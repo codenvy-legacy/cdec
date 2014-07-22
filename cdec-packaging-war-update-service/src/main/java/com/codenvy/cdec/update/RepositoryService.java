@@ -30,7 +30,6 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +37,14 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -112,15 +114,10 @@ public class RepositoryService {
     @RolesAllowed({"user", "system/admin", "system/manager"})
     public Response download(@PathParam("artifact") final String artifact, @PathParam("version") final String version) throws ApiException {
         try {
-            if (!artifactHandler.exists(artifact, version)) {
-                return Response.status(Response.Status.NOT_FOUND)
-                               .entity("Unexpected error. Can't download the artifact '" + artifact +
-                                       "' of version '" + version + "'. Probably the repository doesn't contain one.").build();
-            }
-            return Response.status(Response.Status.OK).entity(createStreamingOutput(artifact, version)).build();
+            return doDownloadArtifact(artifact, version);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't download the artifact '" + artifact + "-" + version +
+            throw new ApiException("Unexpected error. Can't download the artifact '" + artifact + "' of the version '" + version +
                                    "'. Probably it doesn't exist in the repository");
         }
     }
@@ -140,18 +137,28 @@ public class RepositoryService {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadInstallManager(@PathParam("version") final String version) throws ApiException {
         try {
-            if (!artifactHandler.exists(INSTALL_MANAGER, version)) {
-                return Response.status(Response.Status.NOT_FOUND)
-                               .entity("Unexpected error. Can't download the artifact '" + INSTALL_MANAGER +
-                                       "' of version '" + version + "'. Probably the repository doesn't contain one.").build();
-            }
-            StreamingOutput streamingOutput = createStreamingOutput(INSTALL_MANAGER, version);
-            return Response.status(Response.Status.OK).entity(streamingOutput).build();
+            return doDownloadArtifact(INSTALL_MANAGER, version);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't download the artifact 'install-manager-" + version +
+            throw new ApiException("Unexpected error. Can't download the artifact 'install-manager of the version '" + version +
                                    "'. Probably it doesn't exist in the repository");
         }
+    }
+
+    private Response doDownloadArtifact(String artifact, String version) throws IOException {
+        if (!artifactHandler.exists(artifact, version)) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("Unexpected error. Can't download the artifact '" + artifact +
+                                   "' of version '" + version + "'. Probably the repository doesn't contain one.").build();
+        }
+
+        String fileName = artifactHandler.getFileName(artifact, version);
+        java.nio.file.Path path = artifactHandler.getArtifact(fileName, artifact, version);
+
+        return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
+                       .header("Content-Disposition", "attachment; filename=" + fileName)
+                       .header("Content-Length", String.valueOf(Files.size(path)))
+                       .build();
     }
 
     /**
@@ -218,16 +225,5 @@ public class RepositoryService {
         } else {
             throw new InvalidArgumentException("The request must contain multipart content");
         }
-    }
-
-    private StreamingOutput createStreamingOutput(final String artifact, final String version) {
-        return new StreamingOutput() {
-            @Override
-            public void write(OutputStream output) throws IOException, WebApplicationException {
-                try (InputStream in = artifactHandler.download(artifact, version)) {
-                    IOUtils.copy(in, output);
-                }
-            }
-        };
     }
 }
