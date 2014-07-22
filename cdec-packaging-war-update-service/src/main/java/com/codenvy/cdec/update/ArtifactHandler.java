@@ -22,6 +22,7 @@ import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.*;
 import java.nio.file.Files;
@@ -172,7 +173,10 @@ public class ArtifactHandler {
         }
     }
 
-    protected Path getArtifact(String fileName, String artifact, String version) {
+    protected Path getArtifact(@Nullable String fileName, String artifact, String version) throws IOException {
+        if (fileName == null) {
+            throw new IOException("Unknown file name for artifact '" + artifact + "' of version '" + version + "'");
+        }
         return Paths.get(repositoryDir, artifact, version, fileName);
     }
 

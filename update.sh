@@ -16,20 +16,21 @@
 #
 
 #!/bin/bash
-filename=`ls update-service-tomcat-pkg/target | grep update-service-tomcat-pkg`
-#if [ -z "$1" ] || [ "$1" == "prod" ]; then
-#    SSH_KEY_NAME=cl-server-prod-20130219
+filename=`ls cdec-packaging-tomcat-update-service/target | grep update-service-tomcat-pkg`
+if [ -z "$1" ] || [ "$1" == "prod" ]; then
+    SSH_KEY_NAME=cl-server-prod-20130219
 #    SSH_AS_USER_NAME=logreader
 #    AS_IP=syslog.codenvycorp.com
-#    echo "============[ Production will be updated ]=============="
-#elif [ "$1" == "stg" ]; then
+    echo "============[ Production will be updated ]=============="
+elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
+    SSH_KEY_NAME=git_nopass.key
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "============[ Staging will be updated ]=============="
-#else
-#    exit
-#fi
+else
+    exit
+fi
 home=/home/${SSH_AS_USER_NAME}/update-service-tomcat
 
 deleteFileIfExists() {
@@ -40,7 +41,7 @@ deleteFileIfExists() {
 }
 
     echo "==== Step [1/7] =======================> [Uploading a new Tomcat]"
-    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} update-service-tomcat-pkg/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
+    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} cdec-packaging-tomcat-update-service/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina.sh stop; fi"
     echo "==== Step [3/7] =======================> [Server is stopped]"
@@ -48,6 +49,16 @@ deleteFileIfExists() {
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm -rf ${home}"
     echo "==== Step [5/7] =======================> [Unpacking resources]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "unzip ${filename} -d update-service-tomcat"
+
+    if [ "$1" == "stg" ]; then
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/8080/9080/g' ${home}/conf/server.xml"
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/8005/9005/g' ${home}/conf/server.xml"
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/8443/9443/g' ${home}/conf/server.xml"
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32001/33001/g' ${home}/conf/server.xml"
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32101/33101/g' ${home}/conf/server.xml"
+    fi
+
+
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start"
 
@@ -67,5 +78,5 @@ deleteFileIfExists() {
     echo ""
     echo ""
     echo "============================================================================"
-    echo "====================== WELLCOME TO update-service ==============================="
+    echo "====================== UPDATE SERVICE INSTALLED ============================"
     echo "============================================================================"

@@ -23,7 +23,7 @@
         <SMTPHost>localhost</SMTPHost>
         <SMTPPort>25</SMTPPort>
         <SSL>false</SSL>
-        <!--<to>prod-reports@codenvy.com</to>-->
+        <to>INSERT_RECIPIENT_HERE</to>
         <from>noreply@codenvy.com</from>
         <subject>AS error: %logger{20} - %m</subject>
         <layout class="ch.qos.logback.classic.PatternLayout">

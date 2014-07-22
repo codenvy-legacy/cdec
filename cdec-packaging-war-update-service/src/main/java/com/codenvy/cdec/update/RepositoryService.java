@@ -28,7 +28,6 @@ import com.google.inject.Singleton;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.FileCleanerCleanup;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -146,7 +145,8 @@ public class RepositoryService {
                                .entity("Unexpected error. Can't download the artifact '" + INSTALL_MANAGER +
                                        "' of version '" + version + "'. Probably the repository doesn't contain one.").build();
             }
-            return Response.status(Response.Status.OK).entity(createStreamingOutput(INSTALL_MANAGER, version)).build();
+            StreamingOutput streamingOutput = createStreamingOutput(INSTALL_MANAGER, version);
+            return Response.status(Response.Status.OK).entity(streamingOutput).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             throw new ApiException("Unexpected error. Can't download the artifact 'install-manager-" + version +
@@ -177,7 +177,6 @@ public class RepositoryService {
         if (ServletFileUpload.isMultipartContent(request)) {
             DiskFileItemFactory diskFactory = new DiskFileItemFactory();
             diskFactory.setRepository(new File(System.getProperty("java.io.tmpdir")));
-            diskFactory.setFileCleaningTracker(FileCleanerCleanup.getFileCleaningTracker(request.getServletContext()));
 
             ServletFileUpload upload = new ServletFileUpload(diskFactory);
             try {
@@ -185,6 +184,7 @@ public class RepositoryService {
                 for (FileItem item : items) {
                     if (!item.isFormField()) {
                         String fileName = FilenameUtils.getName(item.getName());
+
                         if (!VersionUtil.isValidVersion(version)) {
                             throw new ApiException("The version format is invalid '" + version + "'");
                         } else if (!fileName.contains(version)) {
@@ -193,7 +193,9 @@ public class RepositoryService {
 
                         Properties props = new Properties();
                         for (Map.Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet()) {
-                            props.put(entry.getKey(), entry.getValue().get(0));
+                            if (!entry.getKey().equals("token")) {
+                                props.put(entry.getKey(), entry.getValue().get(0));
+                            }
                         }
 
                         try (InputStream in = item.getInputStream()) {
