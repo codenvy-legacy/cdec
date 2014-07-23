@@ -197,7 +197,7 @@ public class RepositoryService {
         String fileName = artifactHandler.getFileName(artifact, version);
         java.nio.file.Path path = artifactHandler.getArtifact(fileName, artifact, version);
 
-        LOG.info("User '" + EnvironmentContext.getCurrent().getUser().getId() + "' is downloading " + fileName);
+        LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
         return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
                        .header("Content-Length", String.valueOf(Files.size(path)))
                        .header("Content-Disposition", "attachment; filename=" + fileName)
