@@ -127,7 +127,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testShouldAllowDownloadArtifactIfSubscriptionAbsent() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
-        when(transport.makeGetRequest("account/accountId/subscriptions", SubscriptionDescriptor.class))
+        when(transport.makeGetRequest("/account/accountId/subscriptions", SubscriptionDescriptor.class))
                 .thenReturn(Collections.<SubscriptionDescriptor>emptyList());
 
         Response response = given()
