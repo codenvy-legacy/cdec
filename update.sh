@@ -24,7 +24,6 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     echo "============[ Production will be updated ]=============="
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
-    SSH_KEY_NAME=git_nopass.key
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "============[ Staging will be updated ]=============="
