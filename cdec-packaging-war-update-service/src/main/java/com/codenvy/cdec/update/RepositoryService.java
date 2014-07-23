@@ -142,14 +142,14 @@ public class RepositoryService {
 
     private boolean isValidSubscription() throws ApiException {
         try {
-            List<MemberDescriptor> accounts = transport.makeGetRequest("account", MemberDescriptor.class);
+            List<MemberDescriptor> accounts = transport.makeGetRequest("/account", MemberDescriptor.class);
             if (accounts.size() != 1) {
                 throw new ApiException("User must have only one account");
             }
 
             String accountId = accounts.get(0).getAccountReference().getId();
             List<SubscriptionDescriptor> subscriptions =
-                    transport.makeGetRequest("account/" + accountId + "/subscriptions", SubscriptionDescriptor.class);
+                    transport.makeGetRequest("/account/" + accountId + "/subscriptions", SubscriptionDescriptor.class);
 
             for (SubscriptionDescriptor subscription : subscriptions) {
                 if (subscription.getServiceId().equals("On-Premises") && subscription.getEndDate() >= System.currentTimeMillis()) {

@@ -68,10 +68,10 @@ public class TestRepositoryService extends BaseTest {
             artifactHandler = new ArtifactHandler(DOWNLOAD_DIRECTORY.toString());
             repositoryService = new RepositoryService(artifactHandler, transport);
 
-            when(transport.makeGetRequest("account", MemberDescriptor.class)).thenReturn(Arrays.asList(memberDescriptor));
+            when(transport.makeGetRequest("/account", MemberDescriptor.class)).thenReturn(Arrays.asList(memberDescriptor));
             when(memberDescriptor.getAccountReference()).thenReturn(accountReference);
             when(accountReference.getId()).thenReturn("accountId");
-            when(transport.makeGetRequest("account/accountId/subscriptions", SubscriptionDescriptor.class))
+            when(transport.makeGetRequest("/account/accountId/subscriptions", SubscriptionDescriptor.class))
                     .thenReturn(Arrays.asList(subscriptionDescriptor));
             when(subscriptionDescriptor.getServiceId()).thenReturn("On-Premises");
             when(subscriptionDescriptor.getEndDate()).thenReturn(System.currentTimeMillis() + 60 * 1000);

@@ -59,7 +59,7 @@ public class HttpTransport {
         return DtoFactory.getInstance().createListDtoFromJson(json, dtoInterface);
     }
 
-    private String addAuthenticationToken(String baseUrl) throws IOException {
+    protected String addAuthenticationToken(String baseUrl) throws IOException {
         User user = EnvironmentContext.getCurrent().getUser();
         if (user != null) {
             return baseUrl + (baseUrl.contains("?") ? "&" : "?") + "token=" + user.getToken();
@@ -68,8 +68,8 @@ public class HttpTransport {
         }
     }
 
-    private String request(String path, String method) throws IOException {
-        String resourceUrl = addAuthenticationToken(apiEndpoint + path);
+    protected String request(String path, String method) throws IOException {
+        String resourceUrl = addAuthenticationToken(combine(apiEndpoint, path));
         final HttpURLConnection conn = (HttpURLConnection)new URL(resourceUrl).openConnection();
 
         conn.setConnectTimeout(30 * 1000);
@@ -93,6 +93,22 @@ public class HttpTransport {
             return IoUtil.readAndCloseQuietly(conn.getInputStream());
         } finally {
             conn.disconnect();
+        }
+    }
+
+    private String combine(String apiEndpoint, String path) {
+        if (apiEndpoint.endsWith("/")) {
+            if (path.startsWith("/")) {
+                return apiEndpoint + path.substring(1);
+            } else {
+                return apiEndpoint + path;
+            }
+        } else {
+            if (path.startsWith("/")) {
+                return apiEndpoint + path;
+            } else {
+                return apiEndpoint + "/" + path;
+            }
         }
     }
 }
