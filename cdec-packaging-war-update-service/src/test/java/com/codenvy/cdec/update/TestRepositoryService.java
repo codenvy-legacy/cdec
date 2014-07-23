@@ -17,6 +17,10 @@
  */
 package com.codenvy.cdec.update;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
+import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.cdec.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
 
 import org.apache.commons.io.FileUtils;
@@ -33,9 +37,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -47,11 +56,25 @@ public class TestRepositoryService extends BaseTest {
 
     private final ArtifactHandler   artifactHandler;
     private final RepositoryService repositoryService;
+    private final HttpTransport transport;
+
+    private final MemberDescriptor       memberDescriptor       = mock(MemberDescriptor.class);
+    private final AccountReference       accountReference       = mock(AccountReference.class);
+    private final SubscriptionDescriptor subscriptionDescriptor = mock(SubscriptionDescriptor.class);
 
     {
         try {
+            transport = mock(HttpTransport.class);
             artifactHandler = new ArtifactHandler(DOWNLOAD_DIRECTORY.toString());
-            repositoryService = new RepositoryService(artifactHandler);
+            repositoryService = new RepositoryService(artifactHandler, transport);
+
+            when(transport.makeGetRequest("account", MemberDescriptor.class)).thenReturn(Arrays.asList(memberDescriptor));
+            when(memberDescriptor.getAccountReference()).thenReturn(accountReference);
+            when(accountReference.getId()).thenReturn("accountId");
+            when(transport.makeGetRequest("account/accountId/subscriptions", SubscriptionDescriptor.class))
+                    .thenReturn(Arrays.asList(subscriptionDescriptor));
+            when(subscriptionDescriptor.getServiceId()).thenReturn("On-Premises");
+            when(subscriptionDescriptor.getEndDate()).thenReturn(System.currentTimeMillis() + 60 * 1000);
         } catch (IOException e) {
             throw new IllegalArgumentException();
         }
@@ -64,7 +87,11 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given().when().get("repository/version/install-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        assertEquals(response.body().asString(), "1.0.2");
+
+        Map value = response.body().as(Map.class);
+        assertEquals(value.size(), 1);
+        assertTrue(value.containsKey("value"));
+        assertEquals(value.get("value"), "1.0.2");
     }
 
     @Test
@@ -95,6 +122,31 @@ public class TestRepositoryService extends BaseTest {
         Path tmp = Paths.get("target/tmp");
         Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
         assertEquals(FileUtils.readFileToString(tmp.toFile()), "content");
+    }
+
+    @Test
+    public void testShouldAllowDownloadArtifactIfSubscriptionAbsent() throws Exception {
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
+        when(transport.makeGetRequest("account/accountId/subscriptions", SubscriptionDescriptor.class))
+                .thenReturn(Collections.<SubscriptionDescriptor>emptyList());
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
+    public void testShouldAllowDownloadArtifactIfSubscriptionExpired() throws Exception {
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
+        when(subscriptionDescriptor.getEndDate()).thenReturn(System.currentTimeMillis() - 60 * 1000);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test

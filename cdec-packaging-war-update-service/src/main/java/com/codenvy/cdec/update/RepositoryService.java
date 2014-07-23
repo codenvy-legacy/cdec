@@ -18,11 +18,17 @@
 package com.codenvy.cdec.update;
 
 
+import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.api.core.ApiException;
 import com.codenvy.api.core.NotFoundException;
+import com.codenvy.api.core.UnauthorizedException;
 import com.codenvy.api.core.rest.InvalidArgumentException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
+import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.VersionUtil;
+import com.codenvy.commons.env.EnvironmentContext;
+import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
 
 import org.apache.commons.fileupload.FileItem;
@@ -45,13 +51,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 
 /**
- * API.
+ * Repository API.
  *
  * @author Anatoliy Bazko
  */
@@ -63,11 +70,13 @@ public class RepositoryService {
     public static final  String INSTALL_MANAGER = "install-manager";
 
     private final ArtifactHandler artifactHandler;
+    private final HttpTransport transport;
 
     @Inject
-    public RepositoryService(ArtifactHandler artifactHandler) {
+    public RepositoryService(ArtifactHandler artifactHandler, HttpTransport transport) {
         this.artifactHandler = artifactHandler;
-        LOG.info("Update Service has been started, download directory '" + artifactHandler.getDirectory() + "'");
+        this.transport = transport;
+        LOG.info("Update Service has been initialized, download directory: " + artifactHandler.getDirectory());
     }
 
     /**
@@ -81,11 +90,15 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "artifact version")
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("version/{artifact}")
-    public Response getVersion(@PathParam("artifact") String artifact) throws ApiException {
+    public Response getVersion(@PathParam("artifact") final String artifact) throws ApiException {
         try {
-            String version = artifactHandler.getLastVersion(artifact);
-            return Response.status(Response.Status.OK).entity(version).build();
+            Map<String, String> value = new HashMap<String, String>() {{
+                put("value", artifactHandler.getLastVersion(artifact));
+            }};
+
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
         } catch (ArtifactNotFoundException e) {
             LOG.error(e.getMessage(), e);
             throw new NotFoundException("Unexpected error. Can't retrieve the last version of the '" + artifact +
@@ -112,13 +125,42 @@ public class RepositoryService {
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"user", "system/admin", "system/manager"})
-    public Response download(@PathParam("artifact") final String artifact, @PathParam("version") final String version) throws ApiException {
+    public Response download(@PathParam("artifact") final String artifact,
+                             @PathParam("version") final String version) throws ApiException {
+        if (!isValidSubscription()) {
+            throw new UnauthorizedException("User must have valid On-Premises subscription.");
+        }
+
         try {
             return doDownloadArtifact(artifact, version);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             throw new ApiException("Unexpected error. Can't download the artifact '" + artifact + "' of the version '" + version +
                                    "'. Probably it doesn't exist in the repository");
+        }
+    }
+
+    private boolean isValidSubscription() throws ApiException {
+        try {
+            List<MemberDescriptor> accounts = transport.makeGetRequest("account", MemberDescriptor.class);
+            if (accounts.size() != 1) {
+                throw new ApiException("User must have only one account");
+            }
+
+            String accountId = accounts.get(0).getAccountReference().getId();
+            List<SubscriptionDescriptor> subscriptions =
+                    transport.makeGetRequest("account/" + accountId + "/subscriptions", SubscriptionDescriptor.class);
+
+            for (SubscriptionDescriptor subscription : subscriptions) {
+                if (subscription.getServiceId().equals("On-Premises") && subscription.getEndDate() >= System.currentTimeMillis()) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new ApiException("Unexpected error. Can't validate subscription");
         }
     }
 
@@ -155,14 +197,15 @@ public class RepositoryService {
         String fileName = artifactHandler.getFileName(artifact, version);
         java.nio.file.Path path = artifactHandler.getArtifact(fileName, artifact, version);
 
+        LOG.info("User '" + EnvironmentContext.getCurrent().getUser().getId() + "' is downloading " + fileName);
         return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
-                       .header("Content-Disposition", "attachment; filename=" + fileName)
                        .header("Content-Length", String.valueOf(Files.size(path)))
+                       .header("Content-Disposition", "attachment; filename=" + fileName)
                        .build();
     }
 
     /**
-     * Uploads artifact into the repository.
+     * Uploads artifact into the repository. If exists the same then it will be replaced.
      *
      * @param artifact
      *         the name of the artifact
