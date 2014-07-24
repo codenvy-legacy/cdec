@@ -51,7 +51,7 @@ public class ArtifactHandler {
     private final String repositoryDir;
 
     @Inject
-    public ArtifactHandler(@Named("codenvy.update-service.repository") String repositoryDir) throws IOException {
+    public ArtifactHandler(@Named("codenvy.update-server.repository") String repositoryDir) throws IOException {
         this.repositoryDir = repositoryDir;
         Files.createDirectories(Paths.get(repositoryDir));
     }
