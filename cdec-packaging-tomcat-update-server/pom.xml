@@ -161,7 +161,7 @@
                                         <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/tomcat.zip" />
                                         <move todir="${project.build.directory}/update-server-tomcat">
                                             <fileset dir="${project.build.directory}/apache-tomcat-${org.apache.tomcat.version}/">
-                                                <exclude name="**/ROOT/**"/>
+                                                <exclude name="**/ROOT/**" />
                                                 <exclude name="**/docs/**" />
                                                 <exclude name="**/examples/**" />
                                                 <exclude name="**/manager/**" />
@@ -170,16 +170,14 @@
                                         </move>
                                         <!-- Coping resources -->
                                         <copy overwrite="true" todir="${project.build.directory}/update-server-tomcat/">
-                                            <fileset dir="${basedir}/src/main/resources/server"/>
+                                            <fileset dir="${basedir}/src/main/resources/server" />
                                         </copy>
                                         <copy overwrite="true" todir="${project.build.directory}/update-server-tomcat/endorsed">
-                                            <fileset dir="${project.build.directory}/packager-conf/jar"/>
+                                            <fileset dir="${project.build.directory}/packager-conf/jar" />
                                         </copy>
-                                        <move file="${project.build.directory}/update-server-tomcat/endorsed/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar"
-                                              tofile="${project.build.directory}/update-server-tomcat/lib/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar"/>
-                                        <move file="${project.build.directory}/packager-conf/war/update-server.war"
-                                              tofile="${project.build.directory}/update-server-tomcat/webapps/update.war"/>
-                                        <chmod file="${project.build.directory}/update-server-tomcat/bin/*.sh" perm="+x"/>
+                                        <move file="${project.build.directory}/update-server-tomcat/endorsed/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" tofile="${project.build.directory}/update-server-tomcat/lib/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" />
+                                        <move file="${project.build.directory}/packager-conf/war/update-server.war" tofile="${project.build.directory}/update-server-tomcat/webapps/update.war" />
+                                        <chmod file="${project.build.directory}/update-server-tomcat/bin/*.sh" perm="+x" />
                                     </target>
                                 </configuration>
                             </execution>
