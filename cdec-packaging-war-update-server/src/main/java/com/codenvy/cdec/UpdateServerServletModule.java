@@ -27,7 +27,7 @@ import org.everrest.guice.servlet.GuiceEverrestServlet;
 
 /** @author Anatoliy Bazko */
 @DynaModule
-public class UpdateServiceServletModule extends ServletModule {
+public class UpdateServerServletModule extends ServletModule {
 
     @Override
     protected void configureServlets() {

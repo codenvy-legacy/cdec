@@ -25,7 +25,7 @@ import com.google.inject.AbstractModule;
  * @author Anatoliy Bazko
  */
 @DynaModule
-public class UpdateServiceModule extends AbstractModule {
+public class UpdateServerModule extends AbstractModule {
 
     @Override
     protected void configure() {

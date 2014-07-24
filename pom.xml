@@ -32,8 +32,8 @@
     <packaging>pom</packaging>
     <name>Codenvy :: CDEC :: Parent</name>
     <modules>
-        <module>cdec-packaging-war-update-service</module>
-        <module>cdec-packaging-tomcat-update-service</module>
+        <module>cdec-packaging-war-update-server</module>
+        <module>cdec-packaging-tomcat-update-server</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>

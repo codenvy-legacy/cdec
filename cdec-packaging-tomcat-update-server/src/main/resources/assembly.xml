@@ -28,7 +28,7 @@
     <fileSets>
         <!-- Default files -->
         <fileSet>
-            <directory>${project.build.directory}/update-service-tomcat</directory>
+            <directory>${project.build.directory}/update-server-tomcat</directory>
             <outputDirectory/>
             <excludes>
                 <exclude>**/*.sh</exclude>
@@ -36,7 +36,7 @@
         </fileSet>
         <!-- Executable files-->
         <fileSet>
-            <directory>${project.build.directory}/update-service-tomcat</directory>
+            <directory>${project.build.directory}/update-server-tomcat</directory>
             <outputDirectory/>
             <includes>
                 <include>**/*.sh</include>

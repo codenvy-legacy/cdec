@@ -76,7 +76,7 @@ public class RepositoryService {
     public RepositoryService(ArtifactHandler artifactHandler, HttpTransport transport) {
         this.artifactHandler = artifactHandler;
         this.transport = transport;
-        LOG.info("Update Service has been initialized, download directory: " + artifactHandler.getDirectory());
+        LOG.info("Repository Service has been initialized, download directory: " + artifactHandler.getDirectory());
     }
 
     /**
