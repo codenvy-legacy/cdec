@@ -17,9 +17,8 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.cdec.Artifact;
+import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
 
@@ -37,8 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
@@ -58,23 +55,15 @@ public class TestRepositoryService extends BaseTest {
     private final RepositoryService repositoryService;
     private final HttpTransport transport;
 
-    private final MemberDescriptor       memberDescriptor       = mock(MemberDescriptor.class);
-    private final AccountReference       accountReference       = mock(AccountReference.class);
-    private final SubscriptionDescriptor subscriptionDescriptor = mock(SubscriptionDescriptor.class);
-
     {
         try {
             transport = mock(HttpTransport.class);
             artifactHandler = new ArtifactHandler(DOWNLOAD_DIRECTORY.toString());
-            repositoryService = new RepositoryService(artifactHandler, transport);
+            repositoryService = new RepositoryService("", artifactHandler, transport);
 
-            when(transport.makeGetRequest("/account", MemberDescriptor.class)).thenReturn(Arrays.asList(memberDescriptor));
-            when(memberDescriptor.getAccountReference()).thenReturn(accountReference);
-            when(accountReference.getId()).thenReturn("accountId");
-            when(transport.makeGetRequest("/account/accountId/subscriptions", SubscriptionDescriptor.class))
-                    .thenReturn(Arrays.asList(subscriptionDescriptor));
-            when(subscriptionDescriptor.getServiceId()).thenReturn("On-Premises");
-            when(subscriptionDescriptor.getEndDate()).thenReturn(System.currentTimeMillis() + 60 * 1000);
+            when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+            when(transport.doGetRequest("/account/accountId/subscriptions"))
+                    .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() + 60 * 1000) + "}]");
         } catch (IOException e) {
             throw new IllegalArgumentException();
         }
@@ -82,13 +71,15 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testVersion() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), RepositoryService.INSTALL_MANAGER, "1.0.1", "tmp", new Properties());
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), RepositoryService.INSTALL_MANAGER, "1.0.2", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()),
+                               Artifact.INSTALL_MANAGER.toString(), "1.0.1", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()),
+                               Artifact.INSTALL_MANAGER.toString(), "1.0.2", "tmp", new Properties());
 
         Response response = given().when().get("repository/version/install-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
-        Map value = response.body().as(Map.class);
+        Map value = Commons.fromJson(response.body().asString(), Map.class);
         assertEquals(value.size(), 1);
         assertTrue(value.containsKey("value"));
         assertEquals(value.get("value"), "1.0.2");
@@ -96,9 +87,9 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadInstallManager() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), RepositoryService.INSTALL_MANAGER, "1.0.1", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), Artifact.INSTALL_MANAGER.toString(), "1.0.1", "tmp", new Properties());
 
-        Response response = given().when().get("repository/download/" + RepositoryService.INSTALL_MANAGER + "/1.0.1");
+        Response response = given().when().get("repository/download/" + Artifact.INSTALL_MANAGER + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         InputStream in = response.body().asInputStream();
@@ -127,8 +118,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testShouldAllowDownloadArtifactIfSubscriptionAbsent() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
-        when(transport.makeGetRequest("/account/accountId/subscriptions", SubscriptionDescriptor.class))
-                .thenReturn(Collections.<SubscriptionDescriptor>emptyList());
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -140,7 +130,8 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testShouldAllowDownloadArtifactIfSubscriptionExpired() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
-        when(subscriptionDescriptor.getEndDate()).thenReturn(System.currentTimeMillis() - 60 * 1000);
+        when(transport.doGetRequest("/account/accountId/subscriptions"))
+                .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() - 60 * 1000) + "}]");
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()

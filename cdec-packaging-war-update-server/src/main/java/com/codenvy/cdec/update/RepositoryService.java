@@ -25,6 +25,7 @@ import com.codenvy.api.core.NotFoundException;
 import com.codenvy.api.core.UnauthorizedException;
 import com.codenvy.api.core.rest.InvalidArgumentException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
+import com.codenvy.cdec.Artifact;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.VersionUtil;
 import com.codenvy.commons.env.EnvironmentContext;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -56,6 +58,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.cdec.utils.Commons.combinePaths;
+import static com.codenvy.cdec.utils.Commons.createListDtoFromJson;
+
 
 /**
  * Repository API.
@@ -67,15 +72,19 @@ import java.util.Properties;
 public class RepositoryService {
 
     private static final Logger LOG             = LoggerFactory.getLogger(RepositoryService.class);
-    public static final  String INSTALL_MANAGER = "install-manager";
 
     private final ArtifactHandler artifactHandler;
     private final HttpTransport transport;
+    private final String apiEndpoint;
 
     @Inject
-    public RepositoryService(ArtifactHandler artifactHandler, HttpTransport transport) {
+    public RepositoryService(@Named("api.endpoint") String apiEndpoint,
+                             ArtifactHandler artifactHandler,
+                             HttpTransport transport) {
         this.artifactHandler = artifactHandler;
         this.transport = transport;
+        this.apiEndpoint = apiEndpoint;
+
         LOG.info("Repository Service has been initialized, download directory: " + artifactHandler.getDirectory());
     }
 
@@ -142,14 +151,16 @@ public class RepositoryService {
 
     private boolean isValidSubscription() throws ApiException {
         try {
-            List<MemberDescriptor> accounts = transport.makeGetRequest("/account", MemberDescriptor.class);
+            List<MemberDescriptor> accounts = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")),
+                                                                    MemberDescriptor.class);
             if (accounts.size() != 1) {
                 throw new ApiException("User must have only one account");
             }
 
             String accountId = accounts.get(0).getAccountReference().getId();
             List<SubscriptionDescriptor> subscriptions =
-                    transport.makeGetRequest("/account/" + accountId + "/subscriptions", SubscriptionDescriptor.class);
+                    createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
+                                          SubscriptionDescriptor.class);
 
             for (SubscriptionDescriptor subscription : subscriptions) {
                 if (subscription.getServiceId().equals("On-Premises") && subscription.getEndDate() >= System.currentTimeMillis()) {
@@ -179,7 +190,7 @@ public class RepositoryService {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadInstallManager(@PathParam("version") final String version) throws ApiException {
         try {
-            return doDownloadArtifact(INSTALL_MANAGER, version);
+            return doDownloadArtifact(Artifact.INSTALL_MANAGER.toString(), version);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             throw new ApiException("Unexpected error. Can't download the artifact 'install-manager of the version '" + version +

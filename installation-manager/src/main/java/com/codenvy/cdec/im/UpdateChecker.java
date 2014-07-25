@@ -17,6 +17,8 @@
  */
 package com.codenvy.cdec.im;
 
+import com.codenvy.cdec.Artifact;
+import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -33,7 +35,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
+
+import static com.codenvy.cdec.utils.Commons.combinePaths;
+import static com.codenvy.cdec.utils.Commons.fromJson;
+import static com.codenvy.cdec.utils.VersionUtil.compare;
 
 /**
  * Checks and downloads updates by schedule.
@@ -44,23 +51,25 @@ import java.util.Map;
 public class UpdateChecker {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateChecker.class);
 
-    private final String  updateServerEndpoint;
-    private final Path    downloadDir;
-    private final String  updateSchedule;
-    private final boolean downloadAutomatically;
+    private final String        updateServerEndpoint;
+    private final Path          downloadDir;
+    private final String        updateSchedule;
+    private final boolean       downloadAutomatically;
+    private final HttpTransport transport;
 
     private Scheduler scheduler;
 
-    // TODO default values
     @Inject
     public UpdateChecker(@Named("codenvy.installation-manager.update_server_endpoint") String updateServerEndpoint,
                          @Named("codenvy.installation-manager.download_dir") String downloadDir,
                          @Named("codenvy.installation-manager.check_update_schedule") String updateSchedule,
-                         @Named("codenvy.installation-manager.download_automatically") boolean downloadAutomatically) throws IOException {
+                         @Named("codenvy.installation-manager.download_automatically") boolean downloadAutomatically,
+                         HttpTransport transport) throws IOException {
         this.updateServerEndpoint = updateServerEndpoint;
         this.downloadDir = Paths.get(downloadDir);
         this.updateSchedule = updateSchedule;
         this.downloadAutomatically = downloadAutomatically;
+        this.transport = transport;
 
         if (!Files.exists(this.downloadDir)) {
             Files.createDirectories(this.downloadDir);
@@ -87,44 +96,87 @@ public class UpdateChecker {
     }
 
     /**
-     * Checks new updates from Update Server
+     * Job to check updates.
      */
-    private class CheckUpdates implements Job {
+    public class CheckUpdates implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
-            if (updatesAvailable()) {
-                if (downloadAutomatically) {
-                    downloadUpdates();
+            try {
+                Map<String, String> newVersions = getNewVersions();
+                if (!newVersions.isEmpty() && downloadAutomatically) {
+                    downloadUpdates(newVersions);
                 }
+            } catch (Exception e) {
+                throw new JobExecutionException(e);
             }
         }
 
-        private void downloadUpdates() {
+        /**
+         * Downloads updates.
+         */
+        public void downloadUpdates(Map<String, String> artifacts) throws IOException {
+            for (Map.Entry<String, String> entry : artifacts.entrySet()) {
+                transport.download(combinePaths(updateServerEndpoint,
+                                                "/repository/download/" + entry.getKey() + "/" + entry.getValue()), downloadDir);
+            }
         }
 
-        private boolean updatesAvailable() {
-            boolean updatesAvailable = false;
+        /**
+         * @return the list of artifacts with newer versions than currently installed
+         * @throws IOException
+         *         if any exception occurred
+         * @throws IllegalArgumentException
+         *         if can't parse version of artifact
+         */
+        public Map<String, String> getNewVersions() throws IOException, IllegalArgumentException {
+            Map<String, String> newVersions = new HashMap<>();
+            Map<String, String> existed = getExistedArtifacts();
+            Map<String, String> available2Download = getAvailable2DownloadArtifacts();
 
-            Map<String, String> artifacts = getArtifact();
-            Map<String, String> newArtifacts = getAvailableArtifacts();
-
-            for (Map.Entry<String, String> newEntry : newArtifacts.entrySet()) {
-                if (!artifacts.containsKey(newEntry.getKey())) {
-                    updatesAvailable = true;
-                } else {
-
+            for (String artifact : available2Download.keySet()) {
+                if (!existed.containsKey(artifact) || compare(available2Download.get(artifact), existed.get(artifact)) > 0) {
+                    newVersions.put(artifact, available2Download.get(artifact));
                 }
             }
 
-            return updatesAvailable;
+            return newVersions;
         }
 
-        private Map<String, String> getAvailableArtifacts() {
-            return null;
+        /**
+         * Scans all available artifacts and returns their last versions from Update Server.
+         */
+        public Map<String, String> getAvailable2DownloadArtifacts() throws IOException {
+            Map<String, String> available2Download = new HashMap<>();
+
+            for (Artifact artifact : Artifact.values()) {
+                try {
+                    Map m = fromJson(transport.doGetRequest(combinePaths(updateServerEndpoint, "repository/version/" + artifact)), Map.class);
+
+                    if (m != null && m.containsKey("value")) {
+                        available2Download.put(artifact.toString(), (String)m.get("value"));
+                    }
+                } catch (IOException e) {
+                    LOG.error("Can't retrieve the last version of " + artifact, e);
+                }
+            }
+
+            return available2Download;
         }
 
-        private Map<String, String> getArtifact() {
-            return null;
+        /**
+         * Scans all available artifacts and returns their current versions.
+         */
+        public Map<String, String> getExistedArtifacts() throws IOException {
+            Map<String, String> existed = new HashMap<>();
+            for (Artifact artifact : Artifact.values()) {
+                try {
+                    existed.put(artifact.toString(), artifact.getVersion());
+                } catch (IOException e) {
+                    throw new IOException("Can't find out current version of " + artifact, e);
+                }
+            }
+
+            return existed;
         }
     }
 }

@@ -61,11 +61,11 @@ public class TestVersionUtil {
 
     @DataProvider(name = "getValidVersions")
     public static Object[][] getValidVersions() {
-        return new Object[][]{{"1.0.1"}, {"10.3.0"}, {"1.0.0"}, {"1.0.10"}};
+        return new Object[][]{{"1.0.1"}, {"10.3.0"}, {"1.0.0"}, {"1.0.10"}, {"1.0.1-SNAPSHOT"}};
     }
 
     @DataProvider(name = "getInvalidVersions")
     public static Object[][] getInvalidVersions() {
-        return new Object[][]{{"0.0.1"}, {"1"}, {"1.1"}, {"1.1."}, {"1.01.1"}, {"01.1.1"}, {"1.1.01"}};
+        return new Object[][]{{"0.0.1"}, {"1"}, {"1.1"}, {"1.1."}, {"1.01.1"}, {"01.1.1"}, {"1.1.01"}, {"1.0.1-"}, {"1.0.1-beta"}};
     }
 }

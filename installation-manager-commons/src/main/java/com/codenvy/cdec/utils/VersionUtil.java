@@ -25,11 +25,14 @@ import java.util.regex.Pattern;
  */
 public final class VersionUtil {
 
-    public static final Pattern VERSION = Pattern.compile("^([1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)$");
+    public static final Pattern VERSION = Pattern.compile("^([1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(-SNAPSHOT|)$");
 
     private VersionUtil() {
     }
 
+    /**
+     * @return 1 if version1 is greater than version2, 0 if they are equal, -1 if version1 is less than version2
+     */
     public static int compare(String version1, String version2) {
         return parse(version1).compareTo(parse(version2));
     }
@@ -58,7 +61,7 @@ public final class VersionUtil {
         }
 
         /**
-         * @throws java.lang.IllegalArgumentException
+         * @throws IllegalArgumentException
          */
         public static Version parse(String version) throws IllegalArgumentException {
             Matcher matcher = VERSION.matcher(version);
