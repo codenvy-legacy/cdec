@@ -18,8 +18,8 @@
 package com.codenvy.cdec.update;
 
 
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.api.account.shared.dto.Member;
+import com.codenvy.api.account.shared.dto.Subscription;
 import com.codenvy.api.core.ApiException;
 import com.codenvy.api.core.NotFoundException;
 import com.codenvy.api.core.UnauthorizedException;
@@ -71,11 +71,11 @@ import static com.codenvy.cdec.utils.Commons.createListDtoFromJson;
 @Path("repository")
 public class RepositoryService {
 
-    private static final Logger LOG             = LoggerFactory.getLogger(RepositoryService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
     private final ArtifactHandler artifactHandler;
     private final HttpTransport transport;
-    private final String apiEndpoint;
+    private final String        apiEndpoint;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
@@ -151,18 +151,18 @@ public class RepositoryService {
 
     private boolean isValidSubscription() throws ApiException {
         try {
-            List<MemberDescriptor> accounts = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")),
-                                                                    MemberDescriptor.class);
+            List<Member> accounts = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")),
+                                                          Member.class);
             if (accounts.size() != 1) {
                 throw new ApiException("User must have only one account");
             }
 
-            String accountId = accounts.get(0).getAccountReference().getId();
-            List<SubscriptionDescriptor> subscriptions =
+            String accountId = accounts.get(0).getAccountId();
+            List<Subscription> subscriptions =
                     createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
-                                          SubscriptionDescriptor.class);
+                                          Subscription.class);
 
-            for (SubscriptionDescriptor subscription : subscriptions) {
+            for (Subscription subscription : subscriptions) {
                 if (subscription.getServiceId().equals("On-Premises") && subscription.getEndDate() >= System.currentTimeMillis()) {
                     return true;
                 }

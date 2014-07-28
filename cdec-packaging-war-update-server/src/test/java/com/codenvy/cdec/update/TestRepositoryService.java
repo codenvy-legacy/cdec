@@ -61,7 +61,7 @@ public class TestRepositoryService extends BaseTest {
             artifactHandler = new ArtifactHandler(DOWNLOAD_DIRECTORY.toString());
             repositoryService = new RepositoryService("", artifactHandler, transport);
 
-            when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+            when(transport.doGetRequest("/account")).thenReturn("[{accountId:accountId}]");
             when(transport.doGetRequest("/account/accountId/subscriptions"))
                     .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() + 60 * 1000) + "}]");
         } catch (IOException e) {
