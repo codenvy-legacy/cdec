@@ -57,7 +57,6 @@ deleteFileIfExists() {
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32101/33101/g' ${home}/conf/server.xml"
     fi
 
-
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start"
 

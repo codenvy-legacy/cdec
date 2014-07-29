@@ -44,15 +44,15 @@ public class TestUpdateChecker {
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
-        updateChecker = new UpdateChecker("update-server-endpoint", "", "", false, transport);
+        updateChecker = new UpdateChecker("", "update/endpoint", "", "", false, transport);
         checkUpdates = updateChecker.new CheckUpdates();
     }
 
     @Test
     public void testGetAvailable2DownloadArtifacts() throws Exception {
-        when(transport.doGetRequest("update-server-endpoint/repository/version/" + Artifact.INSTALL_MANAGER)).thenReturn("{value:1.0.1}");
-        when(transport.doGetRequest("update-server-endpoint/repository/version/" + Artifact.CDEC)).thenReturn("{value:2.1.12}");
-        when(transport.doGetRequest("update-server-endpoint/repository/version/" + Artifact.PUPPET_CLIENT)).thenThrow(IOException.class);
+        when(transport.doGetRequest("update/endpoint/repository/version/" + Artifact.INSTALL_MANAGER)).thenReturn("{value:1.0.1}");
+        when(transport.doGetRequest("update/endpoint/repository/version/" + Artifact.CDEC)).thenReturn("{value:2.1.12}");
+        when(transport.doGetRequest("update/endpoint/repository/version/" + Artifact.PUPPET_CLIENT)).thenThrow(IOException.class);
         Map<String, String> m = checkUpdates.getAvailable2DownloadArtifacts();
 
         assertEquals(m.size(), 2);

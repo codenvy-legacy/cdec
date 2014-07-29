@@ -71,10 +71,8 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testVersion() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()),
-                               Artifact.INSTALL_MANAGER.toString(), "1.0.1", "tmp", new Properties());
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()),
-                               Artifact.INSTALL_MANAGER.toString(), "1.0.2", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), Artifact.INSTALL_MANAGER.toString(), "1.0.1", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), Artifact.INSTALL_MANAGER.toString(), "1.0.2", "tmp", new Properties());
 
         Response response = given().when().get("repository/version/install-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());

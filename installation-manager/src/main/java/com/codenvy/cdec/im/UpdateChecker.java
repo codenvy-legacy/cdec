@@ -51,7 +51,8 @@ import static com.codenvy.cdec.utils.VersionUtil.compare;
 public class UpdateChecker {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateChecker.class);
 
-    private final String        updateServerEndpoint;
+    private final String        codenvyApiEndpoint;
+    private final String        codenvyUpdateEndpoint;
     private final Path          downloadDir;
     private final String        updateSchedule;
     private final boolean       downloadAutomatically;
@@ -60,12 +61,14 @@ public class UpdateChecker {
     private Scheduler scheduler;
 
     @Inject
-    public UpdateChecker(@Named("codenvy.installation-manager.update_server_endpoint") String updateServerEndpoint,
+    public UpdateChecker(@Named("codenvy.installation-manager.codenvy_api_endpoint") String codenvyApiEndpoint,
+                         @Named("codenvy.installation-manager.codenvy_update_endpoint") String codenvyUpdateEndpoint,
                          @Named("codenvy.installation-manager.download_dir") String downloadDir,
                          @Named("codenvy.installation-manager.check_update_schedule") String updateSchedule,
                          @Named("codenvy.installation-manager.download_automatically") boolean downloadAutomatically,
                          HttpTransport transport) throws IOException {
-        this.updateServerEndpoint = updateServerEndpoint;
+        this.codenvyApiEndpoint = codenvyApiEndpoint;
+        this.codenvyUpdateEndpoint = codenvyUpdateEndpoint;
         this.downloadDir = Paths.get(downloadDir);
         this.updateSchedule = updateSchedule;
         this.downloadAutomatically = downloadAutomatically;
@@ -86,8 +89,8 @@ public class UpdateChecker {
         jobDetail.setJobClass(CheckUpdates.class);
         jobDetail.setDurability(true);
 
-        scheduler.scheduleJob(jobDetail,
-                              TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(updateSchedule)).build());
+        scheduler.scheduleJob(jobDetail, TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(updateSchedule)).build());
+
     }
 
     @PreDestroy
@@ -101,10 +104,14 @@ public class UpdateChecker {
     public class CheckUpdates implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
+            LOG.info("Checking started");
+
             try {
-                Map<String, String> newVersions = getNewVersions();
-                if (!newVersions.isEmpty() && downloadAutomatically) {
-                    downloadUpdates(newVersions);
+                if (isValidSubscription()) {
+                    Map<String, String> newVersions = getNewVersions();
+                    if (!newVersions.isEmpty() && downloadAutomatically) {
+                        downloadUpdates(newVersions);
+                    }
                 }
             } catch (Exception e) {
                 throw new JobExecutionException(e);
@@ -112,11 +119,18 @@ public class UpdateChecker {
         }
 
         /**
+         * TODO
+         */
+        private boolean isValidSubscription() {
+            return false;
+        }
+
+        /**
          * Downloads updates.
          */
         public void downloadUpdates(Map<String, String> artifacts) throws IOException {
             for (Map.Entry<String, String> entry : artifacts.entrySet()) {
-                transport.download(combinePaths(updateServerEndpoint,
+                transport.download(combinePaths(codenvyUpdateEndpoint,
                                                 "/repository/download/" + entry.getKey() + "/" + entry.getValue()), downloadDir);
             }
         }
@@ -150,7 +164,7 @@ public class UpdateChecker {
 
             for (Artifact artifact : Artifact.values()) {
                 try {
-                    Map m = fromJson(transport.doGetRequest(combinePaths(updateServerEndpoint, "repository/version/" + artifact)), Map.class);
+                    Map m = fromJson(transport.doGetRequest(combinePaths(codenvyUpdateEndpoint, "repository/version/" + artifact)), Map.class);
 
                     if (m != null && m.containsKey("value")) {
                         available2Download.put(artifact.toString(), (String)m.get("value"));

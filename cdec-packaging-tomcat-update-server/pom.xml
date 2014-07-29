@@ -25,7 +25,7 @@
         <groupId>com.codenvy.cdec</groupId>
         <version>1.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>update-server-tomcat-pkg</artifactId>
+    <artifactId>cdec-packaging-tomcat-update-server</artifactId>
     <packaging>pom</packaging>
     <name>Codenvy :: CDEC :: Update Server Tomcat Assembly</name>
     <dependencies>
@@ -41,7 +41,7 @@
         </dependency>
         <dependency>
             <groupId>com.codenvy.cdec</groupId>
-            <artifactId>update-server</artifactId>
+            <artifactId>cdec-packaging-war-update-server</artifactId>
             <version>${project.version}</version>
             <type>war</type>
         </dependency>
@@ -176,7 +176,7 @@
                                             <fileset dir="${project.build.directory}/packager-conf/jar" />
                                         </copy>
                                         <move file="${project.build.directory}/update-server-tomcat/endorsed/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" tofile="${project.build.directory}/update-server-tomcat/lib/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" />
-                                        <move file="${project.build.directory}/packager-conf/war/update-server.war" tofile="${project.build.directory}/update-server-tomcat/webapps/update.war" />
+                                        <move file="${project.build.directory}/packager-conf/war/cdec-packaging-war-update-server.war" tofile="${project.build.directory}/update-server-tomcat/webapps/update.war" />
                                         <chmod file="${project.build.directory}/update-server-tomcat/bin/*.sh" perm="+x" />
                                     </target>
                                 </configuration>

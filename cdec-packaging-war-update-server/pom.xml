@@ -25,7 +25,7 @@
         <groupId>com.codenvy.cdec</groupId>
         <version>1.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>update-server</artifactId>
+    <artifactId>cdec-packaging-war-update-server</artifactId>
     <packaging>war</packaging>
     <name>Codenvy :: CDEC :: Update Server</name>
     <dependencies>
