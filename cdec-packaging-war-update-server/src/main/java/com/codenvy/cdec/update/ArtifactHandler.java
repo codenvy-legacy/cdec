@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.cdec.utils.VersionUtil;
+import com.codenvy.cdec.utils.Version;
 import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -31,8 +31,8 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
 
-import static com.codenvy.cdec.utils.VersionUtil.compare;
-import static com.codenvy.cdec.utils.VersionUtil.parse;
+import static com.codenvy.cdec.utils.Version.compare;
+import static com.codenvy.cdec.utils.Version.valueOf;
 import static com.google.common.io.Files.copy;
 
 /**
@@ -61,7 +61,7 @@ public class ArtifactHandler {
      * @throws java.io.IOException
      */
     public String getLastVersion(String artifact) throws IOException {
-        VersionUtil.Version lastVersion = null;
+        Version lastVersion = null;
 
         Path dir = getDirectory(artifact);
         if (!Files.exists(dir)) {
@@ -75,7 +75,7 @@ public class ArtifactHandler {
 
         while (pathIterator.hasNext()) {
             try {
-                VersionUtil.Version version = parse(pathIterator.next().getFileName().toString());
+                Version version = valueOf(pathIterator.next().getFileName().toString());
                 if (lastVersion == null || compare(version, lastVersion) > 0) {
                     lastVersion = version;
                 }

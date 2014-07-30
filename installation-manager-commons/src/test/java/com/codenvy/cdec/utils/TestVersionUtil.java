@@ -29,34 +29,34 @@ public class TestVersionUtil {
 
     @Test(dataProvider = "getValidVersions")
     public void testValidVersion(String version) throws Exception {
-        assertTrue("Version is invalid: " + version, VersionUtil.isValidVersion(version));
+        assertTrue("Version is invalid: " + version, Version.isValidVersion(version));
     }
 
     @Test(dataProvider = "getInvalidVersions")
     public void testInvalidVersion(String version) throws Exception {
-        assertFalse("Version is valid: " + version, VersionUtil.isValidVersion(version));
+        assertFalse("Version is valid: " + version, Version.isValidVersion(version));
     }
 
     @Test
     public void testParseValidVersion() throws Exception {
-        assertEquals(VersionUtil.parse("1.0.1"), new VersionUtil.Version(1, 0, 1));
-        assertEquals(VersionUtil.parse("10.150.200"), new VersionUtil.Version(10, 150, 200));
+        assertEquals(Version.valueOf("1.0.1"), new Version(1, 0, 1));
+        assertEquals(Version.valueOf("10.150.200"), new Version(10, 150, 200));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testParseInvalidVersion() throws Exception {
-        VersionUtil.parse("0.1.1");
+        Version.valueOf("0.1.1");
     }
 
     @Test
     public void testCompare() throws Exception {
-        assertEquals(VersionUtil.compare("1.0.1", "1.0.1"), 0);
-        assertEquals(VersionUtil.compare("2.0.1", "1.0.1"), 1);
-        assertEquals(VersionUtil.compare("1.1.1", "1.0.1"), 1);
-        assertEquals(VersionUtil.compare("1.0.2", "1.0.1"), 1);
-        assertEquals(VersionUtil.compare("1.0.1", "2.0.1"), -1);
-        assertEquals(VersionUtil.compare("1.0.1", "1.1.1"), -1);
-        assertEquals(VersionUtil.compare("1.0.1", "1.0.2"), -1);
+        assertEquals(Version.compare("1.0.1", "1.0.1"), 0);
+        assertEquals(Version.compare("2.0.1", "1.0.1"), 1);
+        assertEquals(Version.compare("1.1.1", "1.0.1"), 1);
+        assertEquals(Version.compare("1.0.2", "1.0.1"), 1);
+        assertEquals(Version.compare("1.0.1", "2.0.1"), -1);
+        assertEquals(Version.compare("1.0.1", "1.1.1"), -1);
+        assertEquals(Version.compare("1.0.1", "1.0.2"), -1);
     }
 
     @DataProvider(name = "getValidVersions")

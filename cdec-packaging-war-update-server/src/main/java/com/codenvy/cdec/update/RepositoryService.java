@@ -18,8 +18,6 @@
 package com.codenvy.cdec.update;
 
 
-import com.codenvy.api.account.shared.dto.Member;
-import com.codenvy.api.account.shared.dto.Subscription;
 import com.codenvy.api.core.ApiException;
 import com.codenvy.api.core.NotFoundException;
 import com.codenvy.api.core.UnauthorizedException;
@@ -27,7 +25,7 @@ import com.codenvy.api.core.rest.InvalidArgumentException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.Artifact;
 import com.codenvy.cdec.utils.HttpTransport;
-import com.codenvy.cdec.utils.VersionUtil;
+import com.codenvy.cdec.utils.Version;
 import com.codenvy.commons.env.EnvironmentContext;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
@@ -58,8 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.codenvy.cdec.utils.Commons.combinePaths;
-import static com.codenvy.cdec.utils.Commons.createListDtoFromJson;
+import static com.codenvy.cdec.utils.Commons.isValidSubscription;
 
 
 /**
@@ -136,7 +133,7 @@ public class RepositoryService {
     @RolesAllowed({"user", "system/admin", "system/manager"})
     public Response download(@PathParam("artifact") final String artifact,
                              @PathParam("version") final String version) throws ApiException {
-        if (!isValidSubscription()) {
+        if (!isValidSubscription(transport, apiEndpoint)) {
             throw new UnauthorizedException("User must have valid On-Premises subscription.");
         }
 
@@ -146,32 +143,6 @@ public class RepositoryService {
             LOG.error(e.getMessage(), e);
             throw new ApiException("Unexpected error. Can't download the artifact '" + artifact + "' of the version '" + version +
                                    "'. Probably it doesn't exist in the repository");
-        }
-    }
-
-    private boolean isValidSubscription() throws ApiException {
-        try {
-            List<Member> accounts = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")),
-                                                          Member.class);
-            if (accounts.size() != 1) {
-                throw new ApiException("User must have only one account");
-            }
-
-            String accountId = accounts.get(0).getAccountId();
-            List<Subscription> subscriptions =
-                    createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
-                                          Subscription.class);
-
-            for (Subscription subscription : subscriptions) {
-                if (subscription.getServiceId().equals("On-Premises") && subscription.getEndDate() >= System.currentTimeMillis()) {
-                    return true;
-                }
-            }
-
-            return false;
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't validate subscription");
         }
     }
 
@@ -246,7 +217,7 @@ public class RepositoryService {
                     if (!item.isFormField()) {
                         String fileName = FilenameUtils.getName(item.getName());
 
-                        if (!VersionUtil.isValidVersion(version)) {
+                        if (!Version.isValidVersion(version)) {
                             throw new ApiException("The version format is invalid '" + version + "'");
                         } else if (!fileName.contains(version)) {
                             throw new ApiException("The file name '" + fileName + "' doesn't contain the version of artifact");

@@ -35,12 +35,12 @@
         </dependency>
         <dependency>
             <groupId>com.codenvy.platform-api</groupId>
-            <artifactId>codenvy-api-core</artifactId>
+            <artifactId>codenvy-api-account</artifactId>
             <version>${codenvy.platform-api.version}</version>
         </dependency>
         <dependency>
             <groupId>com.codenvy.platform-api</groupId>
-            <artifactId>codenvy-dto</artifactId>
+            <artifactId>codenvy-api-core</artifactId>
             <version>${codenvy.platform-api.version}</version>
         </dependency>
         <dependency>

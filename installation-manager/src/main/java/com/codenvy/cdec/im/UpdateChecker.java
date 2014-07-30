@@ -38,9 +38,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.codenvy.cdec.utils.Commons.combinePaths;
-import static com.codenvy.cdec.utils.Commons.fromJson;
-import static com.codenvy.cdec.utils.VersionUtil.compare;
+import static com.codenvy.cdec.utils.Commons.*;
+import static com.codenvy.cdec.utils.Version.compare;
 
 /**
  * Checks and downloads updates by schedule.
@@ -107,7 +106,7 @@ public class UpdateChecker {
             LOG.info("Checking started");
 
             try {
-                if (isValidSubscription()) {
+                if (isValidSubscription(transport, codenvyApiEndpoint)) {
                     Map<String, String> newVersions = getNewVersions();
                     if (!newVersions.isEmpty() && downloadAutomatically) {
                         downloadUpdates(newVersions);
@@ -116,13 +115,6 @@ public class UpdateChecker {
             } catch (Exception e) {
                 throw new JobExecutionException(e);
             }
-        }
-
-        /**
-         * TODO
-         */
-        private boolean isValidSubscription() {
-            return false;
         }
 
         /**
