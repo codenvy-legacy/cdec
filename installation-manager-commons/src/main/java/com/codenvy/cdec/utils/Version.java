@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public class Version implements Comparable<Version> {
 
-    public static final Pattern VERSION = Pattern.compile("^([1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(-SNAPSHOT|)$");
+    private static final Pattern VERSION = Pattern.compile("^([1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(-SNAPSHOT|)$");
 
     private final int major;
     private final int minor;
@@ -90,6 +90,14 @@ public class Version implements Comparable<Version> {
         if (minor != version.minor) return false;
 
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = major;
+        result = 31 * result + minor;
+        result = 31 * result + bugFix;
+        return result;
     }
 
     @Override

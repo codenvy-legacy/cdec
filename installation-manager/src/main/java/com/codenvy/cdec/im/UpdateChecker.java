@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.Artifact;
+import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static com.codenvy.cdec.utils.Commons.*;
 import static com.codenvy.cdec.utils.Version.compare;
@@ -56,6 +57,7 @@ public class UpdateChecker {
     private final String        updateSchedule;
     private final boolean       downloadAutomatically;
     private final HttpTransport transport;
+    private final Set<Artifact> artifacts;
 
     private Scheduler scheduler;
 
@@ -65,17 +67,21 @@ public class UpdateChecker {
                          @Named("codenvy.installation-manager.download_dir") String downloadDir,
                          @Named("codenvy.installation-manager.check_update_schedule") String updateSchedule,
                          @Named("codenvy.installation-manager.download_automatically") boolean downloadAutomatically,
-                         HttpTransport transport) throws IOException {
+                         HttpTransport transport,
+                         Set<Artifact> artifacts) throws IOException {
         this.codenvyApiEndpoint = codenvyApiEndpoint;
         this.codenvyUpdateEndpoint = codenvyUpdateEndpoint;
         this.downloadDir = Paths.get(downloadDir);
         this.updateSchedule = updateSchedule;
         this.downloadAutomatically = downloadAutomatically;
         this.transport = transport;
+        this.artifacts = artifacts;
 
         if (!Files.exists(this.downloadDir)) {
             Files.createDirectories(this.downloadDir);
         }
+
+        LOG.info(artifacts.toString()); // TODO check
     }
 
     @PostConstruct
@@ -154,12 +160,13 @@ public class UpdateChecker {
         public Map<String, String> getAvailable2DownloadArtifacts() throws IOException {
             Map<String, String> available2Download = new HashMap<>();
 
-            for (Artifact artifact : Artifact.values()) {
+            for (Artifact artifact : artifacts) {
                 try {
-                    Map m = fromJson(transport.doGetRequest(combinePaths(codenvyUpdateEndpoint, "repository/version/" + artifact)), Map.class);
+                    Map m = fromJson(transport.doGetRequest(combinePaths(codenvyUpdateEndpoint, "repository/version/" + artifact.getName())),
+                                     Map.class);
 
-                    if (m != null && m.containsKey("value")) {
-                        available2Download.put(artifact.toString(), (String)m.get("value"));
+                    if (m != null && m.containsKey("version")) {
+                        available2Download.put(artifact.getName(), (String)m.get("version"));
                     }
                 } catch (IOException e) {
                     LOG.error("Can't retrieve the last version of " + artifact, e);
@@ -174,9 +181,9 @@ public class UpdateChecker {
          */
         public Map<String, String> getExistedArtifacts() throws IOException {
             Map<String, String> existed = new HashMap<>();
-            for (Artifact artifact : Artifact.values()) {
+            for (Artifact artifact : artifacts) {
                 try {
-                    existed.put(artifact.toString(), artifact.getVersion());
+                    existed.put(artifact.getName(), artifact.getCurrentVersion());
                 } catch (IOException e) {
                     throw new IOException("Can't find out current version of " + artifact, e);
                 }

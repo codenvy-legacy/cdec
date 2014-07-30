@@ -17,7 +17,8 @@
  */
 package com.codenvy.cdec.utils.im;
 
-import com.codenvy.cdec.Artifact;
+import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.UpdateChecker;
 import com.codenvy.cdec.utils.HttpTransport;
 
@@ -25,6 +26,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 
 import static org.mockito.Mockito.mock;
@@ -44,25 +47,24 @@ public class TestUpdateChecker {
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
-        updateChecker = new UpdateChecker("", "update/endpoint", "", "", false, transport);
+        updateChecker = new UpdateChecker("api/endpoint", "update/endpoint", "", "", false, transport,
+                                          new HashSet<Artifact>(Arrays.asList(new InstallManagerArtifact())));
         checkUpdates = updateChecker.new CheckUpdates();
     }
 
     @Test
     public void testGetAvailable2DownloadArtifacts() throws Exception {
-        when(transport.doGetRequest("update/endpoint/repository/version/" + Artifact.INSTALL_MANAGER)).thenReturn("{value:1.0.1}");
-        when(transport.doGetRequest("update/endpoint/repository/version/" + Artifact.CDEC)).thenReturn("{value:2.1.12}");
-        when(transport.doGetRequest("update/endpoint/repository/version/" + Artifact.PUPPET_CLIENT)).thenThrow(IOException.class);
+        when(transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
+        when(transport.doGetRequest("update/endpoint/repository/version/fake")).thenThrow(IOException.class);
         Map<String, String> m = checkUpdates.getAvailable2DownloadArtifacts();
 
-        assertEquals(m.size(), 2);
-        assertEquals(m.get(Artifact.INSTALL_MANAGER.toString()), "1.0.1");
-        assertEquals(m.get(Artifact.CDEC.toString()), "2.1.12");
+        assertEquals(m.size(), 1);
+        assertEquals(m.get(InstallManagerArtifact.NAME), "1.0.1");
     }
 
     @Test
     public void testGetExistedArtifacts() throws Exception {
         Map<String, String> m = checkUpdates.getExistedArtifacts();
-        assertNotNull(m.get(Artifact.INSTALL_MANAGER.toString()));
+        assertNotNull(m.get(InstallManagerArtifact.NAME));
     }
 }

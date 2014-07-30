@@ -51,45 +51,45 @@ public class TestArtifactHandler extends BaseTest {
     public void testShouldThrowExceptionIfDownloadDirectoryDoesNotExist() throws Exception {
         Files.delete(DOWNLOAD_DIRECTORY);
 
-        artifactHandler.getLastVersion("install-manager");
+        artifactHandler.getLastVersion("installation-manager");
     }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testShouldThrowExceptionIfArtifactDirectoryDoesNotExist() throws Exception {
-        artifactHandler.getLastVersion("install-manager");
+        artifactHandler.getLastVersion("installation-manager");
     }
 
     @Test
     public void testGetLastVersion() throws Exception {
-        Files.createDirectories(Paths.get("target", "download", "install-manager", "1.0.1"));
-        Files.createDirectories(Paths.get("target", "download", "install-manager", "1.0.2"));
-        Files.createDirectories(Paths.get("target", "download", "install-manager", "3.1.1"));
-        Files.createDirectories(Paths.get("target", "download", "install-manager", "4.4.1"));
+        Files.createDirectories(Paths.get("target", "download", "installation-manager", "1.0.1"));
+        Files.createDirectories(Paths.get("target", "download", "installation-manager", "1.0.2"));
+        Files.createDirectories(Paths.get("target", "download", "installation-manager", "3.1.1"));
+        Files.createDirectories(Paths.get("target", "download", "installation-manager", "4.4.1"));
 
-        assertEquals(artifactHandler.getLastVersion("install-manager"), "4.4.1");
+        assertEquals(artifactHandler.getLastVersion("installation-manager"), "4.4.1");
     }
 
     @Test(expectedExceptions = IOException.class)
     public void shouldGetLastVersionShouldThrowException() throws Exception {
-        artifactHandler.getLastVersion("install-manager");
+        artifactHandler.getLastVersion("installation-manager");
     }
 
     @Test
     public void testGetDownloadDirectoryForArtifact() throws Exception {
-        assertEquals(artifactHandler.getDirectory("install-manager").toString(),
-                     "target/download/install-manager");
+        assertEquals(artifactHandler.getDirectory("installation-manager").toString(),
+                     "target/download/installation-manager");
     }
 
     @Test
     public void testGetDownloadDirectoryForArtifactWithVersion() throws Exception {
-        assertEquals(artifactHandler.getDirectory("install-manager", "1.0.1").toString(),
-                     "target/download/install-manager/1.0.1");
+        assertEquals(artifactHandler.getDirectory("installation-manager", "1.0.1").toString(),
+                     "target/download/installation-manager/1.0.1");
     }
 
     @Test
     public void testGetPropertiesFile() throws Exception {
-        assertEquals(artifactHandler.getPropertiesFile("install-manager", "1.0.1").toString(),
-                     "target/download/install-manager/1.0.1/.properties");
+        assertEquals(artifactHandler.getPropertiesFile("installation-manager", "1.0.1").toString(),
+                     "target/download/installation-manager/1.0.1/.properties");
     }
 
     @Test
@@ -98,21 +98,21 @@ public class TestArtifactHandler extends BaseTest {
         properties.put(ArtifactHandler.VERSION_PROPERTY, "1.0.1");
         properties.put(ArtifactHandler.REVISION_PROPERTY, "abcdef");
         properties.put(ArtifactHandler.BUILD_TIME_PROPERTY, "20140930");
-        properties.put(ArtifactHandler.FILE_NAME_PROPERTY, "install-manager-1.0.1.zip");
-        artifactHandler.storeProperties("install-manager", "1.0.1", properties);
+        properties.put(ArtifactHandler.FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
+        artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
 
-        Path propertiesFile = Paths.get("target", "download", "install-manager", "1.0.1", ArtifactHandler.ARTIFACT_PROPERTIES);
+        Path propertiesFile = Paths.get("target", "download", "installation-manager", "1.0.1", ArtifactHandler.ARTIFACT_PROPERTIES);
         assertTrue(Files.exists(propertiesFile));
 
-        properties = artifactHandler.loadProperties("install-manager", "1.0.1");
+        properties = artifactHandler.loadProperties("installation-manager", "1.0.1");
         assertNotNull(properties);
         assertEquals(properties.size(), 4);
         assertEquals(properties.getProperty(ArtifactHandler.VERSION_PROPERTY), "1.0.1");
         assertEquals(properties.getProperty(ArtifactHandler.REVISION_PROPERTY), "abcdef");
         assertEquals(properties.getProperty(ArtifactHandler.BUILD_TIME_PROPERTY), "20140930");
-        assertEquals(properties.getProperty(ArtifactHandler.FILE_NAME_PROPERTY), "install-manager-1.0.1.zip");
+        assertEquals(properties.getProperty(ArtifactHandler.FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
 
-        assertEquals(artifactHandler.getFileName("install-manager", "1.0.1"), "install-manager-1.0.1.zip");
+        assertEquals(artifactHandler.getFileName("installation-manager", "1.0.1"), "installation-manager-1.0.1.zip");
     }
 
     @Test
@@ -123,10 +123,10 @@ public class TestArtifactHandler extends BaseTest {
         }
 
         try (InputStream in = Files.newInputStream(tmp)) {
-            artifactHandler.upload(in, "install-manager", "1.0.1", "install-manager-1.0.1.jar", new Properties());
+            artifactHandler.upload(in, "installation-manager", "1.0.1", "installation-manager-1.0.1.jar", new Properties());
         }
 
-        Path artifact = Paths.get("target", "download", "install-manager", "1.0.1", "install-manager-1.0.1.jar");
+        Path artifact = Paths.get("target", "download", "installation-manager", "1.0.1", "installation-manager-1.0.1.jar");
         assertTrue(Files.exists(artifact));
         assertEquals(Files.size(artifact), 5);
 
@@ -138,17 +138,17 @@ public class TestArtifactHandler extends BaseTest {
     @Test
     public void testDownload() throws Exception {
         Properties props = new Properties();
-        props.put(ArtifactHandler.FILE_NAME_PROPERTY, "install-manager-1.0.1.jar");
+        props.put(ArtifactHandler.FILE_NAME_PROPERTY, "installation-manager-1.0.1.jar");
         props.put(ArtifactHandler.VERSION_PROPERTY, "1.0.1");
-        artifactHandler.storeProperties("install-manager", "1.0.1", props);
+        artifactHandler.storeProperties("installation-manager", "1.0.1", props);
 
-        Path artifact = Paths.get("target", "download", "install-manager", "1.0.1", "install-manager-1.0.1.jar");
+        Path artifact = Paths.get("target", "download", "installation-manager", "1.0.1", "installation-manager-1.0.1.jar");
         try (BufferedWriter writer = Files.newBufferedWriter(artifact, Charset.defaultCharset())) {
             writer.write("hello");
         }
 
         Path tmp = Paths.get("target", "download", "tmp");
-        try (InputStream in = artifactHandler.download("install-manager", "1.0.1")) {
+        try (InputStream in = artifactHandler.download("installation-manager", "1.0.1")) {
             copy(new InputSupplier<InputStream>() {
                 @Override
                 public InputStream getInput() throws IOException {
@@ -164,6 +164,6 @@ public class TestArtifactHandler extends BaseTest {
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void shouldThrowExceptionIfArtifactDoesNotExist() throws Exception {
-        artifactHandler.download("install-manager", "1.0.1");
+        artifactHandler.download("installation-manager", "1.0.1");
     }
 }

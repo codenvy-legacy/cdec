@@ -17,11 +17,14 @@
  */
 package com.codenvy.cdec;
 
+import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.UpdateChecker;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
 import org.quartz.SchedulerException;
@@ -100,6 +103,8 @@ public class Daemon {
 
                     binder.bindConstant().annotatedWith(Names.named(key)).to(value);
                 }
+
+                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
             }
 
             private String replaceEnvVariables(String value) {

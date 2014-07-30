@@ -25,7 +25,7 @@ import static org.testng.AssertJUnit.*;
 /**
  * @author Anatoliy Bazko
  */
-public class TestVersionUtil {
+public class TestVersion {
 
     @Test(dataProvider = "getValidVersions")
     public void testValidVersion(String version) throws Exception {

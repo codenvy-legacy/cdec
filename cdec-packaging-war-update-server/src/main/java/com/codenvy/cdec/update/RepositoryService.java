@@ -23,7 +23,7 @@ import com.codenvy.api.core.NotFoundException;
 import com.codenvy.api.core.UnauthorizedException;
 import com.codenvy.api.core.rest.InvalidArgumentException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
-import com.codenvy.cdec.Artifact;
+import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
 import com.codenvy.commons.env.EnvironmentContext;
@@ -101,7 +101,8 @@ public class RepositoryService {
     public Response getVersion(@PathParam("artifact") final String artifact) throws ApiException {
         try {
             Map<String, String> value = new HashMap<String, String>() {{
-                put("value", artifactHandler.getLastVersion(artifact));
+                put("version", artifactHandler.getLastVersion(artifact));
+                put("artifact", artifact); // TODO update in doc
             }};
 
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
@@ -147,7 +148,7 @@ public class RepositoryService {
     }
 
     /**
-     * Downloads 'install-manager' artifact of the specific version.
+     * Downloads 'installation-manager' artifact of the specific version.
      *
      * @param version
      *         the version of the artifact
@@ -157,14 +158,14 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/install-manager/{version}")
+    @Path("download/" + InstallManagerArtifact.NAME + "/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadInstallManager(@PathParam("version") final String version) throws ApiException {
         try {
-            return doDownloadArtifact(Artifact.INSTALL_MANAGER.toString(), version);
+            return doDownloadArtifact(InstallManagerArtifact.NAME, version);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't download the artifact 'install-manager of the version '" + version +
+            throw new ApiException("Unexpected error. Can't download the artifact 'installation-manager of the version '" + version +
                                    "'. Probably it doesn't exist in the repository");
         }
     }

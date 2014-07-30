@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.cdec.Artifact;
+import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
@@ -71,23 +71,23 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testVersion() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), Artifact.INSTALL_MANAGER.toString(), "1.0.1", "tmp", new Properties());
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), Artifact.INSTALL_MANAGER.toString(), "1.0.2", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
 
-        Response response = given().when().get("repository/version/install-manager");
+        Response response = given().when().get("repository/version/installation-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 1);
-        assertTrue(value.containsKey("value"));
-        assertEquals(value.get("value"), "1.0.2");
+        assertEquals(value.size(), 2);
+        assertEquals(value.get("artifact"), InstallManagerArtifact.NAME);
+        assertEquals(value.get("version"), "1.0.2");
     }
 
     @Test
     public void testDownloadInstallManager() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), Artifact.INSTALL_MANAGER.toString(), "1.0.1", "tmp", new Properties());
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
-        Response response = given().when().get("repository/download/" + Artifact.INSTALL_MANAGER + "/1.0.1");
+        Response response = given().when().get("repository/download/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         InputStream in = response.body().asInputStream();
@@ -146,7 +146,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadNotExistedArtifact() throws Exception {
-        Response response = given().when().get("repository/download/install-manager/1.0.2");
+        Response response = given().when().get("repository/download/installation-manager/1.0.2");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode());
     }
 
