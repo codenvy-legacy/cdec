@@ -16,7 +16,7 @@
 #
 
 #!/bin/bash
-filename=`ls cdec-packaging-tomcat-update-server/target | grep update-server-tomcat-pkg`
+filename=`ls cdec-packaging-tomcat-update-server/target | grep cdec-packaging-tomcat-update-server`
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
 #    SSH_AS_USER_NAME=logreader
