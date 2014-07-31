@@ -80,6 +80,8 @@ public class UpdateChecker {
         if (!Files.exists(this.downloadDir)) {
             Files.createDirectories(this.downloadDir);
         }
+
+        LOG.info("Download directory " + downloadDir);
     }
 
     @PostConstruct
@@ -107,7 +109,7 @@ public class UpdateChecker {
     public class CheckUpdates implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
-            LOG.info("Checking started");
+            LOG.info("Checking new updates started");
 
             try {
                 if (isValidSubscription(transport, codenvyApiEndpoint)) {
@@ -118,6 +120,8 @@ public class UpdateChecker {
                 }
             } catch (Exception e) {
                 throw new JobExecutionException(e);
+            } finally {
+                LOG.info("Checking new updates finished");
             }
         }
 
@@ -126,8 +130,11 @@ public class UpdateChecker {
          */
         public void downloadUpdates(Map<String, String> artifacts) throws IOException {
             for (Map.Entry<String, String> entry : artifacts.entrySet()) {
-                transport.download(combinePaths(codenvyUpdateEndpoint,
-                                                "/repository/download/" + entry.getKey() + "/" + entry.getValue()), downloadDir);
+                String artifact = entry.getKey();
+                String version = entry.getValue();
+
+                transport.download(combinePaths(codenvyUpdateEndpoint, "/repository/download/" + artifact + "/" + version), downloadDir);
+                LOG.info("Downloaded '" + artifact + "' version " + version);
             }
         }
 
@@ -146,6 +153,7 @@ public class UpdateChecker {
             for (String artifact : available2Download.keySet()) {
                 if (!existed.containsKey(artifact) || compare(available2Download.get(artifact), existed.get(artifact)) > 0) {
                     newVersions.put(artifact, available2Download.get(artifact));
+                    LOG.info("New version '" + artifact + "' " + newVersions.get(artifact) + " available to download");
                 }
             }
 
