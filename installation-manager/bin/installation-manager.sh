@@ -19,64 +19,65 @@ QUARTZ_OPTS="-Dorg.terracotta.quartz.skipUpdateCheck=true"
 JVM_OPTS="$JVM_OPTS $QUARTZ_OPTS -Xmx256M"
 
 USER=codenvy
+
 APP_DIR=$HOME/installation-manager
+LOG_DIR=${APP_DIR}/log
+
 APP=${APP_DIR}/installation-manager-binary.jar
-PID_FILE=${APP_DIR}/codenvy.pid
+PID_FILE=${APP_DIR}/.pid
+LOG_FILE=${LOG_DIR}/console.log
 
 # Starting tomcat
 start () {
     echo "Starting ..."
-    su - ${USER} -c "java $JVM_OPTS -jar $APP > $APP_DIR/log.txt & echo \$! >$PID_FILE"
+    if [ ! -d ${LOG_DIR} ];  then
+        su - ${USER} -c "mkdir $LOG_DIR"
+    fi
+    su - ${USER} -c "java $JVM_OPTS -jar $APP >> $LOG_FILE & echo \$! >$PID_FILE"
 }
  
 # Stoping tomcat
 stop () {
-    if [ -f ${PID_FILE} ]
-        then
+    if [ -f ${PID_FILE} ]; then
             pid=`cat ${PID_FILE}`
     fi
 
     echo "Stopping ..."
     kill -TERM ${pid}
 
-    if [ -n "$pid" ]
-        then
-            COUNTER=0
-            STATUS="1"
-            while [ ${STATUS} == "1" ]; do
-                ps -fp ${pid}
-                RETVAL=$?
-                if [ ${RETVAL} -eq 0 ]
-                    then
-                        sleep 5
-                        let COUNTER=COUNTER+1
-                        if [ ${COUNTER} -eq 10 ]
-                            then
-                                kill -KILL ${pid}
-                        fi
-                    else
-                        STATUS="0"
-                        rm ${PID_FILE}
+    if [ -n "$pid" ]; then
+        COUNTER=0
+        STATUS="1"
+        while [ ${STATUS} == "1" ]; do
+            ps -fp ${pid}
+            RETVAL=$?
+            if [ ${RETVAL} -eq 0 ]; then
+                sleep 5
+                let COUNTER=COUNTER+1
+                if [ ${COUNTER} -eq 10 ]; then
+                    kill -KILL ${pid}
                 fi
-            done
+            else
+                STATUS="0"
+                rm ${PID_FILE}
+            fi
+        done
     fi
 }
 
 status () {
-    if [ -f ${PID_FILE} ]
-        then
-            pid=`cat ${PID_FILE}`
-            ps -fp ${pid}
-            RETVAL=$?
-        else
-            RETVAL=3
+    if [ -f ${PID_FILE} ]; then
+        pid=`cat ${PID_FILE}`
+        ps -fp ${pid}
+        RETVAL=$?
+    else
+        RETVAL=3
     fi
 
-    if [ ${RETVAL} -eq 0 ]
-        then
-            echo "Installation Manager is running"
-        else
-            echo "Installation Manager is stopped"
+    if [ ${RETVAL} -eq 0 ];then
+        echo "Installation Manager is running"
+    else
+        echo "Installation Manager is stopped"
     fi
     return ${RETVAL}
 }

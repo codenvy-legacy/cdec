@@ -80,8 +80,6 @@ public class UpdateChecker {
         if (!Files.exists(this.downloadDir)) {
             Files.createDirectories(this.downloadDir);
         }
-
-        LOG.info(artifacts.toString()); // TODO check
     }
 
     @PostConstruct

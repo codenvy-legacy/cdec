@@ -102,7 +102,7 @@ public class RepositoryService {
         try {
             Map<String, String> value = new HashMap<String, String>() {{
                 put("version", artifactHandler.getLastVersion(artifact));
-                put("artifact", artifact); // TODO update in doc
+                put("artifact", artifact);
             }};
 
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
