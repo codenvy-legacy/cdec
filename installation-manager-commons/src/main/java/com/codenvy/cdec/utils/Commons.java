@@ -19,7 +19,6 @@ package com.codenvy.cdec.utils;
 
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.api.core.ApiException;
 import com.codenvy.dto.server.DtoFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -76,30 +75,30 @@ public class Commons {
 
     /**
      * Indicates of current user has valid subscription.
+     *
+     * @throws java.lang.IllegalStateException
      */
-    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint) throws ApiException {
-        try {
-            List<MemberDescriptor> accounts =
-                    createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")), MemberDescriptor.class);
+    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint, String requiredSubscription)
+            throws IOException, IllegalStateException {
 
-            if (accounts.size() != 1) {
-                throw new ApiException("User must have only one account");
-            }
+        List<MemberDescriptor> accounts =
+                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")), MemberDescriptor.class);
 
-            String accountId = accounts.get(0).getAccountReference().getId();
-            List<SubscriptionDescriptor> subscriptions =
-                    createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
-                                          SubscriptionDescriptor.class);
-
-            for (SubscriptionDescriptor subscription : subscriptions) {
-                if (subscription.getServiceId().equals("On-Premises") && subscription.getEndDate() >= System.currentTimeMillis()) {
-                    return true;
-                }
-            }
-
-            return false;
-        } catch (IOException e) {
-            throw new ApiException("Unexpected error. Can't validate subscription");
+        if (accounts.size() != 1) {
+            throw new IllegalStateException("User must have only one account");
         }
+
+        String accountId = accounts.get(0).getAccountReference().getId();
+        List<SubscriptionDescriptor> subscriptions =
+                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
+                                      SubscriptionDescriptor.class);
+
+        for (SubscriptionDescriptor subscription : subscriptions) {
+            if (subscription.getServiceId().equals(requiredSubscription) && subscription.getEndDate() >= System.currentTimeMillis()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

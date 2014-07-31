@@ -19,13 +19,8 @@ package com.codenvy.cdec.update;
 
 
 import com.codenvy.api.core.ApiException;
-import com.codenvy.api.core.NotFoundException;
-import com.codenvy.api.core.UnauthorizedException;
-import com.codenvy.api.core.rest.InvalidArgumentException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
-import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.HttpTransport;
-import com.codenvy.cdec.utils.Version;
 import com.codenvy.commons.env.EnvironmentContext;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
@@ -57,6 +52,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static com.codenvy.cdec.utils.Commons.isValidSubscription;
+import static com.codenvy.cdec.utils.Version.isValidVersion;
 
 
 /**
@@ -82,7 +78,7 @@ public class RepositoryService {
         this.transport = transport;
         this.apiEndpoint = apiEndpoint;
 
-        LOG.info("Repository Service has been initialized, download directory: " + artifactHandler.getDirectory());
+        LOG.info("Repository Service has been initialized, repository directory: " + artifactHandler.getRepositoryDir());
     }
 
     /**
@@ -98,21 +94,21 @@ public class RepositoryService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("version/{artifact}")
-    public Response getVersion(@PathParam("artifact") final String artifact) throws ApiException {
+    public Response getVersion(@PathParam("artifact") final String artifact) {
         try {
             Map<String, String> value = new HashMap<String, String>() {{
-                put("version", artifactHandler.getLastVersion(artifact));
+                put("version", artifactHandler.getLatestVersion(artifact));
                 put("artifact", artifact);
             }};
 
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
         } catch (ArtifactNotFoundException e) {
-            LOG.error(e.getMessage(), e);
-            throw new NotFoundException("Unexpected error. Can't retrieve the last version of the '" + artifact +
-                                        "'. Probably the repository doesn't contain anyone.");
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'. " + e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't retrieve the last version of the '" + artifact + "'");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'").build();
         }
     }
 
@@ -124,8 +120,6 @@ public class RepositoryService {
      * @param version
      *         the version of the artifact
      * @return Response
-     * @throws ApiException
-     *         if unexpected error occurred
      */
     @GenerateLink(rel = "download artifact")
     @GET
@@ -133,52 +127,91 @@ public class RepositoryService {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"user", "system/admin", "system/manager"})
     public Response download(@PathParam("artifact") final String artifact,
-                             @PathParam("version") final String version) throws ApiException {
-        if (!isValidSubscription(transport, apiEndpoint)) {
-            throw new UnauthorizedException("User must have valid On-Premises subscription.");
-        }
-
+                             @PathParam("version") final String version) {
         try {
-            return doDownloadArtifact(artifact, version);
+            String requiredSubscription = artifactHandler.getRequiredSubscription(artifact, version);
+            if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
+            }
+
+            return doDownloadArtifact(artifact, version, false);
+        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(
+                    "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't download the artifact '" + artifact + "' of the version '" + version +
-                                   "'. Probably it doesn't exist in the repository");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("Unexpected error. Can't download the artifact '" + artifact + "' version " + version +
+                                   ". Probably it doesn't exist in the repository").build();
         }
     }
 
     /**
-     * Downloads 'installation-manager' artifact of the specific version.
+     * Downloads public artifact of the specific version.
      *
+     * @param artifact
+     *         the artifact name
      * @param version
      *         the version of the artifact
      * @return Response
-     * @throws ApiException
-     *         if unexpected error occurred
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/" + InstallManagerArtifact.NAME + "/{version}")
+    @Path("download/public/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadInstallManager(@PathParam("version") final String version) throws ApiException {
+    public Response downloadPublicArtifact(@PathParam("artifact") String artifact,
+                                           @PathParam("version") String version) {
         try {
-            return doDownloadArtifact(InstallManagerArtifact.NAME, version);
+            return doDownloadArtifact(artifact, version, true);
+        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(
+                    "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            throw new ApiException("Unexpected error. Can't download the artifact 'installation-manager of the version '" + version +
-                                   "'. Probably it doesn't exist in the repository");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("Unexpected error. Can't download the artifact '" + artifact + "' version " + version +
+                                   ". Probably it doesn't exist in the repository").build();
         }
     }
 
-    private Response doDownloadArtifact(String artifact, String version) throws IOException {
-        if (!artifactHandler.exists(artifact, version)) {
+    /**
+     * Downloads the latest version of the artifact.
+     *
+     * @param artifact
+     *         the name of the artifact
+     * @return Response
+     */
+    @GenerateLink(rel = "download artifact")
+    @GET
+    @Path("download/public/{artifact}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") String artifact) {
+        try {
+            String version = artifactHandler.getLatestVersion(artifact);
+            return doDownloadArtifact(artifact, version, true);
+        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("Unexpected error. Can't download the latest version of artifact '" + artifact).build();
+        }
+    }
+
+    private Response doDownloadArtifact(String artifact, String version, boolean checkPublicAccess) throws IOException {
+        java.nio.file.Path path = artifactHandler.getArtifact(artifact, version);
+
+        if (!Files.exists(path)) {
             return Response.status(Response.Status.NOT_FOUND)
                            .entity("Unexpected error. Can't download the artifact '" + artifact +
-                                   "' of version '" + version + "'. Probably the repository doesn't contain one.").build();
+                                   "' version " + version + ". Probably the repository doesn't contain one.").build();
+        }
+
+        if (checkPublicAccess && !artifactHandler.isPublic(artifact, version)) {
+            return Response.status(Response.Status.FORBIDDEN).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
         String fileName = artifactHandler.getFileName(artifact, version);
-        java.nio.file.Path path = artifactHandler.getArtifact(fileName, artifact, version);
 
         LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
         return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
@@ -188,15 +221,17 @@ public class RepositoryService {
     }
 
     /**
-     * Uploads artifact into the repository. If exists the same then it will be replaced.
+     * Uploads artifact into the repository. If the same artifact exists then it will be replaced.
+     * If {@value com.codenvy.cdec.update.ArtifactHandler#PUBLIC_PROPERTY} isn't set then artifact will be treated as private,
+     * which requires user to be authenticated to download it. If {@value com.codenvy.cdec.update.ArtifactHandler#SUBSCRIPTION_REQUIRED_PROPERTY}
+     * is set then user has to have specific valid subscription to download artifact. If artifact is public then subscription won't be taken into
+     * account.
      *
      * @param artifact
      *         the name of the artifact
      * @param version
      *         the version of the artifact
      * @return Response
-     * @throws ApiException
-     *         if unexpected error occurred
      */
     @GenerateLink(rel = "upload artifact")
     @POST
@@ -206,7 +241,7 @@ public class RepositoryService {
     public Response upload(@PathParam("artifact") String artifact,
                            @PathParam("version") String version,
                            @Context HttpServletRequest request,
-                           @Context UriInfo uriInfo) throws ApiException {
+                           @Context UriInfo uriInfo) {
         if (ServletFileUpload.isMultipartContent(request)) {
             DiskFileItemFactory diskFactory = new DiskFileItemFactory();
             diskFactory.setRepository(new File(System.getProperty("java.io.tmpdir")));
@@ -218,10 +253,9 @@ public class RepositoryService {
                     if (!item.isFormField()) {
                         String fileName = FilenameUtils.getName(item.getName());
 
-                        if (!Version.isValidVersion(version)) {
-                            throw new ApiException("The version format is invalid '" + version + "'");
-                        } else if (!fileName.contains(version)) {
-                            throw new ApiException("The file name '" + fileName + "' doesn't contain the version of artifact");
+                        if (!isValidVersion(version)) {
+                            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                           .entity("The version format is invalid '" + version + "'").build();
                         }
 
                         Properties props = new Properties();
@@ -236,20 +270,21 @@ public class RepositoryService {
                             return Response.status(Response.Status.OK).build();
                         } catch (IOException e) {
                             LOG.error(e.getMessage(), e);
-                            throw new ApiException("Unexpected error occurred during uploading.");
+                            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                           .entity("Unexpected error occurred during uploading.").build();
                         } finally {
                             item.delete();
                         }
                     }
                 }
 
-                throw new NotFoundException("Can n't upload files. The list is empty.");
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Can n't upload files. The list is empty.").build();
             } catch (FileUploadException e) {
                 LOG.error(e.getMessage(), e);
-                throw new ApiException("Unexpected error occurred during uploading.");
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error occurred during uploading.").build();
             }
         } else {
-            throw new InvalidArgumentException("The request must contain multipart content");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The request must contain multipart content").build();
         }
     }
 }

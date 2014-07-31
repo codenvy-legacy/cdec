@@ -22,13 +22,9 @@ import java.io.FileNotFoundException;
 /**
  * @author Anatoliy Bazko
  */
-public class ArtifactNotFoundException extends FileNotFoundException {
+public class PropertiesNotFoundException extends FileNotFoundException {
 
-    public ArtifactNotFoundException(String artifact, String version) {
-        super("Artifact '" + artifact + "' version '" + version + "' not found");
-    }
-
-    public ArtifactNotFoundException(String artifact) {
-        super("There is no any version of artifact '" + artifact + "'");
+    public PropertiesNotFoundException(String artifact, String version) {
+        super("Artifact properties '" + artifact + "' version '" + version + "' not found");
     }
 }

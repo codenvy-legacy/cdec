@@ -22,7 +22,6 @@ import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.*;
 import java.nio.file.Files;
@@ -41,12 +40,14 @@ import static com.google.common.io.Files.copy;
 @Singleton
 public class ArtifactHandler {
 
-    public static final String ARTIFACT_PROPERTIES = ".properties";
+    public static final String PROPERTIES_FILE = ".properties";
 
-    public static final String VERSION_PROPERTY    = "version";
-    public static final String REVISION_PROPERTY   = "revision";
-    public static final String BUILD_TIME_PROPERTY = "build-time";
-    public static final String FILE_NAME_PROPERTY  = "file";
+    public static final String VERSION_PROPERTY               = "version";
+    public static final String REVISION_PROPERTY              = "revision";
+    public static final String BUILD_TIME_PROPERTY            = "build-time";
+    public static final String FILE_NAME_PROPERTY             = "file";
+    public static final String PUBLIC_PROPERTY                = "public";
+    public static final String SUBSCRIPTION_REQUIRED_PROPERTY = "subscription-required";
 
     private final String repositoryDir;
 
@@ -57,42 +58,44 @@ public class ArtifactHandler {
     }
 
     /**
-     * @return the latest available version of the artifact
+     * @return the latest available version of the artifact in the repository
+     * @throws com.codenvy.cdec.update.ArtifactNotFoundException
+     *         if artifact is absent in the repository
      * @throws java.io.IOException
+     *         if an I/O error occurs
      */
-    public String getLastVersion(String artifact) throws IOException {
-        Version lastVersion = null;
+    public String getLatestVersion(String artifact) throws IOException {
+        Version latestVersion = null;
 
-        Path dir = getDirectory(artifact);
+        Path dir = getArtifactDir(artifact);
         if (!Files.exists(dir)) {
             throw new ArtifactNotFoundException(artifact);
         }
 
         Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
-        if (!pathIterator.hasNext()) {
-            throw new ArtifactNotFoundException(artifact);
-        }
-
         while (pathIterator.hasNext()) {
             try {
                 Version version = valueOf(pathIterator.next().getFileName().toString());
-                if (lastVersion == null || compare(version, lastVersion) > 0) {
-                    lastVersion = version;
+                if (latestVersion == null || compare(version, latestVersion) > 0) {
+                    latestVersion = version;
                 }
             } catch (IllegalArgumentException e) {
                 // maybe it isn't a version directory
             }
         }
 
-        if (lastVersion == null) {
+        if (latestVersion == null) {
             throw new ArtifactNotFoundException(artifact);
         }
 
-        return lastVersion.toString();
+        return latestVersion.toString();
     }
 
     /**
      * Uploads artifact into the repository.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurs
      */
     public void upload(final InputStream in, String artifact, String version, String fileName, Properties props) throws IOException {
         props.put(FILE_NAME_PROPERTY, fileName);
@@ -104,19 +107,21 @@ public class ArtifactHandler {
             public InputStream getInput() throws IOException {
                 return new BufferedInputStream(in);
             }
-        }, getArtifact(fileName, artifact, version).toFile());
+        }, getArtifact(artifact, version, fileName).toFile());
     }
 
     /**
      * Downloads artifact from the repository.
+     *
+     * @throws com.codenvy.cdec.update.PropertiesNotFoundException
+     *         if property file is absent in the repository
+     * @throws com.codenvy.cdec.update.ArtifactNotFoundException
+     *         if artifact is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
      */
     public InputStream download(String artifact, String version) throws IOException {
-        String fileName = getFileName(artifact, version);
-        if (fileName == null) {
-            throw new ArtifactNotFoundException(artifact, version);
-        }
-
-        Path path = getArtifact(fileName, artifact, version);
+        Path path = getArtifact(artifact, version);
         if (!Files.exists(path)) {
             throw new ArtifactNotFoundException(artifact, version);
         }
@@ -125,25 +130,18 @@ public class ArtifactHandler {
     }
 
     /**
-     * @return true if artifact exists in the repository, otherwise method returns false
-     */
-    public boolean exists(String artifact, String version) {
-        try {
-            Path path = getArtifact(getFileName(artifact, version), artifact, version);
-            return Files.exists(path);
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    /**
      * Loads the properties of the artifact.
+     *
+     * @throws com.codenvy.cdec.update.PropertiesNotFoundException
+     *         if property file is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
      */
     public Properties loadProperties(String artifact, String version) throws IOException {
         Properties props = new Properties();
         Path propertiesFile = getPropertiesFile(artifact, version);
         if (!Files.exists(propertiesFile)) {
-            throw new ArtifactNotFoundException(artifact, version);
+            throw new PropertiesNotFoundException(artifact, version);
         }
 
         try (InputStream in = new BufferedInputStream(Files.newInputStream(propertiesFile))) {
@@ -153,12 +151,11 @@ public class ArtifactHandler {
         return props;
     }
 
-    protected String getFileName(String artifact, String version) throws IOException {
-        return (String)loadProperties(artifact, version).get(FILE_NAME_PROPERTY);
-    }
-
     /**
      * Stores the properties of the artifact.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurs
      */
     public void storeProperties(String artifact, String version, Properties props) throws IOException {
         Path propertiesFile = getPropertiesFile(artifact, version);
@@ -173,26 +170,70 @@ public class ArtifactHandler {
         }
     }
 
-    protected Path getArtifact(@Nullable String fileName, String artifact, String version) throws IOException {
-        if (fileName == null) {
-            throw new IOException("Unknown file name for artifact '" + artifact + "' of version '" + version + "'");
-        }
-        return Paths.get(repositoryDir, artifact, version, fileName);
+    /**
+     * Indicates if artifact is public or isn't.
+     *
+     * @throws com.codenvy.cdec.update.PropertiesNotFoundException
+     *         if property file is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
+     */
+    protected boolean isPublic(String artifact, String version) throws IOException {
+        return Boolean.parseBoolean((String)loadProperties(artifact, version).get(PUBLIC_PROPERTY));
     }
 
-    protected Path getDirectory() {
+    /**
+     * @return the subscription name which is required to download artifact
+     * @throws com.codenvy.cdec.update.PropertiesNotFoundException
+     *         if property file is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
+     */
+    protected String getRequiredSubscription(String artifact, String version) throws IOException {
+        return (String)loadProperties(artifact, version).get(SUBSCRIPTION_REQUIRED_PROPERTY);
+    }
+
+
+    /**
+     * @return the file name under which artifact is stored in the repository, method doesn't check if artifact exists
+     * @throws com.codenvy.cdec.update.PropertiesNotFoundException
+     *         if property file is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
+     */
+    protected String getFileName(String artifact, String version) throws IOException {
+        return (String)loadProperties(artifact, version).get(FILE_NAME_PROPERTY);
+    }
+
+    /**
+     * @return the path to the artifact
+     * @throws com.codenvy.cdec.update.PropertiesNotFoundException
+     *         if property file is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
+     */
+    protected Path getArtifact(String artifact, String version) throws IOException {
+        String fileName = getFileName(artifact, version);
+        return getArtifact(artifact, version, fileName);
+    }
+
+    protected Path getArtifact(String artifact, String version, String fileName) {
+        return getArtifactDir(artifact, version).resolve(fileName);
+    }
+
+    protected Path getRepositoryDir() {
         return Paths.get(repositoryDir);
     }
 
-    protected Path getDirectory(String artifact) {
-        return Paths.get(repositoryDir, artifact);
+    protected Path getArtifactDir(String artifact) {
+        return getRepositoryDir().resolve(artifact);
     }
 
-    protected Path getDirectory(String artifact, String version) {
+    protected Path getArtifactDir(String artifact, String version) {
         return Paths.get(repositoryDir, artifact, version);
     }
 
     protected Path getPropertiesFile(String artifact, String version) {
-        return getDirectory(artifact, version).resolve(ARTIFACT_PROPERTIES);
+        return getArtifactDir(artifact, version).resolve(PROPERTIES_FILE);
     }
 }

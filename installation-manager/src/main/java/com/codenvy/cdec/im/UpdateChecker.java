@@ -112,7 +112,7 @@ public class UpdateChecker {
             LOG.info("Checking new updates started");
 
             try {
-                if (isValidSubscription(transport, codenvyApiEndpoint)) {
+                if (isValidSubscription(transport, codenvyApiEndpoint, "On-Premises")) {
                     Map<String, String> newVersions = getNewVersions();
                     if (!newVersions.isEmpty() && downloadAutomatically) {
                         downloadUpdates(newVersions);

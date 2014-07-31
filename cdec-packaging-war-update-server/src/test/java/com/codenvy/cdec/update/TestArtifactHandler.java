@@ -48,15 +48,14 @@ public class TestArtifactHandler extends BaseTest {
     }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void testShouldThrowExceptionIfDownloadDirectoryDoesNotExist() throws Exception {
+    public void testGetLastVersionThrowExceptionIfDownloadDirectoryAbsent() throws Exception {
         Files.delete(DOWNLOAD_DIRECTORY);
-
-        artifactHandler.getLastVersion("installation-manager");
+        artifactHandler.getLatestVersion("installation-manager");
     }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void testShouldThrowExceptionIfArtifactDirectoryDoesNotExist() throws Exception {
-        artifactHandler.getLastVersion("installation-manager");
+    public void testGetLastVersionThrowExceptionIfArtifactDirectoryAbsent() throws Exception {
+        artifactHandler.getLatestVersion("installation-manager");
     }
 
     @Test
@@ -66,53 +65,119 @@ public class TestArtifactHandler extends BaseTest {
         Files.createDirectories(Paths.get("target", "download", "installation-manager", "3.1.1"));
         Files.createDirectories(Paths.get("target", "download", "installation-manager", "4.4.1"));
 
-        assertEquals(artifactHandler.getLastVersion("installation-manager"), "4.4.1");
-    }
-
-    @Test(expectedExceptions = IOException.class)
-    public void shouldGetLastVersionShouldThrowException() throws Exception {
-        artifactHandler.getLastVersion("installation-manager");
+        assertEquals(artifactHandler.getLatestVersion("installation-manager"), "4.4.1");
     }
 
     @Test
-    public void testGetDownloadDirectoryForArtifact() throws Exception {
-        assertEquals(artifactHandler.getDirectory("installation-manager").toString(),
-                     "target/download/installation-manager");
-    }
-
-    @Test
-    public void testGetDownloadDirectoryForArtifactWithVersion() throws Exception {
-        assertEquals(artifactHandler.getDirectory("installation-manager", "1.0.1").toString(),
+    public void testGetArtifactDir() throws Exception {
+        assertEquals(artifactHandler.getArtifactDir("installation-manager", "1.0.1").toString(),
                      "target/download/installation-manager/1.0.1");
+        assertEquals(artifactHandler.getArtifactDir("installation-manager").toString(),
+                     "target/download/installation-manager");
     }
 
     @Test
     public void testGetPropertiesFile() throws Exception {
         assertEquals(artifactHandler.getPropertiesFile("installation-manager", "1.0.1").toString(),
-                     "target/download/installation-manager/1.0.1/.properties");
+                     "target/download/installation-manager/1.0.1/" + ArtifactHandler.PROPERTIES_FILE);
+    }
+
+    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    public void testLoadPropertiesThrowExceptionIfPropertyFileAbsent() throws Exception {
+        Files.createDirectories(artifactHandler.getArtifactDir("installation-manager", "1.0.1"));
+        assertFalse(Files.exists(artifactHandler.getPropertiesFile("installation-manager", "1.0.1")));
+
+        artifactHandler.loadProperties("installation-manager", "1.0.1");
     }
 
     @Test
     public void testLoadStoreProperties() throws Exception {
+        Path propertiesFile = Paths.get("target", "download", "installation-manager", "1.0.1", ArtifactHandler.PROPERTIES_FILE);
+        assertFalse(Files.exists(propertiesFile));
+
         Properties properties = new Properties();
         properties.put(ArtifactHandler.VERSION_PROPERTY, "1.0.1");
         properties.put(ArtifactHandler.REVISION_PROPERTY, "abcdef");
         properties.put(ArtifactHandler.BUILD_TIME_PROPERTY, "20140930");
         properties.put(ArtifactHandler.FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
+        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "true");
+        properties.put(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
         artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
 
-        Path propertiesFile = Paths.get("target", "download", "installation-manager", "1.0.1", ArtifactHandler.ARTIFACT_PROPERTIES);
         assertTrue(Files.exists(propertiesFile));
 
         properties = artifactHandler.loadProperties("installation-manager", "1.0.1");
         assertNotNull(properties);
-        assertEquals(properties.size(), 4);
+        assertEquals(properties.size(), 6);
         assertEquals(properties.getProperty(ArtifactHandler.VERSION_PROPERTY), "1.0.1");
         assertEquals(properties.getProperty(ArtifactHandler.REVISION_PROPERTY), "abcdef");
         assertEquals(properties.getProperty(ArtifactHandler.BUILD_TIME_PROPERTY), "20140930");
         assertEquals(properties.getProperty(ArtifactHandler.FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
+        assertEquals(properties.getProperty(ArtifactHandler.PUBLIC_PROPERTY), "true");
+        assertEquals(properties.getProperty(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY), "On-Premises");
 
+        assertEquals(artifactHandler.getRequiredSubscription("installation-manager", "1.0.1"), "On-Premises");
         assertEquals(artifactHandler.getFileName("installation-manager", "1.0.1"), "installation-manager-1.0.1.zip");
+    }
+
+    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    public void testIsPublicArtifactThrowExceptionIfPropertiesAbsent() throws Exception {
+        assertTrue(artifactHandler.isPublic("installation-manager", "1.0.1"));
+    }
+
+    @Test
+    public void testIsPublicArtifact() throws Exception {
+        Properties properties = new Properties();
+        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "true");
+        properties.put(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY, "true");
+        artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
+
+        assertTrue(artifactHandler.isPublic("installation-manager", "1.0.1"));
+    }
+
+    @Test
+    public void testIsPrivateArtifact() throws Exception {
+        Properties properties = new Properties();
+        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "false");
+        artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
+
+        assertFalse(artifactHandler.isPublic("installation-manager", "1.0.1"));
+    }
+
+    @Test
+    public void testIsPrivateArtifactPropertyAbsent() throws Exception {
+        artifactHandler.storeProperties("installation-manager", "1.0.1", new Properties());
+
+        assertFalse(artifactHandler.isPublic("installation-manager", "1.0.1"));
+    }
+
+    @Test
+    public void testIsPrivateArtifactPropertyWrongFormat() throws Exception {
+        Properties properties = new Properties();
+        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "");
+        artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
+
+        assertFalse(artifactHandler.isPublic("installation-manager", "1.0.1"));
+    }
+
+    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    public void testGetFileNameThrowExceptionIfPropertiesAbsent() throws Exception {
+        artifactHandler.getFileName("installation-manager", "1.0.1");
+    }
+
+    @Test
+    public void testGetArtifact() throws Exception {
+        Properties properties = new Properties();
+        properties.put(ArtifactHandler.FILE_NAME_PROPERTY, "file");
+        artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
+
+        assertEquals(artifactHandler.getArtifact("installation-manager", "1.0.1").toString(),
+                     "target/download/installation-manager/1.0.1/file");
+    }
+
+    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    public void testGetArtifactThrowExceptionIfPropertiesAbsent() throws Exception {
+        artifactHandler.getArtifact("installation-manager", "1.0.1");
     }
 
     @Test
@@ -162,8 +227,8 @@ public class TestArtifactHandler extends BaseTest {
         }
     }
 
-    @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void shouldThrowExceptionIfArtifactDoesNotExist() throws Exception {
+    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    public void testDownloadThrowExceptionIfPropertiesAbsent() throws Exception {
         artifactHandler.download("installation-manager", "1.0.1");
     }
 }
