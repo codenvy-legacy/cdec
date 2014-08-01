@@ -28,7 +28,7 @@
     </parent>
     <groupId>com.codenvy.cdec</groupId>
     <artifactId>cdec-parent</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>3.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Codenvy :: CDEC :: Parent</name>
     <modules>

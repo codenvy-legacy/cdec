@@ -42,12 +42,12 @@ public class ArtifactHandler {
 
     public static final String PROPERTIES_FILE = ".properties";
 
-    public static final String VERSION_PROPERTY               = "version";
-    public static final String REVISION_PROPERTY              = "revision";
-    public static final String BUILD_TIME_PROPERTY            = "build-time";
-    public static final String FILE_NAME_PROPERTY             = "file";
-    public static final String PUBLIC_PROPERTY                = "public";
-    public static final String SUBSCRIPTION_REQUIRED_PROPERTY = "subscription-required";
+    public static final String VERSION_PROPERTY                 = "version";
+    public static final String REVISION_PROPERTY                = "revision";
+    public static final String BUILD_TIME_PROPERTY              = "build-time";
+    public static final String FILE_NAME_PROPERTY               = "file";
+    public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication_required";
+    public static final String SUBSCRIPTION_REQUIRED_PROPERTY   = "subscription-required";
 
     private final String repositoryDir;
 
@@ -178,8 +178,8 @@ public class ArtifactHandler {
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
-    protected boolean isPublic(String artifact, String version) throws IOException {
-        return Boolean.parseBoolean((String)loadProperties(artifact, version).get(PUBLIC_PROPERTY));
+    protected boolean isAuthenticationRequired(String artifact, String version) throws IOException {
+        return !"false".equalsIgnoreCase((String)loadProperties(artifact, version).get(AUTHENTICATION_REQUIRED_PROPERTY));
     }
 
     /**

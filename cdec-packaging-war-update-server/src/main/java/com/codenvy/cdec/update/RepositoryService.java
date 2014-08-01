@@ -198,7 +198,7 @@ public class RepositoryService {
         }
     }
 
-    private Response doDownloadArtifact(String artifact, String version, boolean checkPublicAccess) throws IOException {
+    private Response doDownloadArtifact(String artifact, String version, boolean publicAccess) throws IOException {
         java.nio.file.Path path = artifactHandler.getArtifact(artifact, version);
 
         if (!Files.exists(path)) {
@@ -207,7 +207,8 @@ public class RepositoryService {
                                    "' version " + version + ". Probably the repository doesn't contain one.").build();
         }
 
-        if (checkPublicAccess && !artifactHandler.isPublic(artifact, version)) {
+        // TODO
+        if (publicAccess && artifactHandler.isAuthenticationRequired(artifact, version)) {
             return Response.status(Response.Status.FORBIDDEN).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
@@ -222,7 +223,7 @@ public class RepositoryService {
 
     /**
      * Uploads artifact into the repository. If the same artifact exists then it will be replaced.
-     * If {@value com.codenvy.cdec.update.ArtifactHandler#PUBLIC_PROPERTY} isn't set then artifact will be treated as private,
+     * If {@value com.codenvy.cdec.update.ArtifactHandler#AUTHENTICATION_REQUIRED_PROPERTY} isn't set then artifact will be treated as private,
      * which requires user to be authenticated to download it. If {@value com.codenvy.cdec.update.ArtifactHandler#SUBSCRIPTION_REQUIRED_PROPERTY}
      * is set then user has to have specific valid subscription to download artifact. If artifact is public then subscription won't be taken into
      * account.

@@ -20,7 +20,7 @@ filename=`ls cdec-packaging-tomcat-update-server/target | grep cdec-packaging-to
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
 #    SSH_AS_USER_NAME=logreader
-#    AS_IP=syslog.codenvycorp.com
+    AS_IP=update.codenvycorp.com
     echo "============[ Production will be updated ]=============="
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
@@ -68,8 +68,8 @@ deleteFileIfExists() {
         scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP}:${home}/logs/catalina.out ${testfile}
 
         if grep -Fq "Server startup in" ${testfile}; then
-            echo "==== Step [7/7] ======================> [update-server is started]"
             AS_STATE=Started
+            echo "==== Step [7/7] ======================> [Update Server is started]"
         fi
             sleep 5
     done

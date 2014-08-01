@@ -19,6 +19,7 @@ QUARTZ_OPTS="-Dorg.terracotta.quartz.skipUpdateCheck=true"
 JVM_OPTS="$JVM_OPTS $QUARTZ_OPTS -Xmx256M"
 
 USER=codenvy
+HOME=/home/codenvy
 
 APP_DIR=$HOME/installation-manager
 LOG_DIR=${APP_DIR}/log

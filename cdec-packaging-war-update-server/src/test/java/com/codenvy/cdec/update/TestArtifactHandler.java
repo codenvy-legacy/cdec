@@ -100,7 +100,7 @@ public class TestArtifactHandler extends BaseTest {
         properties.put(ArtifactHandler.REVISION_PROPERTY, "abcdef");
         properties.put(ArtifactHandler.BUILD_TIME_PROPERTY, "20140930");
         properties.put(ArtifactHandler.FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
-        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "true");
+        properties.put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "true");
         properties.put(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
         artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
 
@@ -113,7 +113,7 @@ public class TestArtifactHandler extends BaseTest {
         assertEquals(properties.getProperty(ArtifactHandler.REVISION_PROPERTY), "abcdef");
         assertEquals(properties.getProperty(ArtifactHandler.BUILD_TIME_PROPERTY), "20140930");
         assertEquals(properties.getProperty(ArtifactHandler.FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
-        assertEquals(properties.getProperty(ArtifactHandler.PUBLIC_PROPERTY), "true");
+        assertEquals(properties.getProperty(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY), "true");
         assertEquals(properties.getProperty(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY), "On-Premises");
 
         assertEquals(artifactHandler.getRequiredSubscription("installation-manager", "1.0.1"), "On-Premises");
@@ -121,43 +121,43 @@ public class TestArtifactHandler extends BaseTest {
     }
 
     @Test(expectedExceptions = PropertiesNotFoundException.class)
-    public void testIsPublicArtifactThrowExceptionIfPropertiesAbsent() throws Exception {
-        assertTrue(artifactHandler.isPublic("installation-manager", "1.0.1"));
+    public void testIsAuthenticationRequiredThrowExceptionIfPropertiesAbsent() throws Exception {
+        assertTrue(artifactHandler.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
 
     @Test
-    public void testIsPublicArtifact() throws Exception {
+    public void testIsAuthenticationRequired() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "true");
+        properties.put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "true");
         properties.put(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY, "true");
         artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
 
-        assertTrue(artifactHandler.isPublic("installation-manager", "1.0.1"));
+        assertTrue(artifactHandler.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
 
     @Test
-    public void testIsPrivateArtifact() throws Exception {
+    public void testAuthenticationIsNotRequired() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "false");
+        properties.put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "false");
         artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
 
-        assertFalse(artifactHandler.isPublic("installation-manager", "1.0.1"));
+        assertFalse(artifactHandler.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
 
     @Test
-    public void testIsPrivateArtifactPropertyAbsent() throws Exception {
+    public void testAuthenticationIsNotRequiredIfArtifactPropertyAbsent() throws Exception {
         artifactHandler.storeProperties("installation-manager", "1.0.1", new Properties());
 
-        assertFalse(artifactHandler.isPublic("installation-manager", "1.0.1"));
+        assertFalse(artifactHandler.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
 
     @Test
-    public void testIsPrivateArtifactPropertyWrongFormat() throws Exception {
+    public void testAuthenticationIsNotRequiredIfArtifactPropertyWrongFormat() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactHandler.PUBLIC_PROPERTY, "");
+        properties.put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "");
         artifactHandler.storeProperties("installation-manager", "1.0.1", properties);
 
-        assertFalse(artifactHandler.isPublic("installation-manager", "1.0.1"));
+        assertFalse(artifactHandler.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
 
     @Test(expectedExceptions = PropertiesNotFoundException.class)
