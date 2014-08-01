@@ -53,11 +53,12 @@ public class TestRepositoryService extends BaseTest {
 
     private final ArtifactHandler   artifactHandler;
     private final RepositoryService repositoryService;
-    private final HttpTransport transport;
-    private final Properties publicArtifactProperties        = new Properties() {{
-        put("public", "true");
+    private final HttpTransport     transport;
+
+    private final Properties authenticationRequiredProperties = new Properties() {{
+        put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "true");
     }};
-    private final Properties subscriptionRequiredtProperties = new Properties() {{
+    private final Properties subscriptionRequiredProperties   = new Properties() {{
         put(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
     }};
 
@@ -91,7 +92,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicArtifact() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", publicArtifactProperties);
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/download/public/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
@@ -105,7 +106,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicArtifactLatestVersion() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", publicArtifactProperties);
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/download/public/" + InstallManagerArtifact.NAME);
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
@@ -119,7 +120,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadArtifact() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredtProperties);
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -152,7 +153,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadErrorIfSubscriptionAbsent() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredtProperties);
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
         when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
 
         Response response = given()
@@ -164,7 +165,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadErrorIfSubscriptionExpired() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredtProperties);
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
         when(transport.doGetRequest("/account/accountId/subscriptions"))
                 .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() - 60 * 1000) + "}]");
 
@@ -189,7 +190,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadErrorIfArtifactIsNotPublic() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredtProperties);
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given().when().get("repository/download/public/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());

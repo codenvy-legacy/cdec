@@ -171,7 +171,7 @@ public class ArtifactHandler {
     }
 
     /**
-     * Indicates if artifact is public or isn't.
+     * Indicates if to download artifact user has to be authenticated.
      *
      * @throws com.codenvy.cdec.update.PropertiesNotFoundException
      *         if property file is absent in the repository
@@ -179,7 +179,7 @@ public class ArtifactHandler {
      *         if an I/O error occurs
      */
     protected boolean isAuthenticationRequired(String artifact, String version) throws IOException {
-        return !"false".equalsIgnoreCase((String)loadProperties(artifact, version).get(AUTHENTICATION_REQUIRED_PROPERTY));
+        return "true".equalsIgnoreCase((String)loadProperties(artifact, version).get(AUTHENTICATION_REQUIRED_PROPERTY));
     }
 
     /**
