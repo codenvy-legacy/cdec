@@ -28,7 +28,8 @@ elif [ "$1" == "stg" ]; then
     AS_IP=syslog.codenvy-stg.com
     echo "============[ Staging will be updated ]=============="
 else
-    exit
+    echo "Unknown server destination"
+    exit 1
 fi
 home=/home/${SSH_AS_USER_NAME}/update-server-tomcat
 
@@ -42,7 +43,7 @@ deleteFileIfExists() {
     echo "==== Step [1/7] =======================> [Uploading a new Tomcat]"
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} cdec-packaging-tomcat-update-server/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina.sh stop; fi"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
     echo "==== Step [3/7] =======================> [Server is stopped]"
     echo "==== Step [4/7] =======================> [Cleaning up]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm -rf ${home}"

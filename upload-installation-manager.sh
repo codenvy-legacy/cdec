@@ -41,9 +41,10 @@ curl -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'"
 TOKEN=$(cat response | sed 's/"}//' | sed 's/{"value":"//' )
 
 response=`cat response`
+rm response
+
 if [ "${response}" == "Invalid user name or password" ]; then
     echo ${response}
-    rm response
     exit 1
 fi
 
@@ -54,12 +55,11 @@ echo "Uploading $FILENAME started"
 curl -X POST -F "file=@installation-manager/target/"${FILENAME} --insecure ${SERVER_IP}/update/repository/upload/installation-manager/${VERSION}?token=${TOKEN}'&'authentication_required=false > response
 
 response=`cat response`
+rm response
 if [ "${response}" != "" ]; then
     echo ${response}
-    rm response
     exit 1
 fi
 
 echo "File uploaded succesfully"
-rm response
 exit 0
