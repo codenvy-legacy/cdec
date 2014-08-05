@@ -207,8 +207,10 @@ public class RepositoryService {
                                    "' version " + version + ". Probably the repository doesn't contain one.").build();
         }
 
-        if (publicAccess && artifactHandler.isAuthenticationRequired(artifact, version)) {
-            return Response.status(Response.Status.FORBIDDEN).entity("Artifact '" + artifact + "' is not in public access").build();
+        if (publicAccess &&
+            (artifactHandler.isAuthenticationRequired(artifact, version)
+             || artifactHandler.getRequiredSubscription(artifact, version) != null)) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
         String fileName = artifactHandler.getFileName(artifact, version);

@@ -51,7 +51,8 @@ import static org.testng.Assert.assertTrue;
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class TestRepositoryService extends BaseTest {
 
-    private final ArtifactHandler   artifactHandler;
+    public static final long HOUR_AHEAD = System.currentTimeMillis() + 60 * 60 * 1000;
+    private final ArtifactHandler artifactHandler;
     private final RepositoryService repositoryService;
     private final HttpTransport     transport;
 
@@ -67,10 +68,6 @@ public class TestRepositoryService extends BaseTest {
             transport = mock(HttpTransport.class);
             artifactHandler = new ArtifactHandler(DOWNLOAD_DIRECTORY.toString());
             repositoryService = new RepositoryService("", artifactHandler, transport);
-
-            when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-            when(transport.doGetRequest("/account/accountId/subscriptions"))
-                    .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() + 60 * 1000) + "}]");
         } catch (IOException e) {
             throw new IllegalArgumentException();
         }
@@ -100,6 +97,12 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
+    public void testDownloadPublicErrorIfArtifactAbsent() throws Exception {
+        Response response = given().when().get("repository/public/download/installation-manager/1.0.2");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode());
+    }
+
+    @Test
     public void testDownloadPublicArtifactLatestVersion() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
@@ -109,70 +112,98 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownload() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
-    }
-
-    @Test
-    public void testDownloadNoSubscription() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
-    }
-
-    @Test
-    public void testDownloadErrorIfSubscriptionAbsent() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
-
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadErrorIfSubscriptionExpired() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+    public void testDownloadPublicArtifactErrorIfAuthenticationRequired() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions"))
-                .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() - 60 * 1000) + "}]");
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
-
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadErrorIfNoRolesAllowed() throws Exception {
-        Response response = given().when().get("repository/download/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadErrorIfArtifactAbsent() throws Exception {
-        Response response = given().when().get("repository/public/download/installation-manager/1.0.2");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadErrorIfArtifactIsNotPublic() throws Exception {
+                .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given().when().get("repository/public/download/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
+    }
+
+    @Test
+    public void testDownloadPublicArtifactErrorIfSubscriptionRequired() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions"))
+                .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+
+        Response response = given().when().get("/repository/public/download/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
+    }
+
+    @Test
+    public void testDownloadPrivate() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+
+    @Test
+    public void testDownloadPrivateSubscriptionRequired() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions"))
+                .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+
+    @Test
+    public void testDownloadPrivateAuthenticationRequired() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+
+
+    @Test
+    public void testDownloadPrivateErrorIfSubscriptionAbsent() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
+    }
+
+    @Test
+    public void testDownloadPrivateErrorIfSubscriptionExpired() throws Exception {
+        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions"))
+                .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() - 1000) + "}]");
+        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
+    }
+
+    @Test
+    public void testDownloadPrivateErrorIfNoRolesAllowed() throws Exception {
+        Response response = given().when().get("repository/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 

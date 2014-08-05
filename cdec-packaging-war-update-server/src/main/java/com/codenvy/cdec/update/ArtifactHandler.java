@@ -46,7 +46,7 @@ public class ArtifactHandler {
     public static final String REVISION_PROPERTY                = "revision";
     public static final String BUILD_TIME_PROPERTY              = "build-time";
     public static final String FILE_NAME_PROPERTY               = "file";
-    public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication_required";
+    public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication-required";
     public static final String SUBSCRIPTION_REQUIRED_PROPERTY   = "subscription-required";
 
     private final String repositoryDir;
@@ -75,9 +75,12 @@ public class ArtifactHandler {
         Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
         while (pathIterator.hasNext()) {
             try {
-                Version version = valueOf(pathIterator.next().getFileName().toString());
-                if (latestVersion == null || compare(version, latestVersion) > 0) {
-                    latestVersion = version;
+                Path next = pathIterator.next();
+                if (Files.isDirectory(next)) {
+                    Version version = valueOf(next.getFileName().toString());
+                    if (latestVersion == null || compare(version, latestVersion) > 0) {
+                        latestVersion = version;
+                    }
                 }
             } catch (IllegalArgumentException e) {
                 // maybe it isn't a version directory

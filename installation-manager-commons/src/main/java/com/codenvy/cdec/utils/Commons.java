@@ -93,8 +93,8 @@ public class Commons {
                 createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
                                       SubscriptionDescriptor.class);
 
-        for (SubscriptionDescriptor subscription : subscriptions) {
-            if (subscription.getServiceId().equals(requiredSubscription) && subscription.getEndDate() >= System.currentTimeMillis()) {
+        for (SubscriptionDescriptor s : subscriptions) {
+            if (s.getServiceId().equals(requiredSubscription) && s.getEndDate() >= System.currentTimeMillis()) {
                 return true;
             }
         }
