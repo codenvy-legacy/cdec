@@ -150,9 +150,12 @@ public class UpdateChecker {
             Map<String, String> existed = getExistedArtifacts();
             Map<String, String> available2Download = getAvailable2DownloadArtifacts();
 
-            for (String artifact : available2Download.keySet()) {
-                if (!existed.containsKey(artifact) || compare(available2Download.get(artifact), existed.get(artifact)) > 0) {
-                    newVersions.put(artifact, available2Download.get(artifact));
+            for (Map.Entry<String, String> entry : available2Download.entrySet()) {
+                String artifact = entry.getKey();
+                String newVersion = entry.getValue();
+
+                if (!existed.containsKey(artifact) || compare(newVersion, existed.get(artifact)) > 0) {
+                    newVersions.put(artifact, newVersion);
                     LOG.info("New version '" + artifact + "' " + newVersions.get(artifact) + " available to download");
                 }
             }

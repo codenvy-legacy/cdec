@@ -207,7 +207,6 @@ public class RepositoryService {
                                    "' version " + version + ". Probably the repository doesn't contain one.").build();
         }
 
-        // TODO
         if (publicAccess && artifactHandler.isAuthenticationRequired(artifact, version)) {
             return Response.status(Response.Status.FORBIDDEN).entity("Artifact '" + artifact + "' is not in public access").build();
         }

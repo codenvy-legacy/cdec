@@ -19,7 +19,7 @@
 filename=`ls cdec-packaging-tomcat-update-server/target | grep cdec-packaging-tomcat-update-server`
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
-#    SSH_AS_USER_NAME=logreader
+    SSH_AS_USER_NAME=codenvy
     AS_IP=update.codenvycorp.com
     echo "============[ Production will be updated ]=============="
 elif [ "$1" == "stg" ]; then
@@ -50,9 +50,6 @@ deleteFileIfExists() {
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "unzip ${filename} -d update-server-tomcat"
 
     if [ "$1" == "stg" ]; then
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/8080/9080/g' ${home}/conf/server.xml"
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/8005/9005/g' ${home}/conf/server.xml"
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/8443/9443/g' ${home}/conf/server.xml"
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32001/33001/g' ${home}/conf/server.xml"
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32101/33101/g' ${home}/conf/server.xml"
     fi
