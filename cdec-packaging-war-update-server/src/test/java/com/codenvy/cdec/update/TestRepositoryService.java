@@ -82,9 +82,10 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 2);
-        assertEquals(value.get("artifact"), InstallManagerArtifact.NAME);
-        assertEquals(value.get("version"), "1.0.2");
+        assertEquals(value.size(), 3);
+        assertEquals(value.get(ArtifactHandler.ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
+        assertEquals(value.get(ArtifactHandler.VERSION_PROPERTY), "1.0.2");
+        assertEquals(value.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp");
     }
 
     @Test
@@ -244,9 +245,10 @@ public class TestRepositoryService extends BaseTest {
 
         Properties properties = new Properties();
         properties.load(Files.newInputStream(propertiesFile));
-        assertEquals(properties.size(), 2);
+        assertEquals(properties.size(), 3);
         assertEquals(properties.get(ArtifactHandler.VERSION_PROPERTY), "1.0.1-SNAPSHOT");
         assertEquals(properties.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
+        assertEquals(properties.get(ArtifactHandler.ARTIFACT_PROPERTY), "cdec");
     }
 
 
@@ -257,7 +259,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1?revision=abcd&buildtime=20140930");
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1?revision=abcd&build-time=20140930");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
@@ -273,8 +275,8 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(properties.size(), 4);
         assertEquals(properties.get(ArtifactHandler.VERSION_PROPERTY), "1.0.1");
         assertEquals(properties.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
-        assertEquals(properties.get("revision"), "abcd");
-        assertEquals(properties.get("buildtime"), "20140930");
+        assertEquals(properties.get(ArtifactHandler.BUILD_TIME_PROPERTY), "20140930");
+        assertEquals(properties.get(ArtifactHandler.ARTIFACT_PROPERTY), "cdec");
     }
 
     @Test

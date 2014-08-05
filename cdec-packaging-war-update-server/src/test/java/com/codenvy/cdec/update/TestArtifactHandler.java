@@ -97,7 +97,6 @@ public class TestArtifactHandler extends BaseTest {
 
         Properties properties = new Properties();
         properties.put(ArtifactHandler.VERSION_PROPERTY, "1.0.1");
-        properties.put(ArtifactHandler.REVISION_PROPERTY, "abcdef");
         properties.put(ArtifactHandler.BUILD_TIME_PROPERTY, "20140930");
         properties.put(ArtifactHandler.FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
         properties.put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -108,9 +107,8 @@ public class TestArtifactHandler extends BaseTest {
 
         properties = artifactHandler.loadProperties("installation-manager", "1.0.1");
         assertNotNull(properties);
-        assertEquals(properties.size(), 6);
+        assertEquals(properties.size(), 5);
         assertEquals(properties.getProperty(ArtifactHandler.VERSION_PROPERTY), "1.0.1");
-        assertEquals(properties.getProperty(ArtifactHandler.REVISION_PROPERTY), "abcdef");
         assertEquals(properties.getProperty(ArtifactHandler.BUILD_TIME_PROPERTY), "20140930");
         assertEquals(properties.getProperty(ArtifactHandler.FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
         assertEquals(properties.getProperty(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY), "true");

@@ -4,7 +4,6 @@
 
 APP_DIR=$HOME/installation-manager
 
-# TODO
 # download install-manager
 # add as service
 # create user

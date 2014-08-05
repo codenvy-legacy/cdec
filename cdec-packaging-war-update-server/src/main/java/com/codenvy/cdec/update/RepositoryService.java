@@ -18,7 +18,6 @@
 package com.codenvy.cdec.update;
 
 
-import com.codenvy.api.core.ApiException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
@@ -52,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.cdec.update.ArtifactHandler.PUBLIC_PROPERTIES;
 import static com.codenvy.cdec.utils.Commons.isValidSubscription;
 
 
@@ -87,8 +87,6 @@ public class RepositoryService {
      * @param artifact
      *         the name of the artifact
      * @return Response
-     * @throws ApiException
-     *         if unexpected error occurred
      */
     @GenerateLink(rel = "artifact version")
     @GET
@@ -96,12 +94,17 @@ public class RepositoryService {
     @Path("version/{artifact}")
     public Response getVersion(@PathParam("artifact") final String artifact) {
         try {
-            Map<String, String> value = new HashMap<String, String>() {{
-                put("version", artifactHandler.getLatestVersion(artifact));
-                put("artifact", artifact);
-            }};
+            String version = artifactHandler.getLatestVersion(artifact);
+            final Properties properties = artifactHandler.loadProperties(artifact, version);
 
-            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
+            Map<String, String> m = new HashMap<>(PUBLIC_PROPERTIES.size());
+            for (String prop : PUBLIC_PROPERTIES) {
+                if (properties.containsKey(prop)) {
+                    m.put(prop, properties.getProperty(prop));
+                }
+            }
+
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(m)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
                            .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'. " + e.getMessage()).build();
@@ -215,7 +218,9 @@ public class RepositoryService {
 
         String fileName = artifactHandler.getFileName(artifact, version);
 
-        LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
+        if (!publicAccess) {
+            LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
+        }
         return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
                        .header("Content-Length", String.valueOf(Files.size(path)))
                        .header("Content-Disposition", "attachment; filename=" + fileName)
@@ -265,7 +270,7 @@ public class RepositoryService {
 
                         Properties props = new Properties();
                         for (Map.Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet()) {
-                            if (!entry.getKey().equals("token")) {
+                            if (PUBLIC_PROPERTIES.contains(entry.getKey())) {
                                 props.put(entry.getKey(), entry.getValue().get(0));
                             }
                         }
