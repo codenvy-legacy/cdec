@@ -94,7 +94,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPublicArtifact() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
-        Response response = given().when().get("repository/download/public/" + InstallManagerArtifact.NAME + "/1.0.1");
+        Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         InputStream in = response.body().asInputStream();
@@ -108,7 +108,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPublicArtifactLatestVersion() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
-        Response response = given().when().get("repository/download/public/" + InstallManagerArtifact.NAME);
+        Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME);
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         InputStream in = response.body().asInputStream();
@@ -184,7 +184,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadErrorIfArtifactAbsent() throws Exception {
-        Response response = given().when().get("repository/download/public/installation-manager/1.0.2");
+        Response response = given().when().get("repository/public/download/installation-manager/1.0.2");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode());
     }
 
@@ -192,7 +192,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadErrorIfArtifactIsNotPublic() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
-        Response response = given().when().get("repository/download/public/cdec/1.0.1");
+        Response response = given().when().get("repository/public/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 

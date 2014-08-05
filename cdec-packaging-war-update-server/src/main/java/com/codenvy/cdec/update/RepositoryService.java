@@ -157,7 +157,7 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/public/{artifact}/{version}")
+    @Path("public/download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadPublicArtifact(@PathParam("artifact") String artifact,
                                            @PathParam("version") String version) {
@@ -183,7 +183,7 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/public/{artifact}")
+    @Path("public/download/{artifact}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") String artifact) {
         try {
