@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    CODENVY CONFIDENTIAL
+    __________________
+
+     [2012] - [2014] Codenvy, S.A.
+     All Rights Reserved.
+
+    NOTICE:  All information contained herein is, and remains
+    the property of Codenvy S.A. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to Codenvy S.A.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+    Dissemination of this information or reproduction of this material
+    is strictly forbidden unless prior written permission is obtained
+    from Codenvy S.A..
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>cdec-parent</artifactId>
+        <groupId>com.codenvy.cdec</groupId>
+        <version>3.2.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>installation-manager-cli</artifactId>
+    <name>Codenvy :: CDEC :: Installation Manager CLI</name>
+    <dependencies>
+        <dependency>
+            <groupId>com.codenvy.cli</groupId>
+            <artifactId>codenvy-cli</artifactId>
+            <version>${codenvy.cli.version}</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.codenvy.cli.CodenvyCLI</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactSet>
+                        <excludes>
+                            <exclude>com.beust:jcommander:*</exclude>
+                            <exclude>org.apache.commons:commons-lang3:*</exclude>
+                            <exclude>com.googlecode.json-simple:json-simple:*</exclude>
+                            <exclude>org.json:json:*</exclude>
+                        </excludes>
+                    </artifactSet>
+                    <finalName>${project.artifactId}-${project.version}</finalName>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>bundle</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy todir="${project.build.directory}/bundle/">
+                                    <fileset dir="${project.basedir}/bin"/>
+                                </copy>
+                                <chmod file="${project.build.directory}/bundle/codenvy" perm="+x"/>
+                                <replace file="${project.build.directory}/bundle/codenvy" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
+                                <replace file="${project.build.directory}/bundle/codenvy.bat" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
+                                <copy file="${project.basedir}/conf/config"
+                                      tofile="${project.build.directory}/bundle/conf/config"/>
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                                      tofile="${project.build.directory}/bundle/lib/${project.artifactId}-${project.version}.jar"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptor>src/main/assemblies/binary-assembly.xml</descriptor>
+                    <formats>
+                        <format>zip</format>
+                    </formats>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
