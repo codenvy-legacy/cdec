@@ -30,6 +30,11 @@ public interface Artifact {
     String getCurrentVersion() throws IOException;
 
     /**
+     * @return true if subscription has to be checked before artifact downloading
+     */
+    boolean isValidSubscriptionRequired();
+
+    /**
      * @return the artifact name
      */
     String getName();

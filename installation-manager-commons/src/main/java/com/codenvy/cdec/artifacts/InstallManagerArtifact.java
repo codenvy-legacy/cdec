@@ -50,4 +50,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
             }
         }
     }
+
+    @Override
+    public boolean isValidSubscriptionRequired() {
+        return false;
+    }
 }

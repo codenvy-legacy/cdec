@@ -32,4 +32,24 @@ public abstract class AbstractArtifact implements Artifact {
     public String getName() {
         return name;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AbstractArtifact)) return false;
+
+        AbstractArtifact that = (AbstractArtifact)o;
+
+        return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

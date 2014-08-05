@@ -112,11 +112,9 @@ public class UpdateChecker {
             LOG.info("Checking new updates started");
 
             try {
-                if (isValidSubscription(transport, codenvyApiEndpoint, "On-Premises")) {
-                    Map<String, String> newVersions = getNewVersions();
-                    if (!newVersions.isEmpty() && downloadAutomatically) {
-                        downloadUpdates(newVersions);
-                    }
+                Map<Artifact, String> newVersions = getNewVersions();
+                if (!newVersions.isEmpty() && downloadAutomatically) {
+                    downloadUpdates(newVersions);
                 }
             } catch (Exception e) {
                 throw new JobExecutionException(e);
@@ -128,13 +126,18 @@ public class UpdateChecker {
         /**
          * Downloads updates.
          */
-        public void downloadUpdates(Map<String, String> artifacts) throws IOException {
-            for (Map.Entry<String, String> entry : artifacts.entrySet()) {
-                String artifact = entry.getKey();
+        public void downloadUpdates(Map<Artifact, String> artifacts) throws IOException {
+            for (Map.Entry<Artifact, String> entry : artifacts.entrySet()) {
+                Artifact artifact = entry.getKey();
                 String version = entry.getValue();
 
-                transport.download(combinePaths(codenvyUpdateEndpoint, "/repository/download/" + artifact + "/" + version), downloadDir);
-                LOG.info("Downloaded '" + artifact + "' version " + version);
+                if (!artifact.isValidSubscriptionRequired() || isValidSubscription(transport, codenvyApiEndpoint, "On-Premises")) {
+                    transport
+                            .download(combinePaths(codenvyUpdateEndpoint, "/repository/download/" + artifact.getName() + "/" + version), downloadDir);
+                    LOG.info("Downloaded '" + artifact + "' version " + version);
+                } else {
+                    LOG.warn("Valid subscription is required to download " + artifact.getName());
+                }
             }
         }
 
@@ -145,13 +148,13 @@ public class UpdateChecker {
          * @throws IllegalArgumentException
          *         if can't parse version of artifact
          */
-        public Map<String, String> getNewVersions() throws IOException, IllegalArgumentException {
-            Map<String, String> newVersions = new HashMap<>();
-            Map<String, String> existed = getExistedArtifacts();
-            Map<String, String> available2Download = getAvailable2DownloadArtifacts();
+        public Map<Artifact, String> getNewVersions() throws IOException, IllegalArgumentException {
+            Map<Artifact, String> newVersions = new HashMap<>();
+            Map<Artifact, String> existed = getExistedArtifacts();
+            Map<Artifact, String> available2Download = getAvailable2DownloadArtifacts();
 
-            for (Map.Entry<String, String> entry : available2Download.entrySet()) {
-                String artifact = entry.getKey();
+            for (Map.Entry<Artifact, String> entry : available2Download.entrySet()) {
+                Artifact artifact = entry.getKey();
                 String newVersion = entry.getValue();
 
                 if (!existed.containsKey(artifact) || compare(newVersion, existed.get(artifact)) > 0) {
@@ -166,8 +169,8 @@ public class UpdateChecker {
         /**
          * Scans all available artifacts and returns their last versions from Update Server.
          */
-        public Map<String, String> getAvailable2DownloadArtifacts() throws IOException {
-            Map<String, String> available2Download = new HashMap<>();
+        public Map<Artifact, String> getAvailable2DownloadArtifacts() throws IOException {
+            Map<Artifact, String> available2Download = new HashMap<>();
 
             for (Artifact artifact : artifacts) {
                 try {
@@ -175,7 +178,7 @@ public class UpdateChecker {
                                      Map.class);
 
                     if (m != null && m.containsKey("version")) {
-                        available2Download.put(artifact.getName(), (String)m.get("version"));
+                        available2Download.put(artifact, (String)m.get("version"));
                     }
                 } catch (IOException e) {
                     LOG.error("Can't retrieve the last version of " + artifact, e);
@@ -188,11 +191,11 @@ public class UpdateChecker {
         /**
          * Scans all available artifacts and returns their current versions.
          */
-        public Map<String, String> getExistedArtifacts() throws IOException {
-            Map<String, String> existed = new HashMap<>();
+        public Map<Artifact, String> getExistedArtifacts() throws IOException {
+            Map<Artifact, String> existed = new HashMap<>();
             for (Artifact artifact : artifacts) {
                 try {
-                    existed.put(artifact.getName(), artifact.getCurrentVersion());
+                    existed.put(artifact, artifact.getCurrentVersion());
                 } catch (IOException e) {
                     throw new IOException("Can't find out current version of " + artifact, e);
                 }

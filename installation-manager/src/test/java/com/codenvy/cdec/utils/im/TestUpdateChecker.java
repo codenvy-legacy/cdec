@@ -40,6 +40,8 @@ import static org.testng.Assert.assertNotNull;
  */
 public class TestUpdateChecker {
 
+    private static final InstallManagerArtifact INSTALL_MANAGER_ARTIFACT = new InstallManagerArtifact();
+
     private UpdateChecker              updateChecker;
     private HttpTransport              transport;
     private UpdateChecker.CheckUpdates checkUpdates;
@@ -48,7 +50,7 @@ public class TestUpdateChecker {
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
         updateChecker = new UpdateChecker("api/endpoint", "update/endpoint", "", "", false, transport,
-                                          new HashSet<Artifact>(Arrays.asList(new InstallManagerArtifact())));
+                                          new HashSet<Artifact>(Arrays.asList(INSTALL_MANAGER_ARTIFACT)));
         checkUpdates = updateChecker.new CheckUpdates();
     }
 
@@ -56,15 +58,15 @@ public class TestUpdateChecker {
     public void testGetAvailable2DownloadArtifacts() throws Exception {
         when(transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
         when(transport.doGetRequest("update/endpoint/repository/version/fake")).thenThrow(IOException.class);
-        Map<String, String> m = checkUpdates.getAvailable2DownloadArtifacts();
+        Map<Artifact, String> m = checkUpdates.getAvailable2DownloadArtifacts();
 
         assertEquals(m.size(), 1);
-        assertEquals(m.get(InstallManagerArtifact.NAME), "1.0.1");
+        assertEquals(m.get(INSTALL_MANAGER_ARTIFACT), "1.0.1");
     }
 
     @Test
     public void testGetExistedArtifacts() throws Exception {
-        Map<String, String> m = checkUpdates.getExistedArtifacts();
-        assertNotNull(m.get(InstallManagerArtifact.NAME));
+        Map<Artifact, String> m = checkUpdates.getExistedArtifacts();
+        assertNotNull(m.get(INSTALL_MANAGER_ARTIFACT));
     }
 }
