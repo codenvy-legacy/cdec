@@ -21,6 +21,7 @@ package com.codenvy.cdec.update;
 import com.codenvy.api.core.ApiException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.utils.HttpTransport;
+import com.codenvy.cdec.utils.Version;
 import com.codenvy.commons.env.EnvironmentContext;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
@@ -52,7 +53,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import static com.codenvy.cdec.utils.Commons.isValidSubscription;
-import static com.codenvy.cdec.utils.Version.isValidVersion;
 
 
 /**
@@ -253,7 +253,10 @@ public class RepositoryService {
                     if (!item.isFormField()) {
                         String fileName = FilenameUtils.getName(item.getName());
 
-                        if (!isValidVersion(version)) {
+                        Version v;
+                        try {
+                            v = Version.valueOf(version);
+                        } catch (IllegalArgumentException e) {
                             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                            .entity("The version format is invalid '" + version + "'").build();
                         }
@@ -266,7 +269,7 @@ public class RepositoryService {
                         }
 
                         try (InputStream in = item.getInputStream()) {
-                            artifactHandler.upload(in, artifact, version, fileName, props);
+                            artifactHandler.upload(in, artifact, v.getAsString(), fileName, props);
                             return Response.status(Response.Status.OK).build();
                         } catch (IOException e) {
                             LOG.error(e.getMessage(), e);

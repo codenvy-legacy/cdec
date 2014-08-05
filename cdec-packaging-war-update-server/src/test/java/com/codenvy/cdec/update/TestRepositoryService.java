@@ -23,6 +23,7 @@ import com.codenvy.cdec.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.testng.MockitoTestNGListener;
@@ -31,7 +32,6 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -96,12 +96,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        InputStream in = response.body().asInputStream();
-
-        Path tmp = Paths.get("target/tmp");
-        Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-        assertEquals(FileUtils.readFileToString(tmp.toFile()), "content");
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
     @Test
@@ -110,32 +105,22 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME);
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        InputStream in = response.body().asInputStream();
-
-        Path tmp = Paths.get("target/tmp");
-        Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-        assertEquals(FileUtils.readFileToString(tmp.toFile()), "content");
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
     @Test
-    public void testDownloadArtifact() throws Exception {
+    public void testDownload() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        InputStream in = response.body().asInputStream();
-
-        Path tmp = Paths.get("target/tmp");
-        Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-        assertEquals(FileUtils.readFileToString(tmp.toFile()), "content");
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
     @Test
-    public void testDownloadArtifactNoSubscription() throws Exception {
+    public void testDownloadNoSubscription() throws Exception {
         artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
         when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
 
@@ -143,12 +128,7 @@ public class TestRepositoryService extends BaseTest {
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        InputStream in = response.body().asInputStream();
-
-        Path tmp = Paths.get("target/tmp");
-        Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-        assertEquals(FileUtils.readFileToString(tmp.toFile()), "content");
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
     @Test
@@ -196,6 +176,48 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 
+    @Test
+    public void testUploadDownloadSnapshotVersion() throws Exception {
+        Path tmp = Paths.get("target/tmp-1.0.1.txt");
+        Files.copy(new ByteArrayInputStream("content".getBytes()), tmp, StandardCopyOption.REPLACE_EXISTING);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1-SNAPSHOT");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get("/repository/public/download/cdec");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+
+    @Test
+    public void testUploadSnapshotVersion() throws Exception {
+        Path tmp = Paths.get("target/tmp-1.0.1.txt");
+        Files.copy(new ByteArrayInputStream("content".getBytes()), tmp, StandardCopyOption.REPLACE_EXISTING);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1-SNAPSHOT");
+
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Path artifact = Paths.get("target", "download", "cdec", "1.0.1-SNAPSHOT", "tmp-1.0.1.txt");
+        assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
+        assertTrue(Files.exists(artifact));
+
+        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1-SNAPSHOT", ArtifactHandler.PROPERTIES_FILE);
+        assertTrue(Files.exists(propertiesFile));
+
+        Properties properties = new Properties();
+        properties.load(Files.newInputStream(propertiesFile));
+        assertEquals(properties.size(), 2);
+        assertEquals(properties.get(ArtifactHandler.VERSION_PROPERTY), "1.0.1-SNAPSHOT");
+        assertEquals(properties.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
+    }
+
 
     @Test
     public void testUpload() throws Exception {
@@ -238,8 +260,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testUploadErrorIfNoStream() throws Exception {
-        Path tmp = Paths.get("target/tmp");
-        Files.copy(new ByteArrayInputStream("content".getBytes()), tmp, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(new ByteArrayInputStream("content".getBytes()), Paths.get("target/tmp"), StandardCopyOption.REPLACE_EXISTING);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()

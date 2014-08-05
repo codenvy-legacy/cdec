@@ -27,14 +27,16 @@ public class Version implements Comparable<Version> {
 
     private static final Pattern VERSION = Pattern.compile("^([1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(-SNAPSHOT|)$");
 
-    private final int major;
-    private final int minor;
-    private final int bugFix;
+    private final int     major;
+    private final int     minor;
+    private final int     bugFix;
+    private final boolean shapshot;
 
-    public Version(int major, int minor, int bugFix) {
+    public Version(int major, int minor, int bugFix, boolean shapshot) {
         this.major = major;
         this.minor = minor;
         this.bugFix = bugFix;
+        this.shapshot = shapshot;
     }
 
     /**
@@ -75,7 +77,8 @@ public class Version implements Comparable<Version> {
 
         return new Version(Integer.parseInt(matcher.group(1)),
                            Integer.parseInt(matcher.group(2)),
-                           Integer.parseInt(matcher.group(3)));
+                           Integer.parseInt(matcher.group(3)),
+                           !matcher.group(4).isEmpty());
     }
 
     @Override
@@ -88,6 +91,7 @@ public class Version implements Comparable<Version> {
         if (bugFix != version.bugFix) return false;
         if (major != version.major) return false;
         if (minor != version.minor) return false;
+        if (shapshot != version.shapshot) return false;
 
         return true;
     }
@@ -97,6 +101,7 @@ public class Version implements Comparable<Version> {
         int result = major;
         result = 31 * result + minor;
         result = 31 * result + bugFix;
+        result = 31 * result + (shapshot ? 0 : 1);
         return result;
     }
 
@@ -104,17 +109,23 @@ public class Version implements Comparable<Version> {
     public int compareTo(Version o) {
         if (major > o.major
             || (major == o.major && minor > o.minor)
-            || (major == o.major && minor == o.minor && bugFix > o.bugFix)) {
+            || (major == o.major && minor == o.minor && bugFix > o.bugFix)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && !shapshot && o.shapshot)) {
             return 1;
-        } else if (major == o.major && minor == o.minor && bugFix == o.bugFix) {
+        } else if (major == o.major && minor == o.minor && bugFix == o.bugFix && shapshot == o.shapshot) {
             return 0;
         } else {
             return -1;
         }
     }
 
+    public String getAsString() {
+        return major + "." + minor + "." + bugFix + (shapshot ? "-SNAPSHOT" : "");
+    }
+
+
     @Override
     public String toString() {
-        return major + "." + minor + "." + bugFix;
+        return getAsString();
     }
 }
