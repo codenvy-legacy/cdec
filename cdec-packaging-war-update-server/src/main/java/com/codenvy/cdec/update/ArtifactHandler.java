@@ -27,8 +27,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
 
 import static com.codenvy.cdec.utils.Version.compare;
 import static com.codenvy.cdec.utils.Version.valueOf;
@@ -43,11 +45,18 @@ public class ArtifactHandler {
     public static final String PROPERTIES_FILE = ".properties";
 
     public static final String VERSION_PROPERTY                 = "version";
-    public static final String REVISION_PROPERTY                = "revision";
+    public static final String ARTIFACT_PROPERTY                = "artifact";
     public static final String BUILD_TIME_PROPERTY              = "build-time";
     public static final String FILE_NAME_PROPERTY               = "file";
-    public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication_required";
+    public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication-required";
     public static final String SUBSCRIPTION_REQUIRED_PROPERTY   = "subscription-required";
+
+    public static final Set<String> PUBLIC_PROPERTIES = new HashSet<String>() {{
+        add(VERSION_PROPERTY);
+        add(ARTIFACT_PROPERTY);
+        add(FILE_NAME_PROPERTY);
+        add(BUILD_TIME_PROPERTY);
+    }};
 
     private final String repositoryDir;
 
@@ -75,9 +84,12 @@ public class ArtifactHandler {
         Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
         while (pathIterator.hasNext()) {
             try {
-                Version version = valueOf(pathIterator.next().getFileName().toString());
-                if (latestVersion == null || compare(version, latestVersion) > 0) {
-                    latestVersion = version;
+                Path next = pathIterator.next();
+                if (Files.isDirectory(next)) {
+                    Version version = valueOf(next.getFileName().toString());
+                    if (latestVersion == null || compare(version, latestVersion) > 0) {
+                        latestVersion = version;
+                    }
                 }
             } catch (IllegalArgumentException e) {
                 // maybe it isn't a version directory
@@ -100,6 +112,7 @@ public class ArtifactHandler {
     public void upload(final InputStream in, String artifact, String version, String fileName, Properties props) throws IOException {
         props.put(FILE_NAME_PROPERTY, fileName);
         props.put(VERSION_PROPERTY, version);
+        props.put(ARTIFACT_PROPERTY, artifact);
         storeProperties(artifact, version, props);
 
         copy(new InputSupplier<InputStream>() {

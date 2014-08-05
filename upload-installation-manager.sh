@@ -17,49 +17,39 @@
 
 #!/bin/bash
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
-    SERVER_IP=https://codenvy.com
+    SSH_KEY_NAME=cl-server-prod-20130219
+    SSH_AS_USER_NAME=codenvy
+    AS_IP=update.codenvycorp.com
     echo "Uploading on production"
 elif [ "$1" == "stg" ]; then
-    SERVER_IP=https://codenvy-stg.com
+    SSH_KEY_NAME=as1-cldide_cl-server.skey
+    SSH_AS_USER_NAME=codenvy
+    AS_IP=syslog.codenvy-stg.com
     echo "Uploading on staging"
 else
     echo "Unknown server destination"
-    exit 1
+    exit
 fi
 
-if [ "$2" == "" ] || [ "$3" == "" ]; then
-    echo "User or password didn't set"
-    exit 1
-fi
+upload() {
+    ARTIFACT=$1
 
-USERNAME=$2
-PASSWORD=$3
+    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
+    VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -v sources | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
+    SOURCE=${ARTIFACT}/target/${FILENAME}
+    DESTINATION=update-server-repository/${ARTIFACT}/${VERSION}
 
-# recieve token
-echo "Log in using $SERVER_IP"
-curl -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'","password":"'${PASSWORD}'","realm":"sysldap"}' --insecure ${SERVER_IP}/api/auth/login > response
-TOKEN=$(cat response | sed 's/"}//' | sed 's/{"value":"//' )
+    echo "file=${FILENAME}" > .properties
+    echo "artifact=${ARTIFACT}" > .properties
+    echo "version=${VERSION}" >> .properties
+    echo "authentication-required=false" >> .properties
+    echo "builtime="`stat -c %y ${SOURCE}` >> .properties
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
+    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
+    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
 
-response=`cat response`
-rm response
+    rm .properties
+}
 
-if [ "${response}" == "Invalid user name or password" ]; then
-    echo ${response}
-    exit 1
-fi
+upload installation-manager
 
-# uploading
-FILENAME=`ls installation-manager/target | grep -G installation-manager-.*-binary[.]zip`
-VERSION=`ls installation-manager/target | grep -G installation-manager-.*[.]jar | grep -v sources | sed 's/installation-manager-//' | sed 's/.jar//'`
-echo "Uploading $FILENAME started"
-curl -X POST -F "file=@installation-manager/target/"${FILENAME} --insecure ${SERVER_IP}/update/repository/upload/installation-manager/${VERSION}?token=${TOKEN}'&'authentication_required=false > response
-
-response=`cat response`
-rm response
-if [ "${response}" != "" ]; then
-    echo ${response}
-    exit 1
-fi
-
-echo "File uploaded succesfully"
-exit 0

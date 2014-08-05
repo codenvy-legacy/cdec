@@ -18,9 +18,9 @@
 package com.codenvy.cdec.update;
 
 
-import com.codenvy.api.core.ApiException;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.utils.HttpTransport;
+import com.codenvy.cdec.utils.Version;
 import com.codenvy.commons.env.EnvironmentContext;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
@@ -51,8 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.cdec.update.ArtifactHandler.PUBLIC_PROPERTIES;
 import static com.codenvy.cdec.utils.Commons.isValidSubscription;
-import static com.codenvy.cdec.utils.Version.isValidVersion;
 
 
 /**
@@ -87,8 +87,6 @@ public class RepositoryService {
      * @param artifact
      *         the name of the artifact
      * @return Response
-     * @throws ApiException
-     *         if unexpected error occurred
      */
     @GenerateLink(rel = "artifact version")
     @GET
@@ -96,12 +94,17 @@ public class RepositoryService {
     @Path("version/{artifact}")
     public Response getVersion(@PathParam("artifact") final String artifact) {
         try {
-            Map<String, String> value = new HashMap<String, String>() {{
-                put("version", artifactHandler.getLatestVersion(artifact));
-                put("artifact", artifact);
-            }};
+            String version = artifactHandler.getLatestVersion(artifact);
+            final Properties properties = artifactHandler.loadProperties(artifact, version);
 
-            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
+            Map<String, String> m = new HashMap<>(PUBLIC_PROPERTIES.size());
+            for (String prop : PUBLIC_PROPERTIES) {
+                if (properties.containsKey(prop)) {
+                    m.put(prop, properties.getProperty(prop));
+                }
+            }
+
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(m)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
                            .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'. " + e.getMessage()).build();
@@ -157,7 +160,7 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/public/{artifact}/{version}")
+    @Path("public/download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadPublicArtifact(@PathParam("artifact") String artifact,
                                            @PathParam("version") String version) {
@@ -183,7 +186,7 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/public/{artifact}")
+    @Path("public/download/{artifact}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") String artifact) {
         try {
@@ -207,13 +210,17 @@ public class RepositoryService {
                                    "' version " + version + ". Probably the repository doesn't contain one.").build();
         }
 
-        if (publicAccess && artifactHandler.isAuthenticationRequired(artifact, version)) {
-            return Response.status(Response.Status.FORBIDDEN).entity("Artifact '" + artifact + "' is not in public access").build();
+        if (publicAccess &&
+            (artifactHandler.isAuthenticationRequired(artifact, version)
+             || artifactHandler.getRequiredSubscription(artifact, version) != null)) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
         String fileName = artifactHandler.getFileName(artifact, version);
 
-        LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
+        if (!publicAccess) {
+            LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
+        }
         return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
                        .header("Content-Length", String.valueOf(Files.size(path)))
                        .header("Content-Disposition", "attachment; filename=" + fileName)
@@ -253,20 +260,23 @@ public class RepositoryService {
                     if (!item.isFormField()) {
                         String fileName = FilenameUtils.getName(item.getName());
 
-                        if (!isValidVersion(version)) {
+                        Version v;
+                        try {
+                            v = Version.valueOf(version);
+                        } catch (IllegalArgumentException e) {
                             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                            .entity("The version format is invalid '" + version + "'").build();
                         }
 
                         Properties props = new Properties();
                         for (Map.Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet()) {
-                            if (!entry.getKey().equals("token")) {
+                            if (PUBLIC_PROPERTIES.contains(entry.getKey())) {
                                 props.put(entry.getKey(), entry.getValue().get(0));
                             }
                         }
 
                         try (InputStream in = item.getInputStream()) {
-                            artifactHandler.upload(in, artifact, version, fileName, props);
+                            artifactHandler.upload(in, artifact, v.getAsString(), fileName, props);
                             return Response.status(Response.Status.OK).build();
                         } catch (IOException e) {
                             LOG.error(e.getMessage(), e);
