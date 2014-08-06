@@ -87,7 +87,6 @@
                                 <copy todir="${project.build.directory}/bundle/">
                                     <fileset dir="${project.basedir}/bin"/>
                                 </copy>
-                                <chmod file="${project.build.directory}/bundle/codenvy" perm="+x"/>
                                 <replace file="${project.build.directory}/bundle/codenvy" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
                                 <replace file="${project.build.directory}/bundle/codenvy.bat" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
                                 <copy file="${project.basedir}/conf/config"
