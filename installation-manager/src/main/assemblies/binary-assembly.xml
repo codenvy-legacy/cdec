@@ -27,17 +27,6 @@
             <destName>${project.artifactId}-binary.jar</destName>
         </file>
     </files>
-    <dependencySets>
-        <dependencySet>
-            <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}.${artifact.extension}</outputFileNameMapping>
-            <outputDirectory>lib</outputDirectory>
-            <unpack>false</unpack>
-            <scope>compile</scope>
-            <excludes>
-                <exclude>com.codenvy.cdec:installation-manager</exclude>
-            </excludes>
-        </dependencySet>
-    </dependencySets>
     <fileSets>
         <fileSet>
             <directory>${basedir}/bin</directory>
