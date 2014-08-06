@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -s https://codenvy.com/update/repository/download/public/install-script.sh)
+# bash <(curl -s https://codenvy.com/update/repository/public/download//install-script)
 
 USER=codenvy
 HOME=/home/${USER}

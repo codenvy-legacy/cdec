@@ -32,7 +32,7 @@
         <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>codenvy-cli</artifactId>
-            <version>${codenvy.cli.version}</version>
+            <version>0.2-SNAPSHOT</version> <!--TODO-->
         </dependency>
     </dependencies>
     <build>

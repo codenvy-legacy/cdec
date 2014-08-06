@@ -15,17 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.utils.im;
+package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
-import com.codenvy.cdec.im.UpdateChecker;
+import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.utils.HttpTransport;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,35 +37,36 @@ import static org.testng.Assert.assertNotNull;
 /**
  * @author Anatoliy Bazko
  */
-public class TestUpdateChecker {
+public class TestInstallationManager {
 
     private static final InstallManagerArtifact INSTALL_MANAGER_ARTIFACT = new InstallManagerArtifact();
 
-    private UpdateChecker              updateChecker;
-    private HttpTransport              transport;
-    private UpdateChecker.CheckUpdates checkUpdates;
+    private HttpTransport       transport;
+    private InstallationManager manager;
 
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
-        updateChecker = new UpdateChecker("api/endpoint", "update/endpoint", "", "", false, transport,
-                                          new HashSet<Artifact>(Arrays.asList(INSTALL_MANAGER_ARTIFACT)));
-        checkUpdates = updateChecker.new CheckUpdates();
+
+        manager = new InstallationManagerImpl("api/endpoint",
+                                              "update/endpoint",
+                                              "target/download",
+                                              transport,
+                                              new HashSet<Artifact>(Arrays.asList(INSTALL_MANAGER_ARTIFACT)));
+    }
+
+    @Test
+    public void testGetExistedArtifacts() throws Exception {
+        Map<Artifact, String> m = manager.getExistedArtifacts();
+        assertNotNull(m.get(INSTALL_MANAGER_ARTIFACT));
     }
 
     @Test
     public void testGetAvailable2DownloadArtifacts() throws Exception {
         when(transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
-        when(transport.doGetRequest("update/endpoint/repository/version/fake")).thenThrow(IOException.class);
-        Map<Artifact, String> m = checkUpdates.getAvailable2DownloadArtifacts();
+        Map<Artifact, String> m = manager.getAvailable2DownloadArtifacts();
 
         assertEquals(m.size(), 1);
         assertEquals(m.get(INSTALL_MANAGER_ARTIFACT), "1.0.1");
-    }
-
-    @Test
-    public void testGetExistedArtifacts() throws Exception {
-        Map<Artifact, String> m = checkUpdates.getExistedArtifacts();
-        assertNotNull(m.get(INSTALL_MANAGER_ARTIFACT));
     }
 }

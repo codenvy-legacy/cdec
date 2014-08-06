@@ -19,7 +19,9 @@ package com.codenvy.cdec;
 
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
-import com.codenvy.cdec.im.UpdateChecker;
+import com.codenvy.cdec.im.InstallationManagerImpl;
+import com.codenvy.cdec.im.UpdateManager;
+import com.codenvy.cdec.server.InstallationManager;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -44,11 +46,11 @@ import java.util.regex.Pattern;
 public class Daemon {
 
     private static final Logger LOG = LoggerFactory.getLogger(Daemon.class);
-    private static final UpdateChecker updateChecker;
+    private static final UpdateManager UPDATE_MANAGER;
 
     static {
         Injector injector = createInjector();
-        updateChecker = injector.getInstance(UpdateChecker.class);
+        UPDATE_MANAGER = injector.getInstance(UpdateManager.class);
     }
 
     public static void main(String[] args) {
@@ -67,7 +69,7 @@ public class Daemon {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 try {
-                    updateChecker.destroy();
+                    UPDATE_MANAGER.destroy();
                 } catch (SchedulerException e) {
                     LOG.error("Error during stopping daemon. " + e.getMessage());
                 }
@@ -77,7 +79,7 @@ public class Daemon {
 
     private static void start() {
         try {
-            updateChecker.init();
+            UPDATE_MANAGER.init();
         } catch (SchedulerException e) {
             LOG.error("Can't start daemon. " + e.getMessage());
         }
@@ -89,8 +91,13 @@ public class Daemon {
         return Guice.createInjector(new Module() {
             @Override
             public void configure(Binder binder) {
-                Properties properties = new Properties();
+                bindProperties(binder);
+                binder.bind(InstallationManager.class).to(InstallationManagerImpl.class);
+                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
+            }
 
+            private void bindProperties(Binder binder) {
+                Properties properties = new Properties();
                 try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
                     properties.load(in);
                 } catch (IOException e) {
@@ -103,10 +110,11 @@ public class Daemon {
 
                     binder.bindConstant().annotatedWith(Names.named(key)).to(value);
                 }
-
-                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
             }
 
+            /**
+             * Replaces environment variables by them actual values using ${...} template.
+             */
             private String replaceEnvVariables(String value) {
                 Matcher matcher = envPattern.matcher(value);
                 if (matcher.find()) {

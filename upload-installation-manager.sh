@@ -18,6 +18,7 @@
 #!/bin/bash
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
+    SSH_KEY_NAME=git_nopass.key
     SSH_AS_USER_NAME=codenvy
     AS_IP=update.codenvycorp.com
     echo "Uploading on production"
@@ -25,22 +26,18 @@ elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
+    AS_IP=git_nopass.key
     echo "Uploading on staging"
 else
     echo "Unknown server destination"
     exit
 fi
 
-upload() {
-    ARTIFACT=$1
-
-    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
-    VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
-    SOURCE=${ARTIFACT}/target/${FILENAME}
+doUpload() {
     DESTINATION=update-server-repository/${ARTIFACT}/${VERSION}
 
     echo "file=${FILENAME}" > .properties
-    echo "artifact=${ARTIFACT}" > .properties
+    echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
     echo "authentication-required=false" >> .properties
     echo "builtime="`stat -c %y ${SOURCE}` >> .properties
@@ -51,5 +48,26 @@ upload() {
     rm .properties
 }
 
-upload installation-manager
+uploadArtifact() {
+    ARTIFACT=$1
+
+    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
+    VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
+    SOURCE=${ARTIFACT}/target/${FILENAME}
+
+    doUpload
+}
+
+uploadInstallScript() {
+    ARTIFACT=install-script
+    FILENAME=install-script.sh
+    VERSION=`ls installation-manager/target | grep -G installation-manager-.*[.]jar | grep -vE 'sources|original' | sed 's/'installation-manager'-//' | sed 's/.jar//'`
+    SOURCE=installation-manager/bin/${FILENAME}
+
+    doUpload
+}
+
+uploadArtifact installation-manager
+uploadArtifact installation-manager-cli
+uploadInstallScript
 

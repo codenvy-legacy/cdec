@@ -17,11 +17,15 @@
  */
 package com.codenvy.cdec.utils;
 
+import com.codenvy.api.account.shared.dto.MemberDescriptor;
+
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Anatoliy Bazko
@@ -44,7 +48,14 @@ public class TestCommons {
 
     @Test
     public void testCreateListDtoFromJson() throws Exception {
-//        Commons.createListDtoFromJson("", MemberDescriptor.)
+        List<MemberDescriptor> descriptors = Commons.createListDtoFromJson("[{userId:id,accountReference:{id:accountId,name:accountName}}]", MemberDescriptor.class);
+        assertEquals(descriptors.size(), 1);
+
+        MemberDescriptor d = descriptors.get(0);
+        assertEquals(d.getUserId(), "id");
+        assertNotNull(d.getAccountReference());
+        assertEquals(d.getAccountReference().getId(), "accountId");
+        assertEquals(d.getAccountReference().getName(), "accountName");
     }
 
     @Test
