@@ -35,6 +35,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -46,11 +51,13 @@ import java.util.regex.Pattern;
 public class Daemon {
 
     private static final Logger LOG = LoggerFactory.getLogger(Daemon.class);
-    private static final UpdateManager UPDATE_MANAGER;
+
+    private static final UpdateManager updateManager;
+    private static final Injector      injector;
 
     static {
-        Injector injector = createInjector();
-        UPDATE_MANAGER = injector.getInstance(UpdateManager.class);
+        injector = createInjector();
+        updateManager = injector.getInstance(UpdateManager.class);
     }
 
     public static void main(String[] args) {
@@ -60,29 +67,45 @@ public class Daemon {
             LOG.error("Startup failed. " + e.getMessage());
         }
 
-        start();
+        try {
+            start();
+        } catch (SchedulerException | RemoteException | AlreadyBoundException e) {
+            LOG.error("Can't start daemon. " + e.getMessage());
+            stop();
+        }
     }
+
 
     private static void daemonize() throws IOException {
         System.in.close();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-                try {
-                    UPDATE_MANAGER.destroy();
-                } catch (SchedulerException e) {
-                    LOG.error("Error during stopping daemon. " + e.getMessage());
-                }
+                Daemon.stop();
             }
         });
     }
 
-    private static void start() {
+    private static void stop() {
         try {
-            UPDATE_MANAGER.init();
+            updateManager.destroy();
         } catch (SchedulerException e) {
-            LOG.error("Can't start daemon. " + e.getMessage());
+            LOG.error("Can't stop Update Manager.", e);
         }
+
+        try {
+            Registry registry = LocateRegistry.getRegistry(Registry.REGISTRY_PORT);
+            registry.unbind(InstallationManager.class.getSimpleName());
+        } catch (RemoteException | NotBoundException e) {
+            LOG.error("Can't unbind RMI sever. " + e.getMessage());
+        }
+    }
+
+    private static void start() throws SchedulerException, RemoteException, AlreadyBoundException {
+        Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+        registry.bind(InstallationManager.class.getSimpleName(), injector.getInstance(InstallationManager.class));
+
+        updateManager.init();
     }
 
     private static Injector createInjector() {

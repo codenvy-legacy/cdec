@@ -72,7 +72,9 @@ public class UpdateManager {
 
     @PreDestroy
     public void destroy() throws SchedulerException {
-        scheduler.shutdown(true);
+        if (scheduler != null) {
+            scheduler.shutdown(true);
+        }
     }
 
     /**

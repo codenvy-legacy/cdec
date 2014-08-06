@@ -21,6 +21,7 @@ import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ import static com.codenvy.cdec.utils.Version.compare;
 /**
  * @author Anatoliy Bazko
  */
+@Singleton
 public class InstallationManagerImpl implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
