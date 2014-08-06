@@ -24,9 +24,9 @@ create_codenvy_user_and_group_under_debian() {
 }
 
 register_service_under_debian() {
-    # in Ubuntu OS http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
+    # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
     echo "Register service..."
-    sudo update-rc.d ${SERVICE_NAME} defaults;
+    sudo update-rc.d ${SERVICE_NAME} defaults &>-
 }
 
 install_required_components_under_debian() {
@@ -51,8 +51,8 @@ create_codenvy_user_and_group_under_redhat() {
 register_service_under_redhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
     echo "Register service..."
-    sudo chkconfig --add ${SERVICE_NAME}
-    sudo chkconfig ${SERVICE_NAME} on
+    sudo chkconfig --add ${SERVICE_NAME} &>-
+    sudo chkconfig ${SERVICE_NAME} on &>-
 }
 
 install_required_components_under_redhat() {
@@ -67,7 +67,8 @@ download_and_unpack_instalation_manager() {
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
     echo "Unpack installation manager..."
-    sudo unzip ${filename} -d ${APP_DIR}
+    sudo rm ${APP_DIR} -r &>-                 # remove exists files
+    sudo unzip ${filename} -d ${APP_DIR} &>-  # unzip new package
 
     # copy installation-manager script into /etc/init.d
     sudo cp ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
@@ -76,34 +77,33 @@ download_and_unpack_instalation_manager() {
     sudo chmod 757 ${APP_DIR}
 }
 
+launching_service() {
+    # try to stop exists installation-manager
+    sudo /etc/init.d/${SERVICE_NAME} stop
+    sudo kill -9 $(ps -C java | grep -v PID | cut -d" " -f2) &>-  # kill manager if stop isn't work
+    sudo kill -9 $(ps -C java | grep -v PID | cut -d" " -f3) &>-  # kill manager if stop isn't work in case when TTY = ?
+
+    # launch new installation-manager
+    sudo /etc/init.d/${SERVICE_NAME} start
+}
+
 # Debian based linux distributives
 if [ -f /etc/debian_version ]; then
     echo "System runs on Debian based distributive."
     install_required_components_under_debian
-
     create_codenvy_user_and_group_under_debian
-     
     download_and_unpack_instalation_manager
-    
     register_service_under_debian
-
-    # launching service
-    sudo /etc/init.d/${SERVICE_NAME} start
+    launching_service
 
 # RedHat based linux distributives
 elif [ -f /etc/redhat-release ]; then
     echo "System runs on Red Hat based distributive."
-
     install_required_components_under_redhat
-
-    create_codenvy_user_and_group_under_redhat
-    
+    create_codenvy_user_and_group_under_redhat    
     download_and_unpack_instalation_manager
-    
     register_service_under_redhat
-    
-    # launching service
-    sudo /etc/init.d/${SERVICE_NAME} start
+    launching_service
 
 else
     echo "Operation system isn't supported."
