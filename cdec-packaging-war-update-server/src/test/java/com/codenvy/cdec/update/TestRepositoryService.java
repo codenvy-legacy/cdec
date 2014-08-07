@@ -52,45 +52,53 @@ import static org.testng.Assert.assertTrue;
 public class TestRepositoryService extends BaseTest {
 
     public static final long HOUR_AHEAD = System.currentTimeMillis() + 60 * 60 * 1000;
-    private final ArtifactHandler artifactHandler;
+    private final ArtifactStorage   artifactStorage;
     private final RepositoryService repositoryService;
     private final HttpTransport     transport;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
-        put(ArtifactHandler.AUTHENTICATION_REQUIRED_PROPERTY, "true");
+        put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "true");
     }};
     private final Properties subscriptionRequiredProperties   = new Properties() {{
-        put(ArtifactHandler.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
+        put(ArtifactStorage.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
     }};
 
     {
         try {
             transport = mock(HttpTransport.class);
-            artifactHandler = new ArtifactHandler(DOWNLOAD_DIRECTORY.toString());
-            repositoryService = new RepositoryService("", artifactHandler, transport);
+            artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
+            repositoryService = new RepositoryService("",
+                                                      artifactStorage,
+                                                      new MongoStorage("mongodb://localhost:12000/update", true),
+                                                      transport);
         } catch (IOException e) {
             throw new IllegalArgumentException();
         }
     }
 
     @Test
-    public void testGetVersion() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
+    public void testGetInstalledVersion() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void testGetLatestVersion() throws Exception {
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
 
         Response response = given().when().get("repository/version/installation-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
         assertEquals(value.size(), 3);
-        assertEquals(value.get(ArtifactHandler.ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
-        assertEquals(value.get(ArtifactHandler.VERSION_PROPERTY), "1.0.2");
-        assertEquals(value.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp");
+        assertEquals(value.get(ArtifactStorage.ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
+        assertEquals(value.get(ArtifactStorage.VERSION_PROPERTY), "1.0.2");
+        assertEquals(value.get(ArtifactStorage.FILE_NAME_PROPERTY), "tmp");
     }
 
     @Test
     public void testDownloadPublicArtifact() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
@@ -105,7 +113,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicArtifactLatestVersion() throws Exception {
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME);
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
@@ -117,7 +125,7 @@ public class TestRepositoryService extends BaseTest {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions"))
                 .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given().when().get("repository/public/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
@@ -128,7 +136,7 @@ public class TestRepositoryService extends BaseTest {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions"))
                 .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given().when().get("/repository/public/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
@@ -138,7 +146,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPrivate() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -152,7 +160,7 @@ public class TestRepositoryService extends BaseTest {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions"))
                 .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -165,7 +173,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPrivateAuthenticationRequired() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -179,7 +187,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPrivateErrorIfSubscriptionAbsent() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -193,7 +201,7 @@ public class TestRepositoryService extends BaseTest {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions"))
                 .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() - 1000) + "}]");
-        artifactHandler.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -240,15 +248,15 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
         assertTrue(Files.exists(artifact));
 
-        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1-SNAPSHOT", ArtifactHandler.PROPERTIES_FILE);
+        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1-SNAPSHOT", ArtifactStorage.PROPERTIES_FILE);
         assertTrue(Files.exists(propertiesFile));
 
         Properties properties = new Properties();
         properties.load(Files.newInputStream(propertiesFile));
         assertEquals(properties.size(), 3);
-        assertEquals(properties.get(ArtifactHandler.VERSION_PROPERTY), "1.0.1-SNAPSHOT");
-        assertEquals(properties.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
-        assertEquals(properties.get(ArtifactHandler.ARTIFACT_PROPERTY), "cdec");
+        assertEquals(properties.get(ArtifactStorage.VERSION_PROPERTY), "1.0.1-SNAPSHOT");
+        assertEquals(properties.get(ArtifactStorage.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
+        assertEquals(properties.get(ArtifactStorage.ARTIFACT_PROPERTY), "cdec");
     }
 
 
@@ -267,16 +275,16 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
         assertTrue(Files.exists(artifact));
 
-        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1", ArtifactHandler.PROPERTIES_FILE);
+        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1", ArtifactStorage.PROPERTIES_FILE);
         assertTrue(Files.exists(propertiesFile));
 
         Properties properties = new Properties();
         properties.load(Files.newInputStream(propertiesFile));
         assertEquals(properties.size(), 4);
-        assertEquals(properties.get(ArtifactHandler.VERSION_PROPERTY), "1.0.1");
-        assertEquals(properties.get(ArtifactHandler.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
-        assertEquals(properties.get(ArtifactHandler.BUILD_TIME_PROPERTY), "20140930");
-        assertEquals(properties.get(ArtifactHandler.ARTIFACT_PROPERTY), "cdec");
+        assertEquals(properties.get(ArtifactStorage.VERSION_PROPERTY), "1.0.1");
+        assertEquals(properties.get(ArtifactStorage.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
+        assertEquals(properties.get(ArtifactStorage.BUILD_TIME_PROPERTY), "20140930");
+        assertEquals(properties.get(ArtifactStorage.ARTIFACT_PROPERTY), "cdec");
     }
 
     @Test

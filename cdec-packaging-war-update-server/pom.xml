@@ -50,6 +50,11 @@
             <version>${commons-fileupload.version}</version>
         </dependency>
         <dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo</artifactId>
+            <version>${de.flapdoodle.embed-mongo.version}</version>
+        </dependency>
+        <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>jsr311-api</artifactId>
             <version>${javax.ws.rs.version}</version>
@@ -58,6 +63,11 @@
             <groupId>org.everrest</groupId>
             <artifactId>everrest-core</artifactId>
             <version>${org.everrest.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>${org.mongodb.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

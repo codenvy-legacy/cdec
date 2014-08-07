@@ -40,7 +40,7 @@ import static com.google.common.io.Files.copy;
  * @author Anatoliy Bazko
  */
 @Singleton
-public class ArtifactHandler {
+public class ArtifactStorage {
 
     public static final String PROPERTIES_FILE = ".properties";
 
@@ -61,7 +61,7 @@ public class ArtifactHandler {
     private final String repositoryDir;
 
     @Inject
-    public ArtifactHandler(@Named("codenvy.update-server.repository") String repositoryDir) throws IOException {
+    public ArtifactStorage(@Named("update-server.repository.path") String repositoryDir) throws IOException {
         this.repositoryDir = repositoryDir;
         Files.createDirectories(Paths.get(repositoryDir));
     }

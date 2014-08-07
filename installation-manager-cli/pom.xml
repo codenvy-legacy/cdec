@@ -18,8 +18,7 @@
     from Codenvy S.A..
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>cdec-parent</artifactId>
@@ -32,7 +31,8 @@
         <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>codenvy-cli</artifactId>
-            <version>0.2-SNAPSHOT</version> <!--TODO-->
+            <version>0.2-SNAPSHOT</version>
+            <!--TODO-->
         </dependency>
     </dependencies>
     <build>
@@ -85,14 +85,12 @@
                         <configuration>
                             <target>
                                 <copy todir="${project.build.directory}/bundle/">
-                                    <fileset dir="${project.basedir}/bin"/>
+                                    <fileset dir="${project.basedir}/bin" />
                                 </copy>
                                 <replace file="${project.build.directory}/bundle/codenvy" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
                                 <replace file="${project.build.directory}/bundle/codenvy.bat" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
-                                <copy file="${project.basedir}/conf/config"
-                                      tofile="${project.build.directory}/bundle/conf/config"/>
-                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
-                                      tofile="${project.build.directory}/bundle/lib/${project.artifactId}-${project.version}.jar"/>
+                                <copy file="${project.basedir}/conf/config" tofile="${project.build.directory}/bundle/conf/config" />
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" tofile="${project.build.directory}/bundle/lib/${project.artifactId}-${project.version}.jar" />
                             </target>
                         </configuration>
                     </execution>

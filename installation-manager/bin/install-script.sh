@@ -87,7 +87,7 @@ install_required_components_under_redhat() {
 
 download_and_unpack_instalation_manager() {
     echo "Download installation manager..."
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=.*$' | sed -e 's/filename=//')
+    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
     echo "Unpack installation manager..."

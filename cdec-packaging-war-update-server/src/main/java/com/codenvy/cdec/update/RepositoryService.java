@@ -22,6 +22,7 @@ import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
 import com.codenvy.commons.env.EnvironmentContext;
+import com.codenvy.commons.user.User;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
 
@@ -51,7 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.codenvy.cdec.update.ArtifactHandler.PUBLIC_PROPERTIES;
+import static com.codenvy.cdec.update.ArtifactStorage.PUBLIC_PROPERTIES;
 import static com.codenvy.cdec.utils.Commons.isValidSubscription;
 
 
@@ -66,19 +67,23 @@ public class RepositoryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
-    private final ArtifactHandler artifactHandler;
-    private final HttpTransport transport;
-    private final String        apiEndpoint;
+    private final ArtifactStorage artifactStorage;
+    private final MongoStorage    mongoStorage;
+    private final HttpTransport   transport;
+    private final String          apiEndpoint;
+
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
-                             ArtifactHandler artifactHandler,
+                             ArtifactStorage artifactStorage,
+                             MongoStorage mongoStorage,
                              HttpTransport transport) {
-        this.artifactHandler = artifactHandler;
+        this.artifactStorage = artifactStorage;
+        this.mongoStorage = mongoStorage;
         this.transport = transport;
         this.apiEndpoint = apiEndpoint;
 
-        LOG.info("Repository Service has been initialized, repository directory: " + artifactHandler.getRepositoryDir());
+        LOG.info("Repository Service has been initialized, repository directory: " + artifactStorage.getRepositoryDir());
     }
 
     /**
@@ -92,10 +97,10 @@ public class RepositoryService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("version/{artifact}")
-    public Response getVersion(@PathParam("artifact") final String artifact) {
+    public Response getLatestVersion(@PathParam("artifact") final String artifact) {
         try {
-            String version = artifactHandler.getLatestVersion(artifact);
-            final Properties properties = artifactHandler.loadProperties(artifact, version);
+            String version = artifactStorage.getLatestVersion(artifact);
+            final Properties properties = artifactStorage.loadProperties(artifact, version);
 
             Map<String, String> m = new HashMap<>(PUBLIC_PROPERTIES.size());
             for (String prop : PUBLIC_PROPERTIES) {
@@ -115,6 +120,35 @@ public class RepositoryService {
         }
     }
 
+
+    // TODO update installed version, varify version
+
+    /**
+     * Returns the installed version of the artifact.
+     *
+     * @param artifact
+     *         the name of the artifact
+     * @return Response
+     */
+    @GenerateLink(rel = "download artifact")
+    @GET
+    @Path("download/{artifact}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @RolesAllowed({"user", "system/admin"})
+    public Response getInstalledVersion(@PathParam("artifact") final String artifact) {
+        // TODO
+        User user = EnvironmentContext.getCurrent().getUser();
+        return null;
+//        try {
+//            mongoStorage.getInstalledInfo(user.getId(), artifact);
+//            return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
+////        } catch (ArtifactNotFoundException e) {
+//
+//        } catch (MongoException e) {
+//            return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
+//        }
+    }
+
     /**
      * Downloads artifact of the specific version.
      *
@@ -128,11 +162,11 @@ public class RepositoryService {
     @GET
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"user", "system/admin", "system/manager"})
+    @RolesAllowed({"user", "system/admin"})
     public Response download(@PathParam("artifact") final String artifact,
                              @PathParam("version") final String version) {
         try {
-            String requiredSubscription = artifactHandler.getRequiredSubscription(artifact, version);
+            String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
             if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
             }
@@ -190,7 +224,7 @@ public class RepositoryService {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") String artifact) {
         try {
-            String version = artifactHandler.getLatestVersion(artifact);
+            String version = artifactStorage.getLatestVersion(artifact);
             return doDownloadArtifact(artifact, version, true);
         } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
@@ -202,7 +236,7 @@ public class RepositoryService {
     }
 
     private Response doDownloadArtifact(String artifact, String version, boolean publicAccess) throws IOException {
-        java.nio.file.Path path = artifactHandler.getArtifact(artifact, version);
+        java.nio.file.Path path = artifactStorage.getArtifact(artifact, version);
 
         if (!Files.exists(path)) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -211,12 +245,12 @@ public class RepositoryService {
         }
 
         if (publicAccess &&
-            (artifactHandler.isAuthenticationRequired(artifact, version)
-             || artifactHandler.getRequiredSubscription(artifact, version) != null)) {
+            (artifactStorage.isAuthenticationRequired(artifact, version)
+             || artifactStorage.getRequiredSubscription(artifact, version) != null)) {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
-        String fileName = artifactHandler.getFileName(artifact, version);
+        String fileName = artifactStorage.getFileName(artifact, version);
 
         if (!publicAccess) {
             LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
@@ -229,8 +263,8 @@ public class RepositoryService {
 
     /**
      * Uploads artifact into the repository. If the same artifact exists then it will be replaced.
-     * If {@value com.codenvy.cdec.update.ArtifactHandler#AUTHENTICATION_REQUIRED_PROPERTY} isn't set then artifact will be treated as private,
-     * which requires user to be authenticated to download it. If {@value com.codenvy.cdec.update.ArtifactHandler#SUBSCRIPTION_REQUIRED_PROPERTY}
+     * If {@value ArtifactStorage#AUTHENTICATION_REQUIRED_PROPERTY} isn't set then artifact will be treated as private,
+     * which requires user to be authenticated to download it. If {@value ArtifactStorage#SUBSCRIPTION_REQUIRED_PROPERTY}
      * is set then user has to have specific valid subscription to download artifact. If artifact is public then subscription won't be taken into
      * account.
      *
@@ -276,7 +310,7 @@ public class RepositoryService {
                         }
 
                         try (InputStream in = item.getInputStream()) {
-                            artifactHandler.upload(in, artifact, v.getAsString(), fileName, props);
+                            artifactStorage.upload(in, artifact, v.getAsString(), fileName, props);
                             return Response.status(Response.Status.OK).build();
                         } catch (IOException e) {
                             LOG.error(e.getMessage(), e);
