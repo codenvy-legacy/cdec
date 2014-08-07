@@ -36,6 +36,7 @@
         <module>cdec-packaging-tomcat-update-server</module>
         <module>installation-manager-commons</module>
         <module>installation-manager</module>
+        <module>installation-manager-gui</module>
         <module>installation-manager-cli</module>
     </modules>
     <scm>
