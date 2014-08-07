@@ -30,9 +30,21 @@ register_service_under_debian() {
 }
 
 install_required_components_under_debian() {
-   echo "Install required components..."
-   sudo apt-get install openjdk-7-jdk
-   sudo apt-get install unzip
+    echo "Check required components..."
+
+    # install java
+    command -v java >/dev/null 2>&1 || {     # check if requered program had already installed earlier
+        echo "Installation manager requires java but it's not installed! " >&2
+        read -p "Press any key to start installing java... " -n1 -s
+        sudo apt-get install openjdk-7-jdk
+    }
+    
+    # install unzip
+    command -v unzip >/dev/null 2>&1 || {      # check if requered program had already installed earlier
+        echo "Installing installation manager requires unzip but it's not installed! " >&2
+        read -p "Press any key to start installing unzip... " -n1 -s
+        sudo apt-get install unzip
+    }
 }
 
 create_codenvy_user_and_group_under_redhat() {
@@ -56,9 +68,21 @@ register_service_under_redhat() {
 }
 
 install_required_components_under_redhat() {
-    echo "Install required components..."
-    sudo yum install java-1.7.0-openjdk
-    sudo yum install unzip
+    echo "Check required components..."
+
+    # install java
+    command -v java >/dev/null 2>&1 || {    # check if requered program had already installed earlier
+        echo "Installation manager requires java but it's not installed! " >&2
+        read -p "Press any key to start installing java... " -n1 -s
+        sudo yum install java-1.7.0-openjdk
+    } 
+    
+    # install unzip
+    command -v unzip >/dev/null 2>&1 || {   # check if requered program had already installed earlier
+        echo "Installing installation manager requires unzip but it's not installed! " >&2
+        read -p "Press any key to start installing unzip... " -n1 -s
+        sudo yum install unzip
+    }
 }
 
 download_and_unpack_instalation_manager() {
