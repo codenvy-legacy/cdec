@@ -80,8 +80,7 @@ download_and_unpack_instalation_manager() {
 launching_service() {
     # try to stop exists installation-manager
     sudo /etc/init.d/${SERVICE_NAME} stop
-    sudo kill -9 $(ps -C java | grep -v PID | cut -d" " -f2) &>-  # kill manager if stop isn't work
-    sudo kill -9 $(ps -C java | grep -v PID | cut -d" " -f3) &>-  # kill manager if stop isn't work in case when TTY = ?
+    sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>-  # kill manager if stop isn't work
 
     # launch new installation-manager
     sudo /etc/init.d/${SERVICE_NAME} start
