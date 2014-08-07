@@ -32,6 +32,24 @@ else
     exit
 fi
 
+uploadArtifact() {
+    ARTIFACT=$1
+
+    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
+    VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
+    SOURCE=${ARTIFACT}/target/${FILENAME}
+
+    doUpload
+}
+
+uploadInstallScript() {
+    ARTIFACT=install-script
+    FILENAME=install-script.sh
+    SOURCE=installation-manager/bin/${FILENAME}
+
+    doUpload
+}
+
 doUpload() {
     DESTINATION=update-server-repository/${ARTIFACT}/${VERSION}
 
@@ -47,24 +65,6 @@ doUpload() {
     rm .properties
 }
 
-uploadArtifact() {
-    ARTIFACT=$1
-
-    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
-    VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
-    SOURCE=${ARTIFACT}/target/${FILENAME}
-
-    doUpload
-}
-
-uploadInstallScript() {
-    ARTIFACT=install-script
-    FILENAME=install-script.sh
-    VERSION=`ls installation-manager/target | grep -G installation-manager-.*[.]jar | grep -vE 'sources|original' | sed 's/'installation-manager'-//' | sed 's/.jar//'`
-    SOURCE=installation-manager/bin/${FILENAME}
-
-    doUpload
-}
 
 uploadArtifact installation-manager
 uploadArtifact installation-manager-cli

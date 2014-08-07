@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.codenvy.cdec.utils.Commons.*;
 import static com.codenvy.cdec.utils.Version.compare;
@@ -52,7 +53,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 
-    private Map<Artifact, String> newVersions;
+    private final Map<Artifact, String> newVersions;
 
     @Inject
     public InstallationManagerImpl(@Named("codenvy.installation-manager.codenvy_api_endpoint") String codenvyApiEndpoint,
@@ -65,7 +66,7 @@ public class InstallationManagerImpl implements InstallationManager {
         this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.artifacts = artifacts;
-        this.newVersions = new HashMap<>(artifacts.size());
+        this.newVersions = new ConcurrentHashMap<>(artifacts.size());
 
 
         if (!Files.exists(this.downloadDir)) {

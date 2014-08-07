@@ -69,12 +69,11 @@ public class Daemon {
 
         try {
             start();
-        } catch (SchedulerException | RemoteException | AlreadyBoundException e) {
+        } catch (Exception e) {
             LOG.error("Can't start daemon. " + e.getMessage());
             stop();
         }
     }
-
 
     private static void daemonize() throws IOException {
         System.in.close();
@@ -96,16 +95,18 @@ public class Daemon {
         try {
             Registry registry = LocateRegistry.getRegistry(Registry.REGISTRY_PORT);
             registry.unbind(InstallationManager.class.getSimpleName());
-        } catch (RemoteException | NotBoundException e) {
+        } catch (RemoteException e) {
             LOG.error("Can't unbind RMI sever. " + e.getMessage());
+        } catch (NotBoundException e) {
+            // do nothing
         }
     }
 
-    private static void start() throws SchedulerException, RemoteException, AlreadyBoundException {
+    private static void start() throws RemoteException, AlreadyBoundException, SchedulerException {
+        updateManager.init();
+
         Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
         registry.bind(InstallationManager.class.getSimpleName(), injector.getInstance(InstallationManager.class));
-
-        updateManager.init();
     }
 
     private static Injector createInjector() {
