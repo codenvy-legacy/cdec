@@ -36,19 +36,19 @@ public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
 
     private final HttpTransport transport;
-    private final String        codenvyUpdateEndpoint;
+    private final String        updateEndpoint;
 
     @Inject
-    public CDECArtifact(@Named("codenvy.installation-manager.codenvy_update_endpoint") String codenvyUpdateEndpoint,
+    public CDECArtifact(@Named("codenvy.installation-manager.update_endpoint") String updateEndpoint,
                         HttpTransport transport) {
         super(NAME);
-        this.codenvyUpdateEndpoint = codenvyUpdateEndpoint;
+        this.updateEndpoint = updateEndpoint;
         this.transport = transport;
     }
 
     @Override
     public String getCurrentVersion() throws IOException {
-        String json = transport.doGetRequest(combinePaths(codenvyUpdateEndpoint, "repository/info/" + NAME));
+        String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/info/" + NAME));
         Map m = Commons.fromJson(json, Map.class);
         return (String)m.get("version");
     }

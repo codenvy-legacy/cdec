@@ -46,8 +46,8 @@ import static com.codenvy.cdec.utils.Version.compare;
 public class InstallationManagerImpl implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
-    private final String codenvyApiEndpoint;
-    private final String codenvyUpdateEndpoint;
+    private final String apiEndpoint;
+    private final String updateEndpoint;
     private final Path   downloadDir;
 
     private final HttpTransport transport;
@@ -56,18 +56,17 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Map<Artifact, String> newVersions;
 
     @Inject
-    public InstallationManagerImpl(@Named("codenvy.installation-manager.codenvy_api_endpoint") String codenvyApiEndpoint,
-                                   @Named("codenvy.installation-manager.codenvy_update_endpoint") String codenvyUpdateEndpoint,
+    public InstallationManagerImpl(@Named("api.endpoint") String apiEndpoint,
+                                   @Named("codenvy.installation-manager.update_endpoint") String updateEndpoint,
                                    @Named("codenvy.installation-manager.download_dir") String downloadDir,
                                    HttpTransport transport,
                                    Set<Artifact> artifacts) throws IOException {
-        this.codenvyUpdateEndpoint = codenvyUpdateEndpoint;
-        this.codenvyApiEndpoint = codenvyApiEndpoint;
+        this.updateEndpoint = updateEndpoint;
+        this.apiEndpoint = apiEndpoint;
         this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.artifacts = artifacts;
         this.newVersions = new ConcurrentHashMap<>(artifacts.size());
-
 
         if (!Files.exists(this.downloadDir)) {
             Files.createDirectories(this.downloadDir);
@@ -96,7 +95,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
         for (Artifact artifact : artifacts) {
             try {
-                Map m = fromJson(transport.doGetRequest(combinePaths(codenvyUpdateEndpoint, "repository/version/" + artifact.getName())), Map.class);
+                Map m = fromJson(transport.doGetRequest(combinePaths(updateEndpoint, "repository/version/" + artifact.getName())), Map.class);
                 if (m != null && m.containsKey("version")) {
                     available2Download.put(artifact, (String)m.get("version"));
                 }
@@ -114,9 +113,9 @@ public class InstallationManagerImpl implements InstallationManager {
             Artifact artifact = entry.getKey();
             String version = entry.getValue();
 
-            if (!artifact.isValidSubscriptionRequired() || isValidSubscription(transport, codenvyApiEndpoint, "On-Premises")) {
+            if (!artifact.isValidSubscriptionRequired() || isValidSubscription(transport, apiEndpoint, "On-Premises")) {
                 transport
-                        .download(combinePaths(codenvyUpdateEndpoint, "/repository/download/" + artifact.getName() + "/" + version), downloadDir);
+                        .download(combinePaths(updateEndpoint, "/repository/download/" + artifact.getName() + "/" + version), downloadDir);
                 LOG.info("Downloaded '" + artifact + "' version " + version);
             } else {
                 LOG.warn("Valid subscription is required to download " + artifact.getName());
