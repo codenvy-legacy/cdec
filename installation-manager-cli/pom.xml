@@ -32,7 +32,6 @@
             <groupId>com.codenvy.cli</groupId>
             <artifactId>codenvy-cli</artifactId>
             <version>0.2-SNAPSHOT</version>
-            <!--TODO-->
         </dependency>
     </dependencies>
     <build>

@@ -21,10 +21,9 @@ package com.codenvy.cdec.update;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
-import com.codenvy.commons.env.EnvironmentContext;
-import com.codenvy.commons.user.User;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.inject.Singleton;
+import com.mongodb.MongoException;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -65,16 +64,20 @@ import static com.codenvy.cdec.utils.Commons.isValidSubscription;
 @Path("repository")
 public class RepositoryService {
 
+    public static final String VALID_USER_AGENT = "Installation Manager";
+
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport   transport;
     private final String          apiEndpoint;
+    private final UserManager userManager;
 
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
+                             UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport transport) {
@@ -82,6 +85,7 @@ public class RepositoryService {
         this.mongoStorage = mongoStorage;
         this.transport = transport;
         this.apiEndpoint = apiEndpoint;
+        this.userManager = userManager;
 
         LOG.info("Repository Service has been initialized, repository directory: " + artifactStorage.getRepositoryDir());
     }
@@ -120,33 +124,63 @@ public class RepositoryService {
         }
     }
 
+    /**
+     * Saves info: user, installed artifact and its version. Only trusted agent allowed.
+     *
+     * @param artifact
+     *         the name of the artifact
+     * @param version
+     *         the version of the artifact
+     * @return Response
+     * @see com.codenvy.cdec.update.MongoStorage#saveInstalledInfo(String, String, String)
+     */
+    @GenerateLink(rel = "save installed info")
+    @POST
+    @Path("info/{artifact}/{version}")
+    @RolesAllowed({"user", "system/admin"})
+    public Response saveInstalledInfo(@PathParam("artifact") final String artifact,
+                                      @PathParam("version") String version,
+                                      @HeaderParam("user-agent") String userAgent) {
 
-    // TODO update installed version, varify version
+        if (!VALID_USER_AGENT.equals(userAgent)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        } else if (!Version.isValidVersion(version)) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("The version format is invalid '" + version + "'").build();
+        }
+
+        try {
+            mongoStorage.saveInstalledInfo(userManager.getCurrentUser().getId(), artifact, version);
+            return Response.status(Response.Status.OK).build();
+        } catch (MongoException e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't save information").build();
+        }
+    }
 
     /**
-     * Returns the installed version of the artifact.
+     * Returns info about the latest installed artifact by user.
      *
      * @param artifact
      *         the name of the artifact
      * @return Response
+     * @see com.codenvy.cdec.update.MongoStorage#getInstalledInfo(String, String)
      */
-    @GenerateLink(rel = "download artifact")
+    @GenerateLink(rel = "get installed version")
     @GET
-    @Path("download/{artifact}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Path("info/{artifact}")
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({"user", "system/admin"})
-    public Response getInstalledVersion(@PathParam("artifact") final String artifact) {
-        // TODO
-        User user = EnvironmentContext.getCurrent().getUser();
-        return null;
-//        try {
-//            mongoStorage.getInstalledInfo(user.getId(), artifact);
-//            return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
-////        } catch (ArtifactNotFoundException e) {
-//
-//        } catch (MongoException e) {
-//            return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
-//        }
+    public Response getInstalledInfo(@PathParam("artifact") final String artifact) {
+        try {
+            Map info = mongoStorage.getInstalledInfo(userManager.getCurrentUser().getId(), artifact);
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<String>(info)).build();
+        } catch (ArtifactNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (MongoException e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
+        }
     }
 
     /**
@@ -253,7 +287,7 @@ public class RepositoryService {
         String fileName = artifactStorage.getFileName(artifact, version);
 
         if (!publicAccess) {
-            LOG.info("User '" + EnvironmentContext.getCurrent().getUser() + "' is downloading " + fileName);
+            LOG.info("User '" + userManager.getCurrentUser() + "' is downloading " + fileName);
         }
         return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
                        .header("Content-Length", String.valueOf(Files.size(path)))

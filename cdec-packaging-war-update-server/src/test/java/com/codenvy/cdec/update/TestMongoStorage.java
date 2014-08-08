@@ -52,11 +52,11 @@ public class TestMongoStorage {
     @Test
     public void testGetInstalledVersion() throws Exception {
         mongoStorage.saveInstalledInfo("user", "artifact", "1.0.1");
-        assertEquals(mongoStorage.getInstalledInfo("user", "artifact"), "1.0.1");
+        assertEquals(mongoStorage.getInstalledInfo("user", "artifact").get("version"), "1.0.1");
 
         Thread.sleep(1000);
 
         mongoStorage.saveInstalledInfo("user", "artifact", "1.0.2");
-        assertEquals(mongoStorage.getInstalledInfo("user", "artifact"), "1.0.2");
+        assertEquals(mongoStorage.getInstalledInfo("user", "artifact").get("version"), "1.0.2");
     }
 }

@@ -18,6 +18,7 @@
 package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.utils.HttpTransport;
@@ -39,7 +40,8 @@ import static org.testng.Assert.assertNotNull;
  */
 public class TestInstallationManager {
 
-    private static final InstallManagerArtifact INSTALL_MANAGER_ARTIFACT = new InstallManagerArtifact();
+    private Artifact CDEC_ARTIFACT;
+    private Artifact INSTALL_MANAGER_ARTIFACT;
 
     private HttpTransport       transport;
     private InstallationManager manager;
@@ -48,25 +50,33 @@ public class TestInstallationManager {
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
 
+        INSTALL_MANAGER_ARTIFACT = new InstallManagerArtifact();
+        CDEC_ARTIFACT = new CDECArtifact("update/endpoint", transport);
+
         manager = new InstallationManagerImpl("api/endpoint",
                                               "update/endpoint",
                                               "target/download",
                                               transport,
-                                              new HashSet<Artifact>(Arrays.asList(INSTALL_MANAGER_ARTIFACT)));
+                                              new HashSet<>(Arrays.asList(INSTALL_MANAGER_ARTIFACT, CDEC_ARTIFACT)));
     }
 
     @Test
-    public void testGetExistedArtifacts() throws Exception {
-        Map<Artifact, String> m = manager.getExistedArtifacts();
+    public void testGetInstalledArtifacts() throws Exception {
+        when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME)).thenReturn("{version:2.10.4}");
+
+        Map<Artifact, String> m = manager.getInstalledArtifacts();
+        assertEquals(m.get(CDEC_ARTIFACT), "2.10.4");
         assertNotNull(m.get(INSTALL_MANAGER_ARTIFACT));
     }
 
     @Test
     public void testGetAvailable2DownloadArtifacts() throws Exception {
         when(transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
+        when(transport.doGetRequest("update/endpoint/repository/version/" + CDECArtifact.NAME)).thenReturn("{version:2.10.5}");
         Map<Artifact, String> m = manager.getAvailable2DownloadArtifacts();
 
-        assertEquals(m.size(), 1);
+        assertEquals(m.size(), 2);
         assertEquals(m.get(INSTALL_MANAGER_ARTIFACT), "1.0.1");
+        assertEquals(m.get(CDEC_ARTIFACT), "2.10.5");
     }
 }

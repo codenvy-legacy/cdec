@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author Anatoliy Bazko
@@ -71,10 +72,9 @@ public class MongoStorage {
 
 
     /**
-     * TODO
-     * @return the latest installed version user's version
+     * @return info about the latest installed artifact by user.
      */
-    public String getInstalledInfo(String userId, String artifact) throws MongoException, ArtifactNotFoundException {
+    public Map getInstalledInfo(String userId, String artifact) throws MongoException, ArtifactNotFoundException {
         DBCollection collection = db.getCollection(ARTIFACTS_COLLECTION);
 
         DBObject clause = new BasicDBObject();
@@ -86,7 +86,8 @@ public class MongoStorage {
         DBCursor cursor = collection.find(clause).sort(order).limit(1);
         if (cursor.hasNext()) {
             DBObject doc = cursor.next();
-            return (String)doc.get("version");
+            doc.removeField("_id");
+            return doc.toMap();
         } else {
             throw new ArtifactNotFoundException(artifact);
         }

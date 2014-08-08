@@ -18,6 +18,7 @@
 package com.codenvy.cdec;
 
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
@@ -118,6 +119,7 @@ public class Daemon {
                 bindProperties(binder);
                 binder.bind(InstallationManager.class).to(InstallationManagerImpl.class);
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
+                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);
             }
 
             private void bindProperties(Binder binder) {

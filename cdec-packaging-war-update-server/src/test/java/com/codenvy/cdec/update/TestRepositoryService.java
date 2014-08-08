@@ -20,6 +20,7 @@ package com.codenvy.cdec.update;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
+import com.codenvy.commons.user.UserImpl;
 import com.jayway.restassured.response.Response;
 
 import org.apache.commons.io.FileUtils;
@@ -27,6 +28,7 @@ import org.apache.commons.io.IOUtils;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -36,14 +38,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * @author Anatoliy Bazko
@@ -52,9 +54,11 @@ import static org.testng.Assert.assertTrue;
 public class TestRepositoryService extends BaseTest {
 
     public static final long HOUR_AHEAD = System.currentTimeMillis() + 60 * 60 * 1000;
+
     private final ArtifactStorage   artifactStorage;
     private final RepositoryService repositoryService;
     private final HttpTransport     transport;
+    private final UserManager       userManager;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -66,19 +70,69 @@ public class TestRepositoryService extends BaseTest {
     {
         try {
             transport = mock(HttpTransport.class);
+            userManager = mock(UserManager.class);
             artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
             repositoryService = new RepositoryService("",
+                                                      userManager,
                                                       artifactStorage,
                                                       new MongoStorage("mongodb://localhost:12000/update", true),
                                                       transport);
+
         } catch (IOException e) {
             throw new IllegalArgumentException();
         }
     }
 
+    @Override
+    @BeforeMethod
+    public void setUp() throws Exception {
+        when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList()));
+        super.setUp();
+    }
+
     @Test
-    public void testGetInstalledVersion() throws Exception {
-        // TODO
+    public void testSaveInstalledInfoErrorIfInvalidUserAgent() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
+    }
+
+    @Test
+    public void testSaveInstalledInfoErrorIfVersionInvalid() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT)
+                .post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
+    public void testSaveInstalledInfo() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT).post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testGetInstalledInfo() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT).post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(JettyHttpServer.SECURE_PATH + "/repository/info/cdec");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Map m = response.as(Map.class);
+        assertEquals(m.size(), 4);
+        assertEquals(m.get("artifact"), "cdec");
+        assertEquals(m.get("version"), "1.0.1");
+        assertEquals(m.get("userId"), "id");
+        assertNotNull(m.get("date"));
     }
 
     @Test

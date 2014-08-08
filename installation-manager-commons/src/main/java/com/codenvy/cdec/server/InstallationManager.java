@@ -31,7 +31,7 @@ public interface InstallationManager extends Remote {
     /**
      * Scans all available artifacts and returns their current versions.
      */
-    public Map<Artifact, String> getExistedArtifacts() throws IOException;
+    public Map<Artifact, String> getInstalledArtifacts() throws IOException;
 
     /**
      * Scans all available artifacts and returns their last versions from Update Server.

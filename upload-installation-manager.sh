@@ -25,7 +25,6 @@ elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
-    AS_IP=git_nopass.key
     echo "Uploading on staging"
 else
     echo "Unknown server destination"
@@ -64,7 +63,6 @@ doUpload() {
 
     rm .properties
 }
-
 
 uploadArtifact installation-manager
 uploadArtifact installation-manager-cli

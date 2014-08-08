@@ -77,17 +77,17 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     @Override
-    public Map<Artifact, String> getExistedArtifacts() throws IOException {
-        Map<Artifact, String> existed = new HashMap<>();
+    public Map<Artifact, String> getInstalledArtifacts() throws IOException {
+        Map<Artifact, String> installed = new HashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                existed.put(artifact, artifact.getCurrentVersion());
+                installed.put(artifact, artifact.getCurrentVersion());
             } catch (IOException e) {
                 throw new IOException("Can't find out current version of " + artifact, e);
             }
         }
 
-        return existed;
+        return installed;
     }
 
     @Override
@@ -133,14 +133,14 @@ public class InstallationManagerImpl implements InstallationManager {
     public void checkNewVersions() throws IOException {
         invalidateNewVersions();
 
-        Map<Artifact, String> existed = getExistedArtifacts();
+        Map<Artifact, String> installed = getInstalledArtifacts();
         Map<Artifact, String> available2Download = getAvailable2DownloadArtifacts();
 
         for (Map.Entry<Artifact, String> entry : available2Download.entrySet()) {
             Artifact artifact = entry.getKey();
             String newVersion = entry.getValue();
 
-            if (!existed.containsKey(artifact) || compare(newVersion, existed.get(artifact)) > 0) {
+            if (!installed.containsKey(artifact) || compare(newVersion, installed.get(artifact)) > 0) {
                 newVersions.put(artifact, newVersion);
                 LOG.info("New version '" + artifact + "' " + newVersions.get(artifact) + " available to download");
             }
