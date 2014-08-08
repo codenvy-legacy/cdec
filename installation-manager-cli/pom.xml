@@ -30,47 +30,41 @@
     <dependencies>
         <dependency>
             <groupId>com.codenvy.cli</groupId>
-            <artifactId>codenvy-cli</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <artifactId>cli-assembly</artifactId>
+            <version>${codenvy.cli.version}</version>
+            <type>zip</type>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.cli</groupId>
+            <artifactId>cli-command</artifactId>
+            <version>${codenvy.cli.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+            <version>${org.apache.karaf.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <mainClass>com.codenvy.cli.CodenvyCLI</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
+                <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <id>copy-dependencies-zip</id>
+                        <phase>generate-resources</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>copy-dependencies</goal>
                         </goals>
+                        <configuration>
+                            <includeTypes>zip</includeTypes>
+                            <stripVersion>true</stripVersion>
+                            <outputDirectory>${project.build.directory}/packager-conf/zip</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <artifactSet>
-                        <excludes>
-                            <exclude>com.beust:jcommander:*</exclude>
-                            <exclude>org.apache.commons:commons-lang3:*</exclude>
-                            <exclude>com.googlecode.json-simple:json-simple:*</exclude>
-                            <exclude>org.json:json:*</exclude>
-                        </excludes>
-                    </artifactSet>
-                    <finalName>${project.artifactId}-${project.version}</finalName>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -83,13 +77,11 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="${project.build.directory}/bundle/">
-                                    <fileset dir="${project.basedir}/bin" />
-                                </copy>
-                                <replace file="${project.build.directory}/bundle/codenvy" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
-                                <replace file="${project.build.directory}/bundle/codenvy.bat" token="${project.artifactId}" value="${project.artifactId}-${project.version}" />
-                                <copy file="${project.basedir}/conf/config" tofile="${project.build.directory}/bundle/conf/config" />
-                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" tofile="${project.build.directory}/bundle/lib/${project.artifactId}-${project.version}.jar" />
+                                <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly.zip" />
+                                <move todir="${project.build.directory}/bundle">
+                                    <fileset dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/" />
+                                </move>
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" tofile="${project.build.directory}/bundle/system/com/codenvy/cdec/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar" />
                             </target>
                         </configuration>
                     </execution>

@@ -15,6 +15,4 @@
 # from Codenvy S.A..
 #
 
-#!/bin/bash
-
-$JAVA_HOME/bin/java -jar ./lib/installation-manager-cli.jar "$@"
+com.codenvy.cdec.im.cli.command.UpdateCommand

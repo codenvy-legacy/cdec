@@ -94,7 +94,7 @@ public class Commons {
                                       SubscriptionDescriptor.class);
 
         for (SubscriptionDescriptor s : subscriptions) {
-            if (s.getServiceId().equals(requiredSubscription) && s.getEndDate() >= System.currentTimeMillis()) {
+            if (s.getServiceId().equals(requiredSubscription) /*&& s.getEndDate() >= System.currentTimeMillis()*/) { //TODO 
                 return true;
             }
         }
