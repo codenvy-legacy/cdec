@@ -29,6 +29,11 @@
     <name>Codenvy :: CDEC :: Installation Manager CLI</name>
     <dependencies>
         <dependency>
+            <groupId>com.codenvy.cdec</groupId>
+            <artifactId>installation-manager-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>cli-assembly</artifactId>
             <version>${codenvy.cli.version}</version>
