@@ -18,11 +18,12 @@
 package com.codenvy.cdec.artifacts;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * @author Anatoliy Bazko
  */
-public interface Artifact {
+public interface Artifact extends Serializable {
 
     /**
      * @return current deployed version of the component

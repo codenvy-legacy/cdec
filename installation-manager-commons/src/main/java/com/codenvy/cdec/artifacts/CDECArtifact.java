@@ -33,6 +33,8 @@ import static com.codenvy.cdec.utils.Commons.combinePaths;
  */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
+    private static final long serialVersionUID = 1L;
+
     public static final String NAME = "cdec";
 
     private final HttpTransport transport;

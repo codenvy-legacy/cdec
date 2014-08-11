@@ -29,6 +29,7 @@ import java.util.Properties;
  */
 @Singleton
 public class InstallManagerArtifact extends AbstractArtifact {
+    private static final long serialVersionUID = 1L;
 
     public static final String NAME = "installation-manager";
 

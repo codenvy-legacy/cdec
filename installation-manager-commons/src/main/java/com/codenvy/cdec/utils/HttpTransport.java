@@ -25,10 +25,7 @@ import org.apache.commons.io.IOUtils;
 
 import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -44,7 +41,8 @@ import static com.codenvy.cdec.utils.Commons.addQueryParam;
  * @author Alexander Reshetnyak
  */
 @Singleton
-public class HttpTransport {
+public class HttpTransport implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
 
