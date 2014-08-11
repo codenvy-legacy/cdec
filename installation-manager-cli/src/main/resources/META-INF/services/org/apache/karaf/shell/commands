@@ -15,4 +15,4 @@
 # from Codenvy S.A..
 #
 
-com.codenvy.cdec.im.cli.command.UpdateCommand
+com.codenvy.cdec.im.cli.command.InstallCommand

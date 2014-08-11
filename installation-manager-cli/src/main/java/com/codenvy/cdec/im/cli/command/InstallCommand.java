@@ -27,16 +27,15 @@ import java.io.IOException;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 
 /**
- * Parameters and execution of 'CDEC:update' command.
+ * Command performs install updates.
  *
  * @author Alexander Reshetnyak
+ * @author Anatoliy Bazko
  */
-@Command(scope = "cdec", name = "update", description = "Update CDEC...")
-public class UpdateCommand extends AbsCommand {
+@Command(scope = "cdec", name = "install", description = "Update CDEC...") // TODO
+public class InstallCommand extends AbsCommand {
 
-    /**
-     * Update...
-     */
+    @Override
     protected Object doExecute() throws IOException {
         init();
 

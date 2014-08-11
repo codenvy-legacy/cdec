@@ -53,8 +53,6 @@ import static org.testng.Assert.*;
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class TestRepositoryService extends BaseTest {
 
-    public static final long HOUR_AHEAD = System.currentTimeMillis() + 60 * 60 * 1000;
-
     private final ArtifactStorage   artifactStorage;
     private final RepositoryService repositoryService;
     private final HttpTransport     transport;
@@ -86,7 +84,7 @@ public class TestRepositoryService extends BaseTest {
     @Override
     @BeforeMethod
     public void setUp() throws Exception {
-        when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList()));
+        when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         super.setUp();
     }
 
@@ -177,8 +175,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testDownloadPublicArtifactErrorIfAuthenticationRequired() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions"))
-                .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[{serviceId:On-Premises}]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given().when().get("repository/public/download/cdec/1.0.1");
@@ -188,8 +185,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testDownloadPublicArtifactErrorIfSubscriptionRequired() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions"))
-                .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[{serviceId:On-Premises}]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given().when().get("/repository/public/download/cdec/1.0.1");
@@ -212,8 +208,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testDownloadPrivateSubscriptionRequired() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions"))
-                .thenReturn("[{serviceId:On-Premises,endDate:" + HOUR_AHEAD + "}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[{serviceId:On-Premises}]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
@@ -241,20 +236,6 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPrivateErrorIfSubscriptionAbsent() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
         when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
-
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    /*@Test TODO Will be uncommented after fix method com.codenvy.cdec.utils.Commons.isValidSubscription(...)*/
-    public void testDownloadPrivateErrorIfSubscriptionExpired() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions"))
-                .thenReturn("[{serviceId:On-Premises,endDate:" + (System.currentTimeMillis() - 1000) + "}]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()

@@ -17,34 +17,24 @@
  */
 package com.codenvy.cdec;
 
-import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.artifacts.CDECArtifact;
-import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
 import com.codenvy.cdec.server.InstallationManager;
+import com.codenvy.cdec.utils.BasedInjector;
 import com.google.inject.Binder;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Anatoliy Bazko
@@ -111,44 +101,10 @@ public class Daemon {
     }
 
     private static Injector createInjector() {
-        final Pattern envPattern = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
-
-        return Guice.createInjector(new Module() {
+        return BasedInjector.getInstance().createChildInjector(new Module() {
             @Override
             public void configure(Binder binder) {
-                bindProperties(binder);
                 binder.bind(InstallationManager.class).to(InstallationManagerImpl.class);
-                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
-                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);
-            }
-
-            private void bindProperties(Binder binder) {
-                Properties properties = new Properties();
-                try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
-                    properties.load(in);
-                } catch (IOException e) {
-                    LOG.error("Can't load properties. " + e.getMessage());
-                }
-
-                for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                    String key = (String)entry.getKey();
-                    String value = replaceEnvVariables((String)entry.getValue());
-
-                    binder.bindConstant().annotatedWith(Names.named(key)).to(value);
-                }
-            }
-
-            /**
-             * Replaces environment variables by them actual values using ${...} template.
-             */
-            private String replaceEnvVariables(String value) {
-                Matcher matcher = envPattern.matcher(value);
-                if (matcher.find()) {
-                    String envVar = matcher.group(1);
-                    return value.substring(0, matcher.start(1) - 2) + System.getenv(envVar) + value.substring(matcher.end(1) + 1);
-                } else {
-                    return value;
-                }
             }
         });
     }
