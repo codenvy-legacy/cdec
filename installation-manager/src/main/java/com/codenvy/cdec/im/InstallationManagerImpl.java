@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,15 +43,15 @@ import static com.codenvy.cdec.utils.Version.compare;
  * @author Anatoliy Bazko
  */
 @Singleton
-public class InstallationManagerImpl implements InstallationManager, Serializable {
+public class InstallationManagerImpl implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
     private final String apiEndpoint;
     private final String updateEndpoint;
-    private final String downloadDir;
+    private final Path   downloadDir;
 
-    protected final HttpTransport transport;
-    protected final Set<Artifact> artifacts;
+    private final HttpTransport transport;
+    private final Set<Artifact> artifacts;
 
     private final Map<Artifact, String> newVersions;
 
@@ -63,13 +63,13 @@ public class InstallationManagerImpl implements InstallationManager, Serializabl
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.apiEndpoint = apiEndpoint;
-        this.downloadDir = downloadDir;
+        this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.artifacts = artifacts;
         this.newVersions = new ConcurrentHashMap<>(artifacts.size());
 
-        if (!Files.exists(Paths.get(downloadDir))) {
-            Files.createDirectories(Paths.get(downloadDir));
+        if (!Files.exists(this.downloadDir)) {
+            Files.createDirectories(this.downloadDir);
         }
 
         LOG.info("Download directory " + downloadDir);
@@ -115,7 +115,7 @@ public class InstallationManagerImpl implements InstallationManager, Serializabl
 
             if (!artifact.isValidSubscriptionRequired() || isValidSubscription(transport, apiEndpoint, "On-Premises")) {
                 transport
-                        .download(combinePaths(updateEndpoint, "/repository/download/" + artifact.getName() + "/" + version), Paths.get(downloadDir));
+                        .download(combinePaths(updateEndpoint, "/repository/download/" + artifact.getName() + "/" + version), downloadDir);
                 LOG.info("Downloaded '" + artifact + "' version " + version);
             } else {
                 LOG.warn("Valid subscription is required to download " + artifact.getName());

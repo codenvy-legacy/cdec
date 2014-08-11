@@ -20,14 +20,11 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
-import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.utils.HttpTransport;
 
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,30 +43,26 @@ public class TestInstallationManager {
     private Artifact INSTALL_MANAGER_ARTIFACT;
 
     private InstallationManagerImpl manager;
+    private HttpTransport           transport;
 
     @BeforeTest
     public void setUp() throws Exception {
-        HttpTransport transport = mock(HttpTransport.class);
+        transport = mock(HttpTransport.class);
 
         INSTALL_MANAGER_ARTIFACT = new InstallManagerArtifact();
         CDEC_ARTIFACT = new CDECArtifact("update/endpoint", transport);
 
-        InstallationManager manager = new InstallationManagerImpl("api/endpoint",
-                                                                  "update/endpoint",
-                                                                  "target/download",
-                                                                  transport,
-                                                                  new HashSet<>(Arrays.asList(INSTALL_MANAGER_ARTIFACT, CDEC_ARTIFACT)));
+        manager = new InstallationManagerImpl("api/endpoint",
+                                              "update/endpoint",
+                                              "target/download",
+                                              transport,
+                                              new HashSet<>(Arrays.asList(INSTALL_MANAGER_ARTIFACT, CDEC_ARTIFACT)));
 
-        Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-        registry.bind(InstallationManager.class.getSimpleName(), manager);
-
-        registry = LocateRegistry.getRegistry(Registry.REGISTRY_PORT);
-        this.manager = (InstallationManagerImpl)registry.lookup(InstallationManager.class.getSimpleName());
     }
 
     @Test
     public void testGetInstalledArtifacts() throws Exception {
-        when(manager.transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME)).thenReturn("{version:2.10.4}");
+        when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME)).thenReturn("{version:2.10.4}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts();
         assertEquals(m.get(CDEC_ARTIFACT), "2.10.4");
@@ -78,8 +71,8 @@ public class TestInstallationManager {
 
     @Test
     public void testGetAvailable2DownloadArtifacts() throws Exception {
-        when(manager.transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
-        when(manager.transport.doGetRequest("update/endpoint/repository/version/" + CDECArtifact.NAME)).thenReturn("{version:2.10.5}");
+        when(transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
+        when(transport.doGetRequest("update/endpoint/repository/version/" + CDECArtifact.NAME)).thenReturn("{version:2.10.5}");
         Map<Artifact, String> m = manager.getAvailable2DownloadArtifacts();
 
         assertEquals(m.size(), 2);
