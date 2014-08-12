@@ -141,7 +141,7 @@ public class MongoStorage {
             }
         });
 
-        LOG.info("Connection has been initialized: " + uri.toString());
+        LOG.info("Connection to MongoDB has been initialized");
         return db;
     }
 
@@ -172,6 +172,13 @@ public class MongoStorage {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                mongoExe.stop();
+            }
+        });
     }
 
     /**
@@ -189,7 +196,6 @@ public class MongoStorage {
 
                 sock.connect(sockAddr, timeout);
             }
-
         } catch (Exception e) {
             return false;
         }
