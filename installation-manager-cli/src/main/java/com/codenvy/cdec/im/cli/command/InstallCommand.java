@@ -35,6 +35,9 @@ import static org.fusesource.jansi.Ansi.Color.GREEN;
 @Command(scope = "cdec", name = "install", description = "Update CDEC...") // TODO
 public class InstallCommand extends AbsCommand {
 
+//    @Argument(name = "project-id", description = "Specify the project ID to use", required = true, multiValued = false)
+//    private String projectId;
+
     @Override
     protected Object doExecute() throws IOException {
         init();

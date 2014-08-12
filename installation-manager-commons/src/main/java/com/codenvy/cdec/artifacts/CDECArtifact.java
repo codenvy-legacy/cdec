@@ -24,6 +24,7 @@ import com.google.inject.Singleton;
 
 import javax.inject.Named;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static com.codenvy.cdec.utils.Commons.combinePaths;
@@ -44,6 +45,11 @@ public class CDECArtifact extends AbstractArtifact {
         super(NAME);
         this.updateEndpoint = updateEndpoint;
         this.transport = transport;
+    }
+
+    @Override
+    public void install(Path binaries) throws IOException {
+        // TODO
     }
 
     @Override

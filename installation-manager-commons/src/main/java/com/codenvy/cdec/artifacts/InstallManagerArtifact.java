@@ -22,6 +22,7 @@ import com.google.inject.Singleton;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Properties;
 
 /**
@@ -34,6 +35,11 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Inject
     public InstallManagerArtifact() {
         super(NAME);
+    }
+
+    @Override
+    public void install(Path binaries) throws IOException {
+        // TODO
     }
 
     @Override

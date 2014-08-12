@@ -59,15 +59,15 @@ public class HttpTransport {
      * Performs GET request and store response into file.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_OCTET_STREAM}
      */
-    public void download(String path, Path destinationDir) throws IOException {
+    public Path download(String path, Path destinationDir) throws IOException {
         if (!Files.exists(destinationDir)) {
             Files.createDirectories(destinationDir);
         }
 
-        download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir);
+        return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir);
     }
 
-    private void download(String path, String method, String expectedContentType, Path destinationDir) throws IOException {
+    private Path download(String path, String method, String expectedContentType, Path destinationDir) throws IOException {
         final HttpURLConnection conn = openConnection(path);
 
         try {
@@ -89,9 +89,12 @@ public class HttpTransport {
                     throw new IOException("File name is unknown");
                 }
 
-                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(destinationDir.resolve(fileName)))) {
+                Path file = destinationDir.resolve(fileName);
+                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
                     IOUtils.copy(in, out);
                 }
+
+                return file;
             } catch (Exception e) {
                 throw new IOException(e);
             }

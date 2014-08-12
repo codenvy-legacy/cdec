@@ -18,11 +18,19 @@
 package com.codenvy.cdec.artifacts;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * @author Anatoliy Bazko
  */
 public interface Artifact {
+
+    /**
+     * Installs artifact
+     *
+     * @param binaries
+     */
+    void install(Path binaries) throws IOException;
 
     /**
      * @return current deployed version of the component
