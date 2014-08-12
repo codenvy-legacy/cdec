@@ -25,10 +25,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
+import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,7 +49,7 @@ import static com.codenvy.cdec.utils.Version.compare;
  * @author Anatoliy Bazko
  */
 @Singleton
-public class InstallationManagerImpl implements InstallationManager {
+public class InstallationManagerImpl extends ServerResource implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
     private final String apiEndpoint;

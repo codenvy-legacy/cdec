@@ -23,29 +23,47 @@ import java.io.IOException;
 import java.rmi.Remote;
 import java.util.Map;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
 /**
  * @author Anatoliy Bazko
  */
+@Path("im")
 public interface InstallationManager extends Remote {
 
     /**
      * Scans all available artifacts and returns their current versions.
      */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public Map<Artifact, String> getInstalledArtifacts() throws IOException;
 
     /**
      * Scans all available artifacts and returns their last versions from Update Server.
      */
+    @POST
+    @Path("get-available-2-download-artifacts")
+    @Produces(MediaType.APPLICATION_JSON)
     Map<Artifact, String> getAvailable2DownloadArtifacts() throws IOException;
 
     /**
      * Downloads updates.
      */
+    @GET
+    @Path("download-updates")
+    @Produces(MediaType.TEXT_HTML)
     void downloadUpdates() throws IOException;
 
     /**
      * @return the list of artifacts with newer versions than currently installed
      */
+    @POST
+    @Path("get-new-versions")
+    @Produces(MediaType.APPLICATION_JSON)
     Map<Artifact, String> getNewVersions();
 
     /**
@@ -54,5 +72,8 @@ public interface InstallationManager extends Remote {
      * @throws IOException
      *         if I/O error occurred
      */
+    @POST
+    @Path("check-new-versions")
+    @Produces(MediaType.TEXT_HTML)    
     void checkNewVersions() throws IOException, IllegalArgumentException;
 }
