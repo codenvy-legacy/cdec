@@ -28,9 +28,9 @@ public interface Artifact {
     /**
      * Installs artifact
      *
-     * @param binaries
+     * @param pathToBinaries
      */
-    void install(Path binaries) throws IOException;
+    void install(Path pathToBinaries) throws IOException;
 
     /**
      * @return current deployed version of the component

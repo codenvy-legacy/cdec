@@ -48,7 +48,7 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     @Override
-    public void install(Path binaries) throws IOException {
+    public void install(Path pathToBinaries) throws IOException {
         // TODO
     }
 

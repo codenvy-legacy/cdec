@@ -30,11 +30,6 @@
     <dependencies>
         <dependency>
             <groupId>com.codenvy.cdec</groupId>
-            <artifactId>installation-manager</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.cdec</groupId>
             <artifactId>installation-manager-commons</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -17,35 +17,51 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
+import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 
 /**
- * Command performs install updates.
+ * Command performs installing updates.
  *
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "cdec", name = "install", description = "Update CDEC...") // TODO
+@Command(scope = "cdec", name = "install", description = "Install updates")
 public class InstallCommand extends AbsCommand {
 
-//    @Argument(name = "project-id", description = "Specify the project ID to use", required = true, multiValued = false)
-//    private String projectId;
+    @Argument(name = "artifact", description = "Specify the artifact to install", required = false, multiValued = false)
+    private String artifactName;
+
+//    @Option(name="-v", aliases = {"--verbose"}, description = "Verbose output")
+//    private boolean verbose;
 
     @Override
-    protected Object doExecute() throws IOException {
+    protected Void doExecute() {
         init();
 
-        /*// not logged in
-        if (!checkifEnabledRemotes()) {
-            return null;
-        }*/
+        Map<Artifact, Path> downloaded = getDownloadedArtifacts();
+        for (Map.Entry<Artifact, Path> entry : downloaded.entrySet()) {
+            Artifact artifact = entry.getKey();
+            Path pathToBinaries = entry.getValue();
+
+            if (artifactName == null || artifact.getName().equals(artifactName)) {
+                try {
+                    artifact.install(pathToBinaries);
+                } catch (IOException e) {
+                    // TODO
+                }
+            }
+        }
 
         Ansi buffer = Ansi.ansi();
         buffer.fg(GREEN);
@@ -54,5 +70,9 @@ public class InstallCommand extends AbsCommand {
         System.out.println(buffer.toString());
 
         return null;
+    }
+
+    private Map<Artifact, Path> getDownloadedArtifacts() {
+        return null; // TODO rest request to IM
     }
 }

@@ -70,7 +70,6 @@ public class MongoStorage {
         initCollections();
     }
 
-
     /**
      * @return info about the latest installed artifact by user.
      */

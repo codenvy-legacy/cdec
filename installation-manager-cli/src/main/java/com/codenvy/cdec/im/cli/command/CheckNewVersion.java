@@ -43,17 +43,16 @@ import static org.fusesource.jansi.Ansi.Color.YELLOW;
 @Command(scope = "cdec", name = "check", description = "Update CDEC...")
 public class CheckNewVersion extends AbsCommand {
 
+    // TODO check class
+
     /**
      * Check availability new version.
      */
     protected Object doExecute() throws IOException {
         init();
 
+        // TODO rest request
         InstallationManager installationManager = BasedInjector.getInstance().getInstance(InstallationManager.class);
-
-        if (installationManager == null) {
-            throw new IllegalStateException("Can't get InstallationManager instance : " + installationManager.getClass().getName());
-        }
 
         installationManager.checkNewVersions();
         Map<Artifact, String> newVersions = installationManager.getNewVersions();
