@@ -24,6 +24,7 @@ import com.google.inject.Singleton;
 
 import javax.inject.Named;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -62,5 +63,11 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public boolean isValidSubscriptionRequired() {
         return true;
+    }
+
+    @Override
+    protected Path getInstalledPath() throws URISyntaxException {
+        return null;
+        // TODO
     }
 }

@@ -21,18 +21,13 @@ import com.codenvy.cdec.server.InstallationManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.apache.commons.io.FileUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -48,29 +43,14 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Override
     public void install(Path pathToBinaries) throws IOException {
-        unpack(pathToBinaries);
-
-        // TODO LOG
-    }
-
-    // TODO move to abstract?
-    private void unpack(Path pathToBinaries) throws IOException {
-        Path unpackDir;
         try {
-            unpackDir = getCurrentInstalledPath().resolve("update");
+            unpack(pathToBinaries);
         } catch (URISyntaxException e) {
             throw new IOException(e);
         }
 
-        FileUtils.deleteDirectory(unpackDir.toFile());
-        Files.createDirectories(unpackDir);
-
-        try (ZipInputStream in = new ZipInputStream(Files.newInputStream(pathToBinaries))) {
-            ZipEntry entry;
-            while ((entry = in.getNextEntry()) != null) {
-                FileUtils.copyInputStreamToFile(in, unpackDir.resolve(entry.getName()).toFile());
-            }
-        }
+        // TODO
+//        restart()
     }
 
     @Override
@@ -92,7 +72,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
         return false;
     }
 
-    private Path getCurrentInstalledPath() throws URISyntaxException {
+    @Override
+    protected Path getInstalledPath() throws URISyntaxException {
         URL location = InstallationManager.class.getClass().getProtectionDomain().getCodeSource().getLocation();
         return Paths.get(location.toURI());
     }

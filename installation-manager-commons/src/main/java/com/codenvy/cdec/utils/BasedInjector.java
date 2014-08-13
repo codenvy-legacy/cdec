@@ -41,6 +41,7 @@ public class BasedInjector {
 
     private static final Injector INJECTOR;
 
+
     static {
         INJECTOR = createInjector();
     }

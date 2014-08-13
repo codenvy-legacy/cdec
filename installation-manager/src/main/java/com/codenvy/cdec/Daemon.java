@@ -17,7 +17,6 @@
  */
 package com.codenvy.cdec;
 
-import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
 import com.codenvy.cdec.server.InstallationManager;
@@ -31,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -54,10 +52,6 @@ public class Daemon {
     }
 
     public static void main(String[] args) {
-        if (args.length != 0) {
-            update(args); // TODO testing purpose
-        }
-
         try {
             daemonize();
         } catch (Throwable e) {
@@ -69,15 +63,6 @@ public class Daemon {
         } catch (Exception e) {
             LOG.error("Can't start daemon. " + e.getMessage());
             stop();
-        }
-    }
-
-    private static void update(String[] args) {
-        InstallManagerArtifact artifact = injector.getInstance(InstallManagerArtifact.class);
-        try {
-            artifact.install(Paths.get(args[0]));
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
         }
     }
 
