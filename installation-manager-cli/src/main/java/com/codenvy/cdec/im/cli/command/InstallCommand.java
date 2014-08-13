@@ -49,19 +49,7 @@ public class InstallCommand extends AbsCommand {
     protected Void doExecute() {
         init();
 
-        Map<Artifact, Path> downloaded = getDownloadedArtifacts();
-        for (Map.Entry<Artifact, Path> entry : downloaded.entrySet()) {
-            Artifact artifact = entry.getKey();
-            Path pathToBinaries = entry.getValue();
-
-            if (artifactName == null || artifact.getName().equals(artifactName)) {
-                try {
-                    artifact.install(pathToBinaries);
-                } catch (IOException e) {
-                    // TODO
-                }
-            }
-        }
+        // TODO
 
         Ansi buffer = Ansi.ansi();
         buffer.fg(GREEN);
@@ -70,9 +58,5 @@ public class InstallCommand extends AbsCommand {
         System.out.println(buffer.toString());
 
         return null;
-    }
-
-    private Map<Artifact, Path> getDownloadedArtifacts() {
-        return null; // TODO rest request to IM
     }
 }

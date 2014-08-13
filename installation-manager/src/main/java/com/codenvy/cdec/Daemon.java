@@ -34,9 +34,11 @@ import org.slf4j.LoggerFactory;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
-import com.codenvy.cdec.im.restlet.TestApplication;
 import com.codenvy.cdec.server.InstallationManager;
+import com.codenvy.cdec.server.restlet.RestletServer;
+import com.codenvy.cdec.server.restlet.ServerDescription;
 import com.codenvy.cdec.utils.BasedInjector;
+import com.codenvy.cdec.utils.Commons;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -46,22 +48,10 @@ import com.google.inject.Module;
  */
 public class Daemon {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Daemon.class);
+    private static final Logger        LOG = LoggerFactory.getLogger(Daemon.class);
 
     private static final UpdateManager updateManager;
     private static final Injector      injector;
-    
-    static private Component             component;
-    static private Server                server;
-
-    static private String                login    = "login";
-    static private char[]                password = "secret".toCharArray();
-    static private String                realm = "im-realm";
-    static private String                serverDigestKey = "imSecretServerKey";
-        
-    static private String                baseUri;
-    static private int                   port = 8182;
-    static private String                serverAddress = "localhost";
 
     static {
         injector = createInjector();
@@ -114,7 +104,8 @@ public class Daemon {
         }
 
         try {
-            component.stop();
+            RestletServer.stop();
+            LOG.info("Server stopped.");
         } catch (Exception e) {
             LOG.error("Can't stop server. ", e);
         }
@@ -127,30 +118,12 @@ public class Daemon {
             LOG.error("Can't initialize Update Manager. ", e);
         }
 
-        startServer();
-    }
-
-    private static void startServer() {
-        component = new Component();
-        server = component.getServers().add(Protocol.HTTP, port);
-
-        baseUri = "http://" + serverAddress + ":" + server.getPort();
-        
         try {
-            createApplicationWithDigestAuth();
-        } catch (Exception e) {
-            LOG.error("Can't create application. ", e);
-            return;
-        }
-        
-        try {
-            component.start();
+            RestletServer.start(new InstallationManagerApplication());
         } catch (Exception e) {
             LOG.error("Can't start server. ", e);
             return;
         }
-
-        LOG.info("Server started on port " + server.getPort());
     }
 
     private static Injector createInjector() {
@@ -162,30 +135,4 @@ public class Daemon {
         });
     }
     
-    private static void createApplicationWithDigestAuth() throws Exception {
-        // create JAX-RS runtime environment
-        JaxRsApplication application = new JaxRsApplication(component.getContext());
-
-        // attach Application
-        application.add(new InstallationManagerApplication());
-
-        Authenticator authenticator = getDigestAuthenticator(application);
-
-        application.setAuthenticator(authenticator);
-
-        // Attach the application to the component
-        component.getDefaultHost().attach(application);
-    }
-
-    private static Authenticator getDigestAuthenticator(JaxRsApplication application) {
-        // Create authenticator
-        DigestAuthenticator authenticator = new DigestAuthenticator(application.getContext(), realm, serverDigestKey);
-
-        // Load a single static login/secret pair
-        MapVerifier mapVerifier = new MapVerifier();
-        mapVerifier.getLocalSecrets().put(login, password);
-        authenticator.setWrappedVerifier(mapVerifier);
-
-        return authenticator;
-    }
 }

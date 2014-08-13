@@ -22,7 +22,9 @@ package com.codenvy.cdec.im.cli.command;
  */
 
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.client.restlet.RestletClient;
 import com.codenvy.cdec.server.InstallationManager;
+import com.codenvy.cdec.server.InstallationManagerService;
 import com.codenvy.cdec.utils.BasedInjector;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
@@ -43,32 +45,34 @@ import static org.fusesource.jansi.Ansi.Color.YELLOW;
 @Command(scope = "cdec", name = "check", description = "Update CDEC...")
 public class CheckNewVersion extends AbsCommand {
 
-    // TODO check class
+    InstallationManagerService installationManagerProxy;
 
     /**
      * Check availability new version.
      */
-    protected Object doExecute() throws IOException {
+    protected Object doExecute() throws Exception {
         init();
 
-        // TODO rest request
-        InstallationManager installationManager = BasedInjector.getInstance().getInstance(InstallationManager.class);
-
-        installationManager.checkNewVersions();
-        Map<Artifact, String> newVersions = installationManager.getNewVersions();
-
+        installationManagerProxy = RestletClient.getServiceProxy(InstallationManagerService.class);
+        
         Ansi buffer = Ansi.ansi();
 
-        if (newVersions.isEmpty()) {
-            buffer.fg(GREEN);
-            buffer.a("All artifacts are up-to-date.");
-        } else {
-            buffer.fg(YELLOW);
-            buffer.a("Following new artifacts are available for update :");
-            for (Map.Entry<Artifact, String> entry : newVersions.entrySet()) {
-                buffer.a(entry.getKey().getName() + ":" + entry.getValue());
-            }
-        }
+        String response = installationManagerProxy.doCheckNewVersions();
+        
+        buffer.fg(GREEN);
+        buffer.a("New version: " + response);
+        
+        
+//        if (newVersions.isEmpty()) {
+//            buffer.fg(GREEN);
+//            buffer.a("All artifacts are up-to-date.");
+//        } else {
+//            buffer.fg(YELLOW);
+//            buffer.a("Following new artifacts are available for update :");
+//            for (Map.Entry<Artifact, String> entry : newVersions.entrySet()) {
+//                buffer.a(entry.getKey().getName() + ":" + entry.getValue());
+//            }
+//        }
 
         buffer.reset();
         System.out.println(buffer.toString());

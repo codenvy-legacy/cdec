@@ -15,19 +15,24 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.restlet;
+package com.codenvy.cdec.server;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
-import javax.ws.rs.core.Application;
-
-public class TestApplication extends Application {
-
-    public Set<Class<?>> getClasses() {
-        Set<Class<?>> rrcs = new HashSet<Class<?>>();
-        rrcs.add(TestResourceImpl.class);
-        return rrcs;
-    }
-
+/**
+ * Helper interface to perform first request to get unique and transient information from server to build the DIGEST authentication
+ * credentials for the next requests.
+ * 
+ * @author Dmytro Nochevnov
+ */
+@Path("im")
+public interface EmptyService {
+    @HEAD
+    @Path("empty")
+    @Produces(MediaType.TEXT_HTML)
+    public void empty();
+    
 }

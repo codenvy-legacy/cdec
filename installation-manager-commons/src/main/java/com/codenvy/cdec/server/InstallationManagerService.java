@@ -17,41 +17,48 @@
  */
 package com.codenvy.cdec.server;
 
-import java.io.IOException;
-import java.util.Map;
-
-import com.codenvy.cdec.artifacts.Artifact;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 /**
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-public interface InstallationManager {
+@Path("im")
+public interface InstallationManagerService extends EmptyService {
 
     /**
      * Scans all available artifacts and returns their current versions.
      */
-    public Map<Artifact, String> getInstalledArtifacts() throws IOException;
-
-    /**
-     * Scans all available artifacts and returns their last versions from Update Server.
-     */
-    Map<Artifact, String> getAvailable2DownloadArtifacts() throws IOException;
-
+    @POST
+    @Path("get-available-2-download-artifacts")
+    @Produces(MediaType.APPLICATION_JSON)
+    public void doGetAvailable2DownloadArtifacts();
+    
     /**
      * Downloads updates.
      */
-    void downloadUpdates() throws IOException;
+    @GET
+    @Path("download-updates")
+    @Produces(MediaType.TEXT_HTML)
+    public void doDownloadUpdates();
 
+    
     /**
      * @return the list of artifacts with newer versions than currently installed
      */
-    Map<Artifact, String> getNewVersions();
+    @POST
+    @Path("get-new-versions")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String doGetNewVersions();
 
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
-     *
-     * @throws IOException
-     *         if I/O error occurred
      */
-    void checkNewVersions() throws IOException, IllegalArgumentException;
+    @POST
+    @Path("check-new-versions")
+    @Produces(MediaType.TEXT_HTML)
+    public String doCheckNewVersions();
 }
