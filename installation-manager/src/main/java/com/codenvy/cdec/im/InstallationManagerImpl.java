@@ -59,6 +59,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     private final Map<Artifact, String> newVersions;
 
+
     @Inject
     public InstallationManagerImpl(@Named("api.endpoint") String apiEndpoint,
                                    @Named("codenvy.installation-manager.update_endpoint") String updateEndpoint,
