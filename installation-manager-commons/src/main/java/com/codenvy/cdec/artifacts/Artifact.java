@@ -23,7 +23,7 @@ import java.nio.file.Path;
 /**
  * @author Anatoliy Bazko
  */
-public interface Artifact {
+public interface Artifact extends Comparable<Artifact> {
 
     /**
      * Installs artifact
@@ -46,4 +46,9 @@ public interface Artifact {
      * @return the artifact name
      */
     String getName();
+
+    /**
+     * @return the priority of the artifact to install, update etc.
+     */
+    int getPriority();
 }

@@ -65,6 +65,11 @@ public abstract class AbstractArtifact implements Artifact {
         return name;
     }
 
+    @Override
+    public int compareTo(Artifact o) {
+        return getPriority() - o.getPriority();
+    }
+
     protected void unpack(Path pathToBinaries) throws IOException, URISyntaxException {
         Path installedPath = getInstalledPath();
 

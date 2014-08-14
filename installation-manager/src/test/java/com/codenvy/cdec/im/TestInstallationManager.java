@@ -26,9 +26,10 @@ import org.apache.commons.io.FileUtils;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,24 +47,24 @@ import static org.testng.Assert.*;
  */
 public class TestInstallationManager {
 
-    private Artifact CDEC_ARTIFACT;
-    private Artifact INSTALL_MANAGER_ARTIFACT;
+    private Artifact cdecArtifact;
+    private Artifact installManagerArtifact;
 
     private InstallationManagerImpl manager;
     private HttpTransport           transport;
 
-    @BeforeTest
+    @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
 
-        INSTALL_MANAGER_ARTIFACT = new InstallManagerArtifact();
-        CDEC_ARTIFACT = new CDECArtifact("update/endpoint", transport);
+        installManagerArtifact = spy(new InstallManagerArtifact());
+        cdecArtifact = spy(new CDECArtifact("update/endpoint", transport));
 
         manager = spy(new InstallationManagerImpl("api/endpoint",
                                                   "update/endpoint",
                                                   "target/download",
                                                   transport,
-                                                  new HashSet<>(Arrays.asList(INSTALL_MANAGER_ARTIFACT, CDEC_ARTIFACT))));
+                                                  new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
 
     }
 
@@ -74,9 +75,40 @@ public class TestInstallationManager {
     }
 
     @Test
+    public void testInstallArtifactDoNothingIfArtifactInstalled() throws Exception {
+        doReturn(new HashMap<Artifact, Path>() {{
+            put(cdecArtifact, Paths.get("target/download/cdec/2.10.1/file1"));
+        }}).when(manager).getDownloadedArtifacts();
+        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
+
+        manager.installArtifact(cdecArtifact);
+
+        verify(cdecArtifact, never()).install(any(Path.class));
+    }
+
+    @Test(expectedExceptions = FileNotFoundException.class)
+    public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
+        doReturn(null).when(cdecArtifact).getCurrentVersion();
+
+        manager.installArtifact(cdecArtifact);
+    }
+
+    @Test
+    public void testInstallArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, Path>() {{
+            put(cdecArtifact, Paths.get("target/download/cdec/1.0.1/file1"));
+        }}).when(manager).getDownloadedArtifacts();
+        doNothing().when(cdecArtifact).install(any(Path.class));
+        doReturn(null).when(cdecArtifact).getCurrentVersion();
+
+        assertEquals(manager.installArtifact(cdecArtifact), "1.0.1");
+        verify(cdecArtifact).install(any(Path.class));
+    }
+
+    @Test
     public void testDownloadUpdates() throws Exception {
-        final Path file1 = Paths.get("target", "download", CDEC_ARTIFACT.getName(), "file1");
-        final Path file2 = Paths.get("target", "download", INSTALL_MANAGER_ARTIFACT.getName(), "file2");
+        final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "2.10.5", "file1");
+        final Path file2 = Paths.get("target", "download", installManagerArtifact.getName(), "1.0.1", "file2");
 
         stub(transport.download(eq("update/endpoint/repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1"), any(Path.class)))
                 .toAnswer(new Answer<Path>() {
@@ -97,8 +129,8 @@ public class TestInstallationManager {
                     }
                 });
         when(manager.getNewVersions()).thenReturn(new HashMap<Artifact, String>() {{
-            put(CDEC_ARTIFACT, "2.10.5");
-            put(INSTALL_MANAGER_ARTIFACT, "1.0.1");
+            put(cdecArtifact, "2.10.5");
+            put(installManagerArtifact, "1.0.1");
         }});
         doReturn(true).when(manager).isValidSubscription();
 
@@ -106,8 +138,8 @@ public class TestInstallationManager {
 
         Map<Artifact, Path> m = manager.getDownloadedArtifacts();
         assertEquals(m.size(), 2);
-        assertEquals(m.get(CDEC_ARTIFACT), file1);
-        assertEquals(m.get(INSTALL_MANAGER_ARTIFACT), file2);
+        assertEquals(m.get(cdecArtifact), file1);
+        assertEquals(m.get(installManagerArtifact), file2);
     }
 
     @Test
@@ -115,8 +147,8 @@ public class TestInstallationManager {
         when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME)).thenReturn("{version:2.10.4}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts();
-        assertEquals(m.get(CDEC_ARTIFACT), "2.10.4");
-        assertNotNull(m.get(INSTALL_MANAGER_ARTIFACT));
+        assertEquals(m.get(cdecArtifact), "2.10.4");
+        assertNotNull(m.get(installManagerArtifact));
     }
 
     @Test
@@ -126,14 +158,14 @@ public class TestInstallationManager {
         Map<Artifact, String> m = manager.getAvailable2DownloadArtifacts();
 
         assertEquals(m.size(), 2);
-        assertEquals(m.get(INSTALL_MANAGER_ARTIFACT), "1.0.1");
-        assertEquals(m.get(CDEC_ARTIFACT), "2.10.5");
+        assertEquals(m.get(installManagerArtifact), "1.0.1");
+        assertEquals(m.get(cdecArtifact), "2.10.5");
     }
 
     @Test
     public void testGetDownloadedArtifacts() throws Exception {
-        Path file1 = Paths.get("target", "download", CDEC_ARTIFACT.getName(), "file1");
-        Path file2 = Paths.get("target", "download", INSTALL_MANAGER_ARTIFACT.getName(), "file2");
+        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
+        Path file2 = Paths.get("target", "download", installManagerArtifact.getName(), "1.0.2", "file2");
         Files.createDirectories(file1.getParent());
         Files.createDirectories(file2.getParent());
         Files.createFile(file1);
@@ -141,8 +173,22 @@ public class TestInstallationManager {
 
         Map<Artifact, Path> m = manager.getDownloadedArtifacts();
         assertEquals(m.size(), 2);
-        assertEquals(m.get(CDEC_ARTIFACT), file1);
-        assertEquals(m.get(INSTALL_MANAGER_ARTIFACT), file2);
+        assertEquals(m.get(cdecArtifact), file1);
+        assertEquals(m.get(installManagerArtifact), file2);
+    }
+
+    @Test
+    public void testGetDownloadedArtifactsServeralVersions() throws Exception {
+        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
+        Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
+        Files.createDirectories(file1.getParent());
+        Files.createDirectories(file2.getParent());
+        Files.createFile(file1);
+        Files.createFile(file2);
+
+        Map<Artifact, Path> m = manager.getDownloadedArtifacts();
+        assertEquals(m.size(), 1);
+        assertEquals(m.get(cdecArtifact), file2);
     }
 
     @Test
@@ -153,8 +199,8 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IOException.class)
     public void testGetDownloadedArtifactsErrorIfMoreThan1File() throws Exception {
-        Path file1 = Paths.get("target", "download", CDEC_ARTIFACT.getName(), "file1");
-        Path file2 = Paths.get("target", "download", CDEC_ARTIFACT.getName(), "file2");
+        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
+        Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file2");
         Files.createDirectories(file1.getParent());
         Files.createFile(file1);
         Files.createFile(file2);

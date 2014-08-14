@@ -17,7 +17,8 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.cdec.utils.Version;
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.utils.Commons;
 import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -28,12 +29,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
-import static com.codenvy.cdec.utils.Version.compare;
-import static com.codenvy.cdec.utils.Version.valueOf;
 import static com.google.common.io.Files.copy;
 
 /**
@@ -68,39 +66,14 @@ public class ArtifactStorage {
 
     /**
      * @return the latest available version of the artifact in the repository
-     * @throws com.codenvy.cdec.update.ArtifactNotFoundException
+     * @throws com.codenvy.cdec.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
     public String getLatestVersion(String artifact) throws IOException {
-        Version latestVersion = null;
-
         Path dir = getArtifactDir(artifact);
-        if (!Files.exists(dir)) {
-            throw new ArtifactNotFoundException(artifact);
-        }
-
-        Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
-        while (pathIterator.hasNext()) {
-            try {
-                Path next = pathIterator.next();
-                if (Files.isDirectory(next)) {
-                    Version version = valueOf(next.getFileName().toString());
-                    if (latestVersion == null || compare(version, latestVersion) > 0) {
-                        latestVersion = version;
-                    }
-                }
-            } catch (IllegalArgumentException e) {
-                // maybe it isn't a version directory
-            }
-        }
-
-        if (latestVersion == null) {
-            throw new ArtifactNotFoundException(artifact);
-        }
-
-        return latestVersion.toString();
+        return Commons.getLatestVersion(artifact, dir);
     }
 
     /**
@@ -128,7 +101,7 @@ public class ArtifactStorage {
      *
      * @throws com.codenvy.cdec.update.PropertiesNotFoundException
      *         if property file is absent in the repository
-     * @throws com.codenvy.cdec.update.ArtifactNotFoundException
+     * @throws com.codenvy.cdec.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs

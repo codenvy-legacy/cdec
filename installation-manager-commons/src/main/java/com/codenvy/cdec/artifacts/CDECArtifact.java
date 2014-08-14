@@ -66,6 +66,11 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     @Override
+    public int getPriority() {
+        return 2;
+    }
+
+    @Override
     protected Path getInstalledPath() throws URISyntaxException {
         return null;
         // TODO

@@ -73,6 +73,11 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
+    public int getPriority() {
+        return 1;
+    }
+
+    @Override
     protected Path getInstalledPath() throws URISyntaxException {
         URL location = InstallationManager.class.getClass().getProtectionDomain().getCodeSource().getLocation();
         return Paths.get(location.toURI());

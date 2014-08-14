@@ -18,9 +18,13 @@
 package com.codenvy.cdec.utils;
 
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.cdec.ArtifactNotFoundException;
 
 import org.testng.annotations.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +35,33 @@ import static org.testng.Assert.assertNotNull;
  * @author Anatoliy Bazko
  */
 public class TestCommons {
+
+    public static final Path DOWNLOAD_DIR = Paths.get("target", "download");
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
+    public void testGetLatestVersionThrowExceptionIfArtifactDirectoryAbsent() throws Exception {
+        Commons.getLatestVersion("installation-manager", DOWNLOAD_DIR);
+    }
+
+    @Test
+    public void testGetLatestVersion() throws Exception {
+        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("1.0.1"));
+        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("1.0.2"));
+        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("3.1.1"));
+        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("4.4.1"));
+
+        assertEquals(Commons.getLatestVersion("installation-manager", DOWNLOAD_DIR.resolve("installation-manager")), "4.4.1");
+    }
+
+    @Test
+    public void testExtractVersion() throws Exception {
+        assertEquals(Commons.extractVersion(Paths.get("repository", "artifact", "version", "file")), "version");
+    }
+
+    @Test
+    public void testExtractArtifactName() throws Exception {
+        assertEquals(Commons.extractArtifactName(Paths.get("repository", "artifact", "version", "file")), "artifact");
+    }
 
     @Test
     public void testCombinePath() throws Exception {

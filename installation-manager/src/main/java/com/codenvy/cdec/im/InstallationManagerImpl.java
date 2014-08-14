@@ -17,10 +17,12 @@
  */
 package com.codenvy.cdec.im;
 
+import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
+import com.codenvy.cdec.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -29,18 +31,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.codenvy.cdec.utils.Commons.combinePaths;
-import static com.codenvy.cdec.utils.Commons.fromJson;
+import static com.codenvy.cdec.utils.Commons.*;
 import static com.codenvy.cdec.utils.Version.compare;
 
 /**
@@ -70,7 +69,7 @@ public class InstallationManagerImpl implements InstallationManager {
         this.apiEndpoint = apiEndpoint;
         this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
-        this.artifacts = artifacts;
+        this.artifacts = new TreeSet<>(artifacts); // keep order
         this.newVersions = new ConcurrentHashMap<>(artifacts.size());
 
         if (!Files.exists(this.downloadDir)) {
@@ -78,6 +77,27 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         LOG.info("Download directory " + downloadDir);
+        LOG.info(artifacts.getClass().getName());
+    }
+
+    @Override
+    public String installArtifact(Artifact artifact) throws IOException {
+        Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
+        Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
+
+        if (downloadedArtifacts.containsKey(artifact)) {
+            Path pathToBinaries = downloadedArtifacts.get(artifact);
+            String version = Commons.extractVersion(pathToBinaries);
+            String installedVersion = installedArtifacts.get(artifact);
+
+            if (installedVersion == null || Version.compare(version, installedVersion) > 1) {
+                artifact.install(pathToBinaries);
+            }
+
+            return version;
+        } else {
+            throw new FileNotFoundException("Binaries to install artifact not found");
+        }
     }
 
     @Override
@@ -125,7 +145,7 @@ public class InstallationManagerImpl implements InstallationManager {
                                              + "download/" + artifact.getName() + "/" + version);
 
             if (!isValidSubscriptionRequired || isValidSubscription()) {
-                Path artifactDownloadDir = getArtifactDownloadedDir(artifact);
+                Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
                 FileUtils.deleteDirectory(artifactDownloadDir.toFile());
 
                 transport.download(requestUrl, artifactDownloadDir);
@@ -137,11 +157,23 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
-    public Map<Artifact, Path> getDownloadedArtifacts() throws IOException {
+    /**
+     * @return downloaded artifacts from the local repository
+     * @throws IOException
+     *         if an I/O error occurs
+     */
+    protected Map<Artifact, Path> getDownloadedArtifacts() throws IOException {
         Map<Artifact, Path> downloaded = new HashMap<>(artifacts.size());
 
         for (Artifact artifact : artifacts) {
-            Path artifactDownloadDir = getArtifactDownloadedDir(artifact);
+            String version;
+            try {
+                version = getLatestVersion(artifact.getName(), downloadDir.resolve(artifact.getName()));
+            } catch (ArtifactNotFoundException e) {
+                continue;
+            }
+
+            Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
             if (Files.exists(artifactDownloadDir)) {
                 Iterator<Path> iter = Files.newDirectoryStream(artifactDownloadDir).iterator();
 
@@ -160,8 +192,8 @@ public class InstallationManagerImpl implements InstallationManager {
         return downloaded;
     }
 
-    private Path getArtifactDownloadedDir(Artifact artifact) {
-        return downloadDir.resolve(artifact.getName());
+    private Path getArtifactDownloadedDir(Artifact artifact, String version) {
+        return downloadDir.resolve(artifact.getName()).resolve(version);
     }
 
     protected boolean isValidSubscription() throws IOException {

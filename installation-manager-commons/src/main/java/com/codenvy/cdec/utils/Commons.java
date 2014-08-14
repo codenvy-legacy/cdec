@@ -19,12 +19,19 @@ package com.codenvy.cdec.utils;
 
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.dto.server.DtoFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.List;
+
+import static com.codenvy.cdec.utils.Version.compare;
+import static com.codenvy.cdec.utils.Version.valueOf;
 
 /**
  * @author Anatoliy Bazko
@@ -71,6 +78,56 @@ public class Commons {
      */
     public static <T> T fromJson(String json, Class<T> t) {
         return gson.fromJson(json, t);
+    }
+
+    /**
+     * @return the version of the artifact out of path
+     */
+    public static String extractVersion(Path pathToBinaries) {
+        return pathToBinaries.getParent().getFileName().toString();
+    }
+
+    /**
+     * @return the artifact name out of path
+     */
+    public static String extractArtifactName(Path pathToBinaries) {
+        return pathToBinaries.getParent().getParent().getFileName().toString();
+    }
+
+    /**
+     * @return the last version of the artifact in the directory
+     * @throws com.codenvy.cdec.ArtifactNotFoundException
+     *         if artifact is absent in the repository
+     * @throws java.io.IOException
+     *         if an I/O error occurs
+     */
+    public static String getLatestVersion(String artifact, Path dir) throws IOException {
+        Version latestVersion = null;
+
+        if (!Files.exists(dir)) {
+            throw new ArtifactNotFoundException(artifact);
+        }
+
+        Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
+        while (pathIterator.hasNext()) {
+            try {
+                Path next = pathIterator.next();
+                if (Files.isDirectory(next)) {
+                    Version version = valueOf(next.getFileName().toString());
+                    if (latestVersion == null || compare(version, latestVersion) > 0) {
+                        latestVersion = version;
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                // maybe it isn't a version directory
+            }
+        }
+
+        if (latestVersion == null) {
+            throw new ArtifactNotFoundException(artifact);
+        }
+
+        return latestVersion.toString();
     }
 
     /**

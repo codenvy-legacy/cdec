@@ -47,27 +47,6 @@ public class TestArtifactStorage extends BaseTest {
         artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
     }
 
-    @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void testGetLastVersionThrowExceptionIfDownloadDirectoryAbsent() throws Exception {
-        Files.delete(DOWNLOAD_DIRECTORY);
-        artifactStorage.getLatestVersion("installation-manager");
-    }
-
-    @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void testGetLastVersionThrowExceptionIfArtifactDirectoryAbsent() throws Exception {
-        artifactStorage.getLatestVersion("installation-manager");
-    }
-
-    @Test
-    public void testGetLastVersion() throws Exception {
-        Files.createDirectories(Paths.get("target", "download", "installation-manager", "1.0.1"));
-        Files.createDirectories(Paths.get("target", "download", "installation-manager", "1.0.2"));
-        Files.createDirectories(Paths.get("target", "download", "installation-manager", "3.1.1"));
-        Files.createDirectories(Paths.get("target", "download", "installation-manager", "4.4.1"));
-
-        assertEquals(artifactStorage.getLatestVersion("installation-manager"), "4.4.1");
-    }
-
     @Test
     public void testGetArtifactDir() throws Exception {
         assertEquals(artifactStorage.getArtifactDir("installation-manager", "1.0.1").toString(),

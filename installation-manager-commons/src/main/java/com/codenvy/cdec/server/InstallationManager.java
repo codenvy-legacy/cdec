@@ -28,6 +28,16 @@ import java.util.Map;
  */
 public interface InstallationManager extends Remote {
 
+
+    /**
+     * Install artifact if existed version lower than downloaded one.
+     *
+     * @return the installed version of the artifact
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    public String installArtifact(Artifact artifact) throws IOException;
+
     /**
      * Scans all available artifacts and returns their current versions.
      */
