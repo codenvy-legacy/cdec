@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.client.restlet;
+package com.codenvy.cdec.restlet;
 
 import java.io.IOException;
 
@@ -31,12 +31,12 @@ import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.server.restlet.ServerDescription;
 import com.codenvy.cdec.server.EmptyService;
 import com.codenvy.cdec.server.InstallationManagerService;
+import com.codenvy.cdec.server.ServerDescription;
 
 /** @author Dmytro Nochevnov */
-public class RestletClient {
+public class RestletClientFactory {
     public static <T extends EmptyService> T getServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
                                                                                           IllegalPathException,
                                                                                           IOException {

@@ -21,24 +21,16 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import org.quartz.SchedulerException;
-import org.restlet.Component;
-import org.restlet.Server;
-import org.restlet.data.Protocol;
-import org.restlet.ext.crypto.DigestAuthenticator;
-import org.restlet.ext.jaxrs.JaxRsApplication;
-import org.restlet.security.Authenticator;
-import org.restlet.security.MapVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
+import com.codenvy.cdec.im.InstallationManagerApplication;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
+import com.codenvy.cdec.restlet.RestletServerFactory;
 import com.codenvy.cdec.server.InstallationManager;
-import com.codenvy.cdec.server.restlet.RestletServer;
-import com.codenvy.cdec.server.restlet.ServerDescription;
 import com.codenvy.cdec.utils.BasedInjector;
-import com.codenvy.cdec.utils.Commons;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -50,12 +42,14 @@ public class Daemon {
 
     private static final Logger        LOG = LoggerFactory.getLogger(Daemon.class);
 
-    private static final UpdateManager updateManager;
-    private static final Injector      injector;
+    private static final UpdateManager                      updateManager;
+    private static final Injector                           injector;
+    private static final RestletServerFactory.RestletServer installationManager;
 
     static {
         injector = createInjector();
         updateManager = injector.getInstance(UpdateManager.class);
+        installationManager = RestletServerFactory.getServer(new InstallationManagerApplication());
     }
 
     public static void main(String[] args) {
@@ -104,7 +98,7 @@ public class Daemon {
         }
 
         try {
-            RestletServer.stop();
+            installationManager.stop();
             LOG.info("Server stopped.");
         } catch (Exception e) {
             LOG.error("Can't stop server. ", e);
@@ -119,7 +113,7 @@ public class Daemon {
         }
 
         try {
-            RestletServer.start(new InstallationManagerApplication());
+            installationManager.start();
         } catch (Exception e) {
             LOG.error("Can't start server. ", e);
             return;

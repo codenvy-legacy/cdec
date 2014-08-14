@@ -18,10 +18,15 @@
 package com.codenvy.cdec.server;
 
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.representation.Representation;
 
 /**
  * @author Dmytro Nochevnov
@@ -32,7 +37,7 @@ public interface InstallationManagerService extends EmptyService {
     /**
      * Scans all available artifacts and returns their current versions.
      */
-    @POST
+    @GET
     @Path("get-available-2-download-artifacts")
     @Produces(MediaType.APPLICATION_JSON)
     public void doGetAvailable2DownloadArtifacts();
@@ -44,21 +49,20 @@ public interface InstallationManagerService extends EmptyService {
     @Path("download-updates")
     @Produces(MediaType.TEXT_HTML)
     public void doDownloadUpdates();
-
     
     /**
      * @return the list of artifacts with newer versions than currently installed
      */
-    @POST
+    @GET
     @Path("get-new-versions")
     @Produces(MediaType.APPLICATION_JSON)
-    public String doGetNewVersions();
+    public void doGetNewVersions();
 
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
      */
-    @POST
-    @Path("check-new-versions")
-    @Produces(MediaType.TEXT_HTML)
-    public String doCheckNewVersions();
+    @GET
+    @Path("check-new-versions/{version}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonRepresentation doCheckNewVersions(@PathParam(value = "version") final String version)  throws JSONException;
 }

@@ -15,14 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.server.restlet;
+package com.codenvy.cdec.server;
 
 /**
  * @author Dmytro Nochevnov</a>
  */
 public class ServerDescription {
     public static final String LOGIN             = "im";
-    public static final char[] PASSWORD          = getRandomPassword();
+    // public static final char[] PASSWORD          = getRandomPassword();  // TODO uncomment
+    public static final char[] PASSWORD          = "secret".toCharArray();
 
     public static final String REALM             = "im-realm";
     public static final String SERVER_DIGEST_KEY = "imSecretServerKey";     // TODO

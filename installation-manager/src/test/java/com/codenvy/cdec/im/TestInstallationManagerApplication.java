@@ -19,14 +19,23 @@ package com.codenvy.cdec.im;
 
 import static org.testng.Assert.assertEquals;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.restlet.Response;
+import org.restlet.data.Status;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.representation.Representation;
+import org.restlet.resource.ResourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.*;
+
 import com.codenvy.cdec.Daemon;
-import com.codenvy.cdec.client.restlet.RestletClient;
+import com.codenvy.cdec.restlet.RestletClientFactory;
 import com.codenvy.cdec.server.InstallationManagerService;
 
 /**
@@ -41,20 +50,44 @@ public class TestInstallationManagerApplication {
     public void setUp() throws Exception {          
         Daemon.start();
         
-        managerSeviceProxy = RestletClient.getServiceProxy(InstallationManagerService.class);
+//        System.in.read();
+        
+        managerSeviceProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
         Daemon.stop();
     }
-
+    
     @Test
-    public void testGetNewVersions() throws Exception {
-        String expectedNewVersionList = "{}";
+    public void testCheckNewVersions() throws Exception {
+        String expectedContent = "[{\"status\":\"downloaded\",\"version\":\"v1\"}]";
         
-        String newVersionList = managerSeviceProxy.doGetNewVersions();
-        assertEquals(newVersionList, expectedNewVersionList);
+        try {
+            JsonRepresentation response = managerSeviceProxy.doCheckNewVersions("v1");
+            
+            if (response == null) {
+                fail();
+            }
+            
+            JSONArray artifacts = response.getJsonArray();
+            LOG.info(artifacts.toString());
+            
+            for (int i = 0; i < artifacts.length(); i++) {
+                JSONObject artifact = artifacts.getJSONObject(i);
+                LOG.info(artifact.toString());                
+            }            
+            
+            assertEquals(expectedContent, artifacts.toString());
+            
+        } catch (ResourceException re) {
+            if (re.getStatus().equals(Status.SERVER_ERROR_INTERNAL)) {
+                LOG.info(re.getMessage());
+            }
+            
+            fail();
+        }
     }
     
 

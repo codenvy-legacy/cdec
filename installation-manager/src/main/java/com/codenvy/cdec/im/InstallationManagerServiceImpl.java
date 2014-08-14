@@ -20,6 +20,13 @@ package com.codenvy.cdec.im;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.ws.rs.core.Response.Status;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.representation.Representation;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +35,7 @@ import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.server.InstallationManagerService;
 import com.codenvy.cdec.utils.BasedInjector;
+import com.codenvy.dto.server.JsonStringMapImpl;
 
 /**
  * @author Dmytro Nochevnov
@@ -43,30 +51,42 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     
     public void doGetAvailable2DownloadArtifacts() {
         // TODO
+//        return null;
     }
     
     public void doDownloadUpdates() {
         // TODO
+//        return null;
     }
 
-    public String doGetNewVersions() {
+    public void doGetNewVersions() {
         // TODO
-        Map<Artifact, String> newVersions = manager.getNewVersions();
-        return newVersions.toString();
+//        Map<Artifact, String> newVersions = manager.getNewVersions();
+        
     }
 
-    public String doCheckNewVersions() {
-        try {
-            manager.checkNewVersions();
-        } catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    public JsonRepresentation doCheckNewVersions(final String version) throws JSONException {
+//        try {
+//            manager.checkNewVersions();
+//        } catch (IllegalArgumentException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
         
-        return "OK";  // TODO
+        JSONArray artifacts = new JSONArray();
+
+        JSONObject artifact1 = new JSONObject();
+        artifact1.put("version", version);
+        artifact1.put("status", "downloaded");
+
+        artifacts.put(artifact1);
+        
+        JsonRepresentation response = new JsonRepresentation(artifacts);
+        
+        return response;
     }
 
     @Override
