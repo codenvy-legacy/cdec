@@ -17,38 +17,38 @@
  */
 package com.codenvy.cdec;
 
+
+import java.io.IOException;
+
+import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.codenvy.cdec.im.InstallationManagerApplication;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
+import com.codenvy.cdec.restlet.RestletServerFactory;
 import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.utils.BasedInjector;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 
-import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.rmi.AlreadyBoundException;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-
 /**
  * @author Anatoliy Bazko
  */
 public class Daemon {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Daemon.class);
+    private static final Logger        LOG = LoggerFactory.getLogger(Daemon.class);
 
-    private static final UpdateManager updateManager;
-    private static final Injector      injector;
+    private static final UpdateManager                      updateManager;
+    private static final Injector                           injector;
+    private static final RestletServerFactory.RestletServer installationManager;
 
     static {
         injector = createInjector();
         updateManager = injector.getInstance(UpdateManager.class);
+        installationManager = RestletServerFactory.getServer(new InstallationManagerApplication());
     }
 
     public static void main(String[] args) {
@@ -76,28 +76,34 @@ public class Daemon {
         });
     }
 
-    private static void stop() {
+    public static void stop() {
         try {
             updateManager.destroy();
         } catch (SchedulerException e) {
-            LOG.error("Can't stop Update Manager.", e);
+            LOG.error("Can't stop Update Manager. ", e);
         }
 
         try {
-            Registry registry = LocateRegistry.getRegistry(Registry.REGISTRY_PORT);
-            registry.unbind(InstallationManager.class.getSimpleName());
-        } catch (RemoteException e) {
-            LOG.error("Can't unbind RMI sever. " + e.getMessage());
-        } catch (NotBoundException e) {
-            // do nothing
+            installationManager.stop();
+            LOG.info("Server stopped.");
+        } catch (Exception e) {
+            LOG.error("Can't stop server. ", e);
         }
     }
 
-    private static void start() throws RemoteException, AlreadyBoundException, SchedulerException {
-        updateManager.init();
+    public static void start() {
+        try {
+            updateManager.init();
+        } catch (SchedulerException e) {
+            LOG.error("Can't initialize Update Manager. ", e);
+        }
 
-        Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-        registry.bind(InstallationManager.class.getSimpleName(), injector.getInstance(InstallationManager.class));
+        try {
+            installationManager.start();
+        } catch (Exception e) {
+            LOG.error("Can't start server. ", e);
+            return;
+        }
     }
 
     private static Injector createInjector() {
@@ -108,4 +114,5 @@ public class Daemon {
             }
         });
     }
+    
 }

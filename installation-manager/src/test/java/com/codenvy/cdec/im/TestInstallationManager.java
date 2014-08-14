@@ -68,7 +68,6 @@ public class TestInstallationManager {
 
     }
 
-
     @AfterMethod
     public void tearDown() throws Exception {
         FileUtils.deleteDirectory(Paths.get("target", "download").toFile());

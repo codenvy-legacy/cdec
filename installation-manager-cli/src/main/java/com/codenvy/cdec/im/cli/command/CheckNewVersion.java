@@ -21,19 +21,22 @@ package com.codenvy.cdec.im.cli.command;
  * @author Alexander Reshetnyak
  */
 
-import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.server.InstallationManager;
-import com.codenvy.cdec.utils.BasedInjector;
-import com.codenvy.cli.command.builtin.AbsCommand;
+import jline.internal.Log;
 
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.resource.ResourceException;
 
-import java.io.IOException;
-import java.util.Map;
+import com.codenvy.cdec.restlet.RestletClientFactory;
+import com.codenvy.cdec.server.InstallationManagerService;
+import com.codenvy.cli.command.builtin.AbsCommand;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.YELLOW;
+import static org.fusesource.jansi.Ansi.Color.RED;
 
 /**
  * Parameters and execution of 'cdec:check' command.
@@ -43,31 +46,49 @@ import static org.fusesource.jansi.Ansi.Color.YELLOW;
 @Command(scope = "cdec", name = "check", description = "Update CDEC...")
 public class CheckNewVersion extends AbsCommand {
 
-    // TODO check class
+    InstallationManagerService installationManagerProxy;
 
     /**
      * Check availability new version.
      */
-    protected Object doExecute() throws IOException {
+    protected Object doExecute() throws Exception {
         init();
 
-        // TODO rest request
-        InstallationManager installationManager = BasedInjector.getInstance().getInstance(InstallationManager.class);
-
-        installationManager.checkNewVersions();
-        Map<Artifact, String> newVersions = installationManager.getNewVersions();
-
+        installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
+        
         Ansi buffer = Ansi.ansi();
 
-        if (newVersions.isEmpty()) {
-            buffer.fg(GREEN);
-            buffer.a("All artifacts are up-to-date.");
-        } else {
-            buffer.fg(YELLOW);
-            buffer.a("Following new artifacts are available for update :");
-            for (Map.Entry<Artifact, String> entry : newVersions.entrySet()) {
-                buffer.a(entry.getKey().getName() + ":" + entry.getValue());
+        JsonRepresentation response;
+        
+        try {
+            response = installationManagerProxy.doCheckNewVersions("v1");
+            
+            if (response == null) {
+                buffer.fg(RED);
+                buffer.a("Incomplete response.");
+                return null;
             }
+                        
+            JSONArray artifacts = response.getJsonArray();
+
+            if (artifacts.length() == 0) {
+                buffer.fg(GREEN);
+                buffer.a("All artifacts are up-to-date.");
+                
+            } else {
+                buffer.fg(YELLOW);
+                buffer.a("Following new artifacts are available for update :");
+                
+                for (int i = 0; i < artifacts.length(); i++) {
+                    JSONObject artifact = artifacts.getJSONObject(i);
+                    buffer.a("artifact " + i + ": " + artifact.toString());   
+                }
+            }
+            
+        } catch (ResourceException re) {
+            buffer.fg(RED);
+            buffer.a("There was an error " + re.getStatus().toString() + ".\n"
+                   + "details: " + re.getMessage());
         }
 
         buffer.reset();
