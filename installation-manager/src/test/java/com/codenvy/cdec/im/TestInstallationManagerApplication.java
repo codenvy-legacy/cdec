@@ -21,35 +21,24 @@ import com.codenvy.cdec.Daemon;
 import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.RestletClientFactory;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
-import org.restlet.resource.ResourceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class TestInstallationManagerApplication {
-    protected static final Logger LOG = LoggerFactory.getLogger(TestInstallationManagerApplication.class);
-
-    InstallationManagerService managerSeviceProxy;
+    private InstallationManagerService managerServiceProxy;
 
     @BeforeMethod
     public void setUp() throws Exception {
         Daemon.start();
-
-//        System.in.read();
-
-        managerSeviceProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
+        managerServiceProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
     }
 
     @AfterMethod
@@ -61,31 +50,8 @@ public class TestInstallationManagerApplication {
     public void testCheckNewVersions() throws Exception {
         String expectedContent = "[{\"status\":\"downloaded\",\"version\":\"v1\"}]";
 
-        try {
-            JsonRepresentation response = managerSeviceProxy.doCheckNewVersions("v1");
-
-            if (response == null) {
-                fail();
-            }
-
-            JSONArray artifacts = response.getJsonArray();
-            LOG.info(artifacts.toString());
-
-            for (int i = 0; i < artifacts.length(); i++) {
-                JSONObject artifact = artifacts.getJSONObject(i);
-                LOG.info(artifact.toString());
-            }
-
-            assertEquals(expectedContent, artifacts.toString());
-
-        } catch (ResourceException re) {
-            if (re.getStatus().equals(Status.SERVER_ERROR_INTERNAL)) {
-                LOG.info(re.getMessage());
-            }
-            
-            fail();
-        }
+        JsonRepresentation response = managerServiceProxy.doCheckNewVersions("v1");
+        assertNotNull(response);
+        assertEquals(response.getJsonArray().toString(), expectedContent);
     }
-    
-
 }
