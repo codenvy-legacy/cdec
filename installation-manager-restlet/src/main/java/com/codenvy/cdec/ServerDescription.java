@@ -17,25 +17,19 @@
  */
 package com.codenvy.cdec;
 
+import com.codenvy.cdec.utils.InjectorBootstrap;
+
+import java.util.UUID;
+
 /**
- * @author Dmytro Nochevnov</a>
+ * @author Dmytro Nochevnov
  */
 public class ServerDescription {
-    public static final String LOGIN             = "im";
-    // public static final char[] PASSWORD          = getRandomPassword();  // TODO uncomment
-    public static final char[] PASSWORD          = "secret".toCharArray();
+    public static final String LOGIN    = "im";
+    public static final char[] PASSWORD = UUID.randomUUID().toString().toCharArray();
 
     public static final String REALM             = "im-realm";
-    public static final String SERVER_DIGEST_KEY = "imSecretServerKey";     // TODO
+    public static final String SERVER_DIGEST_KEY = "imSecretServerKey";
 
-    public static final int    PORT              = 8182;
-    public static final String SERVER_ADDRESS    = "localhost";
-    public static final String BASE_URI          = "http://" + SERVER_ADDRESS + ":" + PORT;
-
-    private static char[] getRandomPassword() {
-        String randomNumber = Double.toString(Math.random());
-        char[] passwd = randomNumber.toCharArray();
-        
-        return passwd;
-    }
+    public static final String SERVER_URL = InjectorBootstrap.getProperty("codenvy.restlet.server_url");
 }

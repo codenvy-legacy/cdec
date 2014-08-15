@@ -29,6 +29,7 @@ import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -37,17 +38,18 @@ import java.util.regex.Pattern;
 /**
  * @author Anatoliy Bazko
  */
-public class BasedInjector {
+public class InjectorBootstrap {
 
-    private static final Injector INJECTOR;
-
+    public static final  Injector            INJECTOR;
+    private static final Map<String, String> boundProperties;
 
     static {
+        boundProperties = new HashMap<>();
         INJECTOR = createInjector();
     }
 
-    public static Injector getInstance() {
-        return INJECTOR;
+    public static String getProperty(String key) {
+        return boundProperties.get(key);
     }
 
     private static Injector createInjector() {
@@ -73,6 +75,7 @@ public class BasedInjector {
                     String key = (String)entry.getKey();
                     String value = replaceEnvVariables((String)entry.getValue());
 
+                    boundProperties.put(key, value);
                     binder.bindConstant().annotatedWith(Names.named(key)).to(value);
                 }
             }

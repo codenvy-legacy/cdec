@@ -35,6 +35,7 @@ import org.restlet.resource.ResourceException;
 import static org.fusesource.jansi.Ansi.Color.*;
 
 /**
+ * TODO
  * Parameters and execution of 'cdec:check' command.
  *
  * @author Alexander Reshetnyak

@@ -19,7 +19,6 @@ package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.utils.BasedInjector;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +27,8 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
 
 /**
  * @author Dmytro Nochevnov
@@ -38,25 +39,30 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     InstallationManager manager;
 
     public InstallationManagerServiceImpl() {
-        manager = BasedInjector.getInstance().getInstance(InstallationManagerImpl.class);
+        manager = INJECTOR.getInstance(InstallationManagerImpl.class);
     }
 
-    public void doGetAvailable2DownloadArtifacts() {
+    @Override
+    public JsonRepresentation doGetAvailable2DownloadArtifacts() {
         // TODO
-//        return null;
+        return null;
     }
 
-    public void doDownloadUpdates() {
+    @Override
+    public JsonRepresentation doDownloadUpdates() {
         // TODO
-//        return null;
+        return null;
     }
 
-    public void doGetNewVersions() {
+    @Override
+    public JsonRepresentation doGetNewVersions() {
+        return null;
         // TODO
 //        Map<Artifact, String> newVersions = manager.getNewVersions();
 
     }
 
+    @Override
     public JsonRepresentation doCheckNewVersions(final String version) throws JSONException {
 //        try {
 //            manager.checkNewVersions();
@@ -82,6 +88,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     }
 
     @Override
-    public void empty() {
+    public void obtainChallengeRequest() {
     }
 }

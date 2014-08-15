@@ -26,23 +26,28 @@ import org.restlet.resource.ResourceException;
 import javax.ws.rs.Path;
 import java.io.IOException;
 
-/** @author Dmytro Nochevnov */
+import static com.codenvy.cdec.utils.Commons.combinePaths;
+
+/**
+ * @author Dmytro Nochevnov
+ */
 public class RestletClientFactory {
-    public static <T extends EmptyService> T getServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
-                                                                                          IllegalPathException,
-                                                                                          IOException {
-        String resourceUri = getUri(ServerDescription.BASE_URI, InstallationManagerService.class);
+    public static <T extends InstallationManagerService> T getServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
+                                                                                                              IllegalPathException,
+                                                                                                              IOException {
+        String resourceUri = combinePaths(ServerDescription.SERVER_URL, getResourcePath(InstallationManagerService.class));
         Reference reference = new Reference(resourceUri);
 
         JaxRsClientResource clientResource = new JaxRsClientResource(null, reference);
-
         T proxy = clientResource.wrap(resourceInterface);
+        doAuthentication(clientResource, proxy);
 
+        return proxy;
+    }
+
+    private static <T extends InstallationManagerService> void doAuthentication(JaxRsClientResource clientResource, T proxy) {
         try {
-            // perform first request to get unique and transient information from server to build the authentication credentials for the
-            // next requests
-            proxy.empty();
-
+            proxy.obtainChallengeRequest();
         } catch (ResourceException re) {
             if (Status.CLIENT_ERROR_UNAUTHORIZED.equals(re.getStatus())) {
                 ChallengeRequest digestChallenge = null;
@@ -64,15 +69,7 @@ public class RestletClientFactory {
                 clientResource.setChallengeResponse(authentication);
             }
         }
-
-        return proxy;
     }
-
-    private static String getUri(final String baseUri, Class resourceInterface) throws MissingAnnotationException, IllegalPathException {
-        String path = getResourcePath(resourceInterface);
-        return baseUri + (baseUri.endsWith("/") ? "" : "/") + path;
-    }
-
 
     private static String getResourcePath(Class resourceInterface) throws MissingAnnotationException, IllegalPathException {
         Path pathAnnotation = (Path)resourceInterface.getAnnotation(Path.class);
@@ -81,10 +78,10 @@ public class RestletClientFactory {
         }
 
         String path = pathAnnotation.value();
-        if (path == null || path.length() == 0) {
-            throw new IllegalPathException(pathAnnotation,
-                                           "The path annotation must have a value.");
+        if (path == null || path.isEmpty()) {
+            throw new IllegalPathException(pathAnnotation, "The path annotation must have a value.");
         }
+
         return path;
     }
 }
