@@ -15,16 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.server;
+package com.codenvy.cdec;
+
+import org.json.JSONException;
+import org.restlet.ext.json.JsonRepresentation;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-import org.json.JSONException;
-import org.restlet.ext.json.JsonRepresentation;
 
 /**
  * @author Dmytro Nochevnov

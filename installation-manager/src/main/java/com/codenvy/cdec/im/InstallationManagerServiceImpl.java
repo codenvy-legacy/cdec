@@ -17,25 +17,17 @@
  */
 package com.codenvy.cdec.im;
 
-import java.io.IOException;
-import java.util.Map;
-
-import javax.ws.rs.core.Response.Status;
+import com.codenvy.cdec.InstallationManager;
+import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.utils.BasedInjector;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
-import org.restlet.representation.Representation;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.server.InstallationManager;
-import com.codenvy.cdec.server.InstallationManagerService;
-import com.codenvy.cdec.utils.BasedInjector;
-import com.codenvy.dto.server.JsonStringMapImpl;
 
 /**
  * @author Dmytro Nochevnov
@@ -47,13 +39,13 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     public InstallationManagerServiceImpl() {
         manager = BasedInjector.getInstance().getInstance(InstallationManagerImpl.class);
-    }    
-    
+    }
+
     public void doGetAvailable2DownloadArtifacts() {
         // TODO
 //        return null;
     }
-    
+
     public void doDownloadUpdates() {
         // TODO
 //        return null;
@@ -62,7 +54,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public void doGetNewVersions() {
         // TODO
 //        Map<Artifact, String> newVersions = manager.getNewVersions();
-        
+
     }
 
     public JsonRepresentation doCheckNewVersions(final String version) throws JSONException {
@@ -75,7 +67,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 //            // TODO Auto-generated catch block
 //            e.printStackTrace();
 //        }
-        
+
         JSONArray artifacts = new JSONArray();
 
         JSONObject artifact1 = new JSONObject();
@@ -83,12 +75,13 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         artifact1.put("status", "downloaded");
 
         artifacts.put(artifact1);
-        
+
         JsonRepresentation response = new JsonRepresentation(artifacts);
-        
+
         return response;
     }
 
     @Override
-    public void empty() {}
+    public void empty() {
+    }
 }

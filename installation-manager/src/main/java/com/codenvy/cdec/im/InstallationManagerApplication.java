@@ -17,12 +17,9 @@
  */
 package com.codenvy.cdec.im;
 
+import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.ws.rs.core.Application;
-
-import com.codenvy.cdec.server.InstallationManagerService;
 
 public class InstallationManagerApplication extends Application {
 

@@ -15,25 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.restlet;
+package com.codenvy.cdec;
 
-import java.io.IOException;
-
-import javax.ws.rs.Path;
-
-import org.restlet.data.ChallengeRequest;
-import org.restlet.data.ChallengeResponse;
-import org.restlet.data.ChallengeScheme;
-import org.restlet.data.Reference;
-import org.restlet.data.Status;
+import org.restlet.data.*;
 import org.restlet.ext.jaxrs.JaxRsClientResource;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.server.EmptyService;
-import com.codenvy.cdec.server.InstallationManagerService;
-import com.codenvy.cdec.server.ServerDescription;
+import javax.ws.rs.Path;
+import java.io.IOException;
 
 /** @author Dmytro Nochevnov */
 public class RestletClientFactory {
@@ -79,10 +70,7 @@ public class RestletClientFactory {
 
     private static String getUri(final String baseUri, Class resourceInterface) throws MissingAnnotationException, IllegalPathException {
         String path = getResourcePath(resourceInterface);
-
-        String fullUriFromPath = baseUri + (baseUri.endsWith("/") ? "" : "/") + path;
-
-        return fullUriFromPath;
+        return baseUri + (baseUri.endsWith("/") ? "" : "/") + path;
     }
 
 

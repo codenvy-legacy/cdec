@@ -38,6 +38,7 @@
         <module>installation-manager</module>
         <module>installation-manager-gui</module>
         <module>installation-manager-cli</module>
+        <module>installation-manager-restlet</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>

@@ -18,21 +18,19 @@
 package com.codenvy.cdec;
 
 
-import java.io.IOException;
+import com.codenvy.cdec.im.InstallationManagerApplication;
+import com.codenvy.cdec.im.InstallationManagerImpl;
+import com.codenvy.cdec.im.UpdateManager;
+import com.codenvy.cdec.utils.BasedInjector;
+import com.google.inject.Binder;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codenvy.cdec.im.InstallationManagerApplication;
-import com.codenvy.cdec.im.InstallationManagerImpl;
-import com.codenvy.cdec.im.UpdateManager;
-import com.codenvy.cdec.restlet.RestletServerFactory;
-import com.codenvy.cdec.server.InstallationManager;
-import com.codenvy.cdec.utils.BasedInjector;
-import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import java.io.IOException;
 
 /**
  * @author Anatoliy Bazko

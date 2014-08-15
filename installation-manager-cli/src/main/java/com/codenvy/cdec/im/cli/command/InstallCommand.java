@@ -17,16 +17,11 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Map;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 

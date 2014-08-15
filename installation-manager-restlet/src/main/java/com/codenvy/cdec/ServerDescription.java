@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.server;
+package com.codenvy.cdec;
 
 /**
  * @author Dmytro Nochevnov</a>

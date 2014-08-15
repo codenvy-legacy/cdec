@@ -17,7 +17,6 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import com.codenvy.cdec.server.InstallationManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -79,7 +78,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Override
     protected Path getInstalledPath() throws URISyntaxException {
-        URL location = InstallationManager.class.getClass().getProtectionDomain().getCodeSource().getLocation();
+        URL location = InstallManagerArtifact.class.getClass().getProtectionDomain().getCodeSource().getLocation();
         return Paths.get(location.toURI());
     }
 }

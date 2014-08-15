@@ -15,9 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.restlet;
-
-import javax.ws.rs.core.Application;
+package com.codenvy.cdec;
 
 import org.restlet.Component;
 import org.restlet.Server;
@@ -29,7 +27,7 @@ import org.restlet.security.MapVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codenvy.cdec.server.ServerDescription;
+import javax.ws.rs.core.Application;
 
 /**
  * @author Dmytro Nochevnov

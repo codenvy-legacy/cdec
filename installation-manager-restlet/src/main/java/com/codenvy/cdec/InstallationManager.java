@@ -15,12 +15,12 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.server;
+package com.codenvy.cdec;
+
+import com.codenvy.cdec.artifacts.Artifact;
 
 import java.io.IOException;
 import java.util.Map;
-
-import com.codenvy.cdec.artifacts.Artifact;
 
 /**
  * @author Anatoliy Bazko
@@ -60,7 +60,7 @@ public interface InstallationManager {
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
      *
-     * @throws IOException
+     * @throws java.io.IOException
      *         if I/O error occurred
      */
     void checkNewVersions() throws IOException, IllegalArgumentException;
