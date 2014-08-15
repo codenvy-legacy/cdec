@@ -41,26 +41,19 @@ public interface InstallationManagerService extends EmptyService {
     public void doGetAvailable2DownloadArtifacts();
     
     /**
-     * Downloads updates.
+     * Downloads update.
      */
     @GET
-    @Path("download-updates")
+    @Path("download/{artifact}/{version}")
     @Produces(MediaType.TEXT_HTML)
-    public void doDownloadUpdates();
+    public void downloadUpdate(@PathParam(value="artifact") final String artifactName, 
+                               @PathParam(value="version") final String version);
     
-    /**
-     * @return the list of artifacts with newer versions than currently installed
-     */
-    @GET
-    @Path("get-new-versions")
-    @Produces(MediaType.APPLICATION_JSON)
-    public void doGetNewVersions();
-
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
      */
     @GET
-    @Path("check-new-versions/{version}")
+    @Path("check")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonRepresentation doCheckNewVersions(@PathParam(value = "version") final String version)  throws JSONException;
+    public JsonRepresentation checkUpdates()  throws JSONException;
 }

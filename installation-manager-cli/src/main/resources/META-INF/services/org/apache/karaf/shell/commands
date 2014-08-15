@@ -16,5 +16,5 @@
 #
 
 com.codenvy.cdec.im.cli.command.InstallCommand
-com.codenvy.cdec.im.cli.command.CheckNewVersion
+com.codenvy.cdec.im.cli.command.CheckUpdatesCommand
 

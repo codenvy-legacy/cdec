@@ -17,10 +17,6 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-/**
- * @author Alexander Reshetnyak
- */
-
 import jline.internal.Log;
 
 import org.apache.karaf.shell.commands.Command;
@@ -42,9 +38,10 @@ import static org.fusesource.jansi.Ansi.Color.RED;
  * Parameters and execution of 'cdec:check' command.
  *
  * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
-@Command(scope = "cdec", name = "check", description = "Update CDEC...")
-public class CheckNewVersion extends AbsCommand {
+@Command(scope = "cdec", name = "check", description = "Check all available updates.")
+public class CheckUpdatesCommand extends AbsCommand {
 
     InstallationManagerService installationManagerProxy;
 
@@ -61,7 +58,7 @@ public class CheckNewVersion extends AbsCommand {
         JsonRepresentation response;
         
         try {
-            response = installationManagerProxy.doCheckNewVersions("v1");
+            response = installationManagerProxy.checkUpdates();
             
             if (response == null) {
                 buffer.fg(RED);
@@ -77,11 +74,14 @@ public class CheckNewVersion extends AbsCommand {
                 
             } else {
                 buffer.fg(YELLOW);
-                buffer.a("Following new artifacts are available for update :");
+                buffer.a("Following artifacts are available for update :");
                 
                 for (int i = 0; i < artifacts.length(); i++) {
-                    JSONObject artifact = artifacts.getJSONObject(i);
-                    buffer.a("artifact " + i + ": " + artifact.toString());   
+                    JSONObject update = artifacts.getJSONObject(i);
+                    String artifact = update.getString("artifact");
+                    String version = update.getString("version");
+                    
+                    buffer.a("- update for artifact '" + artifact + "', version '" + version + "';");   
                 }
             }
             

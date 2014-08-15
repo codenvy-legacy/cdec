@@ -17,16 +17,14 @@
  */
 package com.codenvy.cdec.im;
 
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-
-import javax.ws.rs.core.Response.Status;
+import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
-import org.restlet.representation.Representation;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,26 +33,24 @@ import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.server.InstallationManager;
 import com.codenvy.cdec.server.InstallationManagerService;
 import com.codenvy.cdec.utils.BasedInjector;
-import com.codenvy.dto.server.JsonStringMapImpl;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * @author Dmytro Nochevnov
  */
+@Singleton
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerServiceImpl.class);
+    
+    protected InstallationManager manager;
 
-    InstallationManager manager;
-
+    @Inject
     public InstallationManagerServiceImpl() {
         manager = BasedInjector.getInstance().getInstance(InstallationManagerImpl.class);
-    }    
+    }        
     
     public void doGetAvailable2DownloadArtifacts() {
-        // TODO
-//        return null;
-    }
-    
-    public void doDownloadUpdates() {
         // TODO
 //        return null;
     }
@@ -64,28 +60,39 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 //        Map<Artifact, String> newVersions = manager.getNewVersions();
         
     }
+    
+    @Override
+    public void downloadUpdate(String artifactName, String version) {
+        // TODO
+//        return null;
+    }
 
-    public JsonRepresentation doCheckNewVersions(final String version) throws JSONException {
-//        try {
-//            manager.checkNewVersions();
-//        } catch (IllegalArgumentException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-        
-        JSONArray artifacts = new JSONArray();
 
-        JSONObject artifact1 = new JSONObject();
-        artifact1.put("version", version);
-        artifact1.put("status", "downloaded");
+    @Override
+    public JsonRepresentation checkUpdates() throws JSONException {
+        Map<Artifact, String> newVersions = new HashMap<>();
+        
+        try {
+            manager.checkNewVersions();
+            newVersions = manager.getNewVersions();
 
-        artifacts.put(artifact1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);  // TODO
+        }
         
-        JsonRepresentation response = new JsonRepresentation(artifacts);
+        JSONArray updates = new JSONArray();
+        for (Entry<Artifact, String> update: newVersions.entrySet()) {
+            Artifact artifact = update.getKey();
+            String version = update.getValue();
+            
+            JSONObject updateDescription = new JSONObject();
+            updateDescription.put("artifact", artifact.getName());
+            updateDescription.put("version", version);
+
+            updates.put(updateDescription);
+        }
         
+        JsonRepresentation response = new JsonRepresentation(updates);        
         return response;
     }
 

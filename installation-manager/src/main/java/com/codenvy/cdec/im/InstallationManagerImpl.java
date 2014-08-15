@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Named;
 
 import org.apache.commons.io.FileUtils;
-import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,7 @@ import com.google.inject.Singleton;
  * @author Anatoliy Bazko
  */
 @Singleton
-public class InstallationManagerImpl extends ServerResource implements InstallationManager {
+public class InstallationManagerImpl implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
     private final String apiEndpoint;
