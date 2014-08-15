@@ -18,6 +18,7 @@
 package com.codenvy.cdec;
 
 import org.restlet.Component;
+import org.restlet.Context;
 import org.restlet.data.Protocol;
 import org.restlet.ext.crypto.DigestAuthenticator;
 import org.restlet.ext.jaxrs.JaxRsApplication;
@@ -37,12 +38,14 @@ public class RestletServer {
     private static final Logger LOG = LoggerFactory.getLogger(RestletServer.class);
 
     private final Component component;
+    private final Context context;
     private final URL       url;
 
     RestletServer(Application application) throws MalformedURLException {
         url = new URL(ServerDescription.SERVER_URL);
         component = new Component();
         component.getServers().add(Protocol.HTTP, url.getPort());
+        context = component.getContext().createChildContext();
 
         try {
             createApplicationWithDigestAuth(application);
@@ -53,7 +56,7 @@ public class RestletServer {
 
     public void start() throws Exception {
         component.start();
-        LOG.info("Restlet server started on port" + url.getPort());
+        LOG.info("Restlet server started on port " + url.getPort());
     }
 
     public void stop() throws Exception {
@@ -62,7 +65,7 @@ public class RestletServer {
 
     private void createApplicationWithDigestAuth(Application application) throws Exception {
         // create JAX-RS runtime environment
-        JaxRsApplication applicationContainer = new JaxRsApplication(component.getContext());
+        JaxRsApplication applicationContainer = new JaxRsApplication(context);
 
         // attach Application
         applicationContainer.add(application);
