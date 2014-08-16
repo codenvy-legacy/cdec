@@ -38,6 +38,7 @@
         <module>installation-manager</module>
         <module>installation-manager-gui</module>
         <module>installation-manager-cli</module>
+        <module>installation-manager-restlet</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>
@@ -47,7 +48,6 @@
     <properties>
         <maven.releases.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-releases/</maven.releases.repo.url>
         <maven.snapshots.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-snapshots/</maven.snapshots.repo.url>
-        <org.restlet.version>2.2.2</org.restlet.version>
         <version.license-header>codenvy-codenvy-license-resource-bundle</version.license-header>
     </properties>
 </project>

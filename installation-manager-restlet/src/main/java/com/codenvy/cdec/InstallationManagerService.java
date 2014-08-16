@@ -15,30 +15,28 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.server;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+package com.codenvy.cdec;
 
 import org.json.JSONException;
 import org.restlet.ext.json.JsonRepresentation;
 
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+
 /**
  * @author Dmytro Nochevnov
+ * TODO check paths
  */
 @Path("im")
-public interface InstallationManagerService extends EmptyService {
+public interface InstallationManagerService {
 
     /**
-     * Scans all available artifacts and returns their current versions.
+     * Perform request to get unique and transient information from server to build the authentication credentials for the next requests.
      */
-    @GET
-    @Path("get-available-2-download-artifacts")
-    @Produces(MediaType.APPLICATION_JSON)
-    public void doGetAvailable2DownloadArtifacts();
+    @HEAD
+    @Path("empty")
+    @Produces(MediaType.TEXT_HTML)
+    public void obtainChallengeRequest();
     
     /**
      * Downloads update.

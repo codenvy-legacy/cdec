@@ -15,24 +15,24 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.server;
+package com.codenvy.cdec;
 
-import javax.ws.rs.HEAD;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import com.codenvy.cdec.utils.InjectorBootstrap;
+
+import java.util.UUID;
 
 /**
- * Helper interface to perform first request to get unique and transient information from server to build the DIGEST authentication
- * credentials for the next requests.
- * 
  * @author Dmytro Nochevnov
  */
-@Path("im")
-public interface EmptyService {
-    @HEAD
-    @Path("empty")
-    @Produces(MediaType.TEXT_HTML)
-    public void empty();
+public class ServerDescription {
+    public static final String LOGIN    = "im";
+    public static final char[] PASSWORD = UUID.randomUUID().toString().toCharArray();
+
+    public static final String REALM             = "im-realm";
+    public static final String SERVER_DIGEST_KEY = "imSecretServerKey";
+
+    // public static final String SERVER_URL = InjectorBootstrap.getProperty("codenvy.restlet.server_url");  // TODO commented because it throws java.lang.ExceptionInInitializerError in CLI client
     
+    public static final String SERVER_URL = "http://localhost:8182";
+
 }

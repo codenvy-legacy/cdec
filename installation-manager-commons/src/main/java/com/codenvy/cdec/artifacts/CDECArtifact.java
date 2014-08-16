@@ -1,4 +1,5 @@
 /*
+/*
  * CODENVY CONFIDENTIAL
  * __________________
  *
@@ -17,18 +18,19 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cdec.utils.HttpTransport;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static com.codenvy.cdec.utils.Commons.combinePaths;
 
-import javax.inject.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static com.codenvy.cdec.utils.Commons.combinePaths;
+import javax.inject.Named;
+
+import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cdec.utils.HttpTransport;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * @author Anatoliy Bazko
@@ -55,6 +57,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public String getCurrentVersion() throws IOException {
+        // TODO if absent?  WTF TO DO?
         String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/info/" + NAME));  // TODO needs authentication on https://codenvy.com/update/repository/info/cdec to avoid IOException
         Map m = Commons.fromJson(json, Map.class);
         return (String)m.get("version");

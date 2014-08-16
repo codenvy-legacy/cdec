@@ -17,6 +17,8 @@
  */
 package com.codenvy.cdec.im;
 
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,13 +28,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ServerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import com.codenvy.cdec.InstallationManager;
+import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.server.InstallationManager;
-import com.codenvy.cdec.server.InstallationManagerService;
-import com.codenvy.cdec.utils.BasedInjector;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -40,33 +39,18 @@ import com.google.inject.Singleton;
  * @author Dmytro Nochevnov
  */
 @Singleton
-public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
-    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerServiceImpl.class);
-    
+public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {   
     protected InstallationManager manager;
 
     @Inject
     public InstallationManagerServiceImpl() {
-        manager = BasedInjector.getInstance().getInstance(InstallationManagerImpl.class);
-    }        
-    
-    public void doGetAvailable2DownloadArtifacts() {
-        // TODO
-//        return null;
-    }
-
-    public void doGetNewVersions() {
-        // TODO
-//        Map<Artifact, String> newVersions = manager.getNewVersions();
-        
+        manager = INJECTOR.getInstance(InstallationManagerImpl.class);
     }
     
     @Override
     public void downloadUpdate(String artifactName, String version) {
         // TODO
-//        return null;
     }
-
 
     @Override
     public JsonRepresentation checkUpdates() throws JSONException {
@@ -97,5 +81,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     }
 
     @Override
-    public void empty() {}
+    public void obtainChallengeRequest() {
+    }
 }

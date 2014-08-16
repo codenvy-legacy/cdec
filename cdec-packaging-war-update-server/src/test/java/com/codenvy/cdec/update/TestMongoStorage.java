@@ -36,7 +36,7 @@ public class TestMongoStorage {
 
     @BeforeTest
     public void prepare() throws Exception {
-        mongoStorage = new MongoStorage("mongodb://localhost:12000/update", true);
+        mongoStorage = new MongoStorage("mongodb://localhost:12000/update", true, "target");
     }
 
     @BeforeMethod

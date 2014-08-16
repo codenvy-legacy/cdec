@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.server.InstallationManager;
+import com.codenvy.cdec.InstallationManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

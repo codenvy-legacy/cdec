@@ -73,7 +73,7 @@ public class TestRepositoryService extends BaseTest {
             repositoryService = new RepositoryService("",
                                                       userManager,
                                                       artifactStorage,
-                                                      new MongoStorage("mongodb://localhost:12000/update", true),
+                                                      new MongoStorage("mongodb://localhost:12000/update", true, "target"),
                                                       transport);
 
         } catch (IOException e) {

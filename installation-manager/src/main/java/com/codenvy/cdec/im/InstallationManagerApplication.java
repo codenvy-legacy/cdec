@@ -17,14 +17,13 @@
  */
 package com.codenvy.cdec.im;
 
+import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.ws.rs.core.Application;
-
-import com.codenvy.cdec.server.InstallationManagerService;
-import com.codenvy.cdec.utils.BasedInjector;
-
+/**
+ * @author Dmytro Nochevnov
+ */
 public class InstallationManagerApplication extends Application {
 
     public Set<Class<?>> getClasses() {
@@ -33,12 +32,4 @@ public class InstallationManagerApplication extends Application {
         return rrcs;
     }
 
-//    @Override
-//    public Set<Object> getSingletons() {
-//        Set<Object> singletons = new HashSet<>();
-//        singletons.add(BasedInjector.getInstance().getInstance(InstallationManagerServiceImpl.class));
-//
-//        return singletons;
-//    }
-    
 }

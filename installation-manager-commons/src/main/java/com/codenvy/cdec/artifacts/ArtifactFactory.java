@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import com.codenvy.cdec.utils.BasedInjector;
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
 
 /**
  * @author Anatoliy Bazko
@@ -30,9 +30,9 @@ public class ArtifactFactory {
     public static Artifact createArtifact(String name) {
         switch (name) {
             case CDECArtifact.NAME:
-                return BasedInjector.getInstance().getInstance(CDECArtifact.class);
+                return INJECTOR.getInstance(CDECArtifact.class);
             case InstallManagerArtifact.NAME:
-                return BasedInjector.getInstance().getInstance(InstallManagerArtifact.class);
+                return INJECTOR.getInstance(InstallManagerArtifact.class);
         }
 
         throw new IllegalArgumentException("Artifact " + name + " not found");

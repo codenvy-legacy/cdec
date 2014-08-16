@@ -15,43 +15,39 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.restlet;
+package com.codenvy.cdec;
 
-import java.io.IOException;
-
-import javax.ws.rs.Path;
-
-import org.restlet.data.ChallengeRequest;
-import org.restlet.data.ChallengeResponse;
-import org.restlet.data.ChallengeScheme;
-import org.restlet.data.Reference;
-import org.restlet.data.Status;
+import org.restlet.data.*;
 import org.restlet.ext.jaxrs.JaxRsClientResource;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.server.EmptyService;
-import com.codenvy.cdec.server.InstallationManagerService;
-import com.codenvy.cdec.server.ServerDescription;
+import javax.ws.rs.Path;
+import java.io.IOException;
 
-/** @author Dmytro Nochevnov */
+import static com.codenvy.cdec.utils.Commons.combinePaths;
+
+/**
+ * @author Dmytro Nochevnov
+ */
 public class RestletClientFactory {
-    public static <T extends EmptyService> T getServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
-                                                                                          IllegalPathException,
-                                                                                          IOException {
-        String resourceUri = getUri(ServerDescription.BASE_URI, InstallationManagerService.class);
+    public static <T extends InstallationManagerService> T getServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
+                                                                                                              IllegalPathException,
+                                                                                                              IOException {
+        String resourceUri = combinePaths(ServerDescription.SERVER_URL, getResourcePath(InstallationManagerService.class));
         Reference reference = new Reference(resourceUri);
 
         JaxRsClientResource clientResource = new JaxRsClientResource(null, reference);
-
         T proxy = clientResource.wrap(resourceInterface);
+        doAuthentication(clientResource, proxy);
 
+        return proxy;
+    }
+
+    private static <T extends InstallationManagerService> void doAuthentication(JaxRsClientResource clientResource, T proxy) {
         try {
-            // perform first request to get unique and transient information from server to build the authentication credentials for the
-            // next requests
-            proxy.empty();
-
+            proxy.obtainChallengeRequest();
         } catch (ResourceException re) {
             if (Status.CLIENT_ERROR_UNAUTHORIZED.equals(re.getStatus())) {
                 ChallengeRequest digestChallenge = null;
@@ -73,18 +69,7 @@ public class RestletClientFactory {
                 clientResource.setChallengeResponse(authentication);
             }
         }
-
-        return proxy;
     }
-
-    private static String getUri(final String baseUri, Class resourceInterface) throws MissingAnnotationException, IllegalPathException {
-        String path = getResourcePath(resourceInterface);
-
-        String fullUriFromPath = baseUri + (baseUri.endsWith("/") ? "" : "/") + path;
-
-        return fullUriFromPath;
-    }
-
 
     private static String getResourcePath(Class resourceInterface) throws MissingAnnotationException, IllegalPathException {
         Path pathAnnotation = (Path)resourceInterface.getAnnotation(Path.class);
@@ -93,10 +78,10 @@ public class RestletClientFactory {
         }
 
         String path = pathAnnotation.value();
-        if (path == null || path.length() == 0) {
-            throw new IllegalPathException(pathAnnotation,
-                                           "The path annotation must have a value.");
+        if (path == null || path.isEmpty()) {
+            throw new IllegalPathException(pathAnnotation, "The path annotation must have a value.");
         }
+
         return path;
     }
 }

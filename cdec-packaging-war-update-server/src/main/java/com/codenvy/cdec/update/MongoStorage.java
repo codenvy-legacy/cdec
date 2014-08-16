@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Named;
 import java.io.IOException;
 import java.net.*;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.Map;
@@ -51,12 +52,15 @@ public class MongoStorage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
 
     private final DB             db;
+    private final String dir;
     private final MongoClientURI uri;
 
     @Inject
     public MongoStorage(@Named("update-server.mongodb.url") String url,
-                        @Named("update-server.mongodb.embedded") boolean embedded) throws IOException {
+                        @Named("update-server.mongodb.embedded") boolean embedded,
+                        @Named("update-server.mongodb.embedded_dir") String dir) throws IOException {
         this.uri = new MongoClientURI(url);
+        this.dir = dir;
 
         if (embedded) { // for testing purpose only
             try {
@@ -157,9 +161,11 @@ public class MongoStorage {
 
         LOG.info("Embedded MongoDB is starting up");
 
+        Files.createDirectories(Paths.get(dir));
+
         MongodConfigBuilder mongodConfigBuilder = new MongodConfigBuilder();
         mongodConfigBuilder.net(new Net(12000, false));
-        mongodConfigBuilder.replication(new Storage(Paths.get(System.getProperty("java.io.tmpdir"), "database").toString(), null, 0));
+        mongodConfigBuilder.replication(new Storage(dir, null, 0));
         mongodConfigBuilder.version(Version.V2_5_4);
 
         RuntimeConfigBuilder runtimeConfigBuilder = new RuntimeConfigBuilder().defaults(Command.MongoD);

@@ -18,37 +18,43 @@
 package com.codenvy.cdec;
 
 
-import java.io.IOException;
+import com.codenvy.cdec.im.InstallationManagerApplication;
+import com.codenvy.cdec.im.InstallationManagerImpl;
+import com.codenvy.cdec.im.UpdateManager;
+import com.google.inject.Binder;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codenvy.cdec.im.InstallationManagerApplication;
-import com.codenvy.cdec.im.InstallationManagerImpl;
-import com.codenvy.cdec.im.UpdateManager;
-import com.codenvy.cdec.restlet.RestletServerFactory;
-import com.codenvy.cdec.server.InstallationManager;
-import com.codenvy.cdec.utils.BasedInjector;
-import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import java.io.IOException;
+import java.net.MalformedURLException;
+
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
+
 
 /**
  * @author Anatoliy Bazko
  */
 public class Daemon {
 
-    private static final Logger        LOG = LoggerFactory.getLogger(Daemon.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Daemon.class);
 
-    private static final UpdateManager                      updateManager;
-    private static final Injector                           injector;
-    private static final RestletServerFactory.RestletServer installationManager;
+    private static final UpdateManager updateManager;
+    private static final Injector      injector;
+    private static final RestletServer restletServer;
 
     static {
         injector = createInjector();
         updateManager = injector.getInstance(UpdateManager.class);
-        installationManager = RestletServerFactory.getServer(new InstallationManagerApplication());
+        try {
+            restletServer = new RestletServer(new InstallationManagerApplication());
+        } catch (MalformedURLException e) {
+            LOG.error("Initialization failed. " + e.getMessage());
+            throw new IllegalStateException(e);
+        }
     }
 
     public static void main(String[] args) {
@@ -68,7 +74,6 @@ public class Daemon {
 
     private static void daemonize() throws IOException {
         System.in.close();
-
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 Daemon.stop();
@@ -84,10 +89,9 @@ public class Daemon {
         }
 
         try {
-            installationManager.stop();
-            LOG.info("Server stopped.");
+            restletServer.stop();
         } catch (Exception e) {
-            LOG.error("Can't stop server. ", e);
+            LOG.error("Can't stop Restlet server. ", e);
         }
     }
 
@@ -99,20 +103,19 @@ public class Daemon {
         }
 
         try {
-            installationManager.start();
+            restletServer.start();
         } catch (Exception e) {
-            LOG.error("Can't start server. ", e);
+            LOG.error("Can't start Restlet server. ", e);
             return;
         }
     }
 
     private static Injector createInjector() {
-        return BasedInjector.getInstance().createChildInjector(new Module() {
+        return INJECTOR.createChildInjector(new Module() {
             @Override
             public void configure(Binder binder) {
                 binder.bind(InstallationManager.class).to(InstallationManagerImpl.class);
             }
         });
     }
-    
 }

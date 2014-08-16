@@ -34,6 +34,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.codenvy.cdec</groupId>
+            <artifactId>installation-manager-restlet</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>cli-assembly</artifactId>
             <version>${codenvy.cli.version}</version>

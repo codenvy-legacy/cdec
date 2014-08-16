@@ -26,8 +26,8 @@ import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.restlet.RestletClientFactory;
-import com.codenvy.cdec.server.InstallationManagerService;
+import com.codenvy.cdec.RestletClientFactory;
+import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
@@ -35,6 +35,7 @@ import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.Color.RED;
 
 /**
+ * TODO
  * Parameters and execution of 'cdec:check' command.
  *
  * @author Alexander Reshetnyak

@@ -8,8 +8,6 @@ APP_DIR=$HOME/installation-manager
 SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
 
-DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
-
 create_codenvy_user_and_group_under_debian() {
     if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
         sudo addgroup --quiet --gid 5001 ${USER}
@@ -85,7 +83,9 @@ install_required_components_under_redhat() {
     }
 }
 
-download_and_unpack_instalation_manager() {
+installIM() {
+    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
+
     echo "Download installation manager..."
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
@@ -99,6 +99,18 @@ download_and_unpack_instalation_manager() {
 
     # make it possible to write files into the APP_DIR
     sudo chmod 757 ${APP_DIR}
+}
+
+installCLI() {
+    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
+
+    echo "Download installation manager CLI..."
+    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
+    curl -o ${filename} -L ${DOWNLOAD_URL}
+
+    echo "Unpack installation manager CLI..."
+    rm ${HOME}/im-cli -r &>-                 # remove exists files
+    unzip ${filename} -d ${HOME}/im-cli &>-  # unzip new package
 }
 
 launching_service() {
@@ -115,7 +127,8 @@ if [ -f /etc/debian_version ]; then
     echo "System runs on Debian based distributive."
     install_required_components_under_debian
     create_codenvy_user_and_group_under_debian
-    download_and_unpack_instalation_manager
+    installIM
+    installCLI
     register_service_under_debian
     launching_service
 
@@ -124,7 +137,8 @@ elif [ -f /etc/redhat-release ]; then
     echo "System runs on Red Hat based distributive."
     install_required_components_under_redhat
     create_codenvy_user_and_group_under_redhat    
-    download_and_unpack_instalation_manager
+    installIM
+    installCLI
     register_service_under_redhat
     launching_service
 
