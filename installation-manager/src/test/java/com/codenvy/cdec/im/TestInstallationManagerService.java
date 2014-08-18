@@ -96,6 +96,28 @@ public class TestInstallationManagerService {
         }
     }
     
+    @Test
+    public void testDownload() throws Exception {
+        doReturn(new HashMap<Artifact, String>() {
+             {
+                 put(mockCdecArtifact, "2.10.5");
+                 put(mockInstallManagerArtifact, "1.0.1");
+             }
+        })
+        .when(mockInstallationManager)
+        .getNewVersions();
+
+        doNothing()
+        .when(mockInstallationManager)
+        .checkNewVersions();
+        
+        JsonRepresentation response = installationManagerService.download(mockCdecArtifact.getName(), "2.10.5");
+//        assertNotNull(response);
+        
+        response = installationManagerService.download(mockInstallManagerArtifact.getName(), null);
+//        assertNotNull(response);
+    }    
+    
     public class InstallationManagerServiceTestImpl extends InstallationManagerServiceImpl {
         public InstallationManagerServiceTestImpl(InstallationManager manager) {
             this.manager = manager;

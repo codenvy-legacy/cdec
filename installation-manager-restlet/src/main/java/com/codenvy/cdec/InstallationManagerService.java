@@ -39,13 +39,13 @@ public interface InstallationManagerService {
     public void obtainChallengeRequest();
     
     /**
-     * Downloads update.
+     * Downloads srtifact.
      */
     @GET
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.TEXT_HTML)
-    public void downloadUpdate(@PathParam(value="artifact") final String artifactName, 
-                               @PathParam(value="version") final String version);
+    public JsonRepresentation download(@PathParam(value="artifact") final String artifactName, 
+                                       @PathParam(value="version") final String version);
     
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.

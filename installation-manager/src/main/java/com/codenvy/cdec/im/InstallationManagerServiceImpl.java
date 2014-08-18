@@ -48,8 +48,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     }
     
     @Override
-    public void downloadUpdate(String artifactName, String version) {
+    public JsonRepresentation download(String artifactName, String version) {
         // TODO
+        return null;
     }
 
     @Override
