@@ -17,30 +17,39 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.RestletClientFactory;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
+import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
+import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
+
+import java.io.IOException;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 
 /**
- * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "im", name = "install", description = "Install updates")
-public class InstallCommand extends AbsCommand {
+@Command(scope = "im", name = "download", description = "Download updates")
+public class DownloadCommand extends AbsCommand {
 
-    @Argument(name = "artifact", description = "Specify the artifact to install", required = false, multiValued = false)
+    @Argument(name = "artifact", description = "Specify the artifact to download", required = false, multiValued = false)
     private String artifactName;
-
-//    @Option(name="-v", aliases = {"--verbose"}, description = "Verbose output")
-//    private boolean verbose;
 
     @Override
     protected Void doExecute() {
         init();
+
+        try {
+            InstallationManagerService service = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
+            service.doDownloadUpdates();
+        } catch (MissingAnnotationException | IllegalPathException | IOException e) {
+            e.printStackTrace();
+        }
 
         // TODO
 

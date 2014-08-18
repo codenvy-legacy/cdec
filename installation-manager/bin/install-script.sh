@@ -11,13 +11,22 @@ SERVICE_NAME=codenvy-${SCRIPT_NAME}
 createCodenvyUserAndGroupDebian() {
     if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
         sudo addgroup --quiet --gid 5001 ${USER}
-        echo "Group '${USER}' has just been created"
     fi
     
     if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
         sudo adduser --quiet --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 --disabled-password --gecos "" ${USER}
         sudo passwd -q -d -l ${USER}
-        echo "User '${USER}' has just been created"
+    fi
+}
+
+createCodenvyUserAndGroupRedhat() {
+    if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
+        sudo groupadd -g5001 ${USER}
+    fi
+
+    if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
+        sudo useradd --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 ${USER}
+        sudo passwd -l ${USER}
     fi
 }
 
@@ -43,19 +52,6 @@ installRequiredComponentsDebian() {
         read -p "Press any key to start installing unzip... " -n1 -s
         sudo apt-get install unzip
     }
-}
-
-createCodenvyUserAndGroupRedhat() {
-    if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
-        sudo groupadd -g5001 ${USER}
-        echo "Group '${USER}' has just been created"
-    fi
-
-    if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
-        sudo useradd --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 ${USER}
-        sudo passwd -l ${USER}
-        echo "User '${USER}' has just been created"
-    fi
 }
 
 registerServiceRedhat() {
