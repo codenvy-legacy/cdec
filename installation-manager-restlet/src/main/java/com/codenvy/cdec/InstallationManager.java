@@ -64,4 +64,10 @@ public interface InstallationManager {
      *         if I/O error occurred
      */
     void checkNewVersions() throws IOException, IllegalArgumentException;
+
+    /**
+     * Download certain version of artifact.
+     */
+    void downloadArtifact(Artifact artifact, String version) throws IOException;
+    
 }

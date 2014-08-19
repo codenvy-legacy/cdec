@@ -17,12 +17,8 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.dto.server.DtoFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import static com.codenvy.cdec.utils.Version.compare;
+import static com.codenvy.cdec.utils.Version.valueOf;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,11 +26,16 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.codenvy.cdec.utils.Version.compare;
-import static com.codenvy.cdec.utils.Version.valueOf;
-
-import org.json.JSONObject;
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.restlet.ext.jackson.JacksonRepresentation;
+
+import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.dto.server.DtoFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * @author Anatoliy Bazko
@@ -162,9 +163,24 @@ public class Commons {
         return false;
     }
     
+    /**
+     * Convert one-line json string to pretty formatted multiline string. 
+     * @throws JSONException
+     */
     public static String getPrettyPrintingJson(String json) throws JSONException {
         JSONObject obj = new JSONObject(json);
 
         return obj.toString(2);        
+    }
+    
+    /**
+     * Produce json of been object 
+     * @throws IOException 
+     */
+    public static <T> String getJson(T obj) throws IOException {
+        JacksonRepresentation<T> jackson = new JacksonRepresentation<>(obj);
+        String json = jackson.getText();
+        
+        return json;
     }
 }

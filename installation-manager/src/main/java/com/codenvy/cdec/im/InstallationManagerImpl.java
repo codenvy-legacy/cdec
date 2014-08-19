@@ -20,6 +20,7 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -157,6 +159,27 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
+    @Override
+    public void downloadArtifact(Artifact artifact, String version) throws IOException {
+        boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
+        
+        String requestUrl = combinePaths(updateEndpoint,
+                                         "/repository/"
+                                         + (isValidSubscriptionRequired ? "" : "public/")
+                                         + "download/" + artifact.getName() + "/" + version);
+
+        if (!isValidSubscriptionRequired || isValidSubscription()) {
+            Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
+            FileUtils.deleteDirectory(artifactDownloadDir.toFile());
+
+            transport.download(requestUrl, artifactDownloadDir);
+
+            LOG.info("Downloaded '" + artifact + "' version " + version);
+        } else {
+            LOG.warn("Valid subscription is required to download " + artifact.getName());
+        }
+    }
+        
     /**
      * @return downloaded artifacts from the local repository
      * @throws IOException

@@ -25,10 +25,6 @@ import java.util.List;
 
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ResourceException;
 
 import com.codenvy.cdec.InstallationManagerService;

@@ -24,8 +24,9 @@ import com.codenvy.cli.command.builtin.AbsCommand;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
-import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ResourceException;
+
+import com.codenvy.cdec.utils.Commons;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
@@ -61,11 +62,12 @@ public class DownloadCommand extends AbsCommand {
 
         String response;
 
-        try {
-//            response = installationManagerProxy.download(artifactName, version);
-//
-//            buffer.fg(GREEN);
-//            buffer.a("Start downloading artifact '" + artifactName + "', version '" + "'.");
+        try {            
+            response = installationManagerProxy.download(artifactName, version);
+            String output = Commons.getPrettyPrintingJson(response);
+
+            buffer.fg(GREEN);
+            buffer.a(output);
                 
         } catch (ResourceException re) {
             buffer.fg(RED);

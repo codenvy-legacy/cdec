@@ -206,4 +206,9 @@ public class TestInstallationManager {
 
         manager.getDownloadedArtifacts();
     }
+    
+    @Test
+    public void testDownloadArtifact() {
+        // TODO test of new method manager.downloadArtifact()
+    }
 }

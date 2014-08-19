@@ -45,12 +45,13 @@ public interface InstallationManagerService {
     
     /**
      * Downloads artifact.
+     * If version is null, then download latest version of artifact 
      */
     @GET
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.TEXT_HTML)
     public String download(@PathParam(value="artifact") final String artifactName, 
-                                                    @PathParam(value="version") final String version);
+                           @PathParam(value="version") final String version) throws IOException;
     
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.

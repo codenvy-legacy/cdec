@@ -112,7 +112,7 @@ public class TestInstallationManagerService {
     }
     
     @Test
-    public void testDownload() throws Exception {
+    public void testDownloadArtifact() throws Exception {
         doReturn(new HashMap<Artifact, String>() {
              {
                  put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
@@ -125,6 +125,8 @@ public class TestInstallationManagerService {
         doNothing()
         .when(mockInstallationManager)
         .checkNewVersions();
+        
+        // TODO
         
 //        JacksonRepresentation responseRepresentation = installationManagerService.download(mockCdecArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION);
 ////        assertNotNull(response);
