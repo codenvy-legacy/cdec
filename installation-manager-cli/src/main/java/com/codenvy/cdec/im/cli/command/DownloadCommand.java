@@ -17,26 +17,21 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import jline.internal.Log;
-
-import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.commands.Argument;
-import org.fusesource.jansi.Ansi;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.restlet.ext.json.JsonRepresentation;
-import org.restlet.resource.ResourceException;
-
 import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.RestletClientFactory;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
+import org.apache.karaf.shell.commands.Argument;
+import org.apache.karaf.shell.commands.Command;
+import org.fusesource.jansi.Ansi;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.resource.ResourceException;
+
 import static org.fusesource.jansi.Ansi.Color.GREEN;
-import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.Color.RED;
 
 /**
- * TODO
+ * TODO check
  * Parameters and execution of 'cdec:download' command.
  *
  * @author Dmytro Nochevnov
@@ -46,14 +41,14 @@ public class DownloadCommand extends AbsCommand {
 
     InstallationManagerService installationManagerProxy;
 
-    
+
     @Argument(index = 0, name = "artifact", description = "The name of artifact.", required = true, multiValued = false)
     String artifactName = "";
 
     @Argument(index = 1, name = "version", description = "The name of version of artifact.", required = false, multiValued = false)
     String version = "";
 
-    
+
     /**
      * Download artifact.
      */
@@ -61,11 +56,11 @@ public class DownloadCommand extends AbsCommand {
         init();
 
         installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
-        
+
         Ansi buffer = Ansi.ansi();
-        
-        JsonRepresentation response;
-        
+
+        String response;
+
         try {
 //            response = installationManagerProxy.download(artifactName, version);
 //

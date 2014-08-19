@@ -3,31 +3,40 @@
 # bash <(curl -s https://codenvy.com/update/repository/public/download/install-script)
 
 USER=codenvy
-HOME=/home/${USER}
-APP_DIR=$HOME/installation-manager
+CODENVY_HOME=/home/${USER}
+APP_DIR=$CODENVY_HOME/installation-manager
 SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
 
-create_codenvy_user_and_group_under_debian() {
+createCodenvyUserAndGroupDebian() {
     if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
         sudo addgroup --quiet --gid 5001 ${USER}
-        echo "Group '${USER}' has just been created"
     fi
     
     if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
-        sudo adduser --quiet --home ${HOME} --shell /bin/bash --uid 5001 --gid 5001 --disabled-password --gecos "" ${USER}
+        sudo adduser --quiet --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 --disabled-password --gecos "" ${USER}
         sudo passwd -q -d -l ${USER}
-        echo "User '${USER}' has just been created"
     fi
 }
 
-register_service_under_debian() {
+createCodenvyUserAndGroupRedhat() {
+    if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
+        sudo groupadd -g5001 ${USER}
+    fi
+
+    if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
+        sudo useradd --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 ${USER}
+        sudo passwd -l ${USER}
+    fi
+}
+
+registerServiceDebian() {
     # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
     echo "Register service..."
     sudo update-rc.d ${SERVICE_NAME} defaults &>-
 }
 
-install_required_components_under_debian() {
+installRequiredComponentsDebian() {
     echo "Check required components..."
 
     # install java
@@ -45,27 +54,14 @@ install_required_components_under_debian() {
     }
 }
 
-create_codenvy_user_and_group_under_redhat() {
-    if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
-        sudo groupadd -g5001 ${USER}
-        echo "Group '${USER}' has just been created"
-    fi
-
-    if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
-        sudo useradd --home ${HOME} --shell /bin/bash --uid 5001 --gid 5001 ${USER}
-        sudo passwd -l ${USER}
-        echo "User '${USER}' has just been created"
-    fi
-}
-
-register_service_under_redhat() {
+registerServiceRedhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
     echo "Register service..."
     sudo chkconfig --add ${SERVICE_NAME} &>-
     sudo chkconfig ${SERVICE_NAME} on &>-
 }
 
-install_required_components_under_redhat() {
+installRequiredComponentsRedhat() {
     echo "Check required components..."
 
     # install java
@@ -86,11 +82,9 @@ install_required_components_under_redhat() {
 installIM() {
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
-    echo "Download installation manager..."
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
-    echo "Unpack installation manager..."
     sudo rm ${APP_DIR} -r &>-                 # remove exists files
     sudo unzip ${filename} -d ${APP_DIR} &>-  # unzip new package
 
@@ -104,16 +98,14 @@ installIM() {
 installCLI() {
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
 
-    echo "Download installation manager CLI..."
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
-    echo "Unpack installation manager CLI..."
     rm ${HOME}/im-cli -r &>-                 # remove exists files
     unzip ${filename} -d ${HOME}/im-cli &>-  # unzip new package
 }
 
-launching_service() {
+launchingService() {
     # try to stop exists installation-manager
     sudo /etc/init.d/${SERVICE_NAME} stop
     sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>-  # kill manager if stop isn't work
@@ -122,26 +114,27 @@ launching_service() {
     sudo /etc/init.d/${SERVICE_NAME} start
 }
 
-# Debian based linux distributives
 if [ -f /etc/debian_version ]; then
-    echo "System runs on Debian based distributive."
-    install_required_components_under_debian
-    create_codenvy_user_and_group_under_debian
-    installIM
-    installCLI
-    register_service_under_debian
-    launching_service
-
-# RedHat based linux distributives
+    os="Debian"
 elif [ -f /etc/redhat-release ]; then
-    echo "System runs on Red Hat based distributive."
-    install_required_components_under_redhat
-    create_codenvy_user_and_group_under_redhat    
-    installIM
-    installCLI
-    register_service_under_redhat
-    launching_service
-
+    os="Redhat"
 else
     echo "Operation system isn't supported."
+    exit
 fi
+
+echo "System is run on ${os} based distributive."
+
+installRequiredComponents${os}
+createCodenvyUserAndGroup${os}
+
+echo "Installation: Installation Manager Server ..."
+installIM
+
+echo "Installation: Installation Manager CLI ..."
+installCLI
+
+registerService${os}
+launchingService
+
+

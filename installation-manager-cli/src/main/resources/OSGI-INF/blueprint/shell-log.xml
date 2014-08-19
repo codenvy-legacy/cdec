@@ -18,26 +18,20 @@
     from Codenvy S.A..
 
 -->
-<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0">
-
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.1.0">
         <command>
-            <action class="com.codenvy.cdec.im.cli.command.InstallCommand">
-            </action>
+            <action class="com.codenvy.cdec.im.cli.command.InstallCommand"/>
         </command>
     </command-bundle>
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.1.0">
         <command>
-            <action class="com.codenvy.cdec.im.cli.command.CheckUpdatesCommand">
-            </action>
+            <action class="com.codenvy.cdec.im.cli.command.CheckNewVersion"/>
         </command>
     </command-bundle>
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.1.0">
         <command>
-            <action class="com.codenvy.cdec.im.cli.command.DownloadCommand">
-            </action>
+            <action class="com.codenvy.cdec.im.cli.command.DownloadCommand"/>
         </command>
     </command-bundle>
-
 </blueprint>

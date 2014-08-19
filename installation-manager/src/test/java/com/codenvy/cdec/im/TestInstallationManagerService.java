@@ -43,6 +43,7 @@ import com.codenvy.cdec.utils.HttpTransport;
 
 /**
  * @author Dmytro Nochevnov
+ * TODO check
  */
 public class TestInstallationManagerService {    
     private InstallationManagerService installationManagerService;
@@ -86,27 +87,27 @@ public class TestInstallationManagerService {
         .when(mockInstallationManager)
         .checkNewVersions();
 
-        Response expectedObject = new Response(new Status(StatusCode.SUCCESS),
+        Response expectedObject1 = new Response(new Status(StatusCode.SUCCESS),
                                                  Arrays.asList(new ArtifactInfo[] {
                                                      new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
                                                      new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),                                                     
                                                  }));
-        JacksonRepresentation<Response> expectedRepresentation = new JacksonRepresentation<>(expectedObject);
-        String expectedJson = expectedRepresentation.getText();
+        JacksonRepresentation<Response> expectedRepresentation1 = new JacksonRepresentation<>(expectedObject1 );
+        String expectedJson1 = expectedRepresentation1.getText();
         
-        Response expectedObjectSwopped = new Response(new Status(StatusCode.SUCCESS),
+        Response expectedObject2 = new Response(new Status(StatusCode.SUCCESS),
                                                 Arrays.asList(new ArtifactInfo[] {
                                                     new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),
                                                     new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
                                                 }));
-        JacksonRepresentation<Response> expectedRepresentationSwopped = new JacksonRepresentation<>(expectedObjectSwopped);
-        String expectedJsonSwopped = expectedRepresentationSwopped.getText();
+        JacksonRepresentation<Response> expectedRepresentation2 = new JacksonRepresentation<>(expectedObject2 );
+        String expectedJson2 = expectedRepresentation2.getText();
         
         
         String responseJson = installationManagerService.checkUpdates();
         
-        if (! expectedJson.equals(responseJson)) {
-            assertEquals(expectedJsonSwopped, responseJson);
+        if (! expectedJson1.equals(responseJson)) {
+            assertEquals(expectedJson2, responseJson);
         }
     }
     

@@ -26,12 +26,10 @@ import org.fusesource.jansi.Ansi;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 
 /**
- * Command performs installing updates.
- *
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "cdec", name = "install", description = "Install updates")
+@Command(scope = "im", name = "install", description = "Install updates")
 public class InstallCommand extends AbsCommand {
 
     @Argument(name = "artifact", description = "Specify the artifact to install", required = false, multiValued = false)
