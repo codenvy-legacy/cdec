@@ -17,20 +17,6 @@
  */
 package com.codenvy.cdec.im;
 
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
-import java.util.HashMap;
-
-import org.json.JSONArray;
-import org.restlet.ext.json.JsonRepresentation;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.artifacts.Artifact;
@@ -38,8 +24,20 @@ import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.HttpTransport;
 
+import org.json.JSONArray;
+import org.restlet.ext.json.JsonRepresentation;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.HashMap;
+
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 /**
  * @author Dmytro Nochevnov
+ * TODO check
  */
 public class TestInstallationManagerService {    
     private InstallationManagerService installationManagerService;
@@ -95,6 +93,28 @@ public class TestInstallationManagerService {
             assertEquals(updates.getJSONObject(1).toString(), "{\"artifact\":\"installation-manager\",\"version\":\"1.0.1\"}");
         }
     }
+    
+    @Test
+    public void testDownload() throws Exception {
+        doReturn(new HashMap<Artifact, String>() {
+             {
+                 put(mockCdecArtifact, "2.10.5");
+                 put(mockInstallManagerArtifact, "1.0.1");
+             }
+        })
+        .when(mockInstallationManager)
+        .getNewVersions();
+
+        doNothing()
+        .when(mockInstallationManager)
+        .checkNewVersions();
+        
+        JsonRepresentation response = installationManagerService.download(mockCdecArtifact.getName(), "2.10.5");
+//        assertNotNull(response);
+        
+        response = installationManagerService.download(mockInstallManagerArtifact.getName(), null);
+//        assertNotNull(response);
+    }    
     
     public class InstallationManagerServiceTestImpl extends InstallationManagerServiceImpl {
         public InstallationManagerServiceTestImpl(InstallationManager manager) {

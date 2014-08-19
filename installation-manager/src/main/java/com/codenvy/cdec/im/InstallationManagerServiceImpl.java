@@ -17,11 +17,11 @@
  */
 package com.codenvy.cdec.im;
 
-import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import com.codenvy.cdec.InstallationManager;
+import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.artifacts.Artifact;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,14 +29,15 @@ import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ServerResource;
 
-import com.codenvy.cdec.InstallationManager;
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.artifacts.Artifact;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
 
 /**
  * @author Dmytro Nochevnov
+ * TODO check
  */
 @Singleton
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {   
@@ -48,8 +49,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     }
     
     @Override
-    public void downloadUpdate(String artifactName, String version) {
+    public JsonRepresentation download(String artifactName, String version) {
         // TODO
+        return null;
     }
 
     @Override

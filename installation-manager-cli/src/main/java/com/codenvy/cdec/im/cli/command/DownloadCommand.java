@@ -24,38 +24,55 @@ import com.codenvy.cli.command.builtin.AbsCommand;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
-import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
-import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
-
-import java.io.IOException;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.resource.ResourceException;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
+import static org.fusesource.jansi.Ansi.Color.RED;
 
 /**
- * @author Anatoliy Bazko
+ * TODO check
+ * Parameters and execution of 'cdec:download' command.
+ *
+ * @author Dmytro Nochevnov
  */
-@Command(scope = "im", name = "download", description = "Download updates")
+@Command(scope = "cdec", name = "download", description = "Download update.")
 public class DownloadCommand extends AbsCommand {
 
-    @Argument(name = "artifact", description = "Specify the artifact to download", required = false, multiValued = false)
-    private String artifactName;
+    InstallationManagerService installationManagerProxy;
 
-    @Override
-    protected Void doExecute() {
+
+    @Argument(index = 0, name = "artifact", description = "The name of artifact.", required = true, multiValued = false)
+    String artifactName = "";
+
+    @Argument(index = 1, name = "version", description = "The name of version of artifact.", required = false, multiValued = false)
+    String version = "";
+
+
+    /**
+     * Download artifact.
+     */
+    protected Object doExecute() throws Exception {
         init();
 
-        try {
-            InstallationManagerService service = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
-            service.doDownloadUpdates();
-        } catch (MissingAnnotationException | IllegalPathException | IOException e) {
-            e.printStackTrace();
-        }
-
-        // TODO
+        installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
 
         Ansi buffer = Ansi.ansi();
-        buffer.fg(GREEN);
-        buffer.a("Update CDEC is not yet implement...");
+
+        JsonRepresentation response;
+
+        try {
+            response = installationManagerProxy.download(artifactName, version);
+
+            buffer.fg(GREEN);
+            buffer.a("Start downloading artifact '" + artifactName + "', version '" + "'.");
+
+        } catch (ResourceException re) {
+            buffer.fg(RED);
+            buffer.a("There was an error " + re.getStatus().toString() + ".\n"
+                     + "details: " + re.getMessage());
+        }
+
         buffer.reset();
         System.out.println(buffer.toString());
 
