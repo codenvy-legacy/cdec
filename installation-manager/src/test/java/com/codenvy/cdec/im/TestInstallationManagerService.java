@@ -22,12 +22,11 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
-import org.json.JSONArray;
-import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -36,6 +35,10 @@ import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
+import com.codenvy.cdec.im.service.response.ArtifactInfo;
+import com.codenvy.cdec.im.service.response.Response;
+import com.codenvy.cdec.im.service.response.Response.Status;
+import com.codenvy.cdec.im.service.response.StatusCode;
 import com.codenvy.cdec.utils.HttpTransport;
 
 /**
@@ -48,6 +51,9 @@ public class TestInstallationManagerService {
     private HttpTransport mockTransport;
     private Artifact mockInstallManagerArtifact;
     private Artifact mockCdecArtifact;
+    
+    private static final String CDEC_ARTIFACT_VERSION =  "2.10.5";
+    private static final String INSTALL_MANAGER_ARTIFACT_VERSION = "1.0.1";
     
     @BeforeMethod
     public void init() {
@@ -69,8 +75,8 @@ public class TestInstallationManagerService {
     public void testCheckUpdates() throws Exception {
         doReturn(new HashMap<Artifact, String>() {
              {
-                 put(mockCdecArtifact, "2.10.5");
-                 put(mockInstallManagerArtifact, "1.0.1");
+                 put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
+                 put(mockInstallManagerArtifact, INSTALL_MANAGER_ARTIFACT_VERSION);
              }
         })
         .when(mockInstallationManager)
@@ -79,20 +85,28 @@ public class TestInstallationManagerService {
         doNothing()
         .when(mockInstallationManager)
         .checkNewVersions();
-        
-        JsonRepresentation response = installationManagerService.checkUpdates();
-        assertNotNull(response);
-        
-        JSONArray updates = response.getJsonArray();        
-        assertNotNull(updates);        
-        assertEquals(updates.length(), 2);
 
-        if (updates.getJSONObject(0).get("artifact").equals(mockInstallManagerArtifact.getName())) {
-            assertEquals(updates.getJSONObject(0).toString(), "{\"artifact\":\"installation-manager\",\"version\":\"1.0.1\"}");
-            assertEquals(updates.getJSONObject(1).toString(), "{\"artifact\":\"cdec\",\"version\":\"2.10.5\"}");            
-        } else {
-            assertEquals(updates.getJSONObject(0).toString(), "{\"artifact\":\"cdec\",\"version\":\"2.10.5\"}");
-            assertEquals(updates.getJSONObject(1).toString(), "{\"artifact\":\"installation-manager\",\"version\":\"1.0.1\"}");
+        Response expectedObject = new Response(new Status(StatusCode.SUCCESS),
+                                                 Arrays.asList(new ArtifactInfo[] {
+                                                     new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
+                                                     new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),                                                     
+                                                 }));
+        JacksonRepresentation<Response> expectedRepresentation = new JacksonRepresentation<>(expectedObject);
+        String expectedJson = expectedRepresentation.getText();
+        
+        Response expectedObjectSwopped = new Response(new Status(StatusCode.SUCCESS),
+                                                Arrays.asList(new ArtifactInfo[] {
+                                                    new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),
+                                                    new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
+                                                }));
+        JacksonRepresentation<Response> expectedRepresentationSwopped = new JacksonRepresentation<>(expectedObjectSwopped);
+        String expectedJsonSwopped = expectedRepresentationSwopped.getText();
+        
+        
+        String responseJson = installationManagerService.checkUpdates();
+        
+        if (! expectedJson.equals(responseJson)) {
+            assertEquals(expectedJsonSwopped, responseJson);
         }
     }
     
@@ -100,8 +114,8 @@ public class TestInstallationManagerService {
     public void testDownload() throws Exception {
         doReturn(new HashMap<Artifact, String>() {
              {
-                 put(mockCdecArtifact, "2.10.5");
-                 put(mockInstallManagerArtifact, "1.0.1");
+                 put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
+                 put(mockInstallManagerArtifact, INSTALL_MANAGER_ARTIFACT_VERSION);
              }
         })
         .when(mockInstallationManager)
@@ -111,10 +125,10 @@ public class TestInstallationManagerService {
         .when(mockInstallationManager)
         .checkNewVersions();
         
-        JsonRepresentation response = installationManagerService.download(mockCdecArtifact.getName(), "2.10.5");
-//        assertNotNull(response);
-        
-        response = installationManagerService.download(mockInstallManagerArtifact.getName(), null);
+//        JacksonRepresentation responseRepresentation = installationManagerService.download(mockCdecArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION);
+////        assertNotNull(response);
+//        
+//        responseRepresentation = installationManagerService.download(mockInstallManagerArtifact.getName(), null);
 //        assertNotNull(response);
     }    
     
@@ -123,4 +137,5 @@ public class TestInstallationManagerService {
             this.manager = manager;
         }
     }
+    
 }

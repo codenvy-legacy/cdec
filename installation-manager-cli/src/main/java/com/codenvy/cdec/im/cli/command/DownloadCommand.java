@@ -27,8 +27,8 @@ import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.RestletClientFactory;
 import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.RestletClientFactory;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
@@ -67,10 +67,10 @@ public class DownloadCommand extends AbsCommand {
         JsonRepresentation response;
         
         try {
-            response = installationManagerProxy.download(artifactName, version);
-
-            buffer.fg(GREEN);
-            buffer.a("Start downloading artifact '" + artifactName + "', version '" + "'.");
+//            response = installationManagerProxy.download(artifactName, version);
+//
+//            buffer.fg(GREEN);
+//            buffer.a("Start downloading artifact '" + artifactName + "', version '" + "'.");
                 
         } catch (ResourceException re) {
             buffer.fg(RED);

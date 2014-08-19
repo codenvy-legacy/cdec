@@ -24,6 +24,7 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import org.restlet.resource.ResourceException;
 
 import javax.ws.rs.Path;
+
 import java.io.IOException;
 
 import static com.codenvy.cdec.utils.Commons.combinePaths;

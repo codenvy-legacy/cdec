@@ -17,8 +17,13 @@
  */
 package com.codenvy.cdec;
 
+import java.io.IOException;
+
 import org.json.JSONException;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.json.JsonRepresentation;
+
+import com.codenvy.cdec.im.service.response.Response;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -39,13 +44,13 @@ public interface InstallationManagerService {
     public void obtainChallengeRequest();
     
     /**
-     * Downloads srtifact.
+     * Downloads artifact.
      */
     @GET
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.TEXT_HTML)
-    public JsonRepresentation download(@PathParam(value="artifact") final String artifactName, 
-                                       @PathParam(value="version") final String version);
+    public String download(@PathParam(value="artifact") final String artifactName, 
+                                                    @PathParam(value="version") final String version);
     
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
@@ -53,5 +58,5 @@ public interface InstallationManagerService {
     @GET
     @Path("check")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonRepresentation checkUpdates()  throws JSONException;
+    public String checkUpdates() throws IOException;
 }

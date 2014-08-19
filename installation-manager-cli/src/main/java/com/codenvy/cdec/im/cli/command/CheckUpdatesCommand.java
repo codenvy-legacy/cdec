@@ -17,17 +17,24 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.im.service.response.Response;
+
 import jline.internal.Log;
+
+import java.util.List;
 
 import org.apache.karaf.shell.commands.Command;
 import org.fusesource.jansi.Ansi;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.RestletClientFactory;
 import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.RestletClientFactory;
+import com.codenvy.cdec.im.service.response.ArtifactInfo;
+import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
@@ -55,8 +62,8 @@ public class CheckUpdatesCommand extends AbsCommand {
         installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
         
         Ansi buffer = Ansi.ansi();
-
-        JsonRepresentation response;
+                
+        String response;
         
         try {
             response = installationManagerProxy.checkUpdates();
@@ -64,26 +71,11 @@ public class CheckUpdatesCommand extends AbsCommand {
             if (response == null) {
                 buffer.fg(RED);
                 buffer.a("Incomplete response.");
-                return null;
-            }
-                        
-            JSONArray artifacts = response.getJsonArray();
-
-            if (artifacts.length() == 0) {
-                buffer.fg(GREEN);
-                buffer.a("All artifacts are up-to-date.");
-                
             } else {
-                buffer.fg(YELLOW);
-                buffer.a("Following artifacts are available for update :");
+                String output = Commons.getPrettyPrintingJson(response);
                 
-                for (int i = 0; i < artifacts.length(); i++) {
-                    JSONObject update = artifacts.getJSONObject(i);
-                    String artifact = update.getString("artifact");
-                    String version = update.getString("version");
-                    
-                    buffer.a("- update for artifact '" + artifact + "', version '" + version + "';");   
-                }
+                buffer.fg(GREEN);
+                buffer.a(output);
             }
             
         } catch (ResourceException re) {

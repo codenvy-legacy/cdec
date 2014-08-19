@@ -33,6 +33,9 @@ import java.util.List;
 import static com.codenvy.cdec.utils.Version.compare;
 import static com.codenvy.cdec.utils.Version.valueOf;
 
+import org.json.JSONObject;
+import org.json.JSONException;
+
 /**
  * @author Anatoliy Bazko
  */
@@ -157,5 +160,11 @@ public class Commons {
         }
 
         return false;
+    }
+    
+    public static String getPrettyPrintingJson(String json) throws JSONException {
+        JSONObject obj = new JSONObject(json);
+
+        return obj.toString(2);        
     }
 }
