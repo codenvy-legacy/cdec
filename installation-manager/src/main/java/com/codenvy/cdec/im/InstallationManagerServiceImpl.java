@@ -25,6 +25,7 @@ import com.codenvy.cdec.im.service.response.ArtifactInfo;
 import com.codenvy.cdec.im.service.response.Response;
 import com.codenvy.cdec.im.service.response.Response.Status;
 import com.codenvy.cdec.im.service.response.StatusCode;
+import com.codenvy.cdec.utils.Commons;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -52,7 +53,31 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
+    public String download() throws IOException {
+
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    // TODO
+    @Override
+    public String download(String artifactName) throws IOException {
+        try {
+            manager.download();
+
+        } catch (RuntimeException e) {
+            Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
+            return Commons.getJson(response);
+        }
+
+        Response response = new Response(new Status(StatusCode.OK));
+        return Commons.getJson(response);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     //  TODO shouldn't throw exception
+    // TODO if no need to download, what need to return?
     public String download(String artifactName, String version) throws IOException {
         try {
             Artifact artifact = ArtifactFactory.createArtifact(artifactName);

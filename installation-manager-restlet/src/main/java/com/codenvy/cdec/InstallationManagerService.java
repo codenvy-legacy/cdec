@@ -17,11 +17,6 @@
  */
 package com.codenvy.cdec;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -42,22 +37,22 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public void obtainChallengeRequest();
 
     /**
-     * Downloads available updates. 
+     * Downloads the latest versions of the artifacts.
      */
     @GET
     @Path("download")
     @Produces(MediaType.APPLICATION_JSON)
-    public String downloadUpdates() throws IOException;
+    public String download() throws IOException;
 
-    
+
     /**
-     * Downloads available update of artifact. 
+     * Downloads available update of artifact.
      */
     @GET
     @Path("download/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String downloadUpdate(@PathParam(value="artifact") final String artifactName) throws IOException;
-    
+    public String download(@PathParam(value = "artifact") final String artifactName) throws IOException;
+
     /**
      * Downloads artifact.
      * If version is null, then download latest version of artifact 

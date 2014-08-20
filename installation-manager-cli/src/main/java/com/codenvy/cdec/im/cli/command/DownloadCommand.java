@@ -17,18 +17,13 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.im.service.response.Response;
+import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.utils.Commons;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
-
 import org.restlet.resource.ResourceException;
-
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.RestletClientFactory;
-import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cli.command.builtin.AbsCommand;
 
 import static com.codenvy.cdec.im.cli.command.MessageHelper.*;
 
@@ -39,7 +34,7 @@ import static com.codenvy.cdec.im.cli.command.MessageHelper.*;
  * @author Dmytro Nochevnov
  */
 @Command(scope = "cdec", name = "download", description = "Download artifacts.")
-public class DownloadCommand extends AbsCommand {
+public class DownloadCommand extends AbstractIMCommand {
 
     InstallationManagerService installationManagerProxy;
 
@@ -57,44 +52,42 @@ public class DownloadCommand extends AbsCommand {
      */
     protected Object doExecute() throws Exception {
         init();
-        
-        installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
 
-        try {            
+        try {
             if (artifactName != null && version != null && !downloadAll) {
-                String response = installationManagerProxy.download(artifactName, version);  
+                String response = installationManagerProxy.download(artifactName, version);
                 if (response == null) {
                     printlnRed(INCOMPLETE_RESPONSE);
                     return null;
                 }
-                
-                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));                
+
+                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));
                 return null;
             }
-                
+
             if (artifactName != null && !downloadAll) {
-                String response = installationManagerProxy.downloadUpdate(artifactName);
+                String response = installationManagerProxy.download(artifactName);
                 if (response == null) {
                     printlnRed(INCOMPLETE_RESPONSE);
                     return null;
                 }
-                
-                printlnGreen(Commons.getPrettyPrintingJson(response));                
+
+                printlnGreen(Commons.getPrettyPrintingJson(response));
                 return null;
-            } 
-            
-            if (downloadAll && artifactName == null && version == null) {                
-                String response = installationManagerProxy.downloadUpdates();
+            }
+
+            if (downloadAll && artifactName == null && version == null) {
+                String response = installationManagerProxy.download();
                 if (response == null) {
                     printlnRed(INCOMPLETE_RESPONSE);
                     return null;
                 }
-                printlnGreen(Commons.getPrettyPrintingJson(response));                
+                printlnGreen(Commons.getPrettyPrintingJson(response));
                 return null;
-            } 
-            
+            }
+
             printlnRed(MISLEADING_ARGUMENTS);
-            
+
         } catch (ResourceException re) {
             println(re);
         }
