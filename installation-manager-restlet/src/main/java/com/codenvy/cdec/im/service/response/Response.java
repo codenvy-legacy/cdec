@@ -17,6 +17,7 @@
  */
 package com.codenvy.cdec.im.service.response;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -27,7 +28,7 @@ public class Response {
     List<ArtifactInfo> artifacts;
     
     public Response(Status status) {
-        this(status, null);
+        this.status = status;
     }
 
     public Response(Status status, List<ArtifactInfo> artifacts) {
@@ -35,6 +36,10 @@ public class Response {
         this.status = status;        
     }
     
+    public Response(Status status, ArtifactInfo artifactInfo) {
+        this(status, Arrays.asList(new ArtifactInfo[]{ artifactInfo }));
+    }
+
     public Status getStatus() {
         return status;
     }

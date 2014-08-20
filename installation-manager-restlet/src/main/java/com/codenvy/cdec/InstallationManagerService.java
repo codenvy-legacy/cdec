@@ -42,16 +42,33 @@ public interface InstallationManagerService {
     @Path("empty")
     @Produces(MediaType.TEXT_HTML)
     public void obtainChallengeRequest();
+
+    /**
+     * Downloads available updates. 
+     */
+    @GET
+    @Path("download")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String downloadUpdates() throws IOException;
+
+    
+    /**
+     * Downloads available update of artifact. 
+     */
+    @GET
+    @Path("download/{artifact}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String downloadUpdate(@PathParam(value="artifact") final String artifactName) throws IOException;
     
     /**
      * Downloads artifact.
-     * If version is null, then download latest version of artifact 
      */
     @GET
     @Path("download/{artifact}/{version}")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_JSON)
     public String download(@PathParam(value="artifact") final String artifactName, 
                            @PathParam(value="version") final String version) throws IOException;
+
     
     /**
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.

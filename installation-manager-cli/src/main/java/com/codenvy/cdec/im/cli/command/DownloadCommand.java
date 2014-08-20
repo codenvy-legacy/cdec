@@ -17,19 +17,20 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.RestletClientFactory;
-import com.codenvy.cli.command.builtin.AbsCommand;
+import com.codenvy.cdec.im.service.response.Response;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.fusesource.jansi.Ansi;
+import org.apache.karaf.shell.commands.Option;
+
 import org.restlet.resource.ResourceException;
 
+import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.RestletClientFactory;
 import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cli.command.builtin.AbsCommand;
 
-import static org.fusesource.jansi.Ansi.Color.GREEN;
-import static org.fusesource.jansi.Ansi.Color.RED;
+import static com.codenvy.cdec.im.cli.command.MessageHelper.*;
 
 /**
  * TODO check
@@ -37,46 +38,66 @@ import static org.fusesource.jansi.Ansi.Color.RED;
  *
  * @author Dmytro Nochevnov
  */
-@Command(scope = "cdec", name = "download", description = "Download update.")
+@Command(scope = "cdec", name = "download", description = "Download artifacts.")
 public class DownloadCommand extends AbsCommand {
 
     InstallationManagerService installationManagerProxy;
 
-
-    @Argument(index = 0, name = "artifact", description = "The name of artifact.", required = true, multiValued = false)
-    String artifactName = "";
+    @Argument(index = 0, name = "artifact", description = "The name of artifact.", required = false, multiValued = false)
+    String artifactName;
 
     @Argument(index = 1, name = "version", description = "The name of version of artifact.", required = false, multiValued = false)
-    String version = "";
+    String version;
 
+    @Option(name = "-a", aliases = "--all", description = "Download all available updates.", required = false, multiValued = false)
+    boolean downloadAll;
 
     /**
-     * Download artifact.
+     * Download artifacts.
      */
     protected Object doExecute() throws Exception {
         init();
-
+        
         installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
 
-        Ansi buffer = Ansi.ansi();
-
-        String response;
-
         try {            
-            response = installationManagerProxy.download(artifactName, version);
-            String output = Commons.getPrettyPrintingJson(response);
-
-            buffer.fg(GREEN);
-            buffer.a(output);
+            if (artifactName != null && version != null) {
+                String response = installationManagerProxy.download(artifactName, version);  
+                if (response == null) {
+                    MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                    return null;
+                }
                 
+                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));                
+                return null;
+            }
+                
+            if (artifactName != null && version == null) {
+                String response = installationManagerProxy.downloadUpdate(artifactName);
+                if (response == null) {
+                    MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                    return null;
+                }
+                
+                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));                
+                return null;
+            } 
+            
+            if (artifactName == null && version == null && downloadAll) {                
+                String response = installationManagerProxy.downloadUpdates();
+                if (response == null) {
+                    MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                    return null;
+                }
+                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));                
+                return null;
+            } 
+            
+            MessageHelper.printlnRed(MISLEADING_ARGUMENTS);
+            
         } catch (ResourceException re) {
-            buffer.fg(RED);
-            buffer.a("There was an error " + re.getStatus().toString() + ".\n"
-                   + "details: " + re.getMessage());
+            MessageHelper.println(re);
         }
-
-        buffer.reset();
-        System.out.println(buffer.toString());
 
         return null;
     }

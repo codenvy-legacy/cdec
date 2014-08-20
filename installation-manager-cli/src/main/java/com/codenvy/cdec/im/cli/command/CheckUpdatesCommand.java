@@ -19,23 +19,15 @@ package com.codenvy.cdec.im.cli.command;
 
 import com.codenvy.cdec.im.service.response.Response;
 
-import jline.internal.Log;
-
-import java.util.List;
-
 import org.apache.karaf.shell.commands.Command;
-import org.fusesource.jansi.Ansi;
 import org.restlet.resource.ResourceException;
 
 import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.RestletClientFactory;
-import com.codenvy.cdec.im.service.response.ArtifactInfo;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
-import static org.fusesource.jansi.Ansi.Color.GREEN;
-import static org.fusesource.jansi.Ansi.Color.YELLOW;
-import static org.fusesource.jansi.Ansi.Color.RED;
+import static com.codenvy.cdec.im.cli.command.MessageHelper.*;
 
 /**
  * TODO
@@ -57,31 +49,19 @@ public class CheckUpdatesCommand extends AbsCommand {
 
         installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
         
-        Ansi buffer = Ansi.ansi();
-                
-        String response;
-        
         try {
-            response = installationManagerProxy.checkUpdates();
+            String response = installationManagerProxy.checkUpdates();
             
             if (response == null) {
-                buffer.fg(RED);
-                buffer.a("Incomplete response.");
-            } else {
-                String output = Commons.getPrettyPrintingJson(response);
-                
-                buffer.fg(GREEN);
-                buffer.a(output);
+                MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                return null;
             }
+
+            MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));
             
         } catch (ResourceException re) {
-            buffer.fg(RED);
-            buffer.a("There was an error " + re.getStatus().toString() + ".\n"
-                   + "details: " + re.getMessage());
+            MessageHelper.println(re);
         }
-
-        buffer.reset();
-        System.out.println(buffer.toString());
 
         return null;
     }
