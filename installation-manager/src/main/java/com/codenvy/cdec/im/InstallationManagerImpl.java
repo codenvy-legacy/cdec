@@ -75,6 +75,7 @@ public class InstallationManagerImpl implements InstallationManager {
         LOG.info(artifacts.getClass().getName());
     }
 
+    /** {@inheritDoc} */
     @Override
     public String install(Artifact artifact) throws IOException {
         Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
@@ -95,6 +96,7 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public Map<Artifact, String> getInstalledArtifacts() throws IOException {
         Map<Artifact, String> installed = new HashMap<>();
@@ -109,35 +111,19 @@ public class InstallationManagerImpl implements InstallationManager {
         return installed;
     }
 
-    @Override
-    public Map<Artifact, String> getAvailable2DownloadArtifacts() throws IOException {
-        Map<Artifact, String> available2Download = new HashMap<>();
-
-        for (Artifact artifact : artifacts) {
-            try {
-                Map m = fromJson(transport.doGetRequest(combinePaths(updateEndpoint, "repository/version/" + artifact.getName())), Map.class);
-                if (m != null && m.containsKey("version")) {
-                    available2Download.put(artifact, (String)m.get("version"));
-                }
-            } catch (IOException e) {
-                LOG.error("Can't retrieve the last version of " + artifact, e);
-            }
-        }
-
-        return available2Download;
-    }
-
+    /** {@inheritDoc} */
     @Override
     public void download() throws IOException {
-        for (Map.Entry<Artifact, String> entry : getNewVersions().entrySet()) {
+        for (Map.Entry<Artifact, String> entry : getUpdates().entrySet()) {
             download(entry.getKey(), entry.getValue());
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void download(Artifact artifact, String version) throws IOException {
         boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
-        
+
         String requestUrl = combinePaths(updateEndpoint,
                                          "/repository/"
                                          + (isValidSubscriptionRequired ? "" : "public/")
@@ -155,7 +141,7 @@ public class InstallationManagerImpl implements InstallationManager {
             LOG.warn("Valid subscription is required to download " + artifact.getName());
         }
     }
-        
+
     /**
      * @return downloaded artifacts from the local repository
      * @throws IOException
@@ -191,20 +177,13 @@ public class InstallationManagerImpl implements InstallationManager {
         return downloaded;
     }
 
-    private Path getArtifactDownloadedDir(Artifact artifact, String version) {
-        return downloadDir.resolve(artifact.getName()).resolve(version);
-    }
-
-    protected boolean isValidSubscription() throws IOException {
-        return Commons.isValidSubscription(transport, apiEndpoint, "On-Premises");
-    }
-
+    /** {@inheritDoc} */
     @Override
-    public Map<Artifact, String> getNewVersions() throws IOException {
+    public Map<Artifact, String> getUpdates() throws IOException {
         Map<Artifact, String> newVersions = new HashMap<>();
 
         Map<Artifact, String> installed = getInstalledArtifacts();
-        Map<Artifact, String> available2Download = getAvailable2DownloadArtifacts();
+        Map<Artifact, String> available2Download = getLatestVersionsToDownload();
 
         for (Map.Entry<Artifact, String> entry : available2Download.entrySet()) {
             Artifact artifact = entry.getKey();
@@ -217,5 +196,32 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         return newVersions;
+    }
+
+    protected Path getArtifactDownloadedDir(Artifact artifact, String version) {
+        return downloadDir.resolve(artifact.getName()).resolve(version);
+    }
+
+    protected boolean isValidSubscription() throws IOException {
+        return Commons.isValidSubscription(transport, apiEndpoint, "On-Premises");
+    }
+
+
+    /** Retrieves the latest versions from the Update Server. */
+    protected Map<Artifact, String> getLatestVersionsToDownload() throws IOException {
+        Map<Artifact, String> available2Download = new HashMap<>();
+
+        for (Artifact artifact : artifacts) {
+            try {
+                Map m = fromJson(transport.doGetRequest(combinePaths(updateEndpoint, "repository/version/" + artifact.getName())), Map.class);
+                if (m != null && m.containsKey("version")) {
+                    available2Download.put(artifact, (String)m.get("version"));
+                }
+            } catch (IOException e) {
+                LOG.error("Can't retrieve the last version of " + artifact, e);
+            }
+        }
+
+        return available2Download;
     }
 }

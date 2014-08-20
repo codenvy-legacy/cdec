@@ -18,6 +18,7 @@
 package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.InstallationManager;
+import com.codenvy.cdec.artifacts.Artifact;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -31,6 +32,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Checks and downloads updates by schedule.
@@ -86,9 +88,9 @@ public class UpdateManager {
             LOG.info("Checking new updates started");
 
             try {
-                manager.getNewVersions();
+                Map<Artifact, String> updates = manager.getUpdates();
 
-                if (!manager.getNewVersions().isEmpty() && downloadAutomatically) {
+                if (!updates.isEmpty() && downloadAutomatically) {
                     manager.download();
                 }
             } catch (Exception e) {

@@ -28,6 +28,7 @@ import org.json.JSONException;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
@@ -63,12 +64,16 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    protected void printResult(String response) {
-        try {
-            String message = getPrettyPrintingJson(response);
-            System.out.println(ansi().a(message));
-        } catch (JSONException e) {
-            System.out.println(ansi().fg(RED).a("Unexpected error: " + e.getMessage()).reset());
+    protected void printResult(@Nullable String response) {
+        if (response == null) {
+            printError(new IllegalArgumentException("Unexpected error occurred. Response is empty"));
+        } else {
+            try {
+                String message = getPrettyPrintingJson(response);
+                System.out.println(ansi().a(message));
+            } catch (JSONException e) {
+                System.out.println(ansi().fg(RED).a("Unexpected error: " + e.getMessage()).reset());
+            }
         }
     }
 }

@@ -135,7 +135,7 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, String>() {{
             put(cdecArtifact, "2.10.5");
             put(installManagerArtifact, "1.0.1");
-        }}).when(manager).getNewVersions();
+        }}).when(manager).getUpdates();
 
         manager.download();
 
@@ -143,6 +143,22 @@ public class TestInstallationManager {
         assertEquals(m.size(), 2);
         assertEquals(m.get(cdecArtifact), file1);
         assertEquals(m.get(installManagerArtifact), file2);
+    }
+
+    @Test
+    public void testGetUpdates() throws Exception {
+        doReturn(new HashMap<Artifact, String>() {{
+            put(cdecArtifact, "2.10.5");
+            put(installManagerArtifact, "1.0.0");
+        }}).when(manager).getInstalledArtifacts();
+        doReturn(new HashMap<Artifact, String>() {{
+            put(cdecArtifact, "2.10.5");
+            put(installManagerArtifact, "1.0.1");
+        }}).when(manager).getLatestVersionsToDownload();
+
+        Map<Artifact, String> m = manager.getUpdates();
+        assertEquals(m.size(), 1);
+        assertEquals(m.get(installManagerArtifact), "1.0.1");
     }
 
     @Test
@@ -155,10 +171,10 @@ public class TestInstallationManager {
     }
 
     @Test
-    public void testGetAvailable2DownloadArtifacts() throws Exception {
+    public void testGetLatestVersionsToDownload() throws Exception {
         when(transport.doGetRequest("update/endpoint/repository/version/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
         when(transport.doGetRequest("update/endpoint/repository/version/" + CDECArtifact.NAME)).thenReturn("{version:2.10.5}");
-        Map<Artifact, String> m = manager.getAvailable2DownloadArtifacts();
+        Map<Artifact, String> m = manager.getLatestVersionsToDownload();
 
         assertEquals(m.size(), 2);
         assertEquals(m.get(installManagerArtifact), "1.0.1");

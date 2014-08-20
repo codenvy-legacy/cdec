@@ -71,7 +71,7 @@ public class TestInstallationManagerService {
 
     @Test
     public void testCheckUpdates() throws Exception {
-        when(mockInstallationManager.getNewVersions()).thenReturn(new HashMap<Artifact, String>() {
+        when(mockInstallationManager.getUpdates()).thenReturn(new HashMap<Artifact, String>() {
             {
                 put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
                 put(mockInstallManagerArtifact, INSTALL_MANAGER_ARTIFACT_VERSION);
@@ -108,7 +108,7 @@ public class TestInstallationManagerService {
                 put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
                 put(mockInstallManagerArtifact, INSTALL_MANAGER_ARTIFACT_VERSION);
             }
-        }).when(mockInstallationManager).getNewVersions();
+        }).when(mockInstallationManager).getUpdates();
 
         // TODO
 

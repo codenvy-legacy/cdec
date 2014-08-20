@@ -84,7 +84,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             
             if (version == null) {
                 // download latest version of artifact
-                version = manager.getNewVersions().get(artifact);
+                version = manager.getUpdates().get(artifact);
             }
 
             manager.download(artifact, version);
@@ -103,13 +103,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
+    // TODO rename
     public String checkUpdates() throws IOException {
         Map<Artifact, String> newVersions;
 
         try {
-            manager.getNewVersions();
-            newVersions = manager.getNewVersions();
-
+            newVersions = manager.getUpdates();
         } catch (IOException e) {
             Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
             return getJson(response);
@@ -134,5 +133,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public void obtainChallengeRequest() {
+        // do nothing
     }
 }

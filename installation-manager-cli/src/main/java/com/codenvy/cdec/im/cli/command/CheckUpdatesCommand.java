@@ -25,7 +25,7 @@ import org.restlet.resource.ResourceException;
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-@Command(scope = "im", name = "check-updates", description = "Check all available updates.")
+@Command(scope = "im", name = "check-updates", description = "Check all available updates")
 public class CheckUpdatesCommand extends AbstractIMCommand {
 
     /**

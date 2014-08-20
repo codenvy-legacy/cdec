@@ -29,35 +29,25 @@ public interface InstallationManager {
 
 
     /**
-     * TODO check versions
-     * Install artifact if the existed version lower than a downloaded one.
+     * Install the artifact if the existed version lower than a downloaded one.
      *
-     * @return the installed version of the artifact
+     * @return the version of newly installed artifact or the current one if installation wasn't necessary
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    public String install(Artifact artifact) throws IOException;
+    String install(Artifact artifact) throws IOException;
 
     /**
-     * TODO
-     * Scans all available artifacts and returns their current versions.
+     * Scans all installed artifacts and returns their versions.
      */
-    public Map<Artifact, String> getInstalledArtifacts() throws IOException;
+    Map<Artifact, String> getInstalledArtifacts() throws IOException;
 
     /**
-     * TODO check new versions?
-     * Scans all available artifacts and returns their last versions from Update Server.
-     */
-    Map<Artifact, String> getAvailable2DownloadArtifacts() throws IOException;
-
-    /**
-     * TODO javadoc
-     * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
-     *
+     * @return the list of the artifacts to update.
      * @throws java.io.IOException
      *         if I/O error occurred
      */
-    Map<Artifact, String> getNewVersions() throws IOException, IllegalArgumentException;
+    Map<Artifact, String> getUpdates() throws IOException;
 
     /**
      * Download the specific version of the artifact.
@@ -66,9 +56,7 @@ public interface InstallationManager {
 
 
     /**
-     * TODO javadoc, after check new versions
      * Downloads updates.
      */
     void download() throws IOException;
-
 }
