@@ -19,14 +19,12 @@ package com.codenvy.cdec;
 
 import com.codenvy.cdec.utils.InjectorBootstrap;
 
-import java.util.UUID;
-
 /**
  * @author Dmytro Nochevnov
  */
 public class ServerDescription {
     public static final String LOGIN    = "im";
-    public static final char[] PASSWORD = UUID.randomUUID().toString().toCharArray();
+    public static final char[] PASSWORD = "cdec-secret".toCharArray();  // TODO store password in safe place and in safe view
 
     public static final String REALM             = "im-realm";
     public static final String SERVER_DIGEST_KEY = "imSecretServerKey";
