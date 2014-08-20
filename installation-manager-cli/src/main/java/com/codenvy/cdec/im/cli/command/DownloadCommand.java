@@ -61,10 +61,10 @@ public class DownloadCommand extends AbsCommand {
         installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
 
         try {            
-            if (artifactName != null && version != null) {
+            if (artifactName != null && version != null && !downloadAll) {
                 String response = installationManagerProxy.download(artifactName, version);  
                 if (response == null) {
-                    MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                    printlnRed(INCOMPLETE_RESPONSE);
                     return null;
                 }
                 
@@ -72,31 +72,31 @@ public class DownloadCommand extends AbsCommand {
                 return null;
             }
                 
-            if (artifactName != null && version == null) {
+            if (artifactName != null && !downloadAll) {
                 String response = installationManagerProxy.downloadUpdate(artifactName);
                 if (response == null) {
-                    MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                    printlnRed(INCOMPLETE_RESPONSE);
                     return null;
                 }
                 
-                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));                
+                printlnGreen(Commons.getPrettyPrintingJson(response));                
                 return null;
             } 
             
-            if (artifactName == null && version == null && downloadAll) {                
+            if (downloadAll && artifactName == null && version == null) {                
                 String response = installationManagerProxy.downloadUpdates();
                 if (response == null) {
-                    MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                    printlnRed(INCOMPLETE_RESPONSE);
                     return null;
                 }
-                MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));                
+                printlnGreen(Commons.getPrettyPrintingJson(response));                
                 return null;
             } 
             
-            MessageHelper.printlnRed(MISLEADING_ARGUMENTS);
+            printlnRed(MISLEADING_ARGUMENTS);
             
         } catch (ResourceException re) {
-            MessageHelper.println(re);
+            println(re);
         }
 
         return null;

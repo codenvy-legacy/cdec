@@ -53,14 +53,14 @@ public class CheckUpdatesCommand extends AbsCommand {
             String response = installationManagerProxy.checkUpdates();
             
             if (response == null) {
-                MessageHelper.printlnRed(INCOMPLETE_RESPONSE);
+                printlnRed(INCOMPLETE_RESPONSE);
                 return null;
             }
 
-            MessageHelper.printlnGreen(Commons.getPrettyPrintingJson(response));
+            printlnGreen(Commons.getPrettyPrintingJson(response));
             
         } catch (ResourceException re) {
-            MessageHelper.println(re);
+            println(re);
         }
 
         return null;
