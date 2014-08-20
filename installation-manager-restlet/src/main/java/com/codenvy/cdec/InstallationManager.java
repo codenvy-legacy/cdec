@@ -29,45 +29,46 @@ public interface InstallationManager {
 
 
     /**
-     * Install artifact if existed version lower than downloaded one.
+     * TODO check versions
+     * Install artifact if the existed version lower than a downloaded one.
      *
      * @return the installed version of the artifact
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    public String installArtifact(Artifact artifact) throws IOException;
+    public String install(Artifact artifact) throws IOException;
 
     /**
+     * TODO
      * Scans all available artifacts and returns their current versions.
      */
     public Map<Artifact, String> getInstalledArtifacts() throws IOException;
 
     /**
+     * TODO check new versions?
      * Scans all available artifacts and returns their last versions from Update Server.
      */
     Map<Artifact, String> getAvailable2DownloadArtifacts() throws IOException;
 
     /**
-     * Downloads updates.
-     */
-    void downloadUpdates() throws IOException;
-
-    /**
-     * @return the list of artifacts with newer versions than currently installed
-     */
-    Map<Artifact, String> getNewVersions();
-
-    /**
+     * TODO javadoc
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
      *
      * @throws java.io.IOException
      *         if I/O error occurred
      */
-    void checkNewVersions() throws IOException, IllegalArgumentException;
+    Map<Artifact, String> getNewVersions() throws IOException, IllegalArgumentException;
 
     /**
-     * Download certain version of artifact.
+     * Download the specific version of the artifact.
      */
-    void downloadArtifact(Artifact artifact, String version) throws IOException;
-    
+    void download(Artifact artifact, String version) throws IOException;
+
+
+    /**
+     * TODO javadoc, after check new versions
+     * Downloads updates.
+     */
+    void download() throws IOException;
+
 }

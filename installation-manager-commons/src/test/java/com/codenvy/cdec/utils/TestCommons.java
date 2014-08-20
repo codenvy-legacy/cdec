@@ -20,8 +20,10 @@ package com.codenvy.cdec.utils;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.cdec.ArtifactNotFoundException;
 
+import org.restlet.resource.ResourceException;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +39,27 @@ import static org.testng.Assert.assertNotNull;
 public class TestCommons {
 
     public static final Path DOWNLOAD_DIR = Paths.get("target", "download");
+
+    @Test
+    public void testGetJson() throws Exception {
+        // TODO
+        String value = Commons.getJson(new ResourceException(500, "name", "descr", "uri", new IOException("message")));
+//        assertEquals();
+
+    }
+
+    @Test
+    public void testGetPrettyPrintJson() throws Exception {
+        String value = Commons.getPrettyPrintingJson("{a:1,b:{bb:2},c:[{c1:1},{c2:2}]}");
+        assertEquals(value, "{\n" +
+                            "  \"a\": 1,\n" +
+                            "  \"b\": {\"bb\": 2},\n" +
+                            "  \"c\": [\n" +
+                            "    {\"c1\": 1},\n" +
+                            "    {\"c2\": 2}\n" +
+                            "  ]\n" +
+                            "}");
+    }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testGetLatestVersionThrowExceptionIfArtifactDirectoryAbsent() throws Exception {

@@ -17,23 +17,21 @@
  */
 package com.codenvy.cdec;
 
-import java.io.IOException;
-
-import org.json.JSONException;
-import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.ext.json.JsonRepresentation;
-
-import com.codenvy.cdec.im.service.response.Response;
-
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 
 /**
  * @author Dmytro Nochevnov
  * TODO check paths
  */
 @Path("im")
-public interface InstallationManagerService {
+public interface InstallationManagerService extends DigestAuthSupport {
 
     /**
      * Perform request to get unique and transient information from server to build the authentication credentials for the next requests.
@@ -62,6 +60,7 @@ public interface InstallationManagerService {
     
     /**
      * Downloads artifact.
+     * If version is null, then download latest version of artifact 
      */
     @GET
     @Path("download/{artifact}/{version}")
@@ -74,7 +73,7 @@ public interface InstallationManagerService {
      * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
      */
     @GET
-    @Path("check")
+    @Path("check-updates")
     @Produces(MediaType.APPLICATION_JSON)
     public String checkUpdates() throws IOException;
 }

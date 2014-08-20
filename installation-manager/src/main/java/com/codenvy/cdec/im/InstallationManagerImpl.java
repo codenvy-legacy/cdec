@@ -20,7 +20,6 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
@@ -32,14 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.codenvy.cdec.utils.Commons.*;
 import static com.codenvy.cdec.utils.Version.compare;
@@ -58,9 +55,6 @@ public class InstallationManagerImpl implements InstallationManager {
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 
-    private final Map<Artifact, String> newVersions;
-
-
     @Inject
     public InstallationManagerImpl(@Named("api.endpoint") String apiEndpoint,
                                    @Named("codenvy.installation-manager.update_endpoint") String updateEndpoint,
@@ -72,7 +66,6 @@ public class InstallationManagerImpl implements InstallationManager {
         this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.artifacts = new TreeSet<>(artifacts); // keep order
-        this.newVersions = new ConcurrentHashMap<>(artifacts.size());
 
         if (!Files.exists(this.downloadDir)) {
             Files.createDirectories(this.downloadDir);
@@ -83,7 +76,7 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     @Override
-    public String installArtifact(Artifact artifact) throws IOException {
+    public String install(Artifact artifact) throws IOException {
         Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
         Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
 
@@ -135,32 +128,14 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     @Override
-    public void downloadUpdates() throws IOException {
+    public void download() throws IOException {
         for (Map.Entry<Artifact, String> entry : getNewVersions().entrySet()) {
-            Artifact artifact = entry.getKey();
-            String version = entry.getValue();
-
-            boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
-            String requestUrl = combinePaths(updateEndpoint,
-                                             "/repository/"
-                                             + (isValidSubscriptionRequired ? "" : "public/")
-                                             + "download/" + artifact.getName() + "/" + version);
-
-            if (!isValidSubscriptionRequired || isValidSubscription()) {
-                Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
-                FileUtils.deleteDirectory(artifactDownloadDir.toFile());
-
-                transport.download(requestUrl, artifactDownloadDir);
-
-                LOG.info("Downloaded '" + artifact + "' version " + version);
-            } else {
-                LOG.warn("Valid subscription is required to download " + artifact.getName());
-            }
+            download(entry.getKey(), entry.getValue());
         }
     }
 
     @Override
-    public void downloadArtifact(Artifact artifact, String version) throws IOException {
+    public void download(Artifact artifact, String version) throws IOException {
         boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
         
         String requestUrl = combinePaths(updateEndpoint,
@@ -176,6 +151,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
             LOG.info("Downloaded '" + artifact + "' version " + version);
         } else {
+            // TODO throw an exception
             LOG.warn("Valid subscription is required to download " + artifact.getName());
         }
     }
@@ -224,8 +200,8 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     @Override
-    public void checkNewVersions() throws IOException {
-        invalidateNewVersions();
+    public Map<Artifact, String> getNewVersions() throws IOException {
+        Map<Artifact, String> newVersions = new HashMap<>();
 
         Map<Artifact, String> installed = getInstalledArtifacts();
         Map<Artifact, String> available2Download = getAvailable2DownloadArtifacts();
@@ -239,14 +215,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 LOG.info("New version '" + artifact + "' " + newVersions.get(artifact) + " available to download");
             }
         }
-    }
 
-    @Override
-    public Map<Artifact, String> getNewVersions() {
         return newVersions;
-    }
-
-    private void invalidateNewVersions() {
-        newVersions.clear();
     }
 }

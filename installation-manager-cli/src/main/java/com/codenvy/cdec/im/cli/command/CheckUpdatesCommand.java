@@ -17,50 +17,28 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.im.service.response.Response;
-
 import org.apache.karaf.shell.commands.Command;
 import org.restlet.resource.ResourceException;
 
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.RestletClientFactory;
-import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cli.command.builtin.AbsCommand;
-
-import static com.codenvy.cdec.im.cli.command.MessageHelper.*;
-
 /**
- * TODO
- * Parameters and execution of 'cdec:check' command.
- *
+ * @author Anatoliy Bazko
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-@Command(scope = "cdec", name = "check", description = "Check all available updates.")
-public class CheckUpdatesCommand extends AbsCommand {
-
-    InstallationManagerService installationManagerProxy;
+@Command(scope = "im", name = "check-updates", description = "Check all available updates.")
+public class CheckUpdatesCommand extends AbstractIMCommand {
 
     /**
      * Check availability new version.
      */
-    protected Object doExecute() throws Exception {
+    protected Void doExecute() throws Exception {
         init();
 
-        installationManagerProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
-        
         try {
             String response = installationManagerProxy.checkUpdates();
-            
-            if (response == null) {
-                printlnRed(INCOMPLETE_RESPONSE);
-                return null;
-            }
-
-            printlnGreen(Commons.getPrettyPrintingJson(response));
-            
+            printResult(response);
         } catch (ResourceException re) {
-            println(re);
+            printError(re);
         }
 
         return null;

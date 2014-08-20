@@ -17,7 +17,9 @@
  */
 package com.codenvy.cdec.im;
 
-import static org.testng.Assert.fail;
+import com.codenvy.cdec.Daemon;
+import com.codenvy.cdec.InstallationManagerService;
+import com.codenvy.cdec.RestletClientFactory;
 
 import org.restlet.resource.ResourceException;
 import org.slf4j.Logger;
@@ -26,9 +28,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.codenvy.cdec.Daemon;
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.RestletClientFactory;
+import static org.testng.Assert.fail;
 
 /**
  * @author Dmytro Nochevnov
@@ -42,7 +42,7 @@ public class TestDaemon {
     public void setUp() throws Exception {
         Daemon.start();
         
-        installationManagerServiceProxy = RestletClientFactory.getServiceProxy(InstallationManagerService.class);
+        installationManagerServiceProxy = RestletClientFactory.createServiceProxy(InstallationManagerService.class);
     }
     
     @AfterMethod

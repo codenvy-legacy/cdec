@@ -22,6 +22,7 @@ import java.util.List;
 
 
 /** @author Dmytro Nochevnov */
+// TODO check getjson?
 public class Response {
     Status status;
     

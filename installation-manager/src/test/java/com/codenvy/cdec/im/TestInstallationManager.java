@@ -80,7 +80,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
 
-        manager.installArtifact(cdecArtifact);
+        manager.install(cdecArtifact);
 
         verify(cdecArtifact, never()).install(any(Path.class));
     }
@@ -89,7 +89,7 @@ public class TestInstallationManager {
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getCurrentVersion();
 
-        manager.installArtifact(cdecArtifact);
+        manager.install(cdecArtifact);
     }
 
     @Test
@@ -100,7 +100,7 @@ public class TestInstallationManager {
         doNothing().when(cdecArtifact).install(any(Path.class));
         doReturn(null).when(cdecArtifact).getCurrentVersion();
 
-        assertEquals(manager.installArtifact(cdecArtifact), "1.0.1");
+        assertEquals(manager.install(cdecArtifact), "1.0.1");
         verify(cdecArtifact).install(any(Path.class));
     }
 
@@ -127,13 +127,17 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        when(manager.getNewVersions()).thenReturn(new HashMap<Artifact, String>() {{
+        doReturn(true).when(manager).isValidSubscription();
+        doReturn(new HashMap<Artifact, String>() {{
+            put(cdecArtifact, "2.10.4");
+            put(installManagerArtifact, "1.0.0");
+        }}).when(manager).getInstalledArtifacts();
+        doReturn(new HashMap<Artifact, String>() {{
             put(cdecArtifact, "2.10.5");
             put(installManagerArtifact, "1.0.1");
-        }});
-        doReturn(true).when(manager).isValidSubscription();
+        }}).when(manager).getNewVersions();
 
-        manager.downloadUpdates();
+        manager.download();
 
         Map<Artifact, Path> m = manager.getDownloadedArtifacts();
         assertEquals(m.size(), 2);

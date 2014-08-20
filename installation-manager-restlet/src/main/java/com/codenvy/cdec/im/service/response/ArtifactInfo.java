@@ -32,7 +32,7 @@ public class ArtifactInfo {
     }
 
     public ArtifactInfo(String artifact, String version) {
-        this(new Status(StatusCode.SUCCESS), artifact, version);
+        this(new Status(StatusCode.OK), artifact, version);
     }
     
     public Status getStatus() {

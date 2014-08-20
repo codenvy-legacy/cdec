@@ -17,17 +17,6 @@
  */
 package com.codenvy.cdec.im;
 
-import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.restlet.resource.ServerResource;
-
 import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.artifacts.Artifact;
@@ -36,9 +25,17 @@ import com.codenvy.cdec.im.service.response.ArtifactInfo;
 import com.codenvy.cdec.im.service.response.Response;
 import com.codenvy.cdec.im.service.response.Response.Status;
 import com.codenvy.cdec.im.service.response.StatusCode;
-import com.codenvy.cdec.utils.Commons;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.restlet.resource.ServerResource;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+
+import static com.codenvy.cdec.utils.Commons.getJson;
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
 
 /**
  * @author Dmytro Nochevnov
@@ -53,89 +50,64 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         manager = INJECTOR.getInstance(InstallationManagerImpl.class);
     }
 
+    /** {@inheritDoc} */
     @Override
-    public String downloadUpdates() throws IOException {
-        try {
-           manager.downloadUpdates();  // download latest version of all artifacts
-            
-        } catch(RuntimeException e) {
-            Response response = new Response(new Status(StatusCode.FAILURE, e.getMessage().toString()));            
-            return Commons.getJson(response);
-        }
-        
-        Response response = new Response(new Status(StatusCode.SUCCESS));
-        
-        return Commons.getJson(response);
-    }
-
-    @Override
-    public String downloadUpdate(String artifactName) throws IOException {
-        String version;
-        
-        try {
-            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-            
-            version = manager.getNewVersions().get(artifact);
-            manager.downloadArtifact(artifact, version);
-                            
-        } catch(RuntimeException e) {
-            Response response = new Response(new Status(StatusCode.FAILURE, e.getMessage().toString()));
-            return Commons.getJson(response);
-        }
-        
-        ArtifactInfo artifactInfo = new ArtifactInfo(new Status(StatusCode.DOWNLOADED), artifactName, version);
-        Response response = new Response(new Status(StatusCode.SUCCESS), artifactInfo);
-        
-        return Commons.getJson(response);
-    }
-    
-    @Override
+    //  TODO shouldn't throw exception
     public String download(String artifactName, String version) throws IOException {
         try {
             Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-            manager.downloadArtifact(artifact, version);
-                            
+            
+            if (version == null) {
+                // download latest version of artifact
+                version = manager.getNewVersions().get(artifact);
+            }
+
+            manager.download(artifact, version);
+
         } catch(RuntimeException e) {
-            Response response = new Response(new Status(StatusCode.FAILURE, e.getMessage().toString()));            
-            return Commons.getJson(response);
+            Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
+            return getJson(response);
         }
         
         ArtifactInfo artifactInfo = new ArtifactInfo(new Status(StatusCode.DOWNLOADED), artifactName, version);
-        Response response = new Response(new Status(StatusCode.SUCCESS), artifactInfo);
-        
-        return Commons.getJson(response);
+        List<ArtifactInfo> artifacts = Arrays.asList(artifactInfo);
+        Response response = new Response(new Status(StatusCode.OK), artifacts);
+
+        return getJson(response);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String checkUpdates() throws IOException {
-        Map<Artifact, String> newVersions = new HashMap<>();
-        
+        Map<Artifact, String> newVersions;
+
         try {
-            manager.checkNewVersions();
+            manager.getNewVersions();
             newVersions = manager.getNewVersions();
 
-        } catch (Exception e) {
-            Response response = new Response(new Status(StatusCode.FAILURE, e.getMessage().toString()));            
-            return Commons.getJson(response);
+        } catch (IOException e) {
+            Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
+            return getJson(response);
         }
-        
-        List<ArtifactInfo> artifacts = new ArrayList<>(newVersions.keySet().size());
-        for (Entry<Artifact, String> artifactEntry: newVersions.entrySet()) {
+
+        Set<Entry<Artifact, String>> entries = newVersions.entrySet();
+        List<ArtifactInfo> artifacts = new ArrayList<>(entries.size());
+
+        for (Entry<Artifact, String> artifactEntry : entries) {
             String artifactName = artifactEntry.getKey().getName();
             String version = artifactEntry.getValue();
-            
+
             ArtifactInfo artifactInfo = new ArtifactInfo(artifactName, version);
-            
+
             artifacts.add(artifactInfo);
         }
-        
-        Response response = new Response(new Status(StatusCode.SUCCESS), artifacts);
-        
-        return Commons.getJson(response);
+
+        Response response = new Response(new Status(StatusCode.OK), artifacts);
+        return getJson(response);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void obtainChallengeRequest() {
     }
-
 }

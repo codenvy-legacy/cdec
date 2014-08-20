@@ -86,10 +86,10 @@ public class UpdateManager {
             LOG.info("Checking new updates started");
 
             try {
-                manager.checkNewVersions();
+                manager.getNewVersions();
 
                 if (!manager.getNewVersions().isEmpty() && downloadAutomatically) {
-                    manager.downloadUpdates();
+                    manager.download();
                 }
             } catch (Exception e) {
                 throw new JobExecutionException(e);

@@ -24,7 +24,6 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import org.restlet.resource.ResourceException;
 
 import javax.ws.rs.Path;
-
 import java.io.IOException;
 
 import static com.codenvy.cdec.utils.Commons.combinePaths;
@@ -33,9 +32,14 @@ import static com.codenvy.cdec.utils.Commons.combinePaths;
  * @author Dmytro Nochevnov
  */
 public class RestletClientFactory {
-    public static <T extends InstallationManagerService> T getServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
-                                                                                                              IllegalPathException,
-                                                                                                              IOException {
+
+    /**
+     * Creates proxy service to communicate with server.
+     */
+    public static synchronized <T extends DigestAuthSupport> T createServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
+                                                                                                                     IllegalPathException,
+                                                                                                                     IOException {
+
         String resourceUri = combinePaths(ServerDescription.SERVER_URL, getResourcePath(InstallationManagerService.class));
         Reference reference = new Reference(resourceUri);
 
@@ -46,7 +50,7 @@ public class RestletClientFactory {
         return proxy;
     }
 
-    private static <T extends InstallationManagerService> void doAuthentication(JaxRsClientResource clientResource, T proxy) {
+    private static <T extends DigestAuthSupport> void doAuthentication(JaxRsClientResource clientResource, T proxy) {
         try {
             proxy.obtainChallengeRequest();
         } catch (ResourceException re) {
