@@ -54,24 +54,40 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String download() throws IOException {
-
-        return null;
+        try {
+            manager.download();  // download latest version of all artifacts
+             
+         } catch(RuntimeException e) {
+             Response response = new Response(new Status(StatusCode.ERROR, e.getMessage().toString()));            
+             return getJson(response);
+         }
+         
+         Response response = new Response(new Status(StatusCode.OK));
+         
+         return getJson(response);
     }
 
     /** {@inheritDoc} */
     // TODO
     @Override
     public String download(String artifactName) throws IOException {
+        String version;
+        
         try {
+            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+            
+            // download latest version of artifact
+            version = manager.getUpdates().get(artifact);
             manager.download();
 
         } catch (RuntimeException e) {
             Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
-            return Commons.getJson(response);
+            return getJson(response);
         }
 
-        Response response = new Response(new Status(StatusCode.OK));
-        return Commons.getJson(response);
+        ArtifactInfo artifactInfo = new ArtifactInfo(new Status(StatusCode.DOWNLOADED), artifactName, version);
+        Response response = new Response(new Status(StatusCode.OK), artifactInfo);
+        return getJson(response);
     }
 
     /** {@inheritDoc} */

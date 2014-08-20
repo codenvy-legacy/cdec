@@ -20,12 +20,14 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.service.response.ArtifactInfo;
 import com.codenvy.cdec.im.service.response.Response;
 import com.codenvy.cdec.im.service.response.Response.Status;
 import com.codenvy.cdec.im.service.response.StatusCode;
+import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -46,7 +48,6 @@ public class TestInstallationManagerService {
     private InstallationManagerService installationManagerService;
 
     private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
     private Artifact            mockInstallManagerArtifact;
     private Artifact            mockCdecArtifact;
 
@@ -61,63 +62,97 @@ public class TestInstallationManagerService {
     }
 
     public void initMocks() {
-        mockTransport = mock(HttpTransport.class);
-
         mockInstallationManager = mock(InstallationManagerImpl.class);
 
-        mockInstallManagerArtifact = spy(new InstallManagerArtifact());
-        mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
+        mockCdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
+        mockInstallManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
     }
 
     @Test
     public void testCheckUpdates() throws Exception {
-        when(mockInstallationManager.getUpdates()).thenReturn(new HashMap<Artifact, String>() {
-            {
+        doReturn(new HashMap<Artifact, String>() {{
                 put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
                 put(mockInstallManagerArtifact, INSTALL_MANAGER_ARTIFACT_VERSION);
-            }
-        });
-
-        Response expectedObject1 = new Response(new Status(StatusCode.OK),
-                                                Arrays.asList(new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
-                                                              new ArtifactInfo(mockInstallManagerArtifact.getName(),
-                                                                               INSTALL_MANAGER_ARTIFACT_VERSION)));
-        JacksonRepresentation<Response> expectedRepresentation1 = new JacksonRepresentation<>(expectedObject1);
-        String expectedJson1 = expectedRepresentation1.getText();
-
-        Response expectedObject2 = new Response(new Status(StatusCode.OK),
-                                                Arrays.asList(
-                                                        new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),
-
-                                                        new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION)));
-        JacksonRepresentation<Response> expectedRepresentation2 = new JacksonRepresentation<>(expectedObject2);
-        String expectedJson2 = expectedRepresentation2.getText();
-
+        }})
+        .when(mockInstallationManager)
+        .getUpdates();
 
         String responseJson = installationManagerService.checkUpdates();
-
-        if (!expectedJson1.equals(responseJson)) {
-            assertEquals(expectedJson2, responseJson);
+        
+        Response expectedResponse = new Response(new Status(StatusCode.OK),
+                                                 Arrays.asList(new ArtifactInfo[] {
+                                                     new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
+                                                     new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),                                                     
+                                                 }));
+        String expectedJson = Commons.getJson(expectedResponse);
+                
+        if (! expectedJson.equals(responseJson)) {
+            // Swap artifacts
+            expectedResponse = new Response(new Status(StatusCode.OK),
+                                            Arrays.asList(new ArtifactInfo[] {
+                                                new ArtifactInfo(mockInstallManagerArtifact.getName(), INSTALL_MANAGER_ARTIFACT_VERSION),
+                                                new ArtifactInfo(mockCdecArtifact.getName(), CDEC_ARTIFACT_VERSION),
+                                            }));
+            expectedJson = Commons.getJson(expectedResponse);
+            
+            assertEquals(responseJson, expectedJson);
         }
     }
 
     @Test
     public void testDownloadArtifact() throws Exception {
-        doReturn(new HashMap<Artifact, String>() {
-            {
-                put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
-                put(mockInstallManagerArtifact, INSTALL_MANAGER_ARTIFACT_VERSION);
-            }
-        }).when(mockInstallationManager).getUpdates();
+        String olderVersion = "0." + CDEC_ARTIFACT_VERSION;
+        
+        doReturn(new HashMap<Artifact, String>() {{
+            put(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
+        }})
+        .when(mockInstallationManager)
+        .getUpdates();
+                
+        doNothing()
+        .when(mockInstallationManager)
+        .download(mockCdecArtifact, CDEC_ARTIFACT_VERSION);
 
-        // TODO
+        doNothing()
+        .when(mockInstallationManager)
+        .download(mockCdecArtifact, olderVersion);
+        
+        doNothing()
+        .when(mockInstallationManager)
+        .download();
+        
+        // check download entire updates
+        {
+            Response expectedResponse = new Response(new Status(StatusCode.OK));
+            String expectedJson = Commons.getJson(expectedResponse);
+            
+            String responseJson = installationManagerService.download();
+            assertEquals(responseJson, expectedJson);
+        }
+        
+        // check download update of certain artifact
+        {
+            Response expectedResponse = new Response(new Status(StatusCode.OK),
+                                                     new ArtifactInfo(new Status(StatusCode.DOWNLOADED), 
+                                                                      mockCdecArtifact.getName(), 
+                                                                      CDEC_ARTIFACT_VERSION));
+            String expectedJson = Commons.getJson(expectedResponse);
+            
+            String responseJson = installationManagerService.download(mockCdecArtifact.getName());
+            assertEquals(responseJson, expectedJson);
+        }
+        
+        // check download certain artifact of certain version
+        {
+            Response expectedResponse = new Response(new Status(StatusCode.OK),
+                                                     new ArtifactInfo(new Status(StatusCode.DOWNLOADED), 
+                                                                      mockCdecArtifact.getName(), 
+                                                                      olderVersion));
+            String expectedJson = Commons.getJson(expectedResponse);
 
-//        JacksonRepresentation responseRepresentation = installationManagerService.download(mockCdecArtifact.getName(),
-// INSTALL_MANAGER_ARTIFACT_VERSION);
-////        assertNotNull(response);
-//        
-//        responseRepresentation = installationManagerService.download(mockInstallManagerArtifact.getName(), null);
-//        assertNotNull(response);
+            String responseJson = installationManagerService.download(mockCdecArtifact.getName(), olderVersion);
+            assertEquals(responseJson, expectedJson);
+        }
     }
 
     public class InstallationManagerServiceTestImpl extends InstallationManagerServiceImpl {
