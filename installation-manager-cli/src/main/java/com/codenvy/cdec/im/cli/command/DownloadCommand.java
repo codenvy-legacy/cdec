@@ -17,7 +17,6 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.utils.Commons;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -35,8 +34,6 @@ import static com.codenvy.cdec.im.cli.command.MessageHelper.*;
  */
 @Command(scope = "cdec", name = "download", description = "Download artifacts.")
 public class DownloadCommand extends AbstractIMCommand {
-
-    InstallationManagerService installationManagerProxy;
 
     @Argument(index = 0, name = "artifact", description = "The name of artifact.", required = false, multiValued = false)
     String artifactName;
