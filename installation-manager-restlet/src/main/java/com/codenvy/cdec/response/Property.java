@@ -15,19 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
-
-import com.codenvy.cdec.utils.InjectorBootstrap;
+package com.codenvy.cdec.response;
 
 /**
  * @author Dmytro Nochevnov
  */
-public class ServerDescription {
-    public static final String LOGIN    = "im";
-    public static final char[] PASSWORD = "cdec-secret".toCharArray();  // TODO store password in safe place and in safe view
-
-    public static final String REALM             = "im-realm";
-    public static final String SERVER_DIGEST_KEY = "imSecretServerKey";
-
-    public static final String SERVER_URL = InjectorBootstrap.getProperty("codenvy.restlet.server_url");
+public enum Property {
+    ARTIFACT,
+    ARTIFACTS,
+    VERSION,
+    STATUS,
+    MESSAGE,
 }

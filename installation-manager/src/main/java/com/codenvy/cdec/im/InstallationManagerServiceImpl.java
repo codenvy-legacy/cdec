@@ -17,138 +17,109 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.InstallationManager;
-import com.codenvy.cdec.InstallationManagerService;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactFactory;
-import com.codenvy.cdec.im.service.response.ArtifactInfo;
-import com.codenvy.cdec.im.service.response.Response;
-import com.codenvy.cdec.im.service.response.Response.Status;
-import com.codenvy.cdec.im.service.response.StatusCode;
-import com.codenvy.cdec.utils.Commons;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import com.codenvy.cdec.response.*;
+import com.codenvy.cdec.restlet.InstallationManager;
+import com.codenvy.cdec.restlet.InstallationManagerService;
 
 import org.restlet.resource.ServerResource;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import static com.codenvy.cdec.utils.Commons.getJson;
 import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
 
 /**
  * @author Dmytro Nochevnov
- * TODO check
+ * @author Anatoliy Bazko
  */
-@Singleton
-public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {   
+public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
     protected InstallationManager manager;
 
-    @Inject
     public InstallationManagerServiceImpl() {
         manager = INJECTOR.getInstance(InstallationManagerImpl.class);
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download() throws IOException {
+    public String download() {
+        Map<Artifact, String> updates;
         try {
-            manager.download();  // download latest version of all artifacts
-             
-         } catch(RuntimeException e) {
-             Response response = new Response(new Status(StatusCode.ERROR, e.getMessage().toString()));            
-             return getJson(response);
-         }
-         
-         Response response = new Response(new Status(StatusCode.OK));
-         
-         return getJson(response);
-    }
-
-    /** {@inheritDoc} */
-    // TODO
-    @Override
-    public String download(String artifactName) throws IOException {
-        String version;
-        
-        try {
-            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-            
-            // download latest version of artifact
-            version = manager.getUpdates().get(artifact);
-            manager.download();
-
-        } catch (RuntimeException e) {
-            Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
-            return getJson(response);
-        }
-
-        ArtifactInfo artifactInfo = new ArtifactInfo(new Status(StatusCode.DOWNLOADED), artifactName, version);
-        Response response = new Response(new Status(StatusCode.OK), artifactInfo);
-        return getJson(response);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    //  TODO shouldn't throw exception
-    // TODO if no need to download, what need to return?
-    public String download(String artifactName, String version) throws IOException {
-        try {
-            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-            
-            if (version == null) {
-                // download latest version of artifact
-                version = manager.getUpdates().get(artifact);
-            }
-
-            manager.download(artifact, version);
-
-        } catch(RuntimeException e) {
-            Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
-            return getJson(response);
-        }
-        
-        ArtifactInfo artifactInfo = new ArtifactInfo(new Status(StatusCode.DOWNLOADED), artifactName, version);
-        List<ArtifactInfo> artifacts = Arrays.asList(artifactInfo);
-        Response response = new Response(new Status(StatusCode.OK), artifacts);
-
-        return getJson(response);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    // TODO rename
-    public String checkUpdates() throws IOException {
-        Map<Artifact, String> newVersions;
-
-        try {
-            newVersions = manager.getUpdates();
+            updates = manager.getUpdates();
         } catch (IOException e) {
-            Response response = new Response(new Status(StatusCode.ERROR, e.getMessage()));
-            return getJson(response);
+            return Response.valueOf(e).toJson();
         }
 
-        Set<Entry<Artifact, String>> entries = newVersions.entrySet();
-        List<ArtifactInfo> artifacts = new ArrayList<>(entries.size());
+        List<ArtifactInfo> infos = new ArrayList<>();
 
-        for (Entry<Artifact, String> artifactEntry : entries) {
-            String artifactName = artifactEntry.getKey().getName();
-            String version = artifactEntry.getValue();
+        for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
+            Artifact artifact = entry.getKey();
+            String version = entry.getValue();
 
-            ArtifactInfo artifactInfo = new ArtifactInfo(artifactName, version);
-
-            artifacts.add(artifactInfo);
+            try {
+                doDownload(artifact, version);
+                infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
+            } catch (IOException | IllegalStateException e) {
+                infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
+                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+            }
         }
 
-        Response response = new Response(new Status(StatusCode.OK), artifacts);
-        return getJson(response);
+        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String download(String artifactName) {
+        return download(artifactName, null);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String download(String artifactName, @Nullable String version) {
+        try {
+            doDownload(artifactName, version);
+        } catch (IOException | IllegalStateException e) {
+            return Response.valueOf(e).toJson();
+        }
+
+        ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
+        return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getUpdates() {
+        Map<Artifact, String> updates;
+
+        try {
+            updates = manager.getUpdates();
+        } catch (IOException e) {
+            return Response.valueOf(e).toJson();
+        }
+
+        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
     }
 
     /** {@inheritDoc} */
     @Override
     public void obtainChallengeRequest() {
         // do nothing
+    }
+
+    protected void doDownload(String artifactName, @Nullable String version) throws IOException, IllegalStateException {
+        doDownload(ArtifactFactory.createArtifact(artifactName), version);
+    }
+
+    protected void doDownload(Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
+        if (version == null) {
+            version = manager.getUpdates().get(artifact);
+        }
+
+        manager.download(artifact, version);
     }
 }

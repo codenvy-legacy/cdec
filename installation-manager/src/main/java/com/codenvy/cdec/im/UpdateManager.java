@@ -17,8 +17,8 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.restlet.InstallationManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -91,7 +91,12 @@ public class UpdateManager {
                 Map<Artifact, String> updates = manager.getUpdates();
 
                 if (!updates.isEmpty() && downloadAutomatically) {
-                    manager.download();
+                    for (Map.Entry<Artifact, String> entry : manager.getUpdates().entrySet()) {
+                        Artifact artifact = entry.getKey();
+                        String version = entry.getValue();
+
+                        manager.download(artifact, version);
+                    }
                 }
             } catch (Exception e) {
                 throw new JobExecutionException(e);

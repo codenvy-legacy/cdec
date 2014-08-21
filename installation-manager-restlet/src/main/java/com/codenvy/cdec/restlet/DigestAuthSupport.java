@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
+package com.codenvy.cdec.restlet;
 
 import javax.ws.rs.HEAD;
 import javax.ws.rs.Path;
@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
  * @author Anatoliy Bazko
  */
 public interface DigestAuthSupport {
+
     /**
      * Perform request to get unique and transient information from server to build the authentication credentials for the next requests.
      */

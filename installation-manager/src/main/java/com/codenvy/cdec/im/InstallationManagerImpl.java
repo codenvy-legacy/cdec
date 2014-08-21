@@ -18,8 +18,8 @@
 package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.InstallationManager;
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
@@ -113,15 +113,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void download() throws IOException {
-        for (Map.Entry<Artifact, String> entry : getUpdates().entrySet()) {
-            download(entry.getKey(), entry.getValue());
-        }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void download(Artifact artifact, String version) throws IOException {
+    public void download(Artifact artifact, String version) throws IOException, IllegalStateException {
         boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
 
         String requestUrl = combinePaths(updateEndpoint,
@@ -137,8 +129,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
             LOG.info("Downloaded '" + artifact + "' version " + version);
         } else {
-            // TODO throw an exception
-            LOG.warn("Valid subscription is required to download " + artifact.getName());
+            throw new IllegalStateException("Valid subscription is required to download " + artifact.getName());
         }
     }
 
@@ -180,7 +171,7 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public Map<Artifact, String> getUpdates() throws IOException {
-        Map<Artifact, String> newVersions = new HashMap<>();
+        Map<Artifact, String> newVersions = new LinkedHashMap<>();
 
         Map<Artifact, String> installed = getInstalledArtifacts();
         Map<Artifact, String> available2Download = getLatestVersionsToDownload();

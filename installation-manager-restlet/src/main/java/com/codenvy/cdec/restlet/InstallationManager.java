@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
+package com.codenvy.cdec.restlet;
 
 import com.codenvy.cdec.artifacts.Artifact;
 
@@ -51,12 +51,11 @@ public interface InstallationManager {
 
     /**
      * Download the specific version of the artifact.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     * @throws java.lang.IllegalStateException
+     *         if the subscription is invalid or expired
      */
-    void download(Artifact artifact, String version) throws IOException;
-
-
-    /**
-     * Downloads updates.
-     */
-    void download() throws IOException;
+    void download(Artifact artifact, String version) throws IOException, IllegalStateException;
 }

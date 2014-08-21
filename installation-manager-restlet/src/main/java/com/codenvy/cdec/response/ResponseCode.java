@@ -15,14 +15,12 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.service.response;
+package com.codenvy.cdec.response;
 
 /**
  * @author Dmytro Nochevnov
  */
-public enum StatusCode {
+public enum ResponseCode {
     OK,
-    ERROR,
-    DOWNLOADED,
-    INSTALLED
+    ERROR
 }
