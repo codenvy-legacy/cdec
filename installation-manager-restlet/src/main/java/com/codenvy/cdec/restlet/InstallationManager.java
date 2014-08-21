@@ -35,7 +35,7 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    /*String install(Artifact artifact) throws IOException;*/
+    String install(Artifact artifact) throws IOException;
 
     /**
      * Install the specific version of the artifact.

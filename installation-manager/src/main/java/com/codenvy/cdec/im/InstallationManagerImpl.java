@@ -77,7 +77,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     //TODO REMOVE
     /** {@inheritDoc} */
-    /*@Override
+    @Override
     public String install(Artifact artifact) throws IOException {
         Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
         Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
@@ -95,7 +95,7 @@ public class InstallationManagerImpl implements InstallationManager {
         } else {
             throw new FileNotFoundException("Binaries to install artifact not found");
         }
-    }*/
+    }
 
     @Override
     /** {@inheritDoc} */
