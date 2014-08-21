@@ -33,7 +33,7 @@ createCodenvyUserAndGroupRedhat() {
 registerServiceDebian() {
     # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
     echo "Register service..."
-    sudo update-rc.d ${SERVICE_NAME} defaults &>-
+    sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
 }
 
 installRequiredComponentsDebian() {
@@ -57,8 +57,8 @@ installRequiredComponentsDebian() {
 registerServiceRedhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
     echo "Register service..."
-    sudo chkconfig --add ${SERVICE_NAME} &>-
-    sudo chkconfig ${SERVICE_NAME} on &>-
+    sudo chkconfig --add ${SERVICE_NAME} &>/dev/null
+    sudo chkconfig ${SERVICE_NAME} on &>/dev/null
 }
 
 installRequiredComponentsRedhat() {
@@ -85,8 +85,8 @@ installIM() {
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
-    sudo rm ${APP_DIR} -r &>-                 # remove exists files
-    sudo unzip ${filename} -d ${APP_DIR} &>-  # unzip new package
+    sudo rm ${APP_DIR} -r &>/dev/null                 # remove exists files
+    sudo unzip ${filename} -d ${APP_DIR} &>/dev/null  # unzip new package
 
     # copy installation-manager script into /etc/init.d
     sudo cp ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
@@ -101,14 +101,14 @@ installCLI() {
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
-    rm ${HOME}/im-cli -r &>-                 # remove exists files
-    unzip ${filename} -d ${HOME}/im-cli &>-  # unzip new package
+    rm ${HOME}/im-cli -r &>/dev/null                 # remove exists files
+    unzip ${filename} -d ${HOME}/im-cli &>/dev/null  # unzip new package
 }
 
 launchingService() {
     # try to stop exists installation-manager
     sudo /etc/init.d/${SERVICE_NAME} stop
-    sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>-  # kill manager if stop isn't work
+    sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>/dev/null  # kill manager if stop isn't work
 
     # launch new installation-manager
     sudo /etc/init.d/${SERVICE_NAME} start
@@ -123,7 +123,7 @@ else
     exit
 fi
 
-echo "System is run on ${os} based distributive."
+echo "System is running on ${os} based distributive."
 
 installRequiredComponents${os}
 createCodenvyUserAndGroup${os}
