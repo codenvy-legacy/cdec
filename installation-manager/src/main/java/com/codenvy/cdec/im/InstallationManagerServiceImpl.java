@@ -46,13 +46,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String download() {
-        Map<Artifact, String> updates;
-        try {
-            updates = manager.getUpdates();
-        } catch (IOException e) {
-            return Response.valueOf(e).toJson();
-        }
+    public String download() throws IOException {
+        Map<Artifact, String> updates = manager.getUpdates();
 
         List<ArtifactInfo> infos = new ArrayList<>();
 
@@ -63,7 +58,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             try {
                 doDownload(artifact, version);
                 infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
-            } catch (IOException | IllegalStateException e) {
+            } catch (Exception e) {
                 infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
                 return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
             }
@@ -74,34 +69,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String download(String artifactName) {
+    public String download(String artifactName) throws IOException {
         return download(artifactName, null);
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download(String artifactName, @Nullable String version) {
-        try {
-            doDownload(artifactName, version);
-        } catch (IOException | IllegalStateException e) {
-            return Response.valueOf(e).toJson();
-        }
-
+    public String download(String artifactName, @Nullable String version) throws IOException {
+        doDownload(artifactName, version);
         ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
         return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
     }
 
     /** {@inheritDoc} */
     @Override
-    public String getUpdates() {
-        Map<Artifact, String> updates;
-
-        try {
-            updates = manager.getUpdates();
-        } catch (IOException e) {
-            return Response.valueOf(e).toJson();
-        }
-
+    public String getUpdates() throws IOException {
+        Map<Artifact, String> updates = manager.getUpdates();
         return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
     }
 

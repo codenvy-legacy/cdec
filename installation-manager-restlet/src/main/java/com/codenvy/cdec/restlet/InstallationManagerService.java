@@ -22,10 +22,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 
 /**
  * @author Dmytro Nochevnov
- * TODO check paths
  */
 @Path("im")
 public interface InstallationManagerService extends DigestAuthSupport {
@@ -34,26 +34,26 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @GET
     @Path("download")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download();
+    public String download() throws IOException;
 
 
     /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("download/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "artifact") final String artifactName);
+    public String download(@PathParam(value = "artifact") final String artifactName) throws IOException;
 
     /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
     public String download(@PathParam(value = "artifact") final String artifactName,
-                           @PathParam(value = "version") final String version);
+                           @PathParam(value = "version") final String version) throws IOException;
 
 
     /** @see InstallationManager#getUpdates() */
     @GET
     @Path("check-updates")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getUpdates();
+    public String getUpdates() throws IOException;
 }

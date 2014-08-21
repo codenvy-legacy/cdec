@@ -47,6 +47,7 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
+        <codenvy.cli.version>2.0.0-M2-SNAPSHOT</codenvy.cli.version>
         <maven.releases.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-releases/</maven.releases.repo.url>
         <maven.snapshots.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-snapshots/</maven.snapshots.repo.url>
         <version.license-header>codenvy-codenvy-license-resource-bundle</version.license-header>
