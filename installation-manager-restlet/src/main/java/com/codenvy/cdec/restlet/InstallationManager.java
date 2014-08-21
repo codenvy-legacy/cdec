@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public interface InstallationManager {
 
-
+    //TODO REMOVE
     /**
      * Install the artifact if the existed version lower than a downloaded one.
      *
@@ -35,7 +35,17 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    String install(Artifact artifact) throws IOException;
+    /*String install(Artifact artifact) throws IOException;*/
+
+    /**
+     * Install the specific version of the artifact.
+     *
+     * We don't support downgrade artifact.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    void install(Artifact artifact, String version) throws IOException;
 
     /**
      * Scans all installed artifacts and returns their versions.

@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
+import static java.util.Arrays.asList;
 
 /**
  * @author Dmytro Nochevnov
@@ -104,5 +105,54 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
 
         manager.download(artifact, version);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String install() throws IOException {
+        Map<Artifact, String> updates = manager.getUpdates();
+
+        List<ArtifactInfo> infos = new ArrayList();
+
+        for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
+            Artifact artifact = entry.getKey();
+            String version = entry.getValue();
+
+            try {
+                doInstall(artifact, version);
+                infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
+            } catch (Exception e) {
+                infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
+                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+            }
+        }
+
+        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String install(String artifactName) throws IOException {
+        return install(artifactName, null);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String install(String artifactName, @Nullable String version) throws IOException {
+        doInstall(artifactName, version);
+        ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
+        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
+    }
+
+    protected void doInstall(String artifactName, @Nullable String version) throws IOException, IllegalStateException {
+        doInstall(ArtifactFactory.createArtifact(artifactName), version);
+    }
+
+    protected void doInstall(Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
+        if (version == null) {
+            version = manager.getUpdates().get(artifact);
+        }
+
+        manager.install(artifact, version);
     }
 }

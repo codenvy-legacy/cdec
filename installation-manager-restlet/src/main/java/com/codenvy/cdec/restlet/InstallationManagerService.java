@@ -56,4 +56,28 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Path("check-updates")
     @Produces(MediaType.APPLICATION_JSON)
     public String getUpdates() throws IOException;
+
+    /**
+     * Install all latest updates.
+     */
+    @GET
+    @Path("install")
+    @Produces(MediaType.TEXT_HTML)
+    public String install() throws IOException;
+
+    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact) */
+    @GET
+    @Path("install")
+    @Produces(MediaType.TEXT_HTML)
+    public String install(@PathParam(value="artifact") final String artifactName) throws IOException;
+
+    /**
+     * Install artifact .
+     */
+    /** @see com.codenvy.cdec.restlet.InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String) */
+    @GET
+    @Path("install")
+    @Produces(MediaType.TEXT_HTML)
+    public String install(@PathParam(value="artifact") final String artifactName,
+                          @PathParam(value="version") final String version) throws IOException;
 }

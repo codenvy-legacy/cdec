@@ -75,8 +75,9 @@ public class InstallationManagerImpl implements InstallationManager {
         LOG.info(artifacts.getClass().getName());
     }
 
+    //TODO REMOVE
     /** {@inheritDoc} */
-    @Override
+    /*@Override
     public String install(Artifact artifact) throws IOException {
         Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
         Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
@@ -91,6 +92,34 @@ public class InstallationManagerImpl implements InstallationManager {
             }
 
             return version;
+        } else {
+            throw new FileNotFoundException("Binaries to install artifact not found");
+        }
+    }*/
+
+    @Override
+    /** {@inheritDoc} */
+    public void install(Artifact artifact, String version) throws IOException {
+        Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
+        Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
+
+        if (downloadedArtifacts.containsKey(artifact)) {
+            Path pathToBinaries = downloadedArtifacts.get(artifact);
+            String availableVersion = Commons.extractVersion(pathToBinaries);
+
+            if (!version.equals(availableVersion)) {
+                throw new FileNotFoundException("Binaries to install artifact " + artifact.getName() + ":" + version + " not found");
+            }
+
+            String installedVersion = installedArtifacts.get(artifact);
+
+            if (installedVersion == null || Version.compare(version, installedVersion) > 1) {
+                artifact.install(pathToBinaries);
+
+            } else if (installedVersion != null && Version.compare(version, installedVersion) < 0) {
+                throw new FileNotFoundException("Can not install the artifact '" + artifact.getName() + ":" + version
+                                                + "', because we don't support downgrade artifacts." );
+            }
         } else {
             throw new FileNotFoundException("Binaries to install artifact not found");
         }

@@ -17,38 +17,39 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cli.command.builtin.AbsCommand;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.fusesource.jansi.Ansi;
-
-import static org.fusesource.jansi.Ansi.Color.GREEN;
+import org.restlet.resource.ResourceException;
 
 /**
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
 @Command(scope = "im", name = "install", description = "Install updates")
-public class InstallCommand extends AbsCommand {
+public class InstallCommand extends AbstractIMCommand {
 
-    @Argument(name = "artifact", description = "Specify the artifact to install", required = false, multiValued = false)
+
+    @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install", required = false, multiValued = false)
     private String artifactName;
 
-//    @Option(name="-v", aliases = {"--verbose"}, description = "Verbose output")
-//    private boolean verbose;
+    @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
+    private String version;
 
     @Override
-    protected Void doExecute() {
+    protected Void doExecute() throws Exception {
         init();
 
-        // TODO
-
-        Ansi buffer = Ansi.ansi();
-        buffer.fg(GREEN);
-        buffer.a("Update CDEC is not yet implement...");
-        buffer.reset();
-        System.out.println(buffer.toString());
+        try {
+            if (artifactName != null && version != null) {
+                printResult(installationManagerProxy.install(artifactName, version));
+            } else if (artifactName != null) {
+                printResult(installationManagerProxy.install(artifactName));
+            } else {
+                printResult(installationManagerProxy.install());
+            }
+        } catch (ResourceException e) {
+            printError(e);
+        }
 
         return null;
     }
