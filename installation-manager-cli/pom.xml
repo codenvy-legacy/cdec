@@ -43,11 +43,13 @@
             <artifactId>cli-assembly</artifactId>
             <version>${codenvy.cli.version}</version>
             <type>zip</type>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>cli-command</artifactId>
             <version>${codenvy.cli.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
