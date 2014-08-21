@@ -20,16 +20,20 @@ package com.codenvy.cdec.restlet;
 import org.restlet.Component;
 import org.restlet.Context;
 import org.restlet.data.Protocol;
+import org.restlet.engine.Engine;
 import org.restlet.ext.crypto.DigestAuthenticator;
 import org.restlet.ext.jaxrs.JaxRsApplication;
+import org.restlet.ext.slf4j.Slf4jLoggerFacade;
 import org.restlet.security.Authenticator;
 import org.restlet.security.MapVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Application;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.logging.Level;
 
 /**
  * @author Anatoliy Bazko
@@ -46,6 +50,9 @@ public class RestletServer {
         component = new Component();
         component.getServers().add(Protocol.HTTP, url.getPort());
         context = component.getContext().createChildContext();
+        
+        // use org.slf4j logger in restlet server 
+        Engine.getInstance().setLoggerFacade(new Slf4jLoggerFacade());
 
         try {
             createApplicationWithDigestAuth(application);

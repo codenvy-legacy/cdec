@@ -32,11 +32,22 @@
             <pattern>%-41(%date[%.15thread]) %-45([%-5level] [%.30logger{30} %L]) - %msg%n</pattern>
         </encoder>
     </appender>
-
+    
     <logger name="com.codenvy.cdec" level="DEBUG"/>
 
     <root level="OFF">
         <appender-ref ref="stdout"/>
         <appender-ref ref="file"/>
     </root>
+    
+    <!-- setup logging of restlet server -->    
+    <appender name="restlet-log-file" class="ch.qos.logback.core.FileAppender">
+        <File>target/restlet.log</File>
+        <encoder>
+            <pattern>%-41(%date[%.15thread]) %-45([%-5level] [%.30logger{30} %L]) - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="LogService" additivity="false" level="INFO">
+        <appender-ref ref="restlet-log-file" />
+    </logger>
 </configuration>
