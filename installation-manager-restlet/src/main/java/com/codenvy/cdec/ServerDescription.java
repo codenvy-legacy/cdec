@@ -29,8 +29,5 @@ public class ServerDescription {
     public static final String REALM             = "im-realm";
     public static final String SERVER_DIGEST_KEY = "imSecretServerKey";
 
-    // public static final String SERVER_URL = InjectorBootstrap.getProperty("codenvy.restlet.server_url");  // TODO commented because it throws java.lang.ExceptionInInitializerError in CLI client
-    
-    public static final String SERVER_URL = "http://localhost:8182";
-
+    public static final String SERVER_URL = InjectorBootstrap.getProperty("codenvy.restlet.server_url");
 }

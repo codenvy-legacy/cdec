@@ -65,7 +65,7 @@ public class InjectorBootstrap {
 
             private void bindProperties(Binder binder) {
                 Properties properties = new Properties();
-                try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
+                try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
                     properties.load(in);
                 } catch (IOException e) {
                     throw new IllegalStateException("Can't load properties", e);
