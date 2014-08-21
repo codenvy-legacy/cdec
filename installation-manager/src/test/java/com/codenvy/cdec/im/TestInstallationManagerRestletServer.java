@@ -17,9 +17,9 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.RestletClientFactory;
-import com.codenvy.cdec.RestletServer;
+import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.restlet.RestletClientFactory;
+import com.codenvy.cdec.restlet.RestletServer;
 
 import org.restlet.resource.ResourceException;
 import org.slf4j.Logger;

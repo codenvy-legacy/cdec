@@ -15,22 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
-
-import javax.ws.rs.HEAD;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+package com.codenvy.cdec.response;
 
 /**
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-public interface DigestAuthSupport {
-    /**
-     * Perform request to get unique and transient information from server to build the authentication credentials for the next requests.
-     */
-    @HEAD
-    @Path("empty")
-    @Produces(MediaType.TEXT_HTML)
-    void obtainChallengeRequest();
+public enum Property {
+    ARTIFACT,
+    ARTIFACTS,
+    VERSION,
+    STATUS,
+    MESSAGE,
 }

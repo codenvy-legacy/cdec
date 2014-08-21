@@ -17,10 +17,9 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.InstallationManagerService;
-import com.codenvy.cdec.RestletClientFactory;
-import com.codenvy.cdec.im.service.response.Response;
-import com.codenvy.cdec.im.service.response.StatusCode;
+import com.codenvy.cdec.response.Response;
+import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.restlet.RestletClientFactory;
 import com.codenvy.cli.command.builtin.AbsCommand;
 
 import org.fusesource.jansi.Ansi;
@@ -51,11 +50,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void printError(Exception ex) {
-        Response response = new Response(new Response.Status(StatusCode.ERROR, ex.getMessage()));
         try {
-            String message = getPrettyPrintingJson(response);
+            String message = getPrettyPrintingJson(Response.valueOf(ex).toJson());
             System.out.println(ansi().fg(RED).a(message).reset());
-        } catch (IOException | JSONException e) {
+        } catch (JSONException e) {
             Ansi ansi = ansi().fg(RED).a("Unexpected error: " + e.getMessage())
                               .newline().a("Suppressed error: " + ex.getMessage())
                               .reset();

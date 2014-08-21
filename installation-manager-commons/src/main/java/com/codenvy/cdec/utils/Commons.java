@@ -26,7 +26,6 @@ import com.google.gson.GsonBuilder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.restlet.ext.jackson.JacksonRepresentation;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -171,25 +170,5 @@ public class Commons {
     public static String getPrettyPrintingJson(String json) throws JSONException {
         JSONObject obj = new JSONObject(json);
         return obj.toString(2);
-    }
-
-    /**
-     * Convert one-line json string to pretty formatted multiline string.
-     *
-     * @throws JSONException
-     * @throws java.io.IOException
-     */
-    public static <T> String getPrettyPrintingJson(T obj) throws JSONException, IOException {
-        return getPrettyPrintingJson(getJson(obj));
-    }
-
-    /**
-     * Produce json from object.
-     *
-     * @throws java.io.IOException
-     */
-    public static <T> String getJson(T obj) throws IOException {
-        JacksonRepresentation<T> jackson = new JacksonRepresentation<>(obj);
-        return jackson.getText();
     }
 }

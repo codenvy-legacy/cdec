@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
+package com.codenvy.cdec.restlet;
 
 import org.restlet.Component;
 import org.restlet.Context;

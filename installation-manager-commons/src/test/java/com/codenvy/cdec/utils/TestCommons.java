@@ -20,10 +20,8 @@ package com.codenvy.cdec.utils;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.cdec.ArtifactNotFoundException;
 
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,14 +37,6 @@ import static org.testng.Assert.assertNotNull;
 public class TestCommons {
 
     public static final Path DOWNLOAD_DIR = Paths.get("target", "download");
-
-    @Test
-    public void testGetJson() throws Exception {
-        // TODO
-        String value = Commons.getJson(new ResourceException(500, "name", "descr", "uri", new IOException("message")));
-//        assertEquals();
-
-    }
 
     @Test
     public void testGetPrettyPrintJson() throws Exception {
@@ -102,7 +92,8 @@ public class TestCommons {
 
     @Test
     public void testCreateListDtoFromJson() throws Exception {
-        List<MemberDescriptor> descriptors = Commons.createListDtoFromJson("[{userId:id,accountReference:{id:accountId,name:accountName}}]", MemberDescriptor.class);
+        List<MemberDescriptor> descriptors =
+                Commons.createListDtoFromJson("[{userId:id,accountReference:{id:accountId,name:accountName}}]", MemberDescriptor.class);
         assertEquals(descriptors.size(), 1);
 
         MemberDescriptor d = descriptors.get(0);

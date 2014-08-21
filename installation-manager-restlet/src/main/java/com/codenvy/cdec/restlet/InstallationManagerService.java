@@ -15,11 +15,13 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
+package com.codenvy.cdec.restlet;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 
 /**
  * @author Dmytro Nochevnov
@@ -28,47 +30,30 @@ import java.io.IOException;
 @Path("im")
 public interface InstallationManagerService extends DigestAuthSupport {
 
-    /**
-     * Perform request to get unique and transient information from server to build the authentication credentials for the next requests.
-     */
-    @HEAD
-    @Path("empty")
-    @Produces(MediaType.TEXT_HTML)
-    public void obtainChallengeRequest();
-
-    /**
-     * Downloads the latest versions of the artifacts.
-     */
+    /** Download all latest updates */
     @GET
     @Path("download")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download() throws IOException;
+    public String download();
 
 
-    /**
-     * Downloads available update of artifact.
-     */
+    /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("download/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "artifact") final String artifactName) throws IOException;
+    public String download(@PathParam(value = "artifact") final String artifactName);
 
-    /**
-     * Downloads artifact.
-     * If version is null, then download latest version of artifact 
-     */
+    /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value="artifact") final String artifactName, 
-                           @PathParam(value="version") final String version) throws IOException;
+    public String download(@PathParam(value = "artifact") final String artifactName,
+                           @PathParam(value = "version") final String version);
 
-    
-    /**
-     * Checks if new versions are available. The retrieved list can be obtained by invoking {@link #getNewVersions()} method.
-     */
+
+    /** @see InstallationManager#getUpdates() */
     @GET
     @Path("check-updates")
     @Produces(MediaType.APPLICATION_JSON)
-    public String checkUpdates() throws IOException;
+    public String getUpdates();
 }

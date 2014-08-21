@@ -21,6 +21,8 @@ package com.codenvy.cdec;
 import com.codenvy.cdec.im.InstallationManagerApplication;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.UpdateManager;
+import com.codenvy.cdec.restlet.InstallationManager;
+import com.codenvy.cdec.restlet.RestletServer;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;

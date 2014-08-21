@@ -15,32 +15,23 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.cli.command;
+package com.codenvy.cdec.restlet;
 
-import org.apache.karaf.shell.commands.Command;
-import org.restlet.resource.ResourceException;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 /**
  * @author Anatoliy Bazko
- * @author Alexander Reshetnyak
- * @author Dmytro Nochevnov
  */
-@Command(scope = "im", name = "check-updates", description = "Check all available updates")
-public class CheckUpdatesCommand extends AbstractIMCommand {
+public interface DigestAuthSupport {
 
     /**
-     * Check availability new version.
+     * Perform request to get unique and transient information from server to build the authentication credentials for the next requests.
      */
-    protected Void doExecute() throws Exception {
-        init();
-
-        try {
-            String response = installationManagerProxy.getUpdates();
-            printResult(response);
-        } catch (ResourceException re) {
-            printError(re);
-        }
-
-        return null;
-    }
+    @HEAD
+    @Path("empty")
+    @Produces(MediaType.TEXT_HTML)
+    void obtainChallengeRequest();
 }

@@ -104,20 +104,26 @@ public class TestInstallationManager {
         verify(cdecArtifact).install(any(Path.class));
     }
 
-    @Test
-    public void testDownloadUpdates() throws Exception {
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDownloadErrorIfSubscriptionInvalid() throws Exception {
         final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "2.10.5", "file1");
-        final Path file2 = Paths.get("target", "download", installManagerArtifact.getName(), "1.0.1", "file2");
-
-        stub(transport.download(eq("update/endpoint/repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1"), any(Path.class)))
+        stub(transport.download(eq("update/endpoint/repository/download/" + CDECArtifact.NAME + "/2.10.5"), any(Path.class)))
                 .toAnswer(new Answer<Path>() {
                     @Override
                     public Path answer(InvocationOnMock invocationOnMock) throws Throwable {
-                        Files.createDirectories(file2.getParent());
-                        Files.createFile(file2);
-                        return file2;
+                        Files.createDirectories(file1.getParent());
+                        Files.createFile(file1);
+                        return file1;
                     }
                 });
+        doReturn(false).when(manager).isValidSubscription();
+
+        manager.download(cdecArtifact, "2.10.5");
+    }
+
+    @Test
+    public void testDownload() throws Exception {
+        final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "2.10.5", "file1");
         stub(transport.download(eq("update/endpoint/repository/download/" + CDECArtifact.NAME + "/2.10.5"), any(Path.class)))
                 .toAnswer(new Answer<Path>() {
                     @Override
@@ -128,21 +134,9 @@ public class TestInstallationManager {
                     }
                 });
         doReturn(true).when(manager).isValidSubscription();
-        doReturn(new HashMap<Artifact, String>() {{
-            put(cdecArtifact, "2.10.4");
-            put(installManagerArtifact, "1.0.0");
-        }}).when(manager).getInstalledArtifacts();
-        doReturn(new HashMap<Artifact, String>() {{
-            put(cdecArtifact, "2.10.5");
-            put(installManagerArtifact, "1.0.1");
-        }}).when(manager).getUpdates();
 
-        manager.download();
-
-        Map<Artifact, Path> m = manager.getDownloadedArtifacts();
-        assertEquals(m.size(), 2);
-        assertEquals(m.get(cdecArtifact), file1);
-        assertEquals(m.get(installManagerArtifact), file2);
+        manager.download(cdecArtifact, "2.10.5");
+        assertTrue(Files.exists(file1));
     }
 
     @Test
@@ -225,10 +219,5 @@ public class TestInstallationManager {
         Files.createFile(file2);
 
         manager.getDownloadedArtifacts();
-    }
-    
-    @Test
-    public void testDownloadArtifact() {
-        // TODO test of new method manager.downloadArtifact()
     }
 }

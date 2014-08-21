@@ -15,28 +15,22 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.service.response;
+package com.codenvy.cdec.response;
 
-import com.codenvy.cdec.im.service.response.Response.Status;
+import com.codenvy.cdec.artifacts.Artifact;
 
 /** @author Dmytro Nochevnov */
-public class ArtifactInfo {   
-    private Status status;
+public class ArtifactInfo {
     private String artifact;
     private String version;
-    
-    public ArtifactInfo(Status status, String artifact, String version) {
-        this.status = status;
+
+    public ArtifactInfo(String artifact, String version) {
         this.artifact = artifact;
         this.version = version;
     }
 
-    public ArtifactInfo(String artifact, String version) {
-        this(new Status(StatusCode.OK), artifact, version);
-    }
-    
-    public Status getStatus() {
-        return status;
+    public ArtifactInfo(Artifact artifact, String version) {
+        this(artifact.getName(), version);
     }
 
     public String getArtifact() {
