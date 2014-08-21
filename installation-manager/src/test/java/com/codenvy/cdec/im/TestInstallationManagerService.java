@@ -83,15 +83,10 @@ public class TestInstallationManagerService {
                                                       "}");
     }
 
-    @Test
-    public void testGetUpdatesErrorResponseIfExceptionOccurred() throws Exception {
+    @Test(expectedExceptions = IOException.class)
+    public void testGetUpdatesThrowsException() throws Exception {
         when(mockInstallationManager.getUpdates()).thenThrow(new IOException("IO Error"));
-
-        String response = installationManagerService.getUpdates();
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"IO Error\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        installationManagerService.getUpdates();
     }
 
     @Test
