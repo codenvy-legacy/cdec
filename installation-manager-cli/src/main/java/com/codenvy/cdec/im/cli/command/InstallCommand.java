@@ -39,7 +39,7 @@ public class InstallCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         init();
 
-        String token = getTokenForProduction();
+        String token = getToken();
         if (token == null) {
             return null;
         }

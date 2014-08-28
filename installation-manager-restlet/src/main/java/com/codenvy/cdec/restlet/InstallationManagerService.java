@@ -22,6 +22,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
 import java.io.IOException;
 
 /**
@@ -50,7 +51,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String download(@PathParam(value = "artifact") final String artifactName,
                            @PathParam(value = "version") final String version) throws IOException;
     
-    /** @see InstallationManager#getUpdates() */
+    /** @see InstallationManager#getUpdates(String) */
     @GET
     @Path("check-updates/{token}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -81,4 +82,12 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String install(@PathParam(value="artifact") final String artifactName,
                           @PathParam(value="version") final String version,
                           @PathParam(value = "token") String token) throws IOException;
+
+    /**
+     * Get url of update server.
+     */
+    @GET
+    @Path("update-server-url")
+    @Produces(MediaType.TEXT_PLAIN)   
+    public String getUpdateServerUrl();
 }

@@ -24,12 +24,14 @@ import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.response.*;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.utils.InjectorBootstrap;
 
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,13 +48,21 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerServiceImpl.class);
     
     protected InstallationManager manager;
+    private String updateServerUrl;
 
     public InstallationManagerServiceImpl() {
         manager = INJECTOR.getInstance(InstallationManagerImpl.class);
+        updateServerUrl = InjectorBootstrap.getProperty("codenvy.endpoint");
     }
 
     protected final static String COMMON_ERROR_MESSAGE = "Failed to execute operation.";
     protected final static String WRONG_TOKEN_ERROR_MESSAGE = "Incorrect login.";
+    
+    /** {@inheritDoc} */
+    @Override
+    public String getUpdateServerUrl() {
+        return updateServerUrl;
+    }
     
     /** {@inheritDoc} */
     @Override

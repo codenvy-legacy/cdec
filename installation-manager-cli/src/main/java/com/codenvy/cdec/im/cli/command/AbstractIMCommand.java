@@ -46,8 +46,7 @@ import static org.fusesource.jansi.Ansi.ansi;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-
-    final static String PRODUCTION_REMOTE_URL = "https://codenvy.com";  // TODO add ability to setup production server URL outside the code, e.g. in global preferences
+    private String tokenOfUpdateServerRemote;
     
     protected final InstallationManagerService installationManagerProxy;
 
@@ -59,6 +58,16 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
+    @Override
+    public void init() {
+        super.init();
+
+        if (tokenOfUpdateServerRemote == null) {
+            String updateServerRemoteUrl = getUpdateServerUrl();        
+            tokenOfUpdateServerRemote = getToken(updateServerRemoteUrl);
+        }
+    }
+    
     protected void printError(Exception ex) {
         try {
             String message = getPrettyPrintingJson(Response.valueOf(ex).toJson());
@@ -84,16 +93,19 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
     }
-    
 
-    protected String getTokenForProduction() {
+    protected String getToken() {
+        return tokenOfUpdateServerRemote;
+    }
+    
+    private String getToken(String remoteUrl) {
         MultiRemoteCodenvy multiRemoteCodenvy = getMultiRemoteCodenvy();
 
-        String productionRemoteName = getRemoteNameByUrl(PRODUCTION_REMOTE_URL);
+        String productionRemoteName = getRemoteNameByUrl(remoteUrl);
         if (productionRemoteName == null) {
             System.out.println(ansi().fg(RED)
                                      .a(String.format("Please add remote with url '%s' and login to it.", 
-                                                      PRODUCTION_REMOTE_URL))
+                                                      remoteUrl))
                                      .reset());
             return null;
         }
@@ -111,7 +123,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return credentials.getToken();
     }
     
-    protected RemoteCredentials getRemoteCredentials(String remoteName) {
+    private RemoteCredentials getRemoteCredentials(String remoteName) {
         Preferences globalPreferences = getGlobalPreferences();
         
         if (globalPreferences == null) {
@@ -126,7 +138,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return remotesPreferences.get(remoteName, RemoteCredentials.class);
     }
     
-    protected String getRemoteNameByUrl(String url) {
+    private String getRemoteNameByUrl(String url) {
         MultiRemoteCodenvy multiRemoteCodenvy = getMultiRemoteCodenvy();
         Map<String, Remote> availableRemotes = multiRemoteCodenvy.getAvailableRemotes();
         
@@ -140,7 +152,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return null;
     }
     
-    protected Preferences getGlobalPreferences() {
+    private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());
+    }
+    
+    private String getUpdateServerUrl() {
+        return installationManagerProxy.getUpdateServerUrl();
     }
 }
