@@ -17,29 +17,39 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.restlet.InstallationManager;
-import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cdec.utils.HttpTransport;
-import com.codenvy.cdec.utils.Version;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static com.codenvy.cdec.utils.Commons.combinePaths;
+import static com.codenvy.cdec.utils.Commons.fromJson;
+import static com.codenvy.cdec.utils.Commons.getLatestVersion;
+import static com.codenvy.cdec.utils.Version.compare;
 
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
-import static com.codenvy.cdec.utils.Commons.*;
-import static com.codenvy.cdec.utils.Version.compare;
+import javax.inject.Named;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.AuthenticationException;
+import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.restlet.InstallationManager;
+import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cdec.utils.HttpException;
+import com.codenvy.cdec.utils.HttpTransport;
+import com.codenvy.cdec.utils.Version;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * @author Anatoliy Bazko
@@ -140,7 +150,7 @@ public class InstallationManagerImpl implements InstallationManager {
             try {
                 installed.put(artifact, artifact.getCurrentVersion(accessToken));
             } catch (IOException e) {
-                throw new IOException("Can't find out current version of " + artifact, e);
+                throw getProperException(e, artifact);
             }
         }
 
@@ -257,5 +267,20 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         return available2Download;
+    }
+    
+    /**
+     * Returns correct exception depending on initial type of exception.
+     */
+    protected IOException getProperException(IOException e, Artifact artifact) {
+        if (e instanceof HttpException && ((HttpException) e).getStatus() == 404) {
+            return new ArtifactNotFoundException(artifact.getName());
+            
+        } else if (e instanceof HttpException && ((HttpException) e).getStatus() == 302) {
+            return new AuthenticationException();
+            
+        } else {
+            return e;
+        }
     }
 }

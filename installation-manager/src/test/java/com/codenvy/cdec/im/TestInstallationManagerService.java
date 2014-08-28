@@ -25,11 +25,14 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
@@ -88,8 +91,8 @@ public class TestInstallationManagerService {
     }
 
     @Test
-    public void testGetUpdatesCatchesException302() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new HttpException(302, ""));
+    public void testGetUpdatesCatchesAuthenticationException() throws Exception {
+        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
         String response = installationManagerService.getUpdates("incorrect-token");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Incorrect login.\",\n" +
@@ -98,9 +101,9 @@ public class TestInstallationManagerService {
     }
 
     @Test
-    public void testGetUpdatesCatchesException404() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new HttpException(404, "There is no any version of artifact 'cdec'"));
-        String response = installationManagerService.getUpdates("incorrect-token");
+    public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
+        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
+        String response = installationManagerService.getUpdates("");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
                                                       "  \"status\": \"OK\"\n" +
@@ -109,7 +112,7 @@ public class TestInstallationManagerService {
 
     @Test
     public void testGetUpdatesCatchesException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new HttpException(500, "Server Error"));
+        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
         String response = installationManagerService.getUpdates("incorrect-token");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"" + InstallationManagerServiceImpl.COMMON_ERROR_MESSAGE + "\",\n" +

@@ -31,6 +31,8 @@ import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.response.ArtifactInfo;
@@ -40,7 +42,6 @@ import com.codenvy.cdec.response.ResponseCode;
 import com.codenvy.cdec.response.Status;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
-import com.codenvy.cdec.utils.HttpException;
 
 /**
  * @author Dmytro Nochevnov
@@ -101,28 +102,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             Map<Artifact, String> updates = manager.getUpdates(token);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
-
-        } catch(IOException e) {
-            LOG.error("Can't get list of updates.", e);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build().toJson();            
-        
-        } catch(HttpException e) {
+        } catch(Exception e) {
             return handleException(e);
         }
     }
 
-    private String handleException(HttpException e) {
-        if (e.getStatus() == 404) {  // TODO response should be divided on artifacts with separate status
+    private String handleException(Exception e) {        
+        if (e instanceof ArtifactNotFoundException) {
+            LOG.info("Artifact not found.", e);
             return new Response.Builder().withStatus(ResponseCode.OK).withMessage(e.getMessage()).build().toJson();
-            
-        } else if (e.getStatus() == 302) {
-            LOG.error(String.format("Http error of getting list of updates. Response status: '%d'. Response message: '%s'",
-                                    e.getStatus(), e.getMessage()), e);
+
+        } else if (e instanceof AuthenticationException) {
+            LOG.info("Authentication error.", e);
             return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(WRONG_TOKEN_ERROR_MESSAGE).build().toJson();
             
         } else {
-            LOG.error(String.format("Http error of getting list of updates. Response status: '%d'. Response message: '%s'",
-                                    e.getStatus(), e.getMessage()), e);
+            LOG.error("Installation manager error.", e);
             return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(COMMON_ERROR_MESSAGE).build().toJson();                            
         }
     }

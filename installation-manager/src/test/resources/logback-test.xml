@@ -24,6 +24,11 @@
         <encoder>
             <pattern>%-41(%date[%.15thread]) %-45([%-5level] [%.30logger{30} %L]) - %msg%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
     </appender>
 
     <appender name="file" class="ch.qos.logback.core.FileAppender">
@@ -31,14 +36,22 @@
         <encoder>
             <pattern>%-41(%date[%.15thread]) %-45([%-5level] [%.30logger{30} %L]) - %msg%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
     </appender>
     
-    <logger name="com.codenvy.cdec" level="DEBUG"/>
-
-    <root level="OFF">
+    <root level="ERROR">
         <appender-ref ref="stdout"/>
-        <appender-ref ref="file"/>
     </root>
+    
+    <root level="INFO">
+	    <appender-ref ref="file"/>
+	</root>
+    
+    <logger name="com.codenvy.cdec" level="INFO"/>
     
     <!-- setup logging of restlet server -->    
     <appender name="restlet-log-file" class="ch.qos.logback.core.FileAppender">

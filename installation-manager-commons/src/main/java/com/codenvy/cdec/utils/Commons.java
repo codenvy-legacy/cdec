@@ -17,15 +17,8 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.dto.server.DtoFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import static com.codenvy.cdec.utils.Version.compare;
+import static com.codenvy.cdec.utils.Version.valueOf;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,8 +26,15 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.codenvy.cdec.utils.Version.compare;
-import static com.codenvy.cdec.utils.Version.valueOf;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.dto.server.DtoFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * @author Anatoliy Bazko

@@ -15,20 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.utils;
+package com.codenvy.cdec;
 
 import java.io.IOException;
 
-/** @author Dmytro Nochevnov */
-public class HttpException extends IOException {
-    private int status;
-
-    public HttpException(int status, String message) {
-        super(message);
-        this.status = status;
-    }
-
-    public int getStatus() {
-        return status;
+/**
+ * @author Dmytro Nochevno
+ */
+public class AuthenticationException extends IOException {
+    
+    public AuthenticationException() {
+        super("Authentication error");
     }
 }

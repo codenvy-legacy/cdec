@@ -17,6 +17,7 @@
  */
 package com.codenvy.cdec.artifacts;
 
+import com.codenvy.cdec.ArtifactNotFoundException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -67,7 +68,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
             if (props.containsKey("version")) {
                 return (String)props.get("version");
             } else {
-                throw new IOException("Property version not found");
+                throw new ArtifactNotFoundException(this.getName());
             }
         }
     }
