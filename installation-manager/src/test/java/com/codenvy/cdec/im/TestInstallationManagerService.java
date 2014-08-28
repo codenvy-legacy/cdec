@@ -25,6 +25,7 @@ import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.utils.HttpTransport;
+import com.codenvy.cdec.utils.InjectorBootstrap;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -37,6 +38,7 @@ import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Dmytro Nochevnov
@@ -487,5 +489,12 @@ public class TestInstallationManagerService {
                                                       "  }],\n" +
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
+    }
+    
+    @Test
+    public void testGetUpdateServerUrl() {
+        String response = installationManagerService.getUpdateServerUrl();
+        assertNotNull(response);
+        assertEquals(response, InjectorBootstrap.getProperty("codenvy.endpoint"));
     }
 }
