@@ -80,7 +80,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(null);
 
-        manager.install(cdecArtifact, "2.10.1");
+        manager.install(cdecArtifact, "2.10.1", "");
 
         verify(cdecArtifact, never()).install(any(Path.class));
     }
@@ -89,7 +89,7 @@ public class TestInstallationManager {
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getCurrentVersion(null);
 
-        manager.install(cdecArtifact, "2.10.1");
+        manager.install(cdecArtifact, "2.10.1", "");
     }
 
     @Test
@@ -100,7 +100,7 @@ public class TestInstallationManager {
         doNothing().when(cdecArtifact).install(any(Path.class));
         doReturn(null).when(cdecArtifact).getCurrentVersion(null);
 
-        manager.install(cdecArtifact, "1.0.1");
+        manager.install(cdecArtifact, "1.0.1", "");
         verify(cdecArtifact).install(any(Path.class));
     }
 
@@ -128,7 +128,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
 
-        manager.install(cdecArtifact, "2.10.0");
+        manager.install(cdecArtifact, "2.10.0", "");
     }
 
     @Test
@@ -138,7 +138,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
 
-        manager.install(cdecArtifact, "2.10.2");
+        manager.install(cdecArtifact, "2.10.2", "");
     }
 
     @Test
@@ -211,7 +211,7 @@ public class TestInstallationManager {
     }
 
     @Test
-    public void testGetDownloadedArtifactsServeralVersions() throws Exception {
+    public void testGetDownloadedArtifactsSeveralVersions() throws Exception {
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
         Files.createDirectories(file1.getParent());

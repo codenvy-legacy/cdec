@@ -32,10 +32,12 @@ public interface InstallationManager {
      *
      * We don't support downgrade artifact.
      *
+     * @param token String
+     *         Token for authentication.
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    void install(Artifact artifact, String version) throws IOException;
+    void install(Artifact artifact, String version, String token) throws IOException;
 
     /**
      * TODO remove duplicate of getInstalledArtifacts(String accessToken)

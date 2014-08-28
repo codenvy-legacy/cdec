@@ -229,7 +229,7 @@ public class TestInstallationManagerService {
         }).when(mockInstallationManager).getInstalledArtifacts();
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-        .when(mockInstallationManager).install(mockCdecArtifact, "2.10.5");
+        .when(mockInstallationManager).install(mockCdecArtifact, "2.10.5", "");
 
         String response = installationManagerService.install("");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
@@ -249,7 +249,7 @@ public class TestInstallationManagerService {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates();
+        }).when(mockInstallationManager).getUpdates("");
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.4");
@@ -273,7 +273,7 @@ public class TestInstallationManagerService {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates();
+        }).when(mockInstallationManager).getUpdates("");
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
@@ -298,7 +298,7 @@ public class TestInstallationManagerService {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates();
+        }).when(mockInstallationManager).getUpdates("");
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
@@ -308,7 +308,7 @@ public class TestInstallationManagerService {
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install(artifact, "2.10.5");
+                .when(mockInstallationManager).install(artifact, "2.10.5", "");
 
         String response = installationManagerService.install(mockCdecArtifact.getName(), "");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
@@ -345,7 +345,7 @@ public class TestInstallationManagerService {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates();
+        }).when(mockInstallationManager).getUpdates("");
         doReturn(new LinkedHashMap<Artifact, String>() {
         }).when(mockInstallationManager).getInstalledArtifacts();
 
@@ -426,7 +426,7 @@ public class TestInstallationManagerService {
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install(artifact, "2.10.5");
+                .when(mockInstallationManager).install(artifact, "2.10.5", "");
 
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", "");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
@@ -453,7 +453,7 @@ public class TestInstallationManagerService {
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Artifact '" + mockCdecArtifact.getName() + "'  isn't available to update."))
-                .when(mockInstallationManager).install(artifact, "2.10.7");
+                .when(mockInstallationManager).install(artifact, "2.10.7", "");
 
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.7", "");
         assertEquals(getPrettyPrintingJson(response), "{\n" +

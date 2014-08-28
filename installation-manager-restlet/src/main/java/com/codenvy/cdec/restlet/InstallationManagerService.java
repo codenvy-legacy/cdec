@@ -64,7 +64,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.TEXT_HTML)
     public String install(@PathParam(value = "token") String token) throws IOException;
 
-    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String) */
+    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String, String) */
     @GET
     @Path("install/{artifact}/{token}")
     @Produces(MediaType.TEXT_HTML)
@@ -74,7 +74,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     /**
      * Install artifact .
      */
-    /** @see com.codenvy.cdec.restlet.InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String) */
+    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String, String) */
     @GET
     @Path("install/{artifact}/{version}/{token}")
     @Produces(MediaType.TEXT_HTML)
