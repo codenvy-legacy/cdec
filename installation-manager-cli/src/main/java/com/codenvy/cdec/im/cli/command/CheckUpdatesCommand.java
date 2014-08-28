@@ -17,8 +17,16 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import java.util.Map;
+import java.util.prefs.Preferences;
+
 import org.apache.karaf.shell.commands.Command;
 import org.restlet.resource.ResourceException;
+
+import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
+import com.codenvy.cli.command.builtin.Remote;
+import com.codenvy.cli.security.RemoteCredentials;
+import com.codenvy.client.Codenvy;
 
 /**
  * @author Anatoliy Bazko
@@ -33,9 +41,14 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
      */
     protected Void doExecute() throws Exception {
         init();
-
+        
+        String token = getTokenForProduction();
+        if (token == null) {
+            return null;
+        }
+        
         try {
-            String response = installationManagerProxy.getUpdates();
+            String response = installationManagerProxy.getUpdates(token);
             printResult(response);
         } catch (ResourceException re) {
             printError(re);
@@ -43,4 +56,5 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
 
         return null;
     }
+
 }

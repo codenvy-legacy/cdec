@@ -17,34 +17,47 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.artifacts.ArtifactFactory;
-import com.codenvy.cdec.response.*;
-import com.codenvy.cdec.restlet.InstallationManager;
-import com.codenvy.cdec.restlet.InstallationManagerService;
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
+import static java.util.Arrays.asList;
 
-import org.restlet.resource.ServerResource;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
-import static java.util.Arrays.asList;
+import javax.annotation.Nullable;
+
+import org.restlet.resource.ServerResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.ArtifactFactory;
+import com.codenvy.cdec.response.ArtifactInfo;
+import com.codenvy.cdec.response.ArtifactInfoEx;
+import com.codenvy.cdec.response.Response;
+import com.codenvy.cdec.response.ResponseCode;
+import com.codenvy.cdec.response.Status;
+import com.codenvy.cdec.restlet.InstallationManager;
+import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.utils.HttpException;
 
 /**
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
+    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerServiceImpl.class);
+    
     protected InstallationManager manager;
 
     public InstallationManagerServiceImpl() {
         manager = INJECTOR.getInstance(InstallationManagerImpl.class);
     }
 
+    protected final static String COMMON_ERROR_MESSAGE = "Failed to execute operation.";
+    protected final static String WRONG_TOKEN_ERROR_MESSAGE = "Incorrect login.";
+    
     /** {@inheritDoc} */
     @Override
     public String download() throws IOException {
@@ -81,12 +94,37 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
         return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
     }
-
+    
     /** {@inheritDoc} */
     @Override
-    public String getUpdates() throws IOException {
-        Map<Artifact, String> updates = manager.getUpdates();
-        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
+    public String getUpdates(String token) {
+        try {
+            Map<Artifact, String> updates = manager.getUpdates(token);
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
+
+        } catch(IOException e) {
+            LOG.error("Can't get list of updates.", e);
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build().toJson();            
+        
+        } catch(HttpException e) {
+            return handleException(e);
+        }
+    }
+
+    private String handleException(HttpException e) {
+        if (e.getStatus() == 404) {  // TODO response should be divided on artifacts with separate status
+            return new Response.Builder().withStatus(ResponseCode.OK).withMessage(e.getMessage()).build().toJson();
+            
+        } else if (e.getStatus() == 302) {
+            LOG.error(String.format("Http error of getting list of updates. Response status: '%d'. Response message: '%s'",
+                                    e.getStatus(), e.getMessage()), e);
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(WRONG_TOKEN_ERROR_MESSAGE).build().toJson();
+            
+        } else {
+            LOG.error(String.format("Http error of getting list of updates. Response status: '%d'. Response message: '%s'",
+                                    e.getStatus(), e.getMessage()), e);
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(COMMON_ERROR_MESSAGE).build().toJson();                            
+        }
     }
 
     /** {@inheritDoc} */

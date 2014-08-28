@@ -48,17 +48,31 @@ public interface InstallationManager {
     void install(Artifact artifact, String version) throws IOException;
 
     /**
+     * TODO remove duplicate of getInstalledArtifacts(String accessToken)
      * Scans all installed artifacts and returns their versions.
      */
     Map<Artifact, String> getInstalledArtifacts() throws IOException;
 
     /**
+     * Scans all installed artifacts and returns their versions.
+     */
+    Map<Artifact, String> getInstalledArtifacts(String accessToken) throws IOException;
+    
+    /**
+     * TODO remove duplicate of getUpdates(String accessToken)
      * @return the list of the artifacts to update.
      * @throws java.io.IOException
      *         if I/O error occurred
      */
     Map<Artifact, String> getUpdates() throws IOException;
 
+    /**
+     * @return the list of the artifacts to update.
+     * @throws java.io.IOException
+     *         if I/O error occurred
+     */
+    Map<Artifact, String> getUpdates(String accessToken) throws IOException;
+    
     /**
      * Download the specific version of the artifact.
      *

@@ -17,14 +17,8 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.commons.env.EnvironmentContext;
-import com.codenvy.commons.lang.IoUtil;
-import com.codenvy.commons.user.User;
+import static com.codenvy.cdec.utils.Commons.addQueryParam;
 
-import org.apache.commons.io.IOUtils;
-
-import javax.inject.Singleton;
-import javax.ws.rs.core.MediaType;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +30,14 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.cdec.utils.Commons.addQueryParam;
+import javax.inject.Singleton;
+import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.io.IOUtils;
+
+import com.codenvy.commons.env.EnvironmentContext;
+import com.codenvy.commons.lang.IoUtil;
+import com.codenvy.commons.user.User;
 
 /**
  * @author Anatoliy Bazko
@@ -52,7 +53,35 @@ public class HttpTransport {
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
     public String doGetRequest(String path) throws IOException {
-        return request(path, "GET", MediaType.APPLICATION_JSON);
+        return doGetRequest(path, null);
+    }
+
+    /**
+     * Performs GET request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doGetRequest(String path, String accessToken) throws IOException {
+        return request(path, "GET", MediaType.APPLICATION_JSON, accessToken);
+    }
+
+    private String request(String path, String method, String expectedContentType) throws IOException {
+        return request(path, method, expectedContentType, null);
+    }
+    
+    private String request(String path, String method, String expectedContentType, String accessToken) throws IOException {
+        final HttpURLConnection conn = openConnection(path);
+        
+        if (accessToken != null) {
+            String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
+            conn.addRequestProperty("Cookie", accessTokenCookie);
+        }
+        
+        try {
+            request(method, expectedContentType, conn);
+            return IoUtil.readAndCloseQuietly(conn.getInputStream());
+        } finally {
+            conn.disconnect();
+        }
     }
 
     /**
@@ -103,17 +132,7 @@ public class HttpTransport {
         }
     }
 
-    private String request(String path, String method, String expectedContentType) throws IOException {
-        final HttpURLConnection conn = openConnection(path);
-        try {
-            request(method, expectedContentType, conn);
-            return IoUtil.readAndCloseQuietly(conn.getInputStream());
-        } finally {
-            conn.disconnect();
-        }
-    }
-
-    private void request(String method, String expectedContentType, HttpURLConnection conn) throws IOException {
+    private void request(String method, String expectedContentType, HttpURLConnection conn) throws IOException, HttpException {
         conn.setConnectTimeout(30 * 1000);
         conn.setRequestMethod(method);
         final int responseCode = conn.getResponseCode();
@@ -123,7 +142,8 @@ public class HttpTransport {
             if (in == null) {
                 in = conn.getInputStream();
             }
-            throw new IOException(IoUtil.readAndCloseQuietly(in));
+            
+            throw new HttpException(responseCode, IoUtil.readAndCloseQuietly(in));
         }
 
         final String contentType = conn.getContentType();
@@ -131,12 +151,13 @@ public class HttpTransport {
             throw new IOException("Unsupported type of response from remote server. ");
         }
     }
-
+    
     private HttpURLConnection openConnection(String path) throws IOException {
         String resourceUrl = addAuthenticationToken(path);
         return (HttpURLConnection)new URL(resourceUrl).openConnection();
     }
 
+    // TODO remove due to getting token from client
     private String addAuthenticationToken(String baseUrl) {
         User user = EnvironmentContext.getCurrent().getUser();
         if (user != null) {

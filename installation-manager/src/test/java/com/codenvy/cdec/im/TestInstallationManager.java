@@ -78,7 +78,7 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, Path>() {{
             put(cdecArtifact, Paths.get("target/download/cdec/2.10.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
+        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(null);
 
         manager.install(cdecArtifact);
 
@@ -87,7 +87,7 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
-        doReturn(null).when(cdecArtifact).getCurrentVersion();
+        doReturn(null).when(cdecArtifact).getCurrentVersion(null);
 
         manager.install(cdecArtifact);
     }
@@ -98,7 +98,7 @@ public class TestInstallationManager {
             put(cdecArtifact, Paths.get("target/download/cdec/1.0.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
         doNothing().when(cdecArtifact).install(any(Path.class));
-        doReturn(null).when(cdecArtifact).getCurrentVersion();
+        doReturn(null).when(cdecArtifact).getCurrentVersion(null);
 
         assertEquals(manager.install(cdecArtifact), "1.0.1");
         verify(cdecArtifact).install(any(Path.class));
@@ -144,7 +144,7 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, String>() {{
             put(cdecArtifact, "2.10.5");
             put(installManagerArtifact, "1.0.0");
-        }}).when(manager).getInstalledArtifacts();
+        }}).when(manager).getInstalledArtifacts(null);
         doReturn(new HashMap<Artifact, String>() {{
             put(cdecArtifact, "2.10.5");
             put(installManagerArtifact, "1.0.1");
@@ -157,7 +157,7 @@ public class TestInstallationManager {
 
     @Test
     public void testGetInstalledArtifacts() throws Exception {
-        when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME)).thenReturn("{version:2.10.4}");
+        when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME, null)).thenReturn("{version:2.10.4}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts();
         assertEquals(m.get(cdecArtifact), "2.10.4");

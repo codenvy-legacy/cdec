@@ -55,10 +55,16 @@ public class CDECArtifact extends AbstractArtifact {
         // TODO
     }
 
+    // TODO remove duplicate of getCurrentVersion(String accessToken)
     @Override
     public String getCurrentVersion() throws IOException {
+        return getCurrentVersion(null);
+    }
+    
+    @Override
+    public String getCurrentVersion(String accessToken) throws IOException {
         // TODO if absent?  WTF TO DO?
-        String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/info/" + NAME));  // TODO needs authentication on https://codenvy.com/update/repository/info/cdec to avoid IOException
+        String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/info/" + NAME), accessToken);
         Map m = Commons.fromJson(json, Map.class);
         return (String)m.get("version");
     }

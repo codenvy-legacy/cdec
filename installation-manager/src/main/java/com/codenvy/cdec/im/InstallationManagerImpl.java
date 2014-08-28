@@ -125,13 +125,20 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
+    // TODO remove duplicate of getInstalledArtifacts(String accessToken)
     /** {@inheritDoc} */
     @Override
     public Map<Artifact, String> getInstalledArtifacts() throws IOException {
+        return getInstalledArtifacts(null);
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public Map<Artifact, String> getInstalledArtifacts(String accessToken) throws IOException {
         Map<Artifact, String> installed = new HashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                installed.put(artifact, artifact.getCurrentVersion());
+                installed.put(artifact, artifact.getCurrentVersion(accessToken));
             } catch (IOException e) {
                 throw new IOException("Can't find out current version of " + artifact, e);
             }
@@ -198,11 +205,18 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     /** {@inheritDoc} */
+    // TODO remove duplicate of getUpdates(String accessToken)
     @Override
     public Map<Artifact, String> getUpdates() throws IOException {
+        return getUpdates(null);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Map<Artifact, String> getUpdates(String accessToken) throws IOException {
         Map<Artifact, String> newVersions = new LinkedHashMap<>();
 
-        Map<Artifact, String> installed = getInstalledArtifacts();
+        Map<Artifact, String> installed = getInstalledArtifacts(accessToken);
         Map<Artifact, String> available2Download = getLatestVersionsToDownload();
 
         for (Map.Entry<Artifact, String> entry : available2Download.entrySet()) {
@@ -217,7 +231,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
         return newVersions;
     }
-
+    
     protected Path getArtifactDownloadedDir(Artifact artifact, String version) {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }

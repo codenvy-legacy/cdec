@@ -52,6 +52,18 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.codenvy.cli</groupId>
+            <artifactId>cli-preferences-api</artifactId>
+            <version>${codenvy.cli.version}</version>
+            <scope>provided</scope>
+        </dependency>        
+        <dependency>
+            <groupId>com.codenvy.platform-api-client-java</groupId>
+            <artifactId>codenvy-platform-api-client-java-api</artifactId>
+            <version>${com.codenvy.client.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.console</artifactId>
             <version>${org.apache.karaf.version}</version>

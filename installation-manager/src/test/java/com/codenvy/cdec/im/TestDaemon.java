@@ -42,6 +42,8 @@ public class TestDaemon {
     public void setUp() throws Exception {
         Daemon.start();
         
+//        System.in.read();  // TODO remove        
+        
         installationManagerServiceProxy = RestletClientFactory.createServiceProxy(InstallationManagerService.class);
     }
     

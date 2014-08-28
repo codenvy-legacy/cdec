@@ -49,13 +49,12 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String download(@PathParam(value = "artifact") final String artifactName,
                            @PathParam(value = "version") final String version) throws IOException;
-
-
+    
     /** @see InstallationManager#getUpdates() */
     @GET
-    @Path("check-updates")
+    @Path("check-updates/{token}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getUpdates() throws IOException;
+    public String getUpdates(@PathParam(value = "token") String token) throws IOException;
 
     /**
      * Install all latest updates.

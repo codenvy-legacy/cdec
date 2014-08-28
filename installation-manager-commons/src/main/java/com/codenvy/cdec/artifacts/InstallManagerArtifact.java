@@ -52,8 +52,14 @@ public class InstallManagerArtifact extends AbstractArtifact {
 //        restart()
     }
 
+    // TODO remove duplicate of getCurrentVersion(String accessToken)
     @Override
     public String getCurrentVersion() throws IOException {
+        return getCurrentVersion(null);
+    }
+    
+    @Override
+    public String getCurrentVersion(String accessToken) throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);
