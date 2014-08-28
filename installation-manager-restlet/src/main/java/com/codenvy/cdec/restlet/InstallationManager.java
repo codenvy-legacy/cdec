@@ -27,16 +27,6 @@ import java.util.Map;
  */
 public interface InstallationManager {
 
-    //TODO REMOVE
-    /**
-     * Install the artifact if the existed version lower than a downloaded one.
-     *
-     * @return the version of newly installed artifact or the current one if installation wasn't necessary
-     * @throws java.io.IOException
-     *         if an I/O error occurred
-     */
-    String install(Artifact artifact) throws IOException;
-
     /**
      * Install the specific version of the artifact.
      *

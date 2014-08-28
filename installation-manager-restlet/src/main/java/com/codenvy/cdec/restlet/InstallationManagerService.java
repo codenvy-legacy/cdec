@@ -60,23 +60,25 @@ public interface InstallationManagerService extends DigestAuthSupport {
      * Install all latest updates.
      */
     @GET
-    @Path("install")
+    @Path("install/{token}")
     @Produces(MediaType.TEXT_HTML)
-    public String install() throws IOException;
+    public String install(@PathParam(value = "token") String token) throws IOException;
 
-    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact) */
+    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
-    @Path("install")
+    @Path("install/{artifact}/{token}")
     @Produces(MediaType.TEXT_HTML)
-    public String install(@PathParam(value="artifact") final String artifactName) throws IOException;
+    public String install(@PathParam(value="artifact") final String artifactName,
+                          @PathParam(value = "token") String token) throws IOException;
 
     /**
      * Install artifact .
      */
     /** @see com.codenvy.cdec.restlet.InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
-    @Path("install")
+    @Path("install/{artifact}/{version}/{token}")
     @Produces(MediaType.TEXT_HTML)
     public String install(@PathParam(value="artifact") final String artifactName,
-                          @PathParam(value="version") final String version) throws IOException;
+                          @PathParam(value="version") final String version,
+                          @PathParam(value = "token") String token) throws IOException;
 }

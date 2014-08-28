@@ -17,29 +17,6 @@
  */
 package com.codenvy.cdec.im;
 
-import static com.codenvy.cdec.utils.Commons.combinePaths;
-import static com.codenvy.cdec.utils.Commons.fromJson;
-import static com.codenvy.cdec.utils.Commons.getLatestVersion;
-import static com.codenvy.cdec.utils.Version.compare;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.inject.Named;
-
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
@@ -50,6 +27,21 @@ import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+
+import static com.codenvy.cdec.utils.Commons.*;
+import static com.codenvy.cdec.utils.Version.compare;
 
 /**
  * @author Anatoliy Bazko
@@ -85,28 +77,6 @@ public class InstallationManagerImpl implements InstallationManager {
         LOG.info(artifacts.getClass().getName());
     }
 
-    //TODO REMOVE
-    /** {@inheritDoc} */
-    @Override
-    public String install(Artifact artifact) throws IOException {
-        Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
-        Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
-
-        if (downloadedArtifacts.containsKey(artifact)) {
-            Path pathToBinaries = downloadedArtifacts.get(artifact);
-            String version = Commons.extractVersion(pathToBinaries);
-            String installedVersion = installedArtifacts.get(artifact);
-
-            if (installedVersion == null || Version.compare(version, installedVersion) > 1) {
-                artifact.install(pathToBinaries);
-            }
-
-            return version;
-        } else {
-            throw new FileNotFoundException("Binaries to install artifact not found");
-        }
-    }
-
     @Override
     /** {@inheritDoc} */
     public void install(Artifact artifact, String version) throws IOException {
@@ -127,7 +97,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 artifact.install(pathToBinaries);
 
             } else if (installedVersion != null && Version.compare(version, installedVersion) < 0) {
-                throw new FileNotFoundException("Can not install the artifact '" + artifact.getName() + ":" + version
+                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + ":" + version
                                                 + "', because we don't support downgrade artifacts." );
             }
         } else {

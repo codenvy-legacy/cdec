@@ -80,7 +80,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(null);
 
-        manager.install(cdecArtifact);
+        manager.install(cdecArtifact, "2.10.1");
 
         verify(cdecArtifact, never()).install(any(Path.class));
     }
@@ -89,7 +89,7 @@ public class TestInstallationManager {
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getCurrentVersion(null);
 
-        manager.install(cdecArtifact);
+        manager.install(cdecArtifact, "2.10.1");
     }
 
     @Test
@@ -100,7 +100,7 @@ public class TestInstallationManager {
         doNothing().when(cdecArtifact).install(any(Path.class));
         doReturn(null).when(cdecArtifact).getCurrentVersion(null);
 
-        assertEquals(manager.install(cdecArtifact), "1.0.1");
+        manager.install(cdecArtifact, "1.0.1");
         verify(cdecArtifact).install(any(Path.class));
     }
 
@@ -119,6 +119,26 @@ public class TestInstallationManager {
         doReturn(false).when(manager).isValidSubscription();
 
         manager.download(cdecArtifact, "2.10.5");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testInstallArtifactErrorIfArtifactInstalledNewly() throws Exception {
+        doReturn(new HashMap<Artifact, Path>() {{
+            put(cdecArtifact, Paths.get("target/download/cdec/2.10.0/file1"));
+        }}).when(manager).getDownloadedArtifacts();
+        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
+
+        manager.install(cdecArtifact, "2.10.0");
+    }
+
+    @Test
+    public void testInstallArtifactNewlyArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, Path>() {{
+            put(cdecArtifact, Paths.get("target/download/cdec/2.10.2/file1"));
+        }}).when(manager).getDownloadedArtifacts();
+        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion();
+
+        manager.install(cdecArtifact, "2.10.2");
     }
 
     @Test

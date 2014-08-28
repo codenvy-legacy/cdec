@@ -17,31 +17,26 @@
  */
 package com.codenvy.cdec.im;
 
-import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
-import static java.util.Arrays.asList;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Nullable;
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.AuthenticationException;
+import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.ArtifactFactory;
+import com.codenvy.cdec.response.*;
+import com.codenvy.cdec.restlet.InstallationManager;
+import com.codenvy.cdec.restlet.InstallationManagerService;
 
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.AuthenticationException;
-import com.codenvy.cdec.artifacts.Artifact;
-import com.codenvy.cdec.artifacts.ArtifactFactory;
-import com.codenvy.cdec.response.ArtifactInfo;
-import com.codenvy.cdec.response.ArtifactInfoEx;
-import com.codenvy.cdec.response.Response;
-import com.codenvy.cdec.response.ResponseCode;
-import com.codenvy.cdec.response.Status;
-import com.codenvy.cdec.restlet.InstallationManager;
-import com.codenvy.cdec.restlet.InstallationManagerService;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
+import static java.util.Arrays.asList;
 
 /**
  * @author Dmytro Nochevnov
@@ -142,7 +137,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install() throws IOException {
+    public String install(String token) throws IOException {
         Map<Artifact, String> updates = manager.getUpdates();
 
         List<ArtifactInfo> infos = new ArrayList();
@@ -165,27 +160,32 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName) throws IOException {
-        return install(artifactName, null);
+    public String install(String artifactName, String token) throws IOException {
+        return install(artifactName, null, token);
     }
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, @Nullable String version) throws IOException {
-        doInstall(artifactName, version);
-        ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
-        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
-    }
+    public String install(String artifactName, @Nullable String version, String token) throws IOException {
 
-    protected void doInstall(String artifactName, @Nullable String version) throws IOException, IllegalStateException {
-        doInstall(ArtifactFactory.createArtifact(artifactName), version);
-    }
+        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+        String toInstallVersion = version != null ? version : manager.getUpdates().get(artifact);
 
-    protected void doInstall(Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
-        if (version == null) {
-            version = manager.getUpdates().get(artifact);
+        if (toInstallVersion == null) {
+            return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
         }
 
+        try {
+            doInstall(artifact, toInstallVersion);
+            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
+        } catch (Exception e) {
+            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
+        }
+    }
+
+    protected void doInstall(Artifact artifact, String version) throws IOException, IllegalStateException {
         manager.install(artifact, version);
     }
 }
