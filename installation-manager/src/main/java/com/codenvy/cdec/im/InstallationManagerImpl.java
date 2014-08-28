@@ -79,8 +79,8 @@ public class InstallationManagerImpl implements InstallationManager {
 
     @Override
     /** {@inheritDoc} */
-    public void install(Artifact artifact, String version) throws IOException {
-        Map<Artifact, String> installedArtifacts = getInstalledArtifacts();
+    public void install(Artifact artifact, String version, String token) throws IOException {
+        Map<Artifact, String> installedArtifacts = getInstalledArtifacts(token);
         Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
 
         if (downloadedArtifacts.containsKey(artifact)) {

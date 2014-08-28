@@ -157,7 +157,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String version = entry.getValue();
 
             try {
-                doInstall(artifact, version);
+                doInstall(artifact, version, token);
                 infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
             } catch (Exception e) {
                 infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
@@ -179,14 +179,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String install(String artifactName, @Nullable String version, String token) throws IOException {
 
         Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-        String toInstallVersion = version != null ? version : manager.getUpdates().get(artifact);
+        String toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
 
         if (toInstallVersion == null) {
             return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
         }
 
         try {
-            doInstall(artifact, toInstallVersion);
+            doInstall(artifact, toInstallVersion, token);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
         } catch (Exception e) {
@@ -195,7 +195,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
-    protected void doInstall(Artifact artifact, String version) throws IOException, IllegalStateException {
-        manager.install(artifact, version);
+    protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
+        manager.install(artifact, version, token);
     }
 }
