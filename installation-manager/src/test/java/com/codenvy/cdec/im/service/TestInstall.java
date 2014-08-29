@@ -15,13 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im;
+package com.codenvy.cdec.im.service;
 
 import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
+import com.codenvy.cdec.im.InstallationManagerImpl;
+import com.codenvy.cdec.im.InstallationManagerServiceImpl;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.utils.HttpTransport;
@@ -44,7 +46,7 @@ import static org.testng.Assert.assertNotNull;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestInstallationManagerService {
+public class TestInstall {
     private InstallationManagerService installationManagerService;
 
     private InstallationManager mockInstallationManager;
@@ -64,89 +66,7 @@ public class TestInstallationManagerService {
         mockInstallManagerArtifact = spy(new InstallManagerArtifact());
         mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
     }
-
-    @Test
-    public void testGetUpdates() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenReturn(new LinkedHashMap<Artifact, String>() {
-            {
-                put(mockInstallManagerArtifact, "1.0.1");
-                put(mockCdecArtifact, "2.10.5");
-            }
-        });
-
-        String response = installationManagerService.getUpdates("");
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"installation-manager\",\n" +
-                                                      "      \"version\": \"1.0.1\"\n" +
-                                                      "    },\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"cdec\",\n" +
-                                                      "      \"version\": \"2.10.5\"\n" +
-                                                      "    }\n" +
-                                                      "  ],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
-    }
-
-    @Test
-    public void testGetUpdatesCatchesAuthenticationException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
-        String response = installationManagerService.getUpdates("incorrect-token");
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Incorrect login.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
-    }
-
-    @Test
-    public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
-        String response = installationManagerService.getUpdates("");
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
-    }
-
-    @Test
-    public void testGetUpdatesCatchesException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
-        String response = installationManagerService.getUpdates("incorrect-token");
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"" + InstallationManagerServiceImpl.COMMON_ERROR_MESSAGE + "\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
-    }
-    
-    @Test
-    public void testDownloadArtifact() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, String>() {
-            {
-                put(mockCdecArtifact, "2.10.5");
-                put(mockInstallManagerArtifact, "1.0.1");
-            }
-        }).when(mockInstallationManager).getUpdates();
-
-        String response = installationManagerService.download();
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"cdec\",\n" +
-                                                      "      \"status\": \"SUCCESS\",\n" +
-                                                      "      \"version\": \"2.10.5\"\n" +
-                                                      "    },\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"installation-manager\",\n" +
-                                                      "      \"status\": \"SUCCESS\",\n" +
-                                                      "      \"version\": \"1.0.1\"\n" +
-                                                      "    }\n" +
-                                                      "  ],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
-    }
-
+     
     public class InstallationManagerServiceTestImpl extends InstallationManagerServiceImpl {
         public InstallationManagerServiceTestImpl(InstallationManager manager) {
             this.manager = manager;
@@ -490,16 +410,5 @@ public class TestInstallationManagerService {
                                                       "  }],\n" +
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
-    }
-    
-    @Test
-    public void testGetUpdateServerUrl() {
-        PowerMockito.mockStatic(InjectorBootstrap.class);
-        PowerMockito.when(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"))
-                    .thenReturn("https://codenvy.com/update");
-        
-        String response = installationManagerService.getUpdateServerUrl();
-        assertNotNull(response);
-        assertEquals(response, "https://codenvy.com");
     }
 }

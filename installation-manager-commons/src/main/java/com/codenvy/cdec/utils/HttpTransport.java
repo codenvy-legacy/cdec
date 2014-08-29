@@ -69,12 +69,7 @@ public class HttpTransport {
     }
     
     private String request(String path, String method, String expectedContentType, String accessToken) throws IOException {
-        final HttpURLConnection conn = openConnection(path);
-        
-        if (accessToken != null) {
-            String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
-            conn.addRequestProperty("Cookie", accessTokenCookie);
-        }
+        final HttpURLConnection conn = openConnection(path, accessToken);
         
         try {
             request(method, expectedContentType, conn);
@@ -89,15 +84,27 @@ public class HttpTransport {
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_OCTET_STREAM}
      */
     public Path download(String path, Path destinationDir) throws IOException {
+        return download(path, destinationDir, null);
+    }
+    
+    /**
+     * Performs GET request and store response into file.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_OCTET_STREAM}
+     */
+    public Path download(String path, Path destinationDir, String accessToken) throws IOException {
         if (!Files.exists(destinationDir)) {
             Files.createDirectories(destinationDir);
         }
 
-        return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir);
+        return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir, accessToken);
     }
 
     private Path download(String path, String method, String expectedContentType, Path destinationDir) throws IOException {
-        final HttpURLConnection conn = openConnection(path);
+        return download(path, method, expectedContentType, null);
+    }
+    
+    private Path download(String path, String method, String expectedContentType, Path destinationDir, String accessToken) throws IOException {
+        final HttpURLConnection conn = openConnection(path, accessToken);
 
         try {
             request(method, expectedContentType, conn);
@@ -151,19 +158,19 @@ public class HttpTransport {
             throw new IOException("Unsupported type of response from remote server. ");
         }
     }
-    
-    private HttpURLConnection openConnection(String path) throws IOException {
-        String resourceUrl = addAuthenticationToken(path);
-        return (HttpURLConnection)new URL(resourceUrl).openConnection();
-    }
 
-    // TODO remove due to getting token from client
-    private String addAuthenticationToken(String baseUrl) {
-        User user = EnvironmentContext.getCurrent().getUser();
-        if (user != null) {
-            return addQueryParam(baseUrl, "token", user.getToken());
-        } else {
-            return baseUrl;
+    private HttpURLConnection openConnection(String path) throws IOException {
+        return openConnection(path, null);
+    }
+    
+    private HttpURLConnection openConnection(String path, String accessToken) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection)new URL(path).openConnection();
+        
+        if (accessToken != null) {
+            String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
+            connection.addRequestProperty("Cookie", accessTokenCookie);
         }
+        
+        return connection;
     }
 }

@@ -66,6 +66,7 @@ public interface InstallationManager {
     Map<Artifact, String> getUpdates(String accessToken) throws IOException;
     
     /**
+     * TODO remove duplicate of download(String accessToken, Artifact artifact, String version)
      * Download the specific version of the artifact.
      *
      * @throws java.io.IOException
@@ -74,4 +75,14 @@ public interface InstallationManager {
      *         if the subscription is invalid or expired
      */
     void download(Artifact artifact, String version) throws IOException, IllegalStateException;
+    
+    /**
+     * Download the specific version of the artifact.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     * @throws java.lang.IllegalStateException
+     *         if the subscription is invalid or expired
+     */
+    void download(String accessToken, Artifact artifact, String version) throws IOException, IllegalStateException;
 }

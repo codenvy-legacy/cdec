@@ -128,8 +128,15 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     /** {@inheritDoc} */
+    // TODO remove duplicate of download(String accessToken, Artifact artifact, String version)
     @Override
     public void download(Artifact artifact, String version) throws IOException, IllegalStateException {
+        download(null, artifact, version);
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public void download(String token, Artifact artifact, String version) throws IOException, IllegalStateException {
         boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
 
         String requestUrl = combinePaths(updateEndpoint,
@@ -141,7 +148,7 @@ public class InstallationManagerImpl implements InstallationManager {
             Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
             FileUtils.deleteDirectory(artifactDownloadDir.toFile());
 
-            transport.download(requestUrl, artifactDownloadDir);
+            transport.download(requestUrl, artifactDownloadDir, token);
 
             LOG.info("Downloaded '" + artifact + "' version " + version);
         } else {

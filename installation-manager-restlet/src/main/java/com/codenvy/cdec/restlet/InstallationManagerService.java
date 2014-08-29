@@ -33,22 +33,24 @@ public interface InstallationManagerService extends DigestAuthSupport {
 
     /** Download all latest updates */
     @GET
-    @Path("download")
+    @Path("download/{token}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download() throws IOException;
+    public String download(@PathParam(value = "token") String token) throws IOException;
 
 
     /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
-    @Path("download/{artifact}")
+    @Path("download/{token}/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "artifact") final String artifactName) throws IOException;
+    public String download(@PathParam(value = "token") String token, 
+                           @PathParam(value = "artifact") final String artifactName) throws IOException;
 
     /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
-    @Path("download/{artifact}/{version}")
+    @Path("download/{token}/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "artifact") final String artifactName,
+    public String download(@PathParam(value = "token") String token, 
+                           @PathParam(value = "artifact") final String artifactName,
                            @PathParam(value = "version") final String version) throws IOException;
     
     /** @see InstallationManager#getUpdates(String) */

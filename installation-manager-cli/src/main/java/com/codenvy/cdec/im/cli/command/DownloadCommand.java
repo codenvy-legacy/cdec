@@ -36,13 +36,18 @@ public class DownloadCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         init();
 
+        String token = getToken();
+        if (token == null) {
+            return null;
+        }
+        
         try {
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.download(artifactName, version));
+                printResult(installationManagerProxy.download(token, artifactName, version));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.download(artifactName));
+                printResult(installationManagerProxy.download(token, artifactName));
             } else {
-                printResult(installationManagerProxy.download());
+                printResult(installationManagerProxy.download(token));
             }
         } catch (ResourceException e) {
             printError(e);

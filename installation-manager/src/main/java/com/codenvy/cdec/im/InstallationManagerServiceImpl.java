@@ -56,8 +56,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         updateServerUrl = Commons.extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
     }
 
-    protected final static String COMMON_ERROR_MESSAGE = "Failed to execute operation.";
-    protected final static String WRONG_TOKEN_ERROR_MESSAGE = "Incorrect login.";
+    public final static String COMMON_ERROR_MESSAGE = "Failed to execute operation.";
+    public final static String WRONG_TOKEN_ERROR_MESSAGE = "Incorrect login.";
     
     /** {@inheritDoc} */
     @Override
@@ -67,8 +67,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     
     /** {@inheritDoc} */
     @Override
-    public String download() throws IOException {
-        Map<Artifact, String> updates = manager.getUpdates();
+    public String download(String token) throws IOException {
+        Map<Artifact, String> updates = manager.getUpdates(token);
 
         List<ArtifactInfo> infos = new ArrayList<>();
 
@@ -77,7 +77,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String version = entry.getValue();
 
             try {
-                doDownload(artifact, version);
+                doDownload(token, artifact, version);
                 infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
             } catch (Exception e) {
                 infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
@@ -90,16 +90,20 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String download(String artifactName) throws IOException {
-        return download(artifactName, null);
+    public String download(String token, String artifactName) throws IOException {
+        return download(token, artifactName, null);
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download(String artifactName, @Nullable String version) throws IOException {
-        doDownload(artifactName, version);
-        ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
-        return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+    public String download(String token, String artifactName, @Nullable String version) throws IOException {
+        try {
+            doDownload(token, artifactName, version);
+            ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+        } catch(Exception e) {
+            return handleException(e);
+        }
     }
     
     /** {@inheritDoc} */
@@ -134,16 +138,16 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         // do nothing
     }
 
-    protected void doDownload(String artifactName, @Nullable String version) throws IOException, IllegalStateException {
-        doDownload(ArtifactFactory.createArtifact(artifactName), version);
+    protected void doDownload(String token, String artifactName, @Nullable String version) throws IOException, IllegalStateException {
+        doDownload(token, ArtifactFactory.createArtifact(artifactName), version);
     }
 
-    protected void doDownload(Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
+    protected void doDownload(String token, Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
         if (version == null) {
-            version = manager.getUpdates().get(artifact);
+            version = manager.getUpdates(token).get(artifact);
         }
 
-        manager.download(artifact, version);
+        manager.download(token, artifact, version);
     }
 
     /** {@inheritDoc} */

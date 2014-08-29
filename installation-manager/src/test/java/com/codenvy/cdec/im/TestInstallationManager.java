@@ -144,7 +144,7 @@ public class TestInstallationManager {
     @Test
     public void testDownload() throws Exception {
         final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "2.10.5", "file1");
-        stub(transport.download(eq("update/endpoint/repository/download/" + CDECArtifact.NAME + "/2.10.5"), any(Path.class)))
+        stub(transport.download(eq("update/endpoint/repository/download/" + CDECArtifact.NAME + "/2.10.5"), any(Path.class), anyString()))
                 .toAnswer(new Answer<Path>() {
                     @Override
                     public Path answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -155,7 +155,7 @@ public class TestInstallationManager {
                 });
         doReturn(true).when(manager).isValidSubscription();
 
-        manager.download(cdecArtifact, "2.10.5");
+        manager.download("", cdecArtifact, "2.10.5");
         assertTrue(Files.exists(file1));
     }
 
