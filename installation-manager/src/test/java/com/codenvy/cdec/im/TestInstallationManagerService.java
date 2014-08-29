@@ -27,6 +27,7 @@ import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.InjectorBootstrap;
 
+import org.powermock.api.mockito.PowerMockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -493,8 +494,12 @@ public class TestInstallationManagerService {
     
     @Test
     public void testGetUpdateServerUrl() {
+        PowerMockito.mockStatic(InjectorBootstrap.class);
+        PowerMockito.when(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"))
+                    .thenReturn("https://codenvy.com/update");
+        
         String response = installationManagerService.getUpdateServerUrl();
         assertNotNull(response);
-        assertEquals(response, InjectorBootstrap.getProperty("codenvy.endpoint"));
+        assertEquals(response, "https://codenvy.com");
     }
 }

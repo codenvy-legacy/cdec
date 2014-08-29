@@ -47,10 +47,11 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <codenvy.cli.version>2.0.1-SNAPSHOT</codenvy.cli.version>
+        <codenvy.cli.version>2.0.1-SNAPSHOT</codenvy.cli.version>     
         <com.codenvy.client.version>1.0.3</com.codenvy.client.version>
         <maven.releases.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-releases/</maven.releases.repo.url>
         <maven.snapshots.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-snapshots/</maven.snapshots.repo.url>
+        <org.powermock.version>1.5.5</org.powermock.version>
         <version.license-header>codenvy-codenvy-license-resource-bundle</version.license-header>
     </properties>
 </project>

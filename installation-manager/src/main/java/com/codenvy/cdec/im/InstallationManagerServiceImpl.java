@@ -24,6 +24,7 @@ import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.response.*;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.InjectorBootstrap;
 
 import org.restlet.resource.ServerResource;
@@ -52,7 +53,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     public InstallationManagerServiceImpl() {
         manager = INJECTOR.getInstance(InstallationManagerImpl.class);
-        updateServerUrl = InjectorBootstrap.getProperty("codenvy.endpoint");
+        updateServerUrl = Commons.extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
     }
 
     protected final static String COMMON_ERROR_MESSAGE = "Failed to execute operation.";

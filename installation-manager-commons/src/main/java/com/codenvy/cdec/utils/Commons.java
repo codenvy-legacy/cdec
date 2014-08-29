@@ -21,6 +21,8 @@ import static com.codenvy.cdec.utils.Version.compare;
 import static com.codenvy.cdec.utils.Version.valueOf;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -170,5 +172,17 @@ public class Commons {
     public static String getPrettyPrintingJson(String json) throws JSONException {
         JSONObject obj = new JSONObject(json);
         return obj.toString(2);
+    }
+
+    /**
+     * Extract server url from url with path
+     */
+    public static String extractServerUrl(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            return url.getProtocol() + "://" + url.getHost();
+        } catch (MalformedURLException e) {
+            return null;  // TODO check if this is OK solution
+        }
     }
 }
