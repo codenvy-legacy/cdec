@@ -91,7 +91,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String download(String token, String artifactName) throws IOException {
-        return download(token, artifactName, null);
+        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+        String version = manager.getUpdates(token).get(artifact);
+        
+        return download(token, artifactName, version);
     }
 
     /** {@inheritDoc} */
@@ -143,10 +146,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     }
 
     protected void doDownload(String token, Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
-        if (version == null) {
-            version = manager.getUpdates(token).get(artifact);
-        }
-
         manager.download(token, artifact, version);
     }
 

@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 import com.codenvy.cdec.ArtifactNotFoundException;
 import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.InstallationManagerImpl;
@@ -51,10 +52,9 @@ public class TestGetUpdates {
     private InstallationManagerService installationManagerService;
 
     private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
-    private Artifact            mockInstallManagerArtifact;
-    private Artifact            mockCdecArtifact;
-
+    private Artifact            installManagerArtifact;
+    private Artifact            cdecArtifact;
+    
     @BeforeMethod
     public void init() {
         initMocks();
@@ -62,18 +62,17 @@ public class TestGetUpdates {
     }
 
     public void initMocks() {
-        mockTransport = mock(HttpTransport.class);
-        mockInstallationManager = mock(InstallationManagerImpl.class);
-        mockInstallManagerArtifact = spy(new InstallManagerArtifact());
-        mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
+        mockInstallationManager = PowerMockito.mock(InstallationManagerImpl.class);
+        installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
+        cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }
 
     @Test
     public void testGetUpdates() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenReturn(new LinkedHashMap<Artifact, String>() {
             {
-                put(mockInstallManagerArtifact, "1.0.1");
-                put(mockCdecArtifact, "2.10.5");
+                put(installManagerArtifact, "1.0.1");
+                put(cdecArtifact, "2.10.5");
             }
         });
 
@@ -123,11 +122,12 @@ public class TestGetUpdates {
                                                       "}");
     }
     
-//    @Test   // TODO fix test error "'install' is a *void method* and it *cannot* be stubbed with a *return value*!"
+    @Test
     public void testGetUpdateServerUrl() {
-        PowerMockito.mockStatic(InjectorBootstrap.class);
-        PowerMockito.when(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"))
-                    .thenReturn("https://codenvy.com/update");
+     // TODO fix test error "'install' is a *void method* and it *cannot* be stubbed with a *return value*!"
+//        PowerMockito.mockStatic(InjectorBootstrap.class);
+//        PowerMockito.when(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"))
+//                    .thenReturn("https://codenvy-test.com/update");
         
         String response = installationManagerService.getUpdateServerUrl();
         assertNotNull(response);

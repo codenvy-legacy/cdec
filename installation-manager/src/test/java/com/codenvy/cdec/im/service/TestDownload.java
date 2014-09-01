@@ -20,7 +20,6 @@ package com.codenvy.cdec.im.service;
 import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 import java.util.LinkedHashMap;
@@ -29,12 +28,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
-import com.codenvy.cdec.utils.HttpTransport;
 
 /**
  * @author Dmytro Nochevnov
@@ -43,9 +42,8 @@ public class TestDownload {
     private InstallationManagerService installationManagerService;
 
     private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
-    private Artifact            mockInstallManagerArtifact;
-    private Artifact            mockCdecArtifact;
+    private Artifact            installManagerArtifact;
+    private Artifact            cdecArtifact;
 
     @BeforeMethod
     public void init() {
@@ -54,18 +52,17 @@ public class TestDownload {
     }
 
     public void initMocks() {
-        mockTransport = mock(HttpTransport.class);
         mockInstallationManager = mock(InstallationManagerImpl.class);
-        mockInstallManagerArtifact = spy(new InstallManagerArtifact());
-        mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
+        installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
+        cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }
     
     @Test
     public void testDownload() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
-                put(mockCdecArtifact, "2.10.5");
-                put(mockInstallManagerArtifact, "1.0.1");
+                put(cdecArtifact, "2.10.5");
+                put(installManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates("");
 
@@ -87,12 +84,12 @@ public class TestDownload {
                                                       "}");
     }
     
-//  @Test // TODO un-comment after fixing error with returning null version
+    @Test
     public void testDownloadArtifact() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
-                put(mockCdecArtifact, "2.10.5");
-                put(mockInstallManagerArtifact, "1.0.1");
+                put(cdecArtifact, "2.10.5");
+                put(installManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates("");
 
@@ -107,12 +104,12 @@ public class TestDownload {
                                                       "}");
     }
 
-//    @Test // TODO un-comment after fixing error with returning null version
+    @Test
     public void testDownloadVersionOfArtifact() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
-                put(mockCdecArtifact, "2.10.5");
-                put(mockInstallManagerArtifact, "1.0.1");
+                put(cdecArtifact, "2.10.5");
+                put(installManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates("");
 
@@ -127,11 +124,11 @@ public class TestDownload {
                                                       "}");                                                      
     }
     
-//  @Test  // TODO fix error
+    @Test  // TODO fix error
     public void testDownloadNonExistsArtifact() {
     }
     
-//  @Test  // TODO fix error
+    @Test  // TODO fix error
     public void testDownloadNonExistsVersion() {
     }
 }
