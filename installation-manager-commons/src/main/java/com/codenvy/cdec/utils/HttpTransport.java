@@ -131,8 +131,6 @@ public class HttpTransport {
                 }
 
                 return file;
-            } catch (Exception e) {
-                throw new IOException(e);
             }
         } finally {
             conn.disconnect();

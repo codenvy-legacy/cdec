@@ -19,8 +19,6 @@ package com.codenvy.cdec.im.service;
 
 import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -42,8 +40,6 @@ import com.codenvy.cdec.im.InstallationManagerImpl;
 import com.codenvy.cdec.im.InstallationManagerServiceImpl;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
-import com.codenvy.cdec.utils.HttpTransport;
-import com.codenvy.cdec.utils.InjectorBootstrap;
 
 /**
  * @author Dmytro Nochevnov
@@ -108,7 +104,7 @@ public class TestGetUpdates {
         String response = installationManagerService.getUpdates("");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
-                                                      "  \"status\": \"OK\"\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
 

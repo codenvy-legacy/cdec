@@ -18,8 +18,11 @@
 package com.codenvy.cdec.im.service;
 
 import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.util.LinkedHashMap;
@@ -27,6 +30,8 @@ import java.util.LinkedHashMap;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.artifacts.CDECArtifact;
@@ -124,11 +129,62 @@ public class TestDownload {
                                                       "}");                                                      
     }
     
-    @Test  // TODO fix error
-    public void testDownloadNonExistsArtifact() {
+    @Test
+    public void testDownloadNonExistsArtifact() throws Exception {
+        doReturn(new LinkedHashMap<Artifact, String>())
+        .when(mockInstallationManager)
+        .getUpdates("");
+
+        String response = installationManagerService.download("");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [],\n" +
+                                                      "  \"status\": \"OK\"\n" +
+                                                      "}");
+        
+        response = installationManagerService.download("", "cdec");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");
+        
+        response = installationManagerService.download("", "unknown");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Artifact 'unknown' not found\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");
     }
     
-    @Test  // TODO fix error
-    public void testDownloadNonExistsVersion() {
+    @Test
+    public void testDownloadNonExistsVersion() throws Exception {
+        doReturn(new LinkedHashMap<Artifact, String>() {
+            {
+                put(cdecArtifact, "2.10.5");
+            }
+        }).when(mockInstallationManager).getUpdates("");
+        
+        doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).download("", cdecArtifact, "2.10.4");        
+        
+        String response = installationManagerService.download("", "cdec", "2.10.4");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Artifact 'cdec' version '2.10.4' not found\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");        
+    }
+    
+    @Test
+    public void testDownloadCatchesAuthenticationException() throws Exception {
+        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
+        String response = installationManagerService.download("");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Incorrect login.\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");
+        
+        doThrow(AuthenticationException.class).when(mockInstallationManager).download("", cdecArtifact, "2.10.5");
+        response = installationManagerService.download("", "cdec", "2.10.5");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Incorrect login.\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");
     }
 }

@@ -35,6 +35,6 @@ public class ArtifactFactory {
                 return INJECTOR.getInstance(InstallManagerArtifact.class);
         }
 
-        throw new IllegalArgumentException("Artifact " + name + " not found");
+        throw new IllegalArgumentException("Artifact '" + name + "' not found");
     }
 }

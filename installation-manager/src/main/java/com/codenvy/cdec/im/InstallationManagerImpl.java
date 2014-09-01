@@ -137,22 +137,25 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public void download(String token, Artifact artifact, String version) throws IOException, IllegalStateException {
-        boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
-
-        String requestUrl = combinePaths(updateEndpoint,
-                                         "/repository/"
-                                         + (isValidSubscriptionRequired ? "" : "public/")
-                                         + "download/" + artifact.getName() + "/" + version);
-
-        if (!isValidSubscriptionRequired || isValidSubscription()) {
-            Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
-            FileUtils.deleteDirectory(artifactDownloadDir.toFile());
-
-            transport.download(requestUrl, artifactDownloadDir, token);
-
-            LOG.info("Downloaded '" + artifact + "' version " + version);
-        } else {
-            throw new IllegalStateException("Valid subscription is required to download " + artifact.getName());
+        try {
+            boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
+    
+            String requestUrl = combinePaths(updateEndpoint,
+                                             "/repository/"
+                                             + (isValidSubscriptionRequired ? "" : "public/")
+                                             + "download/" + artifact.getName() + "/" + version);
+    
+            if (!isValidSubscriptionRequired || isValidSubscription()) {
+                Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
+                FileUtils.deleteDirectory(artifactDownloadDir.toFile());
+    
+                transport.download(requestUrl, artifactDownloadDir, token);
+                LOG.info("Downloaded '" + artifact + "' version " + version);
+            } else {
+                throw new IllegalStateException("Valid subscription is required to download " + artifact.getName());
+            }
+        } catch (IOException e) {
+            throw getProperException(e, artifact);
         }
     }
 

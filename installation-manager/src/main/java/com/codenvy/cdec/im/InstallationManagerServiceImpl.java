@@ -67,39 +67,55 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     
     /** {@inheritDoc} */
     @Override
-    public String download(String token) throws IOException {
-        Map<Artifact, String> updates = manager.getUpdates(token);
-
-        List<ArtifactInfo> infos = new ArrayList<>();
-
-        for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
-            Artifact artifact = entry.getKey();
-            String version = entry.getValue();
-
-            try {
-                doDownload(token, artifact, version);
-                infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
-            } catch (Exception e) {
-                infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
-                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+    public String download(String token) {
+        try {
+            Map<Artifact, String> updates = manager.getUpdates(token);
+    
+            List<ArtifactInfo> infos = new ArrayList<>();
+    
+            for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
+                Artifact artifact = entry.getKey();
+                String version = entry.getValue();
+    
+                try {
+                    doDownload(token, artifact, version);
+                    infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
+                } catch (Exception e) {
+                    infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
+                    return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+                }
             }
+    
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+            
+        } catch(Exception e) {
+            return handleException(e);
         }
-
-        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download(String token, String artifactName) throws IOException {
-        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-        String version = manager.getUpdates(token).get(artifact);
-        
-        return download(token, artifactName, version);
+    public String download(String token, String artifactName) {
+        try {
+            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+            String version = manager.getUpdates(token).get(artifact);
+            if (version == null) {
+                throw new ArtifactNotFoundException(artifact.getName());
+            }
+            
+            return download(token, artifactName, version);
+        } catch(IllegalArgumentException e) {
+            LOG.info("Artifact not found.", e);
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build().toJson();
+            
+        } catch(Exception e) {
+            return handleException(e);
+        }
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download(String token, String artifactName, @Nullable String version) throws IOException {
+    public String download(String token, String artifactName, @Nullable String version) {
         try {
             doDownload(token, artifactName, version);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
@@ -123,7 +139,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     private String handleException(Exception e) {        
         if (e instanceof ArtifactNotFoundException) {
             LOG.info("Artifact not found.", e);
-            return new Response.Builder().withStatus(ResponseCode.OK).withMessage(e.getMessage()).build().toJson();
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build().toJson();
 
         } else if (e instanceof AuthenticationException) {
             LOG.info("Authentication error.", e);

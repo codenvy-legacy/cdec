@@ -35,7 +35,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @GET
     @Path("download/{token}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "token") String token) throws IOException;
+    public String download(@PathParam(value = "token") String token);
 
 
     /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
@@ -43,7 +43,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Path("download/{token}/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
     public String download(@PathParam(value = "token") String token, 
-                           @PathParam(value = "artifact") final String artifactName) throws IOException;
+                           @PathParam(value = "artifact") final String artifactName);
 
     /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
@@ -51,13 +51,13 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String download(@PathParam(value = "token") String token, 
                            @PathParam(value = "artifact") final String artifactName,
-                           @PathParam(value = "version") final String version) throws IOException;
+                           @PathParam(value = "version") final String version);
     
     /** @see InstallationManager#getUpdates(String) */
     @GET
     @Path("check-updates/{token}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getUpdates(@PathParam(value = "token") String token) throws IOException;
+    public String getUpdates(@PathParam(value = "token") String token);
 
     /**
      * Install all latest updates.
