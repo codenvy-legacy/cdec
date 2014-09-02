@@ -116,7 +116,7 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(false).when(manager).isValidSubscription();
+        doReturn(false).when(manager).isValidSubscription("auth token");
 
         manager.download("auth token", cdecArtifact, "2.10.5");
     }
@@ -153,7 +153,7 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(true).when(manager).isValidSubscription();
+        doReturn(true).when(manager).isValidSubscription("auth token");
 
         manager.download("auth token", cdecArtifact, "2.10.5");
         assertTrue(Files.exists(file1));

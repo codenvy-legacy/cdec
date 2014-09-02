@@ -119,7 +119,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void download(String token, Artifact artifact, String version) throws IOException, IllegalStateException {
+    public void download(String authToken, Artifact artifact, String version) throws IOException, IllegalStateException {
         try {
             boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
     
@@ -128,11 +128,11 @@ public class InstallationManagerImpl implements InstallationManager {
                                              + (isValidSubscriptionRequired ? "" : "public/")
                                              + "download/" + artifact.getName() + "/" + version);
     
-            if (!isValidSubscriptionRequired || isValidSubscription()) {
+            if (!isValidSubscriptionRequired || isValidSubscription(authToken)) {
                 Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
                 FileUtils.deleteDirectory(artifactDownloadDir.toFile());
     
-                transport.download(requestUrl, artifactDownloadDir, token);
+                transport.download(requestUrl, artifactDownloadDir, authToken);
                 LOG.info("Downloaded '" + artifact + "' version " + version);
             } else {
                 throw new IllegalStateException("Valid subscription is required to download " + artifact.getName());
@@ -202,11 +202,10 @@ public class InstallationManagerImpl implements InstallationManager {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }
 
-    protected boolean isValidSubscription() throws IOException {
-        return Commons.isValidSubscription(transport, apiEndpoint, "On-Premises");
+    protected boolean isValidSubscription(String authToken) throws IOException {
+        return Commons.isValidSubscription(transport, apiEndpoint, "On-Premises", authToken);
     }
-
-
+    
     /** Retrieves the latest versions from the Update Server. */
     protected Map<Artifact, String> getLatestVersionsToDownload() throws IOException {
         Map<Artifact, String> available2Download = new HashMap<>();

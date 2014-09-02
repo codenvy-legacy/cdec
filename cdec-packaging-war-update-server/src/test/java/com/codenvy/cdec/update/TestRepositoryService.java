@@ -207,8 +207,8 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateSubscriptionRequired() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[{serviceId:On-Premises}]");
+        when(transport.doGetRequest("/account", null)).thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions", null)).thenReturn("[{serviceId:On-Premises}]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
@@ -234,8 +234,8 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateErrorIfSubscriptionAbsent() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
+        when(transport.doGetRequest("/account", null)).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions", null)).thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
 
         Response response = given()
