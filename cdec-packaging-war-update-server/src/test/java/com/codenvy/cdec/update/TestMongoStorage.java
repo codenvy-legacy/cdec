@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 

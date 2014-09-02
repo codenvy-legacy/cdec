@@ -33,25 +33,22 @@ import static org.testng.Assert.fail;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestDaemon {    
-    protected static final Logger      LOG = LoggerFactory.getLogger(TestDaemon.class);
+public class TestDaemon {
+    protected static final Logger LOG = LoggerFactory.getLogger(TestDaemon.class);
 
     private InstallationManagerService installationManagerServiceProxy;
-    
+
     @BeforeMethod
     public void setUp() throws Exception {
         Daemon.start();
-        
-//        System.in.read();  // TODO remove        
-        
         installationManagerServiceProxy = RestletClientFactory.createServiceProxy(InstallationManagerService.class);
     }
-    
+
     @AfterMethod
     public void tearDown() throws Exception {
         Daemon.stop();
     }
-    
+
     @Test
     public void testObtainChallengeRequest() throws Exception {
         try {

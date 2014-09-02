@@ -15,20 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec;
+package com.codenvy.cdec.exceptions;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevno
  */
-public class ArtifactNotFoundException extends FileNotFoundException {
-
-    public ArtifactNotFoundException(String artifact, String version) {
-        super("Artifact '" + artifact + "' version '" + version + "' not found");
-    }
-
-    public ArtifactNotFoundException(String artifact) {
-        super("There is no any version of artifact '" + artifact + "'");
+public class AuthenticationException extends IOException {
+    
+    public AuthenticationException() {
+        super("Authentication error. Authentication token might be expired or invalid.");
     }
 }

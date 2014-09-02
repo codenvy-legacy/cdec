@@ -17,7 +17,6 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -53,12 +52,6 @@ public class InstallManagerArtifact extends AbstractArtifact {
 //        restart()
     }
 
-    // TODO remove duplicate of getCurrentVersion(String accessToken)
-    @Override
-    public String getCurrentVersion() throws IOException {
-        return getCurrentVersion(null);
-    }
-    
     @Override
     public String getCurrentVersion(String accessToken) throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
@@ -68,7 +61,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
             if (props.containsKey("version")) {
                 return (String)props.get("version");
             } else {
-                throw new ArtifactNotFoundException(this.getName());
+                throw new IOException(this.getName());
             }
         }
     }

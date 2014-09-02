@@ -18,7 +18,8 @@
     from Codenvy S.A..
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>cdec-parent</artifactId>
@@ -56,11 +57,11 @@
             <artifactId>cli-preferences-api</artifactId>
             <version>${codenvy.cli.version}</version>
             <scope>provided</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>com.codenvy.platform-api-client-java</groupId>
             <artifactId>codenvy-platform-api-client-java-api</artifactId>
-            <version>${com.codenvy.client.version}</version>
+            <version>${codenvy.platform-api-client-java.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -117,11 +118,12 @@
                         </goals>
                         <configuration>
                             <target>
-                                <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly.zip" />
+                                <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly.zip"/>
                                 <move todir="${project.build.directory}/bundle">
-                                    <fileset dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/" />
+                                    <fileset dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/"/>
                                 </move>
-                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" tofile="${project.build.directory}/bundle/system/com/codenvy/cdec/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar" />
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                                      tofile="${project.build.directory}/bundle/system/com/codenvy/cdec/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar"/>
                             </target>
                         </configuration>
                     </execution>

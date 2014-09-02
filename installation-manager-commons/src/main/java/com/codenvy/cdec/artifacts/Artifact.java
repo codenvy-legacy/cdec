@@ -33,16 +33,10 @@ public interface Artifact extends Comparable<Artifact> {
     void install(Path pathToBinaries) throws IOException;
 
     /**
-     * TODO remove duplicate of getCurrentVersion(String accessToken)
-     * @return current deployed version of the component
-     */
-    String getCurrentVersion() throws IOException;
-
-    /**
      * @return current deployed version of the component
      */
     String getCurrentVersion(String accessToken) throws IOException;
-    
+
     /**
      * @return true if subscription has to be checked before artifact downloading
      */

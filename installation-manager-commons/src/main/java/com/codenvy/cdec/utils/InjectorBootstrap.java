@@ -60,7 +60,7 @@ public class InjectorBootstrap {
             public void configure(Binder binder) {
                 bindProperties(binder);
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
-                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);  // TODO remove comment
+                Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);
             }
 
             private void bindProperties(Binder binder) {

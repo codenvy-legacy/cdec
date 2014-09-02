@@ -17,14 +17,11 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cdec.utils.HttpException;
 import com.codenvy.cdec.utils.HttpTransport;
-import com.codenvy.cdec.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -77,48 +74,41 @@ public class InstallationManagerImpl implements InstallationManager {
         LOG.info(artifacts.getClass().getName());
     }
 
-    @Override
     /** {@inheritDoc} */
-    public void install(Artifact artifact, String version, String token) throws IOException {
-        Map<Artifact, String> installedArtifacts = getInstalledArtifacts(token);
+    @Override
+    public void install(String authToken, Artifact artifact, String version) throws IOException {
+        Map<Artifact, String> installedArtifacts = getInstalledArtifacts(authToken);
         Map<Artifact, Path> downloadedArtifacts = getDownloadedArtifacts();
 
         if (downloadedArtifacts.containsKey(artifact)) {
             Path pathToBinaries = downloadedArtifacts.get(artifact);
-            String availableVersion = Commons.extractVersion(pathToBinaries);
+            String availableVersion = extractVersion(pathToBinaries);
 
             if (!version.equals(availableVersion)) {
-                throw new FileNotFoundException("Binaries to install artifact " + artifact.getName() + ":" + version + " not found");
+                throw new FileNotFoundException("Binaries to install artifact '" + artifact.getName() + "' version '" + version + "' not found");
             }
 
             String installedVersion = installedArtifacts.get(artifact);
 
-            if (installedVersion == null || Version.compare(version, installedVersion) > 1) {
+            if (installedVersion == null || compare(version, installedVersion) > 1) {
                 artifact.install(pathToBinaries);
 
-            } else if (installedVersion != null && Version.compare(version, installedVersion) < 0) {
-                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + ":" + version
-                                                + "', because we don't support downgrade artifacts." );
+            } else if (compare(version, installedVersion) < 0) {
+                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version
+                                                + "', because greater version is installed.");
             }
         } else {
             throw new FileNotFoundException("Binaries to install artifact not found");
         }
     }
 
-    // TODO remove duplicate of getInstalledArtifacts(String accessToken)
     /** {@inheritDoc} */
     @Override
-    public Map<Artifact, String> getInstalledArtifacts() throws IOException {
-        return getInstalledArtifacts(null);
-    }
-    
-    /** {@inheritDoc} */
-    @Override
-    public Map<Artifact, String> getInstalledArtifacts(String accessToken) throws IOException {
+    public Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException {
         Map<Artifact, String> installed = new HashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                installed.put(artifact, artifact.getCurrentVersion(accessToken));
+                installed.put(artifact, artifact.getCurrentVersion(authToken));
             } catch (IOException e) {
                 throw getProperException(e, artifact);
             }
@@ -127,13 +117,6 @@ public class InstallationManagerImpl implements InstallationManager {
         return installed;
     }
 
-    /** {@inheritDoc} */
-    // TODO remove duplicate of download(String accessToken, Artifact artifact, String version)
-    @Override
-    public void download(Artifact artifact, String version) throws IOException, IllegalStateException {
-        download(null, artifact, version);
-    }
-    
     /** {@inheritDoc} */
     @Override
     public void download(String token, Artifact artifact, String version) throws IOException, IllegalStateException {
@@ -195,18 +178,11 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     /** {@inheritDoc} */
-    // TODO remove duplicate of getUpdates(String accessToken)
     @Override
-    public Map<Artifact, String> getUpdates() throws IOException {
-        return getUpdates(null);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Map<Artifact, String> getUpdates(String accessToken) throws IOException {
+    public Map<Artifact, String> getUpdates(String authToken) throws IOException {
         Map<Artifact, String> newVersions = new LinkedHashMap<>();
 
-        Map<Artifact, String> installed = getInstalledArtifacts(accessToken);
+        Map<Artifact, String> installed = getInstalledArtifacts(authToken);
         Map<Artifact, String> available2Download = getLatestVersionsToDownload();
 
         for (Map.Entry<Artifact, String> entry : available2Download.entrySet()) {
@@ -247,20 +223,5 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         return available2Download;
-    }
-    
-    /**
-     * Returns correct exception depending on initial type of exception.
-     */
-    protected IOException getProperException(IOException e, Artifact artifact) {
-        if (e instanceof HttpException && ((HttpException) e).getStatus() == 404) {
-            return new ArtifactNotFoundException(artifact.getName());
-            
-        } else if (e instanceof HttpException && ((HttpException) e).getStatus() == 302) {
-            return new AuthenticationException();
-            
-        } else {
-            return e;
-        }
     }
 }

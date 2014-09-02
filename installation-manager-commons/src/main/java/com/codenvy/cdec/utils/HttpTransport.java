@@ -17,8 +17,13 @@
  */
 package com.codenvy.cdec.utils;
 
-import static com.codenvy.cdec.utils.Commons.addQueryParam;
+import com.codenvy.commons.lang.IoUtil;
 
+import org.apache.commons.io.IOUtils;
+
+import javax.annotation.Nullable;
+import javax.inject.Singleton;
+import javax.ws.rs.core.MediaType;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,15 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.inject.Singleton;
-import javax.ws.rs.core.MediaType;
-
-import org.apache.commons.io.IOUtils;
-
-import com.codenvy.commons.env.EnvironmentContext;
-import com.codenvy.commons.lang.IoUtil;
-import com.codenvy.commons.user.User;
 
 /**
  * @author Anatoliy Bazko
@@ -64,13 +60,9 @@ public class HttpTransport {
         return request(path, "GET", MediaType.APPLICATION_JSON, accessToken);
     }
 
-    private String request(String path, String method, String expectedContentType) throws IOException {
-        return request(path, method, expectedContentType, null);
-    }
-    
-    private String request(String path, String method, String expectedContentType, String accessToken) throws IOException {
+    private String request(String path, String method, String expectedContentType, @Nullable String accessToken) throws IOException {
         final HttpURLConnection conn = openConnection(path, accessToken);
-        
+
         try {
             request(method, expectedContentType, conn);
             return IoUtil.readAndCloseQuietly(conn.getInputStream());
@@ -86,7 +78,7 @@ public class HttpTransport {
     public Path download(String path, Path destinationDir) throws IOException {
         return download(path, destinationDir, null);
     }
-    
+
     /**
      * Performs GET request and store response into file.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_OCTET_STREAM}
@@ -99,10 +91,6 @@ public class HttpTransport {
         return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir, accessToken);
     }
 
-    private Path download(String path, String method, String expectedContentType, Path destinationDir) throws IOException {
-        return download(path, method, expectedContentType, null);
-    }
-    
     private Path download(String path, String method, String expectedContentType, Path destinationDir, String accessToken) throws IOException {
         final HttpURLConnection conn = openConnection(path, accessToken);
 
@@ -137,7 +125,7 @@ public class HttpTransport {
         }
     }
 
-    private void request(String method, String expectedContentType, HttpURLConnection conn) throws IOException, HttpException {
+    private void request(String method, String expectedContentType, HttpURLConnection conn) throws IOException {
         conn.setConnectTimeout(30 * 1000);
         conn.setRequestMethod(method);
         final int responseCode = conn.getResponseCode();
@@ -147,7 +135,7 @@ public class HttpTransport {
             if (in == null) {
                 in = conn.getInputStream();
             }
-            
+
             throw new HttpException(responseCode, IoUtil.readAndCloseQuietly(in));
         }
 
@@ -157,18 +145,14 @@ public class HttpTransport {
         }
     }
 
-    private HttpURLConnection openConnection(String path) throws IOException {
-        return openConnection(path, null);
-    }
-    
-    private HttpURLConnection openConnection(String path, String accessToken) throws IOException {
+    private HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
         HttpURLConnection connection = (HttpURLConnection)new URL(path).openConnection();
-        
+
         if (accessToken != null) {
             String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
             connection.addRequestProperty("Cookie", accessTokenCookie);
         }
-        
+
         return connection;
     }
 }

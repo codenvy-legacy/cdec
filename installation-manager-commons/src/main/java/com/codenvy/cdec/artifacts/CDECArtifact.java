@@ -18,19 +18,18 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import static com.codenvy.cdec.utils.Commons.combinePaths;
+import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cdec.utils.HttpTransport;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+import javax.inject.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
-import javax.inject.Named;
-
-import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cdec.utils.HttpTransport;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static com.codenvy.cdec.utils.Commons.combinePaths;
 
 /**
  * @author Anatoliy Bazko
@@ -55,12 +54,6 @@ public class CDECArtifact extends AbstractArtifact {
         // TODO
     }
 
-    // TODO remove duplicate of getCurrentVersion(String accessToken)
-    @Override
-    public String getCurrentVersion() throws IOException {
-        return getCurrentVersion(null);
-    }
-    
     @Override
     public String getCurrentVersion(String accessToken) throws IOException {
         String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/info/" + NAME), accessToken);

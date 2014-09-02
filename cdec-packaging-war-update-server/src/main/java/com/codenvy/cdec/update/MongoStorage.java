@@ -26,7 +26,7 @@ import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Storage;
 import de.flapdoodle.embed.mongo.distribution.Version;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mongodb.*;

@@ -28,61 +28,44 @@ import java.util.Map;
 public interface InstallationManager {
 
     /**
-     * Install the specific version of the artifact.
+     * Install the specific version of the artifact with version greater than installed.
      *
-     * We don't support downgrade artifact.
      *
-     * @param token String
-     *         Token for authentication.
+     * @param authToken
+     *         the authentication token
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    void install(Artifact artifact, String version, String token) throws IOException;
-
-    /**
-     * TODO remove duplicate of getInstalledArtifacts(String accessToken)
-     * Scans all installed artifacts and returns their versions.
-     */
-    Map<Artifact, String> getInstalledArtifacts() throws IOException;
+    void install(String authToken, Artifact artifact, String version) throws IOException;
 
     /**
      * Scans all installed artifacts and returns their versions.
-     */
-    Map<Artifact, String> getInstalledArtifacts(String accessToken) throws IOException;
-    
-    /**
-     * TODO remove duplicate of getUpdates(String accessToken)
-     * @return the list of the artifacts to update.
+     *
+     * @param authToken
+     *         the authentication token
      * @throws java.io.IOException
-     *         if I/O error occurred
+     *         if an I/O error occurred
      */
-    Map<Artifact, String> getUpdates() throws IOException;
+    Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException;
 
     /**
+     * @param authToken
+     *         the authentication token
      * @return the list of the artifacts to update.
      * @throws java.io.IOException
-     *         if I/O error occurred
+     *         if an I/O error occurred
      */
-    Map<Artifact, String> getUpdates(String accessToken) throws IOException;
-    
+    Map<Artifact, String> getUpdates(String authToken) throws IOException;
+
     /**
-     * TODO remove duplicate of download(String accessToken, Artifact artifact, String version)
      * Download the specific version of the artifact.
      *
+     * @param authToken
+     *         the authentication token
      * @throws java.io.IOException
      *         if an I/O error occurred
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    void download(Artifact artifact, String version) throws IOException, IllegalStateException;
-    
-    /**
-     * Download the specific version of the artifact.
-     *
-     * @throws java.io.IOException
-     *         if an I/O error occurred
-     * @throws java.lang.IllegalStateException
-     *         if the subscription is invalid or expired
-     */
-    void download(String accessToken, Artifact artifact, String version) throws IOException, IllegalStateException;
+    void download(String authToken, Artifact artifact, String version) throws IOException, IllegalStateException;
 }

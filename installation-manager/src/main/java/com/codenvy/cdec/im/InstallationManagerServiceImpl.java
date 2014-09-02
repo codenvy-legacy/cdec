@@ -17,27 +17,23 @@
  */
 package com.codenvy.cdec.im;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactFactory;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.response.*;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
-import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.InjectorBootstrap;
 
 import org.restlet.resource.ServerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.cdec.utils.Commons.extractServerUrl;
 import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
 import static java.util.Arrays.asList;
 
@@ -46,37 +42,40 @@ import static java.util.Arrays.asList;
  * @author Anatoliy Bazko
  */
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
-    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerServiceImpl.class);
-    
-    protected InstallationManager manager;
-    private String updateServerUrl;
+    protected final InstallationManager manager;
+
+    private final String updateServerUrl;
 
     public InstallationManagerServiceImpl() {
-        manager = INJECTOR.getInstance(InstallationManagerImpl.class);
-        updateServerUrl = Commons.extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
+        this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
+        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
     }
 
-    public final static String COMMON_ERROR_MESSAGE = "Failed to execute operation.";
-    public final static String WRONG_TOKEN_ERROR_MESSAGE = "Incorrect login.";
-    
+    /** For testing purpose only. */
+    @Deprecated
+    protected InstallationManagerServiceImpl(InstallationManager manager) {
+        this.manager = manager;
+        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
+    }
+
     /** {@inheritDoc} */
     @Override
     public String getUpdateServerUrl() {
         return updateServerUrl;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public String download(String token) {
         try {
             Map<Artifact, String> updates = manager.getUpdates(token);
-    
+
             List<ArtifactInfo> infos = new ArrayList<>();
-    
+
             for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
                 Artifact artifact = entry.getKey();
                 String version = entry.getValue();
-    
+
                 try {
                     doDownload(token, artifact, version);
                     infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
@@ -85,11 +84,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
                 }
             }
-    
+
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
-            
-        } catch(Exception e) {
-            return handleException(e);
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
         }
     }
 
@@ -102,52 +100,33 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             if (version == null) {
                 throw new ArtifactNotFoundException(artifact.getName());
             }
-            
+
             return download(token, artifactName, version);
-        } catch(IllegalArgumentException e) {
-            LOG.info("Artifact not found.", e);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build().toJson();
-            
-        } catch(Exception e) {
-            return handleException(e);
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
         }
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download(String token, String artifactName, @Nullable String version) {
+    public String download(String token, String artifactName, String version) {
         try {
             doDownload(token, artifactName, version);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-        } catch(Exception e) {
-            return handleException(e);
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
         }
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public String getUpdates(String token) {
         try {
             Map<Artifact, String> updates = manager.getUpdates(token);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
-        } catch(Exception e) {
-            return handleException(e);
-        }
-    }
-
-    private String handleException(Exception e) {        
-        if (e instanceof ArtifactNotFoundException) {
-            LOG.info("Artifact not found.", e);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build().toJson();
-
-        } else if (e instanceof AuthenticationException) {
-            LOG.info("Authentication error.", e);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(WRONG_TOKEN_ERROR_MESSAGE).build().toJson();
-            
-        } else {
-            LOG.error("Installation manager error.", e);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(COMMON_ERROR_MESSAGE).build().toJson();                            
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
         }
     }
 
@@ -168,9 +147,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String install(String token) throws IOException {
-        Map<Artifact, String> updates = manager.getUpdates();
+        Map<Artifact, String> updates = manager.getUpdates(token);
 
-        List<ArtifactInfo> infos = new ArrayList();
+        List<ArtifactInfo> infos = new ArrayList<>();
 
         for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
             Artifact artifact = entry.getKey();
@@ -211,11 +190,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(asList(new ArtifactInfo[]{info}))
+                                         .build().toJson();
         }
     }
 
     protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
-        manager.install(artifact, version, token);
+        manager.install(token, artifact, version);
     }
 }

@@ -23,11 +23,10 @@ import com.codenvy.cdec.utils.InjectorBootstrap;
  * @author Dmytro Nochevnov
  */
 public class ServerDescription {
-    public static final String LOGIN    = "im";
-    public static final char[] PASSWORD = "cdec-secret".toCharArray();  // TODO store password in safe place and in safe view
+    public static final String SERVER_URL        = InjectorBootstrap.getProperty("codenvy.restlet.server_url");
+    public static final String LOGIN             = InjectorBootstrap.getProperty("codenvy.restlet.server_login");
+    public static final char[] PASSWORD          = InjectorBootstrap.getProperty("codenvy.restlet.server_password").toCharArray();
+    public static final String REALM             = InjectorBootstrap.getProperty("codenvy.restlet.server_realm");
+    public static final String SERVER_DIGEST_KEY = InjectorBootstrap.getProperty("codenvy.restlet.server_digest_key");
 
-    public static final String REALM             = "im-realm";
-    public static final String SERVER_DIGEST_KEY = "imSecretServerKey";
-
-    public static final String SERVER_URL = InjectorBootstrap.getProperty("codenvy.restlet.server_url");
 }

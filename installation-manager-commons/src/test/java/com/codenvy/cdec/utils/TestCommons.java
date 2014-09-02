@@ -18,7 +18,7 @@
 package com.codenvy.cdec.utils;
 
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 
 import org.testng.annotations.Test;
 

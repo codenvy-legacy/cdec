@@ -19,7 +19,7 @@ package com.codenvy.cdec.update;
 
 
 import com.codenvy.api.core.rest.annotations.GenerateLink;
-import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
 import com.codenvy.dto.server.JsonStringMapImpl;

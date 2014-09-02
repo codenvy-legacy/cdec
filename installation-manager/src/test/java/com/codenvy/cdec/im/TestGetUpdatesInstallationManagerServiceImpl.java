@@ -15,36 +15,33 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.service;
+package com.codenvy.cdec.im;
 
-import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
-import java.io.IOException;
-import java.util.LinkedHashMap;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
-import com.codenvy.cdec.im.InstallationManagerImpl;
-import com.codenvy.cdec.im.InstallationManagerServiceImpl;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.AuthenticationException;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.LinkedHashMap;
+
+import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Dmytro Nochevnov
  */
-public class TestGetUpdates {
+public class TestGetUpdatesInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
     private InstallationManager mockInstallationManager;
@@ -54,11 +51,11 @@ public class TestGetUpdates {
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceTestImpl(mockInstallationManager);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager);
     }
 
     public void initMocks() {
-        mockInstallationManager = PowerMockito.mock(InstallationManagerImpl.class);
+        mockInstallationManager = mock(InstallationManagerImpl.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }
@@ -72,7 +69,7 @@ public class TestGetUpdates {
             }
         });
 
-        String response = installationManagerService.getUpdates("");
+        String response = installationManagerService.getUpdates("auth token");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [\n" +
                                                       "    {\n" +
@@ -91,9 +88,10 @@ public class TestGetUpdates {
     @Test
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
+
         String response = installationManagerService.getUpdates("incorrect-token");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Incorrect login.\",\n" +
+                                                      "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
@@ -101,7 +99,8 @@ public class TestGetUpdates {
     @Test
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
-        String response = installationManagerService.getUpdates("");
+        String response = installationManagerService.getUpdates("auth token");
+
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
@@ -112,22 +111,10 @@ public class TestGetUpdates {
     public void testGetUpdatesCatchesException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
         String response = installationManagerService.getUpdates("incorrect-token");
+
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"" + InstallationManagerServiceImpl.COMMON_ERROR_MESSAGE + "\",\n" +
+                                                      "  \"message\": \"Error\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
-    
-    @Test
-    public void testGetUpdateServerUrl() {
-     // TODO fix test error "'install' is a *void method* and it *cannot* be stubbed with a *return value*!"
-//        PowerMockito.mockStatic(InjectorBootstrap.class);
-//        PowerMockito.when(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"))
-//                    .thenReturn("https://codenvy-test.com/update");
-        
-        String response = installationManagerService.getUpdateServerUrl();
-        assertNotNull(response);
-        assertEquals(response, "https://codenvy.com");
-    }
-    
 }

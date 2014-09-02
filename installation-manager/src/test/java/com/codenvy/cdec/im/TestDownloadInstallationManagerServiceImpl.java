@@ -15,35 +15,32 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.service;
+package com.codenvy.cdec.im;
 
-import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-
-import java.util.LinkedHashMap;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.cdec.AuthenticationException;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactFactory;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
-import com.codenvy.cdec.im.InstallationManagerImpl;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.AuthenticationException;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+
+import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Dmytro Nochevnov
  */
-public class TestDownload {
+public class TestDownloadInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
     private InstallationManager mockInstallationManager;
@@ -53,7 +50,7 @@ public class TestDownload {
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceTestImpl(mockInstallationManager);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager);
     }
 
     public void initMocks() {
@@ -90,15 +87,15 @@ public class TestDownload {
     }
     
     @Test
-    public void testDownloadArtifact() throws Exception {
+    public void testDownloadSpecificArtifact() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(cdecArtifact, "2.10.5");
                 put(installManagerArtifact, "1.0.1");
             }
-        }).when(mockInstallationManager).getUpdates("");
+        }).when(mockInstallationManager).getUpdates("auth token");
 
-        String response = installationManagerService.download("", "cdec");
+        String response = installationManagerService.download("auth token", "cdec");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -110,15 +107,15 @@ public class TestDownload {
     }
 
     @Test
-    public void testDownloadVersionOfArtifact() throws Exception {
+    public void testDownloadSpecificVersionArtifact() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(cdecArtifact, "2.10.5");
                 put(installManagerArtifact, "1.0.1");
             }
-        }).when(mockInstallationManager).getUpdates("");
+        }).when(mockInstallationManager).getUpdates("auth token");
 
-        String response = installationManagerService.download("", "cdec", "2.10.5");
+        String response = installationManagerService.download("auth token", "cdec", "2.10.5");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -130,24 +127,22 @@ public class TestDownload {
     }
     
     @Test
-    public void testDownloadNonExistsArtifact() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, String>())
-        .when(mockInstallationManager)
-        .getUpdates("");
+    public void testDownloadErrorIfUpdatesAbsent() throws Exception {
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates("auth token");
 
-        String response = installationManagerService.download("");
+        String response = installationManagerService.download("auth token");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [],\n" +
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
-        
-        response = installationManagerService.download("", "cdec");
+
+        response = installationManagerService.download("auth token", "cdec");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
-        
-        response = installationManagerService.download("", "unknown");
+
+        response = installationManagerService.download("auth token", "unknown");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Artifact 'unknown' not found\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
@@ -155,16 +150,16 @@ public class TestDownload {
     }
     
     @Test
-    public void testDownloadNonExistsVersion() throws Exception {
+    public void testDownloadErrorIfSpecificVertionArtifactAbsent() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(cdecArtifact, "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("");
-        
-        doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).download("", cdecArtifact, "2.10.4");        
-        
-        String response = installationManagerService.download("", "cdec", "2.10.4");
+        }).when(mockInstallationManager).getUpdates("auth token");
+
+        doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).download("auth token", cdecArtifact, "2.10.4");
+
+        String response = installationManagerService.download("auth token", "cdec", "2.10.4");
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Artifact 'cdec' version '2.10.4' not found\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
@@ -172,18 +167,20 @@ public class TestDownload {
     }
     
     @Test
-    public void testDownloadCatchesAuthenticationException() throws Exception {
+    public void testDownloadErrorIfAuthenticationFailed() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
-        String response = installationManagerService.download("");
+        String response = installationManagerService.download("auth token");
+
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Incorrect login.\",\n" +
+                                                      "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
         
-        doThrow(AuthenticationException.class).when(mockInstallationManager).download("", cdecArtifact, "2.10.5");
-        response = installationManagerService.download("", "cdec", "2.10.5");
+        doThrow(new AuthenticationException()).when(mockInstallationManager).download("auth token", cdecArtifact, "2.10.5");
+        response = installationManagerService.download("auth token", "cdec", "2.10.5");
+
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Incorrect login.\",\n" +
+                                                      "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }

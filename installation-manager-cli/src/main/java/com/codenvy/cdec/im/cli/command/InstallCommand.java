@@ -39,12 +39,9 @@ public class InstallCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         init();
 
-        String token = getToken();
-        if (token == null) {
-            return null;
-        }
-
         try {
+            String token = getAuthToken();
+
             if (artifactName != null && version != null) {
                 printResult(installationManagerProxy.install(artifactName, version, token));
             } else if (artifactName != null) {
@@ -52,7 +49,7 @@ public class InstallCommand extends AbstractIMCommand {
             } else {
                 printResult(installationManagerProxy.install(token));
             }
-        } catch (ResourceException e) {
+        } catch (IllegalStateException | ResourceException e) {
             printError(e);
         }
 

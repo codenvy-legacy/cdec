@@ -15,17 +15,20 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.cdec.im.service;
+package com.codenvy.cdec.exceptions;
 
-import com.codenvy.cdec.im.InstallationManagerServiceImpl;
-import com.codenvy.cdec.restlet.InstallationManager;
+import java.io.FileNotFoundException;
 
 /**
- * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
+public class ArtifactNotFoundException extends FileNotFoundException {
 
-public class InstallationManagerServiceTestImpl extends InstallationManagerServiceImpl {
-    public InstallationManagerServiceTestImpl(InstallationManager manager) {
-        this.manager = manager;
+    public ArtifactNotFoundException(String artifact, String version) {
+        super("Artifact '" + artifact + "' version '" + version + "' not found");
+    }
+
+    public ArtifactNotFoundException(String artifact) {
+        super("There is no any version of artifact '" + artifact + "'");
     }
 }

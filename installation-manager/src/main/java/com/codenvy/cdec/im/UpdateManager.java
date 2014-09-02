@@ -88,14 +88,16 @@ public class UpdateManager {
             LOG.info("Checking new updates started");
 
             try {
-                Map<Artifact, String> updates = manager.getUpdates();
+                String authToken = getAuthToken();
+
+                Map<Artifact, String> updates = manager.getUpdates("auth token");
 
                 if (!updates.isEmpty() && downloadAutomatically) {
-                    for (Map.Entry<Artifact, String> entry : manager.getUpdates().entrySet()) {
+                    for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
                         Artifact artifact = entry.getKey();
                         String version = entry.getValue();
 
-                        manager.download(artifact, version);
+                        manager.download(authToken, artifact, version);
                     }
                 }
             } catch (Exception e) {
@@ -103,6 +105,10 @@ public class UpdateManager {
             } finally {
                 LOG.info("Checking new updates finished");
             }
+        }
+
+        private String getAuthToken() {
+            return null; // TODO
         }
     }
 }

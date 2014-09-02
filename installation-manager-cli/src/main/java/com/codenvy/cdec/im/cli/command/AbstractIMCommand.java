@@ -23,8 +23,8 @@ import com.codenvy.cdec.restlet.RestletClientFactory;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
-import com.codenvy.cli.security.RemoteCredentials;
 import com.codenvy.cli.preferences.Preferences;
+import com.codenvy.cli.security.RemoteCredentials;
 import com.codenvy.client.Codenvy;
 
 import org.fusesource.jansi.Ansi;
@@ -32,11 +32,11 @@ import org.json.JSONException;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
 import static org.fusesource.jansi.Ansi.Color.RED;
@@ -46,39 +46,34 @@ import static org.fusesource.jansi.Ansi.ansi;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    private String tokenOfUpdateServerRemote;
-    
     protected final InstallationManagerService installationManagerProxy;
 
+    private final AtomicReference<String> authToken;
+
     public AbstractIMCommand() {
+        authToken = new AtomicReference<>();
         try {
             installationManagerProxy = RestletClientFactory.createServiceProxy(InstallationManagerService.class);
-        } catch (MissingAnnotationException | IllegalPathException | IOException e) {
-            throw new IllegalStateException("Can't initialize proxy service");
+        } catch (MissingAnnotationException | IllegalPathException e) {
+            throw new IllegalStateException("Can't initialize proxy service", e);
         }
     }
 
-    @Override
-    public void init() {
-        super.init();
-
-        if (tokenOfUpdateServerRemote == null) {
-            String updateServerRemoteUrl = getUpdateServerUrl();        
-            tokenOfUpdateServerRemote = getToken(updateServerRemoteUrl);
-        }
-    }
-    
     protected void printError(Exception ex) {
         try {
-            String message = getPrettyPrintingJson(Response.valueOf(ex).toJson());
-            System.out.println(ansi().fg(RED).a(message).reset());
+            printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));
         } catch (JSONException e) {
-            Ansi ansi = ansi().fg(RED).a("Unexpected error: " + e.getMessage())
-                              .newline().a("Suppressed error: " + ex.getMessage())
+            Ansi ansi = ansi().fg(RED)
+                              .a("Unexpected error: " + e.getMessage())
+                              .newline()
+                              .a("Suppressed error: " + ex.getMessage())
                               .reset();
-
             System.out.println(ansi);
         }
+    }
+
+    protected void printError(String message) {
+        System.out.println(ansi().fg(RED).a(message).reset());
     }
 
     protected void printResult(@Nullable String response) {
@@ -89,73 +84,69 @@ public abstract class AbstractIMCommand extends AbsCommand {
                 String message = getPrettyPrintingJson(response);
                 System.out.println(ansi().a(message));
             } catch (JSONException e) {
-                System.out.println(ansi().fg(RED).a("Unexpected error: " + e.getMessage()).reset());
+                printError("Unexpected error: " + e.getMessage());
             }
         }
     }
 
-    protected String getToken() {
-        return tokenOfUpdateServerRemote;
-    }
-    
-    private String getToken(String remoteUrl) {
-        MultiRemoteCodenvy multiRemoteCodenvy = getMultiRemoteCodenvy();
-
-        String productionRemoteName = getRemoteNameByUrl(remoteUrl);
-        if (productionRemoteName == null) {
-            System.out.println(ansi().fg(RED)
-                                     .a(String.format("Please add remote with url '%s' and login to it.", 
-                                                      remoteUrl))
-                                     .reset());
-            return null;
+    @Nonnull
+    /** @return authentication token to update server */
+    protected String getAuthToken() throws IllegalStateException {
+        if (authToken.get() == null) {
+            synchronized (authToken) {
+                if (authToken.get() == null) {
+                    authToken.set(doGetToken());
+                }
+            }
         }
-        
+
+        return authToken.get();
+    }
+
+    @Nonnull
+    private String doGetToken() throws IllegalStateException {
+        String url = getUpdateServerUrl();
+        String remote = getRemote(url);
+
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
-        if (! readyRemotes.containsKey(productionRemoteName)) {
-            System.out.println(ansi().fg(RED)
-                                     .a(String.format("Please login to remote '%s'.", 
-                                                      productionRemoteName))
-                                     .reset());
-            return null;
+        if (!readyRemotes.containsKey(remote)) {
+            throw new IllegalStateException(String.format("Please login to remote '%s'.", remote));
         }
 
-        RemoteCredentials credentials = getRemoteCredentials(productionRemoteName);
-        return credentials.getToken();
+        return getCredentials(remote).getToken(); // TODO outdated after 3h ?
     }
-    
-    private RemoteCredentials getRemoteCredentials(String remoteName) {
+
+    @Nonnull
+    private RemoteCredentials getCredentials(String remote) {
         Preferences globalPreferences = getGlobalPreferences();
-        
         if (globalPreferences == null) {
-            System.out.println(ansi().fg(RED)
-                               .a(String.format("Please login to remote '%s'.", 
-                                                remoteName))
-                               .reset());
-            return null;
+            throw new IllegalStateException(String.format("Please login to remote '%s'.", remote));
         }
-        
-        Preferences remotesPreferences = globalPreferences.path("remotes");        
-        return remotesPreferences.get(remoteName, RemoteCredentials.class);
+
+        Preferences remotesPreferences = globalPreferences.path("remotes");
+        return remotesPreferences.get(remote, RemoteCredentials.class);
     }
-    
-    private String getRemoteNameByUrl(String url) {
+
+    @Nonnull
+    private String getRemote(String url) throws IllegalStateException {
         MultiRemoteCodenvy multiRemoteCodenvy = getMultiRemoteCodenvy();
         Map<String, Remote> availableRemotes = multiRemoteCodenvy.getAvailableRemotes();
-        
-        for(Entry<String, Remote> remoteEntry: availableRemotes.entrySet()) {
+
+        for (Entry<String, Remote> remoteEntry : availableRemotes.entrySet()) {
             Remote remote = remoteEntry.getValue();
-            if(remote.url.equals(url)) {
+            if (remote.url.equalsIgnoreCase(url)) {
                 return remoteEntry.getKey();
             }
         }
-        
-        return null;
+
+        throw new IllegalStateException(String.format("Please add remote with url '%s' and login to it.", url));
     }
-    
+
+    @Nullable
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());
     }
-    
+
     private String getUpdateServerUrl() {
         return installationManagerProxy.getUpdateServerUrl();
     }

@@ -30,10 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Application;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Level;
 
 /**
  * @author Anatoliy Bazko
@@ -42,7 +40,7 @@ public class RestletServer {
     private static final Logger LOG = LoggerFactory.getLogger(RestletServer.class);
 
     private final Component component;
-    private final Context context;
+    private final Context   context;
     private final URL       url;
 
     public RestletServer(Application application) throws MalformedURLException {
@@ -50,7 +48,7 @@ public class RestletServer {
         component = new Component();
         component.getServers().add(Protocol.HTTP, url.getPort());
         context = component.getContext().createChildContext();
-        
+
         // use org.slf4j logger in restlet server 
         Engine.getInstance().setLoggerFacade(new Slf4jLoggerFacade());
 

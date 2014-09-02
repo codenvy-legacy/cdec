@@ -17,7 +17,7 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.cdec.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.utils.Commons;
 import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
@@ -66,7 +66,7 @@ public class ArtifactStorage {
 
     /**
      * @return the latest available version of the artifact in the repository
-     * @throws com.codenvy.cdec.ArtifactNotFoundException
+     * @throws com.codenvy.cdec.exceptions.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
@@ -101,7 +101,7 @@ public class ArtifactStorage {
      *
      * @throws com.codenvy.cdec.update.PropertiesNotFoundException
      *         if property file is absent in the repository
-     * @throws com.codenvy.cdec.ArtifactNotFoundException
+     * @throws com.codenvy.cdec.exceptions.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs

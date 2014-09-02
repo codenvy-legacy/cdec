@@ -17,8 +17,17 @@
  */
 package com.codenvy.cdec.utils;
 
-import static com.codenvy.cdec.utils.Version.compare;
-import static com.codenvy.cdec.utils.Version.valueOf;
+import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
+import com.codenvy.cdec.exceptions.AuthenticationException;
+import com.codenvy.dto.server.DtoFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -28,15 +37,8 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.cdec.ArtifactNotFoundException;
-import com.codenvy.dto.server.DtoFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import static com.codenvy.cdec.utils.Version.compare;
+import static com.codenvy.cdec.utils.Version.valueOf;
 
 /**
  * @author Anatoliy Bazko
@@ -101,7 +103,7 @@ public class Commons {
 
     /**
      * @return the last version of the artifact in the directory
-     * @throws com.codenvy.cdec.ArtifactNotFoundException
+     * @throws com.codenvy.cdec.exceptions.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
@@ -182,7 +184,23 @@ public class Commons {
             URL url = new URL(urlString);
             return url.getProtocol() + "://" + url.getHost();
         } catch (MalformedURLException e) {
-            return null;  // TODO check if this is OK solution
+            throw new IllegalArgumentException(e);
         }
+    }
+
+    /**
+     * Returns correct exception depending on initial type of exception.
+     */
+    public static IOException getProperException(IOException e, Artifact artifact) {
+        if (e instanceof HttpException) {
+            switch (((HttpException)e).getStatus()) {
+                case 404:
+                    return new ArtifactNotFoundException(artifact.getName());
+                case 302:
+                    return new AuthenticationException();
+            }
+        }
+
+        return e;
     }
 }

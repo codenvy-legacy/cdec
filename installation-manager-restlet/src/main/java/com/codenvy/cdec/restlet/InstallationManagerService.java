@@ -22,7 +22,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
 import java.io.IOException;
 
 /**
@@ -38,21 +37,21 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String download(@PathParam(value = "token") String token);
 
 
-    /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
+    /** @see InstallationManager#download(String, com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("download/{token}/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "token") String token, 
+    public String download(@PathParam(value = "token") String token,
                            @PathParam(value = "artifact") final String artifactName);
 
-    /** @see InstallationManager#download(com.codenvy.cdec.artifacts.Artifact, String) */
+    /** @see InstallationManager#download(String, com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("download/{token}/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "token") String token, 
+    public String download(@PathParam(value = "token") String token,
                            @PathParam(value = "artifact") final String artifactName,
                            @PathParam(value = "version") final String version);
-    
+
     /** @see InstallationManager#getUpdates(String) */
     @GET
     @Path("check-updates/{token}")
@@ -67,29 +66,24 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String install(@PathParam(value = "token") String token) throws IOException;
 
-    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String, String) */
+    /** @see InstallationManager#install(String, com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("install/{artifact}/{token}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value="artifact") final String artifactName,
+    public String install(@PathParam(value = "artifact") final String artifactName,
                           @PathParam(value = "token") String token) throws IOException;
 
-    /**
-     * Install artifact .
-     */
-    /** @see InstallationManager#install(com.codenvy.cdec.artifacts.Artifact, String, String) */
+    /** @see InstallationManager#install(String, com.codenvy.cdec.artifacts.Artifact, String) */
     @GET
     @Path("install/{artifact}/{version}/{token}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value="artifact") final String artifactName,
-                          @PathParam(value="version") final String version,
+    public String install(@PathParam(value = "artifact") final String artifactName,
+                          @PathParam(value = "version") final String version,
                           @PathParam(value = "token") String token) throws IOException;
 
-    /**
-     * Get url of update server.
-     */
+    /** Get the url of the update server. */
     @GET
     @Path("update-server-url")
-    @Produces(MediaType.TEXT_PLAIN)   
+    @Produces(MediaType.TEXT_PLAIN)
     public String getUpdateServerUrl();
 }

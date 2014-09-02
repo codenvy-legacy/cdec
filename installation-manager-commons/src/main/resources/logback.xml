@@ -28,7 +28,7 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
-    
+
     <!-- setup logging of restlet server -->
     <appender name="restlet-log-file" class="ch.qos.logback.core.FileAppender">
         <File>installation-manager/log/restlet.log</File>
@@ -37,6 +37,6 @@
         </encoder>
     </appender>
     <logger name="LogService" additivity="false" level="INFO">
-        <appender-ref ref="restlet-log-file" />
+        <appender-ref ref="restlet-log-file"/>
     </logger>
 </configuration>
