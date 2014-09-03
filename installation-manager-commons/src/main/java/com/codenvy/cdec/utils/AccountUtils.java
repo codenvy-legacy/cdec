@@ -31,8 +31,8 @@ import com.codenvy.api.core.rest.shared.dto.Link;
  */
 public class AccountUtils {
     public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions hasn't found.";
-    public static final String PROPER_ACOUNT_NOT_FOUND_ERROR = "Proper account hasn't found.";
-    
+    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "Valid account hasn't found.";
+    public static final String VALID_USER_ROLE                       = "account/owner";
     
     /**
      * Indicates of current user has valid subscription.
@@ -64,10 +64,10 @@ public class AccountUtils {
         return false;
     }
 
-    public static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
-        MemberDescriptor account = getProperAccount(transport, apiEndpoint, authToken);
+    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
+        MemberDescriptor account = getAccountWithProperRole(transport, apiEndpoint, authToken);
         if (account == null) {
-            throw new IllegalStateException(PROPER_ACOUNT_NOT_FOUND_ERROR);
+            throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
         }
         
         String subscriptionsHref = getSubscriptionsHref(account);
@@ -85,12 +85,12 @@ public class AccountUtils {
         return Commons.createListDtoFromJson(transport.doGetRequest(subscriptionsHref, authToken), SubscriptionDescriptor.class);            
     }
     
-    public static MemberDescriptor getProperAccount(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
+    public static MemberDescriptor getAccountWithProperRole(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
         List<MemberDescriptor> accounts =
             Commons.createListDtoFromJson(transport.doGetRequest(Commons.combinePaths(apiEndpoint, "account"), authToken), MemberDescriptor.class);
         
         for (MemberDescriptor account: accounts) {
-            if (account.getRoles().contains("account/owner")) {   // only account owner can use account subscription to install CDEC
+            if (hasProperRole(account)) {   
                 return account;
             }
         }
@@ -98,7 +98,7 @@ public class AccountUtils {
         return null;
     }
     
-    public static String getSubscriptionsHref(MemberDescriptor account) {
+    private static String getSubscriptionsHref(MemberDescriptor account) {
         List<Link> links = account.getLinks();
         for (Link link: links) {
             if (link.getRel().equals("subscriptions")) {
@@ -109,16 +109,25 @@ public class AccountUtils {
         return null;
     }
 
-    public static String getSubscriptionsHref(String apiEndpoint, String accountId) {
+    private static String getSubscriptionsHref(String apiEndpoint, String accountId) {
         return Commons.combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions");
     }
     
-    public static String getAccountId(MemberDescriptor account) {
+    private static String getAccountId(MemberDescriptor account) {
         AccountReference reference = account.getAccountReference();
         if (reference != null) {
             return account.getAccountReference().getId();
         }
         
         return null;
+    }
+    
+    private static boolean hasProperRole(MemberDescriptor account) {
+        List<String> roles = account.getRoles();
+        if (roles == null) {
+            return false;
+        }
+        
+        return roles.contains(VALID_USER_ROLE);
     }
 }

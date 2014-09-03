@@ -26,7 +26,6 @@ import com.jayway.restassured.response.Response;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.util.log.Log;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.testng.MockitoTestNGListener;
@@ -245,7 +244,7 @@ public class TestRepositoryService extends BaseTest {
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-        assertEquals(response.asString(), RepositoryService.VALID_ON_PREMISES_SUBSCRIPTION_NOT_FOUND_ERROR);
+        assertEquals(response.asString(), RepositoryService.VALID_SUBSCRIPTION_NOT_FOUND_ERROR);
     }
 
     //@Test
@@ -259,7 +258,7 @@ public class TestRepositoryService extends BaseTest {
                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
         
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.asString().contains(AccountUtils.PROPER_ACOUNT_NOT_FOUND_ERROR));
+        assertTrue(response.asString().contains(AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR));
     }
 
     //@Test

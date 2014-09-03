@@ -184,4 +184,15 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
+    
+    @Test
+    public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
+        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IllegalStateException("Valid subscription is required to download cdec"));
+        
+        String response = installationManagerService.download("auth token", "cdec");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Valid subscription is required to download cdec\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");
+    }
 }

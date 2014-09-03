@@ -67,7 +67,7 @@ import static com.codenvy.cdec.update.ArtifactStorage.PUBLIC_PROPERTIES;
 public class RepositoryService {
 
     public static final String VALID_USER_AGENT = "Installation Manager";
-    public static final String VALID_ON_PREMISES_SUBSCRIPTION_NOT_FOUND_ERROR = "User must have valid On-Premises subscription.";
+    public static final String VALID_SUBSCRIPTION_NOT_FOUND_ERROR = "User must have valid subscription.";
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
@@ -205,7 +205,7 @@ public class RepositoryService {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
             if (requiredSubscription != null && !AccountUtils.isValidSubscription(transport, apiEndpoint, requiredSubscription)) {
-                return Response.status(Response.Status.FORBIDDEN).entity(VALID_ON_PREMISES_SUBSCRIPTION_NOT_FOUND_ERROR).build();
+                return Response.status(Response.Status.FORBIDDEN).entity(VALID_SUBSCRIPTION_NOT_FOUND_ERROR).build();
             }
 
             return doDownloadArtifact(artifact, version, false);
