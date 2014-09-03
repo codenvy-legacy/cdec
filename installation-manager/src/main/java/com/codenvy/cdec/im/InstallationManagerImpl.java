@@ -20,7 +20,7 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.restlet.InstallationManager;
-import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -203,7 +204,7 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     protected boolean isValidSubscription(String authToken) throws IOException {
-        return Commons.isValidSubscription(transport, apiEndpoint, "On-Premises", authToken);
+        return AccountUtils.isValidSubscription(transport, apiEndpoint, "On-Premises", authToken); // TODO type of subscription is being stored in .properties file in artifact folder in update server
     }
     
     /** Retrieves the latest versions from the Update Server. */

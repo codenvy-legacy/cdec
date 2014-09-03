@@ -17,10 +17,6 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.api.core.rest.shared.dto.Link;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.exceptions.AuthenticationException;
@@ -137,62 +133,6 @@ public class Commons {
         }
 
         return latestVersion.toString();
-    }
-
-    /**
-     * Indicates of current user has valid subscription.
-     *
-     * @throws java.lang.IllegalStateException, IOException
-     */
-    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint, String requiredSubscription) throws IllegalStateException,
-                                                                                                                       IOException {
-        return isValidSubscription(transport, apiEndpoint, requiredSubscription, null);
-    }
-
-    
-    /**
-     * Indicates of current user has valid subscription.
-     *
-     * @throws java.lang.IllegalStateException
-     */
-    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint, String requiredSubscription, String authToken)
-            throws IOException, IllegalStateException {
-
-        List<MemberDescriptor> accounts =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), authToken), MemberDescriptor.class);
-
-        // TODO refactor, fix account search - get account by accountId
-        List<SubscriptionDescriptor> subscriptions = null;
-        for (MemberDescriptor account: accounts) {
-            if (account.getRoles().contains("account/owner")) {   // only account owner can use account subscription to install CDEC
-                AccountReference reference = account.getAccountReference();
-                if (reference != null) {
-                    String accountId = account.getAccountReference().getId();
-                    subscriptions = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions"), authToken),
-                                                          SubscriptionDescriptor.class);
-                } else {
-                    List<Link> links = account.getLinks();  // TODO add test
-                    for (Link link: links) {
-                        if (link.getRel().equals("subscriptions")) {
-                            String subscribtionsPath = link.getHref();
-                            subscriptions = createListDtoFromJson(transport.doGetRequest(subscribtionsPath, authToken), SubscriptionDescriptor.class);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (subscriptions == null) {
-            return false;
-        }
-        
-        for (SubscriptionDescriptor s : subscriptions) {
-            if (s.getServiceId().equals(requiredSubscription)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
