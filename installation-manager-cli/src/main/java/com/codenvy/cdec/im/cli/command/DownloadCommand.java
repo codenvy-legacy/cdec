@@ -19,6 +19,7 @@ package com.codenvy.cdec.im.cli.command;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 
@@ -30,17 +31,26 @@ import com.codenvy.cdec.user.UserCredentials;
 @Command(scope = "im", name = "download", description = "Download artifacts")
 public class DownloadCommand extends AbstractIMCommand {
 
-    @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to download", required = false, multiValued = false)
+    @Argument(index = 0, name = "artifact", description = "The name of the artifact to download", required = false, multiValued = false)
     private String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
+    
+    @Option(name="-a", aliases = {"--account"}, description = "ID of Codenvy account which is used for subscription", required = false)
+    private String accountId;
 
     protected Void doExecute() throws Exception {
         init();
 
         try {
-            UserCredentials userCredentials = new UserCredentials(getAuthToken(), "accountId");  // TODO read real accountId
+            if (accountId == null) {
+                accountId = getAccountId();                
+            } else {
+                setAccountId(accountId);
+            }
+            
+            UserCredentials userCredentials = new UserCredentials(getAuthToken(), accountId);
             JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
             
             if (artifactName != null && version != null) {
