@@ -19,7 +19,10 @@ package com.codenvy.cdec.im.cli.command;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
+
+import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Alexander Reshetnyak
@@ -40,14 +43,15 @@ public class InstallCommand extends AbstractIMCommand {
         init();
 
         try {
-            String token = getAuthToken();
+            UserCredentials userCredentials = new UserCredentials(getAuthToken());
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.install(artifactName, version, token));
+                printResult(installationManagerProxy.install(artifactName, version, userCredentialsRep));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.install(artifactName, token));
+                printResult(installationManagerProxy.install(artifactName, userCredentialsRep));
             } else {
-                printResult(installationManagerProxy.install(token));
+                printResult(installationManagerProxy.install(userCredentialsRep));
             }
         } catch (IllegalStateException | ResourceException e) {
             printError(e);

@@ -71,7 +71,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
             }
         });
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(new UserCredentials("auth token"));
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
         
         String response = installationManagerService.getUpdates(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
@@ -93,7 +93,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(new UserCredentials("incorrect-token"));   
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token"));   
         
         String response = installationManagerService.getUpdates(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
@@ -106,7 +106,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
         
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(new UserCredentials("auth token"));
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
 
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
@@ -120,7 +120,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     public void testGetUpdatesCatchesException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
         
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(new UserCredentials("incorrect-token")); 
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token")); 
         
         String response = installationManagerService.getUpdates(userCredentialsRep);
 

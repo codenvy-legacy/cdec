@@ -58,8 +58,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String download(@PathParam(value = "artifact") final String artifactName,
                            @PathParam(value = "version") final String version,
                            JacksonRepresentation<UserCredentials> requestRepresentation);
-        
-    /** @see InstallationManager#getUpdates(String) */
+
     @POST
     @Path("check-updates")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -69,25 +68,26 @@ public interface InstallationManagerService extends DigestAuthSupport {
     /**
      * Install all latest updates.
      */
-    @GET
-    @Path("install/{token}")
+    @POST
+    @Path("install")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value = "token") String token) throws IOException;
+    public String install(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-    /** @see InstallationManager#install(String, com.codenvy.cdec.artifacts.Artifact, String) */
-    @GET
-    @Path("install/{artifact}/{token}")
+    @POST
+    @Path("install/{artifact}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String install(@PathParam(value = "artifact") final String artifactName,
-                          @PathParam(value = "token") String token) throws IOException;
+                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-    /** @see InstallationManager#install(String, com.codenvy.cdec.artifacts.Artifact, String) */
-    @GET
-    @Path("install/{artifact}/{version}/{token}")
+    @POST
+    @Path("install/{artifact}/{version}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String install(@PathParam(value = "artifact") final String artifactName,
                           @PathParam(value = "version") final String version,
-                          @PathParam(value = "token") String token) throws IOException;
+                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
     /** Get the url of the update server. */
     @GET

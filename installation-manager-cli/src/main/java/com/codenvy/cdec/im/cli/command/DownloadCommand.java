@@ -41,7 +41,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
         try {
             UserCredentials userCredentials = new UserCredentials(getAuthToken(), "accountId");  // TODO read real accountId
-            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(userCredentials);
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
             
             if (artifactName != null && version != null) {
                 printResult(installationManagerProxy.download(artifactName, version, userCredentialsRep));

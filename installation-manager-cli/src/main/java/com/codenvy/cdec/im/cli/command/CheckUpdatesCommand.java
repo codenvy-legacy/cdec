@@ -39,7 +39,7 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
         
         try {
             UserCredentials userCredentials = new UserCredentials(getAuthToken());
-            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(userCredentials);
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
             
             String response = installationManagerProxy.getUpdates(userCredentialsRep);
 

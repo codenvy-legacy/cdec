@@ -93,7 +93,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -113,7 +112,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             return download(artifactName, version, userCredentialsRep);
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -129,7 +127,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -164,7 +161,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(String token) throws IOException {
+    public String install(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        String token = userCredentials.getToken();
+        
         Map<Artifact, String> updates = manager.getUpdates(token);
 
         List<ArtifactInfo> infos = new ArrayList<>();
@@ -187,14 +187,16 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, String token) throws IOException {
-        return install(artifactName, null, token);
+    public String install(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        return install(artifactName, null, userCredentialsRep);
     }
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, @Nullable String version, String token) throws IOException {
-
+    public String install(String artifactName, @Nullable String version, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        String token = userCredentials.getToken();
+        
         Artifact artifact = ArtifactFactory.createArtifact(artifactName);
         String toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
 
