@@ -19,7 +19,10 @@ package com.codenvy.cdec.im.cli.command;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
+
+import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Dmytro Nochevnov
@@ -37,14 +40,15 @@ public class DownloadCommand extends AbstractIMCommand {
         init();
 
         try {
-            String authToken = getAuthToken();
-
+            UserCredentials userCredentials = new UserCredentials(getAuthToken(), "accountId");  // TODO read real accountId
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(userCredentials);
+            
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.download(authToken, artifactName, version));
+                printResult(installationManagerProxy.download(artifactName, version, userCredentialsRep));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.download(authToken, artifactName));
+                printResult(installationManagerProxy.download(artifactName, userCredentialsRep));
             } else {
-                printResult(installationManagerProxy.download(authToken));
+                printResult(installationManagerProxy.download(userCredentialsRep));
             }
         } catch (IllegalStateException | ResourceException e) {
             printError(e);

@@ -18,7 +18,10 @@
 package com.codenvy.cdec.im.cli.command;
 
 import org.apache.karaf.shell.commands.Command;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
+
+import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Anatoliy Bazko
@@ -35,8 +38,10 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
         init();
         
         try {
-            String authToken = getAuthToken();
-            String response = installationManagerProxy.getUpdates(authToken);
+            UserCredentials userCredentials = new UserCredentials(getAuthToken());
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<UserCredentials>(userCredentials);
+            
+            String response = installationManagerProxy.getUpdates(userCredentialsRep);
 
             printResult(response);
         } catch (IllegalStateException | ResourceException e) {

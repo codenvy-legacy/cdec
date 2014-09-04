@@ -17,11 +17,18 @@
  */
 package com.codenvy.cdec.restlet;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
+import org.restlet.ext.jackson.JacksonRepresentation;
+
+import com.codenvy.cdec.user.UserCredentials;
+
 import java.io.IOException;
 
 /**
@@ -31,32 +38,33 @@ import java.io.IOException;
 public interface InstallationManagerService extends DigestAuthSupport {
 
     /** Download all latest updates */
-    @GET
-    @Path("download/{token}")
+    @POST
+    @Path("download")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "token") String token);
-
-
-    /** @see InstallationManager#download(String, com.codenvy.cdec.artifacts.Artifact, String) */
-    @GET
-    @Path("download/{token}/{artifact}")
+    public String download(JacksonRepresentation<UserCredentials> userCredentialsRep);
+    
+    @POST
+    @Path("download/{artifact}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "token") String token,
-                           @PathParam(value = "artifact") final String artifactName);
+    public String download(@PathParam(value = "artifact") final String artifactName,
+                           JacksonRepresentation<UserCredentials> userCredentialsRep);
 
-    /** @see InstallationManager#download(String, com.codenvy.cdec.artifacts.Artifact, String) */
-    @GET
-    @Path("download/{token}/{artifact}/{version}")
+    @POST
+    @Path("download/{artifact}/{version}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "token") String token,
-                           @PathParam(value = "artifact") final String artifactName,
-                           @PathParam(value = "version") final String version);
-
+    public String download(@PathParam(value = "artifact") final String artifactName,
+                           @PathParam(value = "version") final String version,
+                           JacksonRepresentation<UserCredentials> requestRepresentation);
+        
     /** @see InstallationManager#getUpdates(String) */
-    @GET
-    @Path("check-updates/{token}")
+    @POST
+    @Path("check-updates")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getUpdates(@PathParam(value = "token") String token);
+    public String getUpdates(JacksonRepresentation<UserCredentials> requestRepresentation);
 
     /**
      * Install all latest updates.
