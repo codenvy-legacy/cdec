@@ -20,6 +20,7 @@ package com.codenvy.cdec.update;
 
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
+import com.codenvy.cdec.user.UserCredentials;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
 import com.codenvy.dto.server.JsonStringMapImpl;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -195,15 +197,17 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("download/{artifact}/{version}")
+    @Path("download/{artifact}/{version}/{accountId}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"user", "system/admin"})
     public Response download(@PathParam("artifact") final String artifact,
-                             @PathParam("version") final String version) {
+                             @PathParam("version") final String version,
+                             @PathParam("accountId") final String accountId) {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
+            UserCredentials userCredentials = new UserCredentials(userManager.getCurrentUser().getToken(), accountId);
             if (requiredSubscription != null &&
-                !isValidSubscription(transport, apiEndpoint, requiredSubscription, userManager.getCurrentUser().getToken())) {
+                !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
 
                 return Response.status(Response.Status.FORBIDDEN).entity("User must have valid subscription.").build();
             }

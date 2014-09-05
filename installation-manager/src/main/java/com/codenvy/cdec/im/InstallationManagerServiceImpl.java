@@ -82,7 +82,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 String version = entry.getValue();
 
                 try {
-                    doDownload(token, artifact, version);
+                    doDownload(userCredentials, artifact, version);
                     infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
                 } catch (Exception e) {
                     infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
@@ -120,9 +120,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String download(String artifactName, String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();
-
-            doDownload(token, artifactName, version);
+            doDownload(userCredentials, artifactName, version);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
@@ -150,12 +148,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         // do nothing
     }
 
-    protected void doDownload(String token, String artifactName, @Nullable String version) throws IOException, IllegalStateException {
-        doDownload(token, ArtifactFactory.createArtifact(artifactName), version);
+    protected void doDownload(UserCredentials userCredentials, String artifactName, @Nullable String version) throws IOException, IllegalStateException {
+        doDownload(userCredentials, ArtifactFactory.createArtifact(artifactName), version);
     }
 
-    protected void doDownload(String token, Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
-        manager.download(token, artifact, version);
+    protected void doDownload(UserCredentials userCredentials, Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
+        manager.download(userCredentials, artifact, version);
     }
 
     /** {@inheritDoc} */

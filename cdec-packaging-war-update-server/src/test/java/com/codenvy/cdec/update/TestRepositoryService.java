@@ -201,7 +201,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
@@ -214,7 +214,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
@@ -227,7 +227,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
@@ -241,7 +241,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
@@ -254,7 +254,7 @@ public class TestRepositoryService extends BaseTest {
         Response response = given().auth()
                .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
                .when()
-               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
         
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertTrue(response.asString().contains(AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR));
@@ -268,15 +268,15 @@ public class TestRepositoryService extends BaseTest {
         Response response = given().auth()
                .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
                .when()
-               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1");
+               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
         
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.asString().contains(AccountUtils.PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR));
+        assertTrue(response.asString().contains(AccountUtils.ACCOUNT_NOT_FOUND_ERROR));
     }
 
     @Test
     public void testDownloadPrivateErrorIfNoRolesAllowed() throws Exception {
-        Response response = given().when().get("repository/download/cdec/1.0.1");
+        Response response = given().when().get("repository/download/cdec/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 

@@ -23,6 +23,9 @@ import javax.annotation.Nullable;
 public class UserCredentials {
     private String token;
     private String accountId;
+    
+    // empty constructor is needed for bean
+    public UserCredentials() {}
 
     public UserCredentials(String token, String accountId) {
         this.token = token;

@@ -18,6 +18,7 @@
 package com.codenvy.cdec.restlet;
 
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.user.UserCredentials;
 
 import java.io.IOException;
 import java.util.Map;
@@ -60,12 +61,10 @@ public interface InstallationManager {
     /**
      * Download the specific version of the artifact.
      *
-     * @param authToken
-     *         the authentication token
      * @throws java.io.IOException
      *         if an I/O error occurred
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    void download(String authToken, Artifact artifact, String version) throws IOException, IllegalStateException;
+    void download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
 }

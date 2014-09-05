@@ -60,7 +60,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         mockInstallationManager = mock(InstallationManagerImpl.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
-        testCredentials = new UserCredentials("auth token");
+        testCredentials = new UserCredentials("auth token", "accountId");
     }
     
     @Test
@@ -166,7 +166,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
 
-        doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).download(testCredentials.getToken(), cdecArtifact, "2.10.4");
+        doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.4");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.download("cdec", "2.10.4", userCredentialsRep);
@@ -187,7 +187,7 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
         
-        doThrow(new AuthenticationException()).when(mockInstallationManager).download(testCredentials.getToken(), cdecArtifact, "2.10.5");
+        doThrow(new AuthenticationException()).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
         response = installationManagerService.download("cdec", "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +

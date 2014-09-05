@@ -19,6 +19,7 @@ package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.restlet.InstallationManager;
+import com.codenvy.cdec.user.UserCredentials;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Named;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -88,7 +90,7 @@ public class UpdateManager {
             LOG.info("Checking new updates started");
 
             try {
-                String authToken = getAuthToken();
+                UserCredentials userCredentials = getUserCredentials();
 
                 Map<Artifact, String> updates = manager.getUpdates("auth token");
 
@@ -97,7 +99,7 @@ public class UpdateManager {
                         Artifact artifact = entry.getKey();
                         String version = entry.getValue();
 
-                        manager.download(authToken, artifact, version);
+                        manager.download(userCredentials, artifact, version);
                     }
                 }
             } catch (Exception e) {
@@ -107,7 +109,18 @@ public class UpdateManager {
             }
         }
 
+        private UserCredentials getUserCredentials() {
+            String authToken = getAuthToken();
+            String accountId = getAccountId();
+            
+            return new UserCredentials(authToken, accountId);
+        }
+        
         private String getAuthToken() {
+            return null; // TODO
+        }
+        
+        private String getAccountId() {
             return null; // TODO
         }
     }

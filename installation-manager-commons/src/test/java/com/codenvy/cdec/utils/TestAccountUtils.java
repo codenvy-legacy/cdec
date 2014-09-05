@@ -17,14 +17,12 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.cdec.user.UserCredentials;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
@@ -36,84 +34,96 @@ public class TestAccountUtils {
 
     private HttpTransport mockTransport;
     private final static String VALID_SUBSCRIPTION = "On-Premises";
+    private UserCredentials testCredentials;
     
     @BeforeMethod
     public void setup() {
         mockTransport = mock(HttpTransport.class);
+        testCredentials = new UserCredentials("auth token", "7cd1aace299c-2a6a-9788-48da-560af433");
     }
 
     @Test
-    public void testGetProperAccount() throws IOException {
-        when(mockTransport.doGetRequest(anyString(), anyString())).thenReturn("[{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]}]");
-
-        MemberDescriptor account = AccountUtils.getAccountWithProperRole(mockTransport, "apiEndpoint", AccountUtils.ACCOUNT_OWNER_ROLE, "authToken");
-        assertNotNull(account);
-    }
-    
-    @Test
-    public void testGetInvalidAccount() throws IOException {
-        when(mockTransport.doGetRequest(anyString(), anyString())).thenReturn("[{roles:[\"invalid-role\"]}]");
-        assertNull(AccountUtils.getAccountWithProperRole(mockTransport, "apiEndpoint", AccountUtils.ACCOUNT_OWNER_ROLE, "authToken"));
+    public void testValidSubscriptionByAccountReference() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                             + "accountReference:{id:\"another-id\"}"
+                                                                             + "},{"
+                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                             + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                                                                             + "}]");
+        when(mockTransport.doGetRequest("/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
+        .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + "}]");
+        
+        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));
     }
     
     @Test
     public void testValidSubscriptionByLink() throws IOException {
-        when(mockTransport.doGetRequest("/account", "authToken")).thenReturn("[{"
-                                                                + "links:[{\"rel\":\"subscriptions\",\"href\":\"/account/accountId/subscriptions\"}],"
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                + "links:[{\"rel\":\"subscriptions\",\"href\":\"/account/"
+                                                                + testCredentials.getAccountId()
+                                                                + "/subscriptions\"}],"
                                                                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
                                                                 + "}]");
-        when(mockTransport.doGetRequest("/account/accountId/subscriptions", "authToken")).thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + "}]");
+        when(mockTransport.doGetRequest("/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
+        .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + "}]");
         
-        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, "authToken"));        
+        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));
     }
 
     @Test
-    public void testValidSubscriptionByAccountId() throws IOException {
-        when(mockTransport.doGetRequest("/account", "authToken")).thenReturn("[{"
-                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                             + "accountReference:{id:accountId}"
-                                                                             + "}]");
-        when(mockTransport.doGetRequest("/account/accountId/subscriptions", "authToken")).thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + "}]");
-        
-        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, "authToken"));
-    }
-    
-    @Test
-    public void testInvalidSubscription() throws IOException {
-        when(mockTransport.doGetRequest("/account", "authToken")).thenReturn("[{"
-                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                             + "accountReference:{id:accountId}"
-                                                                             + "}]");
-        when(mockTransport.doGetRequest("/account/accountId/subscriptions", "authToken")).thenReturn("[{serviceId:invalid}]");
-        
-        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, "authToken"));        
-    }
-    
-    @Test
-    public void testInvalidAccount() throws IOException {
-        when(mockTransport.doGetRequest("/account", "authToken")).thenReturn("[{"
-                                                                             + "roles:[\"invalid\"],"                                                    
-                                                                             + "accountReference:{id:accountId}"
+    public void testSubscriptionWhenAccountWithInvalidRole() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                             + "roles:[\"invalid-role\"],"
+                                                                             + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
                                                                              + "}]");
         
         try {
-            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, "authToken");
+            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
             assertEquals(e.getMessage(), AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR);
         }
     }
-
+    
     @Test
-    public void testAbsentSubscriptionsLink() throws IOException {
-        when(mockTransport.doGetRequest("/account", "authToken")).thenReturn("[{"
-                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
+    public void testSubscriptionWhenAccountWithDifferentId() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                             + "accountReference:{id:\"another-id\"}"
                                                                              + "}]");
+        
         try {
-            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, "authToken");
+            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
-            assertEquals(e.getMessage(), AccountUtils.PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR);
+            assertEquals(e.getMessage(), AccountUtils.ACCOUNT_NOT_FOUND_ERROR);
         }
+    }
+
+    @Test
+    public void testSubscriptionWhenAccountWithoutId() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
+                                                                             + "}]");
+        
+        try {
+            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
+        } catch(Exception e) {
+            assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
+            assertEquals(e.getMessage(), AccountUtils.ACCOUNT_NOT_FOUND_ERROR);
+        }
+    }
+    
+    @Test
+    public void testInvalidSubscription() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                             + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                                                                             + "}]");
+        when(mockTransport.doGetRequest("/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
+        .thenReturn("[{serviceId:invalid}]");
+        
+        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));        
     }
 }
