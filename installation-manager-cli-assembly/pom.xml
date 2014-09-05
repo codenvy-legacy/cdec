@@ -18,8 +18,7 @@
     from Codenvy S.A..
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>cdec-parent</artifactId>
@@ -101,31 +100,22 @@
                         </goals>
                         <configuration>
                             <target>
-                                <unzip dest="${project.build.directory}/"
-                                       src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip"/>
+                                <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
-                                    <replacevalue>
-                                        <![CDATA[featuresBoot=installation-manager-cli-features,]]>
-                                    </replacevalue>
+                                    <replacevalue><![CDATA[featuresBoot=installation-manager-cli-features,]]></replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresRepositories=]]></replacetoken>
-                                    <replacevalue>
-                                        <![CDATA[featuresRepositories=mvn:com.codenvy.cdec/installation-manager-cli-features/${project.version}/xml/features,]]>
-                                    </replacevalue>
+                                    <replacevalue><![CDATA[featuresRepositories=mvn:com.codenvy.cdec/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.repos.cfg">
                                     <replacetoken><![CDATA[cellar       =]]></replacetoken>
-                                    <replacevalue>
-                                        <![CDATA[installation-manager-codenvy-cli  = com.codenvy.cdec:installation-manager-cli-feature:xml:features(0,]
-cellar       =]]>
-                                    </replacevalue>
+                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.cdec:installation-manager-cli-feature:xml:features(0,]
+cellar       =]]></replacevalue>
                                 </replace>
-                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-${project.version}.jar"
-                                      tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar"/>
-                                <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml"
-                                      tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml"/>
+                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar" />
+                                <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
                             </target>
                         </configuration>
                     </execution>
