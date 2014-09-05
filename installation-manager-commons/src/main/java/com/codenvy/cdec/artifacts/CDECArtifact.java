@@ -51,7 +51,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public void install(Path pathToBinaries) throws IOException {
-        // TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -73,7 +73,6 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     protected Path getInstalledPath() throws URISyntaxException {
-        return null;
-        // TODO
+        throw new UnsupportedOperationException();
     }
 }

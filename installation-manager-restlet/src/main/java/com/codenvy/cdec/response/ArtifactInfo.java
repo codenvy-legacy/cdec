@@ -20,7 +20,6 @@ package com.codenvy.cdec.response;
 import com.codenvy.cdec.artifacts.Artifact;
 
 /** @author Dmytro Nochevnov */
-// TODO order
 public class ArtifactInfo {
     private String artifact;
     private String version;
