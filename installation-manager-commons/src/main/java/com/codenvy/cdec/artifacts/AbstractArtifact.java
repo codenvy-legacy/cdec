@@ -17,10 +17,11 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -70,17 +71,17 @@ public abstract class AbstractArtifact implements Artifact {
         return getPriority() - o.getPriority();
     }
 
-    protected void unpack(Path pathToBinaries) throws IOException, URISyntaxException {
-        Path installedPath = getInstalledPath();
-
+    protected void unpack(Path pathToBinaries, Path unpackToDir) throws IOException, URISyntaxException {
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(pathToBinaries))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
-                FileUtils.copyInputStreamToFile(in, installedPath.resolve(entry.getName()).toFile());
+                try (FileOutputStream out = new FileOutputStream(unpackToDir.resolve(entry.getName()).toFile())) {
+                    IOUtils.copy(in, out);
+                }
             }
         }
 
-        LOG.info("Unpacked " + pathToBinaries + " into " + installedPath);
+        LOG.info("Unpacked " + pathToBinaries + " into " + unpackToDir);
     }
 
     /**

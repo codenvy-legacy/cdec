@@ -90,7 +90,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
             String installedVersion = installedArtifacts.get(artifact);
 
-            if (installedVersion == null || compare(version, installedVersion) > 1) {
+            if (installedVersion == null || compare(version, installedVersion) > 0) {
                 artifact.install(pathToBinaries);
 
             } else if (compare(version, installedVersion) < 0) {

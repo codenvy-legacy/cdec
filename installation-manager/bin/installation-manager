@@ -16,9 +16,11 @@
 ### END INIT INFO
 
 QUARTZ_OPTS="-Dorg.terracotta.quartz.skipUpdateCheck=true"
-JVM_OPTS="$JVM_OPTS $QUARTZ_OPTS -Xmx256M"
+JVM_OPTS="$JVM_OPTS $QUARTZ_OPTS -Xmx256M -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000"
 
-USER=codenvy
+CURRENT_USER=$USER
+CODENVY_USER=codenvy
+
 HOME=/home/codenvy
 
 APP_DIR=$HOME/installation-manager
@@ -28,13 +30,20 @@ APP=${APP_DIR}/installation-manager-binary.jar
 PID_FILE=${APP_DIR}/.pid
 LOG_FILE=${LOG_DIR}/console.log
 
+JAVA_CMD="java $JVM_OPTS -jar $APP >> $LOG_FILE & echo \$! >$PID_FILE"
+
 # Starting tomcat
 start () {
     echo "Starting ..."
     if [ ! -d ${LOG_DIR} ];  then
-        su - ${USER} -c "mkdir $LOG_DIR"
+        su - ${CODENVY_USER} -c "mkdir $LOG_DIR"
     fi
-    su - ${USER} -c "java $JVM_OPTS -jar $APP >> $LOG_FILE & echo \$! >$PID_FILE"
+
+    if [ ${CURRENT_USER} == ${CODENVY_USER} ]; then
+        bash -c "$JAVA_CMD"
+    else
+        su - ${CODENVY_USER} -c "$JAVA_CMD"
+    fi
 }
  
 # Stoping tomcat

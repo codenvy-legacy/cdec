@@ -24,6 +24,8 @@ public class UserCredentials {
     private String token;
     private String accountId;
 
+    public UserCredentials() {}
+
     public UserCredentials(String token, String accountId) {
         this.token = token;
         this.accountId = accountId;
