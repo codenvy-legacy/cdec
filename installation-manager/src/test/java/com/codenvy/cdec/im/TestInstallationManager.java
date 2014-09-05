@@ -20,6 +20,7 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
+import com.codenvy.cdec.user.UserCredentials;
 import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.HttpTransport;
 
@@ -50,6 +51,8 @@ public class TestInstallationManager {
 
     private InstallationManagerImpl manager;
     private HttpTransport           transport;
+    
+    private UserCredentials         testCredentials;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -64,6 +67,7 @@ public class TestInstallationManager {
                                                   transport,
                                                   new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
 
+        testCredentials = new UserCredentials("auth token", "accountId");
     }
 
     @AfterMethod
@@ -76,18 +80,18 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, Path>() {{
             put(cdecArtifact, Paths.get("target/download/cdec/2.10.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion("auth token");
+        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
 
-        manager.install("auth token", cdecArtifact, "2.10.1");
+        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1");
 
         verify(cdecArtifact, never()).install(any(Path.class));
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
-        doReturn(null).when(cdecArtifact).getCurrentVersion("auth token");
+        doReturn(null).when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
 
-        manager.install("auth token", cdecArtifact, "2.10.1");
+        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1");
     }
 
     @Test
@@ -96,9 +100,9 @@ public class TestInstallationManager {
             put(cdecArtifact, Paths.get("target/download/cdec/1.0.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
         doNothing().when(cdecArtifact).install(any(Path.class));
-        doReturn(null).when(cdecArtifact).getCurrentVersion("auth token");
+        doReturn(null).when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
 
-        manager.install("auth token", cdecArtifact, "1.0.1");
+        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1");
         verify(cdecArtifact).install(any(Path.class));
     }
 
@@ -114,9 +118,9 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(false).when(manager).isValidSubscription("auth token");
+        doReturn(false).when(manager).isValidSubscription(testCredentials);
 
-        manager.download("auth token", cdecArtifact, "2.10.5");
+        manager.download(testCredentials, cdecArtifact, "2.10.5");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -124,9 +128,9 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, Path>() {{
             put(cdecArtifact, Paths.get("target/download/cdec/2.10.0/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion("auth token");
+        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
 
-        manager.install("auth token", cdecArtifact, "2.10.0");
+        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.0");
     }
 
     @Test
@@ -134,11 +138,11 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, Path>() {{
             put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.2/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts("auth token");
-        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion("auth token");
+        doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
+        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion(testCredentials.getToken());
         doNothing().when(installManagerArtifact).install(any(Path.class));
 
-        manager.install("auth token", installManagerArtifact, "2.10.2");
+        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.2");
     }
 
     @Test
@@ -153,9 +157,9 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(true).when(manager).isValidSubscription("auth token");
+        doReturn(true).when(manager).isValidSubscription(testCredentials);
 
-        manager.download("auth token", cdecArtifact, "2.10.5");
+        manager.download(testCredentials, cdecArtifact, "2.10.5");
         assertTrue(Files.exists(file1));
     }
 
@@ -164,22 +168,22 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, String>() {{
             put(cdecArtifact, "2.10.5");
             put(installManagerArtifact, "1.0.0");
-        }}).when(manager).getInstalledArtifacts("auth token");
+        }}).when(manager).getInstalledArtifacts(testCredentials.getToken());
         doReturn(new HashMap<Artifact, String>() {{
             put(cdecArtifact, "2.10.5");
             put(installManagerArtifact, "1.0.1");
         }}).when(manager).getLatestVersionsToDownload();
 
-        Map<Artifact, String> m = manager.getUpdates("auth token");
+        Map<Artifact, String> m = manager.getUpdates(testCredentials.getToken());
         assertEquals(m.size(), 1);
         assertEquals(m.get(installManagerArtifact), "1.0.1");
     }
 
     @Test
     public void testGetInstalledArtifacts() throws Exception {
-        when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME, "auth token")).thenReturn("{version:2.10.4}");
+        when(transport.doGetRequest("update/endpoint/repository/info/" + CDECArtifact.NAME, testCredentials.getToken())).thenReturn("{version:2.10.4}");
 
-        Map<Artifact, String> m = manager.getInstalledArtifacts("auth token");
+        Map<Artifact, String> m = manager.getInstalledArtifacts(testCredentials.getToken());
         assertEquals(m.get(cdecArtifact), "2.10.4");
         assertNotNull(m.get(installManagerArtifact));
     }
@@ -243,14 +247,18 @@ public class TestInstallationManager {
     
     @Test
     public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
-        when(transport.doGetRequest("api/endpoint/account", "authToken")).thenReturn("[{"
-                                                                         + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                         + "accountReference:{id:accountId}"
-                                                                         + "}]");
-        when(transport.doGetRequest("api/endpoint/account/accountId/subscriptions", "authToken")).thenReturn("[{serviceId:invalid}]");
+        when(transport.doGetRequest("api/endpoint/account", testCredentials.getToken()))
+        .thenReturn("[{"
+                    + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                    + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                    + "}]");
+
+        when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", 
+                                    testCredentials.getToken()))
+        .thenReturn("[{serviceId:invalid}]");
         
         try {
-            manager.download("authToken", cdecArtifact, "1.0.0");
+            manager.download(testCredentials, cdecArtifact, "1.0.0");
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
             assertEquals(e.getMessage(), "Valid subscription is required to download cdec");
