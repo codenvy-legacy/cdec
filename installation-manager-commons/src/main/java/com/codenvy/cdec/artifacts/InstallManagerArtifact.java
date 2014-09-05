@@ -85,7 +85,6 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     private void runCommand(String command) throws IOException, InterruptedException, URISyntaxException {
         ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
-//        pb.directory(getInstalledPath().toFile());
         pb.redirectErrorStream(true);
         pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
