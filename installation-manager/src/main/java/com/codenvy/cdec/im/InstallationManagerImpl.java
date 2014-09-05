@@ -20,7 +20,7 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.restlet.InstallationManager;
-import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -119,7 +120,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void download(String token, Artifact artifact, String version) throws IOException, IllegalStateException {
+    public void download(String authToken, Artifact artifact, String version) throws IOException, IllegalStateException {
         try {
             boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
     
@@ -128,11 +129,11 @@ public class InstallationManagerImpl implements InstallationManager {
                                              + (isValidSubscriptionRequired ? "" : "public/")
                                              + "download/" + artifact.getName() + "/" + version);
     
-            if (!isValidSubscriptionRequired || isValidSubscription()) {
+            if (!isValidSubscriptionRequired || isValidSubscription(authToken)) {
                 Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
                 FileUtils.deleteDirectory(artifactDownloadDir.toFile());
     
-                transport.download(requestUrl, artifactDownloadDir, token);
+                transport.download(requestUrl, artifactDownloadDir, authToken);
                 LOG.info("Downloaded '" + artifact + "' version " + version);
             } else {
                 throw new IllegalStateException("Valid subscription is required to download " + artifact.getName());
@@ -202,11 +203,10 @@ public class InstallationManagerImpl implements InstallationManager {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }
 
-    protected boolean isValidSubscription() throws IOException {
-        return Commons.isValidSubscription(transport, apiEndpoint, "On-Premises");
+    protected boolean isValidSubscription(String authToken) throws IOException {
+        return AccountUtils.isValidSubscription(transport, apiEndpoint, "On-Premises", authToken); // TODO type of subscription is being stored in .properties file in artifact folder in update server
     }
-
-
+    
     /** Retrieves the latest versions from the Update Server. */
     protected Map<Artifact, String> getLatestVersionsToDownload() throws IOException {
         Map<Artifact, String> available2Download = new HashMap<>();

@@ -22,8 +22,10 @@ import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.user.UserCredentials;
 import com.codenvy.cdec.utils.HttpTransport;
 
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -41,15 +43,17 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
-    private Artifact            mockInstallManagerArtifact;
-    private Artifact            mockCdecArtifact;
-
+    private InstallationManager        mockInstallationManager;
+    private HttpTransport              mockTransport;
+    private Artifact                   mockInstallManagerArtifact;
+    private Artifact                   mockCdecArtifact;
+    private UserCredentials            testCredentials;
+    
     @BeforeMethod
     public void init() {
         initMocks();
         installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager);
+        testCredentials = new UserCredentials("auth token");
     }
 
     public void initMocks() {
@@ -66,10 +70,11 @@ public class TestInstallInstallationManagerServiceImpl {
                 put(mockCdecArtifact, "2.10.5");
                 put(mockInstallManagerArtifact, "1.0.1");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
-        doReturn(Collections.emptyMap()).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-        String response = installationManagerService.install("auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [\n" +
                                                       "    {\n" +
@@ -94,15 +99,16 @@ public class TestInstallInstallationManagerServiceImpl {
                 put(mockCdecArtifact, "2.10.5");
                 put(mockInstallManagerArtifact, "1.0.1");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(mockCdecArtifact, "2.10.4");
                 put(mockInstallManagerArtifact, "1.0");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-        String response = installationManagerService.install("auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [\n" +
                                                       "    {\n" +
@@ -127,18 +133,19 @@ public class TestInstallInstallationManagerServiceImpl {
                 put(mockCdecArtifact, "2.10.5");
                 put(mockInstallManagerArtifact, "1.0.1");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
                 put(createArtifact(mockInstallManagerArtifact.getName()), "1.0");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install("auth token", mockCdecArtifact, "2.10.5");
+                .when(mockInstallationManager).install(testCredentials.getToken(), mockCdecArtifact, "2.10.5");
 
-        String response = installationManagerService.install("auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -156,14 +163,15 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.4");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -180,15 +188,15 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -205,19 +213,20 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install("auth token", artifact, "2.10.5");
+                .when(mockInstallationManager).install(testCredentials.getToken(), artifact, "2.10.5");
 
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -231,14 +240,15 @@ public class TestInstallInstallationManagerServiceImpl {
 
     @Test
     public void testInstallErrorIfSpecificArtifactAbsent() throws Exception {
-        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates("auth token");
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Artifact 'cdec' isn't available to update.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
@@ -251,12 +261,12 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -273,14 +283,15 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.4");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -297,15 +308,15 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -322,19 +333,20 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install("auth token", artifact, "2.10.5");
+                .when(mockInstallationManager).install(testCredentials.getToken(), artifact, "2.10.5");
 
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -348,19 +360,20 @@ public class TestInstallInstallationManagerServiceImpl {
 
     @Test
     public void testInstallErrorIfSpecificVersionArtifactAbsent() throws Exception {
-        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates("auth token");
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates(testCredentials.getToken());
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
             }
-        }).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Artifact '" + mockCdecArtifact.getName() + "'  isn't available to update."))
-                .when(mockInstallationManager).install("auth token", artifact, "2.10.7");
+                .when(mockInstallationManager).install(testCredentials.getToken(), artifact, "2.10.7");
 
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.7", "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.7", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
@@ -378,11 +391,11 @@ public class TestInstallInstallationManagerServiceImpl {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
-        }).when(mockInstallationManager).getUpdates("auth token");
-        doReturn(Collections.emptyMap()).when(mockInstallationManager).getInstalledArtifacts("auth token");
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
 
-
-        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", "auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +

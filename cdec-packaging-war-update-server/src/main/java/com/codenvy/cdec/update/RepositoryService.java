@@ -20,6 +20,7 @@ package com.codenvy.cdec.update;
 
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
+import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.codenvy.cdec.utils.Version;
 import com.codenvy.dto.server.JsonStringMapImpl;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +55,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import static com.codenvy.cdec.update.ArtifactStorage.PUBLIC_PROPERTIES;
-import static com.codenvy.cdec.utils.Commons.isValidSubscription;
 
 
 /**
@@ -66,6 +67,7 @@ import static com.codenvy.cdec.utils.Commons.isValidSubscription;
 public class RepositoryService {
 
     public static final String VALID_USER_AGENT = "Installation Manager";
+    public static final String VALID_SUBSCRIPTION_NOT_FOUND_ERROR = "User must have valid subscription.";
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
@@ -202,8 +204,8 @@ public class RepositoryService {
                              @PathParam("version") final String version) {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
-            if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription)) {
-                return Response.status(Response.Status.FORBIDDEN).entity("User must have valid On-Premises subscription.").build();
+            if (requiredSubscription != null && !AccountUtils.isValidSubscription(transport, apiEndpoint, requiredSubscription)) {
+                return Response.status(Response.Status.FORBIDDEN).entity(VALID_SUBSCRIPTION_NOT_FOUND_ERROR).build();
             }
 
             return doDownloadArtifact(artifact, version, false);
@@ -214,7 +216,7 @@ public class RepositoryService {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                            .entity("Unexpected error. Can't download the artifact '" + artifact + "' version " + version +
-                                   ". Probably it doesn't exist in the repository").build();
+                                   ". " + e.getMessage()).build();
         }
     }
 
@@ -242,7 +244,7 @@ public class RepositoryService {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                            .entity("Unexpected error. Can't download the artifact '" + artifact + "' version " + version +
-                                   ". Probably it doesn't exist in the repository").build();
+                                   ". " + e.getMessage()).build();
         }
     }
 

@@ -19,7 +19,11 @@ package com.codenvy.cdec.im.cli.command;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
+
+import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Dmytro Nochevnov
@@ -27,24 +31,34 @@ import org.restlet.resource.ResourceException;
 @Command(scope = "im", name = "download", description = "Download artifacts")
 public class DownloadCommand extends AbstractIMCommand {
 
-    @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to download", required = false, multiValued = false)
+    @Argument(index = 0, name = "artifact", description = "The name of the artifact to download", required = false, multiValued = false)
     private String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
+    
+    @Option(name="-a", aliases = {"--account"}, description = "ID of Codenvy account which is used for subscription", required = false)
+    private String accountId;
 
     protected Void doExecute() throws Exception {
         init();
 
         try {
-            String authToken = getAuthToken();
-
-            if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.download(authToken, artifactName, version));
-            } else if (artifactName != null) {
-                printResult(installationManagerProxy.download(authToken, artifactName));
+            if (accountId == null) {
+                accountId = getAccountId();                
             } else {
-                printResult(installationManagerProxy.download(authToken));
+                setAccountId(accountId);
+            }
+            
+            UserCredentials userCredentials = new UserCredentials(getAuthToken(), accountId);
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
+            
+            if (artifactName != null && version != null) {
+                printResult(installationManagerProxy.download(artifactName, version, userCredentialsRep));
+            } else if (artifactName != null) {
+                printResult(installationManagerProxy.download(artifactName, userCredentialsRep));
+            } else {
+                printResult(installationManagerProxy.download(userCredentialsRep));
             }
         } catch (IllegalStateException | ResourceException e) {
             printError(e);

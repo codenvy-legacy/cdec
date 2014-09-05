@@ -25,7 +25,9 @@ import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.exceptions.AuthenticationException;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.user.UserCredentials;
 
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,11 +44,11 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class TestGetUpdatesInstallationManagerServiceImpl {
-    private InstallationManagerService installationManagerService;
+    private InstallationManagerService      installationManagerService;
 
-    private InstallationManager mockInstallationManager;
-    private Artifact            installManagerArtifact;
-    private Artifact            cdecArtifact;
+    private InstallationManager             mockInstallationManager;
+    private Artifact                        installManagerArtifact;
+    private Artifact                        cdecArtifact;
     
     @BeforeMethod
     public void init() {
@@ -69,7 +71,9 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
             }
         });
 
-        String response = installationManagerService.getUpdates("auth token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
+        
+        String response = installationManagerService.getUpdates(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [\n" +
                                                       "    {\n" +
@@ -89,7 +93,9 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
 
-        String response = installationManagerService.getUpdates("incorrect-token");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token"));   
+        
+        String response = installationManagerService.getUpdates(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
@@ -99,7 +105,10 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     @Test
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
-        String response = installationManagerService.getUpdates("auth token");
+        
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
+
+        String response = installationManagerService.getUpdates(userCredentialsRep);
 
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
@@ -110,7 +119,10 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     @Test
     public void testGetUpdatesCatchesException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
-        String response = installationManagerService.getUpdates("incorrect-token");
+        
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token")); 
+        
+        String response = installationManagerService.getUpdates(userCredentialsRep);
 
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Error\",\n" +

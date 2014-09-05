@@ -20,6 +20,7 @@ package com.codenvy.cdec.im;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
+import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.HttpTransport;
 
 import org.apache.commons.io.FileUtils;
@@ -116,7 +117,7 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(false).when(manager).isValidSubscription();
+        doReturn(false).when(manager).isValidSubscription("auth token");
 
         manager.download("auth token", cdecArtifact, "2.10.5");
     }
@@ -153,7 +154,7 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(true).when(manager).isValidSubscription();
+        doReturn(true).when(manager).isValidSubscription("auth token");
 
         manager.download("auth token", cdecArtifact, "2.10.5");
         assertTrue(Files.exists(file1));
@@ -239,5 +240,22 @@ public class TestInstallationManager {
         Files.createFile(file2);
 
         manager.getDownloadedArtifacts();
+    }
+    
+    @Test
+    public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
+        when(transport.doGetRequest("api/endpoint/account", "authToken")).thenReturn("[{"
+                                                                         + "roles:[\"" + AccountUtils.VALID_USER_ROLE + "\"],"                                                    
+                                                                         + "accountReference:{id:accountId}"
+                                                                         + "}]");
+        when(transport.doGetRequest("api/endpoint/account/accountId/subscriptions", "authToken")).thenReturn("[{serviceId:invalid}]");
+        
+        try {
+            manager.download("authToken", cdecArtifact, "1.0.0");
+        } catch(Exception e) {
+            assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
+            assertEquals(e.getMessage(), "Valid subscription is required to download cdec");
+
+        }
     }
 }

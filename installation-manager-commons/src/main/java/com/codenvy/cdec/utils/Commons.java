@@ -17,8 +17,6 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.exceptions.AuthenticationException;
@@ -138,35 +136,6 @@ public class Commons {
     }
 
     /**
-     * Indicates of current user has valid subscription.
-     *
-     * @throws java.lang.IllegalStateException
-     */
-    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint, String requiredSubscription)
-            throws IOException, IllegalStateException {
-
-        List<MemberDescriptor> accounts =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account")), MemberDescriptor.class);
-
-        if (accounts.size() != 1) {
-            throw new IllegalStateException("User must have only one account");
-        }
-
-        String accountId = accounts.get(0).getAccountReference().getId();
-        List<SubscriptionDescriptor> subscriptions =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions")),
-                                      SubscriptionDescriptor.class);
-
-        for (SubscriptionDescriptor s : subscriptions) {
-            if (s.getServiceId().equals(requiredSubscription)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Convert one-line json string to pretty formatted multiline string.
      *
      * @throws JSONException
@@ -197,6 +166,7 @@ public class Commons {
                 case 404:
                     return new ArtifactNotFoundException(artifact.getName());
                 case 302:
+                case 403:
                     return new AuthenticationException();
             }
         }
