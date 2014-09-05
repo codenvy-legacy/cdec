@@ -18,14 +18,13 @@
     from Codenvy S.A..
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>com.codenvy</groupId>
         <version>1.8.18-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath />
     </parent>
     <groupId>com.codenvy.cdec</groupId>
     <artifactId>cdec-parent</artifactId>
@@ -40,6 +39,8 @@
         <module>installation-manager-gui</module>
         <module>installation-manager-cli</module>
         <module>installation-manager-restlet</module>
+        <module>installation-manager-cli-features</module>
+        <module>installation-manager-cli-assembly</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>

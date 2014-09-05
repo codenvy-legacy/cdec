@@ -23,7 +23,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/bundle</directory>
+            <directory>${project.build.directory}/codenvy-cli-${codenvy.cli.version}</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>/bin/*</include>
@@ -31,7 +31,7 @@
             <fileMode>755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/bundle</directory>
+            <directory>${project.build.directory}/codenvy-cli-${codenvy.cli.version}</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>**/*</include>
