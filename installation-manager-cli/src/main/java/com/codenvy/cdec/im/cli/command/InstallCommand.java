@@ -17,12 +17,11 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.user.UserCredentials;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.resource.ResourceException;
-
-import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Alexander Reshetnyak
@@ -43,7 +42,7 @@ public class InstallCommand extends AbstractIMCommand {
         init();
 
         try {
-            UserCredentials userCredentials = new UserCredentials(getAuthToken());
+            UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken());
             JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 
             if (artifactName != null && version != null) {
@@ -53,7 +52,7 @@ public class InstallCommand extends AbstractIMCommand {
             } else {
                 printResult(installationManagerProxy.install(userCredentialsRep));
             }
-        } catch (IllegalStateException | ResourceException e) {
+        } catch (Exception e) {
             printError(e);
         }
 

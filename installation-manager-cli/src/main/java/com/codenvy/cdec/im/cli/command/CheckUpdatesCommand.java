@@ -17,34 +17,31 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.user.UserCredentials;
+
 import org.apache.karaf.shell.commands.Command;
 import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.resource.ResourceException;
-
-import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Anatoliy Bazko
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-@Command(scope = "im", name = "check-updates", description = "Check all available updates")
+@Command(scope = "im", name = "check-updates", description = "Check availability to download new versions of the artifacts")
 public class CheckUpdatesCommand extends AbstractIMCommand {
 
-    /**
-     * Check availability new version.
-     */
+    /** {@inheritDoc} */
+    @Override
     protected Void doExecute() throws Exception {
         init();
-        
-        try {
-            UserCredentials userCredentials = new UserCredentials(getAuthToken());
-            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
-            
-            String response = installationManagerProxy.getUpdates(userCredentialsRep);
 
+        try {
+            UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken());
+            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
+
+            String response = installationManagerProxy.getUpdates(userCredentialsRep);
             printResult(response);
-        } catch (IllegalStateException | ResourceException e) {
+        } catch (Exception e) {
             printError(e);
         }
 

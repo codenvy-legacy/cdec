@@ -23,9 +23,7 @@ import javax.annotation.Nullable;
 public class UserCredentials {
     private String token;
     private String accountId;
-    
-    public UserCredentials() {}
-    
+
     public UserCredentials(String token, String accountId) {
         this.token = token;
         this.accountId = accountId;
@@ -34,21 +32,21 @@ public class UserCredentials {
     public UserCredentials(String token) {
         this.token = token;
     }
-    
-    @Nullable   
+
+    @Nullable
     public String getToken() {
         return token;
     }
-    
+
     public void setToken(String token) {
         this.token = token;
     }
-    
+
     @Nullable
     public String getAccountId() {
         return accountId;
     }
-    
+
     public void setAccountId(String accountId) {
         this.accountId = accountId;
     }

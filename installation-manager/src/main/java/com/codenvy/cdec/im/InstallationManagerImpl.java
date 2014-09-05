@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -123,16 +122,16 @@ public class InstallationManagerImpl implements InstallationManager {
     public void download(String authToken, Artifact artifact, String version) throws IOException, IllegalStateException {
         try {
             boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
-    
+
             String requestUrl = combinePaths(updateEndpoint,
                                              "/repository/"
                                              + (isValidSubscriptionRequired ? "" : "public/")
                                              + "download/" + artifact.getName() + "/" + version);
-    
+
             if (!isValidSubscriptionRequired || isValidSubscription(authToken)) {
                 Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
                 FileUtils.deleteDirectory(artifactDownloadDir.toFile());
-    
+
                 transport.download(requestUrl, artifactDownloadDir, authToken);
                 LOG.info("Downloaded '" + artifact + "' version " + version);
             } else {
@@ -198,7 +197,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
         return newVersions;
     }
-    
+
     protected Path getArtifactDownloadedDir(Artifact artifact, String version) {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }
@@ -206,7 +205,7 @@ public class InstallationManagerImpl implements InstallationManager {
     protected boolean isValidSubscription(String authToken) throws IOException {
         return AccountUtils.isValidSubscription(transport, apiEndpoint, "On-Premises", authToken); // TODO type of subscription is being stored in .properties file in artifact folder in update server
     }
-    
+
     /** Retrieves the latest versions from the Update Server. */
     protected Map<Artifact, String> getLatestVersionsToDownload() throws IOException {
         Map<Artifact, String> available2Download = new HashMap<>();

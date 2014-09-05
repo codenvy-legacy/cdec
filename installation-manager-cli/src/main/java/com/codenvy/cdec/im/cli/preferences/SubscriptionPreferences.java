@@ -20,7 +20,7 @@ package com.codenvy.cdec.im.cli.preferences;
 
 /** @author Dmytro Nochevnov */
 public class SubscriptionPreferences {
-    String accountId;
+    private String accountId;
 
     public String getAccountId() {
         return accountId;

@@ -30,7 +30,6 @@ import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
 
 import javax.annotation.Nullable;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +72,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
-            
+
             Map<Artifact, String> updates = manager.getUpdates(token);
 
             List<ArtifactInfo> infos = new ArrayList<>();
@@ -103,7 +102,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
-            
+
             Artifact artifact = ArtifactFactory.createArtifact(artifactName);
             String version = manager.getUpdates(token).get(artifact);
             if (version == null) {
@@ -121,8 +120,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String download(String artifactName, String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();            
-            
+            String token = userCredentials.getToken();
+
             doDownload(token, artifactName, version);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
@@ -137,7 +136,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
-            
+
             Map<Artifact, String> updates = manager.getUpdates(token);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
         } catch (Exception e) {
@@ -164,7 +163,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String install(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
-        
+
         Map<Artifact, String> updates = manager.getUpdates(token);
 
         List<ArtifactInfo> infos = new ArrayList<>();
@@ -193,10 +192,11 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, @Nullable String version, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+    public String install(String artifactName, @Nullable String version, JacksonRepresentation<UserCredentials> userCredentialsRep)
+            throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
-        
+
         Artifact artifact = ArtifactFactory.createArtifact(artifactName);
         String toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
 
@@ -218,5 +218,5 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
         manager.install(token, artifact, version);
     }
-    
+
 }

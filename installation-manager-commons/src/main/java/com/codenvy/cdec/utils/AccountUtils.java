@@ -17,46 +17,43 @@
  */
 package com.codenvy.cdec.utils;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.api.core.rest.shared.dto.Link;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.List;
+
+import static com.codenvy.cdec.utils.Commons.combinePaths;
+import static com.codenvy.cdec.utils.Commons.createListDtoFromJson;
+
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
+ *
+ * TODO after login command
  */
 public class AccountUtils {
     public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions hasn't found.";
     public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "Valid account hasn't found.";
-    public static final String VALID_USER_ROLE                       = "account/owner";
-    
-    /**
-     * Indicates of current user has valid subscription.
-     *
-     * @throws java.lang.IllegalStateException, IOException
-     */
-    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint, String requiredSubscription) throws IllegalStateException,
-                                                                                                                       IOException {
-        return isValidSubscription(transport, apiEndpoint, requiredSubscription, null);
-    }
+    public static final String ACCOUNT_OWNER_ROLE = "account/owner";
 
-    
     /**
-     * Indicates of current user has valid subscription.
+     * Indicates if the current user has a valid subscription.
      *
      * @throws java.lang.IllegalStateException
+     * @throws java.io.IOException
      */
-    public static boolean isValidSubscription(HttpTransport transport, String apiEndpoint, String requiredSubscription, String authToken)
-            throws IOException, IllegalStateException {
-
+    public static boolean isValidSubscription(HttpTransport transport,
+                                              String apiEndpoint,
+                                              String requiredSubscription,
+                                              String authToken) throws IOException, IllegalStateException {
         List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport, apiEndpoint, authToken);
 
         for (SubscriptionDescriptor s : subscriptions) {
-            if (s.getServiceId().equals(requiredSubscription)) {
+            if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
                 return true;
             }
         }
@@ -64,12 +61,12 @@ public class AccountUtils {
         return false;
     }
 
-    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
-        MemberDescriptor account = getAccountWithProperRole(transport, apiEndpoint, authToken);
+    protected static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
+        MemberDescriptor account = getAccountWithProperRole(transport, apiEndpoint, ACCOUNT_OWNER_ROLE, authToken);
         if (account == null) {
             throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
         }
-        
+
         String subscriptionsHref = getSubscriptionsHref(account);
         if (subscriptionsHref == null) {
             String accountId = getAccountId(account);
@@ -77,57 +74,56 @@ public class AccountUtils {
                 subscriptionsHref = getSubscriptionsHref(apiEndpoint, accountId);
             }
         }
-        
+
         if (subscriptionsHref == null) {
             throw new IllegalStateException(PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR);
         }
-        
-        return Commons.createListDtoFromJson(transport.doGetRequest(subscriptionsHref, authToken), SubscriptionDescriptor.class);            
+
+        return createListDtoFromJson(transport.doGetRequest(subscriptionsHref, authToken), SubscriptionDescriptor.class);
     }
-    
-    public static MemberDescriptor getAccountWithProperRole(HttpTransport transport, String apiEndpoint, String authToken) throws IOException {
-        List<MemberDescriptor> accounts =
-            Commons.createListDtoFromJson(transport.doGetRequest(Commons.combinePaths(apiEndpoint, "account"), authToken), MemberDescriptor.class);
-        
-        for (MemberDescriptor account: accounts) {
-            if (hasProperRole(account)) {   
+
+    @Nullable
+    protected static MemberDescriptor getAccountWithProperRole(HttpTransport transport,
+                                                               String apiEndpoint,
+                                                               String role,
+                                                               String authToken) throws IOException {
+
+        List<MemberDescriptor> accounts = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), authToken),
+                                                                MemberDescriptor.class);
+
+        for (MemberDescriptor account : accounts) {
+            if (hasRole(account, role)) {
                 return account;
             }
         }
 
         return null;
     }
-    
+
+    @Nullable
     private static String getSubscriptionsHref(MemberDescriptor account) {
         List<Link> links = account.getLinks();
-        for (Link link: links) {
+        for (Link link : links) {
             if (link.getRel().equals("subscriptions")) {
                 return link.getHref();
             }
         }
-        
+
         return null;
     }
 
     private static String getSubscriptionsHref(String apiEndpoint, String accountId) {
-        return Commons.combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions");
+        return combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions");
     }
-    
+
+    @Nullable
     private static String getAccountId(MemberDescriptor account) {
         AccountReference reference = account.getAccountReference();
-        if (reference != null) {
-            return account.getAccountReference().getId();
-        }
-        
-        return null;
+        return reference != null ? account.getAccountReference().getId() : null; // Platform API issue
     }
-    
-    private static boolean hasProperRole(MemberDescriptor account) {
+
+    private static boolean hasRole(MemberDescriptor account, String role) {
         List<String> roles = account.getRoles();
-        if (roles == null) {
-            return false;
-        }
-        
-        return roles.contains(VALID_USER_ROLE);
+        return roles != null && roles.contains(role);
     }
 }

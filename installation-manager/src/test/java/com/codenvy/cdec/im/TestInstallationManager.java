@@ -245,7 +245,7 @@ public class TestInstallationManager {
     @Test
     public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
         when(transport.doGetRequest("api/endpoint/account", "authToken")).thenReturn("[{"
-                                                                         + "roles:[\"" + AccountUtils.VALID_USER_ROLE + "\"],"                                                    
+                                                                         + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                                                                          + "accountReference:{id:accountId}"
                                                                          + "}]");
         when(transport.doGetRequest("api/endpoint/account/accountId/subscriptions", "authToken")).thenReturn("[{serviceId:invalid}]");

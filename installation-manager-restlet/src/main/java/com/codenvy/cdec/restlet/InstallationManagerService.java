@@ -17,18 +17,12 @@
  */
 package com.codenvy.cdec.restlet;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import com.codenvy.cdec.user.UserCredentials;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 
-import com.codenvy.cdec.user.UserCredentials;
-
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 
 /**
@@ -65,9 +59,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String getUpdates(JacksonRepresentation<UserCredentials> requestRepresentation);
 
-    /**
-     * Install all latest updates.
-     */
+    /** Install all latest updates. */
     @POST
     @Path("install")
     @Consumes(MediaType.APPLICATION_JSON)

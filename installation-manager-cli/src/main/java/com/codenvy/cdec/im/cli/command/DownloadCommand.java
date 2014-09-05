@@ -17,13 +17,11 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.user.UserCredentials;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.commands.Option;
 import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.resource.ResourceException;
-
-import com.codenvy.cdec.user.UserCredentials;
 
 /**
  * @author Dmytro Nochevnov
@@ -36,23 +34,14 @@ public class DownloadCommand extends AbstractIMCommand {
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
-    
-    @Option(name="-a", aliases = {"--account"}, description = "ID of Codenvy account which is used for subscription", required = false)
-    private String accountId;
 
     protected Void doExecute() throws Exception {
         init();
 
         try {
-            if (accountId == null) {
-                accountId = getAccountId();                
-            } else {
-                setAccountId(accountId);
-            }
-            
-            UserCredentials userCredentials = new UserCredentials(getAuthToken(), accountId);
+            UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
             JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
-            
+
             if (artifactName != null && version != null) {
                 printResult(installationManagerProxy.download(artifactName, version, userCredentialsRep));
             } else if (artifactName != null) {
@@ -60,7 +49,7 @@ public class DownloadCommand extends AbstractIMCommand {
             } else {
                 printResult(installationManagerProxy.download(userCredentialsRep));
             }
-        } catch (IllegalStateException | ResourceException e) {
+        } catch (Exception e) {
             printError(e);
         }
 

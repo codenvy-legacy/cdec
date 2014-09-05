@@ -17,58 +17,40 @@
  */
 package com.codenvy.cdec.im.cli.preferences;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.security.RemoteCredentials;
 import com.codenvy.client.Codenvy;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Map;
+import java.util.Map.Entry;
+
 /** @author Dmytro Nochevnov */
 public class PreferencesStorage {
-    private MultiRemoteCodenvy multiRemoteCodenvy;
-    private Preferences globalPreferences;
-    private String updateServerUrl;
-    private final AtomicReference<String> authToken;    
-    
+
+    private final MultiRemoteCodenvy multiRemoteCodenvy;
+    private final Preferences        globalPreferences;
+    private final String             updateServerUrl;
+
     public PreferencesStorage(MultiRemoteCodenvy multiRemoteCodenvy, Preferences globalPreferences, String updateServerUrl) {
         this.multiRemoteCodenvy = multiRemoteCodenvy;
         this.globalPreferences = globalPreferences;
         this.updateServerUrl = updateServerUrl;
-        
-        authToken = new AtomicReference<>();
     }
 
-    @Nonnull
-    /** @return authentication token to update server */
-    public String getAuthToken() throws IllegalStateException {
-        if (authToken.get() == null) {
-            synchronized (authToken) {
-                if (authToken.get() == null) {
-                    authToken.set(doGetToken());
-                }
-            }
-        }
-
-        return authToken.get();
-    }
-    
     @Nullable
-    public String getAccountId() {        
+    public String getAccountId() {
         SubscriptionPreferences accountDescription = readPreference(SubscriptionPreferences.class);
         if (accountDescription == null || accountDescription.getAccountId() == null) {
             throw new IllegalStateException("ID of Codenvy account which is used for subscription is needed.");
         }
 
-        return accountDescription.getAccountId(); 
+        return accountDescription.getAccountId();
     }
-    
+
     public void setAccountId(String accountId) {
         SubscriptionPreferences accountDescription = new SubscriptionPreferences();
         accountDescription.setAccountId(accountId);
@@ -77,7 +59,7 @@ public class PreferencesStorage {
     }
     
     @Nonnull
-    private String doGetToken() throws IllegalStateException {
+    public String getAuthToken() throws IllegalStateException {
         RemoteCredentials credentials = readPreference(RemoteCredentials.class);
         return credentials.getToken(); // TODO outdated after 3h ?
     }
@@ -90,6 +72,7 @@ public class PreferencesStorage {
         if (!readyRemotes.containsKey(remote)) {
             throw new IllegalStateException(String.format("Please login to remote '%s'.", remote));
         }
+
         return remote;
     }
 
