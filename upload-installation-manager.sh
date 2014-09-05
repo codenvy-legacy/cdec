@@ -65,6 +65,6 @@ doUpload() {
 }
 
 uploadArtifact installation-manager
-uploadArtifact installation-manager-cli
+uploadArtifact installation-manager-cli-assembly
 uploadInstallScript
 
