@@ -35,10 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
@@ -135,11 +132,13 @@ public class TestInstallationManager {
     @Test
     public void testInstallArtifactNewlyArtifact() throws Exception {
         doReturn(new HashMap<Artifact, Path>() {{
-            put(cdecArtifact, Paths.get("target/download/cdec/2.10.2/file1"));
+            put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.2/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion("auth token");
+        doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts("auth token");
+        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion("auth token");
+        doNothing().when(installManagerArtifact).install(any(Path.class));
 
-        manager.install("auth token", cdecArtifact, "2.10.2");
+        manager.install("auth token", installManagerArtifact, "2.10.2");
     }
 
     @Test

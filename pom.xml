@@ -32,8 +32,8 @@
     <packaging>pom</packaging>
     <name>Codenvy :: CDEC :: Parent</name>
     <modules>
-        <module>cdec-packaging-war-update-server</module>
-        <module>cdec-packaging-tomcat-update-server</module>
+        <module>update-server-packaging-tomcat</module>
+        <module>update-server-packaging-war</module>
         <module>installation-manager-commons</module>
         <module>installation-manager</module>
         <module>installation-manager-gui</module>

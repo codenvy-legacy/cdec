@@ -20,10 +20,15 @@ package com.codenvy.cdec.artifacts;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -33,6 +38,8 @@ import java.util.Properties;
  */
 @Singleton
 public class InstallManagerArtifact extends AbstractArtifact {
+    private static final Logger LOG = LoggerFactory.getLogger(InstallManagerArtifact.class);
+
     public static final String NAME = "installation-manager";
 
     @Inject
@@ -43,13 +50,46 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public void install(Path pathToBinaries) throws IOException {
         try {
-            unpack(pathToBinaries);
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
-        }
+            Path dirForUpdate = pathToBinaries.getParent().resolve("upacked");
+            if (Files.exists(dirForUpdate)) {
+                FileUtils.cleanDirectory(dirForUpdate.toFile());
+            } else {
+                Files.createDirectories(dirForUpdate);
+            }
 
-        // TODO
-//        restart()
+            unpack(pathToBinaries, dirForUpdate);
+            restart(dirForUpdate);
+        } catch (InterruptedException | URISyntaxException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    private void restart(Path unpackedUpdates) throws IOException, InterruptedException, URISyntaxException {
+        String installedPath = getInstalledPath().toFile().getAbsolutePath();
+        StringBuilder stringBuilder = new StringBuilder(200);
+
+        stringBuilder.append("sleep 5 ; ") //TODO
+                     .append(installedPath).append("/installation-manager stop ; ")
+                     .append("cp -r ")
+                     .append(unpackedUpdates.toFile().getAbsolutePath())
+                     .append("/* ")
+                     .append(installedPath)
+                     .append(" ; ")
+                     .append("rm -rf ")
+                     .append(unpackedUpdates.toFile().getAbsolutePath())
+                     .append(" ; ")
+                     .append(installedPath).append("/installation-manager start ");
+
+        runCommand(stringBuilder.toString());
+    }
+
+    private void runCommand(String command) throws IOException, InterruptedException, URISyntaxException {
+        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+        pb.redirectErrorStream(true);
+        pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        Process p = pb.start();
+        LOG.info("Executed command: " + command);
     }
 
     @Override
@@ -78,7 +118,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Override
     protected Path getInstalledPath() throws URISyntaxException {
-        URL location = InstallManagerArtifact.class.getClass().getProtectionDomain().getCodeSource().getLocation();
-        return Paths.get(location.toURI());
+        URL location = getClass().getProtectionDomain().getCodeSource().getLocation();
+        return Paths.get(location.toURI()).getParent();
     }
 }
