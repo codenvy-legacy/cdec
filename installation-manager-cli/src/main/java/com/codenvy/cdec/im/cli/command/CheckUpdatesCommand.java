@@ -33,9 +33,9 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
     /** {@inheritDoc} */
     @Override
     protected Void doExecute() throws Exception {
-        init();
-
         try {
+            init();
+            
             UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken());
             JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 

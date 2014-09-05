@@ -36,9 +36,9 @@ public class DownloadCommand extends AbstractIMCommand {
     private String version;
 
     protected Void doExecute() throws Exception {
-        init();
-
         try {
+            init();
+            
             UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
             JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 

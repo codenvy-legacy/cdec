@@ -41,21 +41,24 @@ import static org.fusesource.jansi.Ansi.ansi;
  */
 public abstract class AbstractIMCommand extends AbsCommand {
     protected final InstallationManagerService installationManagerProxy;
-    protected final PreferencesStorage preferencesStorage;
+    protected PreferencesStorage preferencesStorage;
 
     public AbstractIMCommand() {
         try {
             installationManagerProxy = RestletClientFactory.createServiceProxy(InstallationManagerService.class);
-
-            preferencesStorage = new PreferencesStorage(getMultiRemoteCodenvy(),
-                                                        getGlobalPreferences(),
-                                                        getUpdateServerUrl());
-
         } catch (MissingAnnotationException | IllegalPathException e) {
             throw new IllegalStateException("Can't initialize proxy service", e);
         }
     }
 
+    @Override
+    public void init() {
+        super.init();
+        preferencesStorage = new PreferencesStorage(getMultiRemoteCodenvy(),
+                                                    getGlobalPreferences(),
+                                                    getUpdateServerUrl());
+    }
+    
     protected void printError(Exception ex) {
         try {
             printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));
