@@ -29,5 +29,8 @@
         <command>
             <action class="com.codenvy.cdec.im.cli.command.DownloadCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.cdec.im.cli.command.LoginCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

@@ -17,12 +17,18 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import java.util.Map;
+import java.util.Map.Entry;
+import java.net.ConnectException;
+
 import com.codenvy.cdec.im.cli.preferences.PreferencesStorage;
 import com.codenvy.cdec.response.Response;
 import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.restlet.RestletClientFactory;
 import com.codenvy.cli.command.builtin.AbsCommand;
+import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
+import com.codenvy.client.Codenvy;
 
 import org.fusesource.jansi.Ansi;
 import org.json.JSONException;
@@ -42,6 +48,8 @@ import static org.fusesource.jansi.Ansi.ansi;
 public abstract class AbstractIMCommand extends AbsCommand {
     protected final InstallationManagerService installationManagerProxy;
     protected PreferencesStorage preferencesStorage;
+    
+    private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "updateServer";
 
     public AbstractIMCommand() {
         try {
@@ -54,14 +62,25 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Override
     public void init() {
         super.init();
-        preferencesStorage = new PreferencesStorage(getMultiRemoteCodenvy(),
-                                                    getGlobalPreferences(),
-                                                    getUpdateServerUrl());
+        
+        String remote = getUpdateServerRemote();
+        Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
+        if (!readyRemotes.containsKey(remote) && 
+            !(this instanceof LoginCommand)) {
+            throw new IllegalStateException("Please login using im:login command.");
+        }
+        
+        preferencesStorage = new PreferencesStorage(getGlobalPreferences(),
+                                                    getUpdateServerRemote());
     }
     
     protected void printError(Exception ex) {
         try {
-            printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));
+            if (isConnectionException(ex)) {
+                printError("It is impossible to connect to installation manager server.");
+            } else {
+                printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));                
+            }
         } catch (JSONException e) {
             Ansi ansi = ansi().fg(RED)
                               .a("Unexpected error: " + e.getMessage())
@@ -72,6 +91,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
+    private boolean isConnectionException(Exception e) {
+        Throwable cause = e.getCause();
+        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
+    }
+    
     protected void printError(String message) {
         System.out.println(ansi().fg(RED).a(message).reset());
     }
@@ -88,13 +112,46 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
     }
+    
+    /** Find out or add remote for update server */
+    @Nonnull
+    protected String getUpdateServerRemote() {
+        String updateServerUrl = getUpdateServerUrl();
+        String remote = getRemote(updateServerUrl);
 
-    private String getUpdateServerUrl() {
-        return installationManagerProxy.getUpdateServerUrl();
+        // create remote for update sever if it is absent
+        if (remote == null) {
+            if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl)) {
+                throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", 
+                                                              updateServerUrl));
+            }
+            
+            return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+        }        
+
+        return remote;
     }
 
+    protected String getUpdateServerUrl() {
+        return installationManagerProxy.getUpdateServerUrl();
+    }
+    
     @Nonnull
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());
+    }
+    
+    @Nullable
+    private String getRemote(String url) throws IllegalStateException {
+        Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();
+
+        for (Entry<String, Remote> remoteEntry : availableRemotes.entrySet()) {
+            Remote remote = remoteEntry.getValue();
+            if (remote.url.equalsIgnoreCase(url)) {
+                return remoteEntry.getKey();
+            }
+        }
+        
+        return null;
     }
 }
