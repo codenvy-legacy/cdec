@@ -28,10 +28,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 
+import static com.codenvy.cdec.artifacts.ArtifactProperties.*;
 import static com.google.common.io.Files.copy;
 
 /**
@@ -41,20 +40,6 @@ import static com.google.common.io.Files.copy;
 public class ArtifactStorage {
 
     public static final String PROPERTIES_FILE = ".properties";
-
-    public static final String VERSION_PROPERTY                 = "version";
-    public static final String ARTIFACT_PROPERTY                = "artifact";
-    public static final String BUILD_TIME_PROPERTY              = "build-time";
-    public static final String FILE_NAME_PROPERTY               = "file";
-    public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication-required";
-    public static final String SUBSCRIPTION_REQUIRED_PROPERTY   = "subscription-required";
-
-    public static final Set<String> PUBLIC_PROPERTIES = new HashSet<String>() {{
-        add(VERSION_PROPERTY);
-        add(ARTIFACT_PROPERTY);
-        add(FILE_NAME_PROPERTY);
-        add(BUILD_TIME_PROPERTY);
-    }};
 
     private final String repositoryDir;
 
@@ -176,7 +161,7 @@ public class ArtifactStorage {
      *         if an I/O error occurs
      */
     protected String getRequiredSubscription(String artifact, String version) throws IOException {
-        return (String)loadProperties(artifact, version).get(SUBSCRIPTION_REQUIRED_PROPERTY);
+        return (String)loadProperties(artifact, version).get(SUBSCRIPTION_PROPERTY);
     }
 
 

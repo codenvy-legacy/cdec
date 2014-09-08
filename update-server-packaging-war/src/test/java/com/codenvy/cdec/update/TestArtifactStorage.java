@@ -35,6 +35,8 @@ import java.util.Properties;
 import static com.google.common.io.Files.copy;
 import static org.testng.Assert.*;
 
+import static com.codenvy.cdec.artifacts.ArtifactProperties.*;
+
 /**
  * @author Anatoliy Bazko
  */
@@ -75,11 +77,11 @@ public class TestArtifactStorage extends BaseTest {
         assertFalse(Files.exists(propertiesFile));
 
         Properties properties = new Properties();
-        properties.put(ArtifactStorage.VERSION_PROPERTY, "1.0.1");
-        properties.put(ArtifactStorage.BUILD_TIME_PROPERTY, "20140930");
-        properties.put(ArtifactStorage.FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
-        properties.put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "true");
-        properties.put(ArtifactStorage.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
+        properties.put(VERSION_PROPERTY, "1.0.1");
+        properties.put(BUILD_TIME_PROPERTY, "20140930");
+        properties.put(FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
+        properties.put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
+        properties.put(SUBSCRIPTION_PROPERTY, "On-Premises");
         artifactStorage.storeProperties("installation-manager", "1.0.1", properties);
 
         assertTrue(Files.exists(propertiesFile));
@@ -87,11 +89,11 @@ public class TestArtifactStorage extends BaseTest {
         properties = artifactStorage.loadProperties("installation-manager", "1.0.1");
         assertNotNull(properties);
         assertEquals(properties.size(), 5);
-        assertEquals(properties.getProperty(ArtifactStorage.VERSION_PROPERTY), "1.0.1");
-        assertEquals(properties.getProperty(ArtifactStorage.BUILD_TIME_PROPERTY), "20140930");
-        assertEquals(properties.getProperty(ArtifactStorage.FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
-        assertEquals(properties.getProperty(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY), "true");
-        assertEquals(properties.getProperty(ArtifactStorage.SUBSCRIPTION_REQUIRED_PROPERTY), "On-Premises");
+        assertEquals(properties.getProperty(VERSION_PROPERTY), "1.0.1");
+        assertEquals(properties.getProperty(BUILD_TIME_PROPERTY), "20140930");
+        assertEquals(properties.getProperty(FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
+        assertEquals(properties.getProperty(AUTHENTICATION_REQUIRED_PROPERTY), "true");
+        assertEquals(properties.getProperty(SUBSCRIPTION_PROPERTY), "On-Premises");
 
         assertEquals(artifactStorage.getRequiredSubscription("installation-manager", "1.0.1"), "On-Premises");
         assertEquals(artifactStorage.getFileName("installation-manager", "1.0.1"), "installation-manager-1.0.1.zip");
@@ -105,8 +107,7 @@ public class TestArtifactStorage extends BaseTest {
     @Test
     public void testIsAuthenticationRequired() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "true");
-        properties.put(ArtifactStorage.SUBSCRIPTION_REQUIRED_PROPERTY, "true");
+        properties.put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
         artifactStorage.storeProperties("installation-manager", "1.0.1", properties);
 
         assertTrue(artifactStorage.isAuthenticationRequired("installation-manager", "1.0.1"));
@@ -115,7 +116,7 @@ public class TestArtifactStorage extends BaseTest {
     @Test
     public void testAuthenticationIsNotRequired() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "false");
+        properties.put(AUTHENTICATION_REQUIRED_PROPERTY, "false");
         artifactStorage.storeProperties("installation-manager", "1.0.1", properties);
 
         assertFalse(artifactStorage.isAuthenticationRequired("installation-manager", "1.0.1"));
@@ -131,7 +132,7 @@ public class TestArtifactStorage extends BaseTest {
     @Test
     public void testAuthenticationIsNotRequiredIfArtifactPropertyWrongFormat() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "");
+        properties.put(AUTHENTICATION_REQUIRED_PROPERTY, "");
         artifactStorage.storeProperties("installation-manager", "1.0.1", properties);
 
         assertFalse(artifactStorage.isAuthenticationRequired("installation-manager", "1.0.1"));
@@ -145,7 +146,7 @@ public class TestArtifactStorage extends BaseTest {
     @Test
     public void testGetArtifact() throws Exception {
         Properties properties = new Properties();
-        properties.put(ArtifactStorage.FILE_NAME_PROPERTY, "file");
+        properties.put(FILE_NAME_PROPERTY, "file");
         artifactStorage.storeProperties("installation-manager", "1.0.1", properties);
 
         assertEquals(artifactStorage.getArtifact("installation-manager", "1.0.1").toString(),
@@ -180,8 +181,8 @@ public class TestArtifactStorage extends BaseTest {
     @Test
     public void testDownload() throws Exception {
         Properties props = new Properties();
-        props.put(ArtifactStorage.FILE_NAME_PROPERTY, "installation-manager-1.0.1.jar");
-        props.put(ArtifactStorage.VERSION_PROPERTY, "1.0.1");
+        props.put(FILE_NAME_PROPERTY, "installation-manager-1.0.1.jar");
+        props.put(VERSION_PROPERTY, "1.0.1");
         artifactStorage.storeProperties("installation-manager", "1.0.1", props);
 
         Path artifact = Paths.get("target", "download", "installation-manager", "1.0.1", "installation-manager-1.0.1.jar");

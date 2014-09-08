@@ -83,7 +83,10 @@ public class TestAccountUtils {
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
             assertEquals(e.getMessage(), AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR);
+            return;
         }
+        
+        fail();
     }
     
     @Test
@@ -98,7 +101,10 @@ public class TestAccountUtils {
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
             assertEquals(e.getMessage(), AccountUtils.ACCOUNT_NOT_FOUND_ERROR);
+            return;
         }
+        
+        fail();
     }
 
     @Test
@@ -112,7 +118,10 @@ public class TestAccountUtils {
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
             assertEquals(e.getMessage(), AccountUtils.ACCOUNT_NOT_FOUND_ERROR);
+            return;
         }
+        
+        fail();
     }
     
     @Test

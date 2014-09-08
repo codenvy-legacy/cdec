@@ -62,11 +62,6 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     @Override
-    public boolean isValidSubscriptionRequired() {
-        return true;
-    }
-
-    @Override
     public int getPriority() {
         return 2;
     }

@@ -22,6 +22,7 @@ import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.user.UserCredentials;
 import com.codenvy.cdec.utils.AccountUtils;
+import com.codenvy.cdec.utils.ArtifactUtils;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,6 +45,7 @@ import static com.codenvy.cdec.utils.Version.compare;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 @Singleton
 public class InstallationManagerImpl implements InstallationManager {
@@ -123,14 +125,14 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public void download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException {
         try {
-            boolean isValidSubscriptionRequired = artifact.isValidSubscriptionRequired();
-
+            boolean isAuthenticationRequired = ArtifactUtils.isAuthenticationRequired(artifact, version, transport, updateEndpoint);
+            
             String requestUrl = combinePaths(updateEndpoint,
                                              "/repository/"
-                                             + (isValidSubscriptionRequired ? "" : "public/")
+                                             + (isAuthenticationRequired ? "" : "public/")
                                              + "download/" + artifact.getName() + "/" + version);
 
-            if (!isValidSubscriptionRequired || isValidSubscription(userCredentials)) {
+            if (isAuthenticationRequired && isValidSubscription(userCredentials, artifact, version)) {
                 Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
                 FileUtils.deleteDirectory(artifactDownloadDir.toFile());
 
@@ -204,8 +206,13 @@ public class InstallationManagerImpl implements InstallationManager {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }
 
-    protected boolean isValidSubscription(UserCredentials userCredentials) throws IOException {
-        return AccountUtils.isValidSubscription(transport, apiEndpoint, "On-Premises", userCredentials); // TODO type of subscription is being stored in .properties file in artifact folder in update server
+    protected boolean isValidSubscription(UserCredentials userCredentials, Artifact artifact, String version) throws IOException {
+        String subscription = ArtifactUtils.getSubscription(artifact, version, transport, updateEndpoint);
+        if (subscription == null) {
+            return true;
+        }
+        
+        return AccountUtils.isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
     }
 
     /** Retrieves the latest versions from the Update Server. */

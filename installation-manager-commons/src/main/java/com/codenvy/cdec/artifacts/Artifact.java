@@ -38,11 +38,6 @@ public interface Artifact extends Comparable<Artifact> {
     String getCurrentVersion(String accessToken) throws IOException;
 
     /**
-     * @return true if subscription has to be checked before artifact downloading
-     */
-    boolean isValidSubscriptionRequired();
-
-    /**
      * @return the artifact name
      */
     String getName();

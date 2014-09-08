@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.cdec.artifacts.ArtifactProperties.*;
 import static com.jayway.restassured.RestAssured.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,10 +61,10 @@ public class TestRepositoryService extends BaseTest {
     private final UserManager       userManager;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
-        put(ArtifactStorage.AUTHENTICATION_REQUIRED_PROPERTY, "true");
+        put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
     }};
-    private final Properties subscriptionRequiredProperties   = new Properties() {{
-        put(ArtifactStorage.SUBSCRIPTION_REQUIRED_PROPERTY, "On-Premises");
+    private final Properties subscriptionProperties   = new Properties() {{
+        put(SUBSCRIPTION_PROPERTY, "On-Premises");
     }};
 
     {
@@ -144,9 +145,9 @@ public class TestRepositoryService extends BaseTest {
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
         assertEquals(value.size(), 3);
-        assertEquals(value.get(ArtifactStorage.ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
-        assertEquals(value.get(ArtifactStorage.VERSION_PROPERTY), "1.0.2");
-        assertEquals(value.get(ArtifactStorage.FILE_NAME_PROPERTY), "tmp");
+        assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
+        assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
+        assertEquals(value.get(FILE_NAME_PROPERTY), "tmp");
     }
 
     @Test
@@ -159,7 +160,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownloadPublicErrorIfArtifactAbsent() throws Exception {
+    public void testDownloadPublicErrorWhenArtifactAbsent() throws Exception {
         Response response = given().when().get("repository/public/download/installation-manager/1.0.2");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode());
     }
@@ -174,9 +175,45 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownloadPublicArtifactErrorIfAuthenticationRequired() throws Exception {
+    public void testDownloadPublicWithSubscription() throws Exception {
+        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
+        .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        
+        when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
+        .thenReturn("[{serviceId:On-Premises}]");
+        
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+    
+    @Test
+    public void testDownloadPublicArtifactWhenSubscriptionError() throws Exception {
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
+
+        Response response = given().when().get("/repository/public/download/cdec/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
+    }
+        
+    @Test
+    public void testDownloadPrivateArtifactWithoutSubscription() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[{serviceId:On-Premises}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+
+    @Test
+    public void testDownloadArtifactWhenAuthenticationError() throws Exception {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given().when().get("repository/public/download/cdec/1.0.1");
@@ -184,60 +221,12 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownloadPublicArtifactErrorIfSubscriptionRequired() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[{serviceId:On-Premises}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
-
-        Response response = given().when().get("/repository/public/download/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadPrivate() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", new Properties());
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
-    }
-
-    @Test
-    public void testDownloadPrivateSubscriptionRequired() throws Exception {
-        when(transport.doGetRequest("/account", "token")).thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions", "token")).thenReturn("[{serviceId:On-Premises}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
-    }
-
-    @Test
-    public void testDownloadPrivateAuthenticationRequired() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
-    }
-
-
-    @Test
-    public void testDownloadPrivateErrorIfSubscriptionAbsent() throws Exception {
-        when(transport.doGetRequest("/account", "token")).thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions", "token")).thenReturn("[]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+    public void testDownloadPrivateWhenUserWithoutSubscriptionError() throws Exception {
+        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
+                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
+                 .thenReturn("[]");
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -247,9 +236,10 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownloadPrivateErrorIfUserAccountInvalid() throws Exception {
-        when(transport.doGetRequest("/account", "token")).thenReturn("[{accountReference:{id:accountId}}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+    public void testDownloadPrivateWhenUserAccountHasInvalidRoleError() throws Exception {
+        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
+               .thenReturn("[{roles:[\"account/member\"],accountReference:{id:accountId}}]");
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given().auth()
                .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
@@ -261,9 +251,10 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownloadPrivateErrorIfSub() throws Exception {
-        when(transport.doGetRequest("/account", "token")).thenReturn("[{roles:[\"account/owner\"],accountReference:null}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionRequiredProperties);
+    public void testDownloadPrivateErrorIfAccountHasnotArtifactId() throws Exception {
+        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
+               .thenReturn("[{roles:[\"account/owner\"],accountReference:null}]");
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given().auth()
                .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
@@ -318,9 +309,9 @@ public class TestRepositoryService extends BaseTest {
         Properties properties = new Properties();
         properties.load(Files.newInputStream(propertiesFile));
         assertEquals(properties.size(), 3);
-        assertEquals(properties.get(ArtifactStorage.VERSION_PROPERTY), "1.0.1-SNAPSHOT");
-        assertEquals(properties.get(ArtifactStorage.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
-        assertEquals(properties.get(ArtifactStorage.ARTIFACT_PROPERTY), "cdec");
+        assertEquals(properties.get(VERSION_PROPERTY), "1.0.1-SNAPSHOT");
+        assertEquals(properties.get(FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
+        assertEquals(properties.get(ARTIFACT_PROPERTY), "cdec");
     }
 
 
@@ -345,10 +336,10 @@ public class TestRepositoryService extends BaseTest {
         Properties properties = new Properties();
         properties.load(Files.newInputStream(propertiesFile));
         assertEquals(properties.size(), 4);
-        assertEquals(properties.get(ArtifactStorage.VERSION_PROPERTY), "1.0.1");
-        assertEquals(properties.get(ArtifactStorage.FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
-        assertEquals(properties.get(ArtifactStorage.BUILD_TIME_PROPERTY), "20140930");
-        assertEquals(properties.get(ArtifactStorage.ARTIFACT_PROPERTY), "cdec");
+        assertEquals(properties.get(VERSION_PROPERTY), "1.0.1");
+        assertEquals(properties.get(FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
+        assertEquals(properties.get(BUILD_TIME_PROPERTY), "20140930");
+        assertEquals(properties.get(ARTIFACT_PROPERTY), "cdec");
     }
 
     @Test

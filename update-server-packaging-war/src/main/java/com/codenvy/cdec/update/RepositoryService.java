@@ -53,14 +53,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.codenvy.cdec.update.ArtifactStorage.PUBLIC_PROPERTIES;
 import static com.codenvy.cdec.utils.AccountUtils.isValidSubscription;
+import static com.codenvy.cdec.artifacts.ArtifactProperties.*;
+import static java.lang.String.format;
 
 
 /**
  * Repository API.
  *
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 @Singleton
 @Path("repository")
@@ -106,16 +108,9 @@ public class RepositoryService {
     public Response getLatestVersion(@PathParam("artifact") final String artifact) {
         try {
             String version = artifactStorage.getLatestVersion(artifact);
-            final Properties properties = artifactStorage.loadProperties(artifact, version);
+            Map<String, String> properties = getArtifactProperties(artifact, version);
 
-            Map<String, String> m = new HashMap<>(PUBLIC_PROPERTIES.size());
-            for (String prop : PUBLIC_PROPERTIES) {
-                if (properties.containsKey(prop)) {
-                    m.put(prop, properties.getProperty(prop));
-                }
-            }
-
-            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(m)).build();
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(properties)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
                            .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'. " + e.getMessage()).build();
@@ -124,6 +119,18 @@ public class RepositoryService {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                            .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'").build();
         }
+    }
+
+    private Map<String, String> getArtifactProperties(final String artifact, String version) throws IOException {
+        final Properties properties = artifactStorage.loadProperties(artifact, version);
+
+        Map<String, String> m = new HashMap<>(PUBLIC_PROPERTIES.size());
+        for (String prop : PUBLIC_PROPERTIES) {
+            if (properties.containsKey(prop)) {
+                m.put(prop, properties.getProperty(prop));
+            }
+        }
+        return m;
     }
 
     /**
@@ -206,6 +213,7 @@ public class RepositoryService {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
             UserCredentials userCredentials = new UserCredentials(userManager.getCurrentUser().getToken(), accountId);
             if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
+
                 return Response.status(Response.Status.FORBIDDEN).entity("User must have valid subscription.").build();
             }
 
@@ -302,7 +310,7 @@ public class RepositoryService {
     /**
      * Uploads artifact into the repository. If the same artifact exists then it will be replaced.
      * If {@value ArtifactStorage#AUTHENTICATION_REQUIRED_PROPERTY} isn't set then artifact will be treated as private,
-     * which requires user to be authenticated to download it. If {@value ArtifactStorage#SUBSCRIPTION_REQUIRED_PROPERTY}
+     * which requires user to be authenticated to download it. If {@value ArtifactStorage#SUBSCRIPTION_PROPERTY}
      * is set then user has to have specific valid subscription to download artifact. If artifact is public then subscription won't be taken into
      * account.
      *
@@ -367,6 +375,38 @@ public class RepositoryService {
             }
         } else {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The request must contain multipart content").build();
+        }
+    }
+    
+    /**
+     * Returns info about the artifact version.
+     *
+     * @param artifact
+     *         the name of the artifact
+     * @param version
+     *         the version of the artifact
+     * @return Response
+     */
+    @GenerateLink(rel = "get version info")
+    @GET
+    @Path("info/{artifact}/{version}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getVersionInfo(@PathParam("artifact") final String artifact,
+                                   @PathParam("version") final String version) {
+        try {
+            Map<String, String> properties = getArtifactProperties(artifact, version);
+
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(properties)).build();
+        } catch (ArtifactNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity(format("Unexpected error. Can't retrieve the info of the artifact '%s', version '%s'. %s",
+                                          artifact, version, e.getMessage())).build();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(format("Unexpected error. Can't retrieve the info of the artifact '%s', version '%s'. %s",
+                                          artifact, version, e.getMessage())).build();
+
         }
     }
 }

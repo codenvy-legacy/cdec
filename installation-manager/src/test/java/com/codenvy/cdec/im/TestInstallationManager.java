@@ -17,6 +17,7 @@
  */
 package com.codenvy.cdec.im;
 
+
 import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
@@ -38,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.codenvy.cdec.artifacts.ArtifactProperties.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -108,8 +110,9 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testDownloadErrorIfSubscriptionInvalid() throws Exception {
-        final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "2.10.5", "file1");
-        stub(transport.download(eq("update/endpoint/repository/download/" + CDECArtifact.NAME + "/2.10.5"), any(Path.class)))
+        String version = "2.10.5";
+        final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), version, "file1");
+        stub(transport.download(eq("update/endpoint/repository/download/" + cdecArtifact.getName() + "/" + version), any(Path.class)))
                 .toAnswer(new Answer<Path>() {
                     @Override
                     public Path answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -118,9 +121,12 @@ public class TestInstallationManager {
                         return file1;
                     }
                 });
-        doReturn(false).when(manager).isValidSubscription(testCredentials);
+        doReturn(false).when(manager).isValidSubscription(testCredentials, cdecArtifact, version);
 
-        manager.download(testCredentials, cdecArtifact, "2.10.5");
+        when(transport.doGetRequest("update/endpoint/repository/info/" + cdecArtifact.getName() + "/" + version))
+                .thenReturn(String.format("{\"%s\": \"true\"}", AUTHENTICATION_REQUIRED_PROPERTY));
+        
+        manager.download(testCredentials, cdecArtifact, version);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -146,21 +152,22 @@ public class TestInstallationManager {
     }
 
     @Test
-    public void testDownload() throws Exception {
-        final Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "2.10.5", "file1");
-        stub(transport.download(eq("update/endpoint/repository/download/" + CDECArtifact.NAME + "/2.10.5"), any(Path.class), anyString()))
-                .toAnswer(new Answer<Path>() {
-                    @Override
-                    public Path answer(InvocationOnMock invocationOnMock) throws Throwable {
-                        Files.createDirectories(file1.getParent());
-                        Files.createFile(file1);
-                        return file1;
-                    }
-                });
-        doReturn(true).when(manager).isValidSubscription(testCredentials);
+    public void testDownloadVersion() throws Exception {
+        String version = "1.0.0";        
+        when(transport.doGetRequest("api/endpoint/account", testCredentials.getToken()))
+             .thenReturn("[{"
+                    + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                    + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                    + "}]");
+        
+        when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
+            .thenReturn("[{serviceId:\"On-Premises\"}]");
+        
+        when(transport.doGetRequest("update/endpoint/repository/info/" + cdecArtifact.getName() + "/" + version))
+            .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"On-Premises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
+        
+        manager.download(testCredentials, cdecArtifact, version);
 
-        manager.download(testCredentials, cdecArtifact, "2.10.5");
-        assertTrue(Files.exists(file1));
     }
 
     @Test
@@ -245,24 +252,28 @@ public class TestInstallationManager {
         manager.getDownloadedArtifacts();
     }
     
-    @Test
     public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
+        String version = "1.0.0";        
         when(transport.doGetRequest("api/endpoint/account", testCredentials.getToken()))
-        .thenReturn("[{"
+             .thenReturn("[{"
                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                     + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
                     + "}]");
 
-        when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", 
-                                    testCredentials.getToken()))
-        .thenReturn("[{serviceId:invalid}]");
+        when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
+            .thenReturn("[{serviceId:\"anotherSubscription\"}]");
+        
+        when(transport.doGetRequest("update/endpoint/repository/info/" + cdecArtifact.getName() + "/" + version))
+            .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"On-Premises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
         
         try {
-            manager.download(testCredentials, cdecArtifact, "1.0.0");
+            manager.download(testCredentials, cdecArtifact, version);
         } catch(Exception e) {
             assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
             assertEquals(e.getMessage(), "Valid subscription is required to download cdec");
-
+            return;
         }
+        
+        fail();
     }
 }

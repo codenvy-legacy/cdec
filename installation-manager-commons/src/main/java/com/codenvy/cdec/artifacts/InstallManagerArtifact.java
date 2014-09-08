@@ -107,11 +107,6 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
-    public boolean isValidSubscriptionRequired() {
-        return false;
-    }
-
-    @Override
     public int getPriority() {
         return 1;
     }
