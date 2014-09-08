@@ -50,14 +50,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
-        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
+        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("installation-manager.update_server_endpoint"));
     }
 
     /** For testing purpose only. */
     @Deprecated
     protected InstallationManagerServiceImpl(InstallationManager manager) {
         this.manager = manager;
-        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("codenvy.installation-manager.update_endpoint"));
+        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("installation-manager.update_server_endpoint"));
     }
 
     /** {@inheritDoc} */

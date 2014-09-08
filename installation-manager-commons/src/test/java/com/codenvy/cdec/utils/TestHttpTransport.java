@@ -56,7 +56,7 @@ public class TestHttpTransport {
     @BeforeMethod
     public void setUp() throws Exception {
         testService = new TestService();
-        httpTransport = new HttpTransport();
+        httpTransport = new HttpTransport("", 0);
     }
 
     @Test

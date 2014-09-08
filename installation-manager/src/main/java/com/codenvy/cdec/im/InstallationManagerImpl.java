@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,8 +59,8 @@ public class InstallationManagerImpl implements InstallationManager {
 
     @Inject
     public InstallationManagerImpl(@Named("api.endpoint") String apiEndpoint,
-                                   @Named("codenvy.installation-manager.update_endpoint") String updateEndpoint,
-                                   @Named("codenvy.installation-manager.download_dir") String downloadDir,
+                                   @Named("installation-manager.update_server_endpoint") String updateEndpoint,
+                                   @Named("installation-manager.download_dir") String downloadDir,
                                    HttpTransport transport,
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;

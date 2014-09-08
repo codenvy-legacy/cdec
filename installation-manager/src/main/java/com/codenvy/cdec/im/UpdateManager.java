@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Named;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -52,8 +51,8 @@ public class UpdateManager {
     private Scheduler scheduler;
 
     @Inject
-    public UpdateManager(@Named("codenvy.installation-manager.check_update_schedule") String updateSchedule,
-                         @Named("codenvy.installation-manager.download_automatically") boolean downloadAutomatically,
+    public UpdateManager(@Named("installation-manager.daemon.check_update_schedule") String updateSchedule,
+                         @Named("installation-manager.daemon.download_automatically") boolean downloadAutomatically,
                          InstallationManager manager) throws IOException {
         this.manager = manager;
         this.updateSchedule = updateSchedule;

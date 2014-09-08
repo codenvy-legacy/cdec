@@ -42,7 +42,7 @@ public class CDECArtifact extends AbstractArtifact {
     private final String        updateEndpoint;
 
     @Inject
-    public CDECArtifact(@Named("codenvy.installation-manager.update_endpoint") String updateEndpoint,
+    public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                         HttpTransport transport) {
         super(NAME);
         this.updateEndpoint = updateEndpoint;

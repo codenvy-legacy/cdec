@@ -18,10 +18,12 @@
 package com.codenvy.cdec.utils;
 
 import com.codenvy.commons.lang.IoUtil;
+import com.google.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedOutputStream;
@@ -29,6 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,6 +47,16 @@ import java.util.regex.Pattern;
 @Singleton
 public class HttpTransport {
     private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
+
+    private final String proxyUrl;
+    private final int    proxyPort;
+
+    @Inject
+    public HttpTransport(@Named("installation-manager.proxy_url") String proxyUrl,
+                         @Named("installation-manager.proxy_port") int proxyPort) {
+        this.proxyUrl = proxyUrl;
+        this.proxyPort = proxyPort;
+    }
 
     /**
      * Performs GET request.
@@ -146,7 +160,13 @@ public class HttpTransport {
     }
 
     private HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection)new URL(path).openConnection();
+        HttpURLConnection connection;
+        if (!proxyUrl.isEmpty() && proxyPort > 0) {
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyUrl, proxyPort));
+            connection = (HttpURLConnection)new URL(path).openConnection(proxy);
+        } else {
+            connection = (HttpURLConnection)new URL(path).openConnection();
+        }
 
         if (accessToken != null) {
             String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
