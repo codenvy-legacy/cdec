@@ -24,12 +24,8 @@ import com.codenvy.api.core.rest.shared.dto.Link;
 import com.codenvy.cdec.user.UserCredentials;
 
 import javax.annotation.Nullable;
-
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,8 +35,8 @@ import static com.codenvy.cdec.utils.Commons.createListDtoFromJson;
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
- *
- * TODO after login command
+ *         <p/>
+ *         TODO after login command
  */
 public class AccountUtils {
     public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions hasn't found.";
@@ -69,16 +65,17 @@ public class AccountUtils {
         return false;
     }
 
-    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, UserCredentials userCredentials) throws IOException {
+    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, UserCredentials userCredentials)
+            throws IOException {
         MemberDescriptor account = getAccount(transport, apiEndpoint, userCredentials);
         if (account == null) {
             throw new IllegalStateException(ACCOUNT_NOT_FOUND_ERROR);
         }
-        
+
         if (!hasRole(account, ACCOUNT_OWNER_ROLE)) {
             throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
         }
-                
+
         String subscriptionsHref = getSubscriptionsHref(account);
         if (subscriptionsHref == null) {
             String accountId = getAccountId(account);
@@ -98,8 +95,9 @@ public class AccountUtils {
     public static MemberDescriptor getAccount(HttpTransport transport,
                                               String apiEndpoint,
                                               UserCredentials userCredentials) throws IOException {
-        List<MemberDescriptor> accounts = createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
-                                                                MemberDescriptor.class);
+        List<MemberDescriptor> accounts =
+                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
+                                      MemberDescriptor.class);
 
         for (MemberDescriptor account : accounts) {
             String id = getAccountId(account);
@@ -107,7 +105,7 @@ public class AccountUtils {
                 return account;
             }
         }
-        
+
         return null;
     }
 
@@ -130,24 +128,24 @@ public class AccountUtils {
     @Nullable
     private static String getAccountId(MemberDescriptor account) {
         AccountReference reference = account.getAccountReference();
-        
+
         if (reference != null) {
             return account.getAccountReference().getId();
         }
-        
+
         // Platform API issue
         // workaround - read id from subscriptions href
         String subscriptionsHref = getSubscriptionsHref(account);
         if (subscriptionsHref == null) {
             return null;
         }
-        
+
         Pattern pattern = Pattern.compile("account/([0-9a-z-]+)/subscriptions");
         Matcher m = pattern.matcher(subscriptionsHref);
         if (m.find()) {
             return m.group(1);
         }
-        
+
         return null;
     }
 

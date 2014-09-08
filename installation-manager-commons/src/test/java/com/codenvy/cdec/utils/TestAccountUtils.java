@@ -23,9 +23,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -71,57 +73,32 @@ public class TestAccountUtils {
         assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));
     }
 
-    @Test
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = ".*" + AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR + ".*")
     public void testSubscriptionWhenAccountWithInvalidRole() throws IOException {
         when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
                                                                              + "roles:[\"invalid-role\"],"
                                                                              + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
                                                                              + "}]");
-        
-        try {
-            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
-        } catch(Exception e) {
-            assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
-            assertEquals(e.getMessage(), AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR);
-            return;
-        }
-        
-        fail();
+
+        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
     }
-    
-    @Test
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = ".*" + AccountUtils.ACCOUNT_NOT_FOUND_ERROR + ".*")
     public void testSubscriptionWhenAccountWithDifferentId() throws IOException {
         when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
                                                                              + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                                                                              + "accountReference:{id:\"another-id\"}"
                                                                              + "}]");
-        
-        try {
-            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
-        } catch(Exception e) {
-            assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
-            assertEquals(e.getMessage(), AccountUtils.ACCOUNT_NOT_FOUND_ERROR);
-            return;
-        }
-        
-        fail();
+        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
     }
 
-    @Test
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = ".*" + AccountUtils.ACCOUNT_NOT_FOUND_ERROR + ".*")
     public void testSubscriptionWhenAccountWithoutId() throws IOException {
         when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
                                                                              + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
                                                                              + "}]");
-        
-        try {
-            AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
-        } catch(Exception e) {
-            assertEquals(e.getClass().getCanonicalName(), IllegalStateException.class.getCanonicalName());
-            assertEquals(e.getMessage(), AccountUtils.ACCOUNT_NOT_FOUND_ERROR);
-            return;
-        }
-        
-        fail();
+        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
     }
     
     @Test

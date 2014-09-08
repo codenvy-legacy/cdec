@@ -17,9 +17,7 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /** @author Dmytro Nochevnov */
@@ -34,7 +32,6 @@ public class ArtifactProperties {
     public static final Set<String> PUBLIC_PROPERTIES = new HashSet<String>() {{
         add(VERSION_PROPERTY);
         add(ARTIFACT_PROPERTY);
-        add(FILE_NAME_PROPERTY);
         add(BUILD_TIME_PROPERTY);
         add(AUTHENTICATION_REQUIRED_PROPERTY);
         add(SUBSCRIPTION_PROPERTY);

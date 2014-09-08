@@ -56,7 +56,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public String getCurrentVersion(String accessToken) throws IOException {
-        String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/info/" + NAME), accessToken);
+        String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/installationinfo/" + NAME), accessToken);
         Map m = Commons.fromJson(json, Map.class);
         return (String)m.get("version");
     }

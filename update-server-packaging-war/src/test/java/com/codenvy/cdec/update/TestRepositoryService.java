@@ -94,7 +94,7 @@ public class TestRepositoryService extends BaseTest {
     public void testSaveInstalledInfoErrorIfInvalidUserAgent() throws Exception {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/1.0.1");
+                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 
@@ -103,7 +103,7 @@ public class TestRepositoryService extends BaseTest {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .header("user-agent", RepositoryService.VALID_USER_AGENT)
-                .post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/.0.1");
+                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
@@ -111,7 +111,8 @@ public class TestRepositoryService extends BaseTest {
     public void testSaveInstalledInfo() throws Exception {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT).post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/1.0.1");
+                .header("user-agent", RepositoryService.VALID_USER_AGENT)
+                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
     }
 
@@ -119,12 +120,13 @@ public class TestRepositoryService extends BaseTest {
     public void testGetInstalledInfo() throws Exception {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT).post(JettyHttpServer.SECURE_PATH + "/repository/info/cdec/1.0.1");
+                .header("user-agent", RepositoryService.VALID_USER_AGENT)
+                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(JettyHttpServer.SECURE_PATH + "/repository/info/cdec");
+                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map m = response.as(Map.class);
@@ -140,14 +142,13 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
 
-        Response response = given().when().get("repository/version/installation-manager");
+        Response response = given().when().get("repository/properties/installation-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 3);
+        assertEquals(value.size(), 2);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
-        assertEquals(value.get(FILE_NAME_PROPERTY), "tmp");
     }
 
     @Test
@@ -192,7 +193,7 @@ public class TestRepositoryService extends BaseTest {
     }
     
     @Test
-    public void testDownloadPublicArtifactWhenSubscriptionError() throws Exception {
+    public void testDownloadPublicArtifactErrorWhenSubscriptionRequired() throws Exception {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given().when().get("/repository/public/download/cdec/1.0.1");
