@@ -96,7 +96,7 @@ installIM() {
 }
 
 installCLI() {
-    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
+    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli-assembly"
 
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
