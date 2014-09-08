@@ -62,7 +62,7 @@ public class Daemon {
     public static void main(String[] args) {
         try {
             daemonize();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.error("Startup failed. " + e.getMessage());
         }
 
