@@ -21,7 +21,6 @@ import jline.console.ConsoleReader;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.commands.Option;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,29 +29,28 @@ import java.nio.charset.Charset;
 import static java.lang.String.format;
 
 /**
- * Allow to login in the default remote or a given remote
- * @author Florent Benoit
+ * Installation manager Login command.
  */
 @Command(scope = "im", name = "login", description = "Login to Codenvy Update Server")
 public class LoginCommand extends AbstractIMCommand {
 
-    @Argument(name = "username", description = "Username of the update server", required = false, multiValued = false, index = 0)
+    @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;
 
-    @Argument(name = "password", description = "Password of the update server", required = false, multiValued = false, index = 1)
+    @Argument(name = "password", description = "The user's password", required = false, multiValued = false, index = 1)
     private String password;
 
-    @Argument(name = "accountId", description = "ID of Codenvy account which had been used for subscription", required = false, multiValued = false, index = 2)
+    @Argument(name = "accountId", description = "The user's account ID", required = false, multiValued = false, index = 2)
     private String accountId;
 
     @Override
-    protected Object doExecute() throws Exception {
+    protected Void doExecute() throws Exception {
         try {
             init();
-    
+
             String remoteUrl = getUpdateServerUrl();
-            String remoteName = getUpdateServerRemote();
-            
+            String remoteName = getRemoteNameForUpdateServer();
+
             if (username == null) {
                 if (isInteractive()) {
                     System.out.print("Username for '" + remoteUrl + "':");
@@ -65,7 +63,7 @@ public class LoginCommand extends AbstractIMCommand {
                     username = new ConsoleReader().readLine("Username for '" + remoteUrl + "':");
                 }
             }
-    
+
             if (password == null) {
                 if (isInteractive()) {
                     System.out.print("Password for " + username + ":");
@@ -75,10 +73,10 @@ public class LoginCommand extends AbstractIMCommand {
                     }
                     System.out.println(System.lineSeparator());
                 } else {
-                    password = new ConsoleReader().readLine(String.format("Password for %s:", username), Character.valueOf('*'));
+                    password = new ConsoleReader().readLine(String.format("Password for %s:", username), '*');
                 }
             }
-    
+
             if (accountId == null) {
                 if (isInteractive()) {
                     System.out.print("ID of account used for subscription:");
@@ -91,19 +89,24 @@ public class LoginCommand extends AbstractIMCommand {
                     accountId = new ConsoleReader().readLine("ID of account used for subscription:");
                 }
             }
-            
+
             preferencesStorage.setAccountId(accountId);
-            
+
             if (getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                System.out.println(format("Login success!"));
+                System.out.println(format("Login succeeded."));
                 return null;
             } else {
                 System.out.println("Login failed: please check the credentials.");
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             printError(e);
         }
 
         return null;
+    }
+
+    @Override
+    protected void validateIfUserLoggedIn() {
+        // do nothing
     }
 }

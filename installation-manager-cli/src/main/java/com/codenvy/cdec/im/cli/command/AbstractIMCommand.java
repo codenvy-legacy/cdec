@@ -17,10 +17,6 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.net.ConnectException;
-
 import com.codenvy.cdec.im.cli.preferences.PreferencesStorage;
 import com.codenvy.cdec.response.Response;
 import com.codenvy.cdec.restlet.InstallationManagerService;
@@ -37,6 +33,9 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.net.ConnectException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.codenvy.cdec.utils.Commons.getPrettyPrintingJson;
 import static org.fusesource.jansi.Ansi.Color.RED;
@@ -48,8 +47,8 @@ import static org.fusesource.jansi.Ansi.ansi;
 public abstract class AbstractIMCommand extends AbsCommand {
     protected final InstallationManagerService installationManagerProxy;
     protected PreferencesStorage preferencesStorage;
-    
-    private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "updateServer";
+
+    private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";
 
     public AbstractIMCommand() {
         try {
@@ -62,24 +61,30 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Override
     public void init() {
         super.init();
-        
-        String remote = getUpdateServerRemote();
-        Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
-        if (!readyRemotes.containsKey(remote) && 
-            !(this instanceof LoginCommand)) {
-            throw new IllegalStateException("Please login using im:login command.");
-        }
-        
-        preferencesStorage = new PreferencesStorage(getGlobalPreferences(),
-                                                    getUpdateServerRemote());
+        validateIfUserLoggedIn();
+
+        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getRemoteNameForUpdateServer());
     }
-    
+
+    /**
+     * @throws IllegalStateException
+     *         if user isn't logged in
+     */
+    protected void validateIfUserLoggedIn() throws IllegalStateException {
+        String remoteName = getRemoteNameForUpdateServer();
+
+        Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
+        if (!readyRemotes.containsKey(remoteName)) {
+            throw new IllegalStateException("Please log in using im:login command.");
+        }
+    }
+
     protected void printError(Exception ex) {
         try {
             if (isConnectionException(ex)) {
-                printError("It is impossible to connect to installation manager server.");
+                printError("It is impossible to connect to Codenvy Update Server.");
             } else {
-                printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));                
+                printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));
             }
         } catch (JSONException e) {
             Ansi ansi = ansi().fg(RED)
@@ -95,7 +100,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         Throwable cause = e.getCause();
         return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
     }
-    
+
     protected void printError(String message) {
         System.out.println(ansi().fg(RED).a(message).reset());
     }
@@ -112,37 +117,37 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
     }
-    
+
     /** Find out or add remote for update server */
     @Nonnull
-    protected String getUpdateServerRemote() {
+    protected String getRemoteNameForUpdateServer() {
         String updateServerUrl = getUpdateServerUrl();
-        String remote = getRemote(updateServerUrl);
+        String remoteName = getRemoteNameByUrl(updateServerUrl);
 
-        // create remote for update sever if it is absent
-        if (remote == null) {
+        // create remoteName for update sever if it is absent
+        if (remoteName == null) {
             if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl)) {
-                throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", 
+                throw new IllegalStateException(String.format("It was impossible to add remoteName. Please add remote with url '%s' manually.",
                                                               updateServerUrl));
             }
-            
-            return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
-        }        
 
-        return remote;
+            return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+        }
+
+        return remoteName;
     }
 
     protected String getUpdateServerUrl() {
         return installationManagerProxy.getUpdateServerUrl();
     }
-    
+
     @Nonnull
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());
     }
-    
+
     @Nullable
-    private String getRemote(String url) throws IllegalStateException {
+    private String getRemoteNameByUrl(String url) throws IllegalStateException {
         Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();
 
         for (Entry<String, Remote> remoteEntry : availableRemotes.entrySet()) {
@@ -151,7 +156,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
                 return remoteEntry.getKey();
             }
         }
-        
+
         return null;
     }
 }

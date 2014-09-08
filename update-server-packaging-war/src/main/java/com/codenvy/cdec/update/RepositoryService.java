@@ -44,7 +44,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -206,9 +205,7 @@ public class RepositoryService {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
             UserCredentials userCredentials = new UserCredentials(userManager.getCurrentUser().getToken(), accountId);
-            if (requiredSubscription != null &&
-                !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
-
+            if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("User must have valid subscription.").build();
             }
 
