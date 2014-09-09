@@ -25,7 +25,6 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.user.UserCredentials;
 import com.codenvy.cdec.utils.Commons;
@@ -38,7 +37,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
-public class DownloadCommandTest {    
+public class CheckoutUpdatesCommandTest {    
     private AbstractIMCommand spyCommand;
     
     @Mock private InstallationManagerService mockInstallationManagerProxy;
@@ -59,7 +58,7 @@ public class DownloadCommandTest {
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
         
-        spyCommand = spy(new DownloadCommand());        
+        spyCommand = spy(new CheckUpdatesCommand());        
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;      
                 
         doNothing().when(spyCommand).init();
@@ -70,8 +69,8 @@ public class DownloadCommandTest {
     }
     
     @Test
-    public void testDownload() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(userCredentialsRep);
+    public void testCheckUpdates() throws Exception {
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
         
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         
@@ -83,47 +82,14 @@ public class DownloadCommandTest {
             fail(e.getMessage());
         }
     }
-    
+ 
     @Test
-    public void testDownloadArtifact() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(CDECArtifact.NAME.toString(), userCredentialsRep);
-        
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME.toString());
-        
-        try {
-            CommandInvoker.Result result = commandInvoker.invoke();
-            String output = result.getOutputStream();
-            assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-    
-    @Test
-    public void testDownloadArtifactVersion() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(CDECArtifact.NAME.toString(), "2.0.5", userCredentialsRep);
-        
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME.toString());
-        commandInvoker.argument("version", "2.0.5");
-        
-        try {
-            CommandInvoker.Result result = commandInvoker.invoke();
-            String output = result.getOutputStream();
-            assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testDownloadWhenErrorInResponse() throws Exception {
+    public void testCheckUpdatesWhenErrorInResponse() throws Exception {
         String serviceErrorResponse = "{"
                                       + "message: \"Some error\","
                                       + "status: \"ERROR\""
                                       + "}";
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).download(userCredentialsRep);
+        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
         
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         
@@ -137,13 +103,13 @@ public class DownloadCommandTest {
     }
     
     @Test
-    public void testDownloadWhenServiceThrowsError() throws Exception {
+    public void testCheckUpdatesWhenServiceThrowsError() throws Exception {
         String expectedOutput = "{"
                                   + "message: \"Server Error Exception\","
                                   + "status: \"ERROR\""
                                   + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(mockInstallationManagerProxy).download(userCredentialsRep);        
+            .when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);        
         
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         

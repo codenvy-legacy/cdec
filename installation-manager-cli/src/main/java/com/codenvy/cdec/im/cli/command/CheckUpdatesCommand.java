@@ -29,7 +29,7 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
 
     /** {@inheritDoc} */
     @Override
-    protected Void doExecute() throws Exception {
+    protected Void doExecute() {
         try {
             init();
 

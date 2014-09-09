@@ -50,6 +50,7 @@
     <properties>
         <maven.releases.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-releases/</maven.releases.repo.url>
         <maven.snapshots.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-snapshots/</maven.snapshots.repo.url>
+        <osgi-core.version>5.0.0</osgi-core.version>
         <version.license-header>codenvy-codenvy-license-resource-bundle</version.license-header>
     </properties>
 </project>

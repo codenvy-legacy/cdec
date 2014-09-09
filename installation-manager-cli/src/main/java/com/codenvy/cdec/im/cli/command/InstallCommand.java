@@ -35,7 +35,7 @@ public class InstallCommand extends AbstractIMCommand {
     private String version;
 
     @Override
-    protected Void doExecute() throws Exception {
+    protected Void doExecute() {
         try {
             init();
 
