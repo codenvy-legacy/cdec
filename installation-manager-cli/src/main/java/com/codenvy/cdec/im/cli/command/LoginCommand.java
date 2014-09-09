@@ -93,7 +93,7 @@ public class LoginCommand extends AbstractIMCommand {
             preferencesStorage.setAccountId(accountId);
 
             if (getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                System.out.println(format("Login succeeded."));
+                System.out.println("Login succeeded.");
                 return null;
             } else {
                 System.out.println("Login failed: please check the credentials.");
