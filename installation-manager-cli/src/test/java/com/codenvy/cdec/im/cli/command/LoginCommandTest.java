@@ -17,6 +17,11 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
+import com.codenvy.cdec.im.cli.preferences.PreferencesStorage;
+import com.codenvy.cdec.restlet.InstallationManagerService;
+import com.codenvy.cdec.utils.Commons;
+import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -24,17 +29,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.codenvy.cdec.im.cli.preferences.PreferencesStorage;
-import com.codenvy.cdec.restlet.InstallationManagerService;
-import com.codenvy.cdec.utils.Commons;
-import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
 public class LoginCommandTest {    
@@ -79,14 +75,10 @@ public class LoginCommandTest {
         commandInvoker.argument("accountId", TEST_USER_ACCOUNT_ID);        
         
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
-        
-        try {
-            CommandInvoker.Result result = commandInvoker.invoke();
-            String output = result.getOutputStream();
-            assertEquals(output, "Login succeeded.\n");
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, "Login succeeded.\n");
     }
     
     @Test
@@ -97,14 +89,10 @@ public class LoginCommandTest {
         commandInvoker.argument("accountId", TEST_USER_ACCOUNT_ID);        
         
         doReturn(false).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
-        
-        try {
-            CommandInvoker.Result result = commandInvoker.invoke();
-            String output = result.getOutputStream();
-            assertEquals(output, "Login failed: please check the credentials.\n");
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, "Login failed: please check the credentials.\n");
     }
     
     @Test
@@ -117,14 +105,10 @@ public class LoginCommandTest {
             .when(mockInstallationManagerProxy).getUpdateServerUrl();        
         
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        
-        try {
-            CommandInvoker.Result result = commandInvoker.invoke();
-            String output = result.disableAnsi().getOutputStream();
-            assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
     }
     
     static class TestLoginCommand extends LoginCommand {
