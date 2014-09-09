@@ -16,7 +16,7 @@
 #
 
 #!/bin/bash
-filename=`ls cdec-packaging-tomcat-update-server/target | grep cdec-packaging-tomcat-update-server`
+filename=`ls update-server-packaging-tomcat/target | grep update-server-packaging-tomcat`
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
     SSH_AS_USER_NAME=codenvy
@@ -41,7 +41,7 @@ deleteFileIfExists() {
 }
 
     echo "==== Step [1/7] =======================> [Uploading a new Tomcat]"
-    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} cdec-packaging-tomcat-update-server/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
+    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} update-server-packaging-tomcat/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
     echo "==== Step [3/7] =======================> [Server is stopped]"
