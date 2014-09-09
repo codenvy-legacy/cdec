@@ -32,5 +32,8 @@
         <command>
             <action class="com.codenvy.cdec.im.cli.command.LoginCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.cdec.im.cli.command.VersionCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

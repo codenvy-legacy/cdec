@@ -37,7 +37,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String download(JacksonRepresentation<UserCredentials> userCredentialsRep);
-    
+
     @POST
     @Path("download/{artifact}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -65,6 +65,14 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String install(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+
+    /** Get versions of installed artifacts. */
+    @POST
+    @Path("version")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getVersions(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+
 
     @POST
     @Path("install/{artifact}")

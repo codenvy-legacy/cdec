@@ -184,6 +184,15 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
+    public String getVersions(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        Map<Artifact, String> installedArtifacts = manager.getInstalledArtifacts(userCredentials.getToken());
+        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(installedArtifacts).build().toJson();
+    }
+
+
+    /** {@inheritDoc} */
+    @Override
     public String install(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         return install(artifactName, null, userCredentialsRep);
     }

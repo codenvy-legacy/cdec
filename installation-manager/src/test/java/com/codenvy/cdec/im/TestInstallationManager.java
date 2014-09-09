@@ -81,13 +81,13 @@ public class TestInstallationManager {
     @Test
     public void testInstallArtifactDoNothingIfArtifactInstalled() throws Exception {
         doReturn(new HashMap<Artifact, Path>() {{
-            put(cdecArtifact, Paths.get("target/download/cdec/2.10.1/file1"));
+            put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1");
+        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.1");
 
-        verify(cdecArtifact, never()).install(any(Path.class));
+        verify(installManagerArtifact, never()).install(any(Path.class));
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)
@@ -133,11 +133,11 @@ public class TestInstallationManager {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testInstallArtifactErrorIfArtifactInstalledNewly() throws Exception {
         doReturn(new HashMap<Artifact, Path>() {{
-            put(cdecArtifact, Paths.get("target/download/cdec/2.10.0/file1"));
+            put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.0/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.0");
+        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0");
     }
 
     @Test
@@ -193,7 +193,7 @@ public class TestInstallationManager {
                 .thenReturn("{version:2.10.4}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts(testCredentials.getToken());
-        assertEquals(m.get(cdecArtifact), "2.10.4");
+        assertNull(m.get(cdecArtifact));
         assertNotNull(m.get(installManagerArtifact));
     }
 

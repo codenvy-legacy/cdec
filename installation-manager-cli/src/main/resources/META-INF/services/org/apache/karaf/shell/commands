@@ -18,3 +18,4 @@ com.codenvy.cdec.im.cli.command.InstallCommand
 com.codenvy.cdec.im.cli.command.CheckUpdatesCommand
 com.codenvy.cdec.im.cli.command.DownloadCommand
 com.codenvy.cdec.im.cli.command.LoginCommand
+com.codenvy.cdec.im.cli.command.VersionCommand

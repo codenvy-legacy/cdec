@@ -93,10 +93,10 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(CDECArtifact.NAME.toString(), "2.0.5", userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(CDECArtifact.NAME, "2.0.5", userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME.toString());
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
         commandInvoker.argument("version", "2.0.5");
 
         CommandInvoker.Result result = commandInvoker.invoke();
