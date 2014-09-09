@@ -93,6 +93,9 @@ installIM() {
 
     # make it possible to write files into the APP_DIR
     sudo chmod 757 ${APP_DIR}
+
+    # make the user ${USER} an owner all files into the APP_DIR
+    sudo chown -R ${USER}:${USER} ${APP_DIR}
 }
 
 installCLI() {

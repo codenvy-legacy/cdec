@@ -18,6 +18,7 @@
 package com.codenvy.cdec.im;
 
 import com.codenvy.cdec.artifacts.Artifact;
+import com.codenvy.cdec.artifacts.CDECArtifact;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 import com.codenvy.cdec.restlet.InstallationManager;
 import com.codenvy.cdec.user.UserCredentials;
@@ -109,10 +110,12 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException {
-        Map<Artifact, String> installed = new HashMap<>();
+        Map<Artifact, String> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                installed.put(artifact, artifact.getCurrentVersion(authToken));
+                if (! (artifact instanceof CDECArtifact)) {
+                    installed.put(artifact, artifact.getCurrentVersion(authToken));
+                }
             } catch (IOException e) {
                 throw getProperException(e, artifact);
             }
@@ -214,7 +217,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** Retrieves the latest versions from the Update Server. */
     protected Map<Artifact, String> getLatestVersionsToDownload() throws IOException {
-        Map<Artifact, String> available2Download = new HashMap<>();
+        Map<Artifact, String> available2Download = new LinkedHashMap<>();
 
         for (Artifact artifact : artifacts) {
             try {

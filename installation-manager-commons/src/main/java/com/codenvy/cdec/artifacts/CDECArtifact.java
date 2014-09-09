@@ -18,7 +18,6 @@
  */
 package com.codenvy.cdec.artifacts;
 
-import com.codenvy.cdec.utils.Commons;
 import com.codenvy.cdec.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,9 +26,6 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Map;
-
-import static com.codenvy.cdec.utils.Commons.combinePaths;
 
 /**
  * @author Anatoliy Bazko
@@ -56,9 +52,10 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public String getCurrentVersion(String accessToken) throws IOException {
-        String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/installationinfo/" + NAME), accessToken);
+        /*String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/installationinfo/" + NAME), accessToken);
         Map m = Commons.fromJson(json, Map.class);
-        return (String)m.get("version");
+        return (String)m.get("version");*/
+        return null;
     }
 
     @Override
