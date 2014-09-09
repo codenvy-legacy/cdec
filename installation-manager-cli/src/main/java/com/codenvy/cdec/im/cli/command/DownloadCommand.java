@@ -17,11 +17,8 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.user.UserCredentials;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.restlet.ext.jackson.JacksonRepresentation;
 
 /**
  * @author Dmytro Nochevnov
@@ -38,16 +35,13 @@ public class DownloadCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         try {
             init();
-            
-            UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
-            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.download(artifactName, version, userCredentialsRep));
+                printResult(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.download(artifactName, userCredentialsRep));
+                printResult(installationManagerProxy.download(artifactName, getCredentialsRep()));
             } else {
-                printResult(installationManagerProxy.download(userCredentialsRep));
+                printResult(installationManagerProxy.download(getCredentialsRep()));
             }
         } catch (Exception e) {
             printError(e);

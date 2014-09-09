@@ -21,6 +21,7 @@ import com.codenvy.cdec.im.cli.preferences.PreferencesStorage;
 import com.codenvy.cdec.response.Response;
 import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.restlet.RestletClientFactory;
+import com.codenvy.cdec.user.UserCredentials;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
@@ -28,11 +29,13 @@ import com.codenvy.client.Codenvy;
 
 import org.fusesource.jansi.Ansi;
 import org.json.JSONException;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,7 +48,7 @@ import static org.fusesource.jansi.Ansi.ansi;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    protected final InstallationManagerService installationManagerProxy;
+    protected InstallationManagerService installationManagerProxy;
     protected PreferencesStorage preferencesStorage;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";
@@ -141,6 +144,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return installationManagerProxy.getUpdateServerUrl();
     }
 
+    protected JacksonRepresentation<UserCredentials> getCredentialsRep() {
+        UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
+        return new JacksonRepresentation<>(userCredentials);
+    }
+    
     @Nonnull
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());

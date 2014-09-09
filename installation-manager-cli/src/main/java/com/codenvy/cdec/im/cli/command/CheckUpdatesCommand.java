@@ -17,10 +17,7 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.user.UserCredentials;
-
 import org.apache.karaf.shell.commands.Command;
-import org.restlet.ext.jackson.JacksonRepresentation;
 
 /**
  * @author Anatoliy Bazko
@@ -35,11 +32,8 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         try {
             init();
-            
-            UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken());
-            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 
-            String response = installationManagerProxy.getUpdates(userCredentialsRep);
+            String response = installationManagerProxy.getUpdates(getCredentialsRep());
             printResult(response);
         } catch (Exception e) {
             printError(e);

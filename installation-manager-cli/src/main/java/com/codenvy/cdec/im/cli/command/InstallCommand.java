@@ -17,11 +17,8 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import com.codenvy.cdec.user.UserCredentials;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.restlet.ext.jackson.JacksonRepresentation;
 
 /**
  * @author Alexander Reshetnyak
@@ -41,16 +38,13 @@ public class InstallCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         try {
             init();
-            
-            UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken());
-            JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(userCredentials);
 
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.install(artifactName, version, userCredentialsRep));
+                printResult(installationManagerProxy.install(artifactName, version, getCredentialsRep()));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.install(artifactName, userCredentialsRep));
+                printResult(installationManagerProxy.install(artifactName, getCredentialsRep()));
             } else {
-                printResult(installationManagerProxy.install(userCredentialsRep));
+                printResult(installationManagerProxy.install(getCredentialsRep()));
             }
         } catch (Exception e) {
             printError(e);
