@@ -53,7 +53,7 @@ public class PreferencesStorage {
     @Nonnull
     public String getAuthToken() throws IllegalStateException {
         RemoteCredentials credentials = readPreference(RemoteCredentials.class);
-        return credentials.getToken(); // TODO outdated after 3h ?
+        return credentials.getToken();
     }
 
     private <T> T readPreference(Class<T> clazz) { 

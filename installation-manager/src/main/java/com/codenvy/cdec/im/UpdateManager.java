@@ -116,11 +116,11 @@ public class UpdateManager {
         }
         
         private String getAuthToken() {
-            return null; // TODO
+            return null; // CDEC-18
         }
         
         private String getAccountId() {
-            return null; // TODO
+            return null; // CDEC-18
         }
     }
 }

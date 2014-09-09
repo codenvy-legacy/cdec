@@ -35,13 +35,11 @@ import static com.codenvy.cdec.utils.Commons.createListDtoFromJson;
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
- *         <p/>
- *         TODO after login command
  */
 public class AccountUtils {
-    public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions hasn't found.";
-    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "Account with valid role hasn't found.";
-    public static final String ACCOUNT_NOT_FOUND_ERROR               = "Account hasn't found.";
+    public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions not found.";
+    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "Account with valid role not found.";
+    public static final String ACCOUNT_NOT_FOUND_ERROR               = "Account not found.";
     public static final String ACCOUNT_OWNER_ROLE                    = "account/owner";
 
     /**
@@ -65,8 +63,9 @@ public class AccountUtils {
         return false;
     }
 
-    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport, String apiEndpoint, UserCredentials userCredentials)
-            throws IOException {
+    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
+                                                                 String apiEndpoint,
+                                                                 UserCredentials userCredentials) throws IOException {
         MemberDescriptor account = getAccount(transport, apiEndpoint, userCredentials);
         if (account == null) {
             throw new IllegalStateException(ACCOUNT_NOT_FOUND_ERROR);
@@ -101,7 +100,7 @@ public class AccountUtils {
 
         for (MemberDescriptor account : accounts) {
             String id = getAccountId(account);
-            if (id != null && userCredentials.getAccountId().equals(id)) {
+            if (id != null && id.equals(userCredentials.getAccountId())) {
                 return account;
             }
         }
