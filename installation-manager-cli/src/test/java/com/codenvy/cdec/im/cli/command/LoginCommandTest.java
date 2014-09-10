@@ -34,22 +34,19 @@ import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
 public class LoginCommandTest {    
-    private static final String TEST_USER_ACCOUNT_ID = "testUserAccountId";
-
-    private static final String TEST_USER_PASSWORD = "testUserPassword";
-
-    private static final String TEST_USER = "testUser";
-
+    private static final String TEST_USER_ACCOUNT_ID      = "testUserAccountId";
+    private static final String TEST_USER_PASSWORD        = "testUserPassword";
+    private static final String TEST_USER                 = "testUser";    
+    private final static String UPDATE_SERVER_URL         = "http://codenvy-stg.com/update";
+    private final static String UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server"; 
+    
     private TestLoginCommand spyCommand;
     
     @Mock private InstallationManagerService mockInstallationManagerProxy;
     @Mock private PreferencesStorage mockPreferencesStorage;
     @Mock private CommandSession commandSession;
     @Mock private MultiRemoteCodenvy mockMultiRemoteCodenvy;
-    
-    private final static String UPDATE_SERVER_URL = "http://codenvy-stg.com/update";
-    private final static String UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server"; 
-    
+        
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);

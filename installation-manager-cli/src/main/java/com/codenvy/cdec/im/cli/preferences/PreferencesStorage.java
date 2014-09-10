@@ -53,9 +53,15 @@ public class PreferencesStorage {
     @Nonnull
     public String getAuthToken() throws IllegalStateException {
         RemoteCredentials credentials = readPreference(RemoteCredentials.class);
+
+        if (credentials == null || credentials.getToken() == null) {
+            throw new IllegalStateException("User didn't login.");
+        }
+        
         return credentials.getToken();
     }
 
+    @Nonnull
     private <T> T readPreference(Class<T> clazz) { 
         return globalPreferences.path("remotes").get(remote, clazz);
     }
