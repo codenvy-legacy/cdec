@@ -33,6 +33,12 @@ import static com.codenvy.cdec.utils.Commons.combinePaths;
 public class RestletClientFactory {
 
     /**
+     * Utility class so no public constructor.
+     */
+    private RestletClientFactory() {
+    }
+    
+    /**
      * Creates proxy service to communicate with server.
      */
     public static synchronized <T extends DigestAuthSupport> T createServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,

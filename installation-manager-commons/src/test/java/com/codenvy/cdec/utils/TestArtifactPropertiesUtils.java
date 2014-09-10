@@ -49,7 +49,7 @@ public class TestArtifactPropertiesUtils {
             + "\"subscription\":\"On-Premises\""            
             + "}");
     
-        assertEquals(true, ArtifactPropertiesUtils.isAuthenticationRequired(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""));
+        assertEquals(ArtifactPropertiesUtils.isAuthenticationRequired(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), true);
     }
     
     @Test
@@ -62,6 +62,6 @@ public class TestArtifactPropertiesUtils {
             + "\"subscription\":\"On-Premises\""            
             + "}");
     
-        assertEquals("On-Premises", ArtifactPropertiesUtils.getSubscription(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""));
+        assertEquals(ArtifactPropertiesUtils.getSubscription(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), "On-Premises");
     }    
 }

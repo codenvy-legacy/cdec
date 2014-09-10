@@ -29,6 +29,13 @@ import static com.codenvy.cdec.utils.Commons.fromJson;
 /** @author Dmytro Nochevnov */
 public class ArtifactPropertiesUtils {
 
+    /**
+     * Utility class so no public constructor.
+     */
+    private ArtifactPropertiesUtils() {
+        
+    }
+    
     public static boolean isAuthenticationRequired(String artifactName,
                                                    String version,
                                                    HttpTransport transport,

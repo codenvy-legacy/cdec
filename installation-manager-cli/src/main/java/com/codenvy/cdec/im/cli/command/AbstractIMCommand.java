@@ -75,10 +75,13 @@ public abstract class AbstractIMCommand extends AbsCommand {
      */
     protected void validateIfUserLoggedIn() throws IllegalStateException {
         String remoteName = getRemoteNameForUpdateServer();
-
+        if (remoteName == null) {
+            throw new IllegalStateException("Please login using im:login command.");
+        }
+        
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
-            throw new IllegalStateException("Please log in using im:login command.");
+            throw new IllegalStateException("Please login using im:login command.");
         }
     }
 
@@ -121,23 +124,22 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /** Find out or add remote for update server */
-    @Nonnull
+    /** Find out remote for update server */
+    @Nullable
     protected String getRemoteNameForUpdateServer() {
         String updateServerUrl = getUpdateServerUrl();
-        String remoteName = getRemoteNameByUrl(updateServerUrl);
+        return getRemoteNameByUrl(updateServerUrl);
+    }
 
-        // create remoteName for update sever if it is absent
-        if (remoteName == null) {
-            if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl)) {
-                throw new IllegalStateException(String.format("It was impossible to add remoteName. Please add remote with url '%s' manually.",
-                                                              updateServerUrl));
-            }
-
-            return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+    /**
+     * Add into preferences remote with default name and url = updateServerUrl 
+     * @param updateServerUrl
+     */
+    protected void createUpdateServerRemote(String updateServerUrl) {
+        if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl)) {
+            throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.",
+                                                          updateServerUrl));
         }
-
-        return remoteName;
     }
 
     protected String getUpdateServerUrl() {

@@ -43,6 +43,13 @@ public class AccountUtils {
     public static final String ACCOUNT_OWNER_ROLE                    = "account/owner";
 
     /**
+     * Utility class so no public constructor.
+     */
+    private AccountUtils() {
+        
+    }
+    
+    /**
      * Indicates if the current user has a valid subscription.
      *
      * @throws java.lang.IllegalStateException

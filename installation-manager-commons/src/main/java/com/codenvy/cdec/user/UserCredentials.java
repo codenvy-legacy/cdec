@@ -25,7 +25,9 @@ public class UserCredentials {
     private String accountId;
     
     // empty constructor is needed for bean
-    public UserCredentials() {}
+    public UserCredentials() {
+        
+    }
 
     public UserCredentials(String token, String accountId) {
         this.token = token;

@@ -30,11 +30,11 @@ import static org.testng.Assert.*;
 
 /** @author Dmytro Nochevnov */
 public class PreferencesStorageTest {
-    private final static String UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";    
+    private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";    
         
     private Preferences globalPreferences;
-    private String DEFAULT_PREFERENCES_FILE = getClass().getSimpleName() + File.separator + "default-preferences.json"; 
-    private String PREFERENCES_WITH_UPDATE_SERVER_FILE = getClass().getSimpleName() + File.separator + "preferences-with-update-server-remote.json";
+    private String DEFAULT_PREFERENCES_FILE = "default-preferences.json"; 
+    private String PREFERENCES_WITH_UPDATE_SERVER_FILE = "preferences-with-update-server-remote.json";
     
     @BeforeMethod
     public void init() {
@@ -43,7 +43,7 @@ public class PreferencesStorageTest {
 
     @Test
     private void testGetAuthToken() {
-        globalPreferences = loadPreferencesWithUpdateServerRemote();
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
 
         assertEquals(preferencesStorage.getAuthToken(), "authToken");
@@ -55,7 +55,7 @@ public class PreferencesStorageTest {
      */
     @Test(priority=1)
     private void testSetAccountId() {
-        globalPreferences = loadPreferencesWithUpdateServerRemote();
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
 
         preferencesStorage.setAccountId("testAccountId");        
@@ -65,7 +65,7 @@ public class PreferencesStorageTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
     private void testGetAbsentAccountId() {
-        globalPreferences = loadPreferencesWithUpdateServerRemote();
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
         preferencesStorage.getAccountId();
     }  
@@ -73,7 +73,7 @@ public class PreferencesStorageTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "User didn't login.")
     private void testGetAuthTokenWhenUpdateServerRemoteAbsent() {
-        globalPreferences = loadPreferencesWithoutUpdateServerRemote();
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
         
         preferencesStorage.getAuthToken();
@@ -82,18 +82,13 @@ public class PreferencesStorageTest {
     @Test(expectedExceptions = IllegalStateException.class,
         expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
     private void testGetAccountIdWhenUpdateServerRemoteAbsent() {
-        globalPreferences = loadPreferencesWithoutUpdateServerRemote();
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
         preferencesStorage.getAccountId();
     }
     
-    private Preferences loadPreferencesWithoutUpdateServerRemote() {
-        File preferencesFile = new File(getClass().getClassLoader().getResource(DEFAULT_PREFERENCES_FILE).getPath()); 
-        return PreferencesAPI.getPreferences(preferencesFile.toURI());
-    }
-    
-    private Preferences loadPreferencesWithUpdateServerRemote() {
-        File preferencesFile = new File(getClass().getClassLoader().getResource(PREFERENCES_WITH_UPDATE_SERVER_FILE).getPath()); 
+    private Preferences loadPreferences(String preferencesFilePath) {
+        File preferencesFile = new File(getClass().getClassLoader().getResource(preferencesFilePath).getPath()); 
         return PreferencesAPI.getPreferences(preferencesFile.toURI());
     }
 }

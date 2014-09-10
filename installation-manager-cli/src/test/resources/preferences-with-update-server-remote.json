@@ -6,7 +6,7 @@
             "defaultRemote" : true,
             "url" : "http://codenvy-next.com"
         },
-        "Codenvy Update Server" : {
+        "CodenvyUpdateServer" : {
             "token" : "authToken",
             "defaultRemote" : false,
             "username" : "test@test.com",
