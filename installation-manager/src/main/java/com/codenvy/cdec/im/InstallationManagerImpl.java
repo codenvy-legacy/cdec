@@ -113,7 +113,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Map<Artifact, String> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                if (! (artifact instanceof CDECArtifact)) {
+                if (!(artifact instanceof CDECArtifact)) {
                     installed.put(artifact, artifact.getCurrentVersion(authToken));
                 }
             } catch (IOException e) {
@@ -135,15 +135,11 @@ public class InstallationManagerImpl implements InstallationManager {
                                              + (isAuthenticationRequired ? "" : "public/")
                                              + "download/" + artifact.getName() + "/" + version);
 
-            if (isAuthenticationRequired && isValidSubscription(userCredentials, artifact, version)) {
-                Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
-                FileUtils.deleteDirectory(artifactDownloadDir.toFile());
+            Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
+            FileUtils.deleteDirectory(artifactDownloadDir.toFile());
 
-                transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
-                LOG.info("Downloaded '" + artifact + "' version " + version);
-            } else {
-                throw new IllegalStateException("Valid subscription is required to download " + artifact.getName());
-            }
+            transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
+            LOG.info("Downloaded '" + artifact + "' version " + version);
         } catch (IOException e) {
             throw getProperException(e, artifact);
         }
@@ -212,7 +208,6 @@ public class InstallationManagerImpl implements InstallationManager {
     protected boolean isValidSubscription(UserCredentials userCredentials, Artifact artifact, String version) throws IOException {
         String subscription = ArtifactPropertiesUtils.getSubscription(artifact.getName(), version, transport, updateEndpoint);
         return subscription == null || AccountUtils.isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
-
     }
 
     /** Retrieves the latest versions from the Update Server. */
