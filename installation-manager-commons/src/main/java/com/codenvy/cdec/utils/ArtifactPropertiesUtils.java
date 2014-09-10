@@ -17,7 +17,6 @@
  */
 package com.codenvy.cdec.utils;
 
-import com.codenvy.cdec.artifacts.Artifact;
 import com.codenvy.cdec.artifacts.ArtifactProperties;
 import com.codenvy.cdec.exceptions.ArtifactNotFoundException;
 
@@ -30,30 +29,30 @@ import static com.codenvy.cdec.utils.Commons.fromJson;
 /** @author Dmytro Nochevnov */
 public class ArtifactPropertiesUtils {
 
-    public static boolean isAuthenticationRequired(Artifact artifact,
+    public static boolean isAuthenticationRequired(String artifactName,
                                                    String version,
                                                    HttpTransport transport,
                                                    String updateEndpoint) throws IOException {
-        Map<String, String> properties = getArtifactProperties(artifact, version, transport, updateEndpoint);
+        Map<String, String> properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
         return Boolean.valueOf(properties.get(ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY));
     }
 
-    public static String getSubscription(Artifact artifact,
+    public static String getSubscription(String artifactName,
                                          String version,
                                          HttpTransport transport,
                                          String updateEndpoint) throws IOException {
-        Map<String, String> properties = getArtifactProperties(artifact, version, transport, updateEndpoint);
+        Map<String, String> properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
         return properties.get(ArtifactProperties.SUBSCRIPTION_PROPERTY);
     }
 
-    private static Map<String, String> getArtifactProperties(Artifact artifact,
+    private static Map<String, String> getArtifactProperties(String artifactName,
                                                              String version,
                                                              HttpTransport transport,
                                                              String updateEndpoint) throws IOException {
-        String versionInfoServiceHref = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
+        String versionInfoServiceHref = combinePaths(updateEndpoint, "repository/properties/" + artifactName + "/" + version);
         Map<String, String> properties = (Map<String, String>)fromJson(transport.doGetRequest(versionInfoServiceHref), Map.class);
         if (properties == null) {
-            throw new ArtifactNotFoundException(artifact.getName(), version);
+            throw new ArtifactNotFoundException(artifactName, version);
         }
         return properties;
     }

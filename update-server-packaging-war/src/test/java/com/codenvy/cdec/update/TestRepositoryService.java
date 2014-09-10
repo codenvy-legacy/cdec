@@ -17,6 +17,7 @@
  */
 package com.codenvy.cdec.update;
 
+import com.codenvy.cdec.artifacts.ArtifactProperties;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.Commons;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -151,6 +153,29 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
     }
 
+    @Test
+    public void testGetArtifactProperties() throws Exception {
+        Map testProperties = new HashMap() {{
+            put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
+            put(SUBSCRIPTION_PROPERTY, "On-Premises");
+        }};
+        
+        Properties testPropertiesContainer = new Properties();
+        testPropertiesContainer.putAll(testProperties);
+        
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", testPropertiesContainer);
+
+        Response response = given().when().get("repository/properties/installation-manager/1.0.1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Map value = Commons.fromJson(response.body().asString(), Map.class);
+        assertEquals(value.size(), 4);
+        assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
+        assertEquals(value.get(VERSION_PROPERTY), "1.0.1");
+        assertEquals(value.get(AUTHENTICATION_REQUIRED_PROPERTY), "true");
+        assertEquals(value.get(SUBSCRIPTION_PROPERTY), "On-Premises");
+    }
+    
     @Test
     public void testDownloadPublicArtifact() throws Exception {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());

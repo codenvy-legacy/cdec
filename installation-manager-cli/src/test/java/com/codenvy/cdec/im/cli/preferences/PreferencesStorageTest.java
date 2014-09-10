@@ -33,8 +33,8 @@ public class PreferencesStorageTest {
     private final static String UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";    
         
     private Preferences globalPreferences;
-    private String DEFAULT_PREFERENCES_FILE = getClass().getSimpleName()  + File.separator + "default-preferences.json"; 
-    private String PREFERENCES_WITH_UPDATE_SERVER_FILE = getClass().getSimpleName() + "/preferences-with-update-server-remote.json";
+    private String DEFAULT_PREFERENCES_FILE = getClass().getSimpleName() + File.separator + "default-preferences.json"; 
+    private String PREFERENCES_WITH_UPDATE_SERVER_FILE = getClass().getSimpleName() + File.separator + "preferences-with-update-server-remote.json";
     
     @BeforeMethod
     public void init() {

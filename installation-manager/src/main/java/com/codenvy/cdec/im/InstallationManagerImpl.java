@@ -128,7 +128,7 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public void download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException {
         try {
-            boolean isAuthenticationRequired = isAuthenticationRequired(artifact, version, transport, updateEndpoint);
+            boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version, transport, updateEndpoint);
 
             String requestUrl = combinePaths(updateEndpoint,
                                              "/repository/"
@@ -210,7 +210,7 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     protected boolean isValidSubscription(UserCredentials userCredentials, Artifact artifact, String version) throws IOException {
-        String subscription = ArtifactPropertiesUtils.getSubscription(artifact, version, transport, updateEndpoint);
+        String subscription = ArtifactPropertiesUtils.getSubscription(artifact.getName(), version, transport, updateEndpoint);
         return subscription == null || AccountUtils.isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
 
     }
