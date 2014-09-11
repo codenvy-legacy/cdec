@@ -18,6 +18,7 @@
 package com.codenvy.cdec.im.cli.preferences;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -25,6 +26,7 @@ import org.testng.annotations.Test;
 
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
+import com.google.common.io.Files;
 
 import static org.testng.Assert.*;
 
@@ -49,31 +51,22 @@ public class PreferencesStorageTest {
         assertEquals(preferencesStorage.getAuthToken(), "authToken");
     }
 
-    @Test
-    private void testGetAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
-        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-        
-        // test getting absent accountId
-        try {
-            preferencesStorage.getAccountId();
-            fail("There should be IllegalStateException because accountId is absent.");
-        } catch(IllegalStateException e) {
-            assertEquals(e.getMessage(), "ID of Codenvy account which is used for subscription is needed.");
-        }
-        
-        // test setting accotunId. Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
-        preferencesStorage.setAccountId("testAccountId");        
-        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
-    }  
-    
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "User didn't login.")
     private void testGetAuthTokenWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-        
+      
         preferencesStorage.getAuthToken();
+    }
+    
+    @Test
+    private void testSetAccountId() {
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
+
+        preferencesStorage.setAccountId("testAccountId");        
+        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
     }
     
     @Test(expectedExceptions = IllegalStateException.class,
@@ -84,8 +77,18 @@ public class PreferencesStorageTest {
         preferencesStorage.getAccountId();
     }
     
-    private Preferences loadPreferences(String preferencesFilePath) {
-        File preferencesFile = new File(getClass().getClassLoader().getResource(preferencesFilePath).getPath()); 
-        return PreferencesAPI.getPreferences(preferencesFile.toURI());
+    private Preferences loadPreferences(String preferencesFileRelativePath) {
+        String preferencesFileFullPath = getClass().getClassLoader().getResource(preferencesFileRelativePath).getPath();
+        String tempPreferencesFileFullPath = preferencesFileFullPath + ".temp";
+        File preferencesFile = new File(preferencesFileFullPath);
+        File tempPreferencesFile = new File(tempPreferencesFileFullPath);
+        
+        try {
+            Files.copy(preferencesFile, tempPreferencesFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+         
+        return PreferencesAPI.getPreferences(tempPreferencesFile.toURI());
     }
 }

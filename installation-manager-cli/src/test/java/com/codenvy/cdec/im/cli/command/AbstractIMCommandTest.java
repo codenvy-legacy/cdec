@@ -41,6 +41,7 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
+import com.google.common.io.Files;
 
 /** @author Dmytro Nochevnov */
 public class AbstractIMCommandTest {
@@ -97,7 +98,20 @@ public class AbstractIMCommandTest {
         
         spyCommand.validateIfUserLoggedIn();
     }
+    
+    @Test
+    public void testCreateUpdateServerRemote() {
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);        
+        prepareTestAbstractIMCommand(spyCommand);
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
+        spyCommand.init();
         
+        assertNull(spyCommand.getRemoteNameForUpdateServer());
+        
+        spyCommand.createUpdateServerRemote(UPDATE_SERVER_URL);
+        assertNotNull(spyCommand.getRemoteNameForUpdateServer());
+    }
+    
     @Test
     public void testInit() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
@@ -122,11 +136,7 @@ public class AbstractIMCommandTest {
         spyCommand.init();
     }
     
-    /**
-     * Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
-     * So this test should perform at the last when DEFAULT_PREFERENCES_FILE is being used! 
-     */
-    @Test(priority=1)
+    @Test
     public void testGetCredentialsRep() throws IOException {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -141,23 +151,6 @@ public class AbstractIMCommandTest {
         assertEquals(testCreadentials.getAccountId(), "testAccountId");
     }
     
-    /**
-     * Modifies 'globalPreferences' and DEFAULT_PREFERENCES_FILE file content.
-     * So this test should perform at the last when DEFAULT_PREFERENCES_FILE is being used! 
-     */
-    @Test(priority=1)
-    public void testCreateUpdateServerRemote() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);        
-        prepareTestAbstractIMCommand(spyCommand);
-        doNothing().when(spyCommand).validateIfUserLoggedIn();
-        spyCommand.init();
-        
-        assertNull(spyCommand.getRemoteNameForUpdateServer());
-        
-        spyCommand.createUpdateServerRemote(UPDATE_SERVER_URL);
-        assertNotNull(spyCommand.getRemoteNameForUpdateServer());
-    }
-    
     private void prepareTestAbstractIMCommand(TestAbstractIMCommand command) {
         doReturn(globalPreferences).when(session).get(Preferences.class.getName());
         
@@ -167,9 +160,19 @@ public class AbstractIMCommandTest {
         command.setSession(session);
     }
     
-    private Preferences loadPreferences(String preferencesFilePath) {
-        File preferencesFile = new File(getClass().getClassLoader().getResource(preferencesFilePath).getPath()); 
-        return PreferencesAPI.getPreferences(preferencesFile.toURI());
+    private Preferences loadPreferences(String preferencesFileRelativePath) {
+        String preferencesFileFullPath = getClass().getClassLoader().getResource(preferencesFileRelativePath).getPath();
+        String tempPreferencesFileFullPath = preferencesFileFullPath + ".temp";
+        File preferencesFile = new File(preferencesFileFullPath);
+        File tempPreferencesFile = new File(tempPreferencesFileFullPath);
+        
+        try {
+            Files.copy(preferencesFile, tempPreferencesFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+         
+        return PreferencesAPI.getPreferences(tempPreferencesFile.toURI());
     }
     
     class TestAbstractIMCommand extends AbstractIMCommand {        
