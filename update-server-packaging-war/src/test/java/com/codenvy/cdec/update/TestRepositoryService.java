@@ -17,7 +17,6 @@
  */
 package com.codenvy.cdec.update;
 
-import com.codenvy.cdec.artifacts.ArtifactProperties;
 import com.codenvy.cdec.artifacts.InstallManagerArtifact;
 import com.codenvy.cdec.utils.AccountUtils;
 import com.codenvy.cdec.utils.Commons;
@@ -169,11 +168,10 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 4);
+        assertEquals(value.size(), 3);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.1");
         assertEquals(value.get(AUTHENTICATION_REQUIRED_PROPERTY), "true");
-        assertEquals(value.get(SUBSCRIPTION_PROPERTY), "On-Premises");
     }
     
     @Test
