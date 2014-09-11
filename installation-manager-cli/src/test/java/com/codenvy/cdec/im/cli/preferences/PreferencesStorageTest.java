@@ -48,23 +48,23 @@ public class PreferencesStorageTest {
 
         assertEquals(preferencesStorage.getAuthToken(), "authToken");
     }
-    
-//    @Test(expectedExceptions = IllegalStateException.class,
-//          expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
+
     @Test
-    private void testGetAbsentAccountId() {
+    private void testGetAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
         
-        String accountId = null;
+        // test getting absent accountId
         try {
-            accountId = preferencesStorage.getAccountId();
+            preferencesStorage.getAccountId();
+            fail("There should be IllegalStateException because accountId is absent.");
         } catch(IllegalStateException e) {
             assertEquals(e.getMessage(), "ID of Codenvy account which is used for subscription is needed.");
-            return;
         }
         
-        fail(accountId);
+        // test setting accotunId. Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
+        preferencesStorage.setAccountId("testAccountId");        
+        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
     }  
     
     @Test(expectedExceptions = IllegalStateException.class,
@@ -82,19 +82,6 @@ public class PreferencesStorageTest {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
         preferencesStorage.getAccountId();
-    }
-    
-    /**
-     * Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
-     * So this test should perform at the last! 
-     */
-    @Test(priority=1)
-    private void testSetAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
-        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-
-        preferencesStorage.setAccountId("testAccountId");        
-        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
     }
     
     private Preferences loadPreferences(String preferencesFilePath) {
