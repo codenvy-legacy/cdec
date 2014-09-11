@@ -97,24 +97,7 @@ public class AbstractIMCommandTest {
         
         spyCommand.validateIfUserLoggedIn();
     }
-    
-    /**
-     * Modifies 'globalPreferences' and DEFAULT_PREFERENCES_FILE file content.
-     * So this test should perform at the last when DEFAULT_PREFERENCES_FILE is being used! 
-     */
-    @Test(priority=1)
-    public void testCreateUpdateServerRemote() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);        
-        prepareTestAbstractIMCommand(spyCommand);
-        doNothing().when(spyCommand).validateIfUserLoggedIn();
-        spyCommand.init();
         
-        assertNull(spyCommand.getRemoteNameForUpdateServer());
-        
-        spyCommand.createUpdateServerRemote(UPDATE_SERVER_URL);
-        assertNotNull(spyCommand.getRemoteNameForUpdateServer());
-    }
-    
     @Test
     public void testInit() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
@@ -156,6 +139,23 @@ public class AbstractIMCommandTest {
         
         assertEquals(testCreadentials.getToken(), "authToken");
         assertEquals(testCreadentials.getAccountId(), "testAccountId");
+    }
+    
+    /**
+     * Modifies 'globalPreferences' and DEFAULT_PREFERENCES_FILE file content.
+     * So this test should perform at the last when DEFAULT_PREFERENCES_FILE is being used! 
+     */
+    @Test(priority=1)
+    public void testCreateUpdateServerRemote() {
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);        
+        prepareTestAbstractIMCommand(spyCommand);
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
+        spyCommand.init();
+        
+        assertNull(spyCommand.getRemoteNameForUpdateServer());
+        
+        spyCommand.createUpdateServerRemote(UPDATE_SERVER_URL);
+        assertNotNull(spyCommand.getRemoteNameForUpdateServer());
     }
     
     private void prepareTestAbstractIMCommand(TestAbstractIMCommand command) {

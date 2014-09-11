@@ -49,19 +49,6 @@ public class PreferencesStorageTest {
         assertEquals(preferencesStorage.getAuthToken(), "authToken");
     }
     
-    /**
-     * Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
-     * So this test should perform at the last! 
-     */
-    @Test(priority=1)
-    private void testSetAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
-        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-
-        preferencesStorage.setAccountId("testAccountId");        
-        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
-    }  
-    
 //    @Test(expectedExceptions = IllegalStateException.class,
 //          expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
     @Test
@@ -95,6 +82,19 @@ public class PreferencesStorageTest {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
         preferencesStorage.getAccountId();
+    }
+    
+    /**
+     * Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
+     * So this test should perform at the last! 
+     */
+    @Test(priority=1)
+    private void testSetAccountId() {
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
+
+        preferencesStorage.setAccountId("testAccountId");        
+        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
     }
     
     private Preferences loadPreferences(String preferencesFilePath) {
