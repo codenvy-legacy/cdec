@@ -37,7 +37,6 @@ import java.util.Map;
 
 import static com.codenvy.cdec.utils.Commons.extractServerUrl;
 import static com.codenvy.cdec.utils.InjectorBootstrap.INJECTOR;
-import static java.util.Arrays.asList;
 
 /**
  * @author Dmytro Nochevnov
@@ -109,7 +108,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 throw new ArtifactNotFoundException(artifact.getName());
             }
 
-            return download(artifactName, version, userCredentialsRep);
+            try {
+                doDownload(userCredentials, artifact, version);
+                ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.SUCCESS);
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+            } catch (Exception e) {
+                ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.FAILURE);
+                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            }
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }
@@ -124,7 +130,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
-            return Response.valueOf(e).toJson();
+            ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.FAILURE);
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
         }
     }
 
@@ -214,11 +221,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             doInstall(artifact, toInstallVersion, token);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(asList(new ArtifactInfo[]{info})).build().toJson();
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(asList(new ArtifactInfo[]{info}))
-                                         .build().toJson();
+            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
         }
     }
 

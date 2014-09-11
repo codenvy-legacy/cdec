@@ -34,6 +34,5 @@ public class ArtifactProperties {
         add(ARTIFACT_PROPERTY);
         add(BUILD_TIME_PROPERTY);
         add(AUTHENTICATION_REQUIRED_PROPERTY);
-        add(SUBSCRIPTION_PROPERTY);
     }};
 }

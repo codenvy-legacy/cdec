@@ -171,9 +171,14 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.download("cdec", "2.10.4", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [{\n" +
+                                                      "    \"artifact\": \"cdec\",\n" +
+                                                      "    \"status\": \"FAILURE\",\n" +
+                                                      "    \"version\": \"2.10.4\"\n" +
+                                                      "  }],\n" +
                                                       "  \"message\": \"Artifact 'cdec' version '2.10.4' not found\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
-                                                      "}");        
+                                                      "}");
     }
     
     @Test
@@ -190,7 +195,13 @@ public class TestDownloadInstallationManagerServiceImpl {
         doThrow(new AuthenticationException()).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
         response = installationManagerService.download("cdec", "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +
+                                                      "  \"artifacts\": [{\n" +
+                                                      "    \"artifact\": \"cdec\",\n" +
+                                                      "    \"status\": \"FAILURE\",\n" +
+                                                      "    \"version\": \"2.10.5\"\n" +
+                                                      "  }],\n" +
+                                                      "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\"," +
+                                                      "\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
