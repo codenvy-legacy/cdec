@@ -17,14 +17,15 @@
  */
 package com.codenvy.cdec.im.cli.command;
 
-import static com.codenvy.cdec.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
-import static com.codenvy.cdec.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -35,7 +36,6 @@ import org.testng.annotations.Test;
 
 import com.codenvy.cdec.restlet.InstallationManagerService;
 import com.codenvy.cdec.user.UserCredentials;
-import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
@@ -53,14 +53,12 @@ public class AbstractIMCommandTest {
     @Mock
     private CommandSession session;
     
-    @Mock
-    private MultiRemoteCodenvy mockMultiRemoteCodenvy;
-    
     private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
     private final static String UPDATE_SERVER_URL = "https://test.com";
     
     private String DEFAULT_PREFERENCES_FILE = "default-preferences.json"; 
     private String PREFERENCES_WITH_UPDATE_SERVER_FILE = "preferences-with-update-server-remote.json";
+    private String PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-update-server-remote-without-login.json";
     
     private Remote updateServerRemote;
     
@@ -84,51 +82,43 @@ public class AbstractIMCommandTest {
     
     @Test
     public void testGetRemoteNameForUpdateServer() {
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, updateServerRemote);
-        }}).when(mockMultiRemoteCodenvy).getAvailableRemotes();
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
+        prepareTestAbstractIMCommand(spyCommand);
+        spyCommand.init();
         
         assertEquals(spyCommand.getRemoteNameForUpdateServer(), UPDATE_SERVER_REMOTE_NAME);
     }
     
     @Test
     public void testValidateIfUserLoggedIn() {
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, updateServerRemote);
-        }}).when(mockMultiRemoteCodenvy).getAvailableRemotes();
-     
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, null);
-        }}).when(mockMultiRemoteCodenvy).getReadyRemotes();
-        
-        spyCommand.validateIfUserLoggedIn();
-    }
-
-    @Test(expectedExceptions=IllegalStateException.class,expectedExceptionsMessageRegExp="Please login using im:login command.")
-    public void testValidateIfUserLoggedInWhenUserDidnotLogin() {
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, updateServerRemote);
-        }}).when(mockMultiRemoteCodenvy).getAvailableRemotes();
-        
-        doReturn(new HashMap()).when(mockMultiRemoteCodenvy).getReadyRemotes();
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
+        prepareTestAbstractIMCommand(spyCommand);
+        spyCommand.init();
         
         spyCommand.validateIfUserLoggedIn();
     }
     
+    /**
+     * Modifies 'globalPreferences' and DEFAULT_PREFERENCES_FILE file content.
+     * So this test should perform at the last when DEFAULT_PREFERENCES_FILE is being used! 
+     */
+    @Test(priority=1)
+    public void testCreateUpdateServerRemote() {
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);        
+        prepareTestAbstractIMCommand(spyCommand);
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
+        spyCommand.init();
+        
+        assertNull(spyCommand.getRemoteNameForUpdateServer());
+        
+        spyCommand.createUpdateServerRemote(UPDATE_SERVER_URL);
+        assertNotNull(spyCommand.getRemoteNameForUpdateServer());
+    }
+    
     @Test
     public void testInit() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
-        
-        prepareTestAbstractIMCommand(spyCommand);
-        
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, updateServerRemote);
-        }}).when(mockMultiRemoteCodenvy).getAvailableRemotes();
-        
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, null);
-        }}).when(mockMultiRemoteCodenvy).getReadyRemotes();
-        
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
+        prepareTestAbstractIMCommand(spyCommand);        
         spyCommand.init();
         
         assertNotNull(spyCommand.preferencesStorage);
@@ -137,48 +127,26 @@ public class AbstractIMCommandTest {
     
     @Test(expectedExceptions=IllegalStateException.class,expectedExceptionsMessageRegExp="Please login using im:login command.")
     public void testInitWhenUpdateServerRemoteAbsent() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
-        
-        prepareTestAbstractIMCommand(spyCommand);
-        
-        doReturn(new HashMap()).when(mockMultiRemoteCodenvy).getAvailableRemotes();
-        
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);       
+        prepareTestAbstractIMCommand(spyCommand);        
         spyCommand.init();
     }
     
     @Test(expectedExceptions=IllegalStateException.class,expectedExceptionsMessageRegExp="Please login using im:login command.")
     public void testInitWhenUserDidnotLogin() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
-        
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);        
         prepareTestAbstractIMCommand(spyCommand);
-        
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, updateServerRemote);
-        }}).when(mockMultiRemoteCodenvy).getAvailableRemotes();
-        
-        doReturn(new HashMap()).when(mockMultiRemoteCodenvy).getReadyRemotes();
-        
         spyCommand.init();
     }
     
     /**
      * Modifies 'globalPreferences' and PREFERENCES_WITH_UPDATE_SERVER_FILE file content.
-     * So this test should perform at the last! 
+     * So this test should perform at the last when DEFAULT_PREFERENCES_FILE is being used! 
      */
     @Test(priority=1)
     public void testGetCredentialsRep() throws IOException {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
-        
         prepareTestAbstractIMCommand(spyCommand);
-        
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, updateServerRemote);
-        }}).when(mockMultiRemoteCodenvy).getAvailableRemotes();
-        
-        doReturn(new HashMap() {{
-            put(UPDATE_SERVER_REMOTE_NAME, null);
-        }}).when(mockMultiRemoteCodenvy).getReadyRemotes();
-        
         spyCommand.init();
         
         spyCommand.preferencesStorage.setAccountId("testAccountId");
@@ -210,18 +178,15 @@ public class AbstractIMCommandTest {
             return null;
         }
         
+        /** is needed for prepareTestAbstractIMCommand() method */
         @Override
         protected void setCodenvyClient(CodenvyClient codenvyClient) {
             super.setCodenvyClient(codenvyClient);
         }
 
+        /** is needed for prepareTestAbstractIMCommand() method */
         protected void setSession(CommandSession session) {
             this.session = session;
-        }
-        
-        @Override
-        protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
-            return mockMultiRemoteCodenvy;
         }
     }
 }

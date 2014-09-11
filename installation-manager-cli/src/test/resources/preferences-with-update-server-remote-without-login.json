@@ -1,0 +1,14 @@
+{
+    "version" : "1.0",
+    "config" : { },
+    "remotes" : {
+        "default" : {
+            "defaultRemote" : true,
+            "url" : "http://codenvy-next.com"
+        },
+        "CodenvyUpdateServer" : {
+            "defaultRemote" : false,
+            "url" : "https://test.com"
+        }
+    }
+}
