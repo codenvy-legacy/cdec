@@ -62,12 +62,22 @@ public class PreferencesStorageTest {
         assertEquals(preferencesStorage.getAccountId(), "testAccountId");
     }  
     
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
+//    @Test(expectedExceptions = IllegalStateException.class,
+//          expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
+    @Test
     private void testGetAbsentAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-        preferencesStorage.getAccountId();
+        
+        String accountId = null;
+        try {
+            accountId = preferencesStorage.getAccountId();
+        } catch(IllegalStateException e) {
+            assertEquals(e.getMessage(), "ID of Codenvy account which is used for subscription is needed.");
+            return;
+        }
+        
+        fail(accountId);
     }  
     
     @Test(expectedExceptions = IllegalStateException.class,
@@ -80,7 +90,7 @@ public class PreferencesStorageTest {
     }
     
     @Test(expectedExceptions = IllegalStateException.class,
-        expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
+          expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
     private void testGetAccountIdWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
