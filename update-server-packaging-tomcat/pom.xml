@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>cdec-parent</artifactId>
-        <groupId>com.codenvy.cdec</groupId>
+        <groupId>com.codenvy.im.cdec</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>update-server-packaging-tomcat</artifactId>
@@ -40,7 +40,7 @@
             <version>${ch.qos.logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.codenvy.cdec</groupId>
+            <groupId>com.codenvy.im.cdec</groupId>
             <artifactId>update-server-packaging-war</artifactId>
             <version>${project.version}</version>
             <type>war</type>

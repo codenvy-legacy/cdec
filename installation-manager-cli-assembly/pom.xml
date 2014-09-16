@@ -22,29 +22,29 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>cdec-parent</artifactId>
-        <groupId>com.codenvy.cdec</groupId>
+        <groupId>com.codenvy.im.cdec</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-cli-assembly</artifactId>
     <name>Codenvy :: CDEC :: Installation Manager CLI Assembly</name>
     <dependencies>
         <dependency>
-            <groupId>com.codenvy.cdec</groupId>
-            <artifactId>installation-manager-cli</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.cdec</groupId>
-            <artifactId>installation-manager-cli-features</artifactId>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <classifier>features</classifier>
-        </dependency>
-        <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>cli-assembly</artifactId>
             <version>${codenvy.cli.version}</version>
             <type>zip</type>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.im.cdec</groupId>
+            <artifactId>installation-manager-cli</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.im.cdec</groupId>
+            <artifactId>installation-manager-cli-features</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
         </dependency>
     </dependencies>
     <build>
@@ -107,11 +107,11 @@
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresRepositories=]]></replacetoken>
-                                    <replacevalue><![CDATA[featuresRepositories=mvn:com.codenvy.cdec/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
+                                    <replacevalue><![CDATA[featuresRepositories=mvn:com.codenvy.im.cdec/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.repos.cfg">
                                     <replacetoken><![CDATA[cellar       =]]></replacetoken>
-                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.cdec:installation-manager-cli-feature:xml:features(0,]
+                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.im.cdec:installation-manager-cli-feature:xml:features(0,]
 cellar       =]]></replacevalue>
                                 </replace>
                                 <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar" />

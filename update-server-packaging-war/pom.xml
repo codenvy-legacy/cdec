@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>cdec-parent</artifactId>
-        <groupId>com.codenvy.cdec</groupId>
+        <groupId>com.codenvy.im.cdec</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>update-server-packaging-war</artifactId>
@@ -30,14 +30,14 @@
     <name>Codenvy :: CDEC :: Update Server</name>
     <dependencies>
         <dependency>
-            <groupId>com.codenvy.cdec</groupId>
-            <artifactId>installation-manager-commons</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.codenvy.commons</groupId>
             <artifactId>codenvy-commons-inject</artifactId>
             <version>${codenvy.commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.im.cdec</groupId>
+            <artifactId>installation-manager-commons</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.codenvy.security</groupId>
