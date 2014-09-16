@@ -26,8 +26,8 @@
         <version>1.8.18-SNAPSHOT</version>
         <relativePath />
     </parent>
-    <groupId>com.codenvy.im.cdec</groupId>
-    <artifactId>cdec-parent</artifactId>
+    <groupId>com.codenvy.im</groupId>
+    <artifactId>im-parent</artifactId>
     <version>3.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Codenvy :: CDEC :: Parent</name>
@@ -35,12 +35,12 @@
         <module>update-server-packaging-tomcat</module>
         <module>update-server-packaging-war</module>
         <module>installation-manager-commons</module>
-        <module>installation-manager</module>
+        <module>installation-manager-server</module>
         <module>installation-manager-gui</module>
-        <module>installation-manager-cli</module>
         <module>installation-manager-restlet</module>
+        <module>installation-manager-cli</module>
+        <module>installation-manager-cli-bundle</module>
         <module>installation-manager-cli-features</module>
-        <module>installation-manager-cli-assembly</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>

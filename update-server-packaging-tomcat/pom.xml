@@ -21,8 +21,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>cdec-parent</artifactId>
-        <groupId>com.codenvy.im.cdec</groupId>
+        <artifactId>im-parent</artifactId>
+        <groupId>com.codenvy.im</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>update-server-packaging-tomcat</artifactId>
@@ -40,7 +40,7 @@
             <version>${ch.qos.logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.codenvy.im.cdec</groupId>
+            <groupId>com.codenvy.im</groupId>
             <artifactId>update-server-packaging-war</artifactId>
             <version>${project.version}</version>
             <type>war</type>

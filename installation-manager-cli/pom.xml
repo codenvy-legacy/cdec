@@ -21,111 +21,122 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>cdec-parent</artifactId>
-        <groupId>com.codenvy.im.cdec</groupId>
+        <artifactId>im-parent</artifactId>
+        <groupId>com.codenvy.im</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-cli</artifactId>
-    <packaging>bundle</packaging>
     <name>Codenvy :: CDEC :: Installation Manager CLI</name>
     <dependencies>
         <dependency>
-            <groupId>com.codenvy.im.cdec</groupId>
-            <artifactId>installation-manager-commons</artifactId>
+            <groupId>com.codenvy.cli</groupId>
+            <artifactId>cli-assembly</artifactId>
+            <version>${codenvy.cli.version}</version>
+            <type>zip</type>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.im</groupId>
+            <artifactId>installation-manager-cli-bundle</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.codenvy.im.cdec</groupId>
-            <artifactId>installation-manager-restlet</artifactId>
+            <groupId>com.codenvy.im</groupId>
+            <artifactId>installation-manager-cli-features</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.cli</groupId>
-            <artifactId>cli-command</artifactId>
-            <version>${codenvy.cli.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.cli</groupId>
-            <artifactId>cli-preferences-api</artifactId>
-            <version>${codenvy.cli.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.platform-api-client-java</groupId>
-            <artifactId>codenvy-platform-api-client-java-api</artifactId>
-            <version>${codenvy.platform-api-client-java.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.karaf.shell</groupId>
-            <artifactId>org.apache.karaf.shell.console</artifactId>
-            <version>${org.apache.karaf.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.cli</groupId>
-            <artifactId>cli-preferences-impl</artifactId>
-            <version>${codenvy.cli.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.platform-api-client-java</groupId>
-            <artifactId>codenvy-platform-api-client-java-dummy</artifactId>
-            <version>${codenvy.platform-api-client-java.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${org.mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>${osgi-core.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${org.testng.version}</version>
-            <scope>test</scope>
+            <type>xml</type>
+            <classifier>features</classifier>
         </dependency>
     </dependencies>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies-jar</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>jar</includeTypes>
+                            <outputDirectory>${project.build.directory}/packager-conf/jar</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-dependencies-xml</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>xml</includeTypes>
+                            <outputDirectory>${project.build.directory}/packager-conf/xml</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-dependencies-zip</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>zip</includeTypes>
+                            <outputDirectory>${project.build.directory}/packager-conf/zip</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
+                <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>bundle</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
+                                    <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
+                                    <replacevalue><![CDATA[featuresBoot=installation-manager-cli-features,]]></replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
+                                    <replacetoken><![CDATA[featuresRepositories=]]></replacetoken>
+                                    <replacevalue><![CDATA[featuresRepositories=mvn:com.codenvy.im.cdec/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.repos.cfg">
+                                    <replacetoken><![CDATA[cellar       =]]></replacetoken>
+                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.im.cdec:installation-manager-cli-feature:xml:features(0,]
+cellar       =]]></replacevalue>
+                                </replace>
+                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar" />
+                                <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <finalName>${project.artifactId}-${project.version}</finalName>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.5.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <_include>-src/main/bnd/instructions.bnd</_include>
-                        <_plugin />
-                    </instructions>
+                    <descriptor>src/main/assemblies/binary-assembly.xml</descriptor>
+                    <formats>
+                        <format>zip</format>
+                    </formats>
                 </configuration>
             </plugin>
         </plugins>
