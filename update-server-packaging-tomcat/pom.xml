@@ -27,7 +27,7 @@
     </parent>
     <artifactId>update-server-packaging-tomcat</artifactId>
     <packaging>pom</packaging>
-    <name>Codenvy :: CDEC :: Update Server Tomcat Assembly</name>
+    <name>Codenvy :: IM :: Update Server Tomcat Assembly</name>
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>

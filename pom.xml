@@ -30,7 +30,7 @@
     <artifactId>im-parent</artifactId>
     <version>3.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Codenvy :: CDEC :: Parent</name>
+    <name>Codenvy :: IM :: Parent</name>
     <modules>
         <module>update-server-packaging-tomcat</module>
         <module>update-server-packaging-war</module>

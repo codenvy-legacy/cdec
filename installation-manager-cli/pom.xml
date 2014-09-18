@@ -26,7 +26,7 @@
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-cli</artifactId>
-    <name>Codenvy :: CDEC :: Installation Manager CLI</name>
+    <name>Codenvy :: IM :: Installation Manager CLI</name>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.cli</groupId>

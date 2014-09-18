@@ -28,7 +28,7 @@
     </parent>
     <artifactId>installation-manager-cli-bundle</artifactId>
     <packaging>bundle</packaging>
-    <name>Codenvy :: CDEC :: Installation Manager CLI Bundle</name>
+    <name>Codenvy :: IM :: Installation Manager CLI Bundle</name>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.im</groupId>

@@ -27,7 +27,7 @@
     </parent>
     <artifactId>installation-manager-cli-features</artifactId>
     <packaging>feature</packaging>
-    <name>Codenvy :: CDEC :: Installation Manager Feature</name>
+    <name>Codenvy :: IM :: Installation Manager Feature</name>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.im</groupId>

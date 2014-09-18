@@ -27,7 +27,7 @@
     </parent>
     <artifactId>update-server-packaging-war</artifactId>
     <packaging>war</packaging>
-    <name>Codenvy :: CDEC :: Update Server</name>
+    <name>Codenvy :: IM :: Update Server</name>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.commons</groupId>

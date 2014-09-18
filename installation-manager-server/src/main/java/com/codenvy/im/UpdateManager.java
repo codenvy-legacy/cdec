@@ -17,9 +17,7 @@
  */
 package com.codenvy.im;
 
-import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.restlet.InstallationManager;
-import com.codenvy.im.user.UserCredentials;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -33,7 +31,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Checks and downloads updates by schedule.
@@ -45,18 +42,15 @@ public class UpdateManager {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateManager.class);
 
     private final String              updateSchedule;
-    private final boolean             downloadAutomatically;
     private final InstallationManager manager;
 
     private Scheduler scheduler;
 
     @Inject
-    public UpdateManager(@Named("installation-manager.daemon.check_update_schedule") String updateSchedule,
-                         @Named("installation-manager.daemon.download_automatically") boolean downloadAutomatically,
+    public UpdateManager(@Named("installation-manager.daemon.schedule") String updateSchedule,
                          InstallationManager manager) throws IOException {
-        this.manager = manager;
         this.updateSchedule = updateSchedule;
-        this.downloadAutomatically = downloadAutomatically;
+        this.manager = manager;
     }
 
     @PostConstruct
@@ -65,8 +59,8 @@ public class UpdateManager {
         scheduler.start();
 
         JobDetailImpl jobDetail = new JobDetailImpl();
-        jobDetail.setKey(new JobKey(UpdateJob.class.getName()));
-        jobDetail.setJobClass(UpdateJob.class);
+        jobDetail.setKey(new JobKey(IMJob.class.getName()));
+        jobDetail.setJobClass(IMJob.class);
         jobDetail.setDurability(true);
 
         scheduler.scheduleJob(jobDetail, TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(updateSchedule)).build());
@@ -83,44 +77,10 @@ public class UpdateManager {
     /**
      * Job to check and download updates.
      */
-    public class UpdateJob implements Job {
+    public class IMJob implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
-            LOG.info("Checking new updates started");
-
-            try {
-                UserCredentials userCredentials = getUserCredentials();
-
-                Map<Artifact, String> updates = manager.getUpdates("auth token");
-
-                if (!updates.isEmpty() && downloadAutomatically) {
-                    for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
-                        Artifact artifact = entry.getKey();
-                        String version = entry.getValue();
-
-                        manager.download(userCredentials, artifact, version);
-                    }
-                }
-            } catch (Exception e) {
-                throw new JobExecutionException(e);
-            } finally {
-                LOG.info("Checking new updates finished");
-            }
-        }
-
-        private UserCredentials getUserCredentials() {
-            String authToken = getAuthToken();
-            String accountId = getAccountId();
-            
-            return new UserCredentials(authToken, accountId);
-        }
-        
-        private String getAuthToken() {
-            return null; // CDEC-18
-        }
-        
-        private String getAccountId() {
-            return null; // CDEC-18
+            // do nothing yet
         }
     }
 }
