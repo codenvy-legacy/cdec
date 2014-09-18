@@ -107,15 +107,15 @@
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresRepositories=]]></replacetoken>
-                                    <replacevalue><![CDATA[featuresRepositories=mvn:com.codenvy.im.cdec/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
+                                    <replacevalue><![CDATA[featuresRepositories=mvn:com.codenvy.im/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.repos.cfg">
                                     <replacetoken><![CDATA[cellar       =]]></replacetoken>
-                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.im.cdec:installation-manager-cli-feature:xml:features(0,]
+                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.im:installation-manager-cli-feature:xml:features(0,]
 cellar       =]]></replacevalue>
                                 </replace>
-                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar" />
-                                <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cdec/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
+                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar" />
+                                <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
                             </target>
                         </configuration>
                     </execution>
