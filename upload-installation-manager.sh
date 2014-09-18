@@ -17,7 +17,8 @@
 
 #!/bin/bash
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
-    SSH_KEY_NAME=cl-server-prod-20130219
+#    SSH_KEY_NAME=cl-server-prod-20130219
+    SSH_KEY_NAME=git_nopass.key
     SSH_AS_USER_NAME=codenvy
     AS_IP=update.codenvycorp.com
     echo "Uploading on production"
@@ -65,6 +66,6 @@ doUpload() {
 }
 
 uploadArtifact installation-manager
-uploadArtifact installation-manager-cli-assembly
+uploadArtifact installation-manager-cli
 uploadInstallScript
 

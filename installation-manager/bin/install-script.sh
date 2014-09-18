@@ -98,8 +98,8 @@ installIM() {
     sudo chown -R ${USER}:${USER} ${APP_DIR}
 }
 
-installCLI() {
-    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli-assembly"
+installIMCLI() {
+    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
 
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
@@ -135,7 +135,7 @@ echo "Installation: Installation Manager Server ..."
 installIM
 
 echo "Installation: Installation Manager CLI ..."
-installCLI
+installIMCLI
 
 registerService${os}
 launchingService
