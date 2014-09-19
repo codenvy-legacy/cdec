@@ -45,13 +45,6 @@ installRequiredComponentsDebian() {
         read -p "Press any key to start installing java... " -n1 -s
         sudo apt-get install openjdk-7-jdk
     }
-    
-    # install unzip
-    command -v unzip >/dev/null 2>&1 || {      # check if requered program had already installed earlier
-        echo "Installing installation manager requires unzip but it's not installed! " >&2
-        read -p "Press any key to start installing unzip... " -n1 -s
-        sudo apt-get install unzip
-    }
 }
 
 registerServiceRedhat() {
@@ -65,28 +58,25 @@ installRequiredComponentsRedhat() {
     echo "Check required components..."
 
     # install java
-    command -v java >/dev/null 2>&1 || {    # check if requered program had already installed earlier
-        echo "Installation manager requires java but it's not installed! " >&2
+    command -v java >/dev/null 2>&1 || {
+        echo "Installing installation manager requires java but it's not installed! " >&2
         read -p "Press any key to start installing java... " -n1 -s
         sudo yum install java-1.7.0-openjdk
-    } 
-    
-    # install unzip
-    command -v unzip >/dev/null 2>&1 || {   # check if requered program had already installed earlier
-        echo "Installing installation manager requires unzip but it's not installed! " >&2
-        read -p "Press any key to start installing unzip... " -n1 -s
-        sudo yum install unzip
     }
 }
 
 installIM() {
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
+    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
-    sudo rm ${APP_DIR} -r &>/dev/null                 # remove exists files
-    sudo unzip ${filename} -d ${APP_DIR} &>/dev/null  # unzip new package
+    # removes existed files and creates new directory
+    sudo rm ${APP_DIR} -rf &>/dev/null
+    sudo mkdir ${APP_DIR}
+
+    # untar archive
+    sudo tar -xvf ${filename} -C ${APP_DIR}
 
     # copy installation-manager script into /etc/init.d
     sudo cp ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
@@ -101,11 +91,15 @@ installIM() {
 installIMCLI() {
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
 
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
+    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
     curl -o ${filename} -L ${DOWNLOAD_URL}
 
-    rm ${HOME}/im-cli -r &>/dev/null                 # remove exists files
-    unzip ${filename} -d ${HOME}/im-cli &>/dev/null  # unzip new package
+    # removes existed files and creates new directory
+    rm ${HOME}/im-cli -rf &>/dev/null
+    mkdir ${HOME}/im-cli
+
+    # untar archive
+    tar -xvf ${filename} -C ${HOME}/im-cli
 }
 
 launchingService() {
@@ -131,7 +125,7 @@ echo "System is running on ${os} based distributive."
 installRequiredComponents${os}
 createCodenvyUserAndGroup${os}
 
-echo "Installation: Installation Manager Server ..."
+echo "Installation: Installation Manager ..."
 installIM
 
 echo "Installation: Installation Manager CLI ..."

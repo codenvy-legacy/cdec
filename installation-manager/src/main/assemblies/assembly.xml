@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     CODENVY CONFIDENTIAL
@@ -17,25 +18,26 @@
     from Codenvy S.A..
 
 -->
-
 <assembly>
     <id>binary</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
+    <files>
+        <file>
+            <source>target/${project.artifactId}-${project.version}.jar</source>
+            <destName>${project.artifactId}-binary.jar</destName>
+        </file>
+    </files>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/codenvy-cli-${codenvy.cli.version}</directory>
+            <directory>${basedir}/bin</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>/bin/*</include>
+                <include>installation-manager</include>
             </includes>
             <fileMode>755</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/codenvy-cli-${codenvy.cli.version}</directory>
-            <outputDirectory>/</outputDirectory>
-            <includes>
-                <include>**/*</include>
-            </includes>
         </fileSet>
     </fileSets>
 </assembly>

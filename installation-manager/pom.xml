@@ -160,11 +160,8 @@
                 </executions>
                 <configuration>
                     <descriptors>
-                        <descriptor>${basedir}/src/main/assemblies/binary-assembly.xml</descriptor>
+                        <descriptor>src/main/assemblies/assembly.xml</descriptor>
                     </descriptors>
-                    <formats>
-                        <format>zip</format>
-                    </formats>
                 </configuration>
             </plugin>
         </plugins>

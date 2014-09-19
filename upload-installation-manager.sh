@@ -34,7 +34,7 @@ fi
 uploadArtifact() {
     ARTIFACT=$1
 
-    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
+    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]tar.gz`
     VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
     SOURCE=${ARTIFACT}/target/${FILENAME}
 

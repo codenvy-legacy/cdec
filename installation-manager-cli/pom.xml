@@ -133,10 +133,7 @@ cellar       =]]></replacevalue>
                     </execution>
                 </executions>
                 <configuration>
-                    <descriptor>src/main/assemblies/binary-assembly.xml</descriptor>
-                    <formats>
-                        <format>zip</format>
-                    </formats>
+                    <descriptor>src/main/assemblies/assembly.xml</descriptor>
                 </configuration>
             </plugin>
         </plugins>
