@@ -76,7 +76,8 @@ installIM() {
     sudo mkdir ${APP_DIR}
 
     # untar archive
-    sudo tar -xvf ${filename} -C ${APP_DIR}
+    sudo tar -xvf ${filename} -C /tmp
+    sudo tar -xvf /tmp/${filename} -C ${APP_DIR}
 
     # copy installation-manager script into /etc/init.d
     sudo cp ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
