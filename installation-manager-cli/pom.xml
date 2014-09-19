@@ -114,7 +114,7 @@
                                     <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.im:installation-manager-cli-feature:xml:features(0,]
 cellar       =]]></replacevalue>
                                 </replace>
-                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli/${project.version}/installation-manager-cli-${project.version}.jar" />
+                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-bundle/${project.version}/installation-manager-cli-bundle-${project.version}.jar" />
                                 <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
                             </target>
                         </configuration>
