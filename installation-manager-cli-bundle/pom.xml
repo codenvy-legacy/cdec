@@ -18,8 +18,7 @@
     from Codenvy S.A..
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>im-parent</artifactId>
@@ -31,6 +30,11 @@
     <name>Codenvy :: IM :: Installation Manager CLI Bundle</name>
     <dependencies>
         <dependency>
+            <groupId>com.codenvy.cli</groupId>
+            <artifactId>cli-command</artifactId>
+            <version>${codenvy.cli.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-commons</artifactId>
             <version>${project.version}</version>
@@ -39,12 +43,6 @@
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-restlet</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.cli</groupId>
-            <artifactId>cli-command</artifactId>
-            <version>${codenvy.cli.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.codenvy.cli</groupId>
@@ -125,7 +123,7 @@
                 <configuration>
                     <instructions>
                         <_include>-src/main/bnd/instructions.bnd</_include>
-                        <_plugin/>
+                        <_plugin />
                     </instructions>
                 </configuration>
             </plugin>
