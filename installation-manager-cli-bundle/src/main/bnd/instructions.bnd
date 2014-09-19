@@ -16,7 +16,7 @@
 # from Codenvy S.A..
 #
 
-Export-Package com.codenvy.cdec.im.cli.command*;version=${project.version}
+Export-Package com.codenvy.im.cli.command*;version=${project.version}
 
 Import-Package !com.google.inject.internal.asm.util, \
                org.apache.aries.blueprint, \

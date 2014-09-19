@@ -33,6 +33,16 @@
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-cli-bundle</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>installation-manager-commons</artifactId>
+                    <groupId>com.codenvy.im</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>installation-manager-restlet</artifactId>
+                    <groupId>com.codenvy.im</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <build>
