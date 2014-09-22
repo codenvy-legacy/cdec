@@ -31,30 +31,6 @@ else
     exit
 fi
 
-makeBundle() {
-    IM=installation-manager
-    IM_CLI=installation-manager-cli
-
-    IM_FILENAME=`ls ${IM}/target | grep -G ${IM}-.*-binary[.]tar.gz`
-    IM_SOURCE=${IM}/target/${IM_FILENAME}
-
-    IM_CLI_FILENAME=`ls ${IM_CLI}/target | grep -G ${IM_CLI}-.*-binary[.]tar.gz`
-    IM_CLI_SOURCE=${IM_CLI}/target/${IM_CLI_FILENAME}
-
-    BUNDLE_DIR=${IM}/target/im_and_im_cli
-    rm -rf ${BUNDLE_DIR}
-    mkdir ${BUNDLE_DIR}
-
-    cp ${IM_SOURCE} ${BUNDLE_DIR}
-    cp ${IM_CLI_SOURCE} ${BUNDLE_DIR}
-
-    pushd ${BUNDLE_DIR}
-    tar -zcf ../${IM_FILENAME} *
-    popd
-
-    rm -rf ${BUNDLE_DIR}
-}
-
 uploadArtifact() {
     ARTIFACT=$1
 
@@ -88,7 +64,6 @@ doUpload() {
     rm .properties
 }
 
-makeBundle
 uploadArtifact installation-manager
 uploadArtifact installation-manager-cli
 uploadInstallScript

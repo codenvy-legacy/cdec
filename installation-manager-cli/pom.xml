@@ -101,11 +101,6 @@
                         <configuration>
                             <target>
                                 <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
-                                <delete>
-                                    <fileset dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/">
-                                        <include name="shell*" />
-                                    </fileset>
-                                </delete>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
                                     <replacevalue><![CDATA[featuresBoot=installation-manager-cli-features,]]></replacevalue>
