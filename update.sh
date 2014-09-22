@@ -48,7 +48,8 @@ deleteFileIfExists() {
     echo "==== Step [4/7] =======================> [Cleaning up]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm -rf ${home}"
     echo "==== Step [5/7] =======================> [Unpacking resources]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "unzip ${filename} -d update-server-tomcat"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir ${home}"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "tar -xvf ${filename} -C update-server-tomcat"
 
     if [ "$1" == "stg" ]; then
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32001/33001/g' ${home}/conf/server.xml"
