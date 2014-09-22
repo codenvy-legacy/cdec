@@ -14,8 +14,8 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Codenvy S.A..
 #
-com.codenvy.cdec.im.cli.command.InstallCommand
-com.codenvy.cdec.im.cli.command.CheckUpdatesCommand
-com.codenvy.cdec.im.cli.command.DownloadCommand
-com.codenvy.cdec.im.cli.command.LoginCommand
-com.codenvy.cdec.im.cli.command.VersionCommand
+com.codenvy.im.cli.command.InstallCommand
+com.codenvy.im.cli.command.CheckUpdatesCommand
+com.codenvy.im.cli.command.DownloadCommand
+com.codenvy.im.cli.command.LoginCommand
+com.codenvy.im.cli.command.VersionCommand

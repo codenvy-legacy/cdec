@@ -42,10 +42,6 @@
                     <artifactId>installation-manager-restlet</artifactId>
                     <groupId>com.codenvy.im</groupId>
                 </exclusion>
-                <exclusion>
-                    <artifactId>cli-command</artifactId>
-                    <groupId>com.codenvy.cli</groupId>
-                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
