@@ -25,7 +25,8 @@ Import-Package !com.google.inject.internal.asm.util, \
                org.apache.felix.service.command, \
                org.apache.karaf.shell.commands, \
                org.apache.karaf.shell.console, \
-               com.codenvy.cli.command.builtin.*
+               !com.codenvy.cli.command.builtin.*
+
 
 DynamicImport-Package *
 
