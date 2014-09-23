@@ -75,8 +75,8 @@ public class InstallationManagerImpl implements InstallationManager {
             Files.createDirectories(this.downloadDir);
         }
 
-        LOG.info("Download directory " + downloadDir);
-        LOG.info(artifacts.getClass().getName());
+        LOG.info("Download directory: " + downloadDir);
+        LOG.info("API endpoint: " + apiEndpoint);
     }
 
     /** {@inheritDoc} */
@@ -114,7 +114,7 @@ public class InstallationManagerImpl implements InstallationManager {
         for (Artifact artifact : artifacts) {
             try {
                 if (!(artifact instanceof CDECArtifact)) {
-                    installed.put(artifact, artifact.getCurrentVersion(authToken));
+                    installed.put(artifact, artifact.getInstalledVersion(authToken));
                 }
             } catch (IOException e) {
                 throw getProperException(e, artifact);

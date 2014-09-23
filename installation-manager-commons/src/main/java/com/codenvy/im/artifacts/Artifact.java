@@ -32,18 +32,12 @@ public interface Artifact extends Comparable<Artifact> {
      */
     void install(Path pathToBinaries) throws IOException;
 
-    /**
-     * @return current deployed version of the component
-     */
-    String getCurrentVersion(String accessToken) throws IOException;
+    /** @return current installed version of the artifact */
+    String getInstalledVersion(String accessToken) throws IOException;
 
-    /**
-     * @return the artifact name
-     */
+    /** @return the artifact name */
     String getName();
 
-    /**
-     * @return the priority of the artifact to install, update etc.
-     */
+    /** @return the priority of the artifact to install, update etc. */
     int getPriority();
 }

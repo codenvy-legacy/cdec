@@ -27,9 +27,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-/**
- * @author Anatoliy Bazko
- */
+/** @author Anatoliy Bazko */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
@@ -47,15 +45,12 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public void install(Path pathToBinaries) throws IOException {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("CDEC installation is not supported yet.");
     }
 
     @Override
-    public String getCurrentVersion(String accessToken) throws IOException {
-        /*String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/installationinfo/" + NAME), accessToken);
-        Map m = Commons.fromJson(json, Map.class);
-        return (String)m.get("version");*/
-        return null;
+    public String getInstalledVersion(String accessToken) throws IOException {
+        return "UNKNOWN";
     }
 
     @Override

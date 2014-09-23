@@ -81,7 +81,7 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, Path>() {{
             put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.1");
 
@@ -90,7 +90,7 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
-        doReturn(null).when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1");
     }
@@ -101,7 +101,7 @@ public class TestInstallationManager {
             put(cdecArtifact, Paths.get("target/download/cdec/1.0.1/file1"));
         }}).when(manager).getDownloadedArtifacts();
         doNothing().when(cdecArtifact).install(any(Path.class));
-        doReturn(null).when(cdecArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1");
         verify(cdecArtifact).install(any(Path.class));
@@ -112,7 +112,7 @@ public class TestInstallationManager {
         doReturn(new HashMap<Artifact, Path>() {{
             put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.0/file1"));
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0");
     }
@@ -123,7 +123,7 @@ public class TestInstallationManager {
             put(installManagerArtifact, Paths.get("target/download/installation-manager/2.10.2/file1"));
         }}).when(manager).getDownloadedArtifacts();
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
-        doReturn("2.10.1").when(installManagerArtifact).getCurrentVersion(testCredentials.getToken());
+        doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
         doNothing().when(installManagerArtifact).install(any(Path.class));
 
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.2");

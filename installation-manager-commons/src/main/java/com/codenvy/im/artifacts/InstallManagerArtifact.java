@@ -93,7 +93,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
-    public String getCurrentVersion(String accessToken) throws IOException {
+    public String getInstalledVersion(String accessToken) throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);

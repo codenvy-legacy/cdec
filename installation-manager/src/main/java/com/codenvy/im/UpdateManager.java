@@ -32,25 +32,22 @@ import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import java.io.IOException;
 
-/**
- * Checks and downloads updates by schedule.
- *
- * @author Anatoliy Bazko
- */
+/** @author Anatoliy Bazko */
 @Singleton
 public class UpdateManager {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateManager.class);
 
-    private final String              updateSchedule;
+    private final String              schedule;
     private final InstallationManager manager;
 
     private Scheduler scheduler;
 
     @Inject
-    public UpdateManager(@Named("installation-manager.daemon.schedule") String updateSchedule,
+    public UpdateManager(@Named("installation-manager.daemon.schedule") String schedule,
                          InstallationManager manager) throws IOException {
-        this.updateSchedule = updateSchedule;
+        this.schedule = schedule;
         this.manager = manager;
+        LOG.info("Cron schedule: " + schedule);
     }
 
     @PostConstruct
@@ -63,7 +60,7 @@ public class UpdateManager {
         jobDetail.setJobClass(IMJob.class);
         jobDetail.setDurability(true);
 
-        scheduler.scheduleJob(jobDetail, TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(updateSchedule)).build());
+        scheduler.scheduleJob(jobDetail, TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(schedule)).build());
 
     }
 
@@ -74,9 +71,7 @@ public class UpdateManager {
         }
     }
 
-    /**
-     * Job to check and download updates.
-     */
+    /** Job to check and download updates. */
     public class IMJob implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
