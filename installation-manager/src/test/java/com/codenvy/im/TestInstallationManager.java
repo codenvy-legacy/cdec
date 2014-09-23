@@ -139,10 +139,10 @@ public class TestInstallationManager {
                          + "}]");
 
         when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
-            .thenReturn("[{serviceId:\"On-Premises\"}]");
+            .thenReturn("[{serviceId:\"OnPremises\"}]");
 
         when(transport.doGetRequest("update/endpoint/repository/properties/" + cdecArtifact.getName() + "/" + version))
-                .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"On-Premises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
+                .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
         manager.download(testCredentials, cdecArtifact, version);
 

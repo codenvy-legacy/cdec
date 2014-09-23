@@ -35,7 +35,7 @@ import static org.testng.Assert.assertTrue;
 public class TestAccountUtils {
 
     private HttpTransport mockTransport;
-    private final static String VALID_SUBSCRIPTION = "On-Premises";
+    private final static String VALID_SUBSCRIPTION = "OnPremises";
     private UserCredentials testCredentials;
     
     @BeforeMethod

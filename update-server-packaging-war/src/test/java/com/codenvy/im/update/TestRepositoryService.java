@@ -65,7 +65,7 @@ public class TestRepositoryService extends BaseTest {
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
     }};
     private final Properties subscriptionProperties   = new Properties() {{
-        put(SUBSCRIPTION_PROPERTY, "On-Premises");
+        put(SUBSCRIPTION_PROPERTY, "OnPremises");
     }};
 
     {
@@ -156,7 +156,7 @@ public class TestRepositoryService extends BaseTest {
     public void testGetArtifactProperties() throws Exception {
         Map testProperties = new HashMap() {{
             put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
-            put(SUBSCRIPTION_PROPERTY, "On-Premises");
+            put(SUBSCRIPTION_PROPERTY, "OnPremises");
         }};
         
         Properties testPropertiesContainer = new Properties();
@@ -204,7 +204,7 @@ public class TestRepositoryService extends BaseTest {
         .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         
         when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
-        .thenReturn("[{serviceId:On-Premises}]");
+        .thenReturn("[{serviceId:OnPremises}]");
         
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
