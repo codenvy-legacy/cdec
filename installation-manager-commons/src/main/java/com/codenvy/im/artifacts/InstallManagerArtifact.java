@@ -21,9 +21,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -31,6 +34,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -50,7 +55,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public void install(Path pathToBinaries) throws IOException {
         try {
-            Path dirForUpdate = pathToBinaries.getParent().resolve("upacked");
+            Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
             if (Files.exists(dirForUpdate)) {
                 FileUtils.cleanDirectory(dirForUpdate.toFile());
             } else {
@@ -58,9 +63,50 @@ public class InstallManagerArtifact extends AbstractArtifact {
             }
 
             unpack(pathToBinaries, dirForUpdate);
-            restart(dirForUpdate);
+
+            File im = null;
+            File imCli = null;
+
+            for (File file : FileUtils.listFiles(dirForUpdate.toFile(), null, false)) {
+                if (file.getName().startsWith(NAME + "-cli")) {
+                    imCli = file;
+                } else {
+                    im = file;
+                }
+            }
+
+            Path dirImUpdateUnpack = dirForUpdate.resolve("im");
+            unpack(im.toPath(), dirImUpdateUnpack);
+
+            Path dirImCliUpdateUnpack = dirForUpdate.resolve("im-cli");
+            unpack(imCli.toPath(), dirImCliUpdateUnpack);
+
+            createImCliUpdateScript(dirImCliUpdateUnpack);
+            restart(dirImUpdateUnpack);
         } catch (InterruptedException | URISyntaxException e) {
             throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    private void createImCliUpdateScript(Path dirImCliUpdateUnpack) throws URISyntaxException, IOException {
+        Path fileWithImCliInstalled = getInstalledPath().getParent().resolve("im-cli-installed");
+
+        if (!Files.exists(fileWithImCliInstalled)) {
+            throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
+        }
+
+        String imCliInstalledPath = new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri()));
+
+        List<String> commands = new ArrayList<>();
+
+        commands.add("rm -rf " + imCliInstalledPath + "/* ;");
+        commands.add("cp -r " + dirImCliUpdateUnpack + " " + imCliInstalledPath + "/* ;");
+
+        Path updateScript = (new File(imCliInstalledPath)).toPath().resolve("bin/im-cli-update-script.sh");
+        Files.deleteIfExists(updateScript);
+
+        try (FileOutputStream out = new FileOutputStream(updateScript.toFile())) {
+            IOUtils.writeLines(commands, "\n", out);
         }
     }
 
@@ -69,16 +115,16 @@ public class InstallManagerArtifact extends AbstractArtifact {
         StringBuilder stringBuilder = new StringBuilder(200);
 
         stringBuilder.append("sleep 5 ; ") // a little bit time to answer to CLI
-                     .append(installedPath).append("/installation-manager stop ; ")
-                     .append("cp -r ")
-                     .append(unpackedUpdates.toFile().getAbsolutePath())
-                     .append("/* ")
-                     .append(installedPath)
-                     .append(" ; ")
-                     .append("rm -rf ")
-                     .append(unpackedUpdates.toFile().getAbsolutePath())
-                     .append(" ; ")
-                     .append(installedPath).append("/installation-manager start ");
+                .append(installedPath).append("/installation-manager stop ; ")
+                .append("cp -r ")
+                .append(unpackedUpdates.toFile().getAbsolutePath())
+                .append("/* ")
+                .append(installedPath)
+                .append(" ; ")
+                .append("rm -rf ")
+                .append(unpackedUpdates.toFile().getAbsolutePath())
+                .append(" ; ")
+                .append(installedPath).append("/installation-manager start ");
 
         runCommand(stringBuilder.toString());
     }

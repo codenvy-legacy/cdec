@@ -101,6 +101,10 @@ installIMCLI() {
 
     # untar archive
     tar -xvf ${filename} -C ${HOME}/im-cli
+
+    cliinstalled=${HOME}/im-cli
+    sudo su -c "echo ${cliinstalled} > ${CODENVY_HOME}/im-cli-instaled"
+    sudo su -c "chown ${USER}:${USER} ${CODENVY_HOME}/im-cli-instaled"
 }
 
 launchingService() {
