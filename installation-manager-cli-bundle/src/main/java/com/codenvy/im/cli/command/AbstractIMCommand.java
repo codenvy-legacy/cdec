@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
+import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
@@ -68,6 +69,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getRemoteNameForUpdateServer());
     }
 
+
     /**
      * @throws IllegalStateException
      *         if user isn't logged in
@@ -77,11 +79,15 @@ public abstract class AbstractIMCommand extends AbsCommand {
         if (remoteName == null) {
             throw new IllegalStateException("Please login using im:login command.");
         }
-        
+
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
             throw new IllegalStateException("Please login using im:login command.");
         }
+    }
+
+    protected void printLineSeparator() {
+        System.out.println(System.lineSeparator());
     }
 
     protected void printError(Exception ex) {
@@ -110,7 +116,16 @@ public abstract class AbstractIMCommand extends AbsCommand {
         System.out.println(ansi().fg(RED).a(message).reset());
     }
 
-    protected void printResult(@Nullable String response) {
+    protected void printInfo(String message) {
+        System.out.print(message);
+        System.out.flush();
+    }
+
+    protected void printSuccess(String message) {
+        System.out.println(ansi().fg(GREEN).a(message).reset());
+    }
+
+    protected void printResponse(@Nullable String response) {
         if (response == null) {
             printError(new IllegalArgumentException("Unexpected error occurred. Response is empty"));
         } else {

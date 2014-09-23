@@ -37,11 +37,11 @@ public class DownloadCommand extends AbstractIMCommand {
             init();
 
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
+                printResponse(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.download(artifactName, getCredentialsRep()));
+                printResponse(installationManagerProxy.download(artifactName, getCredentialsRep()));
             } else {
-                printResult(installationManagerProxy.download(getCredentialsRep()));
+                printResponse(installationManagerProxy.download(getCredentialsRep()));
             }
         } catch (Exception e) {
             printError(e);

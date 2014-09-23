@@ -54,12 +54,11 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (username == null) {
                 if (isInteractive()) {
-                    System.out.print("Username for '" + remoteUrl + "':");
-                    System.out.flush();
+                    printInfo("Username for '" + remoteUrl + "':");
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         username = reader.readLine();
                     }
-                    System.out.println(System.lineSeparator());
+                    printLineSeparator();
                 } else {
                     username = new ConsoleReader().readLine("Username for '" + remoteUrl + "':");
                 }
@@ -67,12 +66,11 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (password == null) {
                 if (isInteractive()) {
-                    System.out.print("Password for " + username + ":");
-                    System.out.flush();
+                    printInfo("Password for " + username + ":");
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         password = reader.readLine();
                     }
-                    System.out.println(System.lineSeparator());
+                    printLineSeparator();
                 } else {
                     password = new ConsoleReader().readLine(String.format("Password for %s:", username), '*');
                 }
@@ -80,12 +78,11 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (accountId == null) {
                 if (isInteractive()) {
-                    System.out.print("ID of account used for subscription:");
-                    System.out.flush();
+                    printInfo("Account ID:");
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         accountId = reader.readLine();
                     }
-                    System.out.println(System.lineSeparator());
+                    printLineSeparator();
                 } else {
                     accountId = new ConsoleReader().readLine("ID of account used for subscription:");
                 }
@@ -94,10 +91,10 @@ public class LoginCommand extends AbstractIMCommand {
             preferencesStorage.setAccountId(accountId);
 
             if (getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                System.out.println("Login succeeded.");
+                printSuccess("Login succeeded.");
                 return null;
             } else {
-                System.out.println("Login failed: please check the credentials.");
+                printError("Login failed: please check the credentials.");
             }
         } catch (Exception e) {
             printError(e);

@@ -40,11 +40,11 @@ public class InstallCommand extends AbstractIMCommand {
             init();
 
             if (artifactName != null && version != null) {
-                printResult(installationManagerProxy.install(artifactName, version, getCredentialsRep()));
+                printResponse(installationManagerProxy.install(artifactName, version, getCredentialsRep()));
             } else if (artifactName != null) {
-                printResult(installationManagerProxy.install(artifactName, getCredentialsRep()));
+                printResponse(installationManagerProxy.install(artifactName, getCredentialsRep()));
             } else {
-                printResult(installationManagerProxy.install(getCredentialsRep()));
+                printResponse(installationManagerProxy.install(getCredentialsRep()));
             }
         } catch (Exception e) {
             printError(e);

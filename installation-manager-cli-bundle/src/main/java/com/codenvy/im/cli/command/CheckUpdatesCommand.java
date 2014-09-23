@@ -34,7 +34,7 @@ public class CheckUpdatesCommand extends AbstractIMCommand {
             init();
 
             String response = installationManagerProxy.getUpdates(getCredentialsRep());
-            printResult(response);
+            printResponse(response);
         } catch (Exception e) {
             printError(e);
         }

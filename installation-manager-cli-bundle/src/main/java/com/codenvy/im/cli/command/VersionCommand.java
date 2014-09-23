@@ -29,7 +29,7 @@ public class VersionCommand extends AbstractIMCommand {
     protected Void doExecute() throws Exception {
         try {
             init();
-            printResult(installationManagerProxy.getVersions(getCredentialsRep()));
+            printResponse(installationManagerProxy.getVersions(getCredentialsRep()));
         } catch (Exception e) {
             printError(e);
         }
