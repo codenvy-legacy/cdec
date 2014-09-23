@@ -92,7 +92,6 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (getMultiRemoteCodenvy().login(remoteName, username, password)) {
                 printSuccess("Login succeeded.");
-                return null;
             } else {
                 printError("Login failed: please check the credentials.");
             }
