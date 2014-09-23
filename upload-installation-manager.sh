@@ -71,6 +71,10 @@ uploadInstallScript() {
     SOURCE=installation-manager/bin/${FILENAME}
 
     doUpload
+
+    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 doUpload() {

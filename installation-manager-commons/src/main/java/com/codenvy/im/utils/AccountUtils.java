@@ -38,17 +38,17 @@ import static com.codenvy.im.utils.Commons.createListDtoFromJson;
  */
 public class AccountUtils {
     public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions not found.";
-    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "Account with valid role not found.";
-    public static final String ACCOUNT_NOT_FOUND_ERROR               = "Account not found.";
     public static final String ACCOUNT_OWNER_ROLE                    = "account/owner";
+    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "User hasn't " + ACCOUNT_OWNER_ROLE + " role";
+    public static final String ACCOUNT_NOT_FOUND_ERROR               = "Account not found.";
 
     /**
      * Utility class so no public constructor.
      */
     private AccountUtils() {
-        
+
     }
-    
+
     /**
      * Indicates if the current user has a valid subscription.
      *
@@ -78,9 +78,7 @@ public class AccountUtils {
             throw new IllegalStateException(ACCOUNT_NOT_FOUND_ERROR);
         }
 
-        if (!hasRole(account, ACCOUNT_OWNER_ROLE)) {
-            throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
-        }
+        validateRole(account, ACCOUNT_OWNER_ROLE);
 
         String subscriptionsHref = getSubscriptionsHref(account);
         if (subscriptionsHref == null) {
@@ -155,8 +153,10 @@ public class AccountUtils {
         return null;
     }
 
-    private static boolean hasRole(MemberDescriptor account, String role) {
+    private static void validateRole(MemberDescriptor account, String role) throws IllegalStateException {
         List<String> roles = account.getRoles();
-        return roles != null && roles.contains(role);
+        if (roles == null || !roles.contains(role)) {
+            throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
+        }
     }
 }

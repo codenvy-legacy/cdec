@@ -85,7 +85,8 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         LOG.info("Download directory: " + downloadDir);
-        LOG.info("Codenvy API endpoint: " + apiEndpoint);
+        LOG.info("Codenvy endpoint: " + apiEndpoint);
+        LOG.info("Codenvy Update Server endpoint: " + updateEndpoint);
     }
 
     /** {@inheritDoc} */
@@ -139,10 +140,18 @@ public class InstallationManagerImpl implements InstallationManager {
         try {
             boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version, transport, updateEndpoint);
 
-            String requestUrl = combinePaths(updateEndpoint,
-                                             "/repository/"
-                                             + (isAuthenticationRequired ? "" : "public/")
-                                             + "download/" + artifact.getName() + "/" + version);
+            String requestUrl;
+            if (isAuthenticationRequired) {
+                if (userCredentials.getAccountId() == null) {
+                    throw new IllegalStateException("Account ID is unknown. Please login using im:login command");
+                }
+
+                requestUrl = combinePaths(updateEndpoint,
+                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + userCredentials.getAccountId());
+            } else {
+                requestUrl = combinePaths(updateEndpoint,
+                                          "/repository/public/download/" + artifact.getName() + "/" + version);
+            }
 
             Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
             FileUtils.deleteDirectory(artifactDownloadDir.toFile());
