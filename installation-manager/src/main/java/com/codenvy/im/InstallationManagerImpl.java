@@ -38,10 +38,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
-import static com.codenvy.im.utils.Commons.*;
+import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.extractVersion;
+import static com.codenvy.im.utils.Commons.fromJson;
+import static com.codenvy.im.utils.Commons.getLatestVersion;
+import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.compare;
 
 /**
@@ -76,7 +85,7 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         LOG.info("Download directory: " + downloadDir);
-        LOG.info("API endpoint: " + apiEndpoint);
+        LOG.info("Codenvy API endpoint: " + apiEndpoint);
     }
 
     /** {@inheritDoc} */
