@@ -31,12 +31,16 @@ import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -71,6 +75,8 @@ public class TestDownloadInstallationManagerServiceImpl {
                 put(installManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(Paths.get("cdec.zip")).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
+        doReturn(Paths.get("im.zip")).when(mockInstallationManager).download(testCredentials, installManagerArtifact, "1.0.1");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.download(userCredentialsRep);
@@ -78,11 +84,13 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "  \"artifacts\": [\n" +
                                                       "    {\n" +
                                                       "      \"artifact\": \"cdec\",\n" +
+                                                      "      \"file\": \"cdec.zip\",\n" +
                                                       "      \"status\": \"SUCCESS\",\n" +
                                                       "      \"version\": \"2.10.5\"\n" +
                                                       "    },\n" +
                                                       "    {\n" +
                                                       "      \"artifact\": \"installation-manager\",\n" +
+                                                      "      \"file\": \"im.zip\",\n" +
                                                       "      \"status\": \"SUCCESS\",\n" +
                                                       "      \"version\": \"1.0.1\"\n" +
                                                       "    }\n" +
@@ -99,12 +107,14 @@ public class TestDownloadInstallationManagerServiceImpl {
                 put(installManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(Paths.get("cdec.zip")).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.download("cdec", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
+                                                      "    \"file\": \"cdec.zip\",\n" +
                                                       "    \"status\": \"SUCCESS\",\n" +
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +
@@ -120,12 +130,14 @@ public class TestDownloadInstallationManagerServiceImpl {
                 put(installManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(Paths.get("cdec.zip")).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.download("cdec", "2.10.5", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
+                                                      "    \"file\": \"cdec.zip\",\n" +
                                                       "    \"status\": \"SUCCESS\",\n" +
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +

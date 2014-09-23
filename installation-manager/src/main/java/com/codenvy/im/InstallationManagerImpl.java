@@ -22,8 +22,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.user.UserCredentials;
-import com.codenvy.im.utils.AccountUtils;
-import com.codenvy.im.utils.ArtifactPropertiesUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -61,7 +59,6 @@ import static com.codenvy.im.utils.Version.compare;
 public class InstallationManagerImpl implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
-    private final String apiEndpoint;
     private final String updateEndpoint;
     private final Path   downloadDir;
 
@@ -75,7 +72,6 @@ public class InstallationManagerImpl implements InstallationManager {
                                    HttpTransport transport,
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
-        this.apiEndpoint = apiEndpoint;
         this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.artifacts = new TreeSet<>(artifacts); // keep order
@@ -85,8 +81,8 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         LOG.info("Download directory: " + downloadDir);
-        LOG.info("Codenvy endpoint: " + apiEndpoint);
-        LOG.info("Codenvy Update Server endpoint: " + updateEndpoint);
+        LOG.info("Codenvy API endpoint: " + apiEndpoint);
+        LOG.info("Codenvy Update Server API endpoint: " + updateEndpoint);
     }
 
     /** {@inheritDoc} */
@@ -136,7 +132,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException {
+    public Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException {
         try {
             boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version, transport, updateEndpoint);
 
@@ -153,11 +149,13 @@ public class InstallationManagerImpl implements InstallationManager {
                                           "/repository/public/download/" + artifact.getName() + "/" + version);
             }
 
-            Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
+            Path artifactDownloadDir = getDownloadDirectory(artifact, version);
             FileUtils.deleteDirectory(artifactDownloadDir.toFile());
 
-            transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
+            Path file = transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
             LOG.info("Downloaded '" + artifact + "' version " + version);
+
+            return file;
         } catch (IOException e) {
             throw getProperException(e, artifact);
         }
@@ -179,7 +177,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 continue;
             }
 
-            Path artifactDownloadDir = getArtifactDownloadedDir(artifact, version);
+            Path artifactDownloadDir = getDownloadDirectory(artifact, version);
             if (Files.exists(artifactDownloadDir)) {
                 Iterator<Path> iter = Files.newDirectoryStream(artifactDownloadDir).iterator();
 
@@ -219,13 +217,8 @@ public class InstallationManagerImpl implements InstallationManager {
         return newVersions;
     }
 
-    protected Path getArtifactDownloadedDir(Artifact artifact, String version) {
+    protected Path getDownloadDirectory(Artifact artifact, String version) {
         return downloadDir.resolve(artifact.getName()).resolve(version);
-    }
-
-    protected boolean isValidSubscription(UserCredentials userCredentials, Artifact artifact, String version) throws IOException {
-        String subscription = ArtifactPropertiesUtils.getSubscription(artifact.getName(), version, transport, updateEndpoint);
-        return subscription == null || AccountUtils.isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
     }
 
     /** Retrieves the latest versions from the Update Server. */

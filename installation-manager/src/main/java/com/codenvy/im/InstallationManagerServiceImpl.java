@@ -20,23 +20,29 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.response.*;
+import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactInfoEx;
+import com.codenvy.im.response.DownloadArtifactInfo;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-import com.codenvy.im.utils.InjectorBootstrap;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
+import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
 
 /**
  * @author Dmytro Nochevnov
@@ -49,14 +55,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
-        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("installation-manager.update_server_endpoint"));
+        updateServerUrl = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
     }
 
     /** For testing purpose only. */
     @Deprecated
     protected InstallationManagerServiceImpl(InstallationManager manager) {
         this.manager = manager;
-        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("installation-manager.update_server_endpoint"));
+        updateServerUrl = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
     }
 
     /** {@inheritDoc} */
@@ -81,8 +87,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 String version = entry.getValue();
 
                 try {
-                    doDownload(userCredentials, artifact, version);
-                    infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
+                    Path file = doDownload(userCredentials, artifact, version);
+                    infos.add(new DownloadArtifactInfo(artifact, version, file.toString(), Status.SUCCESS));
                 } catch (Exception e) {
                     infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
                     return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
@@ -109,8 +115,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             }
 
             try {
-                doDownload(userCredentials, artifact, version);
-                ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.SUCCESS);
+                Path file = doDownload(userCredentials, artifact, version);
+                ArtifactInfo info = new DownloadArtifactInfo(artifact, version, file.toString(), Status.SUCCESS);
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
             } catch (Exception e) {
                 ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.FAILURE);
@@ -126,8 +132,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String download(String artifactName, String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
-            doDownload(userCredentials, artifactName, version);
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
+            Path file = doDownload(userCredentials, artifactName, version);
+            ArtifactInfo info = new DownloadArtifactInfo(artifactName, version, file.toString(), Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.FAILURE);
@@ -155,12 +161,16 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         // do nothing
     }
 
-    protected void doDownload(UserCredentials userCredentials, String artifactName, @Nullable String version) throws IOException, IllegalStateException {
-        doDownload(userCredentials, ArtifactFactory.createArtifact(artifactName), version);
+    protected Path doDownload(UserCredentials userCredentials,
+                              String artifactName,
+                              @Nullable String version) throws IOException, IllegalStateException {
+        return doDownload(userCredentials, ArtifactFactory.createArtifact(artifactName), version);
     }
 
-    protected void doDownload(UserCredentials userCredentials, Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
-        manager.download(userCredentials, artifact, version);
+    protected Path doDownload(UserCredentials userCredentials,
+                              Artifact artifact,
+                              @Nullable String version) throws IOException, IllegalStateException {
+        return manager.download(userCredentials, artifact, version);
     }
 
     /** {@inheritDoc} */

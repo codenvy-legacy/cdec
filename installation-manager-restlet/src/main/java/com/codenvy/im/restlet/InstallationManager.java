@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.user.UserCredentials;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -30,7 +31,6 @@ public interface InstallationManager {
 
     /**
      * Install the specific version of the artifact with version greater than installed.
-     *
      *
      * @param authToken
      *         the authentication token
@@ -61,10 +61,11 @@ public interface InstallationManager {
     /**
      * Download the specific version of the artifact.
      *
+     * @return path to downloaded artifact
      * @throws java.io.IOException
      *         if an I/O error occurred
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    void download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
+    Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
 }
