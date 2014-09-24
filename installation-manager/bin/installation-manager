@@ -30,7 +30,7 @@ APP=${APP_DIR}/installation-manager-binary.jar
 PID_FILE=${APP_DIR}/.pid
 LOG_FILE=${LOG_DIR}/console.log
 
-JAVA_CMD="java $JVM_OPTS -jar $APP >> $LOG_FILE & echo \$! >$PID_FILE"
+JAVA_CMD="source ~/.bashrc && java $JVM_OPTS -jar $APP >> $LOG_FILE & echo \$! >$PID_FILE"
 
 # Starting tomcat
 start () {
