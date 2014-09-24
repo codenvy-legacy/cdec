@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import static org.apache.commons.io.IOUtils.toByteArray;
+
 /**
  * @author Anatoliy Bazko
  */
@@ -95,7 +97,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
             throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
         }
 
-        String imCliInstalledPath = new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri()));
+        String imCliInstalledPath = new String(toByteArray(fileWithImCliInstalled.toUri()), "UTF-8");
 
         List<String> commands = new ArrayList<>();
 

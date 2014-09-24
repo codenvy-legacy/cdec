@@ -50,7 +50,6 @@ installJava() {
 
         echo "export JAVA_HOME=/usr/local/jdk1.7.0_17" >> ~/.bashrc
         echo "export PATH=$PATH:/usr/local/jdk1.7.0_17/bin" >> ~/.bashrc
-#        source ~/.bashrc
 
         rm jdk.tar.gz
         echo "> Java has been installed"

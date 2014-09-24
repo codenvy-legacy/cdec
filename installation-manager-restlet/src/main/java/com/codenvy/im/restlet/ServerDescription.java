@@ -23,10 +23,10 @@ import com.codenvy.im.utils.InjectorBootstrap;
  * @author Dmytro Nochevnov
  */
 public class ServerDescription {
-    public static final String SERVER_URL        = InjectorBootstrap.getProperty("installation-manager.restlet.server_url");
-    public static final String LOGIN             = InjectorBootstrap.getProperty("installation-manager.restlet.server_login");
-    public static final char[] PASSWORD          = InjectorBootstrap.getProperty("installation-manager.restlet.server_password").toCharArray();
-    public static final String REALM             = InjectorBootstrap.getProperty("installation-manager.restlet.server_realm");
-    public static final String SERVER_DIGEST_KEY = InjectorBootstrap.getProperty("installation-manager.restlet.server_digest_key");
+    static final String SERVER_URL        = InjectorBootstrap.getProperty("installation-manager.restlet.server_url");
+    static final String LOGIN             = InjectorBootstrap.getProperty("installation-manager.restlet.server_login");
+    static final char[] PASSWORD          = InjectorBootstrap.getProperty("installation-manager.restlet.server_password").toCharArray();
+    static final String REALM             = InjectorBootstrap.getProperty("installation-manager.restlet.server_realm");
+    static final String SERVER_DIGEST_KEY = InjectorBootstrap.getProperty("installation-manager.restlet.server_digest_key");
 
 }

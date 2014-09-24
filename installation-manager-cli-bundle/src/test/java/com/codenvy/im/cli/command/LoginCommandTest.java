@@ -29,8 +29,12 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class LoginCommandTest {    
@@ -75,7 +79,7 @@ public class LoginCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, "Login succeeded.\n");
+        assertTrue(output.contains("Login succeeded."));
     }
     
     @Test
@@ -89,7 +93,7 @@ public class LoginCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, "Login failed: please check the credentials.\n");
+        assertTrue(output.contains("Login failed: please check the credentials."));
     }
     
     @Test
