@@ -88,7 +88,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
                 .append("/* ")
                 .append(installedPath)
                 .append(" ; ")
-                .append("chmod +x ./installation-manager ; ")
+                .append("chmod +x " + installedPath + "/installation-manager ; ")
                 .append("rm -rf ")
                 .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
                 .append(" ; ")

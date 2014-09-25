@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -s https://codenvy.com/update/repository/public/download/install-script)
+# bash <(curl -s https://codenvy-stg.com/update/repository/public/download/install-script)
 
 CODENVY_USER=codenvy
 CODENVY_HOME=/home/${CODENVY_USER}
@@ -80,8 +80,8 @@ installIM() {
     sudo tar -xf ${filename} -C /tmp
     sudo tar -xf /tmp/${filename} -C ${APP_DIR}
 
-    # move installation-manager script into /etc/init.d
-    sudo mv ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
+    # create symbol link to installation-manager script into /etc/init.d
+    sudo ln -s ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
 
     # make it possible to write files into the APP_DIR
     sudo chmod 757 ${APP_DIR}
@@ -102,10 +102,6 @@ installIMCLI() {
 
     # untar archive
     tar -xf ${filename} -C ${HOME}/im-cli
-
-    cliinstalled=${HOME}/im-cli
-    sudo su -c "echo ${cliinstalled} > ${CODENVY_HOME}/im-cli-instaled"
-    sudo su -c "chown ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/im-cli-instaled"
 }
 
 launchingIMService() {
