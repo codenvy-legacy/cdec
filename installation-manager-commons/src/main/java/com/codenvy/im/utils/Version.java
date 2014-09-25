@@ -85,7 +85,7 @@ public class Version implements Comparable<Version> {
         int milestone = 0;
 
         String milestoneGroup = matcher.group(4);
-        if (!milestoneGroup.isEmpty() && milestoneGroup.startsWith(MILESTONE_VERSION_PREFIX)) {
+        if (!milestoneGroup.isEmpty()) {
             milestone = parseInt(milestoneGroup.substring(MILESTONE_VERSION_PREFIX.length()));
         }
 
@@ -117,6 +117,7 @@ public class Version implements Comparable<Version> {
         int result = major;
         result = 31 * result + minor;
         result = 31 * result + bugFix;
+        result = 31 * result + milestone;
         result = 31 * result + (snapshot ? 0 : 1);
         return result;
     }
