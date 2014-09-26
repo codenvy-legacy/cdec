@@ -21,12 +21,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -34,11 +32,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
-
-import static org.apache.commons.io.IOUtils.toByteArray;
 
 /**
  * @author Anatoliy Bazko
@@ -67,12 +61,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
             unpack(pathToBinaries, dirForUpdate);
 
             File im = null;
-            File imCli = null;
 
             for (File file : FileUtils.listFiles(dirForUpdate.toFile(), null, false)) {
-                if (file.getName().startsWith(NAME + "-cli")) {
-                    imCli = file;
-                } else {
+                if (!file.getName().startsWith(NAME + "-cli")) {
                     im = file;
                 }
             }
@@ -80,35 +71,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
             Path dirImUpdateUnpack = dirForUpdate.resolve("im");
             unpack(im.toPath(), dirImUpdateUnpack);
 
-            Path dirImCliUpdateUnpack = dirForUpdate.resolve("im-cli");
-            unpack(imCli.toPath(), dirImCliUpdateUnpack);
-
-            createImCliUpdateScript(dirImCliUpdateUnpack);
             restart(dirImUpdateUnpack);
         } catch (InterruptedException | URISyntaxException e) {
             throw new IOException(e.getMessage(), e);
-        }
-    }
-
-    private void createImCliUpdateScript(Path dirImCliUpdateUnpack) throws URISyntaxException, IOException {
-        Path fileWithImCliInstalled = getInstalledPath().getParent().resolve("im-cli-installed");
-
-        if (!Files.exists(fileWithImCliInstalled)) {
-            throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
-        }
-
-        String imCliInstalledPath = new String(toByteArray(fileWithImCliInstalled.toUri()), "UTF-8");
-
-        List<String> commands = new ArrayList<>();
-
-        commands.add("rm -rf " + imCliInstalledPath + "/* ;");
-        commands.add("cp -r " + dirImCliUpdateUnpack + " " + imCliInstalledPath + "/* ;");
-
-        Path updateScript = (new File(imCliInstalledPath)).toPath().resolve("bin/im-cli-update-script.sh");
-        Files.deleteIfExists(updateScript);
-
-        try (FileOutputStream out = new FileOutputStream(updateScript.toFile())) {
-            IOUtils.writeLines(commands, "\n", out);
         }
     }
 
@@ -123,8 +88,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
                 .append("/* ")
                 .append(installedPath)
                 .append(" ; ")
+                .append("chmod +x " + installedPath + "/installation-manager ; ")
                 .append("rm -rf ")
-                .append(unpackedUpdates.toFile().getAbsolutePath())
+                .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
                 .append(" ; ")
                 .append(installedPath).append("/installation-manager start ");
 
