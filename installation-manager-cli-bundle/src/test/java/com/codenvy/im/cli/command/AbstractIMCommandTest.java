@@ -36,39 +36,42 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /** @author Dmytro Nochevnov */
 public class AbstractIMCommandTest {
     private TestAbstractIMCommand spyCommand;
-    private Preferences globalPreferences;
+    private Preferences           globalPreferences;
 
     @Mock
     private InstallationManagerService mockInstallationManagerProxy;
 
     @Mock
     private CommandSession session;
-    
+
     private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
-    private final static String UPDATE_SERVER_URL = "https://test.com";
-    
-    private String DEFAULT_PREFERENCES_FILE = "default-preferences.json"; 
-    private String PREFERENCES_WITH_UPDATE_SERVER_FILE = "preferences-with-update-server-remote.json";
+    private final static String UPDATE_SERVER_URL         = "https://test.com";
+
+    private String DEFAULT_PREFERENCES_FILE                          = "default-preferences.json";
+    private String PREFERENCES_WITH_UPDATE_SERVER_FILE               = "preferences-with-update-server-remote.json";
     private String PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-update-server-remote-without-login.json";
-    
+
     private Remote updateServerRemote;
-    
+
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
-        spyCommand = spy(new TestAbstractIMCommand());        
+        spyCommand = spy(new TestAbstractIMCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
-        
+
         updateServerRemote = new Remote();
         updateServerRemote.setUrl(UPDATE_SERVER_URL);
-        
+
         doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerUrl();
     }
 
@@ -76,107 +79,104 @@ public class AbstractIMCommandTest {
     public void testGetUpdateServerUrl() {
         assertEquals(spyCommand.getUpdateServerUrl(), UPDATE_SERVER_URL);
     }
-    
+
     @Test
     public void testGetRemoteNameForUpdateServer() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
-        
+
         assertEquals(spyCommand.getRemoteNameForUpdateServer(), UPDATE_SERVER_REMOTE_NAME);
     }
-    
+
     @Test
     public void testValidateIfUserLoggedIn() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
-        
+
         spyCommand.validateIfUserLoggedIn();
     }
-    
+
     @Test
     public void testCreateUpdateServerRemote() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);        
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
         spyCommand.init();
-        
-        assertNull(spyCommand.getRemoteNameForUpdateServer());
-        
-        spyCommand.createUpdateServerRemote(UPDATE_SERVER_URL);
+
         assertNotNull(spyCommand.getRemoteNameForUpdateServer());
     }
-    
+
     @Test
     public void testInit() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);        
-        prepareTestAbstractIMCommand(spyCommand);        
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
-        
+
         assertNotNull(spyCommand.preferencesStorage);
         assertEquals(spyCommand.preferencesStorage.getAuthToken(), "authToken");
     }
-    
-    @Test(expectedExceptions=IllegalStateException.class,expectedExceptionsMessageRegExp="Please login using im:login command.")
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
     public void testInitWhenUpdateServerRemoteAbsent() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);       
-        prepareTestAbstractIMCommand(spyCommand);        
-        spyCommand.init();
-    }
-    
-    @Test(expectedExceptions=IllegalStateException.class,expectedExceptionsMessageRegExp="Please login using im:login command.")
-    public void testInitWhenUserDidnotLogin() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);        
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
     }
-    
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
+    public void testInitWhenUserDidnotLogin() {
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
+        prepareTestAbstractIMCommand(spyCommand);
+        spyCommand.init();
+    }
+
     @Test
     public void testGetCredentialsRep() throws IOException {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
-        
+
         spyCommand.preferencesStorage.setAccountId("testAccountId");
-        
+
         JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
         UserCredentials testCreadentials = testCredentialsRep.getObject();
-        
+
         assertEquals(testCreadentials.getToken(), "authToken");
         assertEquals(testCreadentials.getAccountId(), "testAccountId");
     }
-    
+
     private void prepareTestAbstractIMCommand(TestAbstractIMCommand command) {
         doReturn(globalPreferences).when(session).get(Preferences.class.getName());
-        
+
         DummyCodenvyClient codenvyClient = new DummyCodenvyClient();
-        doReturn(codenvyClient).when(session).get(DummyCodenvyClient.class.getName());                
+        doReturn(codenvyClient).when(session).get(DummyCodenvyClient.class.getName());
         command.setCodenvyClient(codenvyClient);
         command.setSession(session);
     }
-    
+
     private Preferences loadPreferences(String preferencesFileRelativePath) {
         String preferencesFileFullPath = getClass().getClassLoader().getResource(preferencesFileRelativePath).getPath();
         String tempPreferencesFileFullPath = preferencesFileFullPath + ".temp";
         File preferencesFile = new File(preferencesFileFullPath);
         File tempPreferencesFile = new File(tempPreferencesFileFullPath);
-        
+
         try {
             Files.copy(preferencesFile, tempPreferencesFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-         
+
         return PreferencesAPI.getPreferences(tempPreferencesFile.toURI());
     }
-    
-    class TestAbstractIMCommand extends AbstractIMCommand {        
+
+    class TestAbstractIMCommand extends AbstractIMCommand {
         @Override
         protected Object doExecute() throws Exception {
             return null;
         }
-        
+
         /** is needed for prepareTestAbstractIMCommand() method */
         @Override
         protected void setCodenvyClient(CodenvyClient codenvyClient) {

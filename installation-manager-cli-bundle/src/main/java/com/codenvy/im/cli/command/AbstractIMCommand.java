@@ -166,13 +166,12 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
 
-        createUpdateServerRemote(url);
-
+        createDefaultRemote(url);
         return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
     }
 
     /** Add into preferences remote with default name and url = url */
-    protected void createUpdateServerRemote(String url) {
+    protected void createDefaultRemote(String url) {
         if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, url)) {
             throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
         }
