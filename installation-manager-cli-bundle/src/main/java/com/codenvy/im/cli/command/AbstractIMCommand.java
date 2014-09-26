@@ -76,9 +76,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
      */
     protected void validateIfUserLoggedIn() throws IllegalStateException {
         String remoteName = getRemoteNameForUpdateServer();
-        if (remoteName == null) {
-            throw new IllegalStateException("Please login using im:login command.");
-        }
 
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
@@ -93,7 +90,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
     protected void printError(Exception ex) {
         try {
             if (isConnectionException(ex)) {
-                printError("It is impossible to connect to Codenvy Update Server.");
+                printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
+                           "please retry a bit later.");
             } else {
                 printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));
             }
@@ -139,21 +137,9 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     /** Find out remote for update server */
-    @Nullable
     protected String getRemoteNameForUpdateServer() {
         String updateServerUrl = getUpdateServerUrl();
         return getRemoteNameByUrl(updateServerUrl);
-    }
-
-    /**
-     * Add into preferences remote with default name and url = updateServerUrl 
-     * @param updateServerUrl
-     */
-    protected void createUpdateServerRemote(String updateServerUrl) {
-        if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl)) {
-            throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.",
-                                                          updateServerUrl));
-        }
     }
 
     protected String getUpdateServerUrl() {
@@ -170,7 +156,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return (Preferences)session.get(Preferences.class.getName());
     }
 
-    @Nullable
     private String getRemoteNameByUrl(String url) throws IllegalStateException {
         Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();
 
@@ -181,6 +166,15 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
 
-        return null;
+        createUpdateServerRemote(url);
+
+        return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+    }
+
+    /** Add into preferences remote with default name and url = url */
+    protected void createUpdateServerRemote(String url) {
+        if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, url)) {
+            throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
+        }
     }
 }

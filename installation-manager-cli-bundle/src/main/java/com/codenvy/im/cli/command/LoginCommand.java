@@ -48,9 +48,6 @@ public class LoginCommand extends AbstractIMCommand {
 
             String remoteUrl = getUpdateServerUrl();
             String remoteName = getRemoteNameForUpdateServer();
-            if (remoteName == null) {
-                createUpdateServerRemote(remoteUrl);
-            }
 
             if (username == null) {
                 if (isInteractive()) {

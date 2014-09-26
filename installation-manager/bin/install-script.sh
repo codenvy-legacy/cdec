@@ -76,7 +76,6 @@ installIM() {
     sudo mkdir ${APP_DIR}
 
     # untar archive
-    echo "> Unpacking binaries"
     sudo tar -xf ${filename} -C /tmp
     sudo tar -xf /tmp/${filename} -C ${APP_DIR}
 
