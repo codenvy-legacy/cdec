@@ -102,7 +102,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
 
     /** Check user's subscription. */
     @POST
-    @Path("check-subscription")
+    @Path("check-subscription/{subscription}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String checkSubscription(@PathParam(value = "subscription") final String subscription,
