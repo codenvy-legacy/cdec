@@ -30,8 +30,11 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertEquals;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class DownloadCommandTest {
@@ -75,7 +78,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse) + "\n"));
     }
 
     @Test
@@ -87,7 +90,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse) + "\n"));
     }
 
     @Test
@@ -100,7 +103,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse) + "\n"));
     }
 
     @Test
@@ -115,7 +118,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(serviceErrorResponse) + "\n");
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(serviceErrorResponse) + "\n"));
     }
 
     @Test
@@ -131,6 +134,6 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(expectedOutput) + "\n"));
     }
 }
