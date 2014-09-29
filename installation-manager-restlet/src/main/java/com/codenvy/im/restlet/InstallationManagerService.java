@@ -21,7 +21,12 @@ import com.codenvy.im.user.UserCredentials;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 
@@ -93,5 +98,13 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @GET
     @Path("update-server-url")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getUpdateServerUrl();
+    public String getUpdateServerEndpoint();
+
+    /** Check user's subscription. */
+    @POST
+    @Path("check-subscription")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String checkSubscription(@PathParam(value = "subscription") final String subscription,
+                                    JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 }

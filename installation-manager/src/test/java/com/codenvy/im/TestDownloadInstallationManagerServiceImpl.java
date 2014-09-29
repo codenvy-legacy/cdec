@@ -26,6 +26,7 @@ import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.HttpTransport;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
@@ -49,24 +50,26 @@ import static org.testng.Assert.assertEquals;
 public class TestDownloadInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager        mockInstallationManager;
-    private Artifact                   installManagerArtifact;
-    private Artifact                   cdecArtifact;
-    private UserCredentials            testCredentials;
+    private InstallationManager mockInstallationManager;
+    private HttpTransport       transport;
+    private Artifact            installManagerArtifact;
+    private Artifact            cdecArtifact;
+    private UserCredentials     testCredentials;
 
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport);
     }
 
     public void initMocks() {
         mockInstallationManager = mock(InstallationManagerImpl.class);
+        transport = mock(HttpTransport.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
         testCredentials = new UserCredentials("auth token", "accountId");
     }
-    
+
     @Test
     public void testDownload() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {

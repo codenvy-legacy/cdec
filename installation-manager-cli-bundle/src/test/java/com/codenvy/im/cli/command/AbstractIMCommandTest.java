@@ -72,7 +72,7 @@ public class AbstractIMCommandTest {
         updateServerRemote = new Remote();
         updateServerRemote.setUrl(UPDATE_SERVER_URL);
 
-        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerUrl();
+        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
     }
 
     @Test

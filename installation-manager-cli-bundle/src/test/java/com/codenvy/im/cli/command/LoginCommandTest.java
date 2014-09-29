@@ -55,7 +55,7 @@ public class LoginCommandTest {
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
-        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerUrl();
+        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
         
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
         
@@ -103,7 +103,7 @@ public class LoginCommandTest {
                                   + "status: \"ERROR\""
                                   + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(mockInstallationManagerProxy).getUpdateServerUrl();        
+            .when(mockInstallationManagerProxy).getUpdateServerEndpoint();
         
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

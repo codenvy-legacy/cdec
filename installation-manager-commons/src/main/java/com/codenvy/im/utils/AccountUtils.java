@@ -39,7 +39,7 @@ import static com.codenvy.im.utils.Commons.createListDtoFromJson;
 public class AccountUtils {
     public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions not found.";
     public static final String ACCOUNT_OWNER_ROLE                    = "account/owner";
-    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "User hasn't " + ACCOUNT_OWNER_ROLE + " role";
+    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR = "User is not owner of his account";
     public static final String ACCOUNT_NOT_FOUND_ERROR               = "Account not found.";
 
     /**

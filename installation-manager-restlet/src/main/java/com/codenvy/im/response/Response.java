@@ -20,7 +20,12 @@ package com.codenvy.im.response;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmytro Nochevnov
@@ -85,9 +90,15 @@ public class Response {
             return withParam(Property.MESSAGE, value);
         }
 
+        public Builder withParam(String key, String value) {
+            params.put(key.toLowerCase(), value);
+            return this;
+        }
+
         private Builder withParam(Property key, String value) {
             params.put(key.toString().toLowerCase(), value);
             return this;
         }
+
     }
 }

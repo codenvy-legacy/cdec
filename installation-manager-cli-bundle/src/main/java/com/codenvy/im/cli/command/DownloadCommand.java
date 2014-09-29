@@ -32,6 +32,7 @@ public class DownloadCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
 
+    @Override
     protected Void doExecute() {
         try {
             init();

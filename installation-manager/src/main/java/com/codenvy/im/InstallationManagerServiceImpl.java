@@ -29,6 +29,7 @@ import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.HttpTransport;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
@@ -50,25 +52,51 @@ import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
  */
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
     protected final InstallationManager manager;
+    protected final HttpTransport transport;
 
-    private final String updateServerUrl;
+    private final String updateServerEndpoint;
+    private final String apiEndpoint;
 
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
-        updateServerUrl = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
+        this.transport = INJECTOR.getInstance(HttpTransport.class);
+        this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
+        this.apiEndpoint = getProperty("api.endpoint");
     }
 
     /** For testing purpose only. */
     @Deprecated
-    protected InstallationManagerServiceImpl(InstallationManager manager) {
+    protected InstallationManagerServiceImpl(InstallationManager manager, HttpTransport transport) {
         this.manager = manager;
-        updateServerUrl = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
+        this.transport = transport;
+        this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
+        this.apiEndpoint = getProperty("api.endpoint");
     }
 
     /** {@inheritDoc} */
     @Override
-    public String getUpdateServerUrl() {
-        return updateServerUrl;
+    public String getUpdateServerEndpoint() {
+        return updateServerEndpoint;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String checkSubscription(String subscription, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        try {
+            boolean subscriptionValidated = isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
+
+            if (subscriptionValidated) {
+                return new Response.Builder().withStatus(ResponseCode.OK).withParam("Subscription", subscription).build().toJson();
+            } else {
+                return new Response.Builder().withStatus(ResponseCode.ERROR).withParam("Subscription", subscription).build().toJson();
+            }
+        } catch (Exception e) {
+            return new Response.Builder().withStatus(ResponseCode.ERROR)
+                                         .withParam("Subscription", subscription)
+                                         .withMessage(e.getMessage())
+                                         .build().toJson();
+        }
     }
 
     /** {@inheritDoc} */

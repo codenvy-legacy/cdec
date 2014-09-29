@@ -143,7 +143,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected String getUpdateServerUrl() {
-        return installationManagerProxy.getUpdateServerUrl();
+        return installationManagerProxy.getUpdateServerEndpoint();
     }
 
     protected JacksonRepresentation<UserCredentials> getCredentialsRep() {
