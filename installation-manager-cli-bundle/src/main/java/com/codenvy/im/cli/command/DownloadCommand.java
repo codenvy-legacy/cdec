@@ -37,7 +37,7 @@ public class DownloadCommand extends AbstractIMCommand {
         try {
             init();
 
-            printInfo("Downloading might takes several minutes depending on your internet connection. Please wait.");
+            printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
             if (artifactName != null && version != null) {
                 printResponse(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
             } else if (artifactName != null) {
