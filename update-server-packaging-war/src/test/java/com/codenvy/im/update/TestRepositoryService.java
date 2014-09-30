@@ -44,11 +44,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.*;
+import static com.codenvy.im.artifacts.ArtifactProperties.ARTIFACT_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.jayway.restassured.RestAssured.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -147,9 +156,10 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 2);
+        assertEquals(value.size(), 3);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
+        assertNull(value.get(MD5_PROPERTY));
     }
 
     @Test
@@ -168,10 +178,11 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 3);
+        assertEquals(value.size(), 4);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.1");
         assertEquals(value.get(AUTHENTICATION_REQUIRED_PROPERTY), "true");
+        assertNull(value.get(MD5_PROPERTY));
     }
     
     @Test

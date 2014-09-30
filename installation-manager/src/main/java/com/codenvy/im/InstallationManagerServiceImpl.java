@@ -18,7 +18,6 @@
 package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.ArtifactInfoEx;
@@ -41,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
@@ -136,7 +136,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
 
-            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+            Artifact artifact = createArtifact(artifactName);
             String version = manager.getUpdates(token).get(artifact);
             if (version == null) {
                 throw new ArtifactNotFoundException(artifact.getName());
@@ -192,7 +192,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     protected Path doDownload(UserCredentials userCredentials,
                               String artifactName,
                               @Nullable String version) throws IOException, IllegalStateException {
-        return doDownload(userCredentials, ArtifactFactory.createArtifact(artifactName), version);
+        return doDownload(userCredentials, createArtifact(artifactName), version);
     }
 
     protected Path doDownload(UserCredentials userCredentials,
@@ -249,7 +249,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
 
-        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+        Artifact artifact = createArtifact(artifactName);
         String toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
 
         if (toInstallVersion == null) {
