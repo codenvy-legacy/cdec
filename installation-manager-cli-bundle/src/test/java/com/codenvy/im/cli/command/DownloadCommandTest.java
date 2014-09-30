@@ -78,7 +78,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse) + "\n"));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse)));
     }
 
     @Test
@@ -103,7 +103,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse) + "\n"));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse)));
     }
 
     @Test
@@ -118,7 +118,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(serviceErrorResponse) + "\n"));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(serviceErrorResponse)));
     }
 
     @Test
@@ -134,6 +134,6 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(expectedOutput) + "\n"));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(expectedOutput)));
     }
 }

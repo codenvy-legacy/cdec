@@ -27,14 +27,19 @@ import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.anyString;
@@ -230,6 +235,59 @@ public class TestDownloadInstallationManagerServiceImpl {
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"message\": \"Valid subscription is required to download cdec\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
+                                                      "}");
+    }
+
+    @Test
+    public void testGetDownloads() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
+                put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        String response = installationManagerService.getDownloads();
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [\n" +
+                                                      "    {\n" +
+                                                      "      \"artifact\": \"cdec\",\n" +
+                                                      "      \"file\": \"target/file1\",\n" +
+                                                      "      \"status\": \"DOWNLOADED\",\n" +
+                                                      "      \"version\": \"1.0.1\"\n" +
+                                                      "    },\n" +
+                                                      "    {\n" +
+                                                      "      \"artifact\": \"cdec\",\n" +
+                                                      "      \"file\": \"target/file2\",\n" +
+                                                      "      \"status\": \"DOWNLOADED\",\n" +
+                                                      "      \"version\": \"1.0.2\"\n" +
+                                                      "    }\n" +
+                                                      "  ],\n" +
+                                                      "  \"status\": \"OK\"\n" +
+                                                      "}");
+    }
+
+    @Test
+    public void testGetDownloadsSpecificArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
+                put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
+            }});
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        String response = installationManagerService.getDownloads(installManagerArtifact.getName());
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [{\n" +
+                                                      "    \"artifact\": \"installation-manager\",\n" +
+                                                      "    \"file\": \"target/file3\",\n" +
+                                                      "    \"status\": \"DOWNLOADED\",\n" +
+                                                      "    \"version\": \"2.0.0\"\n" +
+                                                      "  }],\n" +
+                                                      "  \"status\": \"OK\"\n" +
                                                       "}");
     }
 }
