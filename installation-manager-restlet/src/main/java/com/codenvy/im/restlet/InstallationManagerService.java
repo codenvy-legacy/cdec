@@ -64,15 +64,13 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String getUpdates(JacksonRepresentation<UserCredentials> requestRepresentation);
 
-    @POST
+    @GET
     @Path("download-list/{artifact}")
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getDownloads(@PathParam(value = "artifact") final String artifactName);
 
-    @POST
+    @GET
     @Path("download-list")
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getDownloads();
 

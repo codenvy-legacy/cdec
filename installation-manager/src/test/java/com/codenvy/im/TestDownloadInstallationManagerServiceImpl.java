@@ -290,4 +290,20 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
     }
+
+    @Test
+    public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
+                put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        String response = installationManagerService.getDownloads(installManagerArtifact.getName());
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [],\n" +
+                                                      "  \"status\": \"OK\"\n" +
+                                                      "}");
+    }
 }

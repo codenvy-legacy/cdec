@@ -181,7 +181,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             List<ArtifactInfo> infos = new ArrayList<>();
             SortedMap<Version, Path> versions = downloadedArtifacts.get(ArtifactFactory.createArtifact(artifactName));
 
-            if (!versions.isEmpty()) {
+            if (versions != null && !versions.isEmpty()) {
                 for (Map.Entry<Version, Path> e : versions.entrySet()) {
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
