@@ -246,7 +246,7 @@ public class RepositoryService {
             if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
 
                 return Response.status(Response.Status.FORBIDDEN)
-                               .entity("You can't download the artifact '" + artifact + (version != null ? version: "") + "'," +
+                               .entity("You can't download the artifact '" + artifact + (version != null ? ":" + version : "") + "'," +
                                        " because you should have the valid '" + requiredSubscription + "' subscription.").build();
             }
 
