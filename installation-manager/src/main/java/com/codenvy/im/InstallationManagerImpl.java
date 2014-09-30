@@ -252,8 +252,7 @@ public class InstallationManagerImpl implements InstallationManager {
         return available2Download;
     }
 
-    // TODO test
-    private Map getArtifactProperties(Artifact artifact) throws IOException {
+    protected Map getArtifactProperties(Artifact artifact) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
         Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
 
@@ -261,8 +260,7 @@ public class InstallationManagerImpl implements InstallationManager {
         return m;
     }
 
-    // TODO test
-    private Map getArtifactProperties(Artifact artifact, String version) throws IOException {
+    protected Map getArtifactProperties(Artifact artifact, String version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
         Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
 
@@ -270,7 +268,6 @@ public class InstallationManagerImpl implements InstallationManager {
         return m;
     }
 
-    // TODO test
     protected void validateProperties(Map m) throws IOException {
         if (m == null) {
             throw new IOException("Can't get artifact properties.");

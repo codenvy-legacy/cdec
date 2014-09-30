@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -240,6 +241,35 @@ public class TestInstallationManager {
         assertEquals(v.get(Version.valueOf("1.0.2")), file2);
     }
 
+
+    @Test
+    public void testGetDownloadedArtifactsShouldKeepOrder() throws Exception {
+        doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
+        doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
+        doReturn("{file:file3, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.3"));
+        doNothing().when(manager).validateProperties(anyMap());
+
+        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
+        Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
+        Path file3 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.3", "file3");
+        Files.createDirectories(file2.getParent());
+        Files.createDirectories(file1.getParent());
+        Files.createDirectories(file3.getParent());
+        Files.createFile(file2);
+        Files.createFile(file1);
+        Files.createFile(file3);
+
+        Map<Artifact, SortedMap<Version, Path>> m = manager.getDownloadedArtifacts();
+        assertEquals(m.size(), 1);
+        assertTrue(m.containsKey(cdecArtifact));
+
+        SortedMap<Version, Path> v = m.get(cdecArtifact);
+        Iterator<Version> iterator = v.keySet().iterator();
+        assertEquals(iterator.next(), Version.valueOf("1.0.1"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.2"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.3"));
+    }
+
     @Test
     public void testGetDownloadedArtifactsSeveralVersions() throws Exception {
         doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
@@ -268,5 +298,29 @@ public class TestInstallationManager {
     public void testGetDownloadedArtifactsReturnsEmptyMap() throws Exception {
         Map<Artifact, SortedMap<Version, Path>> m = manager.getDownloadedArtifacts();
         assertTrue(m.isEmpty());
+    }
+
+    @Test
+    public void testGetArtifactPropertiesWithVersion() throws Exception {
+        doReturn("{file:file1, md5=a}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
+        doNothing().when(manager).validateProperties(anyMap());
+
+        Map m = manager.getArtifactProperties(cdecArtifact, "1.0.1");
+        assertTrue(m.containsKey("file"));
+        assertTrue(m.containsKey("md5"));
+        assertEquals(m.get("file"), "file1");
+        assertEquals(m.get("md5"), "a");
+    }
+
+    @Test
+    public void testGetArtifactProperties() throws Exception {
+        doReturn("{file:file1, md5=a}").when(transport).doGetRequest(endsWith("cdec"));
+        doNothing().when(manager).validateProperties(anyMap());
+
+        Map m = manager.getArtifactProperties(cdecArtifact);
+        assertTrue(m.containsKey("file"));
+        assertTrue(m.containsKey("md5"));
+        assertEquals(m.get("file"), "file1");
+        assertEquals(m.get("md5"), "a");
     }
 }
