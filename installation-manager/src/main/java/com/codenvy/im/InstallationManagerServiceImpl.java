@@ -29,6 +29,7 @@ import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
@@ -39,6 +40,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -177,7 +179,23 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String token = userCredentials.getToken();
 
             Map<Artifact, String> updates = manager.getUpdates(token);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
+            for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+                Artifact artifact = e.getKey();
+                String version = e.getValue();
+
+                if (downloadedArtifacts.containsKey(artifact)
+                    && downloadedArtifacts.get(artifact).containsKey(Version.valueOf(version))) {
+
+                    infos.add(new ArtifactInfoEx(artifact, version, Status.DOWNLOADED));
+                } else {
+                    infos.add(new ArtifactInfo(artifact, version));
+                }
+            }
+
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }
