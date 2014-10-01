@@ -87,13 +87,13 @@ public class LoginCommand extends AbstractIMCommand {
             if (accountId == null) {
                 accountId = getAccountId();
 
-                if (accountId == null || accountId.equals("")) {
+                if (accountId == null || accountId.isEmpty()) {
                     printError(CANNOT_RECOGNISE_ACCOUNT_ID);
                     return null;
                 }
 
                 printSuccess("Your Codenvy account with ID '" + accountId + "' has been obtained and will be used to verify subscription. ");
-                printSuccess("You can set another account id manually as argument of this command.");
+                printSuccess("You can set another account id manually by command: 'im:login <user> <password> [accountId]'.");
             }
 
             preferencesStorage.setAccountId(accountId);
