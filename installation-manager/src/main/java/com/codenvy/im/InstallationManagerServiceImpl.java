@@ -28,6 +28,7 @@ import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -263,6 +264,17 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
             return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public String getAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        try {
+            UserCredentials userCredentials = userCredentialsRep.getObject();
+            String token = userCredentials.getToken();
+            return AccountUtils.getFirstValidAccountId(transport, apiEndpoint, token);
+        } catch (IOException e) {
+            return null;
         }
     }
 

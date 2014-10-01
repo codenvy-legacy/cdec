@@ -64,9 +64,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Override
     public void init() {
         super.init();
-        validateIfUserLoggedIn();
-
         preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getRemoteNameForUpdateServer());
+        validateIfUserLoggedIn();
     }
 
 
@@ -79,6 +78,12 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
+            throw new IllegalStateException("Please login using im:login command.");
+        }
+
+        if (preferencesStorage == null
+            || preferencesStorage.getAuthToken() == null
+            || preferencesStorage.getAccountId() == null) {
             throw new IllegalStateException("Please login using im:login command.");
         }
     }
@@ -136,14 +141,27 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /** Find out remote for update server */
+    /** Find out remote for update server
+     *  Creates new one with default name if there is no such remote stored in preferences.
+     */
+    @Nonnull
     protected String getRemoteNameForUpdateServer() {
         String updateServerUrl = getUpdateServerUrl();
-        return getRemoteNameByUrl(updateServerUrl);
+        String remoteName = getRemoteNameByUrl(updateServerUrl);
+        if (remoteName == null) {
+            createRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl);
+            return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+        }
+
+        return remoteName;
     }
 
     protected String getUpdateServerUrl() {
         return installationManagerProxy.getUpdateServerEndpoint();
+    }
+
+    protected String getAccountId() {
+        return installationManagerProxy.getAccountId(getCredentialsRep());
     }
 
     protected JacksonRepresentation<UserCredentials> getCredentialsRep() {
@@ -156,6 +174,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return (Preferences)session.get(Preferences.class.getName());
     }
 
+    /**
+     * Searches and returns name of remote with certain url.
+     */
+    @Nullable
     private String getRemoteNameByUrl(String url) throws IllegalStateException {
         Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();
 
@@ -166,13 +188,12 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
 
-        createDefaultRemote(url);
-        return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+        return null;
     }
 
-    /** Add into preferences remote with default name and url = url */
-    protected void createDefaultRemote(String url) {
-        if (!getMultiRemoteCodenvy().addRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, url)) {
+    /** Add into preferences remote with certain name and url */
+    protected void createRemote(String name, String url) {
+        if (!getMultiRemoteCodenvy().addRemote(name, url)) {
             throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
         }
     }

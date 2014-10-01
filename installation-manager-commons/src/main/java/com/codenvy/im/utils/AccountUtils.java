@@ -78,7 +78,9 @@ public class AccountUtils {
             throw new IllegalStateException(ACCOUNT_NOT_FOUND_ERROR);
         }
 
-        validateRole(account, ACCOUNT_OWNER_ROLE);
+        if (!isValidateRole(account, ACCOUNT_OWNER_ROLE)) {
+            throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
+        }
 
         String subscriptionsHref = getSubscriptionsHref(account);
         if (subscriptionsHref == null) {
@@ -96,7 +98,7 @@ public class AccountUtils {
     }
 
     @Nullable
-    public static MemberDescriptor getAccount(HttpTransport transport,
+    private static MemberDescriptor getAccount(HttpTransport transport,
                                               String apiEndpoint,
                                               UserCredentials userCredentials) throws IOException {
         List<MemberDescriptor> accounts =
@@ -107,6 +109,24 @@ public class AccountUtils {
             String id = getAccountId(account);
             if (id != null && id.equals(userCredentials.getAccountId())) {
                 return account;
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static String getFirstValidAccountId(HttpTransport transport,
+                                                String apiEndpoint,
+                                                String userToken) throws IOException {
+        List<MemberDescriptor> accounts =
+            createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userToken),
+                                  MemberDescriptor.class);
+
+        for (MemberDescriptor account : accounts) {
+            String id = getAccountId(account);
+            if (id != null && isValidateRole(account, ACCOUNT_OWNER_ROLE)) {
+                return id;
             }
         }
 
@@ -137,8 +157,8 @@ public class AccountUtils {
             return account.getAccountReference().getId();
         }
 
-        // Platform API issue
-        // workaround - read id from subscriptions href
+        // Platform API issue.
+        // Workaround: read id from subscriptions href
         String subscriptionsHref = getSubscriptionsHref(account);
         if (subscriptionsHref == null) {
             return null;
@@ -153,10 +173,8 @@ public class AccountUtils {
         return null;
     }
 
-    private static void validateRole(MemberDescriptor account, String role) throws IllegalStateException {
+    private static boolean isValidateRole(MemberDescriptor account, String role) throws IllegalStateException {
         List<String> roles = account.getRoles();
-        if (roles == null || !roles.contains(role)) {
-            throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
-        }
+        return roles != null && roles.contains(role);
     }
 }

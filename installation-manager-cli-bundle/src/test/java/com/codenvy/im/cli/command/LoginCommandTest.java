@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
@@ -73,15 +74,31 @@ public class LoginCommandTest {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
-        commandInvoker.argument("accountId", TEST_USER_ACCOUNT_ID);        
         
+        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(TEST_USER_ACCOUNT_ID).when(spyCommand).getAccountId();
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertTrue(output.contains("Login succeeded."));
+        assertTrue(output.contains(TEST_USER_ACCOUNT_ID));
+    }
+
+    @Test
+    public void testLoginWithAccountId() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+        commandInvoker.argument("accountId", TEST_USER_ACCOUNT_ID);
+
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertTrue(output.contains("Login succeeded."));
+        assertFalse(output.contains(TEST_USER_ACCOUNT_ID));
     }
-    
+
     @Test
     public void testFailLogin() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -95,7 +112,23 @@ public class LoginCommandTest {
         String output = result.getOutputStream();
         assertTrue(output.contains("Login failed: please check the credentials."));
     }
-    
+
+    @Test
+    public void testFailGetAccountId() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+
+        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+
+        doReturn("").when(spyCommand).getAccountId();
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertTrue(output.contains("Login succeeded."));
+        assertTrue(output.contains(LoginCommand.CANNOT_RECOGNISE_ACCOUNT_ID));
+    }
+
     @Test
     public void testInstallWhenServiceThrowsError() throws Exception {
         String expectedOutput = "{"

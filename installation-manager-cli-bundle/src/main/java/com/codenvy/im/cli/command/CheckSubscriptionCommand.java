@@ -28,7 +28,7 @@ import org.apache.karaf.shell.commands.Command;
 public class CheckSubscriptionCommand extends AbstractIMCommand {
 
     /** The default subscription name to check. */
-    private final String DEFAULT_SUBSCRIPTION = "OnPremises";
+    private final static String DEFAULT_SUBSCRIPTION = "OnPremises";
 
     @Argument(index = 0, name = "subscription", description = "The name of the subscription to check", required = false, multiValued = false)
     private String subscription;

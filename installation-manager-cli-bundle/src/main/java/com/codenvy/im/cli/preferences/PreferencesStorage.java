@@ -25,8 +25,8 @@ import javax.annotation.Nullable;
 
 /** @author Dmytro Nochevnov */
 public class PreferencesStorage {
-    private final Preferences        globalPreferences;
-    private final String             remote;
+    private final Preferences globalPreferences;
+    private final String      remote;
 
     public PreferencesStorage(Preferences globalPreferences, String remote) {
         this.globalPreferences = globalPreferences;
@@ -36,8 +36,8 @@ public class PreferencesStorage {
     @Nullable
     public String getAccountId() {        
         SubscriptionPreferences accountDescription = readPreference(SubscriptionPreferences.class);
-        if (accountDescription == null || accountDescription.getAccountId() == null) {
-            throw new IllegalStateException("ID of Codenvy account which is used for subscription is needed.");
+        if (accountDescription == null) {
+            return null;
         }
 
         return accountDescription.getAccountId();
@@ -50,12 +50,12 @@ public class PreferencesStorage {
         writePreference(accountDescription);
     }
     
-    @Nonnull
-    public String getAuthToken() throws IllegalStateException {
+    @Nullable
+    public String getAuthToken() {
         RemoteCredentials credentials = readPreference(RemoteCredentials.class);
 
-        if (credentials == null || credentials.getToken() == null) {
-            throw new IllegalStateException("User didn't login.");
+        if (credentials == null) {
+            return null;
         }
         
         return credentials.getToken();

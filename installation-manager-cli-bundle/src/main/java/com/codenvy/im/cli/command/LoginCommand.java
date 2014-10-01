@@ -32,6 +32,8 @@ import java.nio.charset.Charset;
 @Command(scope = "im", name = "login", description = "Login to Codenvy Update Server")
 public class LoginCommand extends AbstractIMCommand {
 
+    public static final String CANNOT_RECOGNISE_ACCOUNT_ID =
+        "It is impossible to obtain your Codenvy account ID. Please, type your account ID manually as argument of this command.";
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;
 
@@ -52,7 +54,8 @@ public class LoginCommand extends AbstractIMCommand {
             if (username == null) {
                 if (isInteractive()) {
                     printInfo("Username for '" + remoteUrl + "':");
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+                    try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         username = reader.readLine();
                     }
                     printLineSeparator();
@@ -64,7 +67,8 @@ public class LoginCommand extends AbstractIMCommand {
             if (password == null) {
                 if (isInteractive()) {
                     printInfo("Password for " + username + ":");
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+                    try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         password = reader.readLine();
                     }
                     printLineSeparator();
@@ -73,25 +77,26 @@ public class LoginCommand extends AbstractIMCommand {
                 }
             }
 
-            if (accountId == null) {
-                if (isInteractive()) {
-                    printInfo("Account ID:");
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-                        accountId = reader.readLine();
-                    }
-                    printLineSeparator();
-                } else {
-                    accountId = new ConsoleReader().readLine("ID of account used for subscription:");
-                }
-            }
-
-            preferencesStorage.setAccountId(accountId);
-
             if (getMultiRemoteCodenvy().login(remoteName, username, password)) {
                 printSuccess("Login succeeded.");
             } else {
                 printError("Login failed: please check the credentials.");
+                return null;
             }
+
+            if (accountId == null) {
+                accountId = getAccountId();
+
+                if (accountId == null || accountId.equals("")) {
+                    printError(CANNOT_RECOGNISE_ACCOUNT_ID);
+                    return null;
+                }
+
+                printSuccess("Your Codenvy account with ID '" + accountId + "' has been obtained and will be used to verify subscription. ");
+                printSuccess("You can set another account id manually as argument of this command.");
+            }
+
+            preferencesStorage.setAccountId(accountId);
         } catch (Exception e) {
             printError(e);
         }

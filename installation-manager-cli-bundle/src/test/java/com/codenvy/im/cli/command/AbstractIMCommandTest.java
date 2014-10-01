@@ -45,7 +45,7 @@ import static org.testng.Assert.assertNotNull;
 /** @author Dmytro Nochevnov */
 public class AbstractIMCommandTest {
     private TestAbstractIMCommand spyCommand;
-    private Preferences           globalPreferences;
+    private Preferences globalPreferences;
 
     @Mock
     private InstallationManagerService mockInstallationManagerProxy;
@@ -54,11 +54,14 @@ public class AbstractIMCommandTest {
     private CommandSession session;
 
     private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
-    private final static String UPDATE_SERVER_URL         = "https://test.com";
+    private final static String TEST_UPDATE_SERVER_URL    = "https://test.com";
+    private final static String TEST_ACCOUNT_ID           = "test-account-id";
+    private final static String TEST_TOKEN                = "authToken";
 
     private String DEFAULT_PREFERENCES_FILE                          = "default-preferences.json";
     private String PREFERENCES_WITH_UPDATE_SERVER_FILE               = "preferences-with-update-server-remote.json";
     private String PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-update-server-remote-without-login.json";
+    private String PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE = "preferences-with-update-server-remote-without-accountid.json";
 
     private Remote updateServerRemote;
 
@@ -70,14 +73,26 @@ public class AbstractIMCommandTest {
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
         updateServerRemote = new Remote();
-        updateServerRemote.setUrl(UPDATE_SERVER_URL);
+        updateServerRemote.setUrl(TEST_UPDATE_SERVER_URL);
 
-        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+        doReturn(TEST_UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
     }
 
     @Test
     public void testGetUpdateServerUrl() {
-        assertEquals(spyCommand.getUpdateServerUrl(), UPDATE_SERVER_URL);
+        assertEquals(spyCommand.getUpdateServerUrl(), TEST_UPDATE_SERVER_URL);
+    }
+
+    @Test
+    public void testGetAccountId() {
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        prepareTestAbstractIMCommand(spyCommand);
+        spyCommand.init();
+
+        JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
+        doReturn(TEST_ACCOUNT_ID).when(mockInstallationManagerProxy).getAccountId(testCredentialsRep);
+
+        assertEquals(spyCommand.getAccountId(), TEST_ACCOUNT_ID);
     }
 
     @Test
@@ -115,7 +130,8 @@ public class AbstractIMCommandTest {
         spyCommand.init();
 
         assertNotNull(spyCommand.preferencesStorage);
-        assertEquals(spyCommand.preferencesStorage.getAuthToken(), "authToken");
+        assertEquals(spyCommand.preferencesStorage.getAuthToken(), TEST_TOKEN);
+        assertEquals(spyCommand.preferencesStorage.getAccountId(), TEST_ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
@@ -126,8 +142,15 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
-    public void testInitWhenUserDidnotLogin() {
+    public void testInitWhenUserDidNotLogin() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
+        prepareTestAbstractIMCommand(spyCommand);
+        spyCommand.init();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
+    public void testInitWhenUserDidNotObtainAccountId() {
+        globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
     }
@@ -143,7 +166,7 @@ public class AbstractIMCommandTest {
         JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
         UserCredentials testCreadentials = testCredentialsRep.getObject();
 
-        assertEquals(testCreadentials.getToken(), "authToken");
+        assertEquals(testCreadentials.getToken(), TEST_TOKEN);
         assertEquals(testCreadentials.getAccountId(), "testAccountId");
     }
 

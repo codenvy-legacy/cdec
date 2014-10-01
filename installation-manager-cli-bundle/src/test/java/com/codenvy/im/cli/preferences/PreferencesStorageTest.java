@@ -29,14 +29,18 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /** @author Dmytro Nochevnov */
 public class PreferencesStorageTest {
-    private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";    
-        
+    private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
+    private final static String TEST_TOKEN                = "authToken";
+    private final static String TEST_ACCOUNT_ID           = "test-account-id";
+
     private Preferences globalPreferences;
-    private String DEFAULT_PREFERENCES_FILE = "default-preferences.json"; 
-    private String PREFERENCES_WITH_UPDATE_SERVER_FILE = "preferences-with-update-server-remote.json";
+    private final static String DEFAULT_PREFERENCES_FILE = "default-preferences.json";
+    private final static String PREFERENCES_WITH_UPDATE_SERVER_FILE = "preferences-with-update-server-remote.json";
+
     
     @BeforeMethod
     public void init() {
@@ -48,18 +52,25 @@ public class PreferencesStorageTest {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
 
-        assertEquals(preferencesStorage.getAuthToken(), "authToken");
+        assertEquals(preferencesStorage.getAuthToken(), TEST_TOKEN);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "User didn't login.")
-    private void testGetAuthTokenWhenUpdateServerRemoteAbsent() {
+    @Test
+    private void testGetPreferencesWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-      
-        preferencesStorage.getAuthToken();
+        assertNull(preferencesStorage.getAccountId());
+        assertNull(preferencesStorage.getAuthToken());
     }
-    
+
+    @Test
+    private void testGetAccountId() {
+        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
+
+        assertEquals(preferencesStorage.getAccountId(), TEST_ACCOUNT_ID);
+    }
+
     @Test
     private void testSetAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
@@ -67,14 +78,6 @@ public class PreferencesStorageTest {
 
         preferencesStorage.setAccountId("testAccountId");        
         assertEquals(preferencesStorage.getAccountId(), "testAccountId");
-    }
-    
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "ID of Codenvy account which is used for subscription is needed.")
-    private void testGetAccountIdWhenUpdateServerRemoteAbsent() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
-        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, UPDATE_SERVER_REMOTE_NAME);
-        preferencesStorage.getAccountId();
     }
     
     private Preferences loadPreferences(String preferencesFileRelativePath) {

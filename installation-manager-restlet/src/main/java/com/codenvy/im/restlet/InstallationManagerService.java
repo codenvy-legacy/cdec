@@ -107,4 +107,11 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String checkSubscription(@PathParam(value = "subscription") final String subscription,
                                     JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+
+    /** Returns id of first valid account of user based on his/her auth token passed into service within the body of request */
+    @POST
+    @Path("account/id")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep);
 }

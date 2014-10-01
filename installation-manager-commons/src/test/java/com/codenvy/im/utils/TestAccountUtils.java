@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -58,7 +59,23 @@ public class TestAccountUtils {
         
         assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));
     }
-    
+
+    @Test
+    public void testGetFirstValidAccountId() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                                            + "roles:[\"account/member\"],"
+                                                                                            + "accountReference:{id:\"member-id\"}"
+                                                                                            + "},{"
+                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                            + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                                                                                            + "},{"
+                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                            + "accountReference:{id:\"another-id\"}"
+                                                                                            + "}]");
+
+        assertEquals(AccountUtils.getFirstValidAccountId(mockTransport, "", testCredentials.getToken()), testCredentials.getAccountId());
+    }
+
     @Test
     public void testValidSubscriptionByLink() throws IOException {
         when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
