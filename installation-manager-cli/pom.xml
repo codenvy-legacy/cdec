@@ -101,10 +101,30 @@
                         <configuration>
                             <target>
                                 <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
+                                    <replacetoken>main "$@"</replacetoken>
+
+                                    <replacevalue>if [ -f "/home/codenvyshared/im-cli-update-script.sh" ]; then
+    DIR=$(cd $(dirname "$0"); pwd)
+    echo "Installation Manager CLI is updating ..."
+    bash -c "$(cat /home/codenvyshared/im-cli-update-script.sh)"
+    ${DIR}/codenvy
+else
+    source ~/.bashrc
+    main "$@"
+fi</replacevalue>
+                                </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy-cli">
                                     <replacetoken>main "$@"</replacetoken>
-                                    <replacevalue><![CDATA[source ~/.bashrc
-main "$@"]]></replacevalue>
+                                    <replacevalue>if [ -f "/home/codenvyshared/im-cli-update-script.sh" ]; then
+    DIR=$(cd $(dirname "$0"); pwd)
+    echo "Installation Manager CLI is updating ..."
+    bash -c "$(cat /home/codenvyshared/im-cli-update-script.sh)"
+    ${DIR}/codenvy-cli
+else
+    source ~/.bashrc
+    main "$@"
+fi</replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresBoot=]]></replacetoken>

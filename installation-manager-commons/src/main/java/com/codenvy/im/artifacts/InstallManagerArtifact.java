@@ -21,18 +21,18 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.*;
 
 /**
  * @author Anatoliy Bazko
@@ -50,8 +50,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Override
     public void install(Path pathToBinaries) throws IOException {
+        Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
         try {
-            Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
             if (Files.exists(dirForUpdate)) {
                 FileUtils.cleanDirectory(dirForUpdate.toFile());
             } else {
@@ -61,9 +61,12 @@ public class InstallManagerArtifact extends AbstractArtifact {
             unpack(pathToBinaries, dirForUpdate);
 
             File im = null;
+            File imCli = null;
 
             for (File file : FileUtils.listFiles(dirForUpdate.toFile(), null, false)) {
-                if (!file.getName().startsWith(NAME + "-cli")) {
+                if (file.getName().startsWith(NAME + "-cli")) {
+                    imCli = file;
+                } else {
                     im = file;
                 }
             }
@@ -71,10 +74,95 @@ public class InstallManagerArtifact extends AbstractArtifact {
             Path dirImUpdateUnpack = dirForUpdate.resolve("im");
             unpack(im.toPath(), dirImUpdateUnpack);
 
+            Path dirImCliUpdate = getImCliUpdateScriptDir().resolve("im-cli");
+            if (Files.exists(dirImCliUpdate)) {
+                FileUtils.cleanDirectory(dirImCliUpdate.toFile());
+            }
+            Files.createDirectories(dirImCliUpdate);
+            Path fileImCliUpdate = dirImCliUpdate.resolve(imCli.getName());
+
+            Files.createFile(fileImCliUpdate);
+            Files.copy(imCli.toPath(), new FileOutputStream(fileImCliUpdate.toFile()));
+
+            createImCliUpdateScript(fileImCliUpdate);
+
             restart(dirImUpdateUnpack);
         } catch (InterruptedException | URISyntaxException e) {
+            if (dirForUpdate != null && Files.exists(dirForUpdate)) {
+                try {
+                    FileUtils.cleanDirectory(dirForUpdate.toFile());
+                } catch (IOException ioe) {
+                    LOG.error("Can't remove temporary unpacked files in : " + dirForUpdate);
+                }
+            }
+
             throw new IOException(e.getMessage(), e);
         }
+    }
+
+    private void createImCliUpdateScript(Path fileImCliUpdateTarGz) throws IOException, URISyntaxException {
+        String[] imCliInstalledParams = getImCliInstalledProperties();
+
+        String imCliInstalledPath = imCliInstalledParams[0];
+        String imCliUpdateScriptDir = imCliInstalledParams[1];
+        String codenvyShareGroup = imCliInstalledParams[2];
+        String userName = imCliInstalledParams[3];
+        String userGroup = imCliInstalledParams[4];
+
+        List<String> commands = new ArrayList<>();
+
+        commands.add("#!/bin/bash");
+        commands.add("cd ~ ;");
+        commands.add("rm -rf " + imCliInstalledPath + "/* ;");
+        commands.add("newgrp " + codenvyShareGroup + " << END1");
+        commands.add("tar -xzf " + fileImCliUpdateTarGz + " -C " + imCliInstalledPath + " ;");
+        commands.add("rm -rf " + fileImCliUpdateTarGz.getParent() + " ;");
+        commands.add("chown -R " + userName + ":" + userGroup + " " + imCliInstalledPath + " ;");
+
+        Path updateScript = (new File(imCliUpdateScriptDir)).toPath().resolve("im-cli-update-script.sh");
+        commands.add("rm -f " + updateScript + " ;");
+        commands.add("END1");
+
+        commands.add("newgrp " + userGroup + " << END2");
+        commands.add("chmod +x " + imCliInstalledPath + "/bin/* ;");
+        commands.add("END2");
+
+        Files.deleteIfExists(updateScript);
+        try (FileOutputStream out = new FileOutputStream(updateScript.toFile())) {
+            IOUtils.writeLines(commands, "\n", out);
+        }
+
+        setPermissionOwnerGroupRWXOtherR(updateScript);
+    }
+
+    private void setPermissionOwnerGroupRWXOtherR(Path updateScript) throws IOException {
+        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
+        //add owners permission
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+        perms.add(PosixFilePermission.OWNER_EXECUTE);
+        //add group permissions
+        perms.add(PosixFilePermission.GROUP_READ);
+        perms.add(PosixFilePermission.GROUP_WRITE);
+        perms.add(PosixFilePermission.GROUP_EXECUTE);
+
+        perms.add(PosixFilePermission.OTHERS_READ);
+
+        Files.setPosixFilePermissions(updateScript, perms);
+    }
+
+    private Path getImCliUpdateScriptDir() throws IOException, URISyntaxException {
+        return  new File(getImCliInstalledProperties()[1]).toPath();
+    }
+
+    private String[] getImCliInstalledProperties() throws IOException, URISyntaxException {
+        Path fileWithImCliInstalled = getInstalledPath().getParent().resolve(".codenvy/im-cli-installed");
+
+        if (!Files.exists(fileWithImCliInstalled)) {
+            throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
+        }
+        return  new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri())).split("\n");
+
     }
 
     private void restart(Path unpackedUpdates) throws IOException, InterruptedException, URISyntaxException {
