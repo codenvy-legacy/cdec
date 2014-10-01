@@ -167,11 +167,7 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
-    /**
-     * @return downloaded artifacts from the local repository
-     * @throws IOException
-     *         if an I/O error occurs
-     */
+    @Override
     public Map<Artifact, SortedMap<Version, Path>> getDownloadedArtifacts() throws IOException {
         Map<Artifact, SortedMap<Version, Path>> downloaded = new HashMap<>(artifacts.size());
 

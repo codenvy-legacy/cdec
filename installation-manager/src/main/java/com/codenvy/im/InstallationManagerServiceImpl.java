@@ -18,6 +18,7 @@
 package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.ArtifactInfoEx;
@@ -30,6 +31,7 @@ import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
@@ -40,6 +42,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -172,13 +175,75 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
+    public String getDownloads(String artifactName) {
+        try {
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            List<ArtifactInfo> infos = new ArrayList<>();
+            SortedMap<Version, Path> versions = downloadedArtifacts.get(ArtifactFactory.createArtifact(artifactName));
+
+            if (versions != null && !versions.isEmpty()) {
+                for (Map.Entry<Version, Path> e : versions.entrySet()) {
+                    Version version = e.getKey();
+                    Path pathToBinaries = e.getValue();
+
+                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), Status.DOWNLOADED));
+                }
+            }
+
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getDownloads() {
+        try {
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            List<ArtifactInfo> infos = new ArrayList<>();
+            for (Map.Entry<Artifact, SortedMap<Version, Path>> artifact : downloadedArtifacts.entrySet()) {
+                for (Map.Entry<Version, Path> e : artifact.getValue().entrySet()) {
+                    Version version = e.getKey();
+                    Path pathToBinaries = e.getValue();
+
+                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), Status.DOWNLOADED));
+                }
+            }
+
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public String getUpdates(JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
 
             Map<Artifact, String> updates = manager.getUpdates(token);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
+            for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+                Artifact artifact = e.getKey();
+                String version = e.getValue();
+
+                if (downloadedArtifacts.containsKey(artifact)
+                    && downloadedArtifacts.get(artifact).containsKey(Version.valueOf(version))) {
+
+                    infos.add(new ArtifactInfoEx(artifact, version, Status.DOWNLOADED));
+                } else {
+                    infos.add(new ArtifactInfo(artifact, version));
+                }
+            }
+
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }

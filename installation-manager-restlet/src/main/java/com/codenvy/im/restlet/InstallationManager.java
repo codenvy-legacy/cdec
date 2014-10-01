@@ -19,10 +19,12 @@ package com.codenvy.im.restlet;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * @author Anatoliy Bazko
@@ -48,6 +50,13 @@ public interface InstallationManager {
      *         if an I/O error occurred
      */
     Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException;
+
+    /**
+     * @return downloaded artifacts from the local repository
+     * @throws IOException
+     *         if an I/O error occurs
+     */
+    Map<Artifact, SortedMap<Version, Path>> getDownloadedArtifacts() throws IOException;
 
     /**
      * @param authToken
