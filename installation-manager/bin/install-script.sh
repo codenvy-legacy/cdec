@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -s https://codenvy-stg.com/update/repository/public/download/install-script)
+# bash <(curl -s https://codenvy.com/update/repository/public/download/install-script)
 
 CODENVY_USER=codenvy
 CODENVY_HOME=/home/${CODENVY_USER}
@@ -87,20 +87,34 @@ installIM() {
 
     # make the user ${CODENVY_USER} an owner all files into the APP_DIR
     sudo chown -R ${CODENVY_USER}:${CODENVY_USER} ${APP_DIR}
-}
 
-installIMCLI() {
+
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
-
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
-    curl -o ${filename} -L ${DOWNLOAD_URL}
 
     # removes existed files and creates new directory
-    rm ${HOME}/im-cli -rf &>/dev/null
-    mkdir ${HOME}/im-cli
+    cliinstalled=${HOME}/im-cli
+    rm ${cliinstalled} -rf &>/dev/null
+    mkdir ${cliinstalled}
 
-    # untar archive
-    tar -xf ${filename} -C ${HOME}/im-cli
+    tar -xvf /tmp/${filename} -C ${cliinstalled}
+
+    # create shared directory between 'codenvy' and {USER} users.
+    cliupdatedir=/home/codenvyshared
+    CODENVY_SHARE_GROUP=codenvyshare
+    USER_GROUP=${USER}
+    sudo mkdir ${cliupdatedir}
+    sudo groupadd ${CODENVY_SHARE_GROUP}
+    sudo chown -R root.${CODENVY_SHARE_GROUP} ${cliupdatedir}
+    sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
+    sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
+    sudo chmod ug+rwx -R ${cliupdatedir}
+    sudo chmod g+s ${cliupdatedir}
+
+    # store parameters of installed Installation Manager CLI.
+    sudo su -c "mkdir ${CODENVY_HOME}/.codenvy"
+    sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/im-cli-installed"
+    sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 }
 
 launchingIMService() {
@@ -129,7 +143,6 @@ createCodenvyUserAndGroup${os}
 
 installJava
 installIM
-installIMCLI
 
 registerIMService${os}
 launchingIMService

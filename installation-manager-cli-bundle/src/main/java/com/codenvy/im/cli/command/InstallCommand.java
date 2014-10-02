@@ -17,8 +17,14 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.response.Status;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * @author Alexander Reshetnyak
@@ -39,12 +45,20 @@ public class InstallCommand extends AbstractIMCommand {
         try {
             init();
 
+            String response = null;
+
             if (artifactName != null && version != null) {
-                printResponse(installationManagerProxy.install(artifactName, version, getCredentialsRep()));
+                response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
             } else if (artifactName != null) {
-                printResponse(installationManagerProxy.install(artifactName, getCredentialsRep()));
+                response = installationManagerProxy.install(artifactName, getCredentialsRep());
             } else {
-                printResponse(installationManagerProxy.install(getCredentialsRep()));
+                response = installationManagerProxy.install(getCredentialsRep());
+            }
+
+            printResponse(response);
+
+            if (isInstallatationManagerSuccessUpdated(response)) {
+                System.out.println("'Installation Manager CLI' was updated! Please, restart it!!!");
             }
         } catch (Exception e) {
             printError(e);
@@ -52,4 +66,23 @@ public class InstallCommand extends AbstractIMCommand {
 
         return null;
     }
+
+    private boolean isInstallatationManagerSuccessUpdated(String response) throws JSONException {
+        JSONObject jsonResponse = new JSONObject(response);
+
+        if (response.contains("artifacts")) {
+            JSONArray array = jsonResponse.getJSONArray("artifacts");
+            for ( int i = 0 ; i < array.length(); i++) {
+                String artifact = ((JSONObject)array.get(i)).getString("artifact");
+                String status = ((JSONObject)array.get(i)).getString("status");
+
+                if (artifact != null && artifact.equalsIgnoreCase(InstallManagerArtifact.NAME)) {
+                    return status != null && status.equals(Status.SUCCESS.name());
+                }
+            }
+        }
+
+        return false;
+    }
+
 }

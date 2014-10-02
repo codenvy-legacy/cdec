@@ -179,7 +179,7 @@ public class TestDownloadInstallationManagerServiceImpl {
     }
     
     @Test
-    public void testDownloadErrorIfSpecificVertionArtifactAbsent() throws Exception {
+    public void testDownloadErrorIfSpecificVersionArtifactAbsent() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(cdecArtifact, "2.10.5");
