@@ -85,7 +85,7 @@ doUpload() {
     echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
     echo "authentication-required=false" >> .properties
-    echo "builtime="`stat -c %y ${SOURCE}` >> .properties
+    echo "build-time="`stat -c %y ${SOURCE}` >> .properties
     echo "md5=${MD5}" >> .properties
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
