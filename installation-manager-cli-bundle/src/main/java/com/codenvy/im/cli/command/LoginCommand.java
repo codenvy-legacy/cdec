@@ -76,9 +76,7 @@ public class LoginCommand extends AbstractIMCommand {
                 }
             }
 
-            if (getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                printSuccess("Login succeeded.");
-            } else {
+            if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
                 printError("Login failed: please check the credentials.");
                 return null;
             }
@@ -88,21 +86,32 @@ public class LoginCommand extends AbstractIMCommand {
 
                 if (accountId == null || accountId.isEmpty()) {
                     printError(CANNOT_RECOGNISE_ACCOUNT_ID_MSG);
+                    preferencesStorage.invalidate();
+
                     return null;
                 }
+
+                preferencesStorage.setAccountId(accountId);
 
                 printSuccess("Your Codenvy account ID '" + accountId + "' has been obtained and will be used to verify subscription.");
                 printSuccess("You can set another account ID by hand as argument of this command.");
             } else {
+                preferencesStorage.setAccountId(accountId);
+
                 if (!isValidAccount()) {
                     printError("Account ID you entered is not yours or may be you aren't owner of this account.");
+                    preferencesStorage.invalidate();
+
                     return null;
                 }
             }
 
-            preferencesStorage.setAccountId(accountId);
+
+            printSuccess("Login succeeded.");
+
         } catch (Exception e) {
             printError(e);
+            preferencesStorage.invalidate();
         }
 
         return null;

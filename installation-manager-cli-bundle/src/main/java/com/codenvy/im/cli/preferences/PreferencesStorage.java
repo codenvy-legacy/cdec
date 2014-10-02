@@ -67,4 +67,8 @@ public class PreferencesStorage {
     private <T> void writePreference(T preference) {
         globalPreferences.path("remotes").merge(remote, preference);
     }
+
+    public void invalidate() {
+        setAccountId("");
+    }
 }

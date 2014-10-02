@@ -84,7 +84,9 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
         if (preferencesStorage == null
             || preferencesStorage.getAuthToken() == null
-            || preferencesStorage.getAccountId() == null) {
+            || preferencesStorage.getAccountId() == null
+            || preferencesStorage.getAuthToken().isEmpty()
+            || preferencesStorage.getAccountId().isEmpty()) {
             throw new IllegalStateException("Please login using im:login command.");
         }
     }

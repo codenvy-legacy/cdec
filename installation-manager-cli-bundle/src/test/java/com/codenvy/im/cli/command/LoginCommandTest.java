@@ -92,6 +92,7 @@ public class LoginCommandTest {
         commandInvoker.argument("accountId", TEST_USER_ACCOUNT_ID);
 
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(spyCommand).isValidAccount();
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
@@ -125,7 +126,6 @@ public class LoginCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains("Login succeeded."));
         assertTrue(output.contains(LoginCommand.CANNOT_RECOGNISE_ACCOUNT_ID_MSG));
     }
 
