@@ -57,7 +57,7 @@ public class InstallCommand extends AbstractIMCommand {
             printResponse(response);
 
             if (isIMSuccessfullyUpdated(response)) {
-                printInfo("'Installation Manager CLI' was updated! Please, restart it!!!\n");
+                printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
             }
         } catch (Exception e) {
             printError(e);
