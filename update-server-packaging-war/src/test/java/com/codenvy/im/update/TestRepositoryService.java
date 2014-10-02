@@ -19,7 +19,6 @@ package com.codenvy.im.update;
 
 import com.codenvy.commons.user.UserImpl;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
@@ -164,7 +163,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testGetArtifactProperties() throws Exception {
-        Map testProperties = new HashMap() {{
+        Map testProperties = new HashMap<String, String>() {{
             put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
             put(SUBSCRIPTION_PROPERTY, "OnPremises");
         }};
@@ -268,36 +267,6 @@ public class TestRepositoryService extends BaseTest {
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadPrivateWhenUserAccountHasInvalidRoleError() throws Exception {
-        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
-               .thenReturn("[{roles:[\"account/member\"],accountReference:{id:accountId}}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
-
-        Response response = given().auth()
-               .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
-               .when()
-               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.asString().contains(AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR));
-    }
-
-    @Test
-    public void testDownloadPrivateErrorIfAccountHasnotArtifactId() throws Exception {
-        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
-               .thenReturn("[{roles:[\"account/owner\"],accountReference:null}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
-
-        Response response = given().auth()
-               .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
-               .when()
-               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.asString().contains(AccountUtils.ACCOUNT_NOT_FOUND_ERROR));
     }
 
     @Test

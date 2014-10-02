@@ -35,6 +35,7 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,7 +65,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Override
     public void init() {
         super.init();
-        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getRemoteNameForUpdateServer());
+        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForUpdateServer());
         validateIfUserLoggedIn();
     }
 
@@ -74,7 +75,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
      *         if user isn't logged in
      */
     protected void validateIfUserLoggedIn() throws IllegalStateException {
-        String remoteName = getRemoteNameForUpdateServer();
+        String remoteName = getOrCreateRemoteNameForUpdateServer();
 
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
@@ -141,13 +142,15 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /** Find out remote for update server
-     *  Creates new one with default name if there is no such remote stored in preferences.
+    /**
+     * Find out remote for update server.
+     * Creates new one with default name if there is no such remote stored in preferences.
      */
     @Nonnull
-    protected String getRemoteNameForUpdateServer() {
+    protected String getOrCreateRemoteNameForUpdateServer() {
         String updateServerUrl = getUpdateServerUrl();
         String remoteName = getRemoteNameByUrl(updateServerUrl);
+
         if (remoteName == null) {
             createRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl);
             return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
@@ -160,8 +163,13 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return installationManagerProxy.getUpdateServerEndpoint();
     }
 
-    protected String getAccountId() {
-        return installationManagerProxy.getAccountId(getCredentialsRep());
+    @Nullable
+    protected String getAccountIdWhereUserIsOwner() throws IOException {
+        return installationManagerProxy.getAccountIdWhereUserIsOwner(getCredentialsRep());
+    }
+
+    protected boolean isValidAccount() throws IOException {
+        return installationManagerProxy.isValidAccountId(getCredentialsRep());
     }
 
     protected JacksonRepresentation<UserCredentials> getCredentialsRep() {
@@ -174,9 +182,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return (Preferences)session.get(Preferences.class.getName());
     }
 
-    /**
-     * Searches and returns name of remote with certain url.
-     */
+    /** Searches and returns name of remote with certain url. */
     @Nullable
     private String getRemoteNameByUrl(String url) throws IllegalStateException {
         Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();

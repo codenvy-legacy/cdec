@@ -104,6 +104,16 @@ public class TestCommons {
     }
 
     @Test
+    public void testCreateDtoFromJson() throws Exception {
+        MemberDescriptor d = Commons.createDtoFromJson("{userId:id,accountReference:{id:accountId,name:accountName}}", MemberDescriptor.class);
+
+        assertEquals(d.getUserId(), "id");
+        assertNotNull(d.getAccountReference());
+        assertEquals(d.getAccountReference().getId(), "accountId");
+        assertEquals(d.getAccountReference().getName(), "accountName");
+    }
+
+    @Test
     public void testMapFromJson() throws Exception {
         Map m = Commons.fromJson("{a=b,c=d}", Map.class);
         assertEquals(m.size(), 2);

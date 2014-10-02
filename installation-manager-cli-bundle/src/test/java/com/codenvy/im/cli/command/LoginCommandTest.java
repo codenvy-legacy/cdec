@@ -66,7 +66,7 @@ public class LoginCommandTest {
                 
         doNothing().when(spyCommand).init();
         doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
-        doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameForUpdateServer();
+        doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getOrCreateRemoteNameForUpdateServer();
     }
     
     @Test
@@ -76,7 +76,7 @@ public class LoginCommandTest {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
         
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
-        doReturn(TEST_USER_ACCOUNT_ID).when(spyCommand).getAccountId();
+        doReturn(TEST_USER_ACCOUNT_ID).when(spyCommand).getAccountIdWhereUserIsOwner();
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
@@ -121,12 +121,12 @@ public class LoginCommandTest {
 
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
-        doReturn("").when(spyCommand).getAccountId();
+        doReturn("").when(spyCommand).getAccountIdWhereUserIsOwner();
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertTrue(output.contains("Login succeeded."));
-        assertTrue(output.contains(LoginCommand.CANNOT_RECOGNISE_ACCOUNT_ID));
+        assertTrue(output.contains(LoginCommand.CANNOT_RECOGNISE_ACCOUNT_ID_MSG));
     }
 
     @Test

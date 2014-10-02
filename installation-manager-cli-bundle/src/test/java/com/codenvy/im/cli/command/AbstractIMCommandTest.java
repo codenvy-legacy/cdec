@@ -84,15 +84,15 @@ public class AbstractIMCommandTest {
     }
 
     @Test
-    public void testGetAccountId() {
+    public void testGetAccountId() throws Exception {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
         JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
-        doReturn(TEST_ACCOUNT_ID).when(mockInstallationManagerProxy).getAccountId(testCredentialsRep);
+        doReturn(TEST_ACCOUNT_ID).when(mockInstallationManagerProxy).getAccountIdWhereUserIsOwner(testCredentialsRep);
 
-        assertEquals(spyCommand.getAccountId(), TEST_ACCOUNT_ID);
+        assertEquals(spyCommand.getAccountIdWhereUserIsOwner(), TEST_ACCOUNT_ID);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class AbstractIMCommandTest {
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
-        assertEquals(spyCommand.getRemoteNameForUpdateServer(), UPDATE_SERVER_REMOTE_NAME);
+        assertEquals(spyCommand.getOrCreateRemoteNameForUpdateServer(), UPDATE_SERVER_REMOTE_NAME);
     }
 
     @Test
@@ -120,7 +120,7 @@ public class AbstractIMCommandTest {
         doNothing().when(spyCommand).validateIfUserLoggedIn();
         spyCommand.init();
 
-        assertNotNull(spyCommand.getRemoteNameForUpdateServer());
+        assertNotNull(spyCommand.getOrCreateRemoteNameForUpdateServer());
     }
 
     @Test

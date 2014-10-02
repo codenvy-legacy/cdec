@@ -310,8 +310,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, @Nullable String version, JacksonRepresentation<UserCredentials> userCredentialsRep)
-            throws IOException {
+    public String install(String artifactName,
+                          @Nullable String version,
+                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
 
@@ -333,18 +334,23 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     }
 
     /** {@inheritDoc} */
-    @Override public String getAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();
-            return AccountUtils.getFirstValidAccountId(transport, apiEndpoint, token);
-        } catch (IOException e) {
-            return null;
-        }
+    @Override
+    @Nullable
+    public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        String token = userCredentials.getToken();
+        return AccountUtils.getAccountIdWhereUserIsOwner(transport, apiEndpoint, token);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        return AccountUtils.isValidAccountId(transport, apiEndpoint, userCredentials);
+    }
+
 
     protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
         manager.install(token, artifact, version);
     }
-
 }

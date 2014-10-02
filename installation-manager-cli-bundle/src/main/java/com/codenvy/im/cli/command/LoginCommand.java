@@ -32,8 +32,9 @@ import java.nio.charset.Charset;
 @Command(scope = "im", name = "login", description = "Login to Codenvy Update Server")
 public class LoginCommand extends AbstractIMCommand {
 
-    public static final String CANNOT_RECOGNISE_ACCOUNT_ID =
-        "It is impossible to obtain your Codenvy account ID. Please, type your account ID manually as argument of this command.";
+    public static final String CANNOT_RECOGNISE_ACCOUNT_ID_MSG =
+            "It is impossible to obtain your Codenvy account ID. Please, type your account ID by hand as argument of this command.";
+
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;
 
@@ -49,13 +50,12 @@ public class LoginCommand extends AbstractIMCommand {
             init();
 
             String remoteUrl = getUpdateServerUrl();
-            String remoteName = getRemoteNameForUpdateServer();
+            String remoteName = getOrCreateRemoteNameForUpdateServer();
 
             if (username == null) {
                 if (isInteractive()) {
                     printInfo("Username for '" + remoteUrl + "':");
-                    try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         username = reader.readLine();
                     }
                     printLineSeparator();
@@ -67,8 +67,7 @@ public class LoginCommand extends AbstractIMCommand {
             if (password == null) {
                 if (isInteractive()) {
                     printInfo("Password for " + username + ":");
-                    try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         password = reader.readLine();
                     }
                     printLineSeparator();
@@ -85,15 +84,20 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (accountId == null) {
-                accountId = getAccountId();
+                accountId = getAccountIdWhereUserIsOwner();
 
-                if (accountId == null || accountId.equals("")) {
-                    printError(CANNOT_RECOGNISE_ACCOUNT_ID);
+                if (accountId == null || accountId.isEmpty()) {
+                    printError(CANNOT_RECOGNISE_ACCOUNT_ID_MSG);
                     return null;
                 }
 
-                printSuccess("Your Codenvy account with ID '" + accountId + "' has been obtained and will be used to verify subscription. ");
-                printSuccess("You can set another account id manually as argument of this command.");
+                printSuccess("Your Codenvy account ID '" + accountId + "' has been obtained and will be used to verify subscription.");
+                printSuccess("You can set another account ID by hand as argument of this command.");
+            } else {
+                if (!isValidAccount()) {
+                    printError("Account ID you entered is not yours or may be you aren't owner of this account.");
+                    return null;
+                }
             }
 
             preferencesStorage.setAccountId(accountId);

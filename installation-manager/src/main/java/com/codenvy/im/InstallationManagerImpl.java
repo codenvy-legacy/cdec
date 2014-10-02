@@ -102,7 +102,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Version v = Version.valueOf(version);
 
         if (downloadedArtifacts.containsKey(artifact)
-            && downloadedArtifacts.get(artifact).containsKey(v)) { // TODO test
+            && downloadedArtifacts.get(artifact).containsKey(v)) {
 
             Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
             String installedVersion = installedArtifacts.get(artifact);
@@ -144,10 +144,6 @@ public class InstallationManagerImpl implements InstallationManager {
 
             String requestUrl;
             if (isAuthenticationRequired) {
-                if (userCredentials.getAccountId() == null) {
-                    throw new IllegalStateException("Account ID is unknown. Please login using im:login command");
-                }
-
                 requestUrl = combinePaths(updateEndpoint,
                                           "/repository/download/" + artifact.getName() + "/" + version + "/" + userCredentials.getAccountId());
             } else {

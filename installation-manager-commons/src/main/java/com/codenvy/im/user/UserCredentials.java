@@ -17,16 +17,20 @@
  */
 package com.codenvy.im.user;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
-/** @author Dmytro Nochevnov */
+/**
+ * AccountID refer to the account where user has account/owner role.
+ *
+ * @author Dmytro Nochevnov
+ */
 public class UserCredentials {
     private String token;
     private String accountId;
-    
+
     // empty constructor is needed for bean
     public UserCredentials() {
-        
+
     }
 
     public UserCredentials(String token, String accountId) {
@@ -38,7 +42,7 @@ public class UserCredentials {
         this.token = token;
     }
 
-    @Nullable
+    @Nonnull
     public String getToken() {
         return token;
     }
@@ -47,7 +51,7 @@ public class UserCredentials {
         this.token = token;
     }
 
-    @Nullable
+    @Nonnull
     public String getAccountId() {
         return accountId;
     }

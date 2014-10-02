@@ -50,9 +50,7 @@ public class Commons {
 
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().serializeNulls().create();
 
-    /**
-     * Simplifies the way to combine paths. Takes care about normalization.
-     */
+    /** Simplifies the way to combine paths. Takes care about normalization. */
     public static String combinePaths(String apiEndpoint, String path) {
         if (apiEndpoint.endsWith("/")) {
             if (path.startsWith("/")) {
@@ -69,37 +67,32 @@ public class Commons {
         }
     }
 
-    /**
-     * Adds query parameter to url.
-     */
+    /** Adds query parameter to url. */
     public static String addQueryParam(String path, String key, String value) {
         return path + (path.contains("?") ? "&" : "?") + key + "=" + value;
     }
 
-    /**
-     * Translates JSON to the list of DTO objects.
-     */
+    /** Translates JSON to the list of DTO objects. */
     public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
         return DtoFactory.getInstance().createListDtoFromJson(json, dtoInterface);
     }
 
-    /**
-     * Translates JSON to object.
-     */
+    /** Translates JSON to the list of DTO objects. */
+    public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+        return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
+    }
+
+    /** Translates JSON to object. */
     public static <T> T fromJson(String json, Class<T> t) {
         return gson.fromJson(json, t);
     }
 
-    /**
-     * @return the version of the artifact out of path
-     */
+    /** @return the version of the artifact out of path */
     public static String extractVersion(Path pathToBinaries) {
         return pathToBinaries.getParent().getFileName().toString();
     }
 
-    /**
-     * @return the artifact name out of path
-     */
+    /** @return the artifact name out of path */
     public static String extractArtifactName(Path pathToBinaries) {
         return pathToBinaries.getParent().getParent().getFileName().toString();
     }
@@ -150,9 +143,7 @@ public class Commons {
         return obj.toString(2);
     }
 
-    /**
-     * Extract server url from url with path
-     */
+    /** Extract server url from url with path */
     public static String extractServerUrl(String urlString) {
         try {
             URL url = new URL(urlString);

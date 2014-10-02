@@ -20,7 +20,6 @@ package com.codenvy.im.cli.preferences;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.security.RemoteCredentials;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /** @author Dmytro Nochevnov */
@@ -34,7 +33,7 @@ public class PreferencesStorage {
     }
 
     @Nullable
-    public String getAccountId() {        
+    public String getAccountId() {
         SubscriptionPreferences accountDescription = readPreference(SubscriptionPreferences.class);
         if (accountDescription == null) {
             return null;
@@ -46,26 +45,25 @@ public class PreferencesStorage {
     public void setAccountId(String accountId) {
         SubscriptionPreferences accountDescription = new SubscriptionPreferences();
         accountDescription.setAccountId(accountId);
-        
+
         writePreference(accountDescription);
     }
-    
+
     @Nullable
     public String getAuthToken() {
         RemoteCredentials credentials = readPreference(RemoteCredentials.class);
-
         if (credentials == null) {
             return null;
         }
-        
+
         return credentials.getToken();
     }
 
-    @Nonnull
-    private <T> T readPreference(Class<T> clazz) { 
+    @Nullable
+    private <T> T readPreference(Class<T> clazz) {
         return globalPreferences.path("remotes").get(remote, clazz);
     }
-    
+
     private <T> void writePreference(T preference) {
         globalPreferences.path("remotes").merge(remote, preference);
     }

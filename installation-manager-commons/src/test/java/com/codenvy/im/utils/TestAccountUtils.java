@@ -42,7 +42,7 @@ public class TestAccountUtils {
     @BeforeMethod
     public void setup() {
         mockTransport = mock(HttpTransport.class);
-        testCredentials = new UserCredentials("auth token", "7cd1aace299c-2a6a-9788-48da-560af433");
+        testCredentials = new UserCredentials("auth token", "accountId");
     }
 
     @Test
@@ -61,7 +61,7 @@ public class TestAccountUtils {
     }
 
     @Test
-    public void testGetFirstValidAccountId() throws IOException {
+    public void testGetAccountIdWhereUserIsOwner() throws IOException {
         when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
                                                                                             + "roles:[\"account/member\"],"
                                                                                             + "accountReference:{id:\"member-id\"}"
@@ -73,7 +73,48 @@ public class TestAccountUtils {
                                                                                             + "accountReference:{id:\"another-id\"}"
                                                                                             + "}]");
 
-        assertEquals(AccountUtils.getFirstValidAccountId(mockTransport, "", testCredentials.getToken()), testCredentials.getAccountId());
+        assertEquals(AccountUtils.getAccountIdWhereUserIsOwner(mockTransport, "", testCredentials.getToken()), testCredentials.getAccountId());
+    }
+
+    @Test
+    public void testValidateAccountIdTrue() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                                            + "roles:[\"account/member\"],"
+                                                                                            + "accountReference:{id:\"member-id\"}"
+                                                                                            + "},{"
+                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                            + "accountReference:{id:\"" +
+                                                                                            testCredentials.getAccountId() + "\"}"
+                                                                                            + "},{"
+                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                            + "accountReference:{id:\"another-id\"}"
+                                                                                            + "}]");
+
+        assertTrue(AccountUtils.isValidAccountId(mockTransport, "", testCredentials));
+    }
+
+    @Test
+    public void testValidateAccountIdFalseNoValidAccountId() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                                            + "roles:[\"account/member\"],"
+                                                                                            + "accountReference:{id:\"member-id\"}"
+                                                                                            + "},{"
+                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                            + "accountReference:{id:\"another-id\"}"
+                                                                                            + "}]");
+
+        assertFalse(AccountUtils.isValidAccountId(mockTransport, "", testCredentials));
+    }
+
+    @Test
+    public void testValidateAccountIdFalseNoValidRoles() throws IOException {
+        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
+                                                                                            + "roles:[\"account/member\"],"
+                                                                                            + "accountReference:{id:\"" +
+                                                                                            testCredentials.getAccountId() + "\"}"
+                                                                                            + "}]");
+
+        assertFalse(AccountUtils.isValidAccountId(mockTransport, "", testCredentials));
     }
 
     @Test
@@ -90,34 +131,6 @@ public class TestAccountUtils {
         assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = ".*" + AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR + ".*")
-    public void testSubscriptionWhenAccountWithInvalidRole() throws IOException {
-        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                             + "roles:[\"invalid-role\"],"
-                                                                             + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
-                                                                             + "}]");
-
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = ".*" + AccountUtils.ACCOUNT_NOT_FOUND_ERROR + ".*")
-    public void testSubscriptionWhenAccountWithDifferentId() throws IOException {
-        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                             + "accountReference:{id:\"another-id\"}"
-                                                                             + "}]");
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = ".*" + AccountUtils.ACCOUNT_NOT_FOUND_ERROR + ".*")
-    public void testSubscriptionWhenAccountWithoutId() throws IOException {
-        when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
-                                                                             + "}]");
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
-    }
-    
     @Test
     public void testInvalidSubscription() throws IOException {
         when(mockTransport.doGetRequest("/account", testCredentials.getToken())).thenReturn("[{"
