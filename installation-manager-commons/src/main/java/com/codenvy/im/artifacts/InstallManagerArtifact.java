@@ -20,19 +20,30 @@ package com.codenvy.im.artifacts;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.exists;
+import static org.apache.commons.io.FileUtils.cleanDirectory;
+import static org.apache.commons.io.FileUtils.listFiles;
 
 /**
  * @author Anatoliy Bazko
@@ -52,10 +63,10 @@ public class InstallManagerArtifact extends AbstractArtifact {
     public void install(Path pathToBinaries) throws IOException {
         Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
         try {
-            if (Files.exists(dirForUpdate)) {
-                FileUtils.cleanDirectory(dirForUpdate.toFile());
+            if (exists(dirForUpdate)) {
+                cleanDirectory(dirForUpdate.toFile());
             } else {
-                Files.createDirectories(dirForUpdate);
+                createDirectories(dirForUpdate);
             }
 
             unpack(pathToBinaries, dirForUpdate);
@@ -63,7 +74,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
             File im = null;
             File imCli = null;
 
-            for (File file : FileUtils.listFiles(dirForUpdate.toFile(), null, false)) {
+            for (File file : listFiles(dirForUpdate.toFile(), null, false)) {
                 if (file.getName().startsWith(NAME + "-cli")) {
                     imCli = file;
                 } else {
@@ -71,14 +82,20 @@ public class InstallManagerArtifact extends AbstractArtifact {
                 }
             }
 
+            if (im == null) {
+                throw new IOException("Installation Manager binaries not found");
+            } else if (imCli == null) {
+                throw new IOException("Installation Manager CLI binaries not found");
+            }
+
             Path dirImUpdateUnpack = dirForUpdate.resolve("im");
             unpack(im.toPath(), dirImUpdateUnpack);
 
             Path dirImCliUpdate = getImCliUpdateScriptDir().resolve("im-cli");
-            if (Files.exists(dirImCliUpdate)) {
-                FileUtils.cleanDirectory(dirImCliUpdate.toFile());
+            if (exists(dirImCliUpdate)) {
+                cleanDirectory(dirImCliUpdate.toFile());
             }
-            Files.createDirectories(dirImCliUpdate);
+            createDirectories(dirImCliUpdate);
             Path fileImCliUpdate = dirImCliUpdate.resolve(imCli.getName());
 
             Files.createFile(fileImCliUpdate);
@@ -88,9 +105,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
             restart(dirImUpdateUnpack);
         } catch (InterruptedException | URISyntaxException e) {
-            if (dirForUpdate != null && Files.exists(dirForUpdate)) {
+            if (dirForUpdate != null && exists(dirForUpdate)) {
                 try {
-                    FileUtils.cleanDirectory(dirForUpdate.toFile());
+                    cleanDirectory(dirForUpdate.toFile());
                 } catch (IOException ioe) {
                     LOG.error("Can't remove temporary unpacked files in : " + dirForUpdate);
                 }
@@ -136,7 +153,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     private void setPermissionOwnerGroupRWXOtherR(Path updateScript) throws IOException {
-        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
+        Set<PosixFilePermission> perms = new HashSet<>();
         //add owners permission
         perms.add(PosixFilePermission.OWNER_READ);
         perms.add(PosixFilePermission.OWNER_WRITE);
@@ -158,7 +175,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     private String[] getImCliInstalledProperties() throws IOException, URISyntaxException {
         Path fileWithImCliInstalled = getInstalledPath().getParent().resolve(".codenvy/im-cli-installed");
 
-        if (!Files.exists(fileWithImCliInstalled)) {
+        if (!exists(fileWithImCliInstalled)) {
             throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
         }
         return  new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri())).split("\n");

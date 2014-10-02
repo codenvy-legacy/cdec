@@ -99,7 +99,7 @@ installIM() {
 
     tar -xvf /tmp/${filename} -C ${cliinstalled}
 
-    # create shared directory between 'codenvy' and {USER} users.
+    # create shared directory between 'codenvy' and current user
     cliupdatedir=/home/codenvyshared
     CODENVY_SHARE_GROUP=codenvyshare
     USER_GROUP=${USER}

@@ -45,8 +45,7 @@ public class InstallCommand extends AbstractIMCommand {
         try {
             init();
 
-            String response = null;
-
+            String response;
             if (artifactName != null && version != null) {
                 response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
             } else if (artifactName != null) {
@@ -57,8 +56,8 @@ public class InstallCommand extends AbstractIMCommand {
 
             printResponse(response);
 
-            if (isInstallatationManagerSuccessUpdated(response)) {
-                System.out.println("'Installation Manager CLI' was updated! Please, restart it!!!");
+            if (isIMSuccessfullyUpdated(response)) {
+                printInfo("'Installation Manager CLI' was updated! Please, restart it!!!");
             }
         } catch (Exception e) {
             printError(e);
@@ -67,7 +66,7 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    private boolean isInstallatationManagerSuccessUpdated(String response) throws JSONException {
+    private boolean isIMSuccessfullyUpdated(String response) throws JSONException {
         JSONObject jsonResponse = new JSONObject(response);
 
         if (response.contains("artifacts")) {
@@ -84,5 +83,4 @@ public class InstallCommand extends AbstractIMCommand {
 
         return false;
     }
-
 }

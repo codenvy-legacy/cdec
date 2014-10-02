@@ -24,11 +24,14 @@ import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.InjectorBootstrap;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static org.mockito.Mockito.when;
@@ -66,7 +69,7 @@ public class TestGetAccountIdServiceImpl {
                         + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
                         + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountId(userCredentialsRep);
+        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
         assertEquals(response, TEST_ACCOUNT_ID);
     }
 
@@ -80,7 +83,7 @@ public class TestGetAccountIdServiceImpl {
                         + "accountReference:{id:\"another-account-id\"}"
                         + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountId(userCredentialsRep);
+        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
         assertEquals(response, TEST_ACCOUNT_ID);
     }
 
@@ -92,17 +95,15 @@ public class TestGetAccountIdServiceImpl {
                         + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
                         + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountId(userCredentialsRep);
+        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
         assertNull(response);
     }
 
-    @Test
+    @Test(expectedExceptions = IOException.class)
     public void testGetAccountIdErrorIfAuthenticationFailed() throws Exception {
         when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         
-        String response = installationManagerService.getAccountId(userCredentialsRep);
-        assertNull(response);
+        installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
     }
-    
 }
