@@ -45,14 +45,30 @@ installJava() {
         echo "> Unpacking JDK binaries to /usr/local "
         sudo tar -xf jdk.tar.gz -C /usr/local
 
-        sudo su - ${CODENVY_USER} -c "sed -i \"1i\export JAVA_HOME=/usr/local/jdk1.7.0_17\" ~/.bashrc"
-        sudo su - ${CODENVY_USER} -c "sed -i \"2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin\" ~/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/usr/local/jdk1.7.0_17' ~/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin' ~/.bashrc"
 
         sed -i '1i\export JAVA_HOME=/usr/local/jdk1.7.0_17' ~/.bashrc
         sed -i '2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin' ~/.bashrc
 
         rm jdk.tar.gz
         echo "> Java has been installed"
+    }
+}
+
+installCurlDebian() {
+    command -v curl >/dev/null 2>&1 || {     # check if requered program had already installed earlier
+        echo "> Installation Curl "
+        sudo apt-get install curl -y
+        echo "> Curl has been installed"
+    }
+}
+
+installCurlRedhat() {
+    command -v curl >/dev/null 2>&1 || {     # check if requered program had already installed earlier
+        echo "> Installation Curl "
+        sudo yum install curl -y
+        echo "> Curl has been installed"
     }
 }
 
@@ -110,6 +126,7 @@ installIM() {
     sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
     sudo chmod ug+rwx -R ${cliupdatedir}
     sudo chmod g+s ${cliupdatedir}
+    sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ~/.bashrc"
 
     # store parameters of installed Installation Manager CLI.
     sudo su -c "mkdir ${CODENVY_HOME}/.codenvy"
@@ -141,6 +158,7 @@ echo "> System is run on ${os} based distributive."
 echo "> Creating user & group codenvy"
 createCodenvyUserAndGroup${os}
 
+installCurl${os}
 installJava
 installIM
 
