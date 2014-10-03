@@ -45,11 +45,11 @@ installJava() {
         echo "> Unpacking JDK binaries to /usr/local "
         sudo tar -xf jdk.tar.gz -C /usr/local
 
-        sudo su - ${CODENVY_USER} -c "echo \"export JAVA_HOME=/usr/local/jdk1.7.0_17\" >> ~/.bashrc"
-        sudo su - ${CODENVY_USER} -c "echo \"export PATH=$PATH:/usr/local/jdk1.7.0_17/bin\" >> ~/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i \"1i\export JAVA_HOME=/usr/local/jdk1.7.0_17\" ~/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i \"2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin\" ~/.bashrc"
 
-        echo "export JAVA_HOME=/usr/local/jdk1.7.0_17" >> ~/.bashrc
-        echo "export PATH=$PATH:/usr/local/jdk1.7.0_17/bin" >> ~/.bashrc
+        sed -i '1i\export JAVA_HOME=/usr/local/jdk1.7.0_17' ~/.bashrc
+        sed -i '2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin' ~/.bashrc
 
         rm jdk.tar.gz
         echo "> Java has been installed"

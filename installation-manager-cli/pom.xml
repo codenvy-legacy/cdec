@@ -101,6 +101,12 @@
                         <configuration>
                             <target>
                                 <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
+                                <replace dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin">
+                                    <include name="*"/>
+                                    <exclude name="*.bat"/>
+                                    <replacetoken>#!/bin/sh</replacetoken>
+                                    <replacevalue>#!/bin/bash</replacevalue>
+                                </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
 
