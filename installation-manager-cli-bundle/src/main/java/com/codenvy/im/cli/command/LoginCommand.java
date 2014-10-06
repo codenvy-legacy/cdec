@@ -105,12 +105,13 @@ public class LoginCommand extends AbstractIMCommand {
                 }
             }
 
-
             printSuccess("Login succeeded.");
 
         } catch (Exception e) {
             printError(e);
-            preferencesStorage.invalidate();
+            if (preferencesStorage != null) {
+                preferencesStorage.invalidate();
+            }
         }
 
         return null;
