@@ -38,5 +38,8 @@
         <command>
             <action class="com.codenvy.im.cli.command.CheckSubscriptionCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.SwitchToIMCommand"/>
+        </command>
     </command-bundle>
 </blueprint>
