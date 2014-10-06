@@ -16,7 +16,6 @@
 # from Codenvy S.A..
 #
 
-Bundle-Activator com.codenvy.im.cli.IMCodenvyActivator
 Export-Package com.codenvy.im.cli.command*;version=${project.version}
 
 Import-Package !com.google.inject.internal.asm.util, \

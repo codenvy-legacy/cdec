@@ -102,13 +102,14 @@
                             <target>
                                 <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
                                 <replace dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin">
-                                    <include name="*" />
-                                    <exclude name="*.bat" />
+                                    <include name="*"/>
+                                    <exclude name="*.bat"/>
                                     <replacetoken>#!/bin/sh</replacetoken>
                                     <replacevalue>#!/bin/bash</replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
+
                                     <replacevalue>if [ -f "/home/codenvy-shared/im-cli-update-script.sh" ]; then
     echo "Installation Manager CLI is updating ..."
     SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
