@@ -20,4 +20,3 @@ com.codenvy.im.cli.command.DownloadCommand
 com.codenvy.im.cli.command.LoginCommand
 com.codenvy.im.cli.command.VersionCommand
 com.codenvy.im.cli.command.CheckSubscriptionCommand
-com.codenvy.im.cli.command.DownloadsListCommand

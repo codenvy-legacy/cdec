@@ -45,7 +45,6 @@ public class DownloadCommandTest {
     @Mock
     private CommandSession             commandSession;
 
-    private UserCredentials                        credentials;
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
     private String okServiceResponse = "{"
                                        + "artifact: {"
@@ -65,7 +64,7 @@ public class DownloadCommandTest {
 
         doNothing().when(spyCommand).init();
 
-        credentials = new UserCredentials("token", "accountId");
+        UserCredentials credentials = new UserCredentials("token", "accountId");
         userCredentialsRep = new JacksonRepresentation<>(credentials);
         doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
     }
@@ -83,10 +82,10 @@ public class DownloadCommandTest {
 
     @Test
     public void testDownloadArtifact() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(CDECArtifact.NAME.toString(), userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(CDECArtifact.NAME, userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME.toString());
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
@@ -95,10 +94,10 @@ public class DownloadCommandTest {
 
     @Test
     public void testDownloadArtifactVersion() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(CDECArtifact.NAME.toString(), "2.0.5", userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).download(CDECArtifact.NAME, "2.0.5", userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME.toString());
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
         commandInvoker.argument("version", "2.0.5");
 
         CommandInvoker.Result result = commandInvoker.invoke();

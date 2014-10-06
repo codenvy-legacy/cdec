@@ -70,6 +70,12 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String getDownloads(@PathParam(value = "artifact") final String artifactName);
 
     @GET
+    @Path("download-list/{artifact}/{version}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getDownloads(@PathParam(value = "artifact") final String artifactName,
+                               @PathParam(value = "version") final String version);
+
+    @GET
     @Path("download-list")
     @Produces(MediaType.APPLICATION_JSON)
     public String getDownloads();

@@ -199,6 +199,29 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
+    public String getDownloads(String artifactName, String version) {
+        try {
+            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+            Version v = Version.valueOf(version);
+
+            List<ArtifactInfo> infos = new ArrayList<>();
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            if (downloadedArtifacts.get(artifact) != null && downloadedArtifacts.get(artifact).containsKey(v)) {
+                Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
+                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), Status.DOWNLOADED));
+
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+            } else {
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+            }
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public String getDownloads() {
         try {
             Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
