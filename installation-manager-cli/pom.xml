@@ -111,10 +111,13 @@
                                     <replacetoken>main "$@"</replacetoken>
 
                                     <replacevalue>if [ -f "/home/codenvyshared/im-cli-update-script.sh" ]; then
-    DIR=$(cd $(dirname "$0"); pwd)
     echo "Installation Manager CLI is updating ..."
+    SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
+    CURRENT_DIR=$(pwd)
+    cd ~
     bash -c "$(cat /home/codenvyshared/im-cli-update-script.sh)"
-    ${DIR}/codenvy
+    cd ${CURRENT_DIR}
+    ${SCRIPT_DIR}/codenvy-cli
 else
     source ~/.bashrc
     main "$@"
@@ -123,10 +126,13 @@ fi</replacevalue>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy-cli">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>if [ -f "/home/codenvyshared/im-cli-update-script.sh" ]; then
-    DIR=$(cd $(dirname "$0"); pwd)
     echo "Installation Manager CLI is updating ..."
+    SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
+    CURRENT_DIR=$(pwd)
+    cd ~
     bash -c "$(cat /home/codenvyshared/im-cli-update-script.sh)"
-    ${DIR}/codenvy-cli
+    cd ${CURRENT_DIR}
+    ${SCRIPT_DIR}/codenvy-cli
 else
     source ~/.bashrc
     main "$@"
