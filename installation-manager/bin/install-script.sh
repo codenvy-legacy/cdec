@@ -8,32 +8,61 @@ APP_DIR=${CODENVY_HOME}/installation-manager
 SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
 
-createCodenvyUserAndGroupDebian() {
-    if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
-        sudo addgroup --quiet --gid 5001 ${CODENVY_USER}
-    fi
-    
-    if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
-        sudo adduser --quiet --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 --disabled-password --gecos "" ${CODENVY_USER}
-        sudo passwd -q -d -l ${CODENVY_USER}
+# $1 - username; $2 - uid/gid
+useraddDebian() {
+    sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
+    sudo passwd -q -d -l $1
+}
+
+# $1 - username; $2 - uid/gid
+useraddRedhat() {
+    sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
+    sudo passwd -l $1
+}
+
+# $1 - username; $2 - uid/gid
+useraddOpensuse() {
+    sudo -s useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
+    sudo -s passwd -q -l $1
+}
+
+# $1 - groupname; $2 - gid (optional)
+groupaddDebian() {
+    if [ -z  "$2" ]; then
+        sudo addgroup $1
+    else
+        sudo addgroup --quiet --gid $2 $1
     fi
 }
 
-createCodenvyUserAndGroupRedhat() {
-    if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
-        sudo groupadd -g5001 ${CODENVY_USER}
-    fi
-
-    if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
-        sudo useradd --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 ${CODENVY_USER}
-        sudo passwd -l ${CODENVY_USER}
+# $1 - groupname; $2 - gid (optional)
+groupaddRedhat() {
+    if [ -z  "$2" ]; then
+        sudo groupadd $1
+    else
+        sudo groupadd -g$2 $1
     fi
 }
 
-registerIMServiceDebian() {
-    # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
-    echo "> Register service"
-    sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
+# $1 - groupname; $2 - gid (optional)
+groupaddOpensuse() {
+    if [ -z  "$2" ]; then
+        sudo -s groupadd $1
+    else
+        sudo -s groupadd -g$2 $1
+    fi
+}
+
+createCodenvyUserAndGroup() {
+    if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
+        echo "> Creating group codenvy"
+        groupadd${os} ${CODENVY_USER} 5001
+    fi
+
+    if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
+        echo "> Creating user codenvy"
+        useradd${os} ${CODENVY_USER} 5001
+    fi
 }
 
 installJava() {
@@ -56,20 +85,10 @@ installJava() {
     }
 }
 
-installCurlDebian() {
-    command -v curl >/dev/null 2>&1 || {     # check if requered program had already installed earlier
-        echo "> Installation Curl "
-        sudo apt-get install curl -y
-        echo "> Curl has been installed"
-    }
-}
-
-installCurlRedhat() {
-    command -v curl >/dev/null 2>&1 || {     # check if requered program had already installed earlier
-        echo "> Installation Curl "
-        sudo yum install curl -y
-        echo "> Curl has been installed"
-    }
+registerIMServiceDebian() {
+    # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
+    echo "> Register Codenvy Installation Manage Service"
+    sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
 }
 
 registerIMServiceRedhat() {
@@ -77,6 +96,37 @@ registerIMServiceRedhat() {
     echo "> Registering Codenvy Installation Manage Service"
     sudo chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo chkconfig ${SERVICE_NAME} on &>/dev/null
+}
+
+registerIMServiceOpensuse() {
+    # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
+    echo "> Registering Codenvy Installation Manage Service"
+    sudo -s chkconfig --add ${SERVICE_NAME} &>/dev/null
+    sudo -s chkconfig ${SERVICE_NAME} on &>/dev/null
+}
+
+# $1 - command name
+installOnDebian() {
+    sudo apt-get install $1 -y
+}
+
+# $1 - command name
+installOnRedhat() {
+    sudo yum install $1 -y
+}
+
+# $1 - command name
+installOnOpensuse() {
+    sudo -s zypper install $1 -y
+}
+
+# $1 - command name
+installCommand() {
+    command -v $1 >/dev/null 2>&1 || {     # check if requered command had already installed earlier
+        echo "> Installation $1 "
+        installOn${os} $1
+        echo "> $1 has been installed"
+    }
 }
 
 installIM() {
@@ -118,9 +168,9 @@ installIM() {
     # create shared directory between 'codenvy' and current user
     cliupdatedir=/home/codenvyshared
     CODENVY_SHARE_GROUP=codenvyshare
-    USER_GROUP=${USER}
+    USER_GROUP=$(groups | cut -d ' ' -f1)
     sudo mkdir ${cliupdatedir}
-    sudo groupadd ${CODENVY_SHARE_GROUP}
+    groupadd${os} ${CODENVY_SHARE_GROUP}
     sudo chown -R root.${CODENVY_SHARE_GROUP} ${cliupdatedir}
     sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
     sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
@@ -148,6 +198,8 @@ if [ -f /etc/debian_version ]; then
     os="Debian"
 elif [ -f /etc/redhat-release ]; then
     os="Redhat"
+elif [ -f /etc/os-release ]; then
+    os="Opensuse"
 else
     echo "> Operation system isn't supported."
     exit
@@ -155,10 +207,11 @@ fi
 
 echo "> System is run on ${os} based distributive."
 
-echo "> Creating user & group codenvy"
-createCodenvyUserAndGroup${os}
+createCodenvyUserAndGroup
 
-installCurl${os}
+installCommand curl
+installCommand tar
+installCommand wget
 installJava
 installIM
 
