@@ -31,7 +31,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertTrue;
 
-/** @author Anatoliy Bazko */
+/** @author Dmytro Nochevnov */
 public class DownloadListCommandTest {
     private AbstractIMCommand spyCommand;
 
@@ -44,24 +44,24 @@ public class DownloadListCommandTest {
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
-        spyCommand = spy(new DownloadsListCommand());
+        spyCommand = spy(new DownloadCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
         doNothing().when(spyCommand).init();
     }
 
     @Test
-    public void testDownloadList() throws Exception {
-        final String okServiceResponse = "{"
-                                         + "status: \"OK\""
-                                         + "}";
-
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getDownloads();
+    public void testDownload() throws Exception {
+        final String ok = "{"
+                          + "status: \"OK\""
+                          + "}";
+        doReturn(ok).when(mockInstallationManagerProxy).getDownloads();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse)));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok)));
     }
 }

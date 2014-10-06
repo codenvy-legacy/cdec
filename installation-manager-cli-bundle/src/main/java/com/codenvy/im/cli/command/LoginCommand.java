@@ -94,7 +94,6 @@ public class LoginCommand extends AbstractIMCommand {
                 preferencesStorage.setAccountId(accountId);
 
                 printSuccess("Your Codenvy account ID '" + accountId + "' has been obtained and will be used to verify subscription.");
-                printSuccess("You can set another account ID by hand as argument of this command.");
             } else {
                 preferencesStorage.setAccountId(accountId);
 

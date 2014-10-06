@@ -292,6 +292,30 @@ public class TestDownloadInstallationManagerServiceImpl {
     }
 
     @Test
+    public void testGetDownloadsSpecificVersionArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
+                put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
+            }});
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        String response = installationManagerService.getDownloads(cdecArtifact.getName(), "1.0.1");
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [{\n" +
+                                                      "    \"artifact\": \"cdec\",\n" +
+                                                      "    \"file\": \"target/file1\",\n" +
+                                                      "    \"status\": \"DOWNLOADED\",\n" +
+                                                      "    \"version\": \"1.0.1\"\n" +
+                                                      "  }],\n" +
+                                                      "  \"status\": \"OK\"\n" +
+                                                      "}");
+    }
+
+    @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{

@@ -55,6 +55,7 @@ import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
+import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -67,9 +68,9 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 public class InstallationManagerImpl implements InstallationManager {
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
 
-    private final String updateEndpoint;
-    private final Path   downloadDir;
+    private Path downloadDir; // not final, possibly to be configured
 
+    private final String updateEndpoint;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 
@@ -80,17 +81,27 @@ public class InstallationManagerImpl implements InstallationManager {
                                    HttpTransport transport,
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
-        this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.artifacts = new TreeSet<>(artifacts); // keep order
+        this.downloadDir = Paths.get(downloadDir);
 
-        if (!exists(this.downloadDir)) {
-            Files.createDirectories(this.downloadDir);
+        try {
+            createDownloadDir(this.downloadDir);
+        } catch (IOException e) {
+            this.downloadDir = Paths.get(System.getenv("HOME"), "codenvy-updates");
+            createDownloadDir(this.downloadDir);
         }
 
-        LOG.info("Download directory: " + downloadDir);
+
+        LOG.info("Download directory: " + this.downloadDir.toString());
         LOG.info("Codenvy API endpoint: " + apiEndpoint);
         LOG.info("Codenvy Update Server API endpoint: " + updateEndpoint);
+    }
+
+    private void createDownloadDir(Path downloadDir) throws IOException {
+        if (!exists(downloadDir)) {
+            createDirectories(downloadDir);
+        }
     }
 
     /** {@inheritDoc} */

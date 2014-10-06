@@ -19,6 +19,7 @@ package com.codenvy.im.cli.command;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
 
 /**
  * @author Dmytro Nochevnov
@@ -32,18 +33,30 @@ public class DownloadCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
 
+    @Option(name = "--list", aliases = "--l", description = "Show the list of downloaded artifacts", required = false)
+    private boolean list;
+
     @Override
     protected Void doExecute() {
         try {
             init();
 
-            printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
-            if (artifactName != null && version != null) {
-                printResponse(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
-            } else if (artifactName != null) {
-                printResponse(installationManagerProxy.download(artifactName, getCredentialsRep()));
+            if (list) {
+                if (artifactName != null) {
+                    printResponse(installationManagerProxy.getDownloads(artifactName));
+                } else {
+                    printResponse(installationManagerProxy.getDownloads());
+                }
             } else {
-                printResponse(installationManagerProxy.download(getCredentialsRep()));
+
+                printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
+                if (artifactName != null && version != null) {
+                    printResponse(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
+                } else if (artifactName != null) {
+                    printResponse(installationManagerProxy.download(artifactName, getCredentialsRep()));
+                } else {
+                    printResponse(installationManagerProxy.download(getCredentialsRep()));
+                }
             }
         } catch (Exception e) {
             printError(e);

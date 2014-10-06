@@ -166,7 +166,7 @@ installIM() {
     tar -xf /tmp/${filename} -C ${cliinstalled}
 
     # create shared directory between 'codenvy' and current user
-    cliupdatedir=/home/codenvyshared
+    cliupdatedir=/home/codenvy-shared
     CODENVY_SHARE_GROUP=codenvyshare
     USER_GROUP=$(groups | cut -d ' ' -f1)
     sudo mkdir ${cliupdatedir}
