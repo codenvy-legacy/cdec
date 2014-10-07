@@ -42,8 +42,15 @@ deleteFileIfExists() {
 
     echo "==== Step [1/7] =======================> [Uploading a new Tomcat]"
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} update-server-packaging-tomcat/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
+
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
+#    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+#        echo ""
+#        #& echo \$! >$PID_FILE
+#    else
+#    fi
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
+
     echo "==== Step [3/7] =======================> [Server is stopped]"
     echo "==== Step [4/7] =======================> [Cleaning up]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm -rf ${home}"
@@ -57,7 +64,11 @@ deleteFileIfExists() {
     fi
 
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start"
+    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start & echo \$! > /home/codenvy/update-server.pid"
+    else
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start"
+    fi
 
     AS_STATE='Starting'
     testfile=/tmp/catalina.log
