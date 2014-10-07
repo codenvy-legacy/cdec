@@ -91,9 +91,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             boolean subscriptionValidated = isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
 
             if (subscriptionValidated) {
-                return new Response.Builder().withStatus(ResponseCode.OK).withParam("Subscription", subscription).build().toJson();
+                return new Response.Builder().withStatus(ResponseCode.OK)
+                                             .withParam("Subscription", subscription)
+                                             .withMessage("Subscription is valid")
+                                             .build().toJson();
             } else {
-                return new Response.Builder().withStatus(ResponseCode.ERROR).withParam("Subscription", subscription).build().toJson();
+                return new Response.Builder().withStatus(ResponseCode.ERROR)
+                                             .withParam("Subscription", subscription)
+                                             .withMessage("Subscription not found").build().toJson();
             }
         } catch (Exception e) {
             return new Response.Builder().withStatus(ResponseCode.ERROR)

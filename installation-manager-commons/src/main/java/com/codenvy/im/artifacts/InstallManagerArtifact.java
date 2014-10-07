@@ -91,7 +91,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
             Path dirImUpdateUnpack = dirForUpdate.resolve("im");
             unpack(im.toPath(), dirImUpdateUnpack);
 
-            Path dirImCliUpdate = getImCliUpdateScriptDir().resolve("im-cli");
+            Path dirImCliUpdate = getImCliUpdateScriptDir().resolve("codenvy-cli");
             if (exists(dirImCliUpdate)) {
                 cleanDirectory(dirImCliUpdate.toFile());
             }
@@ -136,7 +136,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
         commands.add("rm -rf " + fileImCliUpdateTarGz.getParent() + " ;");
         commands.add("chown -R " + userName + ":" + userGroup + " " + imCliInstalledPath + " ;");
 
-        Path updateScript = (new File(imCliUpdateScriptDir)).toPath().resolve("im-cli-update-script.sh");
+        Path updateScript = (new File(imCliUpdateScriptDir)).toPath().resolve("codenvy-cli-update-script.sh");
         commands.add("rm -f " + updateScript + " ;");
         commands.add("END1");
 
@@ -173,7 +173,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     private String[] getImCliInstalledProperties() throws IOException, URISyntaxException {
-        Path fileWithImCliInstalled = getInstalledPath().getParent().resolve(".codenvy/im-cli-installed");
+        Path fileWithImCliInstalled = getInstalledPath().getParent().resolve(".codenvy/codenvy-cli-installed");
 
         if (!exists(fileWithImCliInstalled)) {
             throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");

@@ -159,7 +159,7 @@ installIM() {
     filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
 
     # removes existed files and creates new directory
-    cliinstalled=${HOME}/im-cli
+    cliinstalled=${HOME}/codenvy-cli
     rm ${cliinstalled} -rf &>/dev/null
     mkdir ${cliinstalled}
 
@@ -180,7 +180,7 @@ installIM() {
 
     # store parameters of installed Installation Manager CLI.
     sudo su -c "mkdir ${CODENVY_HOME}/.codenvy"
-    sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/im-cli-installed"
+    sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 }
 
