@@ -146,7 +146,9 @@ installIM() {
     sudo tar -xf /tmp/${filename} -C ${APP_DIR}
 
     # create symbol link to installation-manager script into /etc/init.d
-    sudo ln -s ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
+    if [ ! -L /etc/init.d/${SERVICE_NAME} ]; then
+        sudo ln -s ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
+    fi
 
     # make it possible to write files into the APP_DIR
     sudo chmod 757 ${APP_DIR}
@@ -167,10 +169,16 @@ installIM() {
 
     # create shared directory between 'codenvy' and current user
     cliupdatedir=/home/codenvy-shared
+    if [ ! -d ${cliupdatedir} ]; then
+        sudo mkdir ${cliupdatedir}
+    fi
+
     CODENVY_SHARE_GROUP=codenvyshare
     USER_GROUP=$(groups | cut -d ' ' -f1)
-    sudo mkdir ${cliupdatedir}
-    addGroupOn${os} ${CODENVY_SHARE_GROUP}
+    if [ `grep -c "^${CODENVY_SHARE_GROUP}" /etc/group` == 0 ]; then
+        addGroupOn${os} ${CODENVY_SHARE_GROUP}
+    fi
+
     sudo chown -R root.${CODENVY_SHARE_GROUP} ${cliupdatedir}
     sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
     sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
@@ -179,7 +187,7 @@ installIM() {
     sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ~/.bashrc"
 
     # store parameters of installed Installation Manager CLI.
-    sudo su -c "mkdir ${CODENVY_HOME}/.codenvy"
+    sudo su -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then; mkdir ${CODENVY_HOME}/.codenvy; fi"
     sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 }
