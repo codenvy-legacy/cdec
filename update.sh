@@ -60,7 +60,7 @@ deleteFileIfExists() {
 
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
     if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i '1i\CATALINA_PID=/home/codenvy/update-server.pid' /home/codenvy/update-server-tomcat/bin/setenv.sh"
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i '1i\CATALINA_PID=/home/codenvy/update-server.pid' /home/codenvy/update-server-tomcat/bin/catalina.sh"
     fi
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start"
 
