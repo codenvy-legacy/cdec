@@ -65,6 +65,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Subscription is valid\",\n" +
                                                       "  \"status\": \"OK\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");
@@ -81,6 +82,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Subscription not found\",\n" +
                                                       "  \"status\": \"ERROR\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");

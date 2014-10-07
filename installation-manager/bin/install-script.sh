@@ -9,25 +9,25 @@ SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
 
 # $1 - username; $2 - uid/gid
-useraddDebian() {
+addUserOnDebian() {
     sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
     sudo passwd -q -d -l $1
 }
 
 # $1 - username; $2 - uid/gid
-useraddRedhat() {
+addUserOnRedhat() {
     sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
     sudo passwd -l $1
 }
 
 # $1 - username; $2 - uid/gid
-useraddOpensuse() {
+addUserOnOpensuse() {
     sudo -s useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
     sudo -s passwd -q -l $1
 }
 
 # $1 - groupname; $2 - gid (optional)
-groupaddDebian() {
+addGroupOnDebian() {
     if [ -z  "$2" ]; then
         sudo addgroup $1
     else
@@ -36,7 +36,7 @@ groupaddDebian() {
 }
 
 # $1 - groupname; $2 - gid (optional)
-groupaddRedhat() {
+addGroupOnRedhat() {
     if [ -z  "$2" ]; then
         sudo groupadd $1
     else
@@ -45,7 +45,7 @@ groupaddRedhat() {
 }
 
 # $1 - groupname; $2 - gid (optional)
-groupaddOpensuse() {
+addGroupOnOpensuse() {
     if [ -z  "$2" ]; then
         sudo -s groupadd $1
     else
@@ -56,12 +56,12 @@ groupaddOpensuse() {
 createCodenvyUserAndGroup() {
     if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
         echo "> Creating group codenvy"
-        groupadd${os} ${CODENVY_USER} 5001
+        addGroupOn${os} ${CODENVY_USER} 5001
     fi
 
     if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
         echo "> Creating user codenvy"
-        useradd${os} ${CODENVY_USER} 5001
+        addUserOn${os} ${CODENVY_USER} 5001
     fi
 }
 
@@ -85,20 +85,20 @@ installJava() {
     }
 }
 
-registerIMServiceDebian() {
+registerIMServiceOnDebian() {
     # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
     echo "> Register Codenvy Installation Manage Service"
     sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
 }
 
-registerIMServiceRedhat() {
+registerIMServiceOnRedhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
     echo "> Registering Codenvy Installation Manage Service"
     sudo chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo chkconfig ${SERVICE_NAME} on &>/dev/null
 }
 
-registerIMServiceOpensuse() {
+registerIMServiceOnOpensuse() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
     echo "> Registering Codenvy Installation Manage Service"
     sudo -s chkconfig --add ${SERVICE_NAME} &>/dev/null
@@ -170,7 +170,7 @@ installIM() {
     CODENVY_SHARE_GROUP=codenvyshare
     USER_GROUP=$(groups | cut -d ' ' -f1)
     sudo mkdir ${cliupdatedir}
-    groupadd${os} ${CODENVY_SHARE_GROUP}
+    addGroupOn${os} ${CODENVY_SHARE_GROUP}
     sudo chown -R root.${CODENVY_SHARE_GROUP} ${cliupdatedir}
     sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
     sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
@@ -215,7 +215,7 @@ installCommand wget
 installJava
 installIM
 
-registerIMService${os}
+registerIMServiceOn${os}
 launchingIMService
 
 
