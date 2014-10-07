@@ -177,8 +177,8 @@
                                         <?SORTPOM RESUME?>
 
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
-                                            <replacetoken>https://codenvy</replacetoken>
-                                            <replacevalue>https://codenvy-stg</replacevalue>
+                                            <replacetoken>codenvy.com</replacetoken>
+                                            <replacevalue>codenvy-stg.com</replacevalue>
                                         </replace>
                                         <tstamp>
                                             <format property="touch.time" pattern="MM/dd/yyyy hh:mm aa" offset="1" unit="minute"/>
