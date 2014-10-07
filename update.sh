@@ -44,7 +44,7 @@ deleteFileIfExists() {
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} update-server-packaging-tomcat/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
 
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina stop -force; fi"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
 #    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
 #        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm /home/codenvy/update-server.pid"
 #    fi
