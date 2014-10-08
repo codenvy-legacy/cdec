@@ -30,8 +30,6 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.net.ConnectException;
-
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -47,7 +45,6 @@ public class InstallCommandTest {
     @Mock
     private CommandSession             commandSession;
 
-    private UserCredentials                        credentials;
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
     private String okServiceResponse = "{"
                                        + "artifacts: [{"
@@ -67,7 +64,7 @@ public class InstallCommandTest {
 
         doNothing().when(spyCommand).init();
 
-        credentials = new UserCredentials("token", "accountId");
+        UserCredentials credentials = new UserCredentials("token", "accountId");
         userCredentialsRep = new JacksonRepresentation<>(credentials);
         doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
     }
@@ -85,10 +82,10 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallArtifact() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(CDECArtifact.NAME.toString(), userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(CDECArtifact.NAME, userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME.toString());
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
@@ -150,12 +147,12 @@ public class InstallCommandTest {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "{\n"
+                             + "  \"CLI client version\": \"1.1.0-SNAPSHOT\",\n"
                              + "  \"artifacts\": [{\n"
                              + "    \"artifact\": \"any\",\n"
                              + "    \"status\": \"SUCCESS\",\n"
                              + "    \"version\": \"any\"\n"
                              + "  }],\n"
-                             + "  \"cli client version\": \"1.1.0-SNAPSHOT\",\n"
                              + "  \"status\": \"OK\"\n"
                              + "}\n");
     }

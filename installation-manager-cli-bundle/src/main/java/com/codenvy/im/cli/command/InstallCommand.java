@@ -26,6 +26,7 @@ import org.apache.karaf.shell.commands.Option;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -49,30 +50,13 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Override
     protected Void doExecute() {
-        if (list) {
-            return doExecuteListOption();
-        } else {
-            return doExecuteInstall();
-        }
-    }
-
-    private Void doExecuteInstall() {
         try {
             init();
 
-            String response;
-            if (artifactName != null && version != null) {
-                response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
-            } else if (artifactName != null) {
-                response = installationManagerProxy.install(artifactName, getCredentialsRep());
+            if (list) {
+                return doExecuteListOption();
             } else {
-                response = installationManagerProxy.install(getCredentialsRep());
-            }
-
-            printResponse(response);
-
-            if (isIMSuccessfullyUpdated(response)) {
-                printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
+                return doExecuteInstall();
             }
         } catch (Exception e) {
             printError(e);
@@ -81,18 +65,31 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    private Void doExecuteListOption() {
-        try {
-            init();
-
-            String clientVersionMessage = "\"cli client version\": " + getClientBuildVersion();
-
-            String response = installationManagerProxy.getVersions(getCredentialsRep());
-            response = response.replaceAll("}$", "," + clientVersionMessage + "}");
-            printResponse(response);
-        } catch (Exception e) {
-            printError(e);
+    private Void doExecuteInstall() throws JSONException, IOException {
+        String response;
+        if (artifactName != null && version != null) {
+            response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
+        } else if (artifactName != null) {
+            response = installationManagerProxy.install(artifactName, getCredentialsRep());
+        } else {
+            response = installationManagerProxy.install(getCredentialsRep());
         }
+
+        printResponse(response);
+
+        if (isIMSuccessfullyUpdated(response)) {
+            printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
+        }
+
+        return null;
+    }
+
+    private Void doExecuteListOption() throws IOException, JSONException {
+        String response = installationManagerProxy.getVersions(getCredentialsRep());
+        JSONObject jsonResponse = new JSONObject(response);
+        jsonResponse.put("CLI client version", getClientBuildVersion());
+
+        printResponse(jsonResponse.toString());
 
         return null;
     }
@@ -115,7 +112,7 @@ public class InstallCommand extends AbstractIMCommand {
         return false;
     }
 
-    public String getClientBuildVersion() throws IOException {
+    private String getClientBuildVersion() throws IOException {
         try (InputStream in = getClass().getClassLoader().getResourceAsStream("codenvy/ClientBuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);
