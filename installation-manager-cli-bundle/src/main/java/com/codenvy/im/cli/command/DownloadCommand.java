@@ -24,7 +24,7 @@ import org.apache.karaf.shell.commands.Option;
 /**
  * @author Dmytro Nochevnov
  */
-@Command(scope = "im", name = "download", description = "Download artifacts")
+@Command(scope = "codenvy", name = "im-download", description = "Download artifacts")
 public class DownloadCommand extends AbstractIMCommand {
 
     @Argument(index = 0, name = "artifact", description = "The name of the artifact to download", required = false, multiValued = false)
@@ -33,20 +33,30 @@ public class DownloadCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
 
-    @Option(name = "--list", aliases = "--l", description = "Show the list of downloaded artifacts", required = false)
-    private boolean list;
+    @Option(name = "--list-local", aliases = "--l", description = "To show the downloaded list of artifacts", required = false)
+    private boolean listLocal;
+
+    @Option(name = "--check-remote", aliases = "--c", description = "To check on remote versions to see if new version is available",
+            required = false)
+    private boolean checkRemote;
 
     @Override
     protected Void doExecute() {
         try {
             init();
 
-            if (list) {
-                if (artifactName != null) {
+            if (listLocal) {
+                if (artifactName != null && version != null) {
+                    printResponse(installationManagerProxy.getDownloads(artifactName, version));
+                } else if (artifactName != null) {
                     printResponse(installationManagerProxy.getDownloads(artifactName));
                 } else {
                     printResponse(installationManagerProxy.getDownloads());
                 }
+
+            } else if (checkRemote) {
+                printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+
             } else {
 
                 printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");

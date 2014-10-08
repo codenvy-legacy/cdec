@@ -19,13 +19,14 @@ package com.codenvy.im.cli.command;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
 
 /**
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "im", name = "check-subscription", description = "Check subscription")
-public class CheckSubscriptionCommand extends AbstractIMCommand {
+@Command(scope = "codenvy", name = "im-subscription", description = "Check subscription")
+public class SubscriptionCommand extends AbstractIMCommand {
 
     /** The default subscription name to check. */
     private final static String DEFAULT_SUBSCRIPTION = "OnPremises";
@@ -33,14 +34,19 @@ public class CheckSubscriptionCommand extends AbstractIMCommand {
     @Argument(index = 0, name = "subscription", description = "The name of the subscription to check", required = false, multiValued = false)
     private String subscription;
 
+    @Option(name = "--check", aliases = "--c", description = "To check subscription", required = false)
+    private boolean check;
+
     @Override
     protected Void doExecute() {
         try {
             init();
 
-            String response = installationManagerProxy.checkSubscription(subscription != null ? subscription : DEFAULT_SUBSCRIPTION,
-                                                                         getCredentialsRep());
-            printResponse(response);
+            if (check) {
+                String response = installationManagerProxy.checkSubscription(subscription != null ? subscription : DEFAULT_SUBSCRIPTION,
+                                                                             getCredentialsRep());
+                printResponse(response);
+            }
         } catch (Exception e) {
             printError(e);
         }

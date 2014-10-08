@@ -30,7 +30,10 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
@@ -133,5 +136,17 @@ public class InstallCommandTest {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
+    }
+
+    @Test
+    public void testListOption() throws Exception {
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getVersions(userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
     }
 }

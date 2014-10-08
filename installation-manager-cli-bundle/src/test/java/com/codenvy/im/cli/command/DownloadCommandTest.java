@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
@@ -134,5 +135,65 @@ public class DownloadCommandTest {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertTrue(output.contains(Commons.getPrettyPrintingJson(expectedOutput)));
+    }
+
+    @Test
+    public void testCheckUpdates() throws Exception {
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--check-remote", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+    }
+
+    @Test
+    public void testCheckUpdatesWhenErrorInResponse() throws Exception {
+        String serviceErrorResponse = "{"
+                                      + "message: \"Some error\","
+                                      + "status: \"ERROR\""
+                                      + "}";
+        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--check-remote", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, Commons.getPrettyPrintingJson(serviceErrorResponse) + "\n");
+    }
+
+    @Test
+    public void testCheckUpdatesWhenServiceThrowsError() throws Exception {
+        String expectedOutput = "{"
+                                + "message: \"Server Error Exception\","
+                                + "status: \"ERROR\""
+                                + "}";
+        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+                .when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--check-remote", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
+    }
+
+    @Test
+    public void testListLocalOption() throws Exception {
+        final String ok = "{"
+                          + "status: \"OK\""
+                          + "}";
+        doReturn(ok).when(mockInstallationManagerProxy).getDownloads();
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list-local", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok)));
     }
 }

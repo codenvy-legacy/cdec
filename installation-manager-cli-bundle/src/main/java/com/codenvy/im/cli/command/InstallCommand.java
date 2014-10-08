@@ -22,6 +22,7 @@ import com.codenvy.im.response.Status;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,7 +31,7 @@ import org.json.JSONObject;
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "im", name = "install", description = "Install updates")
+@Command(scope = "codenvy", name = "im-install", description = "Install updates")
 public class InstallCommand extends AbstractIMCommand {
 
 
@@ -40,24 +41,32 @@ public class InstallCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
     private String version;
 
+    @Option(name = "--list", aliases = "--l", description = "To show installed list of artifacts", required = false)
+    private boolean list;
+
     @Override
     protected Void doExecute() {
         try {
             init();
 
-            String response;
-            if (artifactName != null && version != null) {
-                response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
-            } else if (artifactName != null) {
-                response = installationManagerProxy.install(artifactName, getCredentialsRep());
+            if (list) {
+                printResponse(installationManagerProxy.getVersions(getCredentialsRep()));
+
             } else {
-                response = installationManagerProxy.install(getCredentialsRep());
-            }
+                String response;
+                if (artifactName != null && version != null) {
+                    response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
+                } else if (artifactName != null) {
+                    response = installationManagerProxy.install(artifactName, getCredentialsRep());
+                } else {
+                    response = installationManagerProxy.install(getCredentialsRep());
+                }
 
-            printResponse(response);
+                printResponse(response);
 
-            if (isIMSuccessfullyUpdated(response)) {
-                printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
+                if (isIMSuccessfullyUpdated(response)) {
+                    printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
+                }
             }
         } catch (Exception e) {
             printError(e);
@@ -71,7 +80,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         if (response.contains("artifacts")) {
             JSONArray array = jsonResponse.getJSONArray("artifacts");
-            for ( int i = 0 ; i < array.length(); i++) {
+            for (int i = 0; i < array.length(); i++) {
                 String artifact = ((JSONObject)array.get(i)).getString("artifact");
                 String status = ((JSONObject)array.get(i)).getString("status");
 

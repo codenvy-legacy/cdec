@@ -24,19 +24,13 @@
             <action class="com.codenvy.im.cli.command.InstallCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.CheckUpdatesCommand"/>
-        </command>
-        <command>
             <action class="com.codenvy.im.cli.command.DownloadCommand"/>
         </command>
         <command>
             <action class="com.codenvy.im.cli.command.LoginCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.VersionCommand"/>
-        </command>
-        <command>
-            <action class="com.codenvy.im.cli.command.CheckSubscriptionCommand"/>
+            <action class="com.codenvy.im.cli.command.SubscriptionCommand"/>
         </command>
     </command-bundle>
 </blueprint>

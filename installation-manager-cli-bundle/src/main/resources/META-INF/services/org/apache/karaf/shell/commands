@@ -15,8 +15,6 @@
 # from Codenvy S.A..
 #
 com.codenvy.im.cli.command.InstallCommand
-com.codenvy.im.cli.command.CheckUpdatesCommand
 com.codenvy.im.cli.command.DownloadCommand
 com.codenvy.im.cli.command.LoginCommand
-com.codenvy.im.cli.command.VersionCommand
-com.codenvy.im.cli.command.CheckSubscriptionCommand
+com.codenvy.im.cli.command.SubscriptionCommand
