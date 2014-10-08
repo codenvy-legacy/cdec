@@ -134,16 +134,18 @@ installIM() {
 
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
-    curl -o ${filename} -L ${DOWNLOAD_URL}
+    imFileName=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
+    curl -o ${imFileName} -L ${DOWNLOAD_URL}
+
+    imCLIFileName=$(tar -tf ${imFileName} | grep cli)
 
     # removes existed files and creates new directory
     sudo rm ${APP_DIR} -rf
     sudo mkdir ${APP_DIR}
 
     # untar archive
-    sudo tar -xf ${filename} -C /tmp
-    sudo tar -xf /tmp/${filename} -C ${APP_DIR}
+    sudo tar -xf ${imFileName} -C /tmp
+    sudo tar -xf /tmp/${imFileName} -C ${APP_DIR}
 
     # create symbol link to installation-manager script into /etc/init.d
     if [ ! -L /etc/init.d/${SERVICE_NAME} ]; then
@@ -156,16 +158,12 @@ installIM() {
     # make the user ${CODENVY_USER} an owner all files into the APP_DIR
     sudo chown -R ${CODENVY_USER}:${CODENVY_USER} ${APP_DIR}
 
-
-    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
-
     # removes existed files and creates new directory
     cliinstalled=${HOME}/codenvy-cli
     rm ${cliinstalled} -rf &>/dev/null
     mkdir ${cliinstalled}
 
-    tar -xf /tmp/${filename} -C ${cliinstalled}
+    tar -xf /tmp/${imCLIFileName} -C ${cliinstalled}
 
     # create shared directory between 'codenvy' and current user
     cliupdatedir=/home/codenvy-shared
