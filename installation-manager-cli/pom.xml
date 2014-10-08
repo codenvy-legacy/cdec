@@ -119,7 +119,9 @@
     cd ${CURRENT_DIR}
     ${SCRIPT_DIR}/codenvy-cli
 else
-    source ~/.bashrc
+    if [ -f ~/.bashrc ]; then
+        source ~/.bashrc
+    fi
     main "$@"
 fi</replacevalue>
                                 </replace>
@@ -134,7 +136,9 @@ fi</replacevalue>
     cd ${CURRENT_DIR}
     ${SCRIPT_DIR}/codenvy-cli
 else
-    source ~/.bashrc
+    if [ -f ~/.bashrc ]; then
+        source ~/.bashrc
+    fi
     main "$@"
 fi</replacevalue>
                                 </replace>
