@@ -186,7 +186,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     /** Searches and returns name of remote with certain url. */
     @Nullable
-    private String getRemoteNameByUrl(String url) throws IllegalStateException {
+    protected String getRemoteNameByUrl(String url) throws IllegalStateException {
         Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();
 
         for (Entry<String, Remote> remoteEntry : availableRemotes.entrySet()) {

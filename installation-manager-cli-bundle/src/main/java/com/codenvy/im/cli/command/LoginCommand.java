@@ -21,6 +21,7 @@ import jline.console.ConsoleReader;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -29,7 +30,7 @@ import java.nio.charset.Charset;
 /**
  * Installation manager Login command.
  */
-@Command(scope = "im", name = "login", description = "Login to Codenvy Update Server")
+@Command(scope = "codenvy", name = "login", description = "Login to Codenvy Update Server or another remote Codenvy cloud")
 public class LoginCommand extends AbstractIMCommand {
 
     public static final String CANNOT_RECOGNISE_ACCOUNT_ID_MSG =
@@ -44,13 +45,19 @@ public class LoginCommand extends AbstractIMCommand {
     @Argument(name = "accountId", description = "The user's account ID", required = false, multiValued = false, index = 2)
     private String accountId;
 
+    @Option(name = "--remote", description = "Name of the remote codenvy", required = false)
+    private String remoteName;
+
     @Override
     protected Void doExecute() throws Exception {
         try {
             init();
 
             String remoteUrl = getUpdateServerUrl();
-            String remoteName = getOrCreateRemoteNameForUpdateServer();
+
+            if (remoteName == null) {
+                remoteName = getOrCreateRemoteNameForUpdateServer();
+            }
 
             if (username == null) {
                 if (isInteractive()) {
@@ -76,8 +83,13 @@ public class LoginCommand extends AbstractIMCommand {
                 }
             }
 
-            if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                printError("Login failed: please check the credentials.");
+            if (! getMultiRemoteCodenvy().login(remoteName, username, password)) {
+                printError("Login failed.");
+                return null;
+            }
+
+            if (! remoteName.equals(getRemoteNameByUrl(remoteUrl))) {
+                printSuccess("Login succeeded.");
                 return null;
             }
 
@@ -104,7 +116,6 @@ public class LoginCommand extends AbstractIMCommand {
                     return null;
                 }
             }
-
 
             printSuccess("Login succeeded.");
 

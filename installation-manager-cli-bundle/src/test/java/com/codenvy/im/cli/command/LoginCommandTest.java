@@ -67,6 +67,7 @@ public class LoginCommandTest {
         doNothing().when(spyCommand).init();
         doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
         doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getOrCreateRemoteNameForUpdateServer();
+        doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(UPDATE_SERVER_URL);
     }
     
     @Test
@@ -103,15 +104,14 @@ public class LoginCommandTest {
     @Test
     public void testFailLogin() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("username", TEST_USER);
-        commandInvoker.argument("password", TEST_USER_PASSWORD);
-        commandInvoker.argument("accountId", TEST_USER_ACCOUNT_ID);        
+        commandInvoker.argument("username", "user");
+        commandInvoker.argument("password", "passwd");
         
-        doReturn(false).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(false).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, "user", "passwd");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains("Login failed: please check the credentials."));
+        assertTrue(output.contains("Login failed."));
     }
 
     @Test
@@ -130,7 +130,7 @@ public class LoginCommandTest {
     }
 
     @Test
-    public void testInstallWhenServiceThrowsError() throws Exception {
+    public void testLoginWhenServiceThrowsError() throws Exception {
         String expectedOutput = "{"
                                   + "message: \"Server Error Exception\","
                                   + "status: \"ERROR\""
@@ -144,7 +144,17 @@ public class LoginCommandTest {
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
     }
-    
+
+    @Test
+    public void testLoginToSpecificRemote() {
+        // TODO
+    }
+
+    @Test
+    public void testFailLoginToSpecificRemote() {
+        // TODO
+    }
+
     static class TestLoginCommand extends LoginCommand {
         protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
             return super.getMultiRemoteCodenvy();
