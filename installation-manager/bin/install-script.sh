@@ -187,7 +187,7 @@ installIM() {
     sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ~/.bashrc"
 
     # store parameters of installed Installation Manager CLI.
-    sudo su -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then; mkdir ${CODENVY_HOME}/.codenvy; fi"
+    sudo su -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
     sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 }
