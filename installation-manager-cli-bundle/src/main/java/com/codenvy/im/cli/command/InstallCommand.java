@@ -52,52 +52,47 @@ public class InstallCommand extends AbstractIMCommand {
         if (list) {
             return doExecuteListOption();
         } else {
-            try {
-                init();
-
-                String response;
-                if (artifactName != null && version != null) {
-                    response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
-                } else if (artifactName != null) {
-                    response = installationManagerProxy.install(artifactName, getCredentialsRep());
-                } else {
-                    response = installationManagerProxy.install(getCredentialsRep());
-                }
-
-                printResponse(response);
-
-                if (isIMSuccessfullyUpdated(response)) {
-                    printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
-                }
-            } catch (Exception e) {
-                printError(e);
-            }
-
-            return null;
+            return doExecuteInstall();
         }
     }
 
-    private Void doExecuteListOption() {
-        String response = "";
-        String clientVersionMessage = "";
-
+    private Void doExecuteInstall() {
         try {
             init();
 
-            clientVersionMessage = "\"cli client version\": " + getClientBuildVersion();
-
-            response = installationManagerProxy.getVersions(getCredentialsRep());
-            response = response.replaceAll("}$", "," + clientVersionMessage + "}");
-        } catch (Exception e) {
-            if (! isConnectionException(e)) {
-                printError(e);
-                return null;
+            String response;
+            if (artifactName != null && version != null) {
+                response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
+            } else if (artifactName != null) {
+                response = installationManagerProxy.install(artifactName, getCredentialsRep());
+            } else {
+                response = installationManagerProxy.install(getCredentialsRep());
             }
 
-            response = "{" + clientVersionMessage + "}";
+            printResponse(response);
+
+            if (isIMSuccessfullyUpdated(response)) {
+                printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
+            }
+        } catch (Exception e) {
+            printError(e);
         }
 
-        printResponse(response);
+        return null;
+    }
+
+    private Void doExecuteListOption() {
+        try {
+            init();
+
+            String clientVersionMessage = "\"cli client version\": " + getClientBuildVersion();
+
+            String response = installationManagerProxy.getVersions(getCredentialsRep());
+            response = response.replaceAll("}$", "," + clientVersionMessage + "}");
+            printResponse(response);
+        } catch (Exception e) {
+            printError(e);
+        }
 
         return null;
     }

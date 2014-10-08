@@ -161,20 +161,7 @@ public class InstallCommandTest {
     }
 
     @Test
-    public void testListOptionWhenConnectionError() throws Exception {
-        doThrow(new RuntimeException().initCause(new ConnectException())).when(mockInstallationManagerProxy)
-                                                                         .getVersions(userCredentialsRep);
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--list", Boolean.TRUE);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, "{\"cli client version\": \"1.1.0-SNAPSHOT\"}\n");
-    }
-
-    @Test
-    public void testListOptionWhenNonConnectionError() throws Exception {
+    public void testListOptionWhenServiceError() throws Exception {
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost")).when(mockInstallationManagerProxy)
                                                                                                  .getVersions(userCredentialsRep);
 
