@@ -30,6 +30,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.net.ConnectException;
+
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -48,11 +50,11 @@ public class InstallCommandTest {
     private UserCredentials                        credentials;
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
     private String okServiceResponse = "{"
-                                       + "artifact: {"
+                                       + "artifacts: [{"
                                        + "           artifact: any,"
                                        + "           version: any,"
                                        + "           status: SUCCESS"
-                                       + "           },"
+                                       + "           }],"
                                        + "status: \"OK\""
                                        + "}";
 
@@ -147,6 +149,43 @@ public class InstallCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+        assertEquals(output, "{\n"
+                             + "  \"artifacts\": [{\n"
+                             + "    \"artifact\": \"any\",\n"
+                             + "    \"status\": \"SUCCESS\",\n"
+                             + "    \"version\": \"any\"\n"
+                             + "  }],\n"
+                             + "  \"cli client version\": \"1.1.0-SNAPSHOT\",\n"
+                             + "  \"status\": \"OK\"\n"
+                             + "}\n");
+    }
+
+    @Test
+    public void testListOptionWhenConnectionError() throws Exception {
+        doThrow(new RuntimeException().initCause(new ConnectException())).when(mockInstallationManagerProxy)
+                                                                         .getVersions(userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, "{\"cli client version\": \"1.1.0-SNAPSHOT\"}\n");
+    }
+
+    @Test
+    public void testListOptionWhenNonConnectionError() throws Exception {
+        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost")).when(mockInstallationManagerProxy)
+                                                                                                 .getVersions(userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"message\": \"Server Error Exception\",\n"
+                             + "  \"status\": \"ERROR\"\n"
+                             + "}\n");
     }
 }

@@ -113,7 +113,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    private boolean isConnectionException(Exception e) {
+    protected boolean isConnectionException(Exception e) {
         Throwable cause = e.getCause();
         return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
     }

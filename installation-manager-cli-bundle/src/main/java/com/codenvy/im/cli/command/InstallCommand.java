@@ -26,6 +26,9 @@ import org.apache.karaf.shell.commands.Option;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * @author Alexander Reshetnyak
@@ -41,18 +44,17 @@ public class InstallCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
     private String version;
 
-    @Option(name = "--list", aliases = "--l", description = "To show installed list of artifacts", required = false)
+    @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
 
     @Override
     protected Void doExecute() {
-        try {
-            init();
+        if (list) {
+            return doExecuteListOption();
+        } else {
+            try {
+                init();
 
-            if (list) {
-                printResponse(installationManagerProxy.getVersions(getCredentialsRep()));
-
-            } else {
                 String response;
                 if (artifactName != null && version != null) {
                     response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
@@ -67,10 +69,35 @@ public class InstallCommand extends AbstractIMCommand {
                 if (isIMSuccessfullyUpdated(response)) {
                     printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
                 }
+            } catch (Exception e) {
+                printError(e);
             }
-        } catch (Exception e) {
-            printError(e);
+
+            return null;
         }
+    }
+
+    private Void doExecuteListOption() {
+        String response = "";
+        String clientVersionMessage = "";
+
+        try {
+            init();
+
+            clientVersionMessage = "\"cli client version\": " + getClientBuildVersion();
+
+            response = installationManagerProxy.getVersions(getCredentialsRep());
+            response = response.replaceAll("}$", "," + clientVersionMessage + "}");
+        } catch (Exception e) {
+            if (! isConnectionException(e)) {
+                printError(e);
+                return null;
+            }
+
+            response = "{" + clientVersionMessage + "}";
+        }
+
+        printResponse(response);
 
         return null;
     }
@@ -91,5 +118,18 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         return false;
+    }
+
+    public String getClientBuildVersion() throws IOException {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("codenvy/ClientBuildInfo.properties")) {
+            Properties props = new Properties();
+            props.load(in);
+
+            if (props.containsKey("version")) {
+                return (String)props.get("version");
+            } else {
+                throw new IOException(this.getClass().getSimpleName());
+            }
+        }
     }
 }
