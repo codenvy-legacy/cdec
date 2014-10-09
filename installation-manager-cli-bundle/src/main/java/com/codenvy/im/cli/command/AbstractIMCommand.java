@@ -199,10 +199,25 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return null;
     }
 
-    /** Add into preferences remote with certain name and url */
+    /** Adds into preferences remote with certain name and url */
     protected void createRemote(String name, String url) {
         if (!getMultiRemoteCodenvy().addRemote(name, url)) {
             throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
         }
+    }
+
+    /** Returns true if only remoteName = name of remote which has url = {update server url} */
+    protected boolean isRemoteForUpdateServer(@Nonnull String remoteName) {
+        return remoteName.equals(getOrCreateRemoteNameForUpdateServer());
+    }
+
+    @Nullable
+    protected String getRemoteUrlByName(String remoteName) {
+        Remote remote = getMultiRemoteCodenvy().getRemote(remoteName);
+        if (remote == null) {
+            return null;
+        }
+
+        return remote.getUrl();
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
@@ -41,22 +42,27 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class AbstractIMCommandTest {
     private TestAbstractIMCommand spyCommand;
     private Preferences globalPreferences;
 
-    @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
-
-    @Mock
-    private CommandSession session;
+    @Mock private InstallationManagerService mockInstallationManagerProxy;
+    @Mock private CommandSession             session;
+    @Mock private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
+    @Mock private Remote                     mockUpdateServerRemote;
+    @Mock private Remote                     mockAnotherRemote;
 
     private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
-    private final static String TEST_UPDATE_SERVER_URL    = "https://test.com";
-    private final static String TEST_ACCOUNT_ID           = "test-account-id";
-    private final static String TEST_TOKEN                = "authToken";
+    private final static String UPDATE_SERVER_URL = "https://test.com";
+    private final static String TEST_ACCOUNT_ID   = "test-account-id";
+    private final static String TEST_TOKEN        = "authToken";
+
+    private static final String ANOTHER_REMOTE_NAME = "another remote";
+    private static final String ANOTHER_REMOTE_URL  = "another remote url";
 
     private String DEFAULT_PREFERENCES_FILE                          = "default-preferences.json";
     private String PREFERENCES_WITH_UPDATE_SERVER_FILE               = "preferences-with-update-server-remote.json";
@@ -73,14 +79,14 @@ public class AbstractIMCommandTest {
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
         updateServerRemote = new Remote();
-        updateServerRemote.setUrl(TEST_UPDATE_SERVER_URL);
+        updateServerRemote.setUrl(UPDATE_SERVER_URL);
 
-        doReturn(TEST_UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
     }
 
     @Test
     public void testGetUpdateServerUrl() {
-        assertEquals(spyCommand.getUpdateServerUrl(), TEST_UPDATE_SERVER_URL);
+        assertEquals(spyCommand.getUpdateServerUrl(), UPDATE_SERVER_URL);
     }
 
     @Test
@@ -173,6 +179,31 @@ public class AbstractIMCommandTest {
         assertEquals(testCreadentials.getAccountId(), "testAccountId");
     }
 
+    @Test
+    public void testIsRemoteForUpdateServer() {
+        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
+        prepareTestAbstractIMCommand(spyCommand);
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
+        spyCommand.init();
+
+        String remoteNameForUpdateServer = spyCommand.getOrCreateRemoteNameForUpdateServer();
+        assertTrue(spyCommand.isRemoteForUpdateServer(remoteNameForUpdateServer));
+        assertFalse(spyCommand.isRemoteForUpdateServer("another remote"));
+    }
+
+    @Test
+    public void testGetRemoteUrlByName() {
+        doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
+
+        doReturn(UPDATE_SERVER_URL).when(mockUpdateServerRemote).getUrl();
+        doReturn(mockUpdateServerRemote).when(mockMultiRemoteCodenvy).getRemote(UPDATE_SERVER_REMOTE_NAME);
+        assertEquals(spyCommand.getRemoteUrlByName(UPDATE_SERVER_REMOTE_NAME), UPDATE_SERVER_URL);
+
+        doReturn(ANOTHER_REMOTE_URL).when(mockAnotherRemote).getUrl();
+        doReturn(mockAnotherRemote).when(mockMultiRemoteCodenvy).getRemote(ANOTHER_REMOTE_NAME);
+        assertEquals(spyCommand.getRemoteUrlByName(ANOTHER_REMOTE_NAME), ANOTHER_REMOTE_URL);
+    }
+
     private void prepareTestAbstractIMCommand(TestAbstractIMCommand command) {
         doReturn(globalPreferences).when(session).get(Preferences.class.getName());
 
@@ -212,6 +243,10 @@ public class AbstractIMCommandTest {
         /** is needed for prepareTestAbstractIMCommand() method */
         protected void setSession(CommandSession session) {
             this.session = session;
+        }
+
+        protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
+            return super.getMultiRemoteCodenvy();
         }
     }
 }

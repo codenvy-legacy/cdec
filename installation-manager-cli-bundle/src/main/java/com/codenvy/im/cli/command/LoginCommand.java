@@ -53,43 +53,43 @@ public class LoginCommand extends AbstractIMCommand {
         try {
             init();
 
-            String remoteUrl = getUpdateServerUrl();
-
             if (remoteName == null) {
                 remoteName = getOrCreateRemoteNameForUpdateServer();
             }
 
             if (username == null) {
                 if (isInteractive()) {
-                    printInfo("Username for '" + remoteUrl + "':");
+                    printInfo(String.format("Username for remote '%s': ", remoteName));
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         username = reader.readLine();
                     }
                     printLineSeparator();
                 } else {
-                    username = new ConsoleReader().readLine("Username for '" + remoteUrl + "':");
+                    username = new ConsoleReader().readLine(String.format("Username for remote '%s': ", remoteName));
                 }
             }
 
             if (password == null) {
                 if (isInteractive()) {
-                    printInfo("Password for " + username + ":");
+                    printInfo(String.format("Password for %s: ", username));
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                         password = reader.readLine();
                     }
                     printLineSeparator();
                 } else {
-                    password = new ConsoleReader().readLine(String.format("Password for %s:", username), '*');
+                    password = new ConsoleReader().readLine(String.format("Password for %s: ", username), '*');
                 }
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                printError("Login failed.");
+                printError(String.format("Login failed on remote '%s'.", remoteName));
                 return null;
             }
 
-            if (!remoteName.equals(getRemoteNameByUrl(remoteUrl))) {
-                printSuccess("Login succeeded.");
+            if (!isRemoteForUpdateServer(remoteName)) {
+                printSuccess(String.format("Login success on remote '%s' [%s].",
+                                           remoteName,
+                                           getRemoteUrlByName(remoteName)));
                 return null;
             }
 
@@ -117,7 +117,9 @@ public class LoginCommand extends AbstractIMCommand {
                 }
             }
 
-            printSuccess("Login succeeded.");
+            printSuccess(String.format("Login success on remote '%s' [%s] which is used by installation manager commands.",
+                                       remoteName,
+                                       getRemoteUrlByName(remoteName)));
 
         } catch (Exception e) {
             printError(e);

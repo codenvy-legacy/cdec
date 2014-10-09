@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
+import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.utils.Commons;
@@ -38,50 +39,61 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
-public class LoginCommandTest {    
+public class LoginCommandTest {
     private static final String TEST_USER_ACCOUNT_ID      = "testUserAccountId";
     private static final String TEST_USER_PASSWORD        = "testUserPassword";
-    private static final String TEST_USER                 = "testUser";    
+    private static final String TEST_USER                 = "testUser";
     private final static String UPDATE_SERVER_URL         = "http://codenvy-stg.com/update";
-    private final static String UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server"; 
-    
+    private final static String UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";
+
+    private static final String ANOTHER_REMOTE_NAME       = "another remote";
+    private static final String ANOTHER_REMOTE_URL        = "another remote url";
+
+
     private TestLoginCommand spyCommand;
-    
+
     @Mock private InstallationManagerService mockInstallationManagerProxy;
-    @Mock private PreferencesStorage mockPreferencesStorage;
-    @Mock private CommandSession commandSession;
-    @Mock private MultiRemoteCodenvy mockMultiRemoteCodenvy;
-        
+    @Mock private PreferencesStorage         mockPreferencesStorage;
+    @Mock private CommandSession             commandSession;
+    @Mock private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
+
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
         doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
-        
+
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
-        
-        spyCommand = spy(new TestLoginCommand());        
+
+        spyCommand = spy(new TestLoginCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
         spyCommand.preferencesStorage = mockPreferencesStorage;
-                
+
         doNothing().when(spyCommand).init();
-        doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
-        doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getOrCreateRemoteNameForUpdateServer();
         doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(UPDATE_SERVER_URL);
+        doReturn(true).when(spyCommand).isRemoteForUpdateServer(UPDATE_SERVER_REMOTE_NAME);
+        doReturn(false).when(spyCommand).isRemoteForUpdateServer(ANOTHER_REMOTE_NAME);
+
+        doReturn(UPDATE_SERVER_URL).when(spyCommand).getRemoteUrlByName(UPDATE_SERVER_REMOTE_NAME);
+        doReturn(ANOTHER_REMOTE_URL).when(spyCommand).getRemoteUrlByName(ANOTHER_REMOTE_NAME);
     }
-    
+
     @Test
     public void testLogin() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
-        
+
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(TEST_USER_ACCOUNT_ID).when(spyCommand).getAccountIdWhereUserIsOwner();
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertTrue(output.contains("Login succeeded."));
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, String.format("Your Codenvy account ID '%s' has been obtained and will be used to verify subscription.\n" +
+                                           "Login success on remote '%s' [%s] which is used by installation manager commands.\n",
+                                           TEST_USER_ACCOUNT_ID,
+                                           UPDATE_SERVER_REMOTE_NAME,
+                                           UPDATE_SERVER_URL));
         assertTrue(output.contains(TEST_USER_ACCOUNT_ID));
     }
 
@@ -96,8 +108,10 @@ public class LoginCommandTest {
         doReturn(true).when(spyCommand).isValidAccount();
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertTrue(output.contains("Login succeeded."));
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, String.format("Login success on remote '%s' [%s] which is used by installation manager commands.\n",
+                                           UPDATE_SERVER_REMOTE_NAME,
+                                           UPDATE_SERVER_URL));
         assertFalse(output.contains(TEST_USER_ACCOUNT_ID));
     }
 
@@ -112,7 +126,7 @@ public class LoginCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "Login failed." + "\n");
+        assertEquals(output, String.format("Login failed on remote '%s'.\n", UPDATE_SERVER_REMOTE_NAME));
     }
 
     @Test
@@ -126,8 +140,8 @@ public class LoginCommandTest {
         doReturn("").when(spyCommand).getAccountIdWhereUserIsOwner();
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertTrue(output.contains(LoginCommand.CANNOT_RECOGNISE_ACCOUNT_ID_MSG));
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, LoginCommand.CANNOT_RECOGNISE_ACCOUNT_ID_MSG + "\n");
     }
 
     @Test
@@ -149,35 +163,37 @@ public class LoginCommandTest {
     @Test
     public void testLoginToSpecificRemote() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--remote", "another remote");
+        commandInvoker.option("--remote", ANOTHER_REMOTE_NAME);
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
-        doReturn(true).when(mockMultiRemoteCodenvy).login("another remote", TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(ANOTHER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertTrue(output.contains("Login succeeded."));
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, String.format("Login success on remote '%s' [%s].\n",
+                                           ANOTHER_REMOTE_NAME,
+                                           ANOTHER_REMOTE_URL));
     }
 
     @Test
     public void testFailLoginToSpecificRemote() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--remote", "another remote");
+        commandInvoker.option("--remote", ANOTHER_REMOTE_NAME);
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
         // simulate fail login
-        doReturn(false).when(mockMultiRemoteCodenvy).login("another remote", TEST_USER, TEST_USER_PASSWORD);
+        doReturn(false).when(mockMultiRemoteCodenvy).login(ANOTHER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "Login failed." + "\n");
+        assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
     }
 
-    static class TestLoginCommand extends LoginCommand {
+    class TestLoginCommand extends LoginCommand {
         protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
-            return super.getMultiRemoteCodenvy();
+            return mockMultiRemoteCodenvy;
         }
     }
 }
