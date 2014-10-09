@@ -48,6 +48,7 @@ import java.util.TreeMap;
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
@@ -205,7 +206,7 @@ public class TestInstallationManager {
 
     @Test
     public void testGetLatestVersionsToDownload() throws Exception {
-        doNothing().when(manager).validateProperties(anyMap());
+        doNothing().when(manager).validateArtifactProperties(anyMap());
         when(transport.doGetRequest("update/endpoint/repository/properties/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
         when(transport.doGetRequest("update/endpoint/repository/properties/" + CDECArtifact.NAME)).thenReturn("{version:2.10.5}");
         Map<Artifact, String> m = manager.getLatestVersionsToDownload();
@@ -219,7 +220,7 @@ public class TestInstallationManager {
     public void testGetDownloadedArtifacts() throws Exception {
         doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("installation-manager/1.0.2"));
         doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
-        doNothing().when(manager).validateProperties(anyMap());
+        doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", installManagerArtifact.getName(), "1.0.2", "file2");
@@ -248,7 +249,7 @@ public class TestInstallationManager {
         doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
         doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
         doReturn("{file:file3, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.3"));
-        doNothing().when(manager).validateProperties(anyMap());
+        doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
@@ -275,7 +276,7 @@ public class TestInstallationManager {
     public void testGetDownloadedArtifactsSeveralVersions() throws Exception {
         doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
         doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
-        doNothing().when(manager).validateProperties(anyMap());
+        doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
@@ -304,7 +305,7 @@ public class TestInstallationManager {
     @Test
     public void testGetArtifactPropertiesWithVersion() throws Exception {
         doReturn("{file:file1, md5=a}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
-        doNothing().when(manager).validateProperties(anyMap());
+        doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Map m = manager.getArtifactProperties(cdecArtifact, "1.0.1");
         assertTrue(m.containsKey("file"));
@@ -316,7 +317,7 @@ public class TestInstallationManager {
     @Test
     public void testGetArtifactProperties() throws Exception {
         doReturn("{file:file1, md5=a}").when(transport).doGetRequest(endsWith("cdec"));
-        doNothing().when(manager).validateProperties(anyMap());
+        doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Map m = manager.getArtifactProperties(cdecArtifact);
         assertTrue(m.containsKey("file"));
@@ -327,6 +328,8 @@ public class TestInstallationManager {
 
     @Test
     public void testSetAndGetConfig() throws Exception {
+        doNothing().when(manager).storeProperty(anyString(), anyString());
+
         Map<String, String> config = manager.getConfig();
         assertEquals(config.size(), 3);
         assertTrue(config.containsValue("target/download"));
@@ -346,6 +349,7 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IOException.class)
     public void testSetConfigErrorIfDirectoryCantCreateDirectory() throws Exception {
+        doNothing().when(manager).storeProperty(anyString(), anyString());
         manager.setConfig("/hello/world");
     }
 }

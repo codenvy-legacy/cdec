@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,6 +42,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -60,6 +63,8 @@ import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
@@ -205,6 +210,13 @@ public class InstallationManagerImpl implements InstallationManager {
             this.downloadDir = currentDownloadDir;
             throw new IOException("Can't set new download directory. Installation Manager probably doesn't have r/w permissions.", e);
         }
+
+        try {
+            storeProperty("installation-manager.download_dir", newDownloadDir.toString());
+        } catch (IOException e) {
+            this.downloadDir = currentDownloadDir;
+            throw e;
+        }
     }
 
     @Override
@@ -292,7 +304,7 @@ public class InstallationManagerImpl implements InstallationManager {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
         Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
 
-        validateProperties(m);
+        validateArtifactProperties(m);
         return m;
     }
 
@@ -300,11 +312,11 @@ public class InstallationManagerImpl implements InstallationManager {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
         Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
 
-        validateProperties(m);
+        validateArtifactProperties(m);
         return m;
     }
 
-    protected void validateProperties(Map m) throws IOException {
+    protected void validateArtifactProperties(Map m) throws IOException {
         if (m == null) {
             throw new IOException("Can't get artifact properties.");
         }
@@ -316,4 +328,21 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
+    protected void storeProperty(String property, String value) throws IOException {
+        Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
+
+        Properties props = new Properties();
+        try (InputStream in = newInputStream(conf)) {
+            if (in != null) {
+                props.load(in);
+            } else {
+                throw new IOException("Can't store property into configuration");
+            }
+        }
+
+        props.put(property, value);
+        try (OutputStream out = newOutputStream(conf)) {
+            props.store(out, null);
+        }
+    }
 }

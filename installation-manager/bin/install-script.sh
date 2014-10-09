@@ -194,6 +194,9 @@ installIM() {
     if [ ! -d  ${CODENVY_HOME}/codenvy_conf ]; then
         sudo su - ${CODENVY_USER} -c "mkdir ${CODENVY_HOME}/codenvy_conf"
     fi
+    if [ ! -f  ${CODENVY_HOME}/codenvy_conf/im.properties ]; then
+        sudo su - ${CODENVY_USER} -c "touch ${CODENVY_HOME}/codenvy_conf/im.properties"
+    fi
 }
 
 launchingIMService() {
