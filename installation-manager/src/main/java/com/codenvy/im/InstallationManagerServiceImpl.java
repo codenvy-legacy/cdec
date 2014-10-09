@@ -17,6 +17,7 @@
  */
 package com.codenvy.im;
 
+import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
@@ -380,9 +381,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String getConfig() {
-        ArrayList<Object> config = new ArrayList<>();
-        config.add(manager.getConfig());
-
+        JsonStringMapImpl<String> config = new JsonStringMapImpl<>(manager.getConfig());
         return new Response.Builder().withStatus(ResponseCode.OK).withParam("config", config).build().toJson();
     }
 
