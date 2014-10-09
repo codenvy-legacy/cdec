@@ -50,11 +50,11 @@ public class InstallationManagerConfig {
         this.proxyPort = proxyPort;
     }
 
-    public boolean isEmptyConfig() {
-        return isEmptyParam(downloadDir) && isEmptyParam(proxyUrl) && isEmptyParam(proxyPort);
+    public boolean checkOnEmptyConfig() {
+        return checkEmptyParam(downloadDir) && checkEmptyParam(proxyUrl) && checkEmptyParam(proxyPort);
     }
 
-    private boolean isEmptyParam(String param) {
+    private boolean checkEmptyParam(String param) {
         return param == null || param.isEmpty();
     }
 }
