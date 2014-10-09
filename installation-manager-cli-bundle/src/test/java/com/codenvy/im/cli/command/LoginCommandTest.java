@@ -104,14 +104,15 @@ public class LoginCommandTest {
     @Test
     public void testFailLogin() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("username", "user");
-        commandInvoker.argument("password", "passwd");
-        
-        doReturn(false).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, "user", "passwd");
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+
+        // simulate fail login
+        doReturn(false).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertTrue(output.contains("Login failed."));
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "Login failed." + "\n");
     }
 
     @Test
@@ -146,13 +147,32 @@ public class LoginCommandTest {
     }
 
     @Test
-    public void testLoginToSpecificRemote() {
-        // TODO
+    public void testLoginToSpecificRemote() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--remote", "another remote");
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+
+        doReturn(true).when(mockMultiRemoteCodenvy).login("another remote", TEST_USER, TEST_USER_PASSWORD);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertTrue(output.contains("Login succeeded."));
     }
 
     @Test
-    public void testFailLoginToSpecificRemote() {
-        // TODO
+    public void testFailLoginToSpecificRemote() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--remote", "another remote");
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+
+        // simulate fail login
+        doReturn(false).when(mockMultiRemoteCodenvy).login("another remote", TEST_USER, TEST_USER_PASSWORD);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "Login failed." + "\n");
     }
 
     static class TestLoginCommand extends LoginCommand {
