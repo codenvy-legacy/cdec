@@ -79,7 +79,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
-            throw new IllegalStateException("Please login using im:login command.");
+            throw new IllegalStateException("To use installation manager commands you have to login into '" + remoteName + "' remote.");
         }
 
         if (preferencesStorage == null
@@ -87,7 +87,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             || preferencesStorage.getAccountId() == null
             || preferencesStorage.getAuthToken().isEmpty()
             || preferencesStorage.getAccountId().isEmpty()) {
-            throw new IllegalStateException("Please login using im:login command.");
+            throw new IllegalStateException("To use installation manager commands you have to login into '" + remoteName + "' remote.");
         }
     }
 

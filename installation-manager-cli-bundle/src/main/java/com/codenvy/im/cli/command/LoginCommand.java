@@ -83,12 +83,12 @@ public class LoginCommand extends AbstractIMCommand {
                 }
             }
 
-            if (! getMultiRemoteCodenvy().login(remoteName, username, password)) {
+            if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
                 printError("Login failed.");
                 return null;
             }
 
-            if (! remoteName.equals(getRemoteNameByUrl(remoteUrl))) {
+            if (!remoteName.equals(getRemoteNameByUrl(remoteUrl))) {
                 printSuccess("Login succeeded.");
                 return null;
             }
