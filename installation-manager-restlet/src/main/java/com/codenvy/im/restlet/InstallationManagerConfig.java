@@ -20,8 +20,8 @@ package com.codenvy.im.restlet;
 /** @author Anatoliy Bazko */
 public class InstallationManagerConfig {
     private String downloadDir;
-    private String proxyUrl;
     private String proxyPort;
+    private String proxyUrl;
 
     public InstallationManagerConfig() {
     }
@@ -47,7 +47,7 @@ public class InstallationManagerConfig {
     }
 
     public void setProxyPort(String proxyPort) {
-        this.proxyPort = proxyPort;
+        this.proxyPort = proxyPort.trim();
     }
 
     public boolean checkOnEmptyConfig() {
