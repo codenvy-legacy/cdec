@@ -221,6 +221,7 @@ else
 fi
 
 echo "> System is run on ${os} based distributive."
+cd ~
 
 createCodenvyUserAndGroup
 
