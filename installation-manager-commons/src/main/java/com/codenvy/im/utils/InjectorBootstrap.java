@@ -70,7 +70,7 @@ public class InjectorBootstrap {
 
             private void bindProperties(Binder binder) {
                 try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
-                    doBindProperties(in, binder);
+                    doBindProperties(in);
                 } catch (IOException e) {
                     throw new IllegalStateException("Can't load properties", e);
                 }
@@ -78,14 +78,18 @@ public class InjectorBootstrap {
                 Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
                 if (exists(conf)) {
                     try (InputStream in = newInputStream(conf)) {
-                        doBindProperties(in, binder);
+                        doBindProperties(in);
                     } catch (IOException e) {
                         throw new IllegalStateException("Can't load properties", e);
                     }
                 }
+
+                for (Map.Entry<String, String> e : boundProperties.entrySet()) {
+                    binder.bindConstant().annotatedWith(Names.named(e.getKey())).to(e.getValue());
+                }
             }
 
-            private void doBindProperties(InputStream in, Binder binder) {
+            private void doBindProperties(InputStream in) {
                 Properties properties = new Properties();
                 try {
                     properties.load(in);
@@ -98,7 +102,6 @@ public class InjectorBootstrap {
                     String value = replaceEnvVariables((String)entry.getValue());
 
                     boundProperties.put(key, value);
-                    binder.bindConstant().annotatedWith(Names.named(key)).to(value);
                 }
             }
 
