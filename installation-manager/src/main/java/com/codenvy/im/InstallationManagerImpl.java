@@ -193,9 +193,7 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public Map<String, String> getConfig() {
         return new HashMap<String, String>() {{
-            put("Codenvy API endpoint", apiEndpoint);
-            put("Codenvy Update Server API endpoint", updateEndpoint);
-            put("Download directory", downloadDir.toString());
+            put("download directory", downloadDir.toString());
         }};
     }
 
@@ -203,6 +201,8 @@ public class InstallationManagerImpl implements InstallationManager {
     public void setConfig(String downloadDir) throws IOException {
         Path currentDownloadDir = this.downloadDir;
         Path newDownloadDir = Paths.get(downloadDir);
+
+        validatePath(newDownloadDir);
 
         try {
             createAndSetDownloadDir(newDownloadDir);
@@ -216,6 +216,12 @@ public class InstallationManagerImpl implements InstallationManager {
         } catch (IOException e) {
             this.downloadDir = currentDownloadDir;
             throw e;
+        }
+    }
+
+    protected void validatePath(Path newDownloadDir) throws IOException {
+        if (!newDownloadDir.isAbsolute()) {
+            throw new IOException("Path must be absolute.");
         }
     }
 

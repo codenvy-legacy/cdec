@@ -329,20 +329,17 @@ public class TestInstallationManager {
     @Test
     public void testSetAndGetConfig() throws Exception {
         doNothing().when(manager).storeProperty(anyString(), anyString());
+        doNothing().when(manager).validatePath(any(Path.class));
 
         Map<String, String> config = manager.getConfig();
-        assertEquals(config.size(), 3);
+        assertEquals(config.size(), 1);
         assertTrue(config.containsValue("target/download"));
-        assertTrue(config.containsValue("api/endpoint"));
-        assertTrue(config.containsValue("update/endpoint"));
 
         manager.setConfig("target/new-download");
 
         config = manager.getConfig();
-        assertEquals(config.size(), 3);
+        assertEquals(config.size(), 1);
         assertTrue(config.containsValue("target/new-download"));
-        assertTrue(config.containsValue("api/endpoint"));
-        assertTrue(config.containsValue("update/endpoint"));
 
         manager.setConfig("target/download");
     }
@@ -351,5 +348,11 @@ public class TestInstallationManager {
     public void testSetConfigErrorIfDirectoryCantCreateDirectory() throws Exception {
         doNothing().when(manager).storeProperty(anyString(), anyString());
         manager.setConfig("/hello/world");
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testSetConfigErrorIfDirectoryIsNotAbsolute() throws Exception {
+        doNothing().when(manager).storeProperty(anyString(), anyString());
+        manager.setConfig("hello");
     }
 }
