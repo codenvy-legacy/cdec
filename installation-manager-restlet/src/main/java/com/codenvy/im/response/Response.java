@@ -95,6 +95,11 @@ public class Response {
             return this;
         }
 
+        public Builder withParams(Map<String, String> params) {
+            params.putAll(params);
+            return this;
+        }
+
         private Builder withParam(Property key, String value) {
             params.put(key.toString().toLowerCase(), value);
             return this;

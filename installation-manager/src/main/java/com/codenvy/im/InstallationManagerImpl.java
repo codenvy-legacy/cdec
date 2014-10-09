@@ -56,6 +56,8 @@ import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.createFile;
+import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -71,6 +73,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private Path downloadDir; // not final, possibly to be configured
 
     private final String updateEndpoint;
+    private final String apiEndpoint;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 
@@ -81,27 +84,34 @@ public class InstallationManagerImpl implements InstallationManager {
                                    HttpTransport transport,
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
+        this.apiEndpoint = apiEndpoint;
         this.transport = transport;
         this.artifacts = new TreeSet<>(artifacts); // keep order
-        this.downloadDir = Paths.get(downloadDir);
 
         try {
-            createDownloadDir(this.downloadDir);
+            createAndSetDownloadDir(Paths.get(downloadDir));
         } catch (IOException e) {
-            this.downloadDir = Paths.get(System.getenv("HOME"), "codenvy-updates");
-            createDownloadDir(this.downloadDir);
+            createAndSetDownloadDir(Paths.get(System.getenv("HOME"), "codenvy-updates"));
         }
-
 
         LOG.info("Download directory: " + this.downloadDir.toString());
         LOG.info("Codenvy API endpoint: " + apiEndpoint);
         LOG.info("Codenvy Update Server API endpoint: " + updateEndpoint);
     }
 
-    private void createDownloadDir(Path downloadDir) throws IOException {
+    private void createAndSetDownloadDir(Path downloadDir) throws IOException {
         if (!exists(downloadDir)) {
             createDirectories(downloadDir);
+            checkRWPermissions(downloadDir);
         }
+
+        this.downloadDir = downloadDir;
+    }
+
+    private void checkRWPermissions(Path downloadDir) throws IOException {
+        Path tmp = downloadDir.resolve("tmp.tmp");
+        createFile(tmp);
+        delete(tmp);
     }
 
     /** {@inheritDoc} */
@@ -171,6 +181,29 @@ public class InstallationManagerImpl implements InstallationManager {
             return file;
         } catch (IOException e) {
             throw getProperException(e, artifact);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Map<String, String> getConfig() {
+        return new HashMap<String, String>() {{
+            put("Codenvy API endpoint", apiEndpoint);
+            put("Codenvy Update Server API endpoint: ", updateEndpoint);
+            put("Download directory", downloadDir.toString());
+        }};
+    }
+
+    @Override
+    public void setConfig(String downloadDir) throws IOException {
+        Path currentDownloadDir = this.downloadDir;
+        Path newDownloadDir = Paths.get(downloadDir);
+
+        try {
+            createAndSetDownloadDir(newDownloadDir);
+        } catch (IOException e) {
+            this.downloadDir = currentDownloadDir;
+            throw e;
         }
     }
 

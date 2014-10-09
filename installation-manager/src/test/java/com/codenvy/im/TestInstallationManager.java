@@ -32,6 +32,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -159,15 +160,15 @@ public class TestInstallationManager {
 
     @Test
     public void testDownloadVersion() throws Exception {
-        String version = "1.0.0";        
+        String version = "1.0.0";
         when(transport.doGetRequest("api/endpoint/account", testCredentials.getToken()))
-             .thenReturn("[{"
-                         + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                         + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
-                         + "}]");
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                            + "}]");
 
         when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
-            .thenReturn("[{serviceId:\"OnPremises\"}]");
+                .thenReturn("[{serviceId:\"OnPremises\"}]");
 
         when(transport.doGetRequest("update/endpoint/repository/properties/" + cdecArtifact.getName() + "/" + version))
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
@@ -322,5 +323,29 @@ public class TestInstallationManager {
         assertTrue(m.containsKey("md5"));
         assertEquals(m.get("file"), "file1");
         assertEquals(m.get("md5"), "a");
+    }
+
+    @Test
+    public void testSetAndGetConfig() throws Exception {
+        Map<String, String> config = manager.getConfig();
+        assertEquals(config.size(), 3);
+        assertTrue(config.containsValue("target/download"));
+        assertTrue(config.containsValue("api/endpoint"));
+        assertTrue(config.containsValue("update/endpoint"));
+
+        manager.setConfig("target/new-download");
+
+        config = manager.getConfig();
+        assertEquals(config.size(), 3);
+        assertTrue(config.containsValue("target/new-download"));
+        assertTrue(config.containsValue("api/endpoint"));
+        assertTrue(config.containsValue("update/endpoint"));
+
+        manager.setConfig("target/download");
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testSetConfigErrorIfDirectoryCantCreateDirectory() throws Exception {
+        manager.setConfig("/hello/world");
     }
 }

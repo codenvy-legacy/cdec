@@ -132,11 +132,21 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
 
-    /**
-     * @see com.codenvy.im.utils.AccountUtils#isValidAccountId(com.codenvy.im.utils.HttpTransport, String, com.codenvy.im.user.UserCredentials)
-     */
+    /** @see com.codenvy.im.utils.AccountUtils#isValidAccountId(com.codenvy.im.utils.HttpTransport, String, com.codenvy.im.user.UserCredentials) */
     @POST
     @Path("validate-account-id")
     @Consumes(MediaType.APPLICATION_JSON)
     public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+
+    /** Returns the configuration of the Installation Manager */
+    @GET
+    @Path("get-config")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getConfig();
+
+    /** Returns the configuration of the Installation Manager */
+    @POST
+    @Path("set-config/{downloadDir}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String setConfig(@PathParam(value = "downloadDir") final String downloadDir);
 }

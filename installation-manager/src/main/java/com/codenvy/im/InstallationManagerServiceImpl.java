@@ -377,6 +377,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         return AccountUtils.isValidAccountId(transport, apiEndpoint, userCredentials);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String getConfig() {
+        return new Response.Builder().withStatus(ResponseCode.OK).withParams(manager.getConfig()).build().toJson();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String setConfig(String downloadDir) {
+        try {
+            manager.setConfig(downloadDir);
+            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
 
     protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
         manager.install(token, artifact, version);

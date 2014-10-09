@@ -77,4 +77,10 @@ public interface InstallationManager {
      *         if the subscription is invalid or expired
      */
     Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
+
+    /** @return the configuration */
+    Map<String, String> getConfig();
+
+    /** Sets new configuration */
+    void setConfig(String downloadDirectory) throws IOException;
 }
