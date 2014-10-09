@@ -134,21 +134,24 @@ public class AbstractIMCommandTest {
         assertEquals(spyCommand.preferencesStorage.getAccountId(), TEST_ACCOUNT_ID);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'Codenvy Update Server' remote.")
     public void testInitWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'CodenvyUpdateServer' remote.")
     public void testInitWhenUserDidNotLogin() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Please login using im:login command.")
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'CodenvyUpdateServer' remote.")
     public void testInitWhenUserDidNotObtainAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);
