@@ -46,7 +46,7 @@ public class ConfigCommand extends AbstractIMCommand {
                 config.setDownloadDir(downloadDir);
             }
             if (proxyUrl != null) {
-                config.setProxyPort(proxyUrl);
+                config.setProxyUrl(proxyUrl);
             }
             if (proxyPort != null) {
                 config.setProxyPort(proxyPort);
