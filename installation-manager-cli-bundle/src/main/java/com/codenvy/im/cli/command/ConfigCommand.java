@@ -52,7 +52,6 @@ public class ConfigCommand extends AbstractIMCommand {
                 config.setProxyPort(proxyPort);
             }
 
-
             if (!config.checkOnEmptyConfig()) {
                 printResponse(installationManagerProxy.setConfig(new JacksonRepresentation<>(config)));
             } else {
