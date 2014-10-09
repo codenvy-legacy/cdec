@@ -29,11 +29,16 @@ import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newInputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -64,8 +69,25 @@ public class InjectorBootstrap {
             }
 
             private void bindProperties(Binder binder) {
-                Properties properties = new Properties();
                 try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
+                    doBindProperties(in, binder);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Can't load properties", e);
+                }
+
+                Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
+                if (exists(conf)) {
+                    try (InputStream in = newInputStream(conf)) {
+                        doBindProperties(in, binder);
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Can't load properties", e);
+                    }
+                }
+            }
+
+            private void doBindProperties(InputStream in, Binder binder) {
+                Properties properties = new Properties();
+                try {
                     properties.load(in);
                 } catch (IOException e) {
                     throw new IllegalStateException("Can't load properties", e);
@@ -80,9 +102,7 @@ public class InjectorBootstrap {
                 }
             }
 
-            /**
-             * Replaces environment variables by them actual values using ${...} template.
-             */
+            /** Replaces environment variables by them actual values using ${...} template. */
             private String replaceEnvVariables(String value) {
                 Matcher matcher = envPattern.matcher(value);
                 if (matcher.find()) {

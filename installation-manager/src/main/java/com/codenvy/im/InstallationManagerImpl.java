@@ -332,11 +332,13 @@ public class InstallationManagerImpl implements InstallationManager {
         Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
 
         Properties props = new Properties();
-        try (InputStream in = newInputStream(conf)) {
-            if (in != null) {
-                props.load(in);
-            } else {
-                throw new IOException("Can't store property into configuration");
+        if (exists(conf)) {
+            try (InputStream in = newInputStream(conf)) {
+                if (in != null) {
+                    props.load(in);
+                } else {
+                    throw new IOException("Can't store property into configuration");
+                }
             }
         }
 
