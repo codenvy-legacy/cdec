@@ -28,6 +28,7 @@ import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
+import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
@@ -387,9 +388,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String setConfig(String downloadDir) {
+    public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep) {
         try {
-            manager.setConfig(downloadDir);
+            manager.setConfig(configRep.getObject());
             return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
         } catch (Exception e) {
             return Response.valueOf(e).toJson();

@@ -17,24 +17,44 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.restlet.InstallationManagerConfig;
+
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+import org.restlet.ext.jackson.JacksonRepresentation;
 
 /** @author Anatoliy Bazko */
 @Command(scope = "codenvy", name = "im-config", description = "Config installation manager")
 public class ConfigCommand extends AbstractIMCommand {
 
-
-    @Option(name = "--download-dir", aliases = "--dd", description = "To set the download directory", required = false)
+    @Option(name = "--download-dir", description = "To set the download directory", required = false)
     private String downloadDir;
+
+    @Option(name = "--proxy-url", description = "To set the proxy url", required = false)
+    private String proxyUrl;
+
+    @Option(name = "--proxy-port", description = "To set the proxy port", required = false)
+    private String proxyPort;
 
     @Override
     protected Void doExecute() {
         try {
             init();
 
+            InstallationManagerConfig config = new InstallationManagerConfig();
             if (downloadDir != null) {
-                printResponse(installationManagerProxy.setConfig(downloadDir));
+                config.setDownloadDir(downloadDir);
+            }
+            if (proxyUrl != null) {
+                config.setProxyPort(proxyUrl);
+            }
+            if (proxyPort != null) {
+                config.setProxyPort(proxyPort);
+            }
+
+
+            if (!config.isEmpty()) {
+                printResponse(installationManagerProxy.setConfig(new JacksonRepresentation<>(config)));
             } else {
                 printResponse(installationManagerProxy.getConfig());
             }

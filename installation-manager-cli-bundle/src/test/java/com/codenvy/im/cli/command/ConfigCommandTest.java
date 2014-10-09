@@ -22,9 +22,11 @@ import com.codenvy.im.restlet.InstallationManagerService;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -52,7 +54,7 @@ public class ConfigCommandTest {
 
     @Test
     public void testSetConfig() throws Exception {
-        doReturn(okStatus).when(mockInstallationManagerProxy).setConfig("test");
+        doReturn(okStatus).when(mockInstallationManagerProxy).setConfig(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--download-dir", "test");

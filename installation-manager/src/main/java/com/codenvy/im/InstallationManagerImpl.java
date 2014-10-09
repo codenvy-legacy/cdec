@@ -21,8 +21,10 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.restlet.InstallationManager;
+import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -77,8 +79,9 @@ public class InstallationManagerImpl implements InstallationManager {
 
     private Path downloadDir; // not final, possibly to be configured
 
-    private final String updateEndpoint;
-    private final String apiEndpoint;
+    private final HttpTransportConfiguration transportConf;
+
+    private final String        updateEndpoint;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 
@@ -86,10 +89,11 @@ public class InstallationManagerImpl implements InstallationManager {
     public InstallationManagerImpl(@Named("api.endpoint") String apiEndpoint,
                                    @Named("installation-manager.update_server_endpoint") String updateEndpoint,
                                    @Named("installation-manager.download_dir") String downloadDir,
+                                   HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
-        this.apiEndpoint = apiEndpoint;
+        this.transportConf = transportConf;
         this.transport = transport;
         this.artifacts = new TreeSet<>(artifacts); // keep order
 
@@ -194,28 +198,46 @@ public class InstallationManagerImpl implements InstallationManager {
     public Map<String, String> getConfig() {
         return new HashMap<String, String>() {{
             put("download directory", downloadDir.toString());
+
+            if (transportConf.getProxyUrl() != null && !transportConf.getProxyUrl().isEmpty()) {
+                put("proxy url", transportConf.getProxyUrl());
+            }
+
+            if (transportConf.getProxyPort() > 0) {
+                put("proxy port", String.valueOf(transportConf.getProxyPort()));
+            }
         }};
     }
 
     @Override
-    public void setConfig(String downloadDir) throws IOException {
-        Path currentDownloadDir = this.downloadDir;
-        Path newDownloadDir = Paths.get(downloadDir);
-
-        validatePath(newDownloadDir);
-
-        try {
-            createAndSetDownloadDir(newDownloadDir);
-        } catch (IOException e) {
-            this.downloadDir = currentDownloadDir;
-            throw new IOException("Can't set new download directory. Installation Manager probably doesn't have r/w permissions.", e);
+    public void setConfig(InstallationManagerConfig config) throws IOException {
+        if (config.getProxyPort() != null) {
+            transportConf.setProxyPort(config.getProxyPort());
         }
 
-        try {
-            storeProperty("installation-manager.download_dir", newDownloadDir.toString());
-        } catch (IOException e) {
-            this.downloadDir = currentDownloadDir;
-            throw e;
+        if (config.getProxyUrl() != null) {
+            transportConf.setProxyUrl(config.getProxyUrl());
+        }
+
+        if (config.getDownloadDir() != null) {
+            Path currentDownloadDir = this.downloadDir;
+            Path newDownloadDir = Paths.get(config.getDownloadDir());
+
+            validatePath(newDownloadDir);
+
+            try {
+                createAndSetDownloadDir(newDownloadDir);
+            } catch (IOException e) {
+                this.downloadDir = currentDownloadDir;
+                throw new IOException("Can't set new download directory. Installation Manager probably doesn't have r/w permissions.", e);
+            }
+
+            try {
+                storeProperty("installation-manager.download_dir", newDownloadDir.toString());
+            } catch (IOException e) {
+                this.downloadDir = currentDownloadDir;
+                throw e;
+            }
         }
     }
 

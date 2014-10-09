@@ -21,9 +21,11 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.io.FileUtils;
@@ -86,6 +88,7 @@ public class TestInstallationManager {
         manager = spy(new InstallationManagerImpl("api/endpoint",
                                                   "update/endpoint",
                                                   "target/download",
+                                                  new HttpTransportConfiguration("", "0"),
                                                   transport,
                                                   new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
 
@@ -331,28 +334,52 @@ public class TestInstallationManager {
         doNothing().when(manager).storeProperty(anyString(), anyString());
         doNothing().when(manager).validatePath(any(Path.class));
 
-        Map<String, String> config = manager.getConfig();
-        assertEquals(config.size(), 1);
-        assertTrue(config.containsValue("target/download"));
+        InstallationManagerConfig config = new InstallationManagerConfig();
+        config.setDownloadDir("target/new-download");
+        config.setProxyPort("1000");
+        config.setProxyUrl("localhost");
+        manager.setConfig(config);
 
-        manager.setConfig("target/new-download");
+        Map<String, String> m = manager.getConfig();
+        assertEquals(m.size(), 3);
+        assertTrue(m.containsValue("target/new-download"));
+        assertTrue(m.containsValue("1000"));
+        assertTrue(m.containsValue("localhost"));
 
-        config = manager.getConfig();
-        assertEquals(config.size(), 1);
-        assertTrue(config.containsValue("target/new-download"));
+        config.setDownloadDir("target/download");
+        config.setProxyPort("");
+        manager.setConfig(config);
 
-        manager.setConfig("target/download");
+        m = manager.getConfig();
+        assertEquals(m.size(), 2);
+        assertTrue(m.containsValue("target/download"));
+        assertTrue(m.containsValue("localhost"));
+
+        config.setProxyUrl("");
+        manager.setConfig(config);
+
+        m = manager.getConfig();
+        assertEquals(m.size(), 1);
+        assertTrue(m.containsValue("target/download"));
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testSetConfigErrorIfDirectoryCantCreateDirectory() throws Exception {
         doNothing().when(manager).storeProperty(anyString(), anyString());
-        manager.setConfig("/hello/world");
+
+        InstallationManagerConfig config = new InstallationManagerConfig();
+        config.setDownloadDir("/hello/world");
+
+        manager.setConfig(config);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testSetConfigErrorIfDirectoryIsNotAbsolute() throws Exception {
         doNothing().when(manager).storeProperty(anyString(), anyString());
-        manager.setConfig("hello");
+
+        InstallationManagerConfig config = new InstallationManagerConfig();
+        config.setDownloadDir("hello");
+
+        manager.setConfig(config);
     }
 }

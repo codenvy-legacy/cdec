@@ -82,5 +82,5 @@ public interface InstallationManager {
     Map<String, String> getConfig();
 
     /** Sets new configuration */
-    void setConfig(String downloadDirectory) throws IOException;
+    void setConfig(InstallationManagerConfig config) throws IOException;
 }

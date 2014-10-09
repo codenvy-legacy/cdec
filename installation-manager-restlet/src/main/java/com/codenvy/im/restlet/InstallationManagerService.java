@@ -144,9 +144,9 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String getConfig();
 
-    /** Returns the configuration of the Installation Manager */
+    /** Sets new configuration for installation manager */
     @POST
-    @Path("set-config/{downloadDir}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String setConfig(@PathParam(value = "downloadDir") final String downloadDir);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep);
 }
