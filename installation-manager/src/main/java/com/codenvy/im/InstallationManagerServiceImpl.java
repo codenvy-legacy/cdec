@@ -56,7 +56,7 @@ import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
  */
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
     protected final InstallationManager manager;
-    protected final HttpTransport transport;
+    protected final HttpTransport       transport;
 
     private final String updateServerEndpoint;
     private final String apiEndpoint;

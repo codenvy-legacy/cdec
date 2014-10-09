@@ -96,7 +96,7 @@ public class Response {
         }
 
         public Builder withParams(Map<String, String> params) {
-            params.putAll(params);
+            this.params.putAll(params);
             return this;
         }
 
