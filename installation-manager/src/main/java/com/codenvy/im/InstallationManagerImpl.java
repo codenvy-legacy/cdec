@@ -189,7 +189,7 @@ public class InstallationManagerImpl implements InstallationManager {
     public Map<String, String> getConfig() {
         return new HashMap<String, String>() {{
             put("Codenvy API endpoint", apiEndpoint);
-            put("Codenvy Update Server API endpoint: ", updateEndpoint);
+            put("Codenvy Update Server API endpoint", updateEndpoint);
             put("Download directory", downloadDir.toString());
         }};
     }
@@ -203,7 +203,7 @@ public class InstallationManagerImpl implements InstallationManager {
             createAndSetDownloadDir(newDownloadDir);
         } catch (IOException e) {
             this.downloadDir = currentDownloadDir;
-            throw e;
+            throw new IOException("Can't set new download directory. Installation Manager probably doesn't have r/w permissions.", e);
         }
     }
 

@@ -380,7 +380,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String getConfig() {
-        return new Response.Builder().withStatus(ResponseCode.OK).withParams(manager.getConfig()).build().toJson();
+        return new Response.Builder().withStatus(ResponseCode.OK).withParam("config", manager.getConfig()).build().toJson();
     }
 
     /** {@inheritDoc} */

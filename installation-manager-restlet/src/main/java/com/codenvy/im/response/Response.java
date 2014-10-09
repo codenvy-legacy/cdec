@@ -90,13 +90,8 @@ public class Response {
             return withParam(Property.MESSAGE, value);
         }
 
-        public Builder withParam(String key, String value) {
+        public Builder withParam(String key, Object value) {
             params.put(key.toLowerCase(), value);
-            return this;
-        }
-
-        public Builder withParams(Map<String, String> params) {
-            this.params.putAll(params);
             return this;
         }
 
