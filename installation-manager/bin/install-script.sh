@@ -190,7 +190,7 @@ installIM() {
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 
     # creates Codenvy configuration directory
-    sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=$HOME/codenvy_conf' ~/.bashrc"
+    sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=${CODENVY_HOME}/codenvy_conf' ~/.bashrc"
     if [ ! -d  ${CODENVY_HOME}/codenvy_conf ]; then
         sudo su - ${CODENVY_USER} -c "mkdir ${CODENVY_HOME}/codenvy_conf"
     fi
