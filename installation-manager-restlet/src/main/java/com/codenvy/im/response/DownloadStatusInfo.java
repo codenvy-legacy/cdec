@@ -24,7 +24,7 @@ import org.json.JSONObject;
 public class DownloadStatusInfo {
 
     private final Status status;
-    private final int percents;
+    private final int    percents;
     private final String downloadResult;
 
     /**
@@ -43,12 +43,12 @@ public class DownloadStatusInfo {
      * @param percents
      *         the percentage of done downloading artifacts
      * @param downloadResult
-     *         the result of download
+     *         the result of download in json format
      */
     public DownloadStatusInfo(Status status, int percents, String downloadResult) {
         this.status = status;
         this.percents = percents;
-        this.downloadResult = downloadResult; // TODO what is it?
+        this.downloadResult = downloadResult;
     }
 
     public Status getStatus() {

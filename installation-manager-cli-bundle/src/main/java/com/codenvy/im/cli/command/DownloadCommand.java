@@ -125,7 +125,6 @@ public class DownloadCommand extends AbstractIMCommand {
         }
     }
 
-
     protected String generateDownloadDescriptorId() {
         return UUID.randomUUID().toString();
     }

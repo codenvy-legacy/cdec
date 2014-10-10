@@ -265,7 +265,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             }
 
             long downloadedSize = descriptor.getDownloadedSize();
-            long percents = Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
+            int percents = (int)Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
 
             if (descriptor.isDownloadingFinished()) {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, descriptor.getDownloadResult());
