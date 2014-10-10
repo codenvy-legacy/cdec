@@ -25,14 +25,14 @@ import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
+import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /** @author Anatoliy Bazko */
@@ -62,25 +62,52 @@ public class SubscriptionCommandTest {
     }
 
     @Test
-    public void testCheckSubscriptionReturnOkResponse() throws Exception {
-        String okServiceResponse = "{\nstatus: \"OK\"}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(userCredentialsRep));
+    public void testCheckDefaultSubscription() throws Exception {
+        String okServiceResponse = "{\n"
+                                   + "  \"message\": \"Subscription is valid\",\n"
+                                   + "  \"status\": \"OK\",\n"
+                                   + "  \"subscription\": \"OnPremises\"\n"
+                                   + "}\n";
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SubscriptionCommand.DEFAULT_SUBSCRIPTION,
+                                                                                         userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--check", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse)));
+        assertEquals(output, okServiceResponse);
     }
 
-
     @Test
-    public void testCheckSubscriptionReturnNothing() throws Exception {
+    public void testCheckSubscriptionReturnOkResponse() throws Exception {
+        String okServiceResponse = "{\n"
+                                   + "  \"message\": \"Subscription is valid\",\n"
+                                   + "  \"status\": \"OK\",\n"
+                                   + "  \"subscription\": \"AnotherSubscription\"\n"
+                                   + "}\n";
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription("AnotherSubscription", userCredentialsRep);
+
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--check", "AnotherSubscription");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.isEmpty());
+        assertEquals(output, okServiceResponse );
+    }
+
+    @Test
+    public void testCheckSubscriptionWhenServiceThrowsError() throws Exception {
+        String expectedOutput = "{\n"
+                                + "  \"message\": \"Server Error Exception\",\n"
+                                + "  \"status\": \"ERROR\"\n"
+                                + "}\n";
+        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+            .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(userCredentialsRep));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, expectedOutput);
     }
 }
