@@ -56,6 +56,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.compare;
@@ -198,6 +199,7 @@ public class InstallationManagerImpl implements InstallationManager {
     public Map<String, String> getConfig() {
         return new HashMap<String, String>() {{
             put("download directory", downloadDir.toString());
+            put("base url", extractServerUrl(updateEndpoint));
 
             if (transportConf.getProxyUrl() != null && !transportConf.getProxyUrl().isEmpty()) {
                 put("proxy url", transportConf.getProxyUrl());

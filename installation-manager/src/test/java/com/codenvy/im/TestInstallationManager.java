@@ -86,7 +86,7 @@ public class TestInstallationManager {
         cdecArtifact = spy(new CDECArtifact("update/endpoint", transport));
 
         manager = spy(new InstallationManagerImpl("api/endpoint",
-                                                  "update/endpoint",
+                                                  "http://update.com/endpoint",
                                                   "target/download",
                                                   new HttpTransportConfiguration("", "0"),
                                                   transport,
@@ -174,7 +174,7 @@ public class TestInstallationManager {
         when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
                 .thenReturn("[{serviceId:\"OnPremises\"}]");
 
-        when(transport.doGetRequest("update/endpoint/repository/properties/" + cdecArtifact.getName() + "/" + version))
+        when(transport.doGetRequest(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version)))
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
         manager.download(testCredentials, cdecArtifact, version);
@@ -210,8 +210,8 @@ public class TestInstallationManager {
     @Test
     public void testGetLatestVersionsToDownload() throws Exception {
         doNothing().when(manager).validateArtifactProperties(anyMap());
-        when(transport.doGetRequest("update/endpoint/repository/properties/" + InstallManagerArtifact.NAME)).thenReturn("{version:1.0.1}");
-        when(transport.doGetRequest("update/endpoint/repository/properties/" + CDECArtifact.NAME)).thenReturn("{version:2.10.5}");
+        when(transport.doGetRequest(endsWith("repository/properties/" + InstallManagerArtifact.NAME))).thenReturn("{version:1.0.1}");
+        when(transport.doGetRequest(endsWith("repository/properties/" + CDECArtifact.NAME))).thenReturn("{version:2.10.5}");
         Map<Artifact, String> m = manager.getLatestVersionsToDownload();
 
         assertEquals(m.size(), 2);
@@ -341,26 +341,29 @@ public class TestInstallationManager {
         manager.setConfig(config);
 
         Map<String, String> m = manager.getConfig();
-        assertEquals(m.size(), 3);
+        assertEquals(m.size(), 4);
         assertTrue(m.containsValue("target/new-download"));
         assertTrue(m.containsValue("1000"));
         assertTrue(m.containsValue("localhost"));
+        assertTrue(m.containsValue("http://update.com"));
 
         config.setDownloadDir("target/download");
         config.setProxyPort("");
         manager.setConfig(config);
 
         m = manager.getConfig();
-        assertEquals(m.size(), 2);
+        assertEquals(m.size(), 3);
         assertTrue(m.containsValue("target/download"));
         assertTrue(m.containsValue("localhost"));
+        assertTrue(m.containsValue("http://update.com"));
 
         config.setProxyUrl("");
         manager.setConfig(config);
 
         m = manager.getConfig();
-        assertEquals(m.size(), 1);
+        assertEquals(m.size(), 2);
         assertTrue(m.containsValue("target/download"));
+        assertTrue(m.containsValue("http://update.com"));
     }
 
     @Test(expectedExceptions = IOException.class)
