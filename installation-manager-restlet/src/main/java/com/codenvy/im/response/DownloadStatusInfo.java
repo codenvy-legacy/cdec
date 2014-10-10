@@ -17,11 +17,14 @@
  */
 package com.codenvy.im.response;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /** @author Alexander Reshetnyak */
 public class DownloadStatusInfo {
 
     private final Status status;
-    private final long   percents;
+    private final int percents;
     private final String downloadResult;
 
     /**
@@ -30,7 +33,7 @@ public class DownloadStatusInfo {
      * @param percents
      *         the percentage of done downloading artifacts
      */
-    public DownloadStatusInfo(Status status, long percents) {
+    public DownloadStatusInfo(Status status, int percents) {
         this(status, percents, null);
     }
 
@@ -40,9 +43,9 @@ public class DownloadStatusInfo {
      * @param percents
      *         the percentage of done downloading artifacts
      * @param downloadResult
-     *         the result of download.
+     *         the result of download
      */
-    public DownloadStatusInfo(Status status, long percents, String downloadResult) {
+    public DownloadStatusInfo(Status status, int percents, String downloadResult) {
         this.status = status;
         this.percents = percents;
         this.downloadResult = downloadResult; // TODO what is it?
@@ -52,16 +55,23 @@ public class DownloadStatusInfo {
         return status;
     }
 
-    public long getPercents() {
+    public int getPercents() {
         return percents;
     }
 
     public String getDownloadResult() {
-        return downloadResult;
+        return downloadResult == null ? null : downloadResult.replaceAll("\\\\", "");
     }
 
     /** Factory method. */
-    public DownloadStatusInfo valueOf(String response) {
-        return null; // TODO factory method
+    public static DownloadStatusInfo valueOf(String response) throws JSONException {
+        JSONObject json = new JSONObject(response);
+        JSONObject downloadInfoJson = json.getJSONObject(Property.DOWNLOAD_INFO.toString().toLowerCase());
+
+        Status status = Status.valueOf(downloadInfoJson.getString("status"));
+        int percents = downloadInfoJson.getInt("percents");
+        String downloadResult = downloadInfoJson.getString("downloadResult");
+
+        return new DownloadStatusInfo(status, percents, downloadResult);
     }
 }

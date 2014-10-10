@@ -17,14 +17,13 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.response.Property;
+import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Status;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -98,13 +97,15 @@ public class DownloadCommand extends AbstractIMCommand {
                 break;
             }
 
-            printProgress(getPercents(statusResponse));
+            DownloadStatusInfo downloadStatusInfo = DownloadStatusInfo.valueOf(statusResponse);
+
+            printProgress(downloadStatusInfo.getPercents());
             sleep(1000);
 
-            if (isDownloadedStatusResponse(statusResponse)) { // TODO 100% better to determine ?
+            if (downloadStatusInfo.getStatus() == Status.DOWNLOADED) {
                 cleanCurrentLine();
 
-                printResponse(getDownloadResult(statusResponse));
+                printResponse(downloadStatusInfo.getDownloadResult());
                 break;
             }
         }
@@ -127,55 +128,5 @@ public class DownloadCommand extends AbstractIMCommand {
 
     protected String generateDownloadDescriptorId() {
         return UUID.randomUUID().toString();
-    }
-
-    // TODO
-    private boolean isDownloadedStatusResponse(String response) throws JSONException {
-        JSONObject downloadStatusInfo = getJsonDownloadStatusInfo(response);
-
-        if (downloadStatusInfo != null) {
-            String downloadStatus = downloadStatusInfo.getString(Property.STATUS.toString().toLowerCase());
-            return downloadStatus != null && Status.DOWNLOADED.toString().equals(downloadStatus);
-        }
-
-        return false;
-    }
-
-    // TODO print example
-    private JSONObject getJsonDownloadStatusInfo(String response) throws JSONException {
-        JSONObject jsonResponse = new JSONObject(response);
-        return jsonResponse.getJSONObject(Property.DOWNLOAD_INFO.toString().toLowerCase());
-    }
-
-    // TODO
-    private int getPercents(String json) throws JSONException {
-        JSONObject downloadStatusInfo = getJsonDownloadStatusInfo(json);
-
-        if (downloadStatusInfo != null) {
-            String percents = downloadStatusInfo.getString("percents");
-            if (percents != null) {
-                return Integer.valueOf(percents);
-            }
-
-            throw new IllegalStateException("Can't extract percents from DownloadStatusInfo :" + json);
-        }
-
-        throw new IllegalStateException("Can't extract DownloadStatusInfo from :" + json);
-    }
-
-    // TODO
-    private String getDownloadResult(String json) throws JSONException {
-        JSONObject downloadStatusInfo = getJsonDownloadStatusInfo(json);
-
-        if (downloadStatusInfo != null) {
-            String downloadResult = downloadStatusInfo.getString("downloadResult");
-            if (downloadResult != null) {
-                return downloadResult.replaceAll("\\\\", "");
-            }
-
-            throw new IllegalStateException("Can't extract downloadResult from DownloadStatusInfo :" + json);
-        }
-
-        throw new IllegalStateException("Can't extract DownloadStatusInfo from :" + json);
     }
 }
