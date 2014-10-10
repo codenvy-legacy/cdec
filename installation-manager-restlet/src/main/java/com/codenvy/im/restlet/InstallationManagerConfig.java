@@ -39,7 +39,7 @@ public class InstallationManagerConfig {
     }
 
     public void setProxyUrl(String proxyUrl) {
-        this.proxyUrl = proxyUrl != null ? proxyUrl.trim() : null;
+        this.proxyUrl = proxyUrl;
     }
 
     public String getProxyPort() {
@@ -47,7 +47,7 @@ public class InstallationManagerConfig {
     }
 
     public void setProxyPort(String proxyPort) {
-        this.proxyPort = proxyPort != null ? proxyPort.trim() : null;
+        this.proxyPort = proxyPort;
     }
 
     public boolean checkOnEmptyConfig() {

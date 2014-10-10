@@ -49,7 +49,7 @@ public class HttpTransportConfiguration {
     }
 
     public void setProxyUrl(String proxyUrl) {
-        this.proxyUrl = proxyUrl.trim();
+        this.proxyUrl = proxyUrl == null ? null : proxyUrl.trim();
     }
 
     public int getProxyPort() {
