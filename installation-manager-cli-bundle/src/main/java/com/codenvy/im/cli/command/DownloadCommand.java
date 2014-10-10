@@ -142,6 +142,33 @@ public class DownloadCommand extends AbstractIMCommand {
         return false;
     }
 
+    /**
+     * Extract json for DownloadStatusInfo.
+     *
+     * Example of input json:
+     *
+     * {
+     *   "status":"OK",
+     *   "download_status":
+     *     {
+     *       "status":"DOWNLOADED",
+     *       "percents":100,
+     *       "downloadResult":"{\"status\":\"OK\",
+     *                          \"artifacts\":[
+     *                              {\"status\":\"SUCCESS\",
+     *                               \"file\":\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",
+     *                               \"artifact\":\"cdec\",
+     *                               \"version\":\"3.0.0\"
+     *                               }]
+     *                          }"
+     *     }
+     * }
+     *
+     *
+     * @param response
+     * @return
+     * @throws JSONException
+     */
     // TODO print example
     private JSONObject getJsonDownloadStatusInfo(String response) throws JSONException {
         JSONObject jsonResponse = new JSONObject(response);
