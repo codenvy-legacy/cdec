@@ -33,10 +33,10 @@ public class DownloadCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
 
-    @Option(name = "--list-local", aliases = "--l", description = "To show the downloaded list of artifacts", required = false)
+    @Option(name = "--list-local", aliases = "-l", description = "To show the downloaded list of artifacts", required = false)
     private boolean listLocal;
 
-    @Option(name = "--check-remote", aliases = "--c", description = "To check on remote versions to see if new version is available",
+    @Option(name = "--check-remote", aliases = "-c", description = "To check on remote versions to see if new version is available",
             required = false)
     private boolean checkRemote;
 
