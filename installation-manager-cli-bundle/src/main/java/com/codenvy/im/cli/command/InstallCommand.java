@@ -78,7 +78,10 @@ public class InstallCommand extends AbstractIMCommand {
         printResponse(response);
 
         if (isIMSuccessfullyUpdated(response)) {
-            printInfo("'Installation Manager CLI' is being updated! Please, restart it to finish update!\n");
+            printInfo("'Installation Manager CLI' is being updated! Press any key to restart...");
+
+            session.getKeyboard().read();
+            System.exit(0);
         }
 
         return null;
