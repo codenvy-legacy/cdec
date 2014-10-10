@@ -43,7 +43,7 @@ public class DownloadStatusInfo {
      * @param percents
      *         the percentage of done downloading artifacts
      * @param downloadResult
-     *         the result of download in json format
+     *         the result of downloading in json format
      */
     public DownloadStatusInfo(Status status, int percents, String downloadResult) {
         this.status = status;
