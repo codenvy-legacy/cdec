@@ -34,10 +34,7 @@ import java.util.LinkedHashMap;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -46,16 +43,16 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager        mockInstallationManager;
-    private HttpTransport              mockTransport;
-    private Artifact                   mockInstallManagerArtifact;
-    private Artifact                   mockCdecArtifact;
-    private UserCredentials            testCredentials;
-    
+    private InstallationManager         mockInstallationManager;
+    private HttpTransport               mockTransport;
+    private Artifact                    mockInstallManagerArtifact;
+    private Artifact                    mockCdecArtifact;
+    private UserCredentials             testCredentials;
+
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, mockTransport);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, mockTransport, new DownloadingDescriptorHolder());
         testCredentials = new UserCredentials("auth token");
     }
 
@@ -65,7 +62,7 @@ public class TestInstallInstallationManagerServiceImpl {
         mockInstallManagerArtifact = spy(new InstallManagerArtifact());
         mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
     }
-     
+
     @Test
     public void testInstall() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {

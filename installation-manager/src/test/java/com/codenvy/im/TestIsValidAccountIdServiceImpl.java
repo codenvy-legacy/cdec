@@ -34,9 +34,7 @@ import java.io.IOException;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -57,7 +55,7 @@ public class TestIsValidAccountIdServiceImpl {
     @BeforeMethod
     public void init() {
         MockitoAnnotations.initMocks(this);
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
         accountApiEndpoint = combinePaths(InjectorBootstrap.getProperty("api.endpoint"), "account");
     }
 

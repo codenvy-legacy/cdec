@@ -17,9 +17,20 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.response.Property;
+import com.codenvy.im.response.Status;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.UUID;
+
+import static com.codenvy.im.response.Property.STATUS;
+import static com.codenvy.im.response.ResponseCode.OK;
+import static java.lang.Thread.sleep;
 
 /**
  * @author Dmytro Nochevnov
@@ -58,14 +69,41 @@ public class DownloadCommand extends AbstractIMCommand {
                 printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
 
             } else {
-
                 printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
+
+                final String downloadDescriptorId = generateDownloadDescriptorId();
+
+                String startResponse;
                 if (artifactName != null && version != null) {
-                    printResponse(installationManagerProxy.download(artifactName, version, getCredentialsRep()));
+                    startResponse = installationManagerProxy.startDownload(artifactName, version, downloadDescriptorId, getCredentialsRep());
                 } else if (artifactName != null) {
-                    printResponse(installationManagerProxy.download(artifactName, getCredentialsRep()));
+                    startResponse = installationManagerProxy.startDownload(artifactName, downloadDescriptorId, getCredentialsRep());
                 } else {
-                    printResponse(installationManagerProxy.download(getCredentialsRep()));
+                    startResponse = installationManagerProxy.startDownload(downloadDescriptorId, getCredentialsRep());
+                }
+
+                if (!isOKResponse(startResponse)) {
+                    printResponse(startResponse);
+                    return null;
+                }
+
+                for (; ; ) {
+                    String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
+
+                    if (!isOKResponse(statusResponse)) {
+                        printResponse(statusResponse);
+                        return null;
+                    }
+
+                    printProgress(Integer.valueOf(getPercents(statusResponse)));
+
+                    if (isDownloadedStatusResponse(statusResponse)) {
+                        sleep(1000); // just wait a bit
+                        cleanCurrentLine();
+
+                        printResponse(getDownloadResult(statusResponse));
+                        return null;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -73,5 +111,72 @@ public class DownloadCommand extends AbstractIMCommand {
         }
 
         return null;
+    }
+
+
+    protected String generateDownloadDescriptorId() {
+        return UUID.randomUUID().toString();
+    }
+
+    // TODO move to response
+    private boolean isOKResponse(String response) throws JSONException {
+        JSONObject jsonResponse = new JSONObject(response);
+
+        String statusValue = (String)jsonResponse.get(STATUS.toString().toLowerCase());
+        if (statusValue != null) {
+            return OK.toString().equals(statusValue);
+        }
+
+        return false;
+    }
+
+    // TODO
+    private boolean isDownloadedStatusResponse(String response) throws JSONException {
+        JSONObject downloadStatusInfo = getJsonDownloadStatusInfo(response);
+
+        if (downloadStatusInfo != null) {
+            String downloadStatus = downloadStatusInfo.getString(Property.STATUS.toString().toLowerCase());
+            return downloadStatus != null && Status.DOWNLOADED.toString().equals(downloadStatus);
+        }
+
+        return false;
+    }
+
+    // TODO print example
+    private JSONObject getJsonDownloadStatusInfo(String response) throws JSONException {
+        JSONObject jsonResponse = new JSONObject(response);
+        return jsonResponse.getJSONObject(Property.DOWNLOAD_STATUS.toString().toLowerCase());
+    }
+
+    // TODO
+    private int getPercents(String json) throws JSONException {
+        JSONObject downloadStatusInfo = getJsonDownloadStatusInfo(json);
+
+        if (downloadStatusInfo != null) {
+            String percents = downloadStatusInfo.getString("percents");
+            if (percents != null) {
+                return Integer.valueOf(percents);
+            }
+
+            throw new IllegalStateException("Can't extract percents from DownloadStatusInfo :" + json);
+        }
+
+        throw new IllegalStateException("Can't extract DownloadStatusInfo from :" + json);
+    }
+
+    // TODO
+    private String getDownloadResult(String json) throws JSONException {
+        JSONObject downloadStatusInfo = getJsonDownloadStatusInfo(json);
+
+        if (downloadStatusInfo != null) {
+            String downloadResult = downloadStatusInfo.getString("downloadResult");
+            if (downloadResult != null) {
+                return downloadResult.replaceAll("\\\\", "");
+            }
+
+            throw new IllegalStateException("Can't extract downloadResult from DownloadStatusInfo :" + json);
+        }
+
+        throw new IllegalStateException("Can't extract DownloadStatusInfo from :" + json);
     }
 }

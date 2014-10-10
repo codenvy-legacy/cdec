@@ -38,25 +38,33 @@ public interface InstallationManagerService extends DigestAuthSupport {
 
     /** Download all latest updates */
     @POST
-    @Path("download")
+    @Path("start-download/{download-descriptor-id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(JacksonRepresentation<UserCredentials> userCredentialsRep);
-
-    @POST
-    @Path("download/{artifact}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "artifact") final String artifactName,
+    public String startDownload(@PathParam(value = "download-descriptor-id") final String downloadDescriptorId,
                            JacksonRepresentation<UserCredentials> userCredentialsRep);
 
     @POST
-    @Path("download/{artifact}/{version}")
+    @Path("start-download/{artifact}/{download-descriptor-id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String download(@PathParam(value = "artifact") final String artifactName,
+    public String startDownload(@PathParam(value = "artifact") final String artifactName,
+                           @PathParam(value = "download-descriptor-id") final String downloadDescriptorId,
+                           JacksonRepresentation<UserCredentials> userCredentialsRep);
+
+    @POST
+    @Path("start-download/{artifact}/{version}/{download-descriptor-id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String startDownload(@PathParam(value = "artifact") final String artifactName,
                            @PathParam(value = "version") final String version,
+                           @PathParam(value = "download-descriptor-id") final String downloadDescriptorId,
                            JacksonRepresentation<UserCredentials> requestRepresentation);
+
+    @GET
+    @Path("download-status/{download-descriptor-id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String downloadStatus(@PathParam(value = "download-descriptor-id") final String downloadDescriptorId);
 
     @POST
     @Path("check-updates")

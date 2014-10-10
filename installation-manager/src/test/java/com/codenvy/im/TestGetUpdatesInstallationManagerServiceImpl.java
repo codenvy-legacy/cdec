@@ -48,15 +48,15 @@ import static org.testng.Assert.assertEquals;
 public class TestGetUpdatesInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       transport;
-    private Artifact            installManagerArtifact;
-    private Artifact            cdecArtifact;
+    private InstallationManager         mockInstallationManager;
+    private HttpTransport               transport;
+    private Artifact                    installManagerArtifact;
+    private Artifact                    cdecArtifact;
 
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
     }
 
     public void initMocks() {

@@ -50,7 +50,7 @@ import static org.fusesource.jansi.Ansi.ansi;
  */
 public abstract class AbstractIMCommand extends AbsCommand {
     protected InstallationManagerService installationManagerProxy;
-    protected PreferencesStorage preferencesStorage;
+    protected PreferencesStorage         preferencesStorage;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";
 
@@ -122,6 +122,33 @@ public abstract class AbstractIMCommand extends AbsCommand {
         System.out.println(ansi().fg(RED).a(message).reset());
     }
 
+    protected void printProgress(int percents) {
+        System.out.print(ansi().saveCursorPosition().a(createProgressBar(percents)).restorCursorPosition());
+        System.out.flush();
+    }
+
+    private String createProgressBar(int percent) {
+        StringBuilder bar = new StringBuilder("[");
+
+        for (int i = 0; i < 50; i++) {
+            if (i < (percent / 2)) {
+                bar.append("=");
+            } else if (i == (percent / 2)) {
+                bar.append(">");
+            } else {
+                bar.append(" ");
+            }
+        }
+
+        bar.append("]   " + percent + "%     ");
+        return bar.toString();
+    }
+
+    protected void cleanCurrentLine() {
+        System.out.print(ansi().eraseLine(Ansi.Erase.ALL));
+        System.out.flush();
+    }
+
     protected void printInfo(String message) {
         System.out.print(message);
         System.out.flush();
@@ -178,7 +205,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
         return new JacksonRepresentation<>(userCredentials);
     }
-    
+
     @Nonnull
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());

@@ -61,7 +61,8 @@ uploadArtifact() {
     FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]tar.gz`
     VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
     SOURCE=${ARTIFACT}/target/${FILENAME}
-    MD5=`md5sum ${SOURCE} |  cut -d ' ' -f 1`
+    MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
+    SIZE=`du -b ${SOURCE} | cut -f1`
 
     doUpload
 }
@@ -87,6 +88,7 @@ doUpload() {
     echo "authentication-required=false" >> .properties
     echo "build-time="`stat -c %y ${SOURCE}` >> .properties
     echo "md5=${MD5}" >> .properties
+    echo "size=${SIZE}" >> .properties
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties

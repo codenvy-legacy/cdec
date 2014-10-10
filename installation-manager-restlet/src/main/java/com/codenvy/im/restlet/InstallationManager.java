@@ -83,4 +83,22 @@ public interface InstallationManager {
 
     /** Sets new configuration */
     void setConfig(InstallationManagerConfig config) throws IOException;
+
+    /**
+     * Get location artifact in local repository.
+     *
+     * @return path to location of artifact in local repository
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    Path getLocalPath(Artifact artifact, String version) throws IOException;
+
+    /**
+     * Get artifact size.
+     *
+     * @return size in bytes of artifact
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    Long getSize(Artifact artifact, String version) throws IOException;
 }

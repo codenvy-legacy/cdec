@@ -50,9 +50,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.*;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -249,6 +247,18 @@ public class InstallationManagerImpl implements InstallationManager {
         if (!newDownloadDir.isAbsolute()) {
             throw new IOException("Path must be absolute.");
         }
+    }
+
+    @Override
+    public Path getLocalPath(Artifact artifact, String version) throws IOException {
+        Map<String, String> m = getArtifactProperties(artifact, version);
+
+        return downloadDir.resolve(artifact.getName()).resolve(version).resolve(m.get(FILE_NAME_PROPERTY));
+    }
+
+    @Override
+    public Long getSize(Artifact artifact, String version) throws IOException {
+        return Long.valueOf((String)getArtifactProperties(artifact, version).get(SIZE_PROPERTY));
     }
 
     @Override
