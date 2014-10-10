@@ -21,7 +21,13 @@ import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.response.*;
+import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactInfoEx;
+import com.codenvy.im.response.DownloadArtifactInfo;
+import com.codenvy.im.response.DownloadStatusInfo;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.restlet.InstallationManagerService;
@@ -36,7 +42,13 @@ import org.restlet.resource.ServerResource;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -52,9 +64,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     protected final InstallationManager manager;
     protected final HttpTransport       transport;
 
+    private final DownloadingDescriptorHolder downloadingDescriptorHolder;
+
     private final String updateServerEndpoint;
     private final String apiEndpoint;
-    private final DownloadingDescriptorHolder downloadingDescriptorHolder;
 
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
@@ -66,12 +79,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** For testing purpose only. */
     @Deprecated
-    protected InstallationManagerServiceImpl(InstallationManager manager, HttpTransport transport, DownloadingDescriptorHolder ddHolder) {
+    protected InstallationManagerServiceImpl(InstallationManager manager,
+                                             HttpTransport transport,
+                                             DownloadingDescriptorHolder downloadingDescriptorHolder) {
         this.manager = manager;
         this.transport = transport;
         this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
         this.apiEndpoint = getProperty("api.endpoint");
-        this.downloadingDescriptorHolder = ddHolder;
+        this.downloadingDescriptorHolder = downloadingDescriptorHolder;
     }
 
     /** {@inheritDoc} */
@@ -105,20 +120,45 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-    public String startDownload(final String downloadDescriptorId, final JacksonRepresentation<UserCredentials> userCredentialsRep) {
+    public String startDownload(String downloadDescriptorId, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        return doStartDownload(null, null, downloadDescriptorId, userCredentialsRep);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String startDownload(String artifactName,
+                                String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        return doStartDownload(artifactName, null, downloadDescriptorId, userCredentialsRep);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String startDownload(String artifactName,
+                                String version,
+                                String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        return doStartDownload(artifactName, null, downloadDescriptorId, userCredentialsRep);
+    }
+
+    private String doStartDownload(@Nullable final String artifactName,
+                                   @Nullable final String version,
+                                   final String downloadDescriptorId,
+                                   final JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
+            final CountDownLatch latcher = new CountDownLatch(1);
+
             Thread startDownload = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    download(downloadDescriptorId, userCredentialsRep);
+                    download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher);
                 }
             });
             startDownload.start();
 
-            while (downloadingDescriptorHolder.get(downloadDescriptorId) == null) {
-                Thread.sleep(500);
-            }
+            latcher.await();
 
             return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
         } catch (Exception e) {
@@ -126,142 +166,91 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
-    private void download(String downloadDescriptorId, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+    private void download(@Nullable String artifactName,
+                          @Nullable String version,
+                          String downloadDescriptorId,
+                          JacksonRepresentation<UserCredentials> userCredentialsRep,
+                          CountDownLatch latcher) {
+
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();
 
-            Map<Artifact, String> updates = manager.getUpdates(token);
-
-            List<ArtifactInfo> infos = new ArrayList<>();
+            Map<Artifact, String> updates = filter(artifactName, version, userCredentials);
+            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
 
             DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.valueOf(updates, manager);
             downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
 
-            for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
-                Artifact artifact = entry.getKey();
-                String version = entry.getValue();
+            latcher.countDown();
+
+            for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+                Artifact artToDownload = e.getKey();
+                String verToDownload = e.getValue();
 
                 try {
-                    Path file = doDownload(userCredentials, artifact, version);
-                    infos.add(new DownloadArtifactInfo(artifact, version, file.toString(), Status.SUCCESS));
-                } catch (Exception e) {
-                    infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
-                    downloadingDescriptor.setDownloadResult(
-                            new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson());
+                    Path pathToBinaries = doDownload(userCredentials, artToDownload, verToDownload);
+                    infos.add(new DownloadArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
+                } catch (Exception exp) {
+                    infos.add(new ArtifactInfoEx(artToDownload, verToDownload, Status.FAILURE));
+                    downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.ERROR)
+                                                                                  .withMessage(exp.getMessage())
+                                                                                  .withArtifacts(infos)
+                                                                                  .build()
+                                                                                  .toJson());
                 }
             }
 
-            downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson());
+            downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
+                                                                          .withArtifacts(infos)
+                                                                          .build()
+                                                                          .toJson());
         } catch (Exception e) {
             DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
-                descriptor = new DownloadingDescriptor(Collections.EMPTY_MAP);
+                descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
             }
             descriptor.setDownloadResult(Response.valueOf(e).toJson());
+            downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
+
+            if (latcher.getCount() == 1) {
+                latcher.countDown();
+            }
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String startDownload(final String artifactName, final String downloadDescriptorId,
-                                final JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            Thread startDownload = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    download(artifactName, downloadDescriptorId, userCredentialsRep);
+    /** Filters what need to download, either all updates or a specific one. */
+    private Map<Artifact, String> filter(@Nullable final String artifactName,
+                                         @Nullable final String version,
+                                         UserCredentials userCredentials) throws IOException {
+
+        final Map<Artifact, String> updates = manager.getUpdates(userCredentials.getToken());
+
+        if (artifactName != null) {
+            final Artifact artifact = createArtifact(artifactName);
+
+            if (updates.containsKey(artifact)) {
+                if (version != null) {
+                    return new HashMap<Artifact, String>() {{
+                        put(artifact, version);
+                    }};
+                } else {
+                    return new HashMap<Artifact, String>() {{
+                        put(artifact, updates.get(artifact));
+                    }};
                 }
-            });
-            startDownload.start();
-
-            while (downloadingDescriptorHolder.get(downloadDescriptorId) == null) {
-                Thread.sleep(500);
+            } else {
+                throw new ArtifactNotFoundException(artifactName);
             }
-
-            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
-        } catch (Exception e) {
-            return Response.valueOf(e).toJson();
         }
+
+        return updates;
     }
 
-    private void download(String artifactName, String downloadDescriptorId, JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();
-
-            Artifact artifact = createArtifact(artifactName);
-            String version = manager.getUpdates(token).get(artifact);
-            if (version == null) {
-                throw new ArtifactNotFoundException(artifact.getName());
-            }
-
-            DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.valueOf(artifact, version, manager);
-            downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
-
-            try {
-                Path file = doDownload(userCredentials, artifact, version);
-                ArtifactInfo info = new DownloadArtifactInfo(artifact, version, file.toString(), Status.SUCCESS);
-                downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson());
-            } catch (Exception e) {
-                ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.FAILURE);
-                downloadingDescriptor.setDownloadResult(
-                        new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson());
-            }
-        } catch (Exception e) {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
-            if (descriptor == null) {
-                descriptor = new DownloadingDescriptor(Collections.EMPTY_MAP);
-            }
-
-            descriptor.setDownloadResult(Response.valueOf(e).toJson());
-        }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String startDownload(final String artifactName, final String version, final String downloadDescriptorId,
-                                final JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            Thread startDownload = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    download(artifactName, version, downloadDescriptorId, userCredentialsRep);
-                }
-            });
-            startDownload.start();
-
-            while (downloadingDescriptorHolder.get(downloadDescriptorId) == null) {
-                Thread.sleep(500);
-            }
-
-            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
-        } catch (Exception e) {
-            return Response.valueOf(e).toJson();
-        }
-    }
-
-    private void download(String artifactName, String version, String downloadDescriptorId,
-                            JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.valueOf(createArtifact(artifactName), version, manager);
-            downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
-
-            UserCredentials userCredentials = userCredentialsRep.getObject();
-            Path file = doDownload(userCredentials, artifactName, version);
-            ArtifactInfo info = new DownloadArtifactInfo(artifactName, version, file.toString(), Status.SUCCESS);
-            downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson());
-        } catch (Exception e) {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
-            if (descriptor == null) {
-                descriptor = new DownloadingDescriptor(Collections.EMPTY_MAP);
-            }
-
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.FAILURE);
-            descriptor.setDownloadResult(
-                    new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson());
-        }
+    protected Path doDownload(UserCredentials userCredentials,
+                              Artifact artifact,
+                              String version) throws IOException, IllegalStateException {
+        return manager.download(userCredentials, artifact, version);
     }
 
     /** {@inheritDoc} */
@@ -272,39 +261,23 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (descriptor == null) {
                 return new Response.Builder().withStatus(ResponseCode.ERROR)
-                                             .withMessage("Can't get downloading descriptor with id '" + downloadDescriptorId + "'").build().toJson();
+                                             .withMessage("Can't get downloading descriptor ID").build().toJson();
             }
 
             long downloadedSize = descriptor.getDownloadedSize();
-            long percents = Math.round((downloadedSize * 1D / descriptor.getTotalSize()) * 100);
-            if (descriptor.getDownloadResult() == null) {
-                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
-                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadStatus(info).build().toJson();
-            } else {
+            long percents = Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
+
+            if (descriptor.isDownloadingFinished()) {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, descriptor.getDownloadResult());
-                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadStatus(info).build().toJson();
+                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
+            } else {
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
+                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
             }
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }
     }
-
-    /** {@inheritDoc}
-    @Override
-    public String downloadingProgress(String downloadDescriptorId) {
-        try {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
-
-            if (descriptor == null) {
-                return new Response.Builder().withStatus(ResponseCode.ERROR)
-                                             .withMessage("Can't get downloading descriptor with id '" + downloadDescriptorId + "'").build().toJson();
-            }
-            long downloadedSize = descriptor.getDownloadedSize();
-            return Math.round((downloadedSize*1D / descriptor.getTotalSize()) * 100) + "%";
-        } catch (Exception e) {
-            return Response.valueOf(e).toJson();
-        }
-    }*/
 
     /** {@inheritDoc} */
     @Override
@@ -409,18 +382,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Override
     public void obtainChallengeRequest() {
         // do nothing
-    }
-
-    protected Path doDownload(UserCredentials userCredentials,
-                              String artifactName,
-                              @Nullable String version) throws IOException, IllegalStateException {
-        return doDownload(userCredentials, createArtifact(artifactName), version);
-    }
-
-    protected Path doDownload(UserCredentials userCredentials,
-                              Artifact artifact,
-                              @Nullable String version) throws IOException, IllegalStateException {
-        return manager.download(userCredentials, artifact, version);
     }
 
     /** {@inheritDoc} */

@@ -17,49 +17,51 @@
  */
 package com.codenvy.im.response;
 
-/**
- * @author Alexander Reshetnyak
- */
+/** @author Alexander Reshetnyak */
 public class DownloadStatusInfo {
 
-    private Status status;
-    private long   percents;
-    private String downloadResult;
+    private final Status status;
+    private final long   percents;
+    private final String downloadResult;
 
     /**
-     * Constructor.
-     *
-     * @param status  Status
-     *          Status of downloading process.
-     * @param percents  long
-     *          percents of done downloading artifacts.
+     * @param status
+     *         the status of downloading process
+     * @param percents
+     *         the percentage of done downloading artifacts
      */
     public DownloadStatusInfo(Status status, long percents) {
         this(status, percents, null);
     }
 
     /**
-     * Constructor.
-     *
      * @param status
-     *          Status of downloading process.
-     * @param percents long
-     *          percents of done downloading artifacts.
-     * @param downloadResult String
-     *          the result of download.
-     *
+     *         the status of downloading process
+     * @param percents
+     *         the percentage of done downloading artifacts
+     * @param downloadResult
+     *         the result of download.
      */
     public DownloadStatusInfo(Status status, long percents, String downloadResult) {
         this.status = status;
         this.percents = percents;
-        this.downloadResult = downloadResult;
+        this.downloadResult = downloadResult; // TODO what is it?
     }
 
     public Status getStatus() {
         return status;
     }
 
-    public long getPercents() { return percents; }
+    public long getPercents() {
+        return percents;
+    }
 
-    public String getDownloadResult() { return downloadResult; }
+    public String getDownloadResult() {
+        return downloadResult;
+    }
+
+    /** Factory method. */
+    public DownloadStatusInfo valueOf(String response) {
+        return null; // TODO factory method
+    }
 }

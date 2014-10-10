@@ -27,12 +27,12 @@ import java.util.Map;
 @Singleton
 public class DownloadingDescriptorHolder {
 
-    private final Map<String, DownloadingDescriptor> downloadingMap;
+    private final LinkedHashMap<String, DownloadingDescriptor> downloadingMap;
 
     public DownloadingDescriptorHolder() {
-        final int MAX_ENTRIES = 100;
-        this.downloadingMap = new LinkedHashMap(MAX_ENTRIES + 1, .75F, true) {
-            // This method is called just after a new entry has been added
+        final int MAX_ENTRIES = 10;
+
+        this.downloadingMap = new LinkedHashMap<String, DownloadingDescriptor>(MAX_ENTRIES + 1) {
             public boolean removeEldestEntry(Map.Entry eldest) {
                 return size() > MAX_ENTRIES;
             }
@@ -47,7 +47,7 @@ public class DownloadingDescriptorHolder {
         if (!downloadingMap.containsKey(downloadDescriptorId)) {
             downloadingMap.put(downloadDescriptorId, downloadingDescriptor);
         } else {
-            throw new IllegalStateException("DownloadDescriptor with id '" + downloadDescriptorId + "' is exist.");
+            throw new IllegalStateException("Download descriptor already exists");
         }
     }
 }

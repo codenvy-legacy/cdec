@@ -36,35 +36,37 @@ import java.io.IOException;
 @Path("im")
 public interface InstallationManagerService extends DigestAuthSupport {
 
-    /** Download all latest updates */
+    /** Starts downloading all latest updates */
     @POST
     @Path("start-download/{download-descriptor-id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String startDownload(@PathParam(value = "download-descriptor-id") final String downloadDescriptorId,
-                           JacksonRepresentation<UserCredentials> userCredentialsRep);
+    public String startDownload(@PathParam(value = "download-descriptor-id") String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> userCredentialsRep);
 
+    /** Starts downloading the specific artifact */
     @POST
     @Path("start-download/{artifact}/{download-descriptor-id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String startDownload(@PathParam(value = "artifact") final String artifactName,
-                           @PathParam(value = "download-descriptor-id") final String downloadDescriptorId,
-                           JacksonRepresentation<UserCredentials> userCredentialsRep);
+    public String startDownload(@PathParam(value = "artifact") String artifactName,
+                                @PathParam(value = "download-descriptor-id") String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> userCredentialsRep);
 
+    /** Starts downloading the specific version of the artifact */
     @POST
     @Path("start-download/{artifact}/{version}/{download-descriptor-id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String startDownload(@PathParam(value = "artifact") final String artifactName,
-                           @PathParam(value = "version") final String version,
-                           @PathParam(value = "download-descriptor-id") final String downloadDescriptorId,
-                           JacksonRepresentation<UserCredentials> requestRepresentation);
+    public String startDownload(@PathParam(value = "artifact") String artifactName,
+                                @PathParam(value = "version") String version,
+                                @PathParam(value = "download-descriptor-id") String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> requestRepresentation);
 
     @GET
     @Path("download-status/{download-descriptor-id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String downloadStatus(@PathParam(value = "download-descriptor-id") final String downloadDescriptorId);
+    public String downloadStatus(@PathParam(value = "download-descriptor-id") String downloadDescriptorId);
 
     @POST
     @Path("check-updates")
@@ -75,13 +77,13 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @GET
     @Path("download-list/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getDownloads(@PathParam(value = "artifact") final String artifactName);
+    public String getDownloads(@PathParam(value = "artifact") String artifactName);
 
     @GET
     @Path("download-list/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getDownloads(@PathParam(value = "artifact") final String artifactName,
-                               @PathParam(value = "version") final String version);
+    public String getDownloads(@PathParam(value = "artifact") String artifactName,
+                               @PathParam(value = "version") String version);
 
     @GET
     @Path("download-list")
@@ -107,15 +109,15 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Path("install/{artifact}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value = "artifact") final String artifactName,
+    public String install(@PathParam(value = "artifact") String artifactName,
                           JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
     @POST
     @Path("install/{artifact}/{version}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value = "artifact") final String artifactName,
-                          @PathParam(value = "version") final String version,
+    public String install(@PathParam(value = "artifact") String artifactName,
+                          @PathParam(value = "version") String version,
                           JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
     /** Get the url of the update server. */
@@ -129,7 +131,7 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Path("check-subscription/{subscription}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String checkSubscription(@PathParam(value = "subscription") final String subscription,
+    public String checkSubscription(@PathParam(value = "subscription") String subscription,
                                     JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
     /** Returns id of first valid account of user based on his/her auth token passed into service within the body of request */

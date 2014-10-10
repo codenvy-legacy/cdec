@@ -30,9 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.size;
 
-/**
- * @author Alexander Reshetnyak
- */
+/** @author Alexander Reshetnyak */
 public class DownloadingDescriptor {
 
     private final Map<Path, Long>         artifacts;
@@ -44,18 +42,18 @@ public class DownloadingDescriptor {
         this.downloadResult = new AtomicReference<>();
 
         long tSize = 0;
-        for (Long l : this.artifacts.values()) {
+        for (long l : this.artifacts.values()) {
             tSize += l;
         }
         this.totalSize = tSize;
     }
 
-    // TODO
+    /** @return the total size of all artifacts that will be downloaded */
     public long getTotalSize() {
         return totalSize;
     }
 
-    // TODO
+    /** @return the size of downloaded artifacts */
     public long getDownloadedSize() throws IOException {
         long downloadedSize = 0;
         for (Path path : artifacts.keySet()) {
@@ -67,36 +65,36 @@ public class DownloadingDescriptor {
         return downloadedSize;
     }
 
-    // TODO
-    public static DownloadingDescriptor valueOf(Artifact artifact, String version, InstallationManager manager) throws IOException {
-        Map<Path, Long> m = new LinkedHashMap<>();
-        m.put(manager.getLocalPath(artifact, version), manager.getSize(artifact, version));
-
-        return new DownloadingDescriptor(m);
-    }
-
-    // TODO
+    /** Factory method */
     public static DownloadingDescriptor valueOf(Map<Artifact, String> artifacts, InstallationManager manager) throws IOException {
         Map<Path, Long> m = new LinkedHashMap<>();
+
         for (Map.Entry<Artifact, String> e : artifacts.entrySet()) {
             Artifact artifact = e.getKey();
             String version = e.getValue();
 
-            m.put(manager.getLocalPath(artifact, version), manager.getSize(artifact, version));
+            Path pathToBinaries = manager.getPathToBinaries(artifact, version);
+            Long binariesSize = manager.getBinariesSize(artifact, version);
+
+            m.put(pathToBinaries, binariesSize);
         }
 
         return new DownloadingDescriptor(m);
     }
 
-    // TODO
-    // TODO null check
+    /** @return the downloading status. */
     @Nullable
     public String getDownloadResult() {
         return downloadResult.get();
     }
 
-    // TODO
+    /** Sets the download status. */
     public void setDownloadResult(String downloadResult) {
         this.downloadResult.set(downloadResult);
+    }
+
+    /** Indicates if downloading finished or didn't. */
+    public boolean isDownloadingFinished() {
+        return downloadResult.get() != null;
     }
 }

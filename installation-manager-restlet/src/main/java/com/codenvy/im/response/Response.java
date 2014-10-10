@@ -100,8 +100,8 @@ public class Response {
             return this;
         }
 
-        public Builder withDownloadStatus(DownloadStatusInfo info) {
-            params.put(Property.DOWNLOAD_STATUS.toString().toLowerCase(), info);
+        public Builder withDownloadInfo(DownloadStatusInfo info) {
+            params.put(Property.DOWNLOAD_INFO.toString().toLowerCase(), info);
             return this;
         }
     }

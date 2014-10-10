@@ -26,5 +26,5 @@ public enum Property {
     VERSION,
     STATUS,
     MESSAGE,
-    DOWNLOAD_STATUS;
+    DOWNLOAD_INFO;
 }

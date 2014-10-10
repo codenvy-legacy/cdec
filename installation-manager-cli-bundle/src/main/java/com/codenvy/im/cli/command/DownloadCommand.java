@@ -28,7 +28,6 @@ import org.json.JSONObject;
 
 import java.util.UUID;
 
-import static com.codenvy.im.response.Property.STATUS;
 import static com.codenvy.im.response.ResponseCode.OK;
 import static java.lang.Thread.sleep;
 
@@ -57,54 +56,13 @@ public class DownloadCommand extends AbstractIMCommand {
             init();
 
             if (listLocal) {
-                if (artifactName != null && version != null) {
-                    printResponse(installationManagerProxy.getDownloads(artifactName, version));
-                } else if (artifactName != null) {
-                    printResponse(installationManagerProxy.getDownloads(artifactName));
-                } else {
-                    printResponse(installationManagerProxy.getDownloads());
-                }
+                doList();
 
             } else if (checkRemote) {
-                printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+                doCheck();
 
             } else {
-                printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
-
-                final String downloadDescriptorId = generateDownloadDescriptorId();
-
-                String startResponse;
-                if (artifactName != null && version != null) {
-                    startResponse = installationManagerProxy.startDownload(artifactName, version, downloadDescriptorId, getCredentialsRep());
-                } else if (artifactName != null) {
-                    startResponse = installationManagerProxy.startDownload(artifactName, downloadDescriptorId, getCredentialsRep());
-                } else {
-                    startResponse = installationManagerProxy.startDownload(downloadDescriptorId, getCredentialsRep());
-                }
-
-                if (!isOKResponse(startResponse)) {
-                    printResponse(startResponse);
-                    return null;
-                }
-
-                for (; ; ) {
-                    String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
-
-                    if (!isOKResponse(statusResponse)) {
-                        printResponse(statusResponse);
-                        return null;
-                    }
-
-                    printProgress(Integer.valueOf(getPercents(statusResponse)));
-
-                    if (isDownloadedStatusResponse(statusResponse)) {
-                        sleep(1000); // just wait a bit
-                        cleanCurrentLine();
-
-                        printResponse(getDownloadResult(statusResponse));
-                        return null;
-                    }
-                }
+                doDownload();
             }
         } catch (Exception e) {
             printError(e);
@@ -113,21 +71,62 @@ public class DownloadCommand extends AbstractIMCommand {
         return null;
     }
 
+    private void doDownload() throws JSONException, InterruptedException {
+        printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
+
+        final String downloadDescriptorId = generateDownloadDescriptorId();
+
+        String startResponse;
+        if (artifactName != null && version != null) {
+            startResponse = installationManagerProxy.startDownload(artifactName, version, downloadDescriptorId, getCredentialsRep());
+        } else if (artifactName != null) {
+            startResponse = installationManagerProxy.startDownload(artifactName, downloadDescriptorId, getCredentialsRep());
+        } else {
+            startResponse = installationManagerProxy.startDownload(downloadDescriptorId, getCredentialsRep());
+        }
+
+        if (!OK.in(startResponse)) {
+            printResponse(startResponse);
+            return;
+        }
+
+        for (; ; ) {
+            String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
+
+            if (!OK.in(startResponse)) {
+                printResponse(statusResponse);
+                break;
+            }
+
+            printProgress(getPercents(statusResponse));
+            sleep(1000);
+
+            if (isDownloadedStatusResponse(statusResponse)) { // TODO 100% better to determine ?
+                cleanCurrentLine();
+
+                printResponse(getDownloadResult(statusResponse));
+                break;
+            }
+        }
+    }
+
+    private void doCheck() {
+        printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+    }
+
+    private void doList() {
+        if (artifactName != null && version != null) {
+            printResponse(installationManagerProxy.getDownloads(artifactName, version));
+        } else if (artifactName != null) {
+            printResponse(installationManagerProxy.getDownloads(artifactName));
+        } else {
+            printResponse(installationManagerProxy.getDownloads());
+        }
+    }
+
 
     protected String generateDownloadDescriptorId() {
         return UUID.randomUUID().toString();
-    }
-
-    // TODO move to response
-    private boolean isOKResponse(String response) throws JSONException {
-        JSONObject jsonResponse = new JSONObject(response);
-
-        String statusValue = (String)jsonResponse.get(STATUS.toString().toLowerCase());
-        if (statusValue != null) {
-            return OK.toString().equals(statusValue);
-        }
-
-        return false;
     }
 
     // TODO
@@ -145,7 +144,7 @@ public class DownloadCommand extends AbstractIMCommand {
     // TODO print example
     private JSONObject getJsonDownloadStatusInfo(String response) throws JSONException {
         JSONObject jsonResponse = new JSONObject(response);
-        return jsonResponse.getJSONObject(Property.DOWNLOAD_STATUS.toString().toLowerCase());
+        return jsonResponse.getJSONObject(Property.DOWNLOAD_INFO.toString().toLowerCase());
     }
 
     // TODO

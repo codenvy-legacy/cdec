@@ -74,7 +74,7 @@ public class DownloadCommandTest {
 
     @Test(enabled = false)
     public void testDownload() throws Exception {
-//        doReturn("").when(((DownloadCommand)spyCommand).generateDownloadDescriptorId());
+        doReturn("").when(((DownloadCommand)spyCommand).generateDownloadDescriptorId());
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).startDownload(anyString(), eq(userCredentialsRep));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

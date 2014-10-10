@@ -101,10 +101,10 @@ public class InstallCommand extends AbstractIMCommand {
         JSONObject jsonResponse = new JSONObject(response);
 
         if (response.contains("artifacts")) {
-            JSONArray array = jsonResponse.getJSONArray("artifacts");
-            for (int i = 0; i < array.length(); i++) {
-                String artifact = ((JSONObject)array.get(i)).getString("artifact");
-                String status = ((JSONObject)array.get(i)).getString("status");
+            JSONArray l = jsonResponse.getJSONArray("artifacts");
+            for (int i = 0; i < l.length(); i++) {
+                String artifact = ((JSONObject)l.get(i)).getString("artifact");
+                String status = ((JSONObject)l.get(i)).getString("status");
 
                 if (artifact != null && artifact.equalsIgnoreCase(InstallManagerArtifact.NAME)) {
                     return status != null && status.equals(Status.SUCCESS.name());
