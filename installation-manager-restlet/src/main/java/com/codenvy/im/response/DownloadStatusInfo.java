@@ -74,4 +74,26 @@ public class DownloadStatusInfo {
 
         return new DownloadStatusInfo(status, percents, downloadResult);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DownloadStatusInfo)) return false;
+
+        DownloadStatusInfo that = (DownloadStatusInfo)o;
+
+        if (percents != that.percents) return false;
+        if (!downloadResult.equals(that.downloadResult)) return false;
+        if (status != that.status) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = status.hashCode();
+        result = 31 * result + percents;
+        result = 31 * result + downloadResult.hashCode();
+        return result;
+    }
 }
