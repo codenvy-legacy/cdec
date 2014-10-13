@@ -23,6 +23,9 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.response.DownloadStatusInfo;
+import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
@@ -35,12 +38,20 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -332,5 +343,56 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "  \"artifacts\": [],\n" +
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
+    }
+
+
+    @Test
+    public void testDownloadSkipAlreadyDownloaded() throws Exception {
+        doReturn(new LinkedHashMap<Artifact, String>() {
+            {
+                put(cdecArtifact, "2.10.5");
+                put(installManagerArtifact, "1.0.1");
+            }
+        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(Paths.get("cdec.zip")).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
+        doReturn(Paths.get("im.zip")).when(mockInstallationManager).download(testCredentials, installManagerArtifact, "1.0.1");
+
+        doReturn(Paths.get("cdec.zip")).when(mockInstallationManager).getPathToBinaries(cdecArtifact, "2.10.5");
+        doReturn(Paths.get("im.zip")).when(mockInstallationManager).getPathToBinaries(installManagerArtifact, "1.0.1");
+
+        doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, "2.10.5");
+        doReturn(50L).when(mockInstallationManager).getBinariesSize(installManagerArtifact, "1.0.1");
+
+        // mark IM as already downloaded artifact
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.1"), Paths.get("im.zip"));
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+
+        String response = installationManagerService.startDownload("id1", userCredentialsRep);
+        assertTrue(ResponseCode.OK.in(response));
+
+        DownloadStatusInfo info;
+        do {
+            Thread.sleep(1000); // due to async request, wait a bit to get proper download status
+
+            response = installationManagerService.downloadStatus("id1");
+            assertTrue(ResponseCode.OK.in(response));
+
+            info = DownloadStatusInfo.valueOf(response);
+        } while (!info.getStatus().equals(Status.DOWNLOADED));
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"artifacts\": [{\n" +
+                                                                      "    \"artifact\": \"cdec\",\n" +
+                                                                      "    \"file\": \"cdec.zip\",\n" +
+                                                                      "    \"status\": \"SUCCESS\",\n" +
+                                                                      "    \"version\": \"2.10.5\"\n" +
+                                                                      "  }],\n" +
+                                                                      "  \"status\": \"OK\"\n" +
+                                                                      "}");
     }
 }

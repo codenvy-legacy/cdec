@@ -150,13 +150,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             final CountDownLatch latcher = new CountDownLatch(1);
 
-            Thread startDownload = new Thread(new Runnable() {
+            new Thread() {
                 @Override
                 public void run() {
                     download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher);
                 }
-            });
-            startDownload.start();
+            }.start();
 
             latcher.await();
 
@@ -176,6 +175,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             UserCredentials userCredentials = userCredentialsRep.getObject();
 
             Map<Artifact, String> updates = filter(artifactName, version, userCredentials);
+            updates = skipDownloadedArtifacts(updates);
+
             List<ArtifactInfo> infos = new ArrayList<>(updates.size());
 
             DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.valueOf(updates, manager);
@@ -217,6 +218,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 latcher.countDown();
             }
         }
+    }
+
+    private Map<Artifact, String> skipDownloadedArtifacts(Map<Artifact, String> updates) throws IOException {
+        Map<Artifact, SortedMap<Version, Path>> downloaded = manager.getDownloadedArtifacts();
+
+        Map<Artifact, String> artifacts2Download = new HashMap<>();
+        for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+            Artifact artifact = e.getKey();
+            Version version = Version.valueOf(e.getValue());
+
+            if (!downloaded.containsKey(artifact) || !downloaded.get(artifact).containsKey(version)) {
+                artifacts2Download.put(artifact, version.toString());
+            }
+        }
+
+        return artifacts2Download;
     }
 
     /** Filters what need to download, either all updates or a specific one. */
@@ -293,7 +310,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
 
-                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), Status.DOWNLOADED));
+                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), Status.READY_TO_INSTALL));
                 }
             }
 
@@ -315,7 +332,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (downloadedArtifacts.get(artifact) != null && downloadedArtifacts.get(artifact).containsKey(v)) {
                 Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
-                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), Status.DOWNLOADED));
+                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), Status.READY_TO_INSTALL));
 
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
             } else {
@@ -338,7 +355,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
 
-                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), Status.DOWNLOADED));
+                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), Status.READY_TO_INSTALL));
                 }
             }
 

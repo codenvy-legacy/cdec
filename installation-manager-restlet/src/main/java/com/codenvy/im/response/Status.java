@@ -22,6 +22,7 @@ package com.codenvy.im.response;
  */
 public enum Status {
     SUCCESS,
+    READY_TO_INSTALL,
     DOWNLOADED,
     DOWNLOADING,
     FAILURE
