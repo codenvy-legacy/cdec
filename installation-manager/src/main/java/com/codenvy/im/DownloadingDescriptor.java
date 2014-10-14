@@ -66,8 +66,7 @@ public class DownloadingDescriptor {
     }
 
     /** Factory method */
-    // TODO move
-    public static DownloadingDescriptor valueOf(Map<Artifact, String> artifacts, InstallationManager manager) throws IOException {
+    public static DownloadingDescriptor createDescriptor(Map<Artifact, String> artifacts, InstallationManager manager) throws IOException {
         Map<Path, Long> m = new LinkedHashMap<>();
 
         for (Map.Entry<Artifact, String> e : artifacts.entrySet()) {

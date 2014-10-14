@@ -18,7 +18,7 @@
 package com.codenvy.im;
 
 import com.codenvy.auth.sso.client.LoginFilter;
-import com.codenvy.auth.sso.client.SSOLogoutServlet;
+import com.codenvy.auth.sso.client.deploy.SsoClientServletModule;
 import com.codenvy.inject.DynaModule;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
@@ -40,10 +40,10 @@ public class UpdateServerServletModule extends ServletModule {
         bind(com.codenvy.auth.sso.client.EmptyContextResolver.class);
         bind(com.codenvy.auth.sso.client.token.ChainedTokenExtractor.class);
         bind(com.codenvy.auth.sso.client.filter.RequestFilter.class).to(com.codenvy.auth.sso.client.filter.RegexpRequestFilter.class);
-        bind(com.codenvy.auth.sso.client.InvalidTokenHandler.class).to(com.codenvy.auth.sso.client.RecoverableInvalidTokenHandler.class);
+        bind(com.codenvy.auth.sso.client.TokenHandler.class).to(com.codenvy.auth.sso.client.RecoverableTokenHandler.class);
 
-        filter("/*").through(LoginFilter.class);
+        filterRegex("/(?!_sso/).*$").through(LoginFilter.class);
         serve("/*").with(GuiceEverrestServlet.class);
-        serve("/_sso/client/logout").with(SSOLogoutServlet.class);
+        install(new SsoClientServletModule());
     }
 }

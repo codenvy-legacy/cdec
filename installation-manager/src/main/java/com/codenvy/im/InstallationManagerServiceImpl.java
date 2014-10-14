@@ -179,7 +179,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             List<ArtifactInfo> infos = new ArrayList<>(updates.size());
 
-            DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.valueOf(updates, manager);
+            DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.createDescriptor(updates, manager);
             downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
 
             latcher.countDown();

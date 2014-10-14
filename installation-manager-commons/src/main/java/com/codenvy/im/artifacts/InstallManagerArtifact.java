@@ -169,7 +169,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     private Path getImCliUpdateScriptDir() throws IOException, URISyntaxException {
-        return  new File(getImCliInstalledProperties()[1]).toPath();
+        return new File(getImCliInstalledProperties()[1]).toPath();
     }
 
     private String[] getImCliInstalledProperties() throws IOException, URISyntaxException {
@@ -178,7 +178,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
         if (!exists(fileWithImCliInstalled)) {
             throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
         }
-        return  new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri())).split("\n");
+        return new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri())).split("\n");
 
     }
 
@@ -186,29 +186,34 @@ public class InstallManagerArtifact extends AbstractArtifact {
         String installedPath = getInstalledPath().toFile().getAbsolutePath();
         StringBuilder stringBuilder = new StringBuilder(200);
 
-        stringBuilder.append("sleep 5 ; ") // a little bit time to answer to CLI
-                .append(installedPath).append("/installation-manager stop ; ")
-                .append("cp -r ")
-                .append(unpackedUpdates.toFile().getAbsolutePath())
-                .append("/* ")
-                .append(installedPath)
-                .append(" ; ")
-                .append("chmod +x " + installedPath + "/installation-manager ; ")
-                .append("rm -rf ")
-                .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
-                .append(" ; ")
-                .append(installedPath).append("/installation-manager start ");
+        stringBuilder.append(installedPath).append("/installation-manager stop ; ")
+                     .append("cp -r ")
+                     .append(unpackedUpdates.toFile().getAbsolutePath())
+                     .append("/* ")
+                     .append(installedPath)
+                     .append(" ; ")
+                     .append("chmod +x " + installedPath + "/installation-manager ; ")
+                     .append("rm -rf ")
+                     .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
+                     .append(" ; ")
+                     .append(installedPath).append("/installation-manager start ");
 
         runCommand(stringBuilder.toString());
     }
 
     private void runCommand(String command) throws IOException, InterruptedException, URISyntaxException {
+        LOG.info("Executed command: " + command);
+
         ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
         pb.redirectErrorStream(true);
         pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        pb.start();
-        LOG.info("Executed command: " + command);
+        Process start = pb.start();
+
+        int exitCode = start.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Can't install Installation Manager, exit code " + exitCode);
+        }
     }
 
     @Override

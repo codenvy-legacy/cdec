@@ -74,6 +74,8 @@ installJava() {
         echo "> Unpacking JDK binaries to /usr/local "
         sudo tar -xf jdk.tar.gz -C /usr/local
 
+        sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then touch ${CODENVY_HOME}/.bashrc; fi"
+
         sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/usr/local/jdk1.7.0_17' ~/.bashrc"
         sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin' ~/.bashrc"
 
@@ -182,10 +184,12 @@ installIM() {
     sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
     sudo chmod ug+rwx -R ${cliupdatedir}
     sudo chmod g+s ${cliupdatedir}
+
+    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then touch ${CODENVY_HOME}/.bashrc; fi"
     sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ~/.bashrc"
 
     # stores parameters of installed Installation Manager CLI.
-    sudo su -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
+    sudo su - ${CODENVY_USER} -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
     sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 
