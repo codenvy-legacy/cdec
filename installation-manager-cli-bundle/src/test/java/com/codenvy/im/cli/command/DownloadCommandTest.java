@@ -30,12 +30,7 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -49,14 +44,28 @@ public class DownloadCommandTest {
     private CommandSession             commandSession;
 
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
-    private String okServiceResponse = "{"
-                                       + "artifact: {"
-                                       + "           artifact: any,"
-                                       + "           version: any,"
-                                       + "           status: SUCCESS"
-                                       + "           },"
-                                       + "status: \"OK\""
-                                       + "}";
+    private String okResponse = "{status: \"OK\"}";
+    private String ok100DownloadStatusResponse  = "{\n" +
+                                                  "  \"download_info\": {\n" +
+                                                  "    \"downloadResult\": \"{\\\"status\\\":\\\"OK\\\"," +
+                                                  "\\\"artifacts\\\":[{\\\"status\\\":\\\"SUCCESS\\\"," +
+                                                  "\\\"file\\\":\\\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\\\"," +
+                                                  "\\\"artifact\\\":\\\"cdec\\\",\\\"version\\\":\\\"3.0.0\\\"}]}\",\n" +
+                                                  "    \"percents\": 100,\n" +
+                                                  "    \"status\": \"DOWNLOADED\"\n" +
+                                                  "  },\n" +
+                                                  "  \"status\": \"OK\"\n" +
+                                                  "}\n";
+    private String ok100DownloadCommandResponse = "{\n" +
+                                                  "  \"artifacts\": [{\n" +
+                                                  "    \"artifact\": \"cdec\",\n" +
+                                                  "    \"file\": \"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
+                                                  "    \"status\": \"SUCCESS\",\n" +
+                                                  "    \"version\": \"3.0.0\"\n" +
+                                                  "  }],\n" +
+                                                  "  \"status\": \"OK\"\n" +
+                                                  "}";
+
 
     @BeforeMethod
     public void initMocks() {
@@ -72,50 +81,74 @@ public class DownloadCommandTest {
         doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDownload() throws Exception {
-        doReturn("").when(((DownloadCommand)spyCommand).generateDownloadDescriptorId());
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).startDownload(anyString(), eq(userCredentialsRep));
+        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id1");
+        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload("id1", userCredentialsRep);
+        doReturn(ok100DownloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id1");
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse)));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok100DownloadCommandResponse)));
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDownloadArtifact() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).startDownload(CDECArtifact.NAME, "", userCredentialsRep);
+        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id2");
+        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload(CDECArtifact.NAME, "id2", userCredentialsRep);
+        doReturn(ok100DownloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id2");
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse) + "\n"));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok100DownloadCommandResponse)));
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDownloadArtifactVersion() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).startDownload(CDECArtifact.NAME, "2.0.5", "", userCredentialsRep);
+        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id3");
+        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload(CDECArtifact.NAME, "3.0.0", "id3", userCredentialsRep);
+        doReturn(ok100DownloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id3");
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
-        commandInvoker.argument("version", "2.0.5");
+        commandInvoker.argument("version", "3.0.0");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(okServiceResponse)));
+        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok100DownloadCommandResponse)));
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
-        String serviceErrorResponse = "{"
-                                      + "message: \"Some error\","
-                                      + "status: \"ERROR\""
-                                      + "}";
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).startDownload("", userCredentialsRep);
+        String downloadStatusResponce = "{\n" +
+                                        "  \"download_info\": {\n" +
+                                        "    \"downloadResult\": \"{\\\"status\\\":\\\"ERROR\\\",\\\"message\\\":\\\"There is no any version of " +
+                                        "artifact 'cdec'\\\",\\\"artifacts\\\":[{\\\"status\\\":\\\"FAILURE\\\",\\\"artifact\\\":\\\"cdec\\\"," +
+                                        "\\\"version\\\":\\\"3.0.0\\\"}]}\",\n" +
+                                        "    \"percents\": 0,\n" +
+                                        "    \"status\": \"FAILURE\"\n" +
+                                        "  },\n" +
+                                        "  \"status\": \"OK\"\n" +
+                                        "}\n";
+
+
+        String serviceErrorResponse = "{\n" +
+                                      "  \"artifacts\": [{\n" +
+                                      "    \"artifact\": \"cdec\",\n" +
+                                      "    \"status\": \"FAILURE\",\n" +
+                                      "    \"version\": \"3.0.0\"\n" +
+                                      "  }],\n" +
+                                      "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
+                                      "  \"status\": \"ERROR\"\n" +
+                                      "}\n";
+        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id4");
+        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload("id4", userCredentialsRep);
+        doReturn(downloadStatusResponce).when(mockInstallationManagerProxy).downloadStatus("id4");
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -124,14 +157,15 @@ public class DownloadCommandTest {
         assertTrue(output.contains(Commons.getPrettyPrintingJson(serviceErrorResponse)));
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDownloadWhenServiceThrowsError() throws Exception {
         String expectedOutput = "{"
                                 + "message: \"Server Error Exception\","
                                 + "status: \"ERROR\""
                                 + "}";
+        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id5");
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(mockInstallationManagerProxy).startDownload("", userCredentialsRep);
+                .when(mockInstallationManagerProxy).startDownload("id5", userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -142,14 +176,14 @@ public class DownloadCommandTest {
 
     @Test
     public void testCheckUpdates() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+        doReturn(okResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+        assertEquals(output, Commons.getPrettyPrintingJson(okResponse) + "\n");
     }
 
     @Test

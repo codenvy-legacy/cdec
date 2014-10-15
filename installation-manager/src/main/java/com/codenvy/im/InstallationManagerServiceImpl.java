@@ -42,15 +42,11 @@ import org.restlet.resource.ServerResource;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
@@ -108,12 +104,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                                              .withMessage("Subscription is valid")
                                              .build().toJson();
             } else {
-                return new Response.Builder().withStatus(ResponseCode.ERROR)
+                return new Response.Builder().withStatus(ERROR)
                                              .withParam("Subscription", subscription)
                                              .withMessage("Subscription not found").build().toJson();
             }
         } catch (Exception e) {
-            return new Response.Builder().withStatus(ResponseCode.ERROR)
+            return new Response.Builder().withStatus(ERROR)
                                          .withParam("Subscription", subscription)
                                          .withMessage(e.getMessage())
                                          .build().toJson();
@@ -140,7 +136,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                                 String version,
                                 String downloadDescriptorId,
                                 JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        return doStartDownload(artifactName, null, downloadDescriptorId, userCredentialsRep);
+        return doStartDownload(artifactName, version, downloadDescriptorId, userCredentialsRep);
     }
 
     private String doStartDownload(@Nullable final String artifactName,
@@ -171,13 +167,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                           JacksonRepresentation<UserCredentials> userCredentialsRep,
                           CountDownLatch latcher) {
 
+        List<ArtifactInfo> infos = null;
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
 
             Map<Artifact, String> updates = filter(artifactName, version, userCredentials);
             updates = skipDownloadedArtifacts(updates);
 
-            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
+            infos = new ArrayList<>(updates.size());
 
             DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.valueOf(updates, manager);
             downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
@@ -193,11 +190,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     infos.add(new DownloadArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
                 } catch (Exception exp) {
                     infos.add(new ArtifactInfoEx(artToDownload, verToDownload, Status.FAILURE));
-                    downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.ERROR)
+                    downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                                   .withMessage(exp.getMessage())
                                                                                   .withArtifacts(infos)
                                                                                   .build()
                                                                                   .toJson());
+                    return;
                 }
             }
 
@@ -211,7 +209,19 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             if (descriptor == null) {
                 descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
             }
-            descriptor.setDownloadResult(Response.valueOf(e).toJson());
+
+            if (infos == null) {
+                descriptor.setDownloadResult(Response.valueOf(e).toJson());
+            } else {
+                if (infos.size() == 0 && artifactName != null && version != null) {
+                    infos.add(new ArtifactInfoEx(artifactName, version, Status.FAILURE));
+                }
+                descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
+                                                                   .withMessage(e.getMessage())
+                                                                   .withArtifacts(infos)
+                                                                   .build()
+                                                                   .toJson());
+            }
             downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
 
             if (latcher.getCount() == 1) {
@@ -223,7 +233,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     private Map<Artifact, String> skipDownloadedArtifacts(Map<Artifact, String> updates) throws IOException {
         Map<Artifact, SortedMap<Version, Path>> downloaded = manager.getDownloadedArtifacts();
 
-        Map<Artifact, String> artifacts2Download = new HashMap<>();
+        Map<Artifact, String> artifacts2Download = new LinkedHashMap<>();
         for (Map.Entry<Artifact, String> e : updates.entrySet()) {
             Artifact artifact = e.getKey();
             Version version = Version.valueOf(e.getValue());
@@ -277,8 +287,13 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
-                return new Response.Builder().withStatus(ResponseCode.ERROR)
+                return new Response.Builder().withStatus(ERROR)
                                              .withMessage("Can't get downloading descriptor ID").build().toJson();
+            }
+
+            if (descriptor.getDownloadResult() != null && ERROR.in(descriptor.getDownloadResult())) {
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, descriptor.getDownloadResult());
+                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
             }
 
             long downloadedSize = descriptor.getDownloadedSize();
@@ -420,7 +435,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
             } catch (Exception e) {
                 infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
-                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+                return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
             }
         }
 
@@ -463,7 +478,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
         }
     }
 
