@@ -102,7 +102,8 @@ public class DownloadCommand extends AbstractIMCommand {
             printProgress(downloadStatusInfo.getPercents());
             sleep(1000);
 
-            if (downloadStatusInfo.getStatus() == Status.DOWNLOADED) {
+            if (downloadStatusInfo.getStatus() == Status.DOWNLOADED ||
+                downloadStatusInfo.getStatus() == Status.FAILURE) {
                 cleanCurrentLine();
 
                 printResponse(downloadStatusInfo.getDownloadResult());
