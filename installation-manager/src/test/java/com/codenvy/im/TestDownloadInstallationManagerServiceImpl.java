@@ -25,7 +25,6 @@ import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
@@ -43,12 +42,20 @@ import org.testng.annotations.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static java.lang.Thread.sleep;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -63,8 +70,8 @@ public class TestDownloadInstallationManagerServiceImpl {
     private Artifact            installManagerArtifact;
     private Artifact            cdecArtifact;
     private UserCredentials     testCredentials;
-    private Path pathCDEC;
-    private Path pathIM;
+    private Path                pathCDEC;
+    private Path                pathIM;
 
     @BeforeMethod
     public void init() {
@@ -122,30 +129,32 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("id1", userCredentialsRep);
 
-        DownloadStatusInfo downloadStatusInfo;
+        DownloadStatusInfo info;
         do {
-            String response = installationManagerService.downloadStatus("id1");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
+            sleep(100); // due to async request, wait a bit to get proper download status
 
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"artifacts\": [\n" +
-                                                                                    "    {\n" +
-                                                                                    "      \"artifact\": \"cdec\",\n" +
-                                                                                    "      \"file\": \"./target/cdec.zip\",\n" +
-                                                                                    "      \"status\": \"SUCCESS\",\n" +
-                                                                                    "      \"version\": \"2.10.5\"\n" +
-                                                                                    "    },\n" +
-                                                                                    "    {\n" +
-                                                                                    "      \"artifact\": " +
-                                                                                    "\"installation-manager\",\n" +
-                                                                                    "      \"file\": \"./target/im.zip\",\n" +
-                                                                                    "      \"status\": \"SUCCESS\",\n" +
-                                                                                    "      \"version\": \"1.0.1\"\n" +
-                                                                                    "    }\n" +
-                                                                                    "  ],\n" +
-                                                                                    "  \"status\": \"OK\"\n" +
-                                                                                    "}");
+            String response = installationManagerService.downloadStatus("id1");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"artifacts\": [\n" +
+                                                                      "    {\n" +
+                                                                      "      \"artifact\": \"cdec\",\n" +
+                                                                      "      \"file\": \"./target/cdec.zip\",\n" +
+                                                                      "      \"status\": \"SUCCESS\",\n" +
+                                                                      "      \"version\": \"2.10.5\"\n" +
+                                                                      "    },\n" +
+                                                                      "    {\n" +
+                                                                      "      \"artifact\": " +
+                                                                      "\"installation-manager\",\n" +
+                                                                      "      \"file\": \"./target/im.zip\",\n" +
+                                                                      "      \"status\": \"SUCCESS\",\n" +
+                                                                      "      \"version\": \"1.0.1\"\n" +
+                                                                      "    }\n" +
+                                                                      "  ],\n" +
+                                                                      "  \"status\": \"OK\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -169,21 +178,23 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "id2", userCredentialsRep);
 
-        DownloadStatusInfo downloadStatusInfo;
+        DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id2");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
 
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"artifacts\": [{\n" +
-                                                                                    "    \"artifact\": \"cdec\",\n" +
-                                                                                    "    \"file\": \"./target/cdec.zip\",\n" +
-                                                                                    "    \"status\": \"SUCCESS\",\n" +
-                                                                                    "    \"version\": \"2.10.5\"\n" +
-                                                                                    "  }],\n" +
-                                                                                    "  \"status\": \"OK\"\n" +
-                                                                                    "}");
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"artifacts\": [{\n" +
+                                                                      "    \"artifact\": \"cdec\",\n" +
+                                                                      "    \"file\": \"./target/cdec.zip\",\n" +
+                                                                      "    \"status\": \"SUCCESS\",\n" +
+                                                                      "    \"version\": \"2.10.5\"\n" +
+                                                                      "  }],\n" +
+                                                                      "  \"status\": \"OK\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -207,21 +218,23 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "2.10.5", "id3", userCredentialsRep);
 
-        DownloadStatusInfo downloadStatusInfo;
+        DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id3");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
 
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"artifacts\": [{\n" +
-                                                                                    "    \"artifact\": \"cdec\",\n" +
-                                                                                    "    \"file\": \"./target/cdec.zip\",\n" +
-                                                                                    "    \"status\": \"SUCCESS\",\n" +
-                                                                                    "    \"version\": \"2.10.5\"\n" +
-                                                                                    "  }],\n" +
-                                                                                    "  \"status\": \"OK\"\n" +
-                                                                                    "}");
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"artifacts\": [{\n" +
+                                                                      "    \"artifact\": \"cdec\",\n" +
+                                                                      "    \"file\": \"./target/cdec.zip\",\n" +
+                                                                      "    \"status\": \"SUCCESS\",\n" +
+                                                                      "    \"version\": \"2.10.5\"\n" +
+                                                                      "  }],\n" +
+                                                                      "  \"status\": \"OK\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -231,36 +244,46 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         installationManagerService.startDownload("id4", userCredentialsRep);
-        DownloadStatusInfo downloadStatusInfo;
+
+        DownloadStatusInfo info;
         do {
             String response = installationManagerService.downloadStatus("id4");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"artifacts\": [],\n" +
-                                                                                    "  \"status\": \"OK\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"artifacts\": [],\n" +
+                                                                      "  \"status\": \"OK\"\n" +
+                                                                      "}");
 
         installationManagerService.startDownload("cdec", "id5", userCredentialsRep);
+
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id5");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"message\": \"There is no any version of artifact 'cdec'\"," +
-                                                                                    "\n" +
-                                                                                    "  \"status\": \"ERROR\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"message\": \"There is no any version of artifact 'cdec'\"," +
+                                                                      "\n" +
+                                                                      "  \"status\": \"ERROR\"\n" +
+                                                                      "}");
 
         installationManagerService.startDownload("unknown", "id6", userCredentialsRep);
+
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id6");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"message\": \"Artifact 'unknown' not found\",\n" +
-                                                                                    "  \"status\": \"ERROR\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"message\": \"Artifact 'unknown' not found\",\n" +
+                                                                      "  \"status\": \"ERROR\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -277,20 +300,19 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "2.10.4", "id7", userCredentialsRep);
-        DownloadStatusInfo downloadStatusInfo;
+
+        DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id7");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"artifacts\": [{\n" +
-                                                                                    "    \"artifact\": \"cdec\",\n" +
-                                                                                    "    \"status\": \"FAILURE\",\n" +
-                                                                                    "    \"version\": \"2.10.4\"\n" +
-                                                                                    "  }],\n" +
-                                                                                    "  \"message\": \"Artifact 'cdec' version '2.10.4' not found\",\n" +
-                                                                                    "  \"status\": \"ERROR\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"message\": \"Artifact 'cdec' version '2.10.4' not found\",\n" +
+                                                                      "  \"status\": \"ERROR\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -299,16 +321,20 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         installationManagerService.startDownload("id8", userCredentialsRep);
-        DownloadStatusInfo downloadStatusInfo;
+
+        DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id8");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"message\": \"Authentication error. Authentication token " +
-                                                                                    "might be expired or invalid.\",\n" +
-                                                                                    "  \"status\": \"ERROR\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"message\": \"Authentication error. Authentication token " +
+                                                                      "might be expired or invalid.\",\n" +
+                                                                      "  \"status\": \"ERROR\"\n" +
+                                                                      "}");
 
     }
 
@@ -326,22 +352,20 @@ public class TestDownloadInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         installationManagerService.startDownload("cdec", "2.10.5", "id9", userCredentialsRep);
-        DownloadStatusInfo downloadStatusInfo;
+
+        DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+
             String response = installationManagerService.downloadStatus("id9");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"artifacts\": [{\n" +
-                                                                                    "    \"artifact\": \"cdec\",\n" +
-                                                                                    "    \"status\": \"FAILURE\",\n" +
-                                                                                    "    \"version\": \"2.10.5\"\n" +
-                                                                                    "  }],\n" +
-                                                                                    "  \"message\": \"Authentication error. Authentication token " +
-                                                                                    "might be expired or invalid.\"," +
-                                                                                    "\n" +
-                                                                                    "  \"status\": \"ERROR\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"message\": \"Authentication error. Authentication token might be expired" +
+                                                                      " or invalid.\",\n" +
+                                                                      "  \"status\": \"ERROR\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -350,16 +374,20 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "id10", userCredentialsRep);
-        DownloadStatusInfo downloadStatusInfo;
+
+        DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            
             String response = installationManagerService.downloadStatus("id10");
-            downloadStatusInfo = DownloadStatusInfo.valueOf(response);
-        } while (downloadStatusInfo.getDownloadResult().equals("null"));
-        assertEquals(getPrettyPrintingJson(downloadStatusInfo.getDownloadResult()), "{\n" +
-                                                                                    "  \"message\": \"Valid subscription is required to download " +
-                                                                                    "cdec\",\n" +
-                                                                                    "  \"status\": \"ERROR\"\n" +
-                                                                                    "}");
+            info = DownloadStatusInfo.valueOf(response);
+        } while (info.getStatus() == null);
+
+        assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
+                                                                      "  \"message\": \"Valid subscription is required to download " +
+                                                                      "cdec\",\n" +
+                                                                      "  \"status\": \"ERROR\"\n" +
+                                                                      "}");
     }
 
     @Test
@@ -482,18 +510,18 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
-        String response = installationManagerService.startDownload("id1", userCredentialsRep);
+        String response = installationManagerService.startDownload("id11", userCredentialsRep);
         assertTrue(ResponseCode.OK.in(response));
 
         DownloadStatusInfo info;
         do {
-            sleep(1000); // due to async request, wait a bit to get proper download status
+            sleep(100); // due to async request, wait a bit to get proper download status
 
-            response = installationManagerService.downloadStatus("id1");
+            response = installationManagerService.downloadStatus("id11");
             assertTrue(ResponseCode.OK.in(response));
 
             info = DownloadStatusInfo.valueOf(response);
-        } while (!info.getStatus().equals(Status.DOWNLOADED));
+        } while (info.getStatus() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"artifacts\": [{\n" +

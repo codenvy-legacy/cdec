@@ -20,8 +20,10 @@ package com.codenvy.im.response;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +75,12 @@ public class Response {
             return withArtifacts(infos);
         }
 
-        public Builder withArtifacts(List<ArtifactInfo> l) {
-            params.put(Property.ARTIFACTS.toString().toLowerCase(), l);
+        public Builder withArtifacts(@Nullable List<ArtifactInfo> l) {
+            if (l == null) {
+                params.put(Property.ARTIFACTS.toString().toLowerCase(), Collections.emptyList());
+            } else {
+                params.put(Property.ARTIFACTS.toString().toLowerCase(), l);
+            }
             return this;
         }
 

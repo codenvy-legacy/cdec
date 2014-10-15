@@ -42,9 +42,16 @@ import org.restlet.resource.ServerResource;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.CountDownLatch;
 
+import static com.codenvy.im.DownloadingDescriptor.createDescriptor;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -176,7 +183,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             infos = new ArrayList<>(updates.size());
 
-            DownloadingDescriptor downloadingDescriptor = DownloadingDescriptor.createDescriptor(updates, manager);
+            DownloadingDescriptor downloadingDescriptor = createDescriptor(updates, manager);
             downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
 
             latcher.countDown();
@@ -208,21 +215,15 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (descriptor == null) {
                 descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
-            }
-
-            if (infos == null) {
                 descriptor.setDownloadResult(Response.valueOf(e).toJson());
+                downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
             } else {
-                if (infos.size() == 0 && artifactName != null && version != null) {
-                    infos.add(new ArtifactInfoEx(artifactName, version, Status.FAILURE));
-                }
                 descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                    .withMessage(e.getMessage())
                                                                    .withArtifacts(infos)
                                                                    .build()
                                                                    .toJson());
             }
-            downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
 
             if (latcher.getCount() == 1) {
                 latcher.countDown();
@@ -293,7 +294,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (descriptor.getDownloadResult() != null && ERROR.in(descriptor.getDownloadResult())) {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, descriptor.getDownloadResult());
-                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
+                return new Response.Builder().withStatus(ResponseCode.ERROR).withDownloadInfo(info).build().toJson();
             }
 
             long downloadedSize = descriptor.getDownloadedSize();

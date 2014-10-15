@@ -90,6 +90,10 @@ public class DownloadingDescriptor {
 
     /** Sets the download status. */
     public void setDownloadResult(String downloadResult) {
+        if (isDownloadingFinished()) {
+            throw new IllegalStateException("Impossible to set download result twice.");
+        }
+
         this.downloadResult.set(downloadResult);
     }
 
