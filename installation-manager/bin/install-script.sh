@@ -63,28 +63,53 @@ createCodenvyUserAndGroup() {
         echo "> Creating user codenvy"
         addUserOn${os} ${CODENVY_USER} 5001
     fi
+
+    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then echo -e "\n" > ${CODENVY_HOME}/.bashrc; fi"
 }
 
 installJava() {
-    command -v java >/dev/null 2>&1 || {     # check if requered program had already installed earlier
-        echo "> Installation manager requires java to be installed "
-        read -p "> Press any key to start downloading java" -n1 -s
+    # check if requered program had already installed earlier for current user
+    hash java 2>/dev/null || {
+        echo "> Installation manager requires java to be installed"
+        read -p "> Press any key to start installing java into ${HOME}" -n1 -s
+        echo ""
+
         wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
 
-        echo "> Unpacking JDK binaries to /usr/local "
-        sudo tar -xf jdk.tar.gz -C /usr/local
+        echo "> Unpacking JDK binaries to ${HOME}"
 
-        sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then touch ${CODENVY_HOME}/.bashrc; fi"
+        sudo tar -xf jdk.tar.gz -C ${HOME}
 
-        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/usr/local/jdk1.7.0_17' ~/.bashrc"
-        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin' ~/.bashrc"
+        if [ ! -f ~/.bashrc ]; then echo -e "\n" > ~/.bashrc; fi
+        sed -i '1i\export JAVA_HOME=${HOME}/jdk1.7.0_17' ~/.bashrc
+        sed -i '2i\export PATH=$PATH:${HOME}/jdk1.7.0_17/bin' ~/.bashrc
 
-        sed -i '1i\export JAVA_HOME=/usr/local/jdk1.7.0_17' ~/.bashrc
-        sed -i '2i\export PATH=$PATH:/usr/local/jdk1.7.0_17/bin' ~/.bashrc
-
-        rm jdk.tar.gz
-        echo "> Java has been installed"
+        echo "> Java has been installed for ${USER} user"
     }
+
+    # check if requered program had already installed earlier for codenvy user
+    if [ `sudo su - codenvy -c "if hash java 2>/dev/null; then echo "0"; else echo "1"; fi"` == "1" ]; then
+        if [ ! -f jdk.tar.gz ]; then
+            echo "> Installation manager requires java to be installed for codenvy user"
+            read -p "> Press any key to start installing java into ${CODENVY_HOME}" -n1 -s
+            echo ""
+
+            wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
+        fi
+
+        echo "> Unpacking JDK binaries to ${CODENVY_HOME}"
+
+        sudo tar -xf jdk.tar.gz -C ${CODENVY_HOME}
+
+        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=${CODENVY_HOME}/jdk1.7.0_17' ${CODENVY_HOME}/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:${CODENVY_HOME}/jdk1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
+
+        echo "> Java has been installed for ${CODENVY_USER} user"
+    fi
+
+    if [ -f jdk.tar.gz ]; then
+        rm jdk.tar.gz
+    fi
 }
 
 registerIMServiceOnDebian() {
@@ -185,8 +210,7 @@ installIM() {
     sudo chmod ug+rwx -R ${cliupdatedir}
     sudo chmod g+s ${cliupdatedir}
 
-    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then touch ${CODENVY_HOME}/.bashrc; fi"
-    sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ~/.bashrc"
+    sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ${CODENVY_HOME}/.bashrc"
 
     # stores parameters of installed Installation Manager CLI.
     sudo su - ${CODENVY_USER} -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
@@ -194,7 +218,7 @@ installIM() {
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 
     # creates Codenvy configuration directory
-    sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=${CODENVY_HOME}/codenvy_conf' ~/.bashrc"
+    sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=${CODENVY_HOME}/codenvy_conf' ${CODENVY_HOME}/.bashrc"
     if [ ! -d  ${CODENVY_HOME}/codenvy_conf ]; then
         sudo su - ${CODENVY_USER} -c "mkdir ${CODENVY_HOME}/codenvy_conf"
     fi
