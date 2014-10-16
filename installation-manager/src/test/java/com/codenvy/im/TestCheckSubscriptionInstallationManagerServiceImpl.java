@@ -17,6 +17,7 @@
  */
 package com.codenvy.im;
 
+import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
@@ -30,6 +31,7 @@ import org.testng.annotations.Test;
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.testng.Assert.assertEquals;
@@ -86,5 +88,17 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
                                                       "  \"status\": \"ERROR\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");
+    }
+
+    @Test
+    public void testCheckSubscriptionErrorIfAuthenticationFailed() throws Exception {
+        doThrow(new AuthenticationException()).when(transport).doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token"));
+
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
+
+        String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
+        assertEquals(response, "{\"status\":\"ERROR\"," +
+                               "\"subscription\":\"OnPremises\"," +
+                               "\"message\":\"Authentication error. Authentication token might be expired or invalid.\"}");
     }
 }

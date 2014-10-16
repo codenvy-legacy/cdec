@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.user.UserCredentials;
 
 import org.testng.annotations.BeforeMethod;
@@ -24,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -141,5 +143,14 @@ public class TestAccountUtils {
         .thenReturn("[{serviceId:invalid}]");
         
         assertFalse(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials));        
+    }
+
+    @Test(expectedExceptions = AuthenticationException.class)
+    public void testInvalidAuthentication() throws IOException {
+        doThrow(new HttpException(403, "auth error"))
+            .when(mockTransport)
+            .doGetRequest("/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken());
+
+        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, testCredentials);
     }
 }

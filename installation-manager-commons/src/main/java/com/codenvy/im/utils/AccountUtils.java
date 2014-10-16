@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.createListDtoFromJson;
+import static com.codenvy.im.utils.Commons.getProperException;
 
 /**
  * @author Anatoliy Bazko
@@ -53,17 +54,20 @@ public class AccountUtils {
                                               String apiEndpoint,
                                               String requiredSubscription,
                                               UserCredentials userCredentials) throws IOException, IllegalStateException {
-        List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport,
-                                                                      apiEndpoint,
-                                                                      userCredentials);
-
-        for (SubscriptionDescriptor s : subscriptions) {
-            if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
-                return true;
+        try {
+            List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport,
+                                                                          apiEndpoint,
+                                                                          userCredentials);
+            for (SubscriptionDescriptor s : subscriptions) {
+                if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
+                    return true;
+                }
             }
-        }
 
-        return false;
+            return false;
+        } catch (IOException e) {
+            throw getProperException(e);
+        }
     }
 
     private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
