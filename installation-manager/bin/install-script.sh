@@ -71,7 +71,7 @@ installJava() {
     # check if requered program had already installed earlier for current user
     hash java 2>/dev/null || {
         echo "> Installation manager requires java to be installed"
-        read -p "> Press any key to start installing java into ${HOME}" -n1 -s
+        read -p "> Press any key to start installing java" -n1 -s
         echo ""
 
         wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
