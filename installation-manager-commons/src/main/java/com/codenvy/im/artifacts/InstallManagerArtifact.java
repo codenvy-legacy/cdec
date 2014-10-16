@@ -52,6 +52,18 @@ import static org.apache.commons.io.FileUtils.listFiles;
 public class InstallManagerArtifact extends AbstractArtifact {
     private static final Logger LOG = LoggerFactory.getLogger(InstallManagerArtifact.class);
 
+    // That is figure out for issue https://jira.codenvycorp.com/browse/CDEC-20
+    /*private static final String updateScriptCatchErrors = "trap catch_errors ERR ;\n\n" +
+                                                          "error_count=0 ;\n\n" +
+                                                          "function catch_errors() {\n" +
+                                                          "   error_count=$(expr $error_count + 1) ; \n" +
+                                                          "}\n\n";
+
+    private static final String updateScriptCheckErrors = "if [[ $error_count -eq 0 ]]; then\n" +
+                                                          "rm -f ./im-update.log\n" +
+                                                          "fi";*/
+
+
     public static final String NAME = "installation-manager";
 
     @Inject
@@ -202,18 +214,15 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     private void runCommand(String command) throws IOException, InterruptedException, URISyntaxException {
-        LOG.info("Executed command: " + command);
+        LOG.info("Executing  command: " + command);
 
         ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
         pb.redirectErrorStream(true);
         pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        Process start = pb.start();
+        pb.start();
 
-        int exitCode = start.waitFor();
-        if (exitCode != 0) {
-            throw new IOException("Can't install Installation Manager, exit code " + exitCode);
-        }
+        LOG.info("Executed command: " + command);
     }
 
     @Override
