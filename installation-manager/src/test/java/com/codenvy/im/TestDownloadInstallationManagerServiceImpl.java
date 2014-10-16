@@ -135,7 +135,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
             String response = installationManagerService.downloadStatus("id1");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"artifacts\": [\n" +
@@ -184,7 +184,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id2");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"artifacts\": [{\n" +
@@ -224,7 +224,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id3");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"artifacts\": [{\n" +
@@ -247,9 +247,11 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         DownloadStatusInfo info;
         do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+
             String response = installationManagerService.downloadStatus("id4");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"artifacts\": [],\n" +
@@ -263,7 +265,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id5");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"message\": \"There is no any version of artifact 'cdec'\"," +
@@ -278,7 +280,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id6");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"message\": \"Artifact 'unknown' not found\",\n" +
@@ -307,7 +309,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id7");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"message\": \"Artifact 'cdec' version '2.10.4' not found\",\n" +
@@ -328,7 +330,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id8");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"message\": \"Authentication error. Authentication token " +
@@ -359,7 +361,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
             String response = installationManagerService.downloadStatus("id9");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"message\": \"Authentication error. Authentication token might be expired" +
@@ -381,7 +383,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             
             String response = installationManagerService.downloadStatus("id10");
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"message\": \"Valid subscription is required to download " +
@@ -521,7 +523,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             assertTrue(ResponseCode.OK.in(response));
 
             info = DownloadStatusInfo.valueOf(response);
-        } while (info.getStatus() == null);
+        } while (info.getDownloadResult() == null);
 
         assertEquals(getPrettyPrintingJson(info.getDownloadResult()), "{\n" +
                                                                       "  \"artifacts\": [{\n" +
