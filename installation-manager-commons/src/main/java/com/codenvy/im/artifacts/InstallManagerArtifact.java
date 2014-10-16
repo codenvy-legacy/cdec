@@ -198,7 +198,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
         String installedPath = getInstalledPath().toFile().getAbsolutePath();
         StringBuilder stringBuilder = new StringBuilder(200);
 
-        stringBuilder.append(installedPath).append("/installation-manager stop ; ")
+        stringBuilder.append("sleep 5 ; ") // a little bit time to answer to CLI
+                     .append(installedPath).append("/installation-manager stop ; ")
                      .append("cp -r ")
                      .append(unpackedUpdates.toFile().getAbsolutePath())
                      .append("/* ")
