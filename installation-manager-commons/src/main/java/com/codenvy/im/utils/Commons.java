@@ -160,7 +160,6 @@ public class Commons {
                 case 404:
                     return new ArtifactNotFoundException(artifact.getName());
 
-                case 403:
                 case 302:
                     return new AuthenticationException();
             }
@@ -173,7 +172,6 @@ public class Commons {
         if (e instanceof HttpException) {
             switch (((HttpException)e).getStatus()) {
                 case 403:
-                case 302:
                     return new AuthenticationException();
             }
         }
