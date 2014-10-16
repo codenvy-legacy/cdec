@@ -463,24 +463,32 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String install(String artifactName,
                           @Nullable String version,
                           JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
-        UserCredentials userCredentials = userCredentialsRep.getObject();
-        String token = userCredentials.getToken();
+            String token;
+            Artifact artifact;
+            String toInstallVersion;
 
-        Artifact artifact = createArtifact(artifactName);
-        String toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
+            try {
+                UserCredentials userCredentials = userCredentialsRep.getObject();
+                token = userCredentials.getToken();
 
-        if (toInstallVersion == null) {
-            return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
-        }
+                artifact = createArtifact(artifactName);
+                toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
+            } catch (Exception e) {
+                return Response.valueOf(e).toJson();
+            }
 
-        try {
-            doInstall(artifact, toInstallVersion, token);
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-        } catch (Exception e) {
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
-            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
-        }
+            if (toInstallVersion == null) {
+                return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
+            }
+
+            try {
+                doInstall(artifact, toInstallVersion, token);
+                ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+            } catch (Exception e) {
+                ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
+                return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            }
     }
 
     /** {@inheritDoc} */

@@ -36,7 +36,9 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
-/** @author Dmytro Nochevnov */
+/** @author Dmytro Nochevnov
+ *          Alexander Reshetnyak
+ */
 public class InstallCommandTest {
     private AbstractIMCommand spyCommand;
 
@@ -104,6 +106,22 @@ public class InstallCommandTest {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, Commons.getPrettyPrintingJson(okServiceResponse) + "\n");
+    }
+
+    @Test
+    public void testInstallWhenUnknownArtifact() throws Exception {
+        String serviceErrorResponse = "{"
+                                      + "message: \"Artifact 'qwerty ' not found\","
+                                      + "status: \"ERROR\""
+                                      + "}";
+        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install("qwerty", userCredentialsRep);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", "qwerty");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, Commons.getPrettyPrintingJson(serviceErrorResponse) + "\n");
     }
 
     @Test

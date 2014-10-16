@@ -405,4 +405,21 @@ public class TestInstallInstallationManagerServiceImpl {
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
     }
+
+    @Test
+    public void testInstallErrorIfUnknownArtifact() throws Exception {
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(new LinkedHashMap<Artifact, String>() {
+            {
+                put(createArtifact(mockCdecArtifact.getName()), "2.10.7");
+            }
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
+
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install("qwerty", userCredentialsRep);
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Artifact 'qwerty' not found\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
+                                                      "}");
+    }
 }
