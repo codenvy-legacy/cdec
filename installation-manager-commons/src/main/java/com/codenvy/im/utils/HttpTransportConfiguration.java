@@ -38,7 +38,7 @@ public class HttpTransportConfiguration {
 
     private int parseProxyPort(String proxyPort) {
         try {
-            return Integer.valueOf(proxyPort);
+            return Integer.parseInt(proxyPort);
         } catch (NumberFormatException e) {
             return 0;
         }

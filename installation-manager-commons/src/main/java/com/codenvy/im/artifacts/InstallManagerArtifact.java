@@ -44,6 +44,7 @@ import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
 import static org.apache.commons.io.FileUtils.cleanDirectory;
 import static org.apache.commons.io.FileUtils.listFiles;
+import static org.apache.commons.io.IOUtils.toByteArray;
 
 /**
  * @author Anatoliy Bazko
@@ -117,7 +118,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
             restart(dirImUpdateUnpack);
         } catch (InterruptedException | URISyntaxException e) {
-            if (dirForUpdate != null && exists(dirForUpdate)) {
+            if (exists(dirForUpdate)) {
                 try {
                     cleanDirectory(dirForUpdate.toFile());
                 } catch (IOException ioe) {
@@ -190,7 +191,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
         if (!exists(fileWithImCliInstalled)) {
             throw new IOException("File " + fileWithImCliInstalled.toFile().getAbsolutePath() + " doesn't exist.");
         }
-        return new String(IOUtils.toByteArray(fileWithImCliInstalled.toUri())).split("\n");
+
+        byte[] bytes = toByteArray(fileWithImCliInstalled.toUri());
+        return new String(bytes, 0, bytes.length, "UTF-8").split("\n");
 
     }
 
