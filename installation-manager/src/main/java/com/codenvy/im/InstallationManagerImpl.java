@@ -216,12 +216,12 @@ public class InstallationManagerImpl implements InstallationManager {
     public void setConfig(InstallationManagerConfig config) throws IOException {
         if (config.getProxyPort() != null) {
             transportConf.setProxyPort(config.getProxyPort());
-            storeProperty("installation-manager.proxy_url", transportConf.getProxyUrl());
+            storeProperty("installation-manager.proxy_port", String.valueOf(transportConf.getProxyPort()));
         }
 
         if (config.getProxyUrl() != null) {
             transportConf.setProxyUrl(config.getProxyUrl());
-            storeProperty("installation-manager.proxy_port", String.valueOf(transportConf.getProxyPort()));
+            storeProperty("installation-manager.proxy_url", transportConf.getProxyUrl());
         }
 
         if (config.getDownloadDir() != null) {
