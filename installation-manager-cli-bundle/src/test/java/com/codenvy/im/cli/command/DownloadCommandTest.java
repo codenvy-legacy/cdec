@@ -224,7 +224,7 @@ public class DownloadCommandTest {
         final String ok = "{"
                           + "status: \"OK\""
                           + "}";
-        doReturn(ok).when(mockInstallationManagerProxy).getDownloads();
+        doReturn(ok).when(mockInstallationManagerProxy).getDownloads(userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);

@@ -314,8 +314,11 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String getDownloads(String artifactName) {
+    public String getDownloads(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
+            UserCredentials userCredentials = userCredentialsRep.getObject();
+            String token = userCredentials.getToken();
+
             Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
             List<ArtifactInfo> infos = new ArrayList<>();
@@ -325,8 +328,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 for (Map.Entry<Version, Path> e : versions.entrySet()) {
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
+                    Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+                    Status status = artifact.isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), Status.READY_TO_INSTALL));
+                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), status));
                 }
             }
 
@@ -338,8 +343,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String getDownloads(String artifactName, String version) {
+    public String getDownloads(String artifactName,
+                               String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
+            UserCredentials userCredentials = userCredentialsRep.getObject();
+            String token = userCredentials.getToken();
+
             Artifact artifact = ArtifactFactory.createArtifact(artifactName);
             Version v = Version.valueOf(version);
 
@@ -348,7 +357,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (downloadedArtifacts.get(artifact) != null && downloadedArtifacts.get(artifact).containsKey(v)) {
                 Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
-                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), Status.READY_TO_INSTALL));
+                Status status = artifact.isInstallable(v, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+
+                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), status));
 
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
             } else {
@@ -359,10 +370,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
-    /** {@inheritDoc} */
+    /** {@inheritDoc}
+     * @param userCredentialsRep*/
     @Override
-    public String getDownloads() {
+    public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
+            UserCredentials userCredentials = userCredentialsRep.getObject();
+            String token = userCredentials.getToken();
+
             Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
             List<ArtifactInfo> infos = new ArrayList<>();
@@ -370,8 +385,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 for (Map.Entry<Version, Path> e : artifact.getValue().entrySet()) {
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
+                    Status status = artifact.getKey().isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), Status.READY_TO_INSTALL));
+                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), status));
                 }
             }
 

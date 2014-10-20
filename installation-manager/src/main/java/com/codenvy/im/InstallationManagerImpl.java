@@ -142,9 +142,9 @@ public class InstallationManagerImpl implements InstallationManager {
             if (installedVersion == null || compare(version, installedVersion) > 0) {
                 artifact.install(pathToBinaries);
 
-            } else if (compare(version, installedVersion) < 0) {
+            } else if (compare(version, installedVersion) <= 0) {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version
-                                                + "', because greater version is installed already.");
+                                                + "', because greater or equal version has already been installed.");
             }
         } else {
             throw new FileNotFoundException("Binaries to install artifact '" + artifact.getName() + "' version '" + version + "' not found");

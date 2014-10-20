@@ -19,6 +19,7 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -56,6 +57,10 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public int getPriority() {
         return 2;
+    }
+
+    @Override public boolean isInstallable(Version versionToInstall, String authToken) {
+        return false;
     }
 
     @Override

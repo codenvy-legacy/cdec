@@ -65,13 +65,14 @@ import static org.testng.Assert.assertTrue;
 public class TestDownloadInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       transport;
-    private Artifact            installManagerArtifact;
-    private Artifact            cdecArtifact;
-    private UserCredentials     testCredentials;
-    private Path                pathCDEC;
-    private Path                pathIM;
+    private InstallationManager                    mockInstallationManager;
+    private HttpTransport                          transport;
+    private Artifact                               installManagerArtifact;
+    private Artifact                               cdecArtifact;
+    private UserCredentials                        testCredentials;
+    private Path                                   pathCDEC;
+    private Path                                   pathIM;
+    private JacksonRepresentation<UserCredentials> userCredentialsRep;
 
     @BeforeMethod
     public void init() {
@@ -80,6 +81,8 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
+
+        userCredentialsRep = new JacksonRepresentation<>(testCredentials);
     }
 
     @AfterMethod
@@ -125,8 +128,6 @@ public class TestDownloadInstallationManagerServiceImpl {
         doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, "2.10.5");
         doReturn(50L).when(mockInstallationManager).getBinariesSize(installManagerArtifact, "1.0.1");
 
-
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("id1", userCredentialsRep);
 
         DownloadStatusInfo info;
@@ -175,7 +176,6 @@ public class TestDownloadInstallationManagerServiceImpl {
         doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, "2.10.5");
         doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, "2.10.5");
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "id2", userCredentialsRep);
 
         DownloadStatusInfo info;
@@ -215,7 +215,6 @@ public class TestDownloadInstallationManagerServiceImpl {
         doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, "2.10.5");
         doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, "2.10.5");
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "2.10.5", "id3", userCredentialsRep);
 
         DownloadStatusInfo info;
@@ -240,8 +239,6 @@ public class TestDownloadInstallationManagerServiceImpl {
     @Test
     public void testDownloadErrorIfUpdatesAbsent() throws Exception {
         doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates(testCredentials.getToken());
-
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         installationManagerService.startDownload("id4", userCredentialsRep);
 
@@ -300,7 +297,6 @@ public class TestDownloadInstallationManagerServiceImpl {
         doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).getBinariesSize(cdecArtifact, "2.10.4");
         doThrow(new ArtifactNotFoundException("cdec", "2.10.4")).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.4");
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "2.10.4", "id7", userCredentialsRep);
 
         DownloadStatusInfo info;
@@ -320,7 +316,6 @@ public class TestDownloadInstallationManagerServiceImpl {
     @Test
     public void testDownloadErrorIfAuthenticationFailedOnGetUpdates() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         installationManagerService.startDownload("id8", userCredentialsRep);
 
@@ -351,7 +346,6 @@ public class TestDownloadInstallationManagerServiceImpl {
         doThrow(new AuthenticationException()).when(mockInstallationManager).getPathToBinaries(cdecArtifact, "2.10.5");
         doThrow(new AuthenticationException()).when(mockInstallationManager).getBinariesSize(cdecArtifact, "2.10.5");
         doThrow(new AuthenticationException()).when(mockInstallationManager).download(testCredentials, cdecArtifact, "2.10.5");
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         installationManagerService.startDownload("cdec", "2.10.5", "id9", userCredentialsRep);
 
@@ -374,7 +368,6 @@ public class TestDownloadInstallationManagerServiceImpl {
     public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IllegalStateException("Valid subscription is required to download cdec"));
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         installationManagerService.startDownload("cdec", "id10", userCredentialsRep);
 
         DownloadStatusInfo info;
@@ -401,19 +394,19 @@ public class TestDownloadInstallationManagerServiceImpl {
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
-        String response = installationManagerService.getDownloads();
+        String response = installationManagerService.getDownloads(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [\n" +
                                                       "    {\n" +
                                                       "      \"artifact\": \"cdec\",\n" +
                                                       "      \"file\": \"target/file1\",\n" +
-                                                      "      \"status\": \"READY_TO_INSTALL\",\n" +
+                                                      "      \"status\": \"DOWNLOADED\",\n" +
                                                       "      \"version\": \"1.0.1\"\n" +
                                                       "    },\n" +
                                                       "    {\n" +
                                                       "      \"artifact\": \"cdec\",\n" +
                                                       "      \"file\": \"target/file2\",\n" +
-                                                      "      \"status\": \"READY_TO_INSTALL\",\n" +
+                                                      "      \"status\": \"DOWNLOADED\",\n" +
                                                       "      \"version\": \"1.0.2\"\n" +
                                                       "    }\n" +
                                                       "  ],\n" +
@@ -433,7 +426,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
-        String response = installationManagerService.getDownloads(installManagerArtifact.getName());
+        String response = installationManagerService.getDownloads(installManagerArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"installation-manager\",\n" +
@@ -446,7 +439,7 @@ public class TestDownloadInstallationManagerServiceImpl {
     }
 
     @Test
-    public void testGetDownloadsSpecificVersionArtifact() throws Exception {
+    public void testGetDownloadsSpecificVersionCDECArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
@@ -457,17 +450,58 @@ public class TestDownloadInstallationManagerServiceImpl {
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
-        String response = installationManagerService.getDownloads(cdecArtifact.getName(), "1.0.1");
+        String response = installationManagerService.getDownloads(cdecArtifact.getName(), "1.0.1", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
                                                       "    \"file\": \"target/file1\",\n" +
-                                                      "    \"status\": \"READY_TO_INSTALL\",\n" +
+                                                      "    \"status\": \"DOWNLOADED\",\n" +
                                                       "    \"version\": \"1.0.1\"\n" +
                                                       "  }],\n" +
                                                       "  \"status\": \"OK\"\n" +
                                                       "}");
     }
+
+    @Test
+    public void testGetDownloadsOlderVersionInstallManagerArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.0-SNAPSHOT"), Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        String response = installationManagerService.getDownloads(installManagerArtifact.getName(), "1.0.0-SNAPSHOT", userCredentialsRep);
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [{\n" +
+                                                      "    \"artifact\": \"installation-manager\",\n" +
+                                                      "    \"file\": \"target/file1\",\n" +
+                                                      "    \"status\": \"DOWNLOADED\",\n" +
+                                                      "    \"version\": \"1.0.0-SNAPSHOT\"\n" +
+                                                      "  }],\n" +
+                                                      "  \"status\": \"OK\"\n" +
+                                                      "}");
+    }
+
+    @Test
+    public void testGetDownloadsNewVersionInstallManagerArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("2.0.0-SNAPSHOT"), Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
+            }});
+        }}).when(mockInstallationManager).getDownloadedArtifacts();
+
+        String response = installationManagerService.getDownloads(userCredentialsRep);
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"artifacts\": [{\n" +
+                                                      "    \"artifact\": \"installation-manager\",\n" +
+                                                      "    \"file\": \"target/file1\",\n" +
+                                                      "    \"status\": \"READY_TO_INSTALL\",\n" +
+                                                      "    \"version\": \"2.0.0-SNAPSHOT\"\n" +
+                                                      "  }],\n" +
+                                                      "  \"status\": \"OK\"\n" +
+                                                      "}");
+    }
+
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
@@ -478,7 +512,7 @@ public class TestDownloadInstallationManagerServiceImpl {
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
-        String response = installationManagerService.getDownloads(installManagerArtifact.getName());
+        String response = installationManagerService.getDownloads(installManagerArtifact.getName(), userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [],\n" +
                                                       "  \"status\": \"OK\"\n" +
@@ -509,8 +543,6 @@ public class TestDownloadInstallationManagerServiceImpl {
                 put(Version.valueOf("1.0.1"), Paths.get("im.zip"));
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
-
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
         String response = installationManagerService.startDownload("id11", userCredentialsRep);
         assertTrue(ResponseCode.OK.in(response));

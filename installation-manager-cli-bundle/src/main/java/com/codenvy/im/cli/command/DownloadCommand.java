@@ -42,7 +42,7 @@ public class DownloadCommand extends AbstractIMCommand {
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
     private String version;
 
-    @Option(name = "--list-local", aliases = "-l", description = "To show the downloaded list of artifacts", required = false)
+    @Option(name = "--list-local", aliases = "-l", description = "To show the list of downloaded artifacts", required = false)
     private boolean listLocal;
 
     @Option(name = "--check-remote", aliases = "-c", description = "To check on remote versions to see if new version is available",
@@ -71,7 +71,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doDownload() throws JSONException, InterruptedException {
-        printInfo("Downloading might takes several minutes depending on your internet connection. Please wait. \n");
+        printInfo("Downloading might take several minutes depending on your internet connection. Please wait. \n");
 
         final String downloadDescriptorId = generateDownloadDescriptorId();
 
@@ -118,11 +118,11 @@ public class DownloadCommand extends AbstractIMCommand {
 
     private void doList() {
         if (artifactName != null && version != null) {
-            printResponse(installationManagerProxy.getDownloads(artifactName, version));
+            printResponse(installationManagerProxy.getDownloads(artifactName, version, getCredentialsRep()));
         } else if (artifactName != null) {
-            printResponse(installationManagerProxy.getDownloads(artifactName));
+            printResponse(installationManagerProxy.getDownloads(artifactName, getCredentialsRep()));
         } else {
-            printResponse(installationManagerProxy.getDownloads());
+            printResponse(installationManagerProxy.getDownloads(getCredentialsRep()));
         }
     }
 

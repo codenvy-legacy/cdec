@@ -100,8 +100,10 @@ public class TestInstallationManager {
         FileUtils.deleteDirectory(Paths.get("target", "download").toFile());
     }
 
-    @Test
-    public void testInstallArtifactDoNothingIfArtifactInstalled() throws Exception {
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1', " +
+                                            "because greater or equal version has already been installed.")
+    public void testReInstallAlreadyInstalledArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("2.10.1"), Paths.get("target/download/installation-manager/2.10.1/file1"));
@@ -135,8 +137,10 @@ public class TestInstallationManager {
         verify(cdecArtifact).install(any(Path.class));
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testInstallArtifactErrorIfArtifactInstalledNewly() throws Exception {
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0', " +
+                                            "because greater or equal version has already been installed.")
+    public void testInstallArtifactErrorIfInstalledArtifactHasGreaterVersion() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("2.10.0"), Paths.get("target/download/installation-manager/2.10.0/file1"));
@@ -145,6 +149,18 @@ public class TestInstallationManager {
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0");
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = "CDEC installation is not supported yet.")
+    public void testInstallCDECArtifact() throws Exception {
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("3.0.0"), Paths.get("target/download/cdec/3.0.0/file1"));
+            }});
+        }}).when(manager).getDownloadedArtifacts();
+
+        manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0");
     }
 
     @Test

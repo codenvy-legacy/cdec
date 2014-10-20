@@ -134,14 +134,8 @@ public class TestInstallInstallationManagerServiceImpl {
                 put(mockInstallManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
-        doReturn(new LinkedHashMap<Artifact, String>() {
-            {
-                put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
-                put(createArtifact(mockInstallManagerArtifact.getName()), "1.0");
-            }
-        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
-        doThrow(new IllegalStateException(
-                "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
+
+        doThrow(new IllegalStateException("Can not install artifact."))
                 .when(mockInstallationManager).install(testCredentials.getToken(), mockCdecArtifact, "2.10.5");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
@@ -152,7 +146,7 @@ public class TestInstallInstallationManagerServiceImpl {
                                                       "    \"status\": \"FAILURE\",\n" +
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +
-                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
+                                                      "  \"message\": \"Can not install artifact.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }

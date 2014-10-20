@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -246,6 +247,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public int getPriority() {
         return 1;
+    }
+
+    /**
+     * @return true if only installed version is less than versionToInstall
+     */
+    @Override public boolean isInstallable(Version versionToInstall, String authToken) throws IOException {
+        return Version.valueOf(getInstalledVersion(authToken)).compareTo(versionToInstall) < 0;
     }
 
     @Override
