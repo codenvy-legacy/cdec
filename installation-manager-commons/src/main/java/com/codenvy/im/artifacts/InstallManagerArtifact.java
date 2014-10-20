@@ -203,17 +203,17 @@ public class InstallManagerArtifact extends AbstractArtifact {
         StringBuilder stringBuilder = new StringBuilder(200);
 
         stringBuilder.append("sleep 5 ; ") // a little bit time to answer to CLI
-                     .append(installedPath).append("/installation-manager stop ; ")
-                     .append("cp -r ")
-                     .append(unpackedUpdates.toFile().getAbsolutePath())
-                     .append("/* ")
-                     .append(installedPath)
-                     .append(" ; ")
-                     .append("chmod +x " + installedPath + "/installation-manager ; ")
-                     .append("rm -rf ")
-                     .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
-                     .append(" ; ")
-                     .append(installedPath).append("/installation-manager start ");
+                .append(installedPath).append("/installation-manager stop ; ")
+                .append("cp -r ")
+                .append(unpackedUpdates.toFile().getAbsolutePath())
+                .append("/* ")
+                .append(installedPath)
+                .append(" ; ")
+                .append("chmod +x " + installedPath + "/installation-manager ; ")
+                .append("rm -rf ")
+                .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
+                .append(" ; ")
+                .append(installedPath).append("/installation-manager start ");
 
         runCommand(stringBuilder.toString());
     }
@@ -249,10 +249,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
         return 1;
     }
 
-    /**
-     * @return true if only installed version is less than versionToInstall
-     */
-    @Override public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
+    @Override
+    public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
         return Version.valueOf(getInstalledVersion(accessToken)).compareTo(versionToInstall) < 0;
     }
 
