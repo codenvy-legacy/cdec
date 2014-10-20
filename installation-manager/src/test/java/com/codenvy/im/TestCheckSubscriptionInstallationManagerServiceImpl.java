@@ -136,7 +136,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. Start date attribute isn't exist\",\n" +
+                                                      "  \"message\": \"Can't validate subscription. Start date attribute is absent\",\n" +
                                                       "  \"status\": \"ERROR\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");
@@ -155,7 +155,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. Start date attribute isn't exist\",\n" +
+                                                      "  \"message\": \"Can't validate subscription. Start date attribute is absent\",\n" +
                                                       "  \"status\": \"ERROR\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");

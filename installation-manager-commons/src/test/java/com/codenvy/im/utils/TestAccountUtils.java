@@ -233,7 +233,7 @@ public class TestAccountUtils {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute isn't exist")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute is absent")
     public void testValidSubscriptionByDateStartDateIsAbsent() throws IOException {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, 1);
@@ -248,7 +248,7 @@ public class TestAccountUtils {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute isn't exist")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute is absent")
     public void testValidSubscriptionByDateEndDateIsAbsent() throws IOException {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
@@ -263,7 +263,7 @@ public class TestAccountUtils {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute has wrong format: 2014.10.22")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute has wrong format: .*")
     public void testInvalidSubscriptionStartDateIsWrong() throws IOException {
         SimpleDateFormat subscriptionDateWrongFormat = new SimpleDateFormat("yyyy.MM.dd");
 
@@ -284,7 +284,7 @@ public class TestAccountUtils {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute has wrong format: 2014.10.23")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute has wrong format: .*")
     public void testInvalidSubscriptionEndDateIsWrong() throws IOException {
         SimpleDateFormat subscriptionDateWrongFormat = new SimpleDateFormat("yyyy.MM.dd");
 
