@@ -43,8 +43,6 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return the priority of the artifact to install, update etc. */
     int getPriority();
 
-    /** @return true if only artifact with version = versionToInstall could be installed as it or over the already installed artifact
-     * @param versionToInstall
-     * @param authToken */
-    boolean isInstallable(Version versionToInstall, String authToken) throws IOException;
+    /** @return true if only artifact with version = versionToInstall could be installed as it or over the already installed artifact. */
+    boolean isInstallable(Version versionToInstall, String accessToken) throws IOException;
 }

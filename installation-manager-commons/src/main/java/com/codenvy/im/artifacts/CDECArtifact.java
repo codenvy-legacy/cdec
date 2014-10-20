@@ -59,7 +59,7 @@ public class CDECArtifact extends AbstractArtifact {
         return 2;
     }
 
-    @Override public boolean isInstallable(Version versionToInstall, String authToken) {
+    @Override public boolean isInstallable(Version versionToInstall, String accessToken) {
         return false;
     }
 

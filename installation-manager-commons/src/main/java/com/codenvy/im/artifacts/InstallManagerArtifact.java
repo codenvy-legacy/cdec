@@ -252,8 +252,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
     /**
      * @return true if only installed version is less than versionToInstall
      */
-    @Override public boolean isInstallable(Version versionToInstall, String authToken) throws IOException {
-        return Version.valueOf(getInstalledVersion(authToken)).compareTo(versionToInstall) < 0;
+    @Override public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
+        return Version.valueOf(getInstalledVersion(accessToken)).compareTo(versionToInstall) < 0;
     }
 
     @Override
