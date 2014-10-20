@@ -253,7 +253,7 @@ public class RepositoryService {
 
                 return Response.status(Response.Status.FORBIDDEN)
                                .entity("You can't download the artifact '" + artifact + (version != null ? ":" + version : "") + "'," +
-                                       " because you should have the valid '" + requiredSubscription + "' subscription.").build();
+                                       " because you don't have the valid '" + requiredSubscription + "' subscription.").build();
             }
 
             return doDownloadArtifact(artifact, version, false);
