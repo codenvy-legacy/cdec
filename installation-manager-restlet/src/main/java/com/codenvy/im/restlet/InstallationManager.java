@@ -19,9 +19,12 @@ package com.codenvy.im.restlet;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * @author Anatoliy Bazko
@@ -30,7 +33,6 @@ public interface InstallationManager {
 
     /**
      * Install the specific version of the artifact with version greater than installed.
-     *
      *
      * @param authToken
      *         the authentication token
@@ -50,6 +52,13 @@ public interface InstallationManager {
     Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException;
 
     /**
+     * @return downloaded artifacts from the local repository
+     * @throws IOException
+     *         if an I/O error occurs
+     */
+    Map<Artifact, SortedMap<Version, Path>> getDownloadedArtifacts() throws IOException;
+
+    /**
      * @param authToken
      *         the authentication token
      * @return the list of the artifacts to update.
@@ -61,10 +70,31 @@ public interface InstallationManager {
     /**
      * Download the specific version of the artifact.
      *
+     * @return path to downloaded artifact
      * @throws java.io.IOException
      *         if an I/O error occurred
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    void download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
+    Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
+
+    /** @return the configuration */
+    Map<String, String> getConfig();
+
+    /** Sets new configuration */
+    void setConfig(InstallationManagerConfig config) throws IOException;
+
+    /**
+     * @return path to artifact into the local repository
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    Path getPathToBinaries(Artifact artifact, String version) throws IOException;
+
+    /**
+     * @return size in bytes of the artifact
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    Long getBinariesSize(Artifact artifact, String version) throws IOException;
 }

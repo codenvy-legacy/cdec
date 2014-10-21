@@ -17,26 +17,47 @@
  */
 package com.codenvy.im;
 
+import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.response.*;
+import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactInfoEx;
+import com.codenvy.im.response.DownloadArtifactInfo;
+import com.codenvy.im.response.DownloadStatusInfo;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManager;
+import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-import com.codenvy.im.utils.InjectorBootstrap;
+import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.CountDownLatch;
 
+import static com.codenvy.im.DownloadingDescriptor.createDescriptor;
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.codenvy.im.response.ResponseCode.ERROR;
+import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
+import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
 
 /**
  * @author Dmytro Nochevnov
@@ -44,48 +65,273 @@ import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
  */
 public class InstallationManagerServiceImpl extends ServerResource implements InstallationManagerService {
     protected final InstallationManager manager;
+    protected final HttpTransport       transport;
 
-    private final String updateServerUrl;
+    private final DownloadingDescriptorHolder downloadingDescriptorHolder;
+
+    private final String updateServerEndpoint;
+    private final String apiEndpoint;
 
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
-        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("installation-manager.update_server_endpoint"));
+        this.transport = INJECTOR.getInstance(HttpTransport.class);
+        this.downloadingDescriptorHolder = INJECTOR.getInstance(DownloadingDescriptorHolder.class);
+        this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
+        this.apiEndpoint = getProperty("api.endpoint");
     }
 
     /** For testing purpose only. */
     @Deprecated
-    protected InstallationManagerServiceImpl(InstallationManager manager) {
+    protected InstallationManagerServiceImpl(InstallationManager manager,
+                                             HttpTransport transport,
+                                             DownloadingDescriptorHolder downloadingDescriptorHolder) {
         this.manager = manager;
-        updateServerUrl = extractServerUrl(InjectorBootstrap.getProperty("installation-manager.update_server_endpoint"));
+        this.transport = transport;
+        this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
+        this.apiEndpoint = getProperty("api.endpoint");
+        this.downloadingDescriptorHolder = downloadingDescriptorHolder;
     }
 
     /** {@inheritDoc} */
     @Override
-    public String getUpdateServerUrl() {
-        return updateServerUrl;
+    public String getUpdateServerEndpoint() {
+        return updateServerEndpoint;
     }
 
     /** {@inheritDoc} */
     @Override
-    public String download(JacksonRepresentation<UserCredentials> userCredentialsRep) {
+    public String checkSubscription(String subscription, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        try {
+            boolean subscriptionValidated = isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
+
+            if (subscriptionValidated) {
+                return new Response.Builder().withStatus(ResponseCode.OK)
+                                             .withParam("Subscription", subscription)
+                                             .withMessage("Subscription is valid")
+                                             .build().toJson();
+            } else {
+                return new Response.Builder().withStatus(ERROR)
+                                             .withParam("Subscription", subscription)
+                                             .withMessage("Subscription not found or outdated").build().toJson();
+            }
+        } catch (Exception e) {
+            return new Response.Builder().withStatus(ERROR)
+                                         .withParam("Subscription", subscription)
+                                         .withMessage(e.getMessage())
+                                         .build().toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String startDownload(String downloadDescriptorId, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        return doStartDownload(null, null, downloadDescriptorId, userCredentialsRep);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String startDownload(String artifactName,
+                                String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        return doStartDownload(artifactName, null, downloadDescriptorId, userCredentialsRep);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String startDownload(String artifactName,
+                                String version,
+                                String downloadDescriptorId,
+                                JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        return doStartDownload(artifactName, version, downloadDescriptorId, userCredentialsRep);
+    }
+
+    private String doStartDownload(@Nullable final String artifactName,
+                                   @Nullable final String version,
+                                   final String downloadDescriptorId,
+                                   final JacksonRepresentation<UserCredentials> userCredentialsRep) {
+        try {
+            final CountDownLatch latcher = new CountDownLatch(1);
+
+            new Thread() {
+                @Override
+                public void run() {
+                    download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher);
+                }
+            }.start();
+
+            latcher.await();
+
+            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    private void download(@Nullable String artifactName,
+                          @Nullable String version,
+                          String downloadDescriptorId,
+                          JacksonRepresentation<UserCredentials> userCredentialsRep,
+                          CountDownLatch latcher) {
+
+        List<ArtifactInfo> infos = null;
+        try {
+            UserCredentials userCredentials = userCredentialsRep.getObject();
+
+            Map<Artifact, String> updates = filter(artifactName, version, userCredentials);
+            updates = skipDownloadedArtifacts(updates);
+
+            infos = new ArrayList<>(updates.size());
+
+            DownloadingDescriptor downloadingDescriptor = createDescriptor(updates, manager);
+            downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
+
+            latcher.countDown();
+
+            for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+                Artifact artToDownload = e.getKey();
+                String verToDownload = e.getValue();
+
+                try {
+                    Path pathToBinaries = doDownload(userCredentials, artToDownload, verToDownload);
+                    infos.add(new DownloadArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
+                } catch (Exception exp) {
+                    infos.add(new ArtifactInfoEx(artToDownload, verToDownload, Status.FAILURE));
+                    downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
+                                                                                  .withMessage(exp.getMessage())
+                                                                                  .withArtifacts(infos)
+                                                                                  .build()
+                                                                                  .toJson());
+                    return;
+                }
+            }
+
+            downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
+                                                                          .withArtifacts(infos)
+                                                                          .build()
+                                                                          .toJson());
+        } catch (Exception e) {
+            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+
+            if (descriptor == null) {
+                descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
+                descriptor.setDownloadResult(Response.valueOf(e).toJson());
+                downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
+            } else {
+                descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
+                                                                   .withMessage(e.getMessage())
+                                                                   .withArtifacts(infos)
+                                                                   .build()
+                                                                   .toJson());
+            }
+
+            if (latcher.getCount() == 1) {
+                latcher.countDown();
+            }
+        }
+    }
+
+    private Map<Artifact, String> skipDownloadedArtifacts(Map<Artifact, String> updates) throws IOException {
+        Map<Artifact, SortedMap<Version, Path>> downloaded = manager.getDownloadedArtifacts();
+
+        Map<Artifact, String> artifacts2Download = new LinkedHashMap<>();
+        for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+            Artifact artifact = e.getKey();
+            Version version = Version.valueOf(e.getValue());
+
+            if (!downloaded.containsKey(artifact) || !downloaded.get(artifact).containsKey(version)) {
+                artifacts2Download.put(artifact, version.toString());
+            }
+        }
+
+        return artifacts2Download;
+    }
+
+    /** Filters what need to download, either all updates or a specific one. */
+    private Map<Artifact, String> filter(@Nullable final String artifactName,
+                                         @Nullable final String version,
+                                         UserCredentials userCredentials) throws IOException {
+
+        final Map<Artifact, String> updates = manager.getUpdates(userCredentials.getToken());
+
+        if (artifactName != null) {
+            final Artifact artifact = createArtifact(artifactName);
+
+            if (updates.containsKey(artifact)) {
+                if (version != null) {
+                    return new HashMap<Artifact, String>() {{
+                        put(artifact, version);
+                    }};
+                } else {
+                    return new HashMap<Artifact, String>() {{
+                        put(artifact, updates.get(artifact));
+                    }};
+                }
+            } else {
+                throw new ArtifactNotFoundException(artifactName);
+            }
+        }
+
+        return updates;
+    }
+
+    protected Path doDownload(UserCredentials userCredentials,
+                              Artifact artifact,
+                              String version) throws IOException, IllegalStateException {
+        return manager.download(userCredentials, artifact, version);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String downloadStatus(final String downloadDescriptorId) {
+        try {
+            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+
+            if (descriptor == null) {
+                return new Response.Builder().withStatus(ERROR)
+                                             .withMessage("Can't get downloading descriptor ID").build().toJson();
+            }
+
+            if (descriptor.getDownloadResult() != null && ERROR.in(descriptor.getDownloadResult())) {
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, descriptor.getDownloadResult());
+                return new Response.Builder().withStatus(ResponseCode.ERROR).withDownloadInfo(info).build().toJson();
+            }
+
+            long downloadedSize = descriptor.getDownloadedSize();
+            int percents = (int)Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
+
+            if (descriptor.isDownloadingFinished()) {
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, descriptor.getDownloadResult());
+                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
+            } else {
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
+                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
+            }
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getDownloads(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
 
-            Map<Artifact, String> updates = manager.getUpdates(token);
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
             List<ArtifactInfo> infos = new ArrayList<>();
+            SortedMap<Version, Path> versions = downloadedArtifacts.get(ArtifactFactory.createArtifact(artifactName));
 
-            for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
-                Artifact artifact = entry.getKey();
-                String version = entry.getValue();
+            if (versions != null && !versions.isEmpty()) {
+                for (Map.Entry<Version, Path> e : versions.entrySet()) {
+                    Version version = e.getKey();
+                    Path pathToBinaries = e.getValue();
+                    Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+                    Status status = artifact.isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                try {
-                    doDownload(userCredentials, artifact, version);
-                    infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
-                } catch (Exception e) {
-                    infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
-                    return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), status));
                 }
             }
 
@@ -97,41 +343,57 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String download(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+    public String getDownloads(String artifactName,
+                               String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
 
             Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-            String version = manager.getUpdates(token).get(artifact);
-            if (version == null) {
-                throw new ArtifactNotFoundException(artifact.getName());
-            }
+            Version v = Version.valueOf(version);
 
-            try {
-                doDownload(userCredentials, artifact, version);
-                ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.SUCCESS);
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-            } catch (Exception e) {
-                ArtifactInfoEx info = new ArtifactInfoEx(artifact, version, Status.FAILURE);
-                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            List<ArtifactInfo> infos = new ArrayList<>();
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            if (downloadedArtifacts.get(artifact) != null && downloadedArtifacts.get(artifact).containsKey(v)) {
+                Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
+                Status status = artifact.isInstallable(v, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+
+                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), status));
+
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+            } else {
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
             }
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }
     }
 
-    /** {@inheritDoc} */
+    /** {@inheritDoc}
+     * @param userCredentialsRep*/
     @Override
-    public String download(String artifactName, String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+    public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
-            doDownload(userCredentials, artifactName, version);
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.SUCCESS);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+            String token = userCredentials.getToken();
+
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            List<ArtifactInfo> infos = new ArrayList<>();
+            for (Map.Entry<Artifact, SortedMap<Version, Path>> artifact : downloadedArtifacts.entrySet()) {
+                for (Map.Entry<Version, Path> e : artifact.getValue().entrySet()) {
+                    Version version = e.getKey();
+                    Path pathToBinaries = e.getValue();
+                    Status status = artifact.getKey().isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+
+                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), status));
+                }
+            }
+
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
         } catch (Exception e) {
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, version, Status.FAILURE);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            return Response.valueOf(e).toJson();
         }
     }
 
@@ -143,7 +405,23 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String token = userCredentials.getToken();
 
             Map<Artifact, String> updates = manager.getUpdates(token);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(updates).build().toJson();
+            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
+            for (Map.Entry<Artifact, String> e : updates.entrySet()) {
+                Artifact artifact = e.getKey();
+                String version = e.getValue();
+
+                if (downloadedArtifacts.containsKey(artifact)
+                    && downloadedArtifacts.get(artifact).containsKey(Version.valueOf(version))) {
+
+                    infos.add(new ArtifactInfoEx(artifact, version, Status.DOWNLOADED));
+                } else {
+                    infos.add(new ArtifactInfo(artifact, version));
+                }
+            }
+
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }
@@ -153,14 +431,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Override
     public void obtainChallengeRequest() {
         // do nothing
-    }
-
-    protected void doDownload(UserCredentials userCredentials, String artifactName, @Nullable String version) throws IOException, IllegalStateException {
-        doDownload(userCredentials, ArtifactFactory.createArtifact(artifactName), version);
-    }
-
-    protected void doDownload(UserCredentials userCredentials, Artifact artifact, @Nullable String version) throws IOException, IllegalStateException {
-        manager.download(userCredentials, artifact, version);
     }
 
     /** {@inheritDoc} */
@@ -182,7 +452,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
             } catch (Exception e) {
                 infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
-                return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
+                return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
             }
         }
 
@@ -206,13 +476,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, @Nullable String version, JacksonRepresentation<UserCredentials> userCredentialsRep)
-            throws IOException {
-        UserCredentials userCredentials = userCredentialsRep.getObject();
-        String token = userCredentials.getToken();
+    public String install(String artifactName,
+                          @Nullable String version,
+                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        String token;
+        Artifact artifact;
+        String toInstallVersion;
 
-        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-        String toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
+        try {
+            UserCredentials userCredentials = userCredentialsRep.getObject();
+            token = userCredentials.getToken();
+
+            artifact = createArtifact(artifactName);
+            toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
 
         if (toInstallVersion == null) {
             return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
@@ -224,12 +503,45 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
-            return new Response.Builder().withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Nullable
+    public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        String token = userCredentials.getToken();
+        return AccountUtils.getAccountIdWhereUserIsOwner(transport, apiEndpoint, token);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        return AccountUtils.isValidAccountId(transport, apiEndpoint, userCredentials);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getConfig() {
+        JsonStringMapImpl<String> config = new JsonStringMapImpl<>(manager.getConfig());
+        return new Response.Builder().withStatus(ResponseCode.OK).withParam("config", config).build().toJson();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep) {
+        try {
+            manager.setConfig(configRep.getObject());
+            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
         }
     }
 
     protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
         manager.install(token, artifact, version);
     }
-
 }

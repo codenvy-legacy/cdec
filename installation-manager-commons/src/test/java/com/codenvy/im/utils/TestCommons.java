@@ -104,10 +104,29 @@ public class TestCommons {
     }
 
     @Test
+    public void testCreateDtoFromJson() throws Exception {
+        MemberDescriptor d = Commons.createDtoFromJson("{userId:id,accountReference:{id:accountId,name:accountName}}", MemberDescriptor.class);
+
+        assertEquals(d.getUserId(), "id");
+        assertNotNull(d.getAccountReference());
+        assertEquals(d.getAccountReference().getId(), "accountId");
+        assertEquals(d.getAccountReference().getName(), "accountName");
+    }
+
+    @Test
     public void testMapFromJson() throws Exception {
         Map m = Commons.fromJson("{a=b,c=d}", Map.class);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "b");
         assertEquals(m.get("c"), "d");
+    }
+
+    @Test
+    public void testCalculateMD5Sum() throws Exception {
+        Path testFile = Paths.get("target", "testFile");
+        Files.write(testFile, "SomeText".getBytes());
+
+        String expectedMD5Sum = "5b6865e9622804fd70324543d06869c4"; // calculated by md5sum linux command
+        assertEquals(Commons.calculateMD5Sum(testFile), expectedMD5Sum);
     }
 }

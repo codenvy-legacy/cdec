@@ -19,6 +19,7 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.codenvy.im.utils.SecureSHell;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,9 +30,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * @author Anatoliy Bazko
- */
+/** @author Anatoliy Bazko */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
@@ -225,16 +224,18 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     @Override
-    public String getCurrentVersion(String accessToken) throws IOException {
-        /*String json = transport.doGetRequest(combinePaths(updateEndpoint, "repository/installationinfo/" + NAME), accessToken);
-        Map m = Commons.fromJson(json, Map.class);
-        return (String)m.get("version");*/
-        return null;
+    public String getInstalledVersion(String accessToken) throws IOException {
+        return "UNKNOWN";
     }
 
     @Override
     public int getPriority() {
         return 2;
+    }
+
+    @Override
+    public boolean isInstallable(Version versionToInstall, String accessToken) {
+        return false; // temporarily
     }
 
     @Override

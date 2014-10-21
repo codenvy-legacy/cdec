@@ -43,16 +43,16 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager        mockInstallationManager;
-    private HttpTransport              mockTransport;
-    private Artifact                   mockInstallManagerArtifact;
-    private Artifact                   mockCdecArtifact;
-    private UserCredentials            testCredentials;
-    
+    private InstallationManager         mockInstallationManager;
+    private HttpTransport               mockTransport;
+    private Artifact                    mockInstallManagerArtifact;
+    private Artifact                    mockCdecArtifact;
+    private UserCredentials             testCredentials;
+
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, mockTransport, new DownloadingDescriptorHolder());
         testCredentials = new UserCredentials("auth token");
     }
 
@@ -62,7 +62,7 @@ public class TestInstallInstallationManagerServiceImpl {
         mockInstallManagerArtifact = spy(new InstallManagerArtifact());
         mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
     }
-     
+
     @Test
     public void testInstall() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
@@ -134,14 +134,8 @@ public class TestInstallInstallationManagerServiceImpl {
                 put(mockInstallManagerArtifact, "1.0.1");
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
-        doReturn(new LinkedHashMap<Artifact, String>() {
-            {
-                put(createArtifact(mockCdecArtifact.getName()), "2.10.6");
-                put(createArtifact(mockInstallManagerArtifact.getName()), "1.0");
-            }
-        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
-        doThrow(new IllegalStateException(
-                "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
+
+        doThrow(new IllegalStateException("Can not install artifact."))
                 .when(mockInstallationManager).install(testCredentials.getToken(), mockCdecArtifact, "2.10.5");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
@@ -152,7 +146,7 @@ public class TestInstallInstallationManagerServiceImpl {
                                                       "    \"status\": \"FAILURE\",\n" +
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +
-                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
+                                                      "  \"message\": \"Can not install artifact.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
@@ -403,6 +397,23 @@ public class TestInstallInstallationManagerServiceImpl {
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +
                                                       "  \"status\": \"OK\"\n" +
+                                                      "}");
+    }
+
+    @Test
+    public void testInstallErrorIfUnknownArtifact() throws Exception {
+        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+        doReturn(new LinkedHashMap<Artifact, String>() {
+            {
+                put(createArtifact(mockCdecArtifact.getName()), "2.10.7");
+            }
+        }).when(mockInstallationManager).getInstalledArtifacts(testCredentials.getToken());
+
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.install("qwerty", userCredentialsRep);
+        assertEquals(getPrettyPrintingJson(response), "{\n" +
+                                                      "  \"message\": \"Artifact 'qwerty' not found\",\n" +
+                                                      "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
 }

@@ -19,7 +19,6 @@ package com.codenvy.im.update;
 
 import com.codenvy.commons.user.UserImpl;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
@@ -39,13 +38,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.*;
+import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
+import static java.util.Calendar.getInstance;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
@@ -64,8 +63,8 @@ public class TestRepositoryService extends BaseTest {
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
     }};
-    private final Properties subscriptionProperties   = new Properties() {{
-        put(SUBSCRIPTION_PROPERTY, "On-Premises");
+    private final Properties subscriptionProperties           = new Properties() {{
+        put(SUBSCRIPTION_PROPERTY, "OnPremises");
     }};
 
     {
@@ -147,16 +146,17 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 2);
+        assertEquals(value.size(), 3);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
+        assertNull(value.get(MD5_PROPERTY));
     }
 
     @Test
     public void testGetArtifactProperties() throws Exception {
-        Map testProperties = new HashMap() {{
+        Map testProperties = new HashMap<String, String>() {{
             put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
-            put(SUBSCRIPTION_PROPERTY, "On-Premises");
+            put(SUBSCRIPTION_PROPERTY, "OnPremises");
         }};
         
         Properties testPropertiesContainer = new Properties();
@@ -168,10 +168,11 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.fromJson(response.body().asString(), Map.class);
-        assertEquals(value.size(), 3);
+        assertEquals(value.size(), 4);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.1");
         assertEquals(value.get(AUTHENTICATION_REQUIRED_PROPERTY), "true");
+        assertNull(value.get(MD5_PROPERTY));
     }
     
     @Test
@@ -200,12 +201,24 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicWithSubscription() throws Exception {
+        SimpleDateFormat  subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+        Calendar cal = getInstance();
+        cal.add(Calendar.DATE, -1);
+        String startDate = subscriptionDateFormat.format(cal.getTime());
+
+        cal = getInstance();
+        cal.add(Calendar.DATE, 1);
+        String endDate = subscriptionDateFormat.format(cal.getTime());
+
         when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
         .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         
         when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
-        .thenReturn("[{serviceId:On-Premises}]");
-        
+        .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
+
+        when(transport.doGetRequest("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
+        .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
@@ -257,36 +270,6 @@ public class TestRepositoryService extends BaseTest {
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    @Test
-    public void testDownloadPrivateWhenUserAccountHasInvalidRoleError() throws Exception {
-        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
-               .thenReturn("[{roles:[\"account/member\"],accountReference:{id:accountId}}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
-
-        Response response = given().auth()
-               .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
-               .when()
-               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.asString().contains(AccountUtils.VALID_ACCOUNT_NOT_FOUND_ERROR));
-    }
-
-    @Test
-    public void testDownloadPrivateErrorIfAccountHasnotArtifactId() throws Exception {
-        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
-               .thenReturn("[{roles:[\"account/owner\"],accountReference:null}]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
-
-        Response response = given().auth()
-               .basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
-               .when()
-               .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
-        
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.asString().contains(AccountUtils.ACCOUNT_NOT_FOUND_ERROR));
     }
 
     @Test

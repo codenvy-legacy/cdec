@@ -45,7 +45,7 @@ public class TestArtifactPropertiesUtils {
             + "\"artifact\":\"installation-manager\","
             + "\"version\":\"2.0.4\","
             + "\"authentication-required\":\"true\","
-            + "\"subscription\":\"On-Premises\""            
+            + "\"subscription\":\"OnPremises\""
             + "}");
     
         assertEquals(ArtifactPropertiesUtils.isAuthenticationRequired(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), true);
@@ -58,9 +58,9 @@ public class TestArtifactPropertiesUtils {
             + "\"artifact\":\"installation-manager\","
             + "\"version\":\"2.0.4\","
             + "\"authentication-required\":\"true\","
-            + "\"subscription\":\"On-Premises\""            
+            + "\"subscription\":\"OnPremises\""
             + "}");
-    
-        assertEquals(ArtifactPropertiesUtils.getSubscription(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), "On-Premises");
+
+        assertEquals(ArtifactPropertiesUtils.getSubscription(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), "OnPremises");
     }    
 }

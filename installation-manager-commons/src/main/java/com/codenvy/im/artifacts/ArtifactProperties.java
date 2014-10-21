@@ -28,11 +28,16 @@ public class ArtifactProperties {
     public static final String FILE_NAME_PROPERTY               = "file";
     public static final String AUTHENTICATION_REQUIRED_PROPERTY = "authentication-required";
     public static final String SUBSCRIPTION_PROPERTY            = "subscription";
+    public static final String MD5_PROPERTY                     = "md5";
+    public static final String SIZE_PROPERTY                    = "size";
 
     public static final Set<String> PUBLIC_PROPERTIES = new HashSet<String>() {{
         add(VERSION_PROPERTY);
         add(ARTIFACT_PROPERTY);
         add(BUILD_TIME_PROPERTY);
         add(AUTHENTICATION_REQUIRED_PROPERTY);
+        add(FILE_NAME_PROPERTY);
+        add(MD5_PROPERTY);
+        add(SIZE_PROPERTY);
     }};
 }

@@ -26,7 +26,9 @@ import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.HttpTransport;
 
+import org.mockito.Mockito;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -44,20 +46,22 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class TestGetUpdatesInstallationManagerServiceImpl {
-    private InstallationManagerService      installationManagerService;
+    private InstallationManagerService installationManagerService;
 
-    private InstallationManager             mockInstallationManager;
-    private Artifact                        installManagerArtifact;
-    private Artifact                        cdecArtifact;
-    
+    private InstallationManager         mockInstallationManager;
+    private HttpTransport               transport;
+    private Artifact                    installManagerArtifact;
+    private Artifact                    cdecArtifact;
+
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager);
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
     }
 
     public void initMocks() {
         mockInstallationManager = mock(InstallationManagerImpl.class);
+        transport = Mockito.mock(HttpTransport.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }
@@ -72,7 +76,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         });
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
-        
+
         String response = installationManagerService.getUpdates(userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
                                                       "  \"artifacts\": [\n" +

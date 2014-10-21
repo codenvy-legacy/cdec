@@ -39,7 +39,13 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -105,7 +111,7 @@ public class RepositoryService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/properties/{artifact}")
-    public Response getLatestVersionArtifactProperties(@PathParam("artifact") final String artifact) {
+    public Response getArtifactProperties(@PathParam("artifact") final String artifact) {
         try {
             String version = artifactStorage.getLatestVersion(artifact);
             Map<String, String> properties = doGetArtifactProperties(artifact, version);
@@ -245,7 +251,9 @@ public class RepositoryService {
             UserCredentials userCredentials = new UserCredentials(userManager.getCurrentUser().getToken(), accountId);
             if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
 
-                return Response.status(Response.Status.FORBIDDEN).entity("User must have valid subscription.").build();
+                return Response.status(Response.Status.FORBIDDEN)
+                               .entity("You can't download the artifact '" + artifact + (version != null ? ":" + version : "") + "'," +
+                                       " because you don't have the valid '" + requiredSubscription + "' subscription.").build();
             }
 
             return doDownloadArtifact(artifact, version, false);

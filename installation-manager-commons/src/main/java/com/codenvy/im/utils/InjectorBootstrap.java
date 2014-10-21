@@ -29,11 +29,16 @@ import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newInputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -64,8 +69,29 @@ public class InjectorBootstrap {
             }
 
             private void bindProperties(Binder binder) {
-                Properties properties = new Properties();
                 try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
+                    doBindProperties(in);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Can't load properties", e);
+                }
+
+                Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
+                if (exists(conf)) {
+                    try (InputStream in = newInputStream(conf)) {
+                        doBindProperties(in);
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Can't load properties", e);
+                    }
+                }
+
+                for (Map.Entry<String, String> e : boundProperties.entrySet()) {
+                    binder.bindConstant().annotatedWith(Names.named(e.getKey())).to(e.getValue());
+                }
+            }
+
+            private void doBindProperties(InputStream in) {
+                Properties properties = new Properties();
+                try {
                     properties.load(in);
                 } catch (IOException e) {
                     throw new IllegalStateException("Can't load properties", e);
@@ -76,13 +102,10 @@ public class InjectorBootstrap {
                     String value = replaceEnvVariables((String)entry.getValue());
 
                     boundProperties.put(key, value);
-                    binder.bindConstant().annotatedWith(Names.named(key)).to(value);
                 }
             }
 
-            /**
-             * Replaces environment variables by them actual values using ${...} template.
-             */
+            /** Replaces environment variables by them actual values using ${...} template. */
             private String replaceEnvVariables(String value) {
                 Matcher matcher = envPattern.matcher(value);
                 if (matcher.find()) {

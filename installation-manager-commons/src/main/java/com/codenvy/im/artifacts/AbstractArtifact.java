@@ -17,17 +17,25 @@
  */
 package com.codenvy.im.artifacts;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.nio.file.attribute.FileTime;
+
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.setLastModifiedTime;
+import static org.apache.commons.io.IOUtils.copy;
 
 /**
  * @author Anatoliy Bazko
@@ -71,12 +79,27 @@ public abstract class AbstractArtifact implements Artifact {
         return getPriority() - o.getPriority();
     }
 
-    protected void unpack(Path pathToBinaries, Path unpackToDir) throws IOException, URISyntaxException {
-        try (ZipInputStream in = new ZipInputStream(Files.newInputStream(pathToBinaries))) {
-            ZipEntry entry;
-            while ((entry = in.getNextEntry()) != null) {
-                try (FileOutputStream out = new FileOutputStream(unpackToDir.resolve(entry.getName()).toFile())) {
-                    IOUtils.copy(in, out);
+    public void unpack(Path pathToBinaries, Path unpackToDir) throws IOException, URISyntaxException {
+        try (TarArchiveInputStream in = new TarArchiveInputStream(
+                new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pathToBinaries))))) {
+
+            TarArchiveEntry tarEntry;
+            while ((tarEntry = in.getNextTarEntry()) != null) {
+                Path destPath = unpackToDir.resolve(tarEntry.getName());
+
+                if (tarEntry.isDirectory()) {
+                    if (!Files.exists(destPath)) {
+                        createDirectories(destPath);
+                    }
+                } else {
+                    if (!Files.exists(destPath.getParent())) {
+                        createDirectories(destPath.getParent());
+                    }
+
+                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
+                        copy(in, out);
+                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
+                    }
                 }
             }
         }

@@ -20,7 +20,14 @@ package com.codenvy.im.response;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 
-import java.util.*;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmytro Nochevnov
@@ -68,8 +75,12 @@ public class Response {
             return withArtifacts(infos);
         }
 
-        public Builder withArtifacts(List<ArtifactInfo> l) {
-            params.put(Property.ARTIFACTS.toString().toLowerCase(), l);
+        public Builder withArtifacts(@Nullable List<ArtifactInfo> l) {
+            if (l == null) {
+                params.put(Property.ARTIFACTS.toString().toLowerCase(), Collections.emptyList());
+            } else {
+                params.put(Property.ARTIFACTS.toString().toLowerCase(), l);
+            }
             return this;
         }
 
@@ -85,8 +96,18 @@ public class Response {
             return withParam(Property.MESSAGE, value);
         }
 
+        public Builder withParam(String key, Object value) {
+            params.put(key.toLowerCase(), value);
+            return this;
+        }
+
         private Builder withParam(Property key, String value) {
             params.put(key.toString().toLowerCase(), value);
+            return this;
+        }
+
+        public Builder withDownloadInfo(DownloadStatusInfo info) {
+            params.put(Property.DOWNLOAD_INFO.toString().toLowerCase(), info);
             return this;
         }
     }

@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedOutputStream;
@@ -48,14 +47,11 @@ import java.util.regex.Pattern;
 public class HttpTransport {
     private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
 
-    private final String proxyUrl;
-    private final int    proxyPort;
+    private final HttpTransportConfiguration transportConf;
 
     @Inject
-    public HttpTransport(@Named("installation-manager.proxy_url") String proxyUrl,
-                         @Named("installation-manager.proxy_port") int proxyPort) {
-        this.proxyUrl = proxyUrl;
-        this.proxyPort = proxyPort;
+    public HttpTransport(HttpTransportConfiguration transportConf) {
+        this.transportConf = transportConf;
     }
 
     /**
@@ -161,8 +157,8 @@ public class HttpTransport {
 
     private HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
         HttpURLConnection connection;
-        if (!proxyUrl.isEmpty() && proxyPort > 0) {
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyUrl, proxyPort));
+        if (transportConf.isProxyConfValid()) {
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(transportConf.getProxyUrl(), transportConf.getProxyPort()));
             connection = (HttpURLConnection)new URL(path).openConnection(proxy);
         } else {
             connection = (HttpURLConnection)new URL(path).openConnection();

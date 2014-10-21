@@ -1,0 +1,17 @@
+{
+    "version" : "1.0",
+    "config" : { },
+    "remotes" : {
+        "default" : {
+            "defaultRemote" : true,
+            "url" : "http://codenvy-next.com"
+        },
+        "CodenvyUpdateServer" : {
+            "token" : "authToken",
+            "defaultRemote" : false,
+            "username" : "test@test.com",
+            "url" : "https://test.com",
+            "accountId" : "test-account-id"
+        }
+    }
+}

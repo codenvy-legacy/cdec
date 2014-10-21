@@ -80,7 +80,7 @@ public class TestArtifactStorage extends BaseTest {
         properties.put(BUILD_TIME_PROPERTY, "20140930");
         properties.put(FILE_NAME_PROPERTY, "installation-manager-1.0.1.zip");
         properties.put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
-        properties.put(SUBSCRIPTION_PROPERTY, "On-Premises");
+        properties.put(SUBSCRIPTION_PROPERTY, "OnPremises");
         artifactStorage.storeProperties("installation-manager", "1.0.1", properties);
 
         assertTrue(Files.exists(propertiesFile));
@@ -92,9 +92,9 @@ public class TestArtifactStorage extends BaseTest {
         assertEquals(properties.getProperty(BUILD_TIME_PROPERTY), "20140930");
         assertEquals(properties.getProperty(FILE_NAME_PROPERTY), "installation-manager-1.0.1.zip");
         assertEquals(properties.getProperty(AUTHENTICATION_REQUIRED_PROPERTY), "true");
-        assertEquals(properties.getProperty(SUBSCRIPTION_PROPERTY), "On-Premises");
+        assertEquals(properties.getProperty(SUBSCRIPTION_PROPERTY), "OnPremises");
 
-        assertEquals(artifactStorage.getRequiredSubscription("installation-manager", "1.0.1"), "On-Premises");
+        assertEquals(artifactStorage.getRequiredSubscription("installation-manager", "1.0.1"), "OnPremises");
         assertEquals(artifactStorage.getFileName("installation-manager", "1.0.1"), "installation-manager-1.0.1.zip");
     }
 

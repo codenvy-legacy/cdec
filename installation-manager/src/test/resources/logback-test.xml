@@ -51,7 +51,7 @@
 	    <appender-ref ref="file"/>
 	</root>
     
-    <logger name="com.codenvy.im.cdec" level="INFO"/>
+    <logger name="com.codenvy.im" level="INFO"/>
     
     <!-- setup logging of restlet server -->    
     <appender name="restlet-log-file" class="ch.qos.logback.core.FileAppender">

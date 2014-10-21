@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.utils.Version;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -32,18 +34,18 @@ public interface Artifact extends Comparable<Artifact> {
      */
     void install(Path pathToBinaries) throws IOException;
 
-    /**
-     * @return current deployed version of the component
-     */
-    String getCurrentVersion(String accessToken) throws IOException;
+    /** @return current installed version of the artifact */
+    String getInstalledVersion(String accessToken) throws IOException;
 
-    /**
-     * @return the artifact name
-     */
+    /** @return the artifact name */
     String getName();
 
-    /**
-     * @return the priority of the artifact to install, update etc.
-     */
+    /** @return the priority of the artifact to install, update etc. */
     int getPriority();
+
+    /**
+     * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed
+     * version of the artifact
+     */
+    boolean isInstallable(Version versionToInstall, String accessToken) throws IOException;
 }

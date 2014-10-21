@@ -31,12 +31,38 @@ else
     exit
 fi
 
+makeBundle() {
+    IM=installation-manager
+    IM_CLI=installation-manager-cli
+
+    IM_FILENAME=`ls ${IM}/target | grep -G ${IM}-.*-binary[.]tar.gz`
+    IM_SOURCE=${IM}/target/${IM_FILENAME}
+
+    IM_CLI_FILENAME=`ls ${IM_CLI}/target | grep -G ${IM_CLI}-.*-binary[.]tar.gz`
+    IM_CLI_SOURCE=${IM_CLI}/target/${IM_CLI_FILENAME}
+
+    BUNDLE_DIR=${IM}/target/im_and_im_cli
+    rm -rf ${BUNDLE_DIR}
+    mkdir ${BUNDLE_DIR}
+
+    cp ${IM_SOURCE} ${BUNDLE_DIR}
+    cp ${IM_CLI_SOURCE} ${BUNDLE_DIR}
+
+    pushd ${BUNDLE_DIR}
+    tar -zcf ../${IM_FILENAME} *
+    popd
+
+    rm -rf ${BUNDLE_DIR}
+}
+
 uploadArtifact() {
     ARTIFACT=$1
 
-    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]zip`
+    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]tar.gz`
     VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
     SOURCE=${ARTIFACT}/target/${FILENAME}
+    MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
+    SIZE=`du -b ${SOURCE} | cut -f1`
 
     doUpload
 }
@@ -47,6 +73,10 @@ uploadInstallScript() {
     SOURCE=installation-manager/bin/${FILENAME}
 
     doUpload
+
+    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 doUpload() {
@@ -56,7 +86,9 @@ doUpload() {
     echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
     echo "authentication-required=false" >> .properties
-    echo "builtime="`stat -c %y ${SOURCE}` >> .properties
+    echo "build-time="`stat -c %y ${SOURCE}` >> .properties
+    echo "md5=${MD5}" >> .properties
+    echo "size=${SIZE}" >> .properties
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
@@ -64,7 +96,8 @@ doUpload() {
     rm .properties
 }
 
+makeBundle
 uploadArtifact installation-manager
-uploadArtifact installation-manager-cli-assembly
+uploadArtifact installation-manager-cli
 uploadInstallScript
 

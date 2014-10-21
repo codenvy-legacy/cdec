@@ -21,12 +21,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>cdec-parent</artifactId>
-        <groupId>com.codenvy.im.cdec</groupId>
-        <version>3.2.0-SNAPSHOT</version>
+        <artifactId>im-parent</artifactId>
+        <groupId>com.codenvy.im</groupId>
+        <version>3.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-commons</artifactId>
-    <name>Codenvy :: CDEC :: Installation Manager Commons</name>
+    <name>Codenvy :: IM :: Installation Manager Commons</name>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.commons</groupId>
@@ -47,6 +47,11 @@
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.51</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${commons-compress.version}</version>
         </dependency>
         <dependency>
             <groupId>org.restlet.jse</groupId>
@@ -112,42 +117,88 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <testResources>
-            <testResource>
-                <directory>src/test/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
-            </testResource>
-        </testResources>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>buildnumber</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <tasks>
-                                <?SORTPOM IGNORE?>
-                                <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
-                                    version = ${project.version}
-                                </echo>
-                                <?SORTPOM RESUME?>
-                            </tasks>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>buildnumber</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <?SORTPOM IGNORE?>
+                                        <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
+                                            version = ${project.version}
+                                        </echo>
+                                        <?SORTPOM RESUME?>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>stg</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>buildnumber</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <?SORTPOM IGNORE?>
+                                        <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
+                                            version = ${project.version}
+                                        </echo>
+                                        <?SORTPOM RESUME?>
+                                        <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
+                                            <replacetoken>codenvy.com</replacetoken>
+                                            <replacevalue>codenvy-stg.com</replacevalue>
+                                        </replace>
+                                        <tstamp>
+                                            <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
+                                        </tstamp>
+                                        <touch datetime="${touch.time}">
+                                            <fileset dir="${project.build.directory}/classes/codenvy" />
+                                        </touch>
+                                        <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
+                                            <zipfileset dir="${project.build.directory}/classes/codenvy/" prefix="codenvy" />
+                                        </jar>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

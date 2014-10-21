@@ -2,113 +2,233 @@
 
 # bash <(curl -s https://codenvy.com/update/repository/public/download/install-script)
 
-USER=codenvy
-CODENVY_HOME=/home/${USER}
-APP_DIR=$CODENVY_HOME/installation-manager
+CODENVY_USER=codenvy
+CODENVY_HOME=/home/${CODENVY_USER}
+APP_DIR=${CODENVY_HOME}/installation-manager
 SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
 
-createCodenvyUserAndGroupDebian() {
-    if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
-        sudo addgroup --quiet --gid 5001 ${USER}
-    fi
-    
-    if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
-        sudo adduser --quiet --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 --disabled-password --gecos "" ${USER}
-        sudo passwd -q -d -l ${USER}
+# $1 - username; $2 - uid/gid
+addUserOnDebian() {
+    sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
+    sudo passwd -q -d -l $1
+}
+
+# $1 - username; $2 - uid/gid
+addUserOnRedhat() {
+    sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
+    sudo passwd -l $1
+}
+
+# $1 - username; $2 - uid/gid
+addUserOnOpensuse() {
+    sudo -s useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
+    sudo -s passwd -q -l $1
+}
+
+# $1 - groupname; $2 - gid (optional)
+addGroupOnDebian() {
+    if [ -z  "$2" ]; then
+        sudo addgroup $1
+    else
+        sudo addgroup --quiet --gid $2 $1
     fi
 }
 
-createCodenvyUserAndGroupRedhat() {
-    if [ `grep -c "^${USER}" /etc/group` == 0 ]; then
-        sudo groupadd -g5001 ${USER}
-    fi
-
-    if [ `grep -c "^${USER}:" /etc/passwd` == 0 ]; then
-        sudo useradd --home ${CODENVY_HOME} --shell /bin/bash --uid 5001 --gid 5001 ${USER}
-        sudo passwd -l ${USER}
+# $1 - groupname; $2 - gid (optional)
+addGroupOnRedhat() {
+    if [ -z  "$2" ]; then
+        sudo groupadd $1
+    else
+        sudo groupadd -g$2 $1
     fi
 }
 
-registerServiceDebian() {
+# $1 - groupname; $2 - gid (optional)
+addGroupOnOpensuse() {
+    if [ -z  "$2" ]; then
+        sudo -s groupadd $1
+    else
+        sudo -s groupadd -g$2 $1
+    fi
+}
+
+createCodenvyUserAndGroup() {
+    if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
+        echo "> Creating group codenvy"
+        addGroupOn${os} ${CODENVY_USER} 5001
+    fi
+
+    if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
+        echo "> Creating user codenvy"
+        addUserOn${os} ${CODENVY_USER} 5001
+    fi
+
+    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then echo -e "\n" > ${CODENVY_HOME}/.bashrc; fi"
+}
+
+installJava() {
+    # check if requered program had already installed earlier for current user
+    hash java 2>/dev/null || {
+        echo "> Installation manager requires java to be installed"
+        read -p "> Press any key to start installing java" -n1 -s
+        echo ""
+
+        wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
+
+        echo "> Unpacking JDK binaries to ${HOME}"
+
+        sudo tar -xf jdk.tar.gz -C ${HOME}
+
+        if [ ! -f ~/.bashrc ]; then echo -e "\n" > ~/.bashrc; fi
+        sed -i '1i\export JAVA_HOME=${HOME}/jdk1.7.0_17' ~/.bashrc
+        sed -i '2i\export PATH=$PATH:${HOME}/jdk1.7.0_17/bin' ~/.bashrc
+
+        echo "> Java has been installed for ${USER} user"
+    }
+
+    # check if requered program had already installed earlier for codenvy user
+    if [ `sudo su - codenvy -c "if hash java 2>/dev/null; then echo "0"; else echo "1"; fi"` == "1" ]; then
+        if [ ! -f jdk.tar.gz ]; then
+            echo "> Installation manager requires java to be installed for codenvy user"
+            read -p "> Press any key to start installing java into ${CODENVY_HOME}" -n1 -s
+            echo ""
+
+            wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
+        fi
+
+        echo "> Unpacking JDK binaries to ${CODENVY_HOME}"
+
+        sudo tar -xf jdk.tar.gz -C ${CODENVY_HOME}
+
+        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=${CODENVY_HOME}/jdk1.7.0_17' ${CODENVY_HOME}/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:${CODENVY_HOME}/jdk1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
+
+        echo "> Java has been installed for ${CODENVY_USER} user"
+    fi
+
+    if [ -f jdk.tar.gz ]; then
+        rm jdk.tar.gz
+    fi
+}
+
+registerIMServiceOnDebian() {
     # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
-    echo "Register service..."
+    echo "> Register Codenvy Installation Manage Service"
     sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
 }
 
-installRequiredComponentsDebian() {
-    echo "Check required components..."
-
-    # install java
-    command -v java >/dev/null 2>&1 || {     # check if requered program had already installed earlier
-        echo "Installation manager requires java but it's not installed! " >&2
-        read -p "Press any key to start installing java... " -n1 -s
-        sudo apt-get install openjdk-7-jdk
-    }
-    
-    # install unzip
-    command -v unzip >/dev/null 2>&1 || {      # check if requered program had already installed earlier
-        echo "Installing installation manager requires unzip but it's not installed! " >&2
-        read -p "Press any key to start installing unzip... " -n1 -s
-        sudo apt-get install unzip
-    }
-}
-
-registerServiceRedhat() {
+registerIMServiceOnRedhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
-    echo "Register service..."
+    echo "> Registering Codenvy Installation Manage Service"
     sudo chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo chkconfig ${SERVICE_NAME} on &>/dev/null
 }
 
-installRequiredComponentsRedhat() {
-    echo "Check required components..."
+registerIMServiceOnOpensuse() {
+    # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
+    echo "> Registering Codenvy Installation Manage Service"
+    sudo -s chkconfig --add ${SERVICE_NAME} &>/dev/null
+    sudo -s chkconfig ${SERVICE_NAME} on &>/dev/null
+}
 
-    # install java
-    command -v java >/dev/null 2>&1 || {    # check if requered program had already installed earlier
-        echo "Installation manager requires java but it's not installed! " >&2
-        read -p "Press any key to start installing java... " -n1 -s
-        sudo yum install java-1.7.0-openjdk
-    } 
-    
-    # install unzip
-    command -v unzip >/dev/null 2>&1 || {   # check if requered program had already installed earlier
-        echo "Installing installation manager requires unzip but it's not installed! " >&2
-        read -p "Press any key to start installing unzip... " -n1 -s
-        sudo yum install unzip
+# $1 - command name
+installOnDebian() {
+    sudo apt-get install $1 -y
+}
+
+# $1 - command name
+installOnRedhat() {
+    sudo yum install $1 -y
+}
+
+# $1 - command name
+installOnOpensuse() {
+    sudo -s zypper install $1 -y
+}
+
+# $1 - command name
+installCommand() {
+    command -v $1 >/dev/null 2>&1 || {     # check if requered command had already installed earlier
+        echo "> Installation $1 "
+        installOn${os} $1
+        echo "> $1 has been installed"
     }
 }
 
 installIM() {
+    echo "> Downloading Installation Manager "
+
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
-    curl -o ${filename} -L ${DOWNLOAD_URL}
+    imFileName=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
+    curl -o ${imFileName} -L ${DOWNLOAD_URL}
 
-    sudo rm ${APP_DIR} -r &>/dev/null                 # remove exists files
-    sudo unzip ${filename} -d ${APP_DIR} &>/dev/null  # unzip new package
+    imCLIFileName=$(tar -tf ${imFileName} | grep cli)
 
-    # copy installation-manager script into /etc/init.d
-    sudo cp ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
+    # removes existed files and creates new directory
+    sudo rm ${APP_DIR} -rf
+    sudo mkdir ${APP_DIR}
+
+    # untar archive
+    sudo tar -xf ${imFileName} -C /tmp
+    sudo tar -xf /tmp/${imFileName} -C ${APP_DIR}
+
+    # create symbol link to installation-manager script into /etc/init.d
+    if [ ! -L /etc/init.d/${SERVICE_NAME} ]; then
+        sudo ln -s ${APP_DIR}/${SCRIPT_NAME} /etc/init.d/${SERVICE_NAME}
+    fi
 
     # make it possible to write files into the APP_DIR
     sudo chmod 757 ${APP_DIR}
 
-    # make the user ${USER} an owner all files into the APP_DIR
-    sudo chown -R ${USER}:${USER} ${APP_DIR}
+    # make the user ${CODENVY_USER} an owner all files into the APP_DIR
+    sudo chown -R ${CODENVY_USER}:${CODENVY_USER} ${APP_DIR}
+
+    # removes existed files and creates new directory
+    cliinstalled=${HOME}/codenvy-cli
+    rm ${cliinstalled} -rf &>/dev/null
+    mkdir ${cliinstalled}
+
+    tar -xf /tmp/${imCLIFileName} -C ${cliinstalled}
+
+    # create shared directory between 'codenvy' and current user
+    cliupdatedir=/home/codenvy-shared
+    if [ ! -d ${cliupdatedir} ]; then
+        sudo mkdir ${cliupdatedir}
+    fi
+
+    CODENVY_SHARE_GROUP=codenvyshare
+    USER_GROUP=$(groups | cut -d ' ' -f1)
+    if [ `grep -c "^${CODENVY_SHARE_GROUP}" /etc/group` == 0 ]; then
+        addGroupOn${os} ${CODENVY_SHARE_GROUP}
+    fi
+
+    sudo chown -R root.${CODENVY_SHARE_GROUP} ${cliupdatedir}
+    sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
+    sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
+    sudo chmod ug+rwx -R ${cliupdatedir}
+    sudo chmod g+s ${cliupdatedir}
+
+    sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ${CODENVY_HOME}/.bashrc"
+
+    # stores parameters of installed Installation Manager CLI.
+    sudo su - ${CODENVY_USER} -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
+    sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
+    sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
+
+    # creates Codenvy configuration directory
+    sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=${CODENVY_HOME}/codenvy_conf' ${CODENVY_HOME}/.bashrc"
+    if [ ! -d  ${CODENVY_HOME}/codenvy_conf ]; then
+        sudo su - ${CODENVY_USER} -c "mkdir ${CODENVY_HOME}/codenvy_conf"
+    fi
+    if [ ! -f  ${CODENVY_HOME}/codenvy_conf/im.properties ]; then
+        sudo su - ${CODENVY_USER} -c "touch ${CODENVY_HOME}/codenvy_conf/im.properties"
+    fi
 }
 
-installCLI() {
-    DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli-assembly"
-
-    filename=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]zip' | sed -e 's/filename=//')
-    curl -o ${filename} -L ${DOWNLOAD_URL}
-
-    rm ${HOME}/im-cli -r &>/dev/null                 # remove exists files
-    unzip ${filename} -d ${HOME}/im-cli &>/dev/null  # unzip new package
-}
-
-launchingService() {
+launchingIMService() {
+    echo "> Launching Codenvy Installation Manage Service"
     # try to stop exists installation-manager
     sudo /etc/init.d/${SERVICE_NAME} stop
     sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>/dev/null  # kill manager if stop isn't work
@@ -121,23 +241,25 @@ if [ -f /etc/debian_version ]; then
     os="Debian"
 elif [ -f /etc/redhat-release ]; then
     os="Redhat"
+elif [ -f /etc/os-release ]; then
+    os="Opensuse"
 else
-    echo "Operation system isn't supported."
+    echo "> Operation system isn't supported."
     exit
 fi
 
-echo "System is running on ${os} based distributive."
+echo "> System is run on ${os} based distributive."
+cd ~
 
-installRequiredComponents${os}
-createCodenvyUserAndGroup${os}
+createCodenvyUserAndGroup
 
-echo "Installation: Installation Manager Server ..."
+installCommand curl
+installCommand tar
+installCommand wget
+installJava
 installIM
 
-echo "Installation: Installation Manager CLI ..."
-installCLI
-
-registerService${os}
-launchingService
+registerIMServiceOn${os}
+launchingIMService
 
 

@@ -34,6 +34,8 @@ JAVA_CMD="java $JVM_OPTS -jar $APP >> $LOG_FILE & echo \$! >$PID_FILE"
 
 # Starting tomcat
 start () {
+    source ~/.bashrc
+
     echo "Starting ..."
     if [ ! -d ${LOG_DIR} ];  then
         su - ${CODENVY_USER} -c "mkdir $LOG_DIR"

@@ -42,21 +42,30 @@ deleteFileIfExists() {
 
     echo "==== Step [1/7] =======================> [Uploading a new Tomcat]"
     scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} update-server-packaging-tomcat/target/${filename} ${SSH_AS_USER_NAME}@${AS_IP}:${filename}
+
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin/;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
+#    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+#        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm /home/codenvy/update-server.pid"
+#    fi
+
     echo "==== Step [3/7] =======================> [Server is stopped]"
     echo "==== Step [4/7] =======================> [Cleaning up]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm -rf ${home}"
     echo "==== Step [5/7] =======================> [Unpacking resources]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "unzip ${filename} -d update-server-tomcat"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir ${home}"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "tar -xvf ${filename} -C update-server-tomcat"
 
-    if [ "$1" == "stg" ]; then
+    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32001/33001/g' ${home}/conf/server.xml"
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32101/33101/g' ${home}/conf/server.xml"
     fi
 
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;./catalina.sh start"
+    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i '1i\CATALINA_PID=/home/codenvy/update-server.pid' /home/codenvy/update-server-tomcat/bin/catalina.sh"
+    fi
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin; ./catalina.sh start"
 
     AS_STATE='Starting'
     testfile=/tmp/catalina.log

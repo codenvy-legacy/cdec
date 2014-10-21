@@ -19,36 +19,39 @@ package com.codenvy.im.utils;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.api.core.rest.shared.dto.Link;
 import com.codenvy.im.user.UserCredentials;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static com.codenvy.im.utils.Commons.createListDtoFromJson;
+import static com.codenvy.im.utils.Commons.getProperException;
 
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
 public class AccountUtils {
-    public static final String PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR = "Path to subscriptions not found.";
-    public static final String VALID_ACCOUNT_NOT_FOUND_ERROR         = "Account with valid role not found.";
-    public static final String ACCOUNT_NOT_FOUND_ERROR               = "Account not found.";
-    public static final String ACCOUNT_OWNER_ROLE                    = "account/owner";
+    public static final  String           ACCOUNT_OWNER_ROLE       = "account/owner";
+    public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yyyy";
+    private static final SimpleDateFormat subscriptionDateFormat   = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
 
-    /**
-     * Utility class so no public constructor.
-     */
+    /** Utility class so there is no public constructor. */
     private AccountUtils() {
-        
     }
-    
+
     /**
      * Indicates if the current user has a valid subscription.
      *
@@ -59,10 +62,105 @@ public class AccountUtils {
                                               String apiEndpoint,
                                               String requiredSubscription,
                                               UserCredentials userCredentials) throws IOException, IllegalStateException {
-        List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport, apiEndpoint, userCredentials);
+        try {
+            List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport,
+                                                                          apiEndpoint,
+                                                                          userCredentials);
+            for (SubscriptionDescriptor s : subscriptions) {
+                if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
+                    SubscriptionAttributesDescriptor attributes = getSubscriptionAttributes(s.getId(), transport, apiEndpoint, userCredentials);
+                    return isSubscriptionUseAvailableByDate(attributes);
+                }
+            }
 
-        for (SubscriptionDescriptor s : subscriptions) {
-            if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
+            return false;
+        } catch (IOException e) {
+            throw getProperException(e);
+        }
+    }
+
+    private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalStateException {
+        Date startDate;
+        Date endDate;
+
+        String startDateStr = subscriptionAttributes.getStartDate();
+        try {
+            if (startDateStr == null) {
+                throw new IllegalStateException("Can't validate subscription. Start date attribute is absent");
+            }
+
+            startDate = subscriptionDateFormat.parse(startDateStr);
+        } catch (ParseException e) {
+            throw new IllegalStateException("Can't validate subscription. Start date attribute has wrong format: " + startDateStr, e);
+        }
+
+        String endDateStr = subscriptionAttributes.getEndDate();
+        try {
+            if (endDateStr == null) {
+                throw new IllegalStateException("Can't validate subscription. End date attribute is absent");
+            }
+
+            endDate = subscriptionDateFormat.parse(endDateStr);
+        } catch (ParseException e) {
+            throw new IllegalStateException(
+                    "Can't validate subscription. End date attribute has wrong format: " + endDateStr, e);
+        }
+
+        Date currentDate = Calendar.getInstance().getTime();
+
+        return startDate.getTime() <= currentDate.getTime() && currentDate.getTime() <= endDate.getTime();
+    }
+
+    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
+                                                                 String apiEndpoint,
+                                                                 UserCredentials userCredentials) throws IOException {
+        String requestUrl = combinePaths(apiEndpoint, "account/" + userCredentials.getAccountId() + "/subscriptions");
+        return createListDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionDescriptor.class);
+    }
+
+    private static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
+                                                                              HttpTransport transport,
+                                                                              String apiEndpoint,
+                                                                              UserCredentials userCredentials) throws IOException {
+        String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId + "/attributes");
+        return createDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionAttributesDescriptor.class);
+    }
+
+
+    /**
+     * This method iterates over all user's accounts and returns the first one where user in question is owner.
+     *
+     * @return String accountId
+     * @throws IOException
+     */
+    @Nullable
+    public static String getAccountIdWhereUserIsOwner(HttpTransport transport,
+                                                      String apiEndpoint,
+                                                      String userToken) throws IOException {
+        List<MemberDescriptor> members =
+                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userToken),
+                                      MemberDescriptor.class);
+
+        for (MemberDescriptor m : members) {
+            if (hasRole(m, ACCOUNT_OWNER_ROLE)) {
+                return getAccountId(m);
+            }
+        }
+
+        return null;
+    }
+
+
+    /** Checks if user is owner of specific account. */
+    public static boolean isValidAccountId(HttpTransport transport,
+                                           String apiEndpoint,
+                                           UserCredentials userCredentials) throws IOException {
+        List<MemberDescriptor> members =
+                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
+                                      MemberDescriptor.class);
+
+        for (MemberDescriptor m : members) {
+            if (userCredentials.getAccountId().equals(getAccountId(m)) && hasRole(m, ACCOUNT_OWNER_ROLE)) {
                 return true;
             }
         }
@@ -70,54 +168,9 @@ public class AccountUtils {
         return false;
     }
 
-    private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
-                                                                 String apiEndpoint,
-                                                                 UserCredentials userCredentials) throws IOException {
-        MemberDescriptor account = getAccount(transport, apiEndpoint, userCredentials);
-        if (account == null) {
-            throw new IllegalStateException(ACCOUNT_NOT_FOUND_ERROR);
-        }
-
-        if (!hasRole(account, ACCOUNT_OWNER_ROLE)) {
-            throw new IllegalStateException(VALID_ACCOUNT_NOT_FOUND_ERROR);
-        }
-
-        String subscriptionsHref = getSubscriptionsHref(account);
-        if (subscriptionsHref == null) {
-            String accountId = getAccountId(account);
-            if (accountId != null) {
-                subscriptionsHref = getSubscriptionsHref(apiEndpoint, accountId);
-            }
-        }
-
-        if (subscriptionsHref == null) {
-            throw new IllegalStateException(PATH_TO_SUBSCRIPTIONS_NOT_FOUND_ERROR);
-        }
-
-        return createListDtoFromJson(transport.doGetRequest(subscriptionsHref, userCredentials.getToken()), SubscriptionDescriptor.class);
-    }
-
     @Nullable
-    public static MemberDescriptor getAccount(HttpTransport transport,
-                                              String apiEndpoint,
-                                              UserCredentials userCredentials) throws IOException {
-        List<MemberDescriptor> accounts =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
-                                      MemberDescriptor.class);
-
-        for (MemberDescriptor account : accounts) {
-            String id = getAccountId(account);
-            if (id != null && id.equals(userCredentials.getAccountId())) {
-                return account;
-            }
-        }
-
-        return null;
-    }
-
-    @Nullable
-    private static String getSubscriptionsHref(MemberDescriptor account) {
-        List<Link> links = account.getLinks();
+    private static String getSubscriptionsHref(MemberDescriptor member) {
+        List<Link> links = member.getLinks();
         for (Link link : links) {
             if (link.getRel().equals("subscriptions")) {
                 return link.getHref();
@@ -127,21 +180,17 @@ public class AccountUtils {
         return null;
     }
 
-    private static String getSubscriptionsHref(String apiEndpoint, String accountId) {
-        return combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions");
-    }
-
     @Nullable
-    private static String getAccountId(MemberDescriptor account) {
-        AccountReference reference = account.getAccountReference();
+    private static String getAccountId(MemberDescriptor member) {
+        AccountReference accountRef = member.getAccountReference();
 
-        if (reference != null) {
-            return account.getAccountReference().getId();
+        if (accountRef != null) {
+            return member.getAccountReference().getId();
         }
 
-        // Platform API issue
-        // workaround - read id from subscriptions href
-        String subscriptionsHref = getSubscriptionsHref(account);
+        // Platform API issue.
+        // Workaround: read id from subscriptions href
+        String subscriptionsHref = getSubscriptionsHref(member);
         if (subscriptionsHref == null) {
             return null;
         }
@@ -152,11 +201,12 @@ public class AccountUtils {
             return m.group(1);
         }
 
-        return null;
+        return null; // almost impossible case
     }
 
-    private static boolean hasRole(MemberDescriptor account, String role) {
-        List<String> roles = account.getRoles();
+    /** Checks if user has specific role. */
+    private static boolean hasRole(MemberDescriptor member, String role) throws IllegalStateException {
+        List<String> roles = member.getRoles();
         return roles != null && roles.contains(role);
     }
 }
