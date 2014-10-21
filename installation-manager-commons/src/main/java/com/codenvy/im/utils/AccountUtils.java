@@ -34,7 +34,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.utils.Commons.*;
+import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
+import static com.codenvy.im.utils.Commons.createListDtoFromJson;
+import static com.codenvy.im.utils.Commons.getProperException;
 
 /**
  * @author Anatoliy Bazko
@@ -83,7 +86,7 @@ public class AccountUtils {
         String startDateStr = subscriptionAttributes.getStartDate();
         try {
             if (startDateStr == null) {
-                throw new IllegalStateException("Can't validate subscription. Start date attribute isn't exist");
+                throw new IllegalStateException("Can't validate subscription. Start date attribute is absent");
             }
 
             startDate = subscriptionDateFormat.parse(startDateStr);
@@ -94,7 +97,7 @@ public class AccountUtils {
         String endDateStr = subscriptionAttributes.getEndDate();
         try {
             if (endDateStr == null) {
-                throw new IllegalStateException("Can't validate subscription. End date attribute isn't exist");
+                throw new IllegalStateException("Can't validate subscription. End date attribute is absent");
             }
 
             endDate = subscriptionDateFormat.parse(endDateStr);
