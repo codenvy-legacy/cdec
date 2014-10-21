@@ -80,7 +80,7 @@ public class CDECArtifact extends AbstractArtifact {
                             pathToBinaries);
 
         for (PuppetClientConfiguration clientConfig : installationConfig.getPuppetClients()) {
-            installPuppetClient(clientConfig, insta);
+//            installPuppetClient(clientConfig, insta);  // TODO
         }
 
         signNodesOnPuppetMaster();
@@ -214,7 +214,7 @@ public class CDECArtifact extends AbstractArtifact {
         //TODO  check puppet-master-port
 
 
-        String result = ssh.execute("sudo iptables " + rule); //TODO or echo in /etc/sysconfig/iptables
+//        String result = ssh.execute("sudo iptables " + rule); //TODO or echo in /etc/sysconfig/iptables
 
         //if (result) validate result!!!
         //TODO

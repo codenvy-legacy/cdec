@@ -44,6 +44,11 @@
             <version>${codenvy.platform-api.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.51</version>
+        </dependency>
+        <dependency>
             <groupId>org.restlet.jse</groupId>
             <artifactId>org.restlet.ext.jackson</artifactId>
             <version>${org.restlet.version}</version>
@@ -57,11 +62,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${org.slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.51</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
