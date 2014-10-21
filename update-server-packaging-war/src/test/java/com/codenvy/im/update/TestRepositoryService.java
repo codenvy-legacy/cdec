@@ -38,25 +38,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.ARTIFACT_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.*;
+import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
+import static java.util.Calendar.getInstance;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * @author Anatoliy Bazko
@@ -72,7 +63,7 @@ public class TestRepositoryService extends BaseTest {
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
     }};
-    private final Properties subscriptionProperties   = new Properties() {{
+    private final Properties subscriptionProperties           = new Properties() {{
         put(SUBSCRIPTION_PROPERTY, "OnPremises");
     }};
 
@@ -210,12 +201,24 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicWithSubscription() throws Exception {
+        SimpleDateFormat  subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+        Calendar cal = getInstance();
+        cal.add(Calendar.DATE, -1);
+        String startDate = subscriptionDateFormat.format(cal.getTime());
+
+        cal = getInstance();
+        cal.add(Calendar.DATE, 1);
+        String endDate = subscriptionDateFormat.format(cal.getTime());
+
         when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
         .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         
         when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
-        .thenReturn("[{serviceId:OnPremises}]");
-        
+        .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
+
+        when(transport.doGetRequest("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
+        .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()

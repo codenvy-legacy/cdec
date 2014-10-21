@@ -19,26 +19,31 @@ package com.codenvy.im.utils;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.api.core.rest.shared.dto.Link;
 import com.codenvy.im.user.UserCredentials;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.Commons.createListDtoFromJson;
-import static com.codenvy.im.utils.Commons.getProperException;
+import static com.codenvy.im.utils.Commons.*;
 
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
 public class AccountUtils {
-    public static final String ACCOUNT_OWNER_ROLE                    = "account/owner";
+    public static final  String           ACCOUNT_OWNER_ROLE       = "account/owner";
+    public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yyyy";
+    private static final SimpleDateFormat subscriptionDateFormat   = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
 
     /** Utility class so there is no public constructor. */
     private AccountUtils() {
@@ -60,7 +65,8 @@ public class AccountUtils {
                                                                           userCredentials);
             for (SubscriptionDescriptor s : subscriptions) {
                 if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
-                    return true;
+                    SubscriptionAttributesDescriptor attributes = getSubscriptionAttributes(s.getId(), transport, apiEndpoint, userCredentials);
+                    return isSubscriptionUseAvailableByDate(attributes);
                 }
             }
 
@@ -70,11 +76,51 @@ public class AccountUtils {
         }
     }
 
+    private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalStateException {
+        Date startDate;
+        Date endDate;
+
+        String startDateStr = subscriptionAttributes.getStartDate();
+        try {
+            if (startDateStr == null) {
+                throw new IllegalStateException("Can't validate subscription. Start date attribute isn't exist");
+            }
+
+            startDate = subscriptionDateFormat.parse(startDateStr);
+        } catch (ParseException e) {
+            throw new IllegalStateException("Can't validate subscription. Start date attribute has wrong format: " + startDateStr, e);
+        }
+
+        String endDateStr = subscriptionAttributes.getEndDate();
+        try {
+            if (endDateStr == null) {
+                throw new IllegalStateException("Can't validate subscription. End date attribute isn't exist");
+            }
+
+            endDate = subscriptionDateFormat.parse(endDateStr);
+        } catch (ParseException e) {
+            throw new IllegalStateException(
+                    "Can't validate subscription. End date attribute has wrong format: " + endDateStr, e);
+        }
+
+        Date currentDate = Calendar.getInstance().getTime();
+
+        return startDate.getTime() <= currentDate.getTime() && currentDate.getTime() <= endDate.getTime();
+    }
+
     private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
                                                                  String apiEndpoint,
                                                                  UserCredentials userCredentials) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/" + userCredentials.getAccountId() + "/subscriptions");
         return createListDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionDescriptor.class);
+    }
+
+    private static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
+                                                                              HttpTransport transport,
+                                                                              String apiEndpoint,
+                                                                              UserCredentials userCredentials) throws IOException {
+        String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId + "/attributes");
+        return createDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionAttributesDescriptor.class);
     }
 
 

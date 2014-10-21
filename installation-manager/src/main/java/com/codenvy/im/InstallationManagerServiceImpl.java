@@ -113,7 +113,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             } else {
                 return new Response.Builder().withStatus(ERROR)
                                              .withParam("Subscription", subscription)
-                                             .withMessage("Subscription not found").build().toJson();
+                                             .withMessage("Subscription not found or outdated").build().toJson();
             }
         } catch (Exception e) {
             return new Response.Builder().withStatus(ERROR)
