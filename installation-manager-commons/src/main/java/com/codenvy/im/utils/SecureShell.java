@@ -23,13 +23,15 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static java.lang.String.format;
@@ -90,11 +92,19 @@ public class SecureShell {
     }
 
     public String execute(String command) throws IOException {
-        return execute(command, 0);
+        return execute(command, 0, new HashMap<String, String>(0));
     }
 
-    public String execute(String command, int timeoutMillis) throws IOException {
+    public String execute(String command, Map<String, String> variables) throws IOException {
+        return execute(command, 0, variables);
+    }
+
+    public String execute(String command, int timeoutMillis, @Nonnull Map<String, String> envVars) throws IOException {
         ChannelExec channel = null;
+
+        for (Map.Entry<String, String> variable : envVars.entrySet()) {
+            command = format("export %s='%s'; ", variable.getKey(), variable.getValue()) + command;
+        }
 
         try {
             channel = (ChannelExec)session.openChannel("exec");

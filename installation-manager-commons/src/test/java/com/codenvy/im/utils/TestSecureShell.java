@@ -21,6 +21,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Alexander Reshetnyak
@@ -42,7 +44,12 @@ public class TestSecureShell {
     public void testAuthKey() throws IOException {
         ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
 
-        String result = ssh.execute("exit 10");
+        Map<String, String> variables = new HashMap<String, String>(){{
+            put("TEST_VAR1", "/usr");
+            put("TEST_VAR2", "src");
+        }};
+
+        String result = ssh.execute("ls $TEST_VAR1/$TEST_VAR2", variables);
 
         System.out.println(result);
     }
