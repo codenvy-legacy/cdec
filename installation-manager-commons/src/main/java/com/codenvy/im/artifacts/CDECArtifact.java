@@ -19,8 +19,8 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.SecureShell;
 import com.codenvy.im.utils.Version;
-import com.codenvy.im.utils.SecureSHell;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -89,7 +89,7 @@ public class CDECArtifact extends AbstractArtifact {
     private void installPuppetMaster(PuppetMasterConfiguration config,
                                      List<String> hosts,
                                      Path pathToCdecArchive) throws IOException {
-        SecureSHell ssh = new SecureSHell(config.getHost(),
+        SecureShell ssh = new SecureShell(config.getHost(),
                                           config.getSSHPort(),
                                           config.getUser(),
                                           config.getPassword()); //TODO or Authentication via  public key!!!
@@ -124,7 +124,7 @@ public class CDECArtifact extends AbstractArtifact {
     private void installPuppetClient(PuppetClientConfiguration config,
                                      List<String> instantsHosts,
                                      String puppetMasterHost) throws IOException {
-        SecureSHell ssh = new SecureSHell(config.getHost(),
+        SecureShell ssh = new SecureShell(config.getHost(),
                                           config.getSSHPort(),
                                           config.getUser(),
                                           config.getPassword()); //TODO or Authentication via  public key!!!
@@ -138,17 +138,18 @@ public class CDECArtifact extends AbstractArtifact {
         configurePuppetAgent(ssh, puppetMasterHost);
     }
 
-    private void configurePuppetAgent(SecureSHell ssh, String puppetMasterHost) {
+    private void configurePuppetAgent(SecureShell ssh, String puppetMasterHost) {
 
 
     }
 
-    private void installPuppetAgent(SecureSHell ssh, String puppetResourceUrl, String puppetClientVersion) throws IOException {
+    private void installPuppetAgent(SecureShell ssh, String puppetResourceUrl, String puppetClientVersion) throws IOException {
         // Disable SELinux //TODO Debian ???
 
-        String result = ssh.execute(new String[] {"sudo setenforce 0",
-                                                  "sudo cp /etc/selinux/config /etc/selinux/config.bak",
-                                                  "sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config"});
+        String result = ssh.execute("sudo setenforce 0");
+        result = ssh.execute("sudo cp /etc/selinux/config /etc/selinux/config.bak");
+        result = ssh.execute("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config");
+
         //if (result) validate result!!!
         //TODO
 
@@ -162,23 +163,23 @@ public class CDECArtifact extends AbstractArtifact {
 
     }
 
-    private void startPuppetMaster(SecureSHell ssh) throws IOException {
+    private void startPuppetMaster(SecureShell ssh) throws IOException {
         ssh.execute("sudo service puppetmaster start");
         //if (result) validate result!!!
         //TODO
     }
 
-    private void configureCdecOnPuppetmaster(SecureSHell ssh, PuppetMasterConfiguration config) {
+    private void configureCdecOnPuppetmaster(SecureShell ssh, PuppetMasterConfiguration config) {
         //TODO
     }
 
-    private void unpackCdecInPuppet(SecureSHell ssh, String remouteBinariesPath) throws IOException {
+    private void unpackCdecInPuppet(SecureShell ssh, String remouteBinariesPath) throws IOException {
         ssh.execute("sudo unzip " + remouteBinariesPath + " /etc/puppet/");
         //if (result) validate result!!!
         //TODO
     }
 
-    private String uploadCDEC(SecureSHell ssh, Path pathToCdecArchive) {
+    private String uploadCDEC(SecureShell ssh, Path pathToCdecArchive) {
         //TODO
         // http://www.jcraft.com/jsch/examples/ScpTo.java.html
 
@@ -187,13 +188,13 @@ public class CDECArtifact extends AbstractArtifact {
         return null;
     }
 
-    private void installUnzip(SecureSHell ssh) throws IOException {
+    private void installUnzip(SecureShell ssh) throws IOException {
         String result = ssh.execute("sudo yum install unzip");
         //if (result) validate result!!!
         //TODO
     }
 
-    private void installPuppetServer(SecureSHell ssh,
+    private void installPuppetServer(SecureShell ssh,
                                      String puppetResourceUrl,
                                      String puppetServerVersion) throws IOException {
         String result = ssh.execute("sudo rpm -ivh " + puppetResourceUrl);
@@ -205,11 +206,11 @@ public class CDECArtifact extends AbstractArtifact {
         //TODO
     }
 
-    private void validateHostsByDomainName(SecureSHell ssh, List<String> hosts) {
+    private void validateHostsByDomainName(SecureShell ssh, List<String> hosts) {
         //TODO
     }
 
-    private void addFirewallRuleForPuppetMaster(SecureSHell ssh, int port) throws IOException {
+    private void addFirewallRuleForPuppetMaster(SecureShell ssh, int port) throws IOException {
         //TODO  check puppet-master-port
 
 

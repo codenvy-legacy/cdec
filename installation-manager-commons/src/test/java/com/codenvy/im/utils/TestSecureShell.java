@@ -17,16 +17,47 @@
  */
 package com.codenvy.im.utils;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 /**
  * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
 public class TestSecureShell {
+    SecureShell ssh;
 
-    @Test
-    public void testGetPrettyPrintJson() throws Exception {
+//    @Test
+    public void testUserPasswd() throws Exception {
+        ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "vagrant");
+        String result = ssh.execute("ls");
+        result += ssh.execute("ls");
 
+        System.out.println(result);
     }
 
+//    @Test
+    public void testAuthKey() throws IOException {
+        ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
+
+        String result = ssh.execute("exit 10");
+
+        System.out.println(result);
+    }
+
+//    @Test
+    public void testErrorOnCommandExecution() throws IOException {
+        ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
+
+        String result = ssh.execute("unknown_command");
+
+        System.out.println(result);
+    }
+
+//    @AfterMethod
+    public void tearDown() {
+        ssh.disconnect();
+    }
 }
