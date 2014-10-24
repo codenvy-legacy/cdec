@@ -21,9 +21,11 @@ import com.codenvy.im.restlet.InstallationManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.quartz.*;
-import org.quartz.impl.JobDetailImpl;
-import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,23 +54,22 @@ public class UpdateManager {
 
     @PostConstruct
     public void init() throws SchedulerException {
-        scheduler = new StdSchedulerFactory().getScheduler();
-        scheduler.start();
-
-        JobDetailImpl jobDetail = new JobDetailImpl();
-        jobDetail.setKey(new JobKey(IMJob.class.getName()));
-        jobDetail.setJobClass(IMJob.class);
-        jobDetail.setDurability(true);
-
-        scheduler.scheduleJob(jobDetail, TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(schedule)).build());
-
+//        scheduler = new StdSchedulerFactory().getScheduler();
+//        scheduler.start();
+//
+//        JobDetailImpl jobDetail = new JobDetailImpl();
+//        jobDetail.setKey(new JobKey(IMJob.class.getName()));
+//        jobDetail.setJobClass(IMJob.class);
+//        jobDetail.setDurability(true);
+//
+//        scheduler.scheduleJob(jobDetail, TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(schedule)).build());
     }
 
     @PreDestroy
     public void destroy() throws SchedulerException {
-        if (scheduler != null) {
-            scheduler.shutdown(true);
-        }
+//        if (scheduler != null) {
+//            scheduler.shutdown(true);
+//        }
     }
 
     /** Job to check and download updates. */
