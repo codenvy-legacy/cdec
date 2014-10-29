@@ -20,6 +20,7 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.command.CommandException;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
@@ -127,7 +128,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void install(String authToken, Artifact artifact, String version) throws IOException {
+    public void install(String authToken, Artifact artifact, String version) throws IOException, CommandException {
         Map<Artifact, String> installedArtifacts = getInstalledArtifacts(authToken);
         Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = getDownloadedArtifacts();
 
@@ -296,7 +297,7 @@ public class InstallationManagerImpl implements InstallationManager {
                             }
                         }
                     } catch (IllegalArgumentException | IOException e) {
-                        // maybe it isn't a version directory
+                        // maybe it isn't a version directory  // TODO handle exceptions
                     }
                 }
 

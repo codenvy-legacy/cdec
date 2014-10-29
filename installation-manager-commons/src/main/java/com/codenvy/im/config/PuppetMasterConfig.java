@@ -15,25 +15,20 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.artifacts;
-
-import java.util.List;
+package com.codenvy.im.config;
 
 /**
  * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
-public class CDECInstallationConfiguration {
-    private List<String> hostsName;
+public class PuppetMasterConfig extends PuppetConfig {
+    public static final String PUPPET_MASTER_PORT = Property.PUPPET_MASTER_PORT.toString();
 
-    public List<PuppetClientConfiguration> getPuppetClients() {
-        return null;
+    enum Property implements ConfigProperty {
+        PUPPET_MASTER_PORT
     }
 
-    public PuppetMasterConfiguration getPuppetMaster() {
-        return null;
-    }
-
-    public List<String> getHostsName() {
-        return hostsName;
+    public String getPuppetMasterPort() {
+        return getProperty(Property.PUPPET_MASTER_PORT);
     }
 }

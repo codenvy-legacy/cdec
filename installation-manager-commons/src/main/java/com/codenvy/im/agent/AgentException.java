@@ -1,4 +1,5 @@
 /*
+/*
  * CODENVY CONFIDENTIAL
  * __________________
  *
@@ -15,15 +16,21 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.artifacts;
+package com.codenvy.im.agent;
 
 /**
- * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
-public class PuppetClientConfiguration extends AbstractInstanceConfig {
-    private String puppetClientVersion;
+public class AgentException extends RuntimeException {
+    public AgentException() {
+        super();
+    }
 
-    public String getPuppetClientVersion() {
-        return puppetClientVersion;
+    public AgentException(String message) {
+        super(message);
+    }
+
+    public AgentException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

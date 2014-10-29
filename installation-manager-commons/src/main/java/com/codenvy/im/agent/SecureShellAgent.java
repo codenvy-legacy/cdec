@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.utils;
+package com.codenvy.im.agent;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -40,32 +40,32 @@ import static java.lang.String.format;
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-public class SecureShell {
+public class SecureShellAgent implements Agent {
 
     private final Session session;
     private final JSch jsch = new JSch();
 
-    public SecureShell(String host, int port, String user) throws IOException {
+    public SecureShellAgent(String host, int port, String user) throws AgentException {
         try {
             session = getSession(host, port, user);
             session.connect();
         } catch (JSchException e) {
-            throw new IOException("Can't connect to host " + user + "@" + host + ":" + port + ": " + e.getMessage());
+            throw new AgentException(format("Can't connect to host '%s@%s:%s'.", user, host, port), e);
         }
     }
 
-    public SecureShell(String host, int port, String user, String password) throws IOException {
+    public SecureShellAgent(String host, int port, String user, String password) throws AgentException {
         try {
             session = getSession(host, port, user);
             session.setPassword(password);
             session.connect();
         } catch (JSchException e) {
-            throw new IOException("Can't connect to host " + user + "@" + host + ":" + port + ": " + e.getMessage());
+            throw new AgentException(format("Can't connect to host '%s@%s:%s'.", user, host, port), e);
         }
     }
 
-    public SecureShell(String host, int port, String user, String privateKeyFileAbsolutePath, @Nullable String passphrase) throws
-                                                                                                                           IOException {
+    public SecureShellAgent(String host, int port, String user, String privateKeyFileAbsolutePath, @Nullable String passphrase) throws
+                                                                                                                           AgentException {
         try {
             session = getSession(host, port, user);
 
@@ -77,7 +77,7 @@ public class SecureShell {
 
             session.connect();
         } catch (JSchException e) {
-            throw new IOException("Can't connect to host " + user + "@" + host + ":" + port + ": " + e.getMessage());
+            throw new AgentException(format("Can't connect to host '%s@%s:%s'.", user, host, port), e);
         }
     }
 
@@ -91,18 +91,18 @@ public class SecureShell {
         return session;
     }
 
-    public String execute(String command) throws IOException {
+    @Override public String execute(String command) throws AgentException {
         return execute(command, 0, new HashMap<String, String>(0));
     }
 
-    public String execute(String command, Map<String, String> variables) throws IOException {
-        return execute(command, 0, variables);
+    @Override public String execute(String command, Map<String, String> parameters) throws AgentException {
+        return execute(command, 0, parameters);
     }
 
-    public String execute(String command, int timeoutMillis, @Nonnull Map<String, String> envVars) throws IOException {
+    @Override public String execute(String command, int timeoutMillis, @Nonnull Map<String, String> parameters) throws AgentException {
         ChannelExec channel = null;
 
-        for (Map.Entry<String, String> variable : envVars.entrySet()) {
+        for (Map.Entry<String, String> variable : parameters.entrySet()) {
             command = format("export %s='%s'; ", variable.getKey(), variable.getValue()) + command;
         }
 
@@ -121,14 +121,13 @@ public class SecureShell {
             int exitStatus = channel.getExitStatus();
             if (exitStatus != 0) {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(error));
-
                 throw new Exception(read(bufferedReader));
             } else {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
                 return read(bufferedReader);
             }
         } catch (Exception e) {
-            throw new IOException(format("Command '%s' execution fail. Error message: '%s'.", command, e.getMessage()));
+            throw new AgentException("Command '" + command + "' execution fail.", e);
         } finally {
             if (channel != null) {
                 channel.disconnect();

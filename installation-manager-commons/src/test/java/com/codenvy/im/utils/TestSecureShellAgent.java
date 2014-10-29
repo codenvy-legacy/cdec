@@ -17,8 +17,7 @@
  */
 package com.codenvy.im.utils;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
+import com.codenvy.im.agent.SecureShellAgent;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,23 +27,23 @@ import java.util.Map;
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-public class TestSecureShell {
-    SecureShell ssh;
+public class TestSecureShellAgent {
+    SecureShellAgent ssh;
 
-//    @Test
+    //    @Test
     public void testUserPasswd() throws Exception {
-        ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "vagrant");
+        ssh = new SecureShellAgent("127.0.0.1", 2222, "vagrant", "vagrant");
         String result = ssh.execute("ls");
         result += ssh.execute("ls");
 
         System.out.println(result);
     }
 
-//    @Test
+    //    @Test
     public void testAuthKey() throws IOException {
-        ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
+        ssh = new SecureShellAgent("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
 
-        Map<String, String> variables = new HashMap<String, String>(){{
+        Map<String, String> variables = new HashMap<String, String>() {{
             put("TEST_VAR1", "/usr");
             put("TEST_VAR2", "src");
         }};
@@ -54,16 +53,16 @@ public class TestSecureShell {
         System.out.println(result);
     }
 
-//    @Test
+    //    @Test
     public void testErrorOnCommandExecution() throws IOException {
-        ssh = new SecureShell("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
+        ssh = new SecureShellAgent("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
 
         String result = ssh.execute("unknown_command");
 
         System.out.println(result);
     }
 
-//    @AfterMethod
+    //    @AfterMethod
     public void tearDown() {
         ssh.disconnect();
     }

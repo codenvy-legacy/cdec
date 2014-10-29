@@ -15,36 +15,21 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.artifacts;
+package com.codenvy.im.config;
 
 /**
- * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
-public abstract class AbstractInstanceConfig {
-
-    private String       host;
-    private int          port;
-    private String       user;
-    private String       password;
-    private String       puppetResourceUrl;
-
-    public String getHost() {
-        return host;
+public class ConfigException extends RuntimeException {
+    public ConfigException() {
+        super();
     }
 
-    public int getSSHPort() {
-        return port;
+    public ConfigException(String message) {
+        super(message);
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getPuppetResourceUrl() {
-        return puppetResourceUrl;
+    public ConfigException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

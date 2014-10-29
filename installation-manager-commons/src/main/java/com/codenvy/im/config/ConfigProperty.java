@@ -15,20 +15,10 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.artifacts;
+package com.codenvy.im.config;
 
 /**
- * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
-public class PuppetMasterConfiguration extends AbstractInstanceConfig {
-    private String puppetServerVersion;
-    private int    puppetMasterPort;
-
-    public String getPuppetServerVersion() {
-        return puppetServerVersion;
-    }
-
-    public int getPuppetMasterPort() {
-        return puppetMasterPort;
-    }
+interface ConfigProperty {
 }
