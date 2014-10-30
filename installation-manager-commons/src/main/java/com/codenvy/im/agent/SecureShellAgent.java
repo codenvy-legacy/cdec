@@ -42,15 +42,9 @@ public class SecureShellAgent implements Agent {
     private final Session session;
     private final JSch jsch = new JSch();
 
-    public SecureShellAgent(String host, int port, String user) throws AgentException {
-        try {
-            session = getSession(host, port, user);
-            session.connect();
-        } catch (JSchException e) {
-            throw new AgentException(format("Can't connect to host '%s@%s:%s'.", user, host, port), e);
-        }
-    }
-
+    /**
+     * Create ssh session object and try to connect to remote host by using password.
+     */
     public SecureShellAgent(String host, int port, String user, String password) throws AgentException {
         try {
             session = getSession(host, port, user);
@@ -61,6 +55,9 @@ public class SecureShellAgent implements Agent {
         }
     }
 
+    /**
+     * Create ssh session object and try to connect to remote host by using auth key.
+     */
     public SecureShellAgent(String host, int port, String user, String privateKeyFileAbsolutePath, @Nullable String passphrase) throws
                                                                                                                            AgentException {
         try {
@@ -74,7 +71,8 @@ public class SecureShellAgent implements Agent {
 
             session.connect();
         } catch (JSchException e) {
-            throw new AgentException(format("Can't connect to host '%s@%s:%s'.", user, host, port), e);
+            throw new AgentException(
+                format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath), e);
         }
     }
 
