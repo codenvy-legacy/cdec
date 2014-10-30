@@ -21,6 +21,8 @@ import com.codenvy.commons.lang.IoUtil;
 import com.google.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
@@ -46,6 +48,7 @@ import java.util.regex.Pattern;
 @Singleton
 public class HttpTransport {
     private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
+    private static final String  MESSAGE   = "message";
 
     private final HttpTransportConfiguration transportConf;
 
@@ -146,7 +149,7 @@ public class HttpTransport {
                 in = conn.getInputStream();
             }
 
-            throw new HttpException(responseCode, IoUtil.readAndCloseQuietly(in));
+            throw new HttpException(responseCode, getErrorMessageIfPossible(IoUtil.readAndCloseQuietly(in)));
         }
 
         final String contentType = conn.getContentType();
@@ -155,7 +158,19 @@ public class HttpTransport {
         }
     }
 
-    private HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
+    /** Checks if a response has the specific error message and take it if possible. */
+    private String getErrorMessageIfPossible(String json) {
+        try {
+            JSONObject jsonResponse = new JSONObject(json);
+            String message = (String)jsonResponse.get(MESSAGE.toLowerCase());
+
+            return message != null ? message : json;
+        } catch (JSONException e) {
+            return json;
+        }
+    }
+
+    protected HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
         HttpURLConnection connection;
         if (transportConf.isProxyConfValid()) {
             Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(transportConf.getProxyUrl(), transportConf.getProxyPort()));

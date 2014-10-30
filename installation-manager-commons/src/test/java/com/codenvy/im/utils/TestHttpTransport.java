@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.api.core.ServerException;
 import com.codenvy.dto.server.JsonStringMapImpl;
 
 import org.apache.commons.io.IOUtils;
@@ -82,6 +83,16 @@ public class TestHttpTransport {
         }
     }
 
+    @Test(expectedExceptions = HttpException.class,
+          expectedExceptionsMessageRegExp = "Not Found")
+    public void testFailDownload(ITestContext context) throws Exception {
+        java.nio.file.Path destDir = Paths.get("target", "download");
+
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+
+        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/downloadfail", destDir);
+    }
+
     @Path("test")
     public class TestService {
 
@@ -105,6 +116,26 @@ public class TestHttpTransport {
                            .header("Content-Length", String.valueOf(Files.size(file)))
                            .header("Content-Disposition", "attachment; filename=" + file.getFileName().toString())
                            .build();
+        }
+
+        @GET
+        @Path("downloadfail")
+        @Produces(MediaType.APPLICATION_OCTET_STREAM)
+        public Response doFailDownloadArtifact() throws ServerException {
+            try {
+                java.nio.file.Path file = Paths.get("target", "tmp.file");
+                file.toFile().length(); // Will throw FileNotFoundException.
+
+                //will didn't run
+                return Response.ok(file.toFile(), MediaType.APPLICATION_OCTET_STREAM)
+                               .header("Content-Length", String.valueOf(Files.size(file)))
+                               .header("Content-Disposition", "attachment; filename=" + file.getFileName().toString())
+                               .build();
+
+            } catch (Exception e) {
+                throw new ServerException("{message:Not Found}");
+            }
+
         }
     }
 }
