@@ -22,6 +22,8 @@ import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -59,6 +61,7 @@ public class TestRepositoryService extends BaseTest {
     private final RepositoryService repositoryService;
     private final HttpTransport     transport;
     private final UserManager       userManager;
+    private final MongoStorage      mongoStorage;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -69,13 +72,14 @@ public class TestRepositoryService extends BaseTest {
 
     {
         try {
+            mongoStorage = new MongoStorage("mongodb://localhost:12000/update", true, "target");
             transport = mock(HttpTransport.class);
             userManager = mock(UserManager.class);
             artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
             repositoryService = new RepositoryService("",
                                                       userManager,
                                                       artifactStorage,
-                                                      new MongoStorage("mongodb://localhost:12000/update", true, "target"),
+                                                      mongoStorage,
                                                       transport);
 
         } catch (IOException e) {
@@ -87,7 +91,25 @@ public class TestRepositoryService extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
+        initStorage();
         super.setUp();
+    }
+
+    private void initStorage() {
+        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.ARTIFACTS_COLLECTION);
+        collection.remove(new BasicDBObject());
+        collection = mongoStorage.getDb().getCollection(MongoStorage.ARTIFACTS_DOWNLOADED_COLLECTION);
+        collection.remove(new BasicDBObject());
+
+        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", true);
+        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", true);
+        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", false);
+        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", false);
+        mongoStorage.saveDownloadInfo("uid2", "cdec", "1.0.1", true);
+        mongoStorage.saveDownloadInfo("uid2", "cdec", "1.0.2", true);
+        mongoStorage.saveDownloadInfo("uid2", "cdec", "1.0.3", true);
+        mongoStorage.saveDownloadInfo("uid1", "artifact2", "1.0.1", false);
+        mongoStorage.saveDownloadInfo("uid2", "artifact3", "1.0.1", false);
     }
 
     @Test
@@ -158,10 +180,10 @@ public class TestRepositoryService extends BaseTest {
             put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
             put(SUBSCRIPTION_PROPERTY, "OnPremises");
         }};
-        
+
         Properties testPropertiesContainer = new Properties();
         testPropertiesContainer.putAll(testProperties);
-        
+
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", testPropertiesContainer);
 
         Response response = given().when().get("repository/properties/installation-manager/1.0.1");
@@ -174,7 +196,7 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(value.get(AUTHENTICATION_REQUIRED_PROPERTY), "true");
         assertNull(value.get(MD5_PROPERTY));
     }
-    
+
     @Test
     public void testDownloadPublicArtifact() throws Exception {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
@@ -212,7 +234,7 @@ public class TestRepositoryService extends BaseTest {
 
         when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
         .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        
+
         when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
         .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
 
@@ -227,7 +249,7 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
-    
+
     @Test
     public void testDownloadPublicArtifactErrorWhenSubscriptionRequired() throws Exception {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
@@ -235,7 +257,7 @@ public class TestRepositoryService extends BaseTest {
         Response response = given().when().get("/repository/public/download/cdec/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
     }
-        
+
     @Test
     public void testDownloadPrivateArtifactWithoutSubscription() throws Exception {
         when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
@@ -370,6 +392,95 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec-1.01.1/1.01.1");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
+    public void testGetDownloadStatisticByUser() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT)
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/user/uid1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/user/uid1");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Map m = response.as(Map.class);
+        assertEquals(m.size(), 4);
+        assertEquals(m.get("success"), "2");
+        assertEquals(m.get("fail"), "3");
+        assertEquals(m.get("total"), "5");
+        assertNotNull(m.get("list"));
+
+        List l = (List)m.get("list");
+        assertEquals(l.size(), 2);
+        m = (Map)l.get(0);
+        assertEquals(m.get("userId"), "uid1");
+        assertEquals(m.get("artifact"), "cdec");
+        assertEquals(m.get("version"), "1.0.1");
+        assertEquals(m.get("success"), "2");
+        assertEquals(m.get("fail"), "2");
+
+        m = (Map)l.get(1);
+        assertEquals(m.get("userId"), "uid1");
+        assertEquals(m.get("artifact"), "artifact2");
+        assertEquals(m.get("version"), "1.0.1");
+        assertEquals(m.get("success"), "0");
+        assertEquals(m.get("fail"), "1");
+    }
+
+    @Test
+    public void testGetDownloadStatisticByArtifact() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT)
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/artifact/cdec");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(
+                        JettyHttpServer.SECURE_PATH + "/repository/download/statistic/artifact/cdec");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Map m = response.as(Map.class);
+        assertEquals(m.size(), 4);
+        assertEquals(m.get("success"), "5");
+        assertEquals(m.get("fail"), "2");
+        assertEquals(m.get("total"), "7");
+        assertNotNull(m.get("list"));
+
+        List l = (List)m.get("list");
+        assertEquals(l.size(), 4);
+        m = (Map)l.get(0);
+        assertEquals(m.get("userId"), "uid2");
+        assertEquals(m.get("artifact"), "cdec");
+        assertEquals(m.get("version"), "1.0.3");
+        assertEquals(m.get("success"), "1");
+        assertEquals(m.get("fail"), "0");
+
+        m = (Map)l.get(1);
+        assertEquals(m.get("userId"), "uid2");
+        assertEquals(m.get("artifact"), "cdec");
+        assertEquals(m.get("version"), "1.0.2");
+        assertEquals(m.get("success"), "1");
+        assertEquals(m.get("fail"), "0");
+
+        m = (Map)l.get(2);
+        assertEquals(m.get("userId"), "uid2");
+        assertEquals(m.get("artifact"), "cdec");
+        assertEquals(m.get("version"), "1.0.1");
+        assertEquals(m.get("success"), "1");
+        assertEquals(m.get("fail"), "0");
+
+        m = (Map)l.get(3);
+        assertEquals(m.get("userId"), "uid1");
+        assertEquals(m.get("artifact"), "cdec");
+        assertEquals(m.get("version"), "1.0.1");
+        assertEquals(m.get("success"), "2");
+        assertEquals(m.get("fail"), "2");
     }
 }
 

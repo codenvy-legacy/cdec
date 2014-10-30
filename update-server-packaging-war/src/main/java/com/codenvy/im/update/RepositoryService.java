@@ -32,6 +32,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,25 +40,11 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.io.*;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -229,6 +216,133 @@ public class RepositoryService {
         }
     }
 
+/*    *//**
+     * Saves info for fail download state: user, artifact, version and date. Only trusted agent allowed.
+     *
+     *
+     * @param artifact
+     *         the name of the artifact
+     * @param version
+     *         the version of the artifact
+     * @return Response
+     * @see com.codenvy.im.update.MongoStorage#saveDownloadInfo(String, String, String, boolean)
+     *//*
+    @GenerateLink(rel = "save fail downloaded info")
+    @POST
+    @Path("/download/info/fail/{artifact}/{version}")
+    @RolesAllowed({"user", "system/admin"})
+    public Response saveDownloadFailInfo(@PathParam("artifact") final String artifact,
+                                         @PathParam("version") String version,
+                                         @HeaderParam("user-agent") String userAgent) {
+
+        if (!VALID_USER_AGENT.equals(userAgent)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        } else if (!Version.isValidVersion(version)) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("The version format is invalid '" + version + "'").build();
+        }
+
+        try {
+            mongoStorage.saveDownloadInfo(userManager.getCurrentUser().getId(), artifact, version, false);
+            return Response.status(Response.Status.OK).build();
+        } catch (MongoException e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't save information").build();
+        }
+    }
+
+    *//**
+     * Saves info: user, artifact, version and date. Only trusted agent allowed.
+     *
+     * @param artifact
+     *         the name of the artifact
+     * @param version
+     *         the version of the artifact
+     * @return Response
+     * @see com.codenvy.im.update.MongoStorage#saveDownloadInfo(String, String, String, boolean)
+     *//*
+    @GenerateLink(rel = "save success downloaded info")
+    @POST
+    @Path("/download/info/{artifact}/{version}")
+    @RolesAllowed({"user", "system/admin"})
+    public Response saveDownloadInfo(@PathParam("artifact") final String artifact,
+                                     @PathParam("version") String version,
+                                     @HeaderParam("user-agent") String userAgent) {
+
+        if (!VALID_USER_AGENT.equals(userAgent)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        } else if (!Version.isValidVersion(version)) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("The version format is invalid '" + version + "'").build();
+        }
+
+        try {
+            mongoStorage.saveDownloadInfo(userManager.getCurrentUser().getId(), artifact, version, true);
+            return Response.status(Response.Status.OK).build();
+        } catch (MongoException e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't save information").build();
+        }
+    }*/
+
+    /**
+     * Get download statistic by artifacts for specific user.
+     *
+     * @return Response
+     * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByUserId(String)
+     * @see com.codenvy.im.update.MongoStorage#getTotalDownloadsByUserId(String)
+     */
+    @GenerateLink(rel = "get download statistic by artifacts for specific user")
+    @GET
+    @Path("/download/statistic/user/{user-id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"system/admin"})
+    public Response getDownloadStatisticByUser(@PathParam("user-id") final String userId) {
+        try {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.putAll(mongoStorage.getTotalDownloadsInfoByUserId(userId));
+            response.put("list", mongoStorage.getDownloadsInfoByUserId(userId));
+
+            return Response.status(Response.Status.OK)
+                           .entity(new JsonStringMapImpl<>(response))
+                           .build();
+        } catch (ArtifactNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (MongoException e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
+        }
+    }
+
+    /**
+     * Get download statistic by users for specific artifact.
+     *
+     * @return Response
+     * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByArtifact(String)
+     * @see com.codenvy.im.update.MongoStorage#getTotalDownloadsInfoByArtifact(String)
+     */
+    @GenerateLink(rel = "get download statistic by users for specific artifact")
+    @GET
+    @Path("/download/statistic/artifact/{artifact}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"system/admin"})
+    public Response getDownloadStatisticByArtifact(@PathParam("artifact") final String artifact) {
+        try {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.putAll(mongoStorage.getTotalDownloadsInfoByArtifact(artifact));
+            response.put("list", mongoStorage.getDownloadsInfoByArtifact(artifact));
+
+            return Response.status(Response.Status.OK)
+                           .entity(new JsonStringMapImpl<>(response))
+                           .build();
+        } catch (ArtifactNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (MongoException e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
+        }
+    }
+
     /**
      * Downloads artifact of the specific version.
      *
@@ -320,8 +434,8 @@ public class RepositoryService {
         }
     }
 
-    private Response doDownloadArtifact(String artifact, String version, boolean publicAccess) throws IOException {
-        java.nio.file.Path path = artifactStorage.getArtifact(artifact, version);
+    private Response doDownloadArtifact(final String artifact, final String version, boolean publicAccess) throws IOException {
+        final java.nio.file.Path path = artifactStorage.getArtifact(artifact, version);
 
         if (!Files.exists(path)) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -340,7 +454,33 @@ public class RepositoryService {
         if (!publicAccess) {
             LOG.info("User '" + userManager.getCurrentUser() + "' is downloading " + fileName);
         }
-        return Response.ok(path.toFile(), MediaType.APPLICATION_OCTET_STREAM)
+
+        final String userId = userManager.getCurrentUser() != null ? userManager.getCurrentUser().getId() : null;
+
+        StreamingOutput stream = new StreamingOutput() {
+            public void write(OutputStream output) throws IOException, WebApplicationException {
+                try (InputStream input = new FileInputStream(path.toFile())) {
+                    IOUtils.copyLarge(input, output);
+
+                    if (userId != null) {
+                        mongoStorage.saveDownloadInfo(userId, artifact, version, true);
+                    }
+                } catch (Exception e) {
+                    if (userId != null) {
+                        try {
+                            mongoStorage.saveDownloadInfo(userId, artifact, version, false);
+                        } catch (Exception ex) {
+                            LOG.error("Can't save info about fail on downloading an artifact " + artifact + ":" + version + " to user ", ex);
+                        }
+                    }
+                    
+                    LOG.error("Can't send an artifact " + artifact + ":" + version, e);
+                    throw new IOException(e.getMessage(), e);
+                }
+            }
+        };
+
+        return Response.ok(stream)
                        .header("Content-Length", String.valueOf(Files.size(path)))
                        .header("Content-Disposition", "attachment; filename=" + fileName)
                        .build();

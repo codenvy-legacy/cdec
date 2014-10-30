@@ -45,7 +45,7 @@ import static com.codenvy.im.utils.Commons.getProperException;
  */
 public class AccountUtils {
     public static final  String           ACCOUNT_OWNER_ROLE       = "account/owner";
-    public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yyyy";
+    public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
     private static final SimpleDateFormat subscriptionDateFormat   = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
 
     /** Utility class so there is no public constructor. */

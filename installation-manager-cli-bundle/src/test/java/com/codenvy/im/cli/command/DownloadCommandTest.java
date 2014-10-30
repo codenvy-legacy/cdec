@@ -18,11 +18,13 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
+import org.json.JSONException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -30,6 +32,10 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nullable;
+
+import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
+import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -44,7 +50,7 @@ public class DownloadCommandTest {
     private CommandSession             commandSession;
 
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
-    private String okResponse = "{status: \"OK\"}";
+    private String okResponse                   = "{status: \"OK\"}";
     private String ok100DownloadStatusResponse  = "{\n" +
                                                   "  \"download_info\": {\n" +
                                                   "    \"downloadResult\": \"{\\\"status\\\":\\\"OK\\\"," +
@@ -125,7 +131,7 @@ public class DownloadCommandTest {
 
     @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
-        String downloadStatusResponce = "{\n" +
+        String downloadStatusResponse = "{\n" +
                                         "  \"download_info\": {\n" +
                                         "    \"downloadResult\": \"{\\\"status\\\":\\\"ERROR\\\",\\\"message\\\":\\\"There is no any version of " +
                                         "artifact 'cdec'\\\",\\\"artifacts\\\":[{\\\"status\\\":\\\"FAILURE\\\",\\\"artifact\\\":\\\"cdec\\\"," +
@@ -148,7 +154,7 @@ public class DownloadCommandTest {
                                       "}\n";
         when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id4");
         doReturn(okResponse).when(mockInstallationManagerProxy).startDownload("id4", userCredentialsRep);
-        doReturn(downloadStatusResponce).when(mockInstallationManagerProxy).downloadStatus("id4");
+        doReturn(downloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id4");
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -232,5 +238,29 @@ public class DownloadCommandTest {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertTrue(output.contains(Commons.getPrettyPrintingJson(ok)));
+    }
+
+
+    @Test(enabled = false)
+    public void testDownloadWhenErrorInResponseSubscriptionNotFound() throws Exception {
+        String downloadStatusResponse = "{\"status\":\"ERROR\",\"download_info\":{\"status\":\"FAILURE\",\"percents\":0," +
+                                        "\"downloadResult\":\"{\"status\":\\\"ERROR\\\",\\\"message\\\":\\\"Unexpected error. Can't download " +
+                                        "the artifact 'cdec' version 3.0.0. {\\\\\\\"message\\\\\\\":\\\\\\\"Subscription not found " +
+                                        "communityaccountvyiu9z02hxyfcapj\\\"}\\\",\\\"artifacts\\\":[{\\\"status\\\":\\\"FAILURE\\\"," +
+                                        "\"artifact\":\"cdec\",\"version\":\"3.0.0\"}]}\"}}";
+
+
+        printResponse(downloadStatusResponse);
+        DownloadStatusInfo downloadStatusInfo = DownloadStatusInfo.valueOf(downloadStatusResponse);
+        printResponse(downloadStatusInfo.getDownloadResult());
+    }
+
+    protected void printResponse(@Nullable String response) {
+        try {
+            String message = getPrettyPrintingJson(response);
+            System.out.println(ansi().a(message));
+        } catch (JSONException e) {
+            System.out.println("Unexpected error: " + e.getMessage());
+        }
     }
 }

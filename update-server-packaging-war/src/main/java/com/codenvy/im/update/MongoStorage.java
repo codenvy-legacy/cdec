@@ -39,20 +39,28 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Anatoliy Bazko
  */
 @Singleton
 public class MongoStorage {
-    public static final String ARTIFACTS_COLLECTION = "artifacts";
+    public static final String ARTIFACTS_COLLECTION            = "artifacts";
+    public static final String ARTIFACTS_DOWNLOADED_COLLECTION = "artifacts_downloads";
 
-    private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
+    private static final Logger LOG      = LoggerFactory.getLogger(MongoStorage.class);
+    public static final  String ID       = "_id";
+    public static final  String USER_ID  = "userId";
+    public static final  String ARTIFACT = "artifact";
+    public static final  String VERSION  = "version";
+    public static final  String DATE     = "date";
+    public static final  String SUCCESS  = "success";
+    public static final  String FAIL     = "fail";
+    public static final  String TOTAL    = "total";
 
     private final DB             db;
-    private final String dir;
+    private final String         dir;
     private final MongoClientURI uri;
 
     @Inject
@@ -82,15 +90,15 @@ public class MongoStorage {
         DBCollection collection = db.getCollection(ARTIFACTS_COLLECTION);
 
         DBObject clause = new BasicDBObject();
-        clause.put("userId", userId);
-        clause.put("artifact", artifact);
+        clause.put(USER_ID, userId);
+        clause.put(ARTIFACT, artifact);
 
-        DBObject order = new BasicDBObject("date", -1);
+        DBObject order = new BasicDBObject(DATE, -1);
 
         DBCursor cursor = collection.find(clause).sort(order).limit(1);
         if (cursor.hasNext()) {
             DBObject doc = cursor.next();
-            doc.removeField("_id");
+            doc.removeField(ID);
             return doc.toMap();
         } else {
             throw new ArtifactNotFoundException(artifact);
@@ -105,12 +113,196 @@ public class MongoStorage {
         DBCollection collection = db.getCollection(ARTIFACTS_COLLECTION);
 
         DBObject doc = new BasicDBObject();
-        doc.put("userId", userId);
-        doc.put("artifact", artifact);
-        doc.put("version", version);
-        doc.put("date", new Date());
+        doc.put(USER_ID, userId);
+        doc.put(ARTIFACT, artifact);
+        doc.put(VERSION, version);
+        doc.put(DATE, new Date());
 
         collection.save(doc);
+    }
+
+    /**
+     * Saves info concerning downloaded artifact by user.
+     */
+    public void saveDownloadInfo(String userId, String artifact, String version, boolean isSuccessDownloading) throws MongoException {
+        DBCollection collection = db.getCollection(ARTIFACTS_DOWNLOADED_COLLECTION);
+
+        DBObject doc = new BasicDBObject();
+        doc.put(USER_ID, userId);
+        doc.put(ARTIFACT, artifact);
+        doc.put(VERSION, version);
+        doc.put(DATE, new Date());
+
+        if (isSuccessDownloading) {
+            doc.put(SUCCESS, 1);
+        } else {
+            doc.put(FAIL, 1);
+        }
+
+        collection.save(doc);
+    }
+
+    /**
+     * @return statistics by users about downloading specific artifact with versions.
+     * <p/>
+     * Example:
+     * {userId=user2, artifact=artifact2, version=1.0.1, success=2, fail=0}
+     * {userId=user1, artifact=artifact2, version=1.0.2, success=1, fail=0}
+     * {userId=user1, artifact=artifact2, version=1.0.1, success=0, fail=1}
+     */
+    public List<Map<String, String>> getDownloadsInfoByArtifact(String artifact) throws MongoException, ArtifactNotFoundException {
+        AggregationOutput output = getDownloadsByArtifact(artifact);
+
+        List<Map<String, String>> result = createResult(output, USER_ID, VERSION, SUCCESS, FAIL);
+        addFieldInResult(result, ARTIFACT, artifact);
+
+        return result;
+    }
+
+    private AggregationOutput getDownloadsByArtifact(String artifact) {
+        DBCollection collection = db.getCollection(ARTIFACTS_DOWNLOADED_COLLECTION);
+        DBObject match = new BasicDBObject("$match", new BasicDBObject(ARTIFACT, artifact));
+        DBObject project1 = new BasicDBObject("$project", createProjectFields(USER_ID, VERSION, SUCCESS, FAIL));
+        DBObject group = getGroupOperation(createGroupFields(USER_ID, VERSION));
+
+        return collection.aggregate(match, project1, group);
+    }
+
+    /**
+     * @return total downloads by artifact.
+     * <p/>
+     * Example:
+     * {success=2, fail=1, total=3}
+     */
+    public Map<String, String> getTotalDownloadsInfoByArtifact(String artifact) {
+        AggregationOutput output = getTotalDownloadsByArtifact(artifact);
+        List<Map<String, String>> list = createResult(output, SUCCESS, FAIL);
+
+        if (list.size() == 0)
+        {
+            return Collections.EMPTY_MAP;
+        }
+
+        Map<String, String> m = list.get(0);
+        Long success = Long.valueOf(m.get(SUCCESS));
+        Long fail = Long.valueOf(m.get(FAIL));
+        m.put(TOTAL, String.valueOf(success + fail));
+
+        return m;
+    }
+
+    private AggregationOutput getTotalDownloadsByArtifact(String artifact) {
+        DBCollection collection = db.getCollection(ARTIFACTS_DOWNLOADED_COLLECTION);
+        DBObject match = new BasicDBObject("$match", new BasicDBObject(ARTIFACT, artifact));
+        DBObject project1 = new BasicDBObject("$project", createProjectFields(SUCCESS, FAIL));
+        DBObject group = getGroupOperation(null);
+
+        return collection.aggregate(match, project1, group);
+    }
+
+    /**
+     * @return statistics by specific user about downloading artifacts with versions.
+     * <p/>
+     * Example :
+     * {userId=user2, artifact=artifact3, version=1.0.1, success=1, fail=1}
+     * {userId=user2, artifact=artifact2, version=1.0.1, success=2, fail=1}
+     * {userId=user2, artifact=artifact1, version=1.0.1, success=1, fail=0}
+     */
+    public List<Map<String, String>> getDownloadsInfoByUserId(String userId) throws MongoException, ArtifactNotFoundException {
+        AggregationOutput output = getDownloadsByUserId(userId);
+
+        List<Map<String, String>> result = createResult(output, ARTIFACT, VERSION, SUCCESS, FAIL);
+        addFieldInResult(result, USER_ID, userId);
+
+        return result;
+    }
+
+    private AggregationOutput getDownloadsByUserId(String userId) {
+        DBCollection collection = db.getCollection(ARTIFACTS_DOWNLOADED_COLLECTION);
+        DBObject match = new BasicDBObject("$match", new BasicDBObject(USER_ID, userId));
+        DBObject project1 = new BasicDBObject("$project", createProjectFields(ARTIFACT, VERSION, SUCCESS, FAIL));
+        DBObject group = getGroupOperation(createGroupFields(ARTIFACT, VERSION));
+
+        return collection.aggregate(match, project1, group);
+    }
+
+    /**
+     * @return total downloads by user.
+     * <p/>
+     * Example:
+     * {success=2, fail=1, total=3}
+     */
+    public Map<String, String> getTotalDownloadsInfoByUserId(String userId) {
+        AggregationOutput output = getTotalDownloadsByUserId(userId);
+        List<Map<String, String>> list = createResult(output, SUCCESS, FAIL);
+
+        if (list.size() == 0)
+        {
+            return Collections.EMPTY_MAP;
+        }
+
+        Map<String, String> m = list.get(0);
+        Long success = Long.valueOf(m.get(SUCCESS));
+        Long fail = Long.valueOf(m.get(FAIL));
+        m.put(TOTAL, String.valueOf(success + fail));
+
+        return m;
+    }
+
+    private AggregationOutput getTotalDownloadsByUserId(String userId) {
+        DBCollection collection = db.getCollection(ARTIFACTS_DOWNLOADED_COLLECTION);
+        DBObject match = new BasicDBObject("$match", new BasicDBObject(USER_ID, userId));
+        DBObject project1 = new BasicDBObject("$project", createProjectFields(SUCCESS, FAIL));
+        DBObject group = getGroupOperation(null);
+
+        return collection.aggregate(match, project1, group);
+    }
+
+    private Map<Object, Object> createGroupFields(String... fields) {
+        Map<Object, Object> m = new HashMap<>();
+        for (String field : fields) {
+            m.put(field, "$" + field);
+        }
+        return m;
+    }
+
+    private BasicDBObject getGroupOperation(Map<Object, Object> m) {
+        return new BasicDBObject("$group", new BasicDBObject(ID, m)
+                .append(SUCCESS, new BasicDBObject("$sum", "$" + SUCCESS))
+                .append(FAIL, new BasicDBObject("$sum", "$" + FAIL)));
+    }
+
+    private BasicDBObject createProjectFields(String... fields) {
+        BasicDBObject projectField = new BasicDBObject(fields[0], 1);
+        for (int i = 1; i < fields.length; i++) {
+            projectField.append(fields[i], 1);
+        }
+
+        return projectField;
+    }
+
+    private List<Map<String, String>> createResult(AggregationOutput output, String... trackedFields) {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (DBObject item : output.results()) {
+            Map<String, String> itemMap = new LinkedHashMap<>();
+
+            for (String field : trackedFields) {
+                if (item.get(ID) != null && ((BasicDBObject)item.get(ID)).get(field) != null) {
+                    itemMap.put(field, ((BasicDBObject)item.get(ID)).get(field).toString());
+                } else {
+                    itemMap.put(field, item.get(field).toString());
+                }
+            }
+
+            result.add(itemMap);
+        }
+        return result;
+    }
+
+    private void addFieldInResult(List<Map<String, String>> result, String field, String value) {
+        for (Map<String, String> m : result) {
+            m.put(field, value);
+        }
     }
 
     protected DB getDb() {
@@ -119,7 +311,10 @@ public class MongoStorage {
 
     private void initCollections() {
         DBCollection collection = db.getCollection(ARTIFACTS_COLLECTION);
-        collection.ensureIndex(new BasicDBObject("userId", 1).append("artifact", 1).append("date", -1));
+        collection.ensureIndex(new BasicDBObject(USER_ID, 1).append(ARTIFACT, 1).append(DATE, -1));
+
+        collection = db.getCollection(ARTIFACTS_DOWNLOADED_COLLECTION);
+        collection.ensureIndex(new BasicDBObject(USER_ID, 1).append(ARTIFACT, 1).append(VERSION, 1).append(DATE, -1));
     }
 
     private DB connectToDB() throws IOException {
