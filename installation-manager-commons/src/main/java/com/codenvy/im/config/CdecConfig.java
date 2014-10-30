@@ -17,43 +17,54 @@
  */
 package com.codenvy.im.config;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.inject.Singleton;
 
 /**
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-public class CdecConfig {
-    private List<PuppetConfig> puppetClients = new ArrayList<>();
-    private PuppetMasterConfig puppetMaster;
-    private PuppetConfig       puppetClient;
-
-    private final static String DEFAULT_BASE_DIR = CdecConfig.class.getClassLoader().getResource("codenvy/cdec").getPath();  // TODO read path from installation-manager.properties
-    private final static String PUPPET_CLIENT_CONFIG_FILE = "puppet-client.properties";
-
-    public CdecConfig() {
-        Path baseDir = FileSystems.getDefault().getPath(DEFAULT_BASE_DIR);
-
-        puppetClient = new PuppetConfig();
-        Path configFile = baseDir.resolve(PUPPET_CLIENT_CONFIG_FILE);
-//        puppetClient.load(configFile);   // TODO
-
-        // TODO load puppetMaster configurations
-        // TODO load puppetClients configurations
+@Singleton
+public class CdecConfig extends Config {
+    public enum Property implements ConfigProperty {
+        HOST,
+        SSH_PORT,
+        USER,
+        PASSWORD,
+        PRIVATE_KEY_FILE_ABSOLUTE_PATH,
+        PUPPET_VERSION,
+        PUPPET_RESOURCE_URL,
+        PUPPET_MASTER_PORT
     }
 
-    public List<PuppetConfig> getPuppetClients() {
-        return puppetClients;
+    public String getHost() {
+        return getProperty(Property.HOST);
     }
 
-    public PuppetMasterConfig getPuppetMaster() {
-        return puppetMaster;
+    public String getSSHPort() {
+        return getProperty(Property.SSH_PORT);
     }
 
-    public PuppetConfig getPuppetClient() {
-        return puppetClient;
+    public String getUser() {
+        return getProperty(Property.USER);
+    }
+
+    public String getPassword() {
+        return getProperty(Property.PASSWORD);
+    }
+
+    public String getPrivateKeyFileAbsolutePath() {
+        return getProperty(Property.PRIVATE_KEY_FILE_ABSOLUTE_PATH);
+    }
+
+    public String getPuppetVersion() {
+        return getProperty(Property.PUPPET_VERSION);
+    }
+
+    public String getPuppetResourceUrl() {
+        return getProperty(Property.PUPPET_RESOURCE_URL);
+    }
+
+    public String getPuppetMasterPort() {
+        return getProperty(Property.PUPPET_MASTER_PORT);
     }
 }

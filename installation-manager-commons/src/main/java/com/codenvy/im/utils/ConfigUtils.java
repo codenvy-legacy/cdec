@@ -20,6 +20,7 @@ package com.codenvy.im.utils;
 import com.codenvy.im.config.ConfigException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class ConfigUtils {
     private ConfigUtils() {
     }
 
-    public static Map<String, String> readProperties(Reader in) throws ConfigException {
+    public static Map<String, String> readProperties(InputStream in) throws ConfigException {
         Map<String, String> propertiesCandidate = new HashMap<>();
         Properties properties = new Properties();
         try {

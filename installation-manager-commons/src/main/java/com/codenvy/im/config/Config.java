@@ -19,11 +19,9 @@ package com.codenvy.im.config;
 
 import com.codenvy.im.utils.ConfigUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,19 +30,15 @@ import static java.lang.String.format;
 /**
  * @author Dmytro Nochevnov
  */
-public class Config {
+public abstract class Config {
     private Map<String, String> properties = new HashMap<>();
 
-    public void save(Path config) throws ConfigException {
+    public void save(OutputStream out) throws ConfigException {
         // TODO
     }
 
-    public void load(Path config) throws ConfigException {
-        try (BufferedReader reader = Files.newBufferedReader(config, Charset.defaultCharset())) {
-            this.properties = ConfigUtils.readProperties(reader);
-        } catch (IOException e) {
-            throw new ConfigException(format("Can't read config file '%s'.", config.toAbsolutePath()), e);
-        }
+    public void load(InputStream in) throws ConfigException {
+        this.properties = ConfigUtils.readProperties(in);
     }
 
     protected final String getProperty(ConfigProperty property) throws ConfigException {

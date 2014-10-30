@@ -17,15 +17,9 @@
  */
 package com.codenvy.im.command;
 
-import java.util.Map;
-
 /** @author Dmytro Nochevnov */
 public interface Command {
     String execute() throws CommandException;
 
     String execute(int timeoutMillis) throws CommandException;
-
-    String execute(Map<String, String> parameters) throws CommandException;
-
-    String execute(int timeoutMillis, Map<String, String> parameters) throws CommandException;
 }

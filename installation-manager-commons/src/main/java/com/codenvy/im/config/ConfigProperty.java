@@ -20,5 +20,5 @@ package com.codenvy.im.config;
 /**
  * @author Dmytro Nochevnov
  */
-interface ConfigProperty {
+public interface ConfigProperty {
 }

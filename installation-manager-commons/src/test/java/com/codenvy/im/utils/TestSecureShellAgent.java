@@ -43,12 +43,7 @@ public class TestSecureShellAgent {
     public void testAuthKey() throws IOException {
         ssh = new SecureShellAgent("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
 
-        Map<String, String> variables = new HashMap<String, String>() {{
-            put("TEST_VAR1", "/usr");
-            put("TEST_VAR2", "src");
-        }};
-
-        String result = ssh.execute("ls $TEST_VAR1/$TEST_VAR2", variables);
+        String result = ssh.execute("ls src");
 
         System.out.println(result);
     }

@@ -19,18 +19,13 @@ package com.codenvy.im.utils;
 
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.SecureShellAgent;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.RemoteCommand;
 import com.codenvy.im.config.CdecConfig;
-import com.codenvy.im.config.PuppetConfig;
-import org.testng.annotations.AfterMethod;
+import com.codenvy.im.config.ConfigFactory;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 
@@ -40,20 +35,16 @@ import static org.testng.Assert.assertEquals;
  */
 public class TestRemoteCommand {
     SecureShellAgent agent;
-    CdecConfig cdec;
-
+    CdecConfig config;
 
 //    @BeforeTest
     public void setUp() {
         agent = new SecureShellAgent("127.0.0.1", 2222, "vagrant", "~/.ssh/id_rsa", null);
-        cdec = new CdecConfig();
+        config = ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
     }
 
 //    @Test
     public void testCommand() {
-
-        final PuppetConfig config = cdec.getPuppetClient();
-
         final Agent agent = new SecureShellAgent(
             config.getHost(),
             Integer.valueOf(config.getSSHPort()),
@@ -68,24 +59,4 @@ public class TestRemoteCommand {
         assertEquals(result, "");  // TODO
     }
 
-//    @Test
-    public void testCommandWithParameters() {
-
-        final PuppetConfig config = cdec.getPuppetClient();
-
-        final Agent agent = new SecureShellAgent(
-            config.getHost(),
-            Integer.valueOf(config.getSSHPort()),
-            config.getUser(),
-            config.getPrivateKeyFileAbsolutePath(),
-            null
-        );
-
-        Command command = new RemoteCommand("ls $TEST_DIR", agent, "test parameter", new HashMap<String, String>() {{
-            put("TEST", "/etc");
-        }});
-
-        String result = command.execute();
-        assertEquals(result, "");  // TODO
-    }
 }

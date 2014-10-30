@@ -23,15 +23,12 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import static java.lang.String.format;
@@ -92,19 +89,11 @@ public class SecureShellAgent implements Agent {
     }
 
     @Override public String execute(String command) throws AgentException {
-        return execute(command, 0, new HashMap<String, String>(0));
+        return execute(command, 0);
     }
 
-    @Override public String execute(String command, Map<String, String> parameters) throws AgentException {
-        return execute(command, 0, parameters);
-    }
-
-    @Override public String execute(String command, int timeoutMillis, @Nonnull Map<String, String> parameters) throws AgentException {
+    @Override public String execute(String command, int timeoutMillis) throws AgentException {
         ChannelExec channel = null;
-
-        for (Map.Entry<String, String> variable : parameters.entrySet()) {
-            command = format("export %s='%s'; ", variable.getKey(), variable.getValue()) + command;
-        }
 
         try {
             channel = (ChannelExec)session.openChannel("exec");

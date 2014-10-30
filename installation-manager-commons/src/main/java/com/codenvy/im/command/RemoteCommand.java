@@ -20,16 +20,11 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.AgentException;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class RemoteCommand implements Command {
     private String description;
-
-    private Map<String, String> defaultParameters = new HashMap<>();
 
     private String commandTemplate;
 
@@ -41,16 +36,9 @@ public class RemoteCommand implements Command {
         this.description = description;
     }
 
-    public RemoteCommand(String commandTemplate, Agent agent, String description, Map<String, String> defaultParameters) {
-        this.commandTemplate = commandTemplate;
-        this.agent = agent;
-        this.description = description;
-        this.defaultParameters = defaultParameters;
-    }
-
     @Override public String execute() throws CommandException {
         try {
-            return agent.execute(commandTemplate, defaultParameters);
+            return agent.execute(commandTemplate);
         } catch (AgentException e) {
             throw new CommandException(toString(), e);
         }
@@ -58,36 +46,16 @@ public class RemoteCommand implements Command {
 
     @Override public String execute(int timeoutMillis) throws CommandException {
         try {
-            return agent.execute(commandTemplate, timeoutMillis, defaultParameters);
+            return agent.execute(commandTemplate, timeoutMillis);
         } catch (AgentException e) {
             throw new CommandException(toString(), e);
         }
     }
 
-    @Override public String execute(Map<String, String> parameters) throws CommandException {
-        try {
-            return agent.execute(commandTemplate, parameters);
-        } catch (AgentException e) {
-            throw new CommandException(format("Error of executing next command: %s", toString(parameters)), e);
-        }
-    }
-
-    @Override public String execute(int timeoutMillis, Map<String, String> parameters) throws CommandException {
-        try {
-            return agent.execute(commandTemplate, timeoutMillis, parameters);
-        } catch (AgentException e) {
-            throw new CommandException(toString(parameters), e);
-        }
-    }
-
-    @Override public String toString() {
-        return toString(defaultParameters);
-    }
-
-    public String toString(Map<String, String> parameters) {
-        return format("Remote command: '%s'. Description: '%s'. Parameters: '%s'.",
+    @Override
+    public String toString() {
+        return format("Remote command: '%s'. Description: '%s'.",
                       this.commandTemplate,
-                      this.description,
-                      parameters);
+                      this.description);
     }
 }

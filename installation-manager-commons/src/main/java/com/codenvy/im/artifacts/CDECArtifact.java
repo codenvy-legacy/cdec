@@ -24,7 +24,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.command.RemoteCommand;
 import com.codenvy.im.config.CdecConfig;
-import com.codenvy.im.config.PuppetConfig;
+import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -35,13 +35,14 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import static java.lang.String.format;
-import static com.codenvy.im.config.PuppetConfig.*;
 
-/** @author Anatoliy Bazko */
+/**
+ * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
+ * */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
@@ -49,9 +50,7 @@ public class CDECArtifact extends AbstractArtifact {
     private final HttpTransport transport;
     private final String        updateEndpoint;
 
-    private final CdecConfig cdec;
-
-    enum InstallType {
+    public enum InstallType {
         SINGLE_NODE_WITH_PUPPET_MASTER,
         SINGLE_NODE_WITHOUT_PUPPET_MASTER,
         MULTI_NODE_WITH_PUPPET_MASTER
@@ -63,8 +62,6 @@ public class CDECArtifact extends AbstractArtifact {
         super(NAME);
         this.updateEndpoint = updateEndpoint;
         this.transport = transport;
-
-        this.cdec = new CdecConfig();
     }
 
     @Override
@@ -76,24 +73,24 @@ public class CDECArtifact extends AbstractArtifact {
         }
     }
 
-    //    private void installPuppetMaster(PuppetMasterConfig config,
-    //                                     List<String> hosts,
-    //                                     Path pathToCdecArchive) throws IOException {
-    //        SecureShellAgent ssh = new SecureShellAgent(config.getHost(),
-    //                                          config.getSSHPort(),
-    //                                          config.getUser(),
-    //                                          config.getPassword()); //TODO or Authentication via  public key!!!
-    //
-    //        // 1.1 Validate all hosts name and set their if need. //TODO Set ?
-    //        validateHostsByDomainName(ssh, hosts);
-    //
-    //        // 1.2 Add rule for firewall for puppet master.
-    //        addFirewallRuleForPuppetMaster(ssh, config.getPuppetMasterPort());
-    //
-    //        // 1.3 Install puppet master;
-    //        installPuppetServer(ssh, config.getPuppetResourceUrl(), config.getPuppetServerVersion());
-    //
-    //        // 1.4 Install unzip if need //TODO
+//    private void installPuppetMaster(PuppetMasterConfig config,
+//                                     List<String> hosts,
+//                                     Path pathToCdecArchive) throws IOException {
+//        SecureShellAgent ssh = new SecureShellAgent(config.getHost(),
+//                                          config.getSSHPort(),
+//                                          config.getUser(),
+//                                          config.getPassword()); //TODO or Authentication via  public key!!!
+//
+//        // 1.1 Validate all hosts name and set their if need. //TODO Set ?
+//        validateHostsByDomainName(ssh, hosts);
+//
+//        // 1.2 Add rule for firewall for puppet master.
+//        addFirewallRuleForPuppetMaster(ssh, config.getPuppetMasterPort());
+//
+//        // 1.3 Install puppet master;
+//        installPuppetServer(ssh, config.getPuppetResourceUrl(), config.getPuppetServerVersion());
+//
+//        // 1.4 Install unzip if need //TODO
 //        installUnzip(ssh);
 //
 //        // 1.5 Upload CDEC in puppet master.
@@ -236,7 +233,6 @@ public class CDECArtifact extends AbstractArtifact {
 
     /**
      * CDEC installation sequence.
-     * <p/>
      * 1) On Puppet Master host :
      * 1.1 Validate all hosts name and set their if need. //TODO set ?
      * 1.2 Add rule in firewall for puppet master.
@@ -279,9 +275,9 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     private List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands() {
-        List<Command> commands = new ArrayList<>();
+        final CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
 
-        final PuppetConfig config = cdec.getPuppetClient();
+        List<Command> commands = new ArrayList<>();
 
         final Agent agent = new SecureShellAgent(
             config.getHost(),
@@ -294,26 +290,14 @@ public class CDECArtifact extends AbstractArtifact {
         commands.addAll(new ArrayList<Command>() {{
             add(new RemoteCommand("sudo setenforce 0", agent, "Disable SELinux"));
             add(new RemoteCommand("sudo cp /etc/selinux/config /etc/selinux/config.bak", agent, "Disable SELinux"));
-            add(new RemoteCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config", agent, "Disable SELinux"));
+            add(new RemoteCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config", agent,
+                                  "Disable SELinux"));
         }});
 
-        commands.add(new RemoteCommand(
-            format("sudo rpm -ivh $%s", PUPPET_RESOURCE_URL),
-            agent,
-            "Install puppet client",
-            new HashMap<String, String>() {{
-                put(PUPPET_RESOURCE_URL, config.getPuppetResourceUrl());
-            }}
-        ));
-
-        commands.add(new RemoteCommand(
-            format("sudo yum install $%s -y", PUPPET_VERSION),
-            agent,
-            "Install puppet client",
-            new HashMap<String, String>() {{
-                put(PUPPET_VERSION, config.getPuppetVersion());
-            }}
-        ));
+        commands.addAll(new ArrayList<Command>() {{
+            add(new RemoteCommand(format("sudo rpm -ivh %s", config.getPuppetResourceUrl()), agent, "Install puppet client"));
+            add(new RemoteCommand(format("sudo yum install %s -y", config.getPuppetVersion()), agent, "Install puppet client"));
+        }});
 
         return commands;
     }

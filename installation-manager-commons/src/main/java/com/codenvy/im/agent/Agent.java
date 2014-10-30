@@ -18,14 +18,9 @@
  */
 package com.codenvy.im.agent;
 
-import javax.annotation.Nonnull;
-import java.util.Map;
-
 /** @author Dmytro Nochevnov */
 public interface Agent {
     String execute(String command) throws AgentException;
 
-    String execute(String command, Map<String, String> parameters) throws AgentException;
-
-    String execute(String command, int timeoutMillis, @Nonnull Map<String, String> parameters) throws AgentException;
+    String execute(String command, int timeoutMillis) throws AgentException;
 }
