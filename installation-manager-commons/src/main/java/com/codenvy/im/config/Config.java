@@ -19,9 +19,7 @@ package com.codenvy.im.config;
 
 import com.codenvy.im.utils.ConfigUtils;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,11 +30,7 @@ import static java.lang.String.format;
  */
 public abstract class Config {
     private Map<String, String> properties = new HashMap<>();
-
-    public void save(OutputStream out) throws ConfigException {
-        // TODO
-    }
-
+    
     public void load(InputStream in) throws ConfigException {
         this.properties = ConfigUtils.readProperties(in);
     }

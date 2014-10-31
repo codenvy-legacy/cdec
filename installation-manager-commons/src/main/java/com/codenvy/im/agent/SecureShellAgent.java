@@ -40,7 +40,7 @@ import static java.lang.String.format;
 public class SecureShellAgent implements Agent {
 
     private final Session session;
-    private final JSch jsch = new JSch();
+    private final JSch jsch = getJSch();
 
     /**
      * Create ssh session object and try to connect to remote host by using password.
@@ -51,7 +51,12 @@ public class SecureShellAgent implements Agent {
             session.setPassword(password);
             session.connect();
         } catch (JSchException e) {
-            throw new AgentException(format("Can't connect to host '%s@%s:%s'.", user, host, port), e);
+            String errorMessage = format("Can't connect to host '%s@%s:%s'.", user, host, port);
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                errorMessage += format(" Error: %s", e.getMessage());
+            }
+
+            throw new AgentException(errorMessage, e);
         }
     }
 
@@ -59,7 +64,7 @@ public class SecureShellAgent implements Agent {
      * Create ssh session object and try to connect to remote host by using auth key.
      */
     public SecureShellAgent(String host, int port, String user, String privateKeyFileAbsolutePath, @Nullable String passphrase) throws
-                                                                                                                           AgentException {
+                                                                                                                                AgentException {
         try {
             session = getSession(host, port, user);
 
@@ -71,19 +76,13 @@ public class SecureShellAgent implements Agent {
 
             session.connect();
         } catch (JSchException e) {
-            throw new AgentException(
-                format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath), e);
+            String errorMessage = format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                errorMessage += format(" Error: %s", e.getMessage());
+            }
+
+            throw new AgentException(errorMessage, e);
         }
-    }
-
-    private Session getSession(String host, int port, String user) throws JSchException {
-        Session session = jsch.getSession(user, host, port);
-
-        Properties config = new Properties();
-        config.put("StrictHostKeyChecking", "no");
-        session.setConfig(config);
-
-        return session;
     }
 
     @Override public String execute(String command) throws AgentException {
@@ -114,12 +113,32 @@ public class SecureShellAgent implements Agent {
                 return read(bufferedReader);
             }
         } catch (Exception e) {
-            throw new AgentException("Command '" + command + "' execution fail.", e);
+            String errorMessage = format("Command '%s' execution fail.", command);
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                errorMessage += format(" Error: %s", e.getMessage());
+            }
+
+            throw new AgentException(errorMessage, e);
         } finally {
             if (channel != null) {
                 channel.disconnect();
             }
         }
+    }
+
+    /** for unit testing propose */
+    JSch getJSch() {
+        return new JSch();
+    }
+
+    private Session getSession(String host, int port, String user) throws JSchException {
+        Session session = jsch.getSession(user, host, port);
+
+        Properties config = new Properties();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+
+        return session;
     }
 
     private String read(BufferedReader reader) throws IOException {

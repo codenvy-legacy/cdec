@@ -40,7 +40,7 @@ public class ConfigFactory {
                 return loadConfig(configFilePath, CdecConfig.class);
         }
 
-        throw new IllegalArgumentException("CDEC config of type '" + installType + "' isn't found");
+        throw new IllegalArgumentException("CDEC config of type '" + installType + "' wasn't found.");
     }
 
     private static <T extends Config> T loadConfig(String configFilePath, Class<T> clazz) {

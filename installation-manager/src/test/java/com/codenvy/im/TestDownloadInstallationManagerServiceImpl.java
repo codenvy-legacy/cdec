@@ -400,13 +400,13 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "    {\n" +
                                                       "      \"artifact\": \"cdec\",\n" +
                                                       "      \"file\": \"target/file1\",\n" +
-                                                      "      \"status\": \"DOWNLOADED\",\n" +
+                                                      "      \"status\": \"READY_TO_INSTALL\",\n" +
                                                       "      \"version\": \"1.0.1\"\n" +
                                                       "    },\n" +
                                                       "    {\n" +
                                                       "      \"artifact\": \"cdec\",\n" +
                                                       "      \"file\": \"target/file2\",\n" +
-                                                      "      \"status\": \"DOWNLOADED\",\n" +
+                                                      "      \"status\": \"READY_TO_INSTALL\",\n" +
                                                       "      \"version\": \"1.0.2\"\n" +
                                                       "    }\n" +
                                                       "  ],\n" +
@@ -455,7 +455,7 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                       "  \"artifacts\": [{\n" +
                                                       "    \"artifact\": \"cdec\",\n" +
                                                       "    \"file\": \"target/file1\",\n" +
-                                                      "    \"status\": \"DOWNLOADED\",\n" +
+                                                      "    \"status\": \"READY_TO_INSTALL\",\n" +
                                                       "    \"version\": \"1.0.1\"\n" +
                                                       "  }],\n" +
                                                       "  \"status\": \"OK\"\n" +

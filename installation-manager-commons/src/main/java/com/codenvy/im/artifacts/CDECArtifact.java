@@ -69,7 +69,11 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public void install(Path pathToBinaries) throws CommandException, AgentException, ConfigException {
-        List<Command> installCommands = getInstallCommands(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
+        install(pathToBinaries, InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
+    }
+
+    public void install(Path pathToBinaries, InstallType installType) throws CommandException, AgentException, ConfigException {
+        List<Command> installCommands = getInstallCommands(pathToBinaries, installType);
 
         for (Command command : installCommands) {
             command.execute();
@@ -78,7 +82,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public String getInstalledVersion(String accessToken) throws IOException {
-        return "UNKNOWN";  // TODO
+        return null;  // TODO issue CDEC-62
     }
 
     @Override
@@ -88,24 +92,24 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public boolean isInstallable(Version versionToInstall, String accessToken) {
-        return false; // temporarily
+        return true;
     }
 
     @Override
     protected Path getInstalledPath() throws URISyntaxException {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();  // TODO issue CDEC-61
     }
 
-    private List<Command> getInstallCommands(InstallType type) throws AgentException, ConfigException {
+    private List<Command> getInstallCommands(Path pathToBinaries, InstallType type) throws AgentException, ConfigException {
         switch (type) {
             case SINGLE_NODE_WITHOUT_PUPPET_MASTER:
-                return getInstallCdecOnSingleNodeWithoutPuppetMasterCommands();
+                return getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(pathToBinaries);
 
             case SINGLE_NODE_WITH_PUPPET_MASTER:
-                return getInstallCdecOnSingleNodeWithPuppetMaster();
+                return getInstallCdecOnSingleNodeWithPuppetMaster(pathToBinaries);
 
             case MULTI_NODES_WITH_PUPPET_MASTER:
-                return getInstallCdecOnMultiNodesWithPappetMaster();
+                return getInstallCdecOnMultiNodesWithPappetMaster(pathToBinaries);
 
             default:
                 return Collections.emptyList();
@@ -116,7 +120,7 @@ public class CDECArtifact extends AbstractArtifact {
      * @throws ConfigException if required config parameter isn't present in configuration.
      * @throws AgentException if required agent isn't ready to perform commands.
      */
-    private List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands() throws AgentException, ConfigException {
+    private List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Path pathToBinaries) throws AgentException, ConfigException {
         final CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
 
         List<Command> commands = new ArrayList<>();
@@ -128,6 +132,8 @@ public class CDECArtifact extends AbstractArtifact {
             config.getPrivateKeyFileAbsolutePath(),
             null
         );
+
+        // TODO issue CDEC-58
 
         commands.addAll(new ArrayList<Command>() {{
             add(new RemoteCommand("sudo setenforce 0", agent, "Disable SELinux"));
@@ -147,7 +153,7 @@ public class CDECArtifact extends AbstractArtifact {
     /**
      * TODO issue CDEC-59
      */
-    private List<Command> getInstallCdecOnSingleNodeWithPuppetMaster() {
+    private List<Command> getInstallCdecOnSingleNodeWithPuppetMaster(Path pathToBinaries) {
         /**
          * CDEC installation sequence.
          * 1) On Puppet Master host :
@@ -186,7 +192,7 @@ public class CDECArtifact extends AbstractArtifact {
     /**
      * TODO issue CDEC-60
      */
-    private List<Command> getInstallCdecOnMultiNodesWithPappetMaster() {
+    private List<Command> getInstallCdecOnMultiNodesWithPappetMaster(Path pathToBinaries) {
     //                CdecConfig installationConfig = new CdecConfig();
     //
     //                installPuppetMaster(installationConfig.getPuppetMaster(),
