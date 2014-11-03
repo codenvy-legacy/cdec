@@ -18,34 +18,87 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-
+import com.codenvy.im.utils.InjectorBootstrap;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
+import static java.lang.String.format;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class ConfigFactory {
-    private static final String DEFAULT_BASE_DIR = "codenvy";   // TODO get path from installation-manager.properties
-    private static final String SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES = "cdec/single-node-without-puppet-master.properties";
+    private static final String CONFIG_PATH         = InjectorBootstrap.getProperty("config.path");
+    private static final String DEFAULT_CONFIG_PATH = InjectorBootstrap.getProperty("config.path.default");
+
+    protected static final String CDEC_CONFIG_PATH                                  = "cdec";
+    protected static final String SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE = "single-node-without-puppet-master.properties";
+
+    protected static Map<String, Path> configFiles = new HashMap<String, Path>() {{
+        put(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString(),
+            Paths.get(CONFIG_PATH).resolve(CDEC_CONFIG_PATH).resolve(SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE));
+    }};
+
+    protected static Map<String, Path> defaultConfigFiles = new HashMap<String, Path>() {{
+        put(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString(),
+            Paths.get(DEFAULT_CONFIG_PATH).resolve(CDEC_CONFIG_PATH).resolve(SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE));
+    }};
 
     /**
      * Config factory.
      */
-    public static CdecConfig loadConfig(CDECArtifact.InstallType installType) {
-        switch (installType) {
-            case SINGLE_NODE_WITHOUT_PUPPET_MASTER:
-                String configFilePath = Paths.get(DEFAULT_BASE_DIR).resolve(SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES).toString();
-                return loadConfig(configFilePath, CdecConfig.class);
+    public static CdecConfig loadConfig(String configType) throws IllegalArgumentException, ConfigException {
+        Path configFileRelativePath = configFiles.get(configType);
+        if (configFileRelativePath == null) {
+            throw new IllegalArgumentException("Config '" + configType + "' isn't supported.");
         }
 
-        throw new IllegalArgumentException("CDEC config of type '" + installType + "' wasn't found.");
+        try {
+            Path configFileAbsolutePath = getConfigFileAbsolutePath(configFileRelativePath, defaultConfigFiles.get(configType));
+            return loadConfig(Files.newInputStream(configFileAbsolutePath), CdecConfig.class);
+        } catch (Exception e) {
+            throw new ConfigException(format("Config '%s' error: %s: %s",
+                                             configType,
+                                             e.getClass().getSimpleName(),
+                                             e.getMessage()));
+        }
     }
 
-    private static <T extends Config> T loadConfig(String configFilePath, Class<T> clazz) {
-        T config = INJECTOR.getInstance(clazz);
-        config.load(ConfigFactory.class.getClassLoader().getResourceAsStream(configFilePath));   // TODO load from file system
+    /**
+     * Return path to existed config file on file system = [fileSystemAccountRootPath]/[configFileRelativePath].
+     * If config file doesn't exist, create it with default content from file [classResourceDir]/[defaultConfigFileRelativePath]
+     * @throws IOException if it's impossible to create config file with default content.
+     */
+    private static Path getConfigFileAbsolutePath(Path configFileRelativePath, Path defaultConfigFileRelativePath) throws IOException {
+        Path fileSystemAccountRootPath = Paths.get(System.getProperty("user.home"));
+        Path configFileAbsolutePath = fileSystemAccountRootPath.resolve(configFileRelativePath);
+
+        if (!Files.exists(configFileAbsolutePath)) {
+            // copy default config file [classResourceDir]/[defaultConfigFileRelativePath] to [configFileAbsolutePath]
+            Files.createDirectories(configFileAbsolutePath.getParent());
+
+            InputStream defaultConfigContent =
+                ConfigFactory.class.getClassLoader().getResourceAsStream(String.valueOf(defaultConfigFileRelativePath));
+
+            if (defaultConfigContent == null) {
+                throw new IOException(format("Default config not found at '%s'.", defaultConfigFileRelativePath));
+            }
+
+            Files.copy(defaultConfigContent, configFileAbsolutePath);
+        }
+
+        return configFileAbsolutePath;
+    }
+
+    private static <T extends Config> T loadConfig(InputStream configFile, Class<T> configDataClass) throws ConfigException {
+        T config = INJECTOR.getInstance(configDataClass);
+        config.load(configFile);
         return config;
     }
 }

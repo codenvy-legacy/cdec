@@ -121,7 +121,7 @@ public class CDECArtifact extends AbstractArtifact {
      * @throws AgentException if required agent isn't ready to perform commands.
      */
     private List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Path pathToBinaries) throws AgentException, ConfigException {
-        final CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
+        final CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
 
         List<Command> commands = new ArrayList<>();
 
