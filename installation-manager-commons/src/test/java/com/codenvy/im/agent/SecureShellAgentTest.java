@@ -104,7 +104,7 @@ public class SecureShellAgentTest {
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Command '" + INVALID_COMMAND + "' execution fail. Error: " + INVALID_COMMAND_OUTPUT)
+          expectedExceptionsMessageRegExp = INVALID_COMMAND_OUTPUT)
     public void testErrorOnCommandExecution() {
         testAgent = new SecureShellAgent(TEST_HOST, TEST_PORT, TEST_USER, TEST_AUTH_PRIVATE_KEY, TEST_PASSPHRASE);
         testAgent.execute(INVALID_COMMAND);

@@ -113,12 +113,7 @@ public class SecureShellAgent implements Agent {
                 return read(bufferedReader);
             }
         } catch (Exception e) {
-            String errorMessage = format("Command '%s' execution fail.", command);
-            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                errorMessage += format(" Error: %s", e.getMessage());
-            }
-
-            throw new AgentException(errorMessage, e);
+            throw new AgentException(e.getMessage(), e);
         } finally {
             if (channel != null) {
                 channel.disconnect();

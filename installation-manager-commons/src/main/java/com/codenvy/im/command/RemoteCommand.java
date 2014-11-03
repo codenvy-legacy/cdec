@@ -26,36 +26,44 @@ import static java.lang.String.format;
 public class RemoteCommand implements Command {
     private String description;
 
-    private String commandTemplate;
+    private String command;
 
     private Agent agent;
 
-    public RemoteCommand(String commandTemplate, Agent agent, String description) {
-        this.commandTemplate = commandTemplate;
+    public RemoteCommand(String command, Agent agent, String description) {
+        this.command = command;
         this.agent = agent;
         this.description = description;
     }
 
     @Override public String execute() throws CommandException {
         try {
-            return agent.execute(commandTemplate);
+            return agent.execute(command);
         } catch (AgentException e) {
-            throw new CommandException(toString(), e);
+            String errorMessage = format("Remote command %s execution fail.", toString());
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                errorMessage += format(" Error: %s", e.getMessage());
+            }
+
+            throw new CommandException(errorMessage, e);
         }
     }
 
     @Override public String execute(int timeoutMillis) throws CommandException {
         try {
-            return agent.execute(commandTemplate, timeoutMillis);
+            return agent.execute(command, timeoutMillis);
         } catch (AgentException e) {
-            throw new CommandException(toString(), e);
+            String errorMessage = format("Remote command %s execution fail.", toString());
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                errorMessage += format(" Error: %s", e.getMessage());
+            }
+
+            throw new CommandException(errorMessage, e);
         }
     }
 
     @Override
     public String toString() {
-        return format("Remote command: '%s'. Description: '%s'.",
-                      this.commandTemplate,
-                      this.description);
+        return format("'%s' ('%s')", this.command, this.description);
     }
 }

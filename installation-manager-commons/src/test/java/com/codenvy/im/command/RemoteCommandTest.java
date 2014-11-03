@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.command;
 
+import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.SecureShellAgent;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -24,7 +25,9 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 /**
  * @author Dmytro Nochevnov
@@ -61,7 +64,38 @@ public class RemoteCommandTest {
     @Test
     public void testCommandToString() {
         Command command = new RemoteCommand("ls", null, "test description");
-        assertEquals(command.toString(), "Remote command: 'ls'. Description: 'test description'.");
+        assertEquals(command.toString(), "'ls' ('test description')");
     }
 
+    public void testCommandException() {
+        doThrow(new AgentException("agent error")).when(mockAgent).execute("ls");
+
+        Command command = new RemoteCommand("ls", mockAgent, "test description");
+
+        try {
+            command.execute(123);
+        } catch(CommandException e) {
+            // @Test annotation didn't work properly here
+            assertEquals(e.getMessage(), "Remote command 'ls' ('test description') execution fail. Error: agent error");
+            return;
+        }
+
+        fail("CommandException should be thrown.");
+    }
+
+    public void testCommandExceptionWithoutAgentErrorMessage() {
+        doThrow(new AgentException()).when(mockAgent).execute("ls", 123);
+
+        Command command = new RemoteCommand("ls", mockAgent, "test description");
+
+        try {
+            command.execute(123);
+        } catch(CommandException e) {
+            // @Test annotation didn't work properly here
+            assertEquals(e.getMessage(), "Remote command 'ls' ('test description') execution fail.");
+            return;
+        }
+
+        fail("CommandException should be thrown.");
+    }
 }

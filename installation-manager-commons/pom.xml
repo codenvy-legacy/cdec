@@ -58,11 +58,6 @@
             <version>${commons-compress.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.sshd</groupId>
-            <artifactId>sshd-core</artifactId>
-            <version>${org.apache.sshd.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.restlet.jse</groupId>
             <artifactId>org.restlet.ext.jackson</artifactId>
             <version>${org.restlet.version}</version>
@@ -93,6 +88,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-core</artifactId>
+            <version>${org.apache.sshd.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -188,13 +189,12 @@
                                             version = ${project.version}
                                         </echo>
                                         <?SORTPOM RESUME?>
-
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
                                             <replacetoken>codenvy.com</replacetoken>
                                             <replacevalue>codenvy-stg.com</replacevalue>
                                         </replace>
                                         <tstamp>
-                                            <format property="touch.time" pattern="MM/dd/yyyy hh:mm aa" offset="1" unit="minute" />
+                                            <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                         </tstamp>
                                         <touch datetime="${touch.time}">
                                             <fileset dir="${project.build.directory}/classes/codenvy" />
