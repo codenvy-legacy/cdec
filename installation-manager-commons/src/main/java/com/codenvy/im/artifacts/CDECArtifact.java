@@ -76,7 +76,9 @@ public class CDECArtifact extends AbstractArtifact {
         List<Command> installCommands = getInstallCommands(pathToBinaries, installType);
 
         for (Command command : installCommands) {
+            System.out.print(format("Executing command %s ...", toString()));  // TODO display status in CLI
             command.execute();
+            System.out.println(" Ready.");                                     // TODO display status in CLI
         }
     }
 
@@ -125,13 +127,24 @@ public class CDECArtifact extends AbstractArtifact {
 
         List<Command> commands = new ArrayList<>();
 
-        final Agent agent = new SecureShellAgent(
-            config.getHost(),
-            Integer.valueOf(config.getSSHPort()),
-            config.getUser(),
-            config.getPrivateKeyFileAbsolutePath(),
-            null
-        );
+        final Agent agent;
+        // select use password or auth key
+        if (!config.getPassword().isEmpty()) {
+            agent = new SecureShellAgent(
+                config.getHost(),
+                Integer.valueOf(config.getSSHPort()),
+                config.getUser(),
+                config.getPassword()
+            );
+        } else {
+            agent = new SecureShellAgent(
+                config.getHost(),
+                Integer.valueOf(config.getSSHPort()),
+                config.getUser(),
+                config.getPrivateKeyFileAbsolutePath(),
+                null
+            );
+        }
 
         // TODO issue CDEC-58
 

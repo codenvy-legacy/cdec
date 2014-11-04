@@ -39,11 +39,11 @@ public class CdecConfigTest {
         setupConfig(getTestConfigDirRelativePath(), "codenvy");
 
         CdecConfig testConfig = ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
-        assertEquals(testConfig.getHost(), "127.0.0.1");
-        assertEquals(testConfig.getSSHPort(), "22");
+        assertEquals(testConfig.getHost(), "");
+        assertEquals(testConfig.getSSHPort(), "");
         assertEquals(testConfig.getUser(), "");
         assertEquals(testConfig.getPassword(), "");
-        assertEquals(testConfig.getPrivateKeyFileAbsolutePath(), "~/.ssh/id_rsa");
+        assertEquals(testConfig.getPrivateKeyFileAbsolutePath(), "");
         assertEquals(testConfig.getPuppetVersion(), "puppet-3.4.3-1.el6.noarch");
         assertEquals(testConfig.getPuppetResourceUrl(),
                      "http://yum.puppetlabs.com/el/6/products/x86_64/puppetlabs-release-6-7.noarch.rpm");
