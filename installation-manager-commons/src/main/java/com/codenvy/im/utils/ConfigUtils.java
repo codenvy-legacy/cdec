@@ -21,12 +21,12 @@ import com.codenvy.im.config.ConfigException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 /**
  * @author Dmytro Nochevnov
@@ -42,7 +42,7 @@ public class ConfigUtils {
         try {
             properties.load(in);
         } catch (IOException e) {
-            throw new ConfigException("Can't load properties", e);
+            throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
 
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
@@ -53,5 +53,22 @@ public class ConfigUtils {
         }
 
         return propertiesCandidate;
+    }
+
+    public static void storeProperties(Map<String, String> properties, OutputStream out) throws ConfigException {
+        Properties propertiesToStore = new Properties();
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey().toString().toUpperCase();   // set property name into Upper case
+            String value = entry.getValue();
+
+            propertiesToStore.put(key, value);
+        }
+
+
+        try {
+            propertiesToStore.store(out, null);
+        } catch (IOException e) {
+            throw new ConfigException(format("Can't store properties: %s", e.getMessage()), e);
+        }
     }
 }

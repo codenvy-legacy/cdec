@@ -20,6 +20,7 @@ package com.codenvy.im.config;
 import com.codenvy.im.utils.ConfigUtils;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,22 +31,37 @@ import static java.lang.String.format;
  */
 public abstract class Config {
     private Map<String, String> properties = new HashMap<>();
-    
-    public void load(InputStream in) throws ConfigException {
+
+    private String configSource;
+
+    public final void load(InputStream in, String configSource) throws ConfigException {
         this.properties = ConfigUtils.readProperties(in);
+        this.configSource = configSource;
+    }
+
+    public final void store(OutputStream out) throws ConfigException {
+        ConfigUtils.storeProperties(this.properties, out);
+    }
+
+    public final String getConfigSource() {
+        return configSource;
     }
 
     protected final String getProperty(ConfigProperty property) throws ConfigException {
-        if (! properties.containsKey(property.toString())) {
-            throw new ConfigException(format("Property '%s' hasn't been found.", property));
+        String propertyName = property.toString().toUpperCase();
+        if (! properties.containsKey(propertyName)) {
+            if (configSource != null) {
+                throw new ConfigException(format("Property '%s' hasn't been found at '%s'.", propertyName, getConfigSource()));
+            } else {
+                throw new ConfigException(format("Property '%s' hasn't been found.", propertyName, getConfigSource()));
+            }
         }
 
-        return properties.get(property.toString());
+        return properties.get(propertyName);
     }
 
     protected final void setProperty(ConfigProperty property, String value) {
-        properties.put(property.toString(), value);
+        String propertyName = property.toString().toUpperCase();
+        properties.put(propertyName, value);
     }
-
-
 }

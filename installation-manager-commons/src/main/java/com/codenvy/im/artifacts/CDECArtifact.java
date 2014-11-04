@@ -99,7 +99,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     protected Path getInstalledPath() throws URISyntaxException {
-        throw new UnsupportedOperationException();  // TODO issue CDEC-61
+        throw new UnsupportedOperationException();
     }
 
     private List<Command> getInstallCommands(Path pathToBinaries, InstallType type) throws AgentException, ConfigException {
@@ -124,6 +124,13 @@ public class CDECArtifact extends AbstractArtifact {
      */
     private List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Path pathToBinaries) throws AgentException, ConfigException {
         final CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
+
+        // check readiness of config
+        if (config.getHost().isEmpty() || config.getSSHPort().isEmpty()) {
+            throw new ConfigException(format("Installation config file '%s' is incomplete.", config.getConfigSource()));
+        }
+
+        System.out.println(format("Config file '%s' will being used to install CDEC.", config.getConfigSource()));  // TODO display in CLI
 
         List<Command> commands = new ArrayList<>();
 

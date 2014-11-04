@@ -20,10 +20,13 @@ package com.codenvy.im.config;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -34,15 +37,27 @@ public class ConfigTest {
         InputStream mockIs = new ByteArrayInputStream((TestConfig.Property.TEST_PROPERTY.toString() + "=test_value").getBytes());
 
         Config testConfig = new TestConfig();
-        testConfig.load(mockIs);
+        testConfig.load(mockIs, "test source");
 
         String testPropertyValue = testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
         assertEquals(testPropertyValue, "test_value");
+
+        assertEquals(testConfig.getConfigSource(), "test source");
     }
 
     @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Property 'TEST_PROPERTY' hasn't been found.")
     public void testGetUnexistsProperty () {
         Config testConfig = new TestConfig();
+        testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
+    }
+
+    @Test(expectedExceptions = ConfigException.class,
+          expectedExceptionsMessageRegExp = "Property 'TEST_PROPERTY' hasn't been found at 'test source'.")
+    public void testGetUnexistsPropertyAfterLoad () {
+        InputStream mockIs = new ByteArrayInputStream(("unknown_property=test_value").getBytes());
+
+        Config testConfig = new TestConfig();
+        testConfig.load(mockIs, "test source");
         testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
     }
 
@@ -53,6 +68,17 @@ public class ConfigTest {
 
         String testPropertyValue = testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
         assertEquals(testPropertyValue, "test value");
+    }
+
+    @Test
+    public void testStore() throws IOException {
+        Config testConfig = new TestConfig();
+        testConfig.setProperty(TestConfig.Property.TEST_PROPERTY, "test_value");
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        testConfig.store(os);
+
+        assertTrue(os.toString().contains("TEST_PROPERTY=test_value"), "Config '" + os.toString() + "' didn't contain 'TEST_PROPERTY=test_value'.");
     }
 
     static class TestConfig extends Config {
