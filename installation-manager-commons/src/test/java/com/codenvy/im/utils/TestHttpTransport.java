@@ -83,14 +83,12 @@ public class TestHttpTransport {
         }
     }
 
-    @Test(expectedExceptions = HttpException.class,
-          expectedExceptionsMessageRegExp = "Not Found")
+    @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "Not Found")
     public void testFailDownload(ITestContext context) throws Exception {
         java.nio.file.Path destDir = Paths.get("target", "download");
-
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
 
-        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/downloadfail", destDir);
+        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/throwException", destDir);
     }
 
     @Path("test")
@@ -119,23 +117,10 @@ public class TestHttpTransport {
         }
 
         @GET
-        @Path("downloadfail")
+        @Path("throwException")
         @Produces(MediaType.APPLICATION_OCTET_STREAM)
         public Response doFailDownloadArtifact() throws ServerException {
-            try {
-                java.nio.file.Path file = Paths.get("target", "tmp.file");
-                file.toFile().length(); // Will throw FileNotFoundException.
-
-                //will didn't run
-                return Response.ok(file.toFile(), MediaType.APPLICATION_OCTET_STREAM)
-                               .header("Content-Length", String.valueOf(Files.size(file)))
-                               .header("Content-Disposition", "attachment; filename=" + file.getFileName().toString())
-                               .build();
-
-            } catch (Exception e) {
-                throw new ServerException("{message:Not Found}");
-            }
-
+            throw new ServerException("{message:Not Found}");
         }
     }
 }

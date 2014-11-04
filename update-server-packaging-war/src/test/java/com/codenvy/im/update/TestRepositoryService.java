@@ -41,15 +41,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.*;
+import static com.codenvy.im.artifacts.ArtifactProperties.ARTIFACT_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -96,20 +110,22 @@ public class TestRepositoryService extends BaseTest {
     }
 
     private void initStorage() {
-        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.ARTIFACTS_COLLECTION);
-        collection.remove(new BasicDBObject());
-        collection = mongoStorage.getDb().getCollection(MongoStorage.ARTIFACTS_DOWNLOADED_COLLECTION);
+        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.INSTALLED_ARTIFACTS);
         collection.remove(new BasicDBObject());
 
-        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("uid1", "cdec", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("uid2", "cdec", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("uid2", "cdec", "1.0.2", true);
-        mongoStorage.saveDownloadInfo("uid2", "cdec", "1.0.3", true);
-        mongoStorage.saveDownloadInfo("uid1", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("uid2", "artifact3", "1.0.1", false);
+        collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
+        collection.remove(new BasicDBObject());
+
+        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("uid1", "artifact2", "1.0.1", false);
+
+        mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.2", true);
+        mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.3", true);
+        mongoStorage.updateDownloadStatistics("uid2", "artifact3", "1.0.1", false);
     }
 
     @Test
@@ -396,91 +412,71 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testGetDownloadStatisticByUser() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT)
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/user/uid1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/user/uid1");
+        Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                                   .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/uid1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map m = response.as(Map.class);
-        assertEquals(m.size(), 4);
-        assertEquals(m.get("success"), "2");
-        assertEquals(m.get("fail"), "3");
-        assertEquals(m.get("total"), "5");
-        assertNotNull(m.get("list"));
+        assertEquals(m.size(), 5);
+        assertEquals(m.get(MongoStorage.USER_ID), "uid1");
+        assertEquals(m.get(MongoStorage.TOTAL), 5D);
+        assertEquals(m.get(MongoStorage.SUCCESS), 2D);
+        assertEquals(m.get(MongoStorage.FAIL), 3D);
+        assertNotNull(m.get(MongoStorage.ARTIFACTS));
 
-        List l = (List)m.get("list");
+        List l = (List)m.get(MongoStorage.ARTIFACTS);
         assertEquals(l.size(), 2);
+
         m = (Map)l.get(0);
-        assertEquals(m.get("userId"), "uid1");
-        assertEquals(m.get("artifact"), "cdec");
-        assertEquals(m.get("version"), "1.0.1");
-        assertEquals(m.get("success"), "2");
-        assertEquals(m.get("fail"), "2");
+        assertEquals(m.get(MongoStorage.ARTIFACT), "artifact2");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
+        assertEquals(m.get(MongoStorage.SUCCESS), 0D);
+        assertEquals(m.get(MongoStorage.FAIL), 1D);
+        assertEquals(m.get(MongoStorage.TOTAL), 1D);
 
         m = (Map)l.get(1);
-        assertEquals(m.get("userId"), "uid1");
-        assertEquals(m.get("artifact"), "artifact2");
-        assertEquals(m.get("version"), "1.0.1");
-        assertEquals(m.get("success"), "0");
-        assertEquals(m.get("fail"), "1");
+        assertEquals(m.get(MongoStorage.ARTIFACT), "cdec");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
+        assertEquals(m.get(MongoStorage.SUCCESS), 2D);
+        assertEquals(m.get(MongoStorage.FAIL), 2D);
+        assertEquals(m.get(MongoStorage.TOTAL), 4D);
     }
 
     @Test
     public void testGetDownloadStatisticByArtifact() throws Exception {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT)
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/artifact/cdec");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(
-                        JettyHttpServer.SECURE_PATH + "/repository/download/statistic/artifact/cdec");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/cdec");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map m = response.as(Map.class);
-        assertEquals(m.size(), 4);
-        assertEquals(m.get("success"), "5");
-        assertEquals(m.get("fail"), "2");
-        assertEquals(m.get("total"), "7");
-        assertNotNull(m.get("list"));
+        assertEquals(m.size(), 5);
+        assertEquals(m.get(MongoStorage.ARTIFACT), "cdec");
+        assertEquals(m.get(MongoStorage.SUCCESS), 5D);
+        assertEquals(m.get(MongoStorage.FAIL), 2D);
+        assertEquals(m.get(MongoStorage.TOTAL), 7D);
+        assertNotNull(m.get(MongoStorage.VERSIONS));
 
-        List l = (List)m.get("list");
-        assertEquals(l.size(), 4);
+        List l = (List)m.get(MongoStorage.VERSIONS);
+        assertEquals(l.size(), 3);
+
         m = (Map)l.get(0);
-        assertEquals(m.get("userId"), "uid2");
-        assertEquals(m.get("artifact"), "cdec");
-        assertEquals(m.get("version"), "1.0.3");
-        assertEquals(m.get("success"), "1");
-        assertEquals(m.get("fail"), "0");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.3");
+        assertEquals(m.get(MongoStorage.SUCCESS), 1D);
+        assertEquals(m.get(MongoStorage.FAIL), 0D);
+        assertEquals(m.get(MongoStorage.TOTAL), 1D);
 
         m = (Map)l.get(1);
-        assertEquals(m.get("userId"), "uid2");
-        assertEquals(m.get("artifact"), "cdec");
-        assertEquals(m.get("version"), "1.0.2");
-        assertEquals(m.get("success"), "1");
-        assertEquals(m.get("fail"), "0");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.2");
+        assertEquals(m.get(MongoStorage.SUCCESS), 1D);
+        assertEquals(m.get(MongoStorage.FAIL), 0D);
+        assertEquals(m.get(MongoStorage.TOTAL), 1D);
 
         m = (Map)l.get(2);
-        assertEquals(m.get("userId"), "uid2");
-        assertEquals(m.get("artifact"), "cdec");
-        assertEquals(m.get("version"), "1.0.1");
-        assertEquals(m.get("success"), "1");
-        assertEquals(m.get("fail"), "0");
-
-        m = (Map)l.get(3);
-        assertEquals(m.get("userId"), "uid1");
-        assertEquals(m.get("artifact"), "cdec");
-        assertEquals(m.get("version"), "1.0.1");
-        assertEquals(m.get("success"), "2");
-        assertEquals(m.get("fail"), "2");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
+        assertEquals(m.get(MongoStorage.SUCCESS), 3D);
+        assertEquals(m.get(MongoStorage.FAIL), 2D);
+        assertEquals(m.get(MongoStorage.TOTAL), 5D);
     }
 }
 

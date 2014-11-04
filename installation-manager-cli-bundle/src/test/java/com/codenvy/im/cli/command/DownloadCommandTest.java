@@ -18,13 +18,11 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
-import org.json.JSONException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -32,11 +30,11 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
-
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
-import static org.fusesource.jansi.Ansi.ansi;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -238,29 +236,5 @@ public class DownloadCommandTest {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertTrue(output.contains(Commons.getPrettyPrintingJson(ok)));
-    }
-
-
-    @Test(enabled = false)
-    public void testDownloadWhenErrorInResponseSubscriptionNotFound() throws Exception {
-        String downloadStatusResponse = "{\"status\":\"ERROR\",\"download_info\":{\"status\":\"FAILURE\",\"percents\":0," +
-                                        "\"downloadResult\":\"{\"status\":\\\"ERROR\\\",\\\"message\\\":\\\"Unexpected error. Can't download " +
-                                        "the artifact 'cdec' version 3.0.0. {\\\\\\\"message\\\\\\\":\\\\\\\"Subscription not found " +
-                                        "communityaccountvyiu9z02hxyfcapj\\\"}\\\",\\\"artifacts\\\":[{\\\"status\\\":\\\"FAILURE\\\"," +
-                                        "\"artifact\":\"cdec\",\"version\":\"3.0.0\"}]}\"}}";
-
-
-        printResponse(downloadStatusResponse);
-        DownloadStatusInfo downloadStatusInfo = DownloadStatusInfo.valueOf(downloadStatusResponse);
-        printResponse(downloadStatusInfo.getDownloadResult());
-    }
-
-    protected void printResponse(@Nullable String response) {
-        try {
-            String message = getPrettyPrintingJson(response);
-            System.out.println(ansi().a(message));
-        } catch (JSONException e) {
-            System.out.println("Unexpected error: " + e.getMessage());
-        }
     }
 }

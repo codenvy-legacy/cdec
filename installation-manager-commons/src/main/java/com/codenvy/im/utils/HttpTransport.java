@@ -162,7 +162,7 @@ public class HttpTransport {
     private String getErrorMessageIfPossible(String json) {
         try {
             JSONObject jsonResponse = new JSONObject(json);
-            String message = (String)jsonResponse.get(MESSAGE.toLowerCase());
+            String message = (String)jsonResponse.get(MESSAGE);
 
             return message != null ? message : json;
         } catch (JSONException e) {

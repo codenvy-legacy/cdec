@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Anatoliy Bazko
@@ -44,10 +45,10 @@ public class TestMongoStorage {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.ARTIFACTS_COLLECTION);
+        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.INSTALLED_ARTIFACTS);
         collection.remove(new BasicDBObject());
 
-        collection = mongoStorage.getDb().getCollection(MongoStorage.ARTIFACTS_DOWNLOADED_COLLECTION);
+        collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
         collection.remove(new BasicDBObject());
     }
 
@@ -69,120 +70,68 @@ public class TestMongoStorage {
 
     @Test
     public void testGetDownloadStatisticsForSpecificUser() throws Exception {
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("user1", "artifact1", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("user1", "artifact1", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("user1", "artifact2", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("user1", "artifact2", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("user1", "artifact2", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("user1", "artifact1", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("user1", "artifact1", "1.0.1", false);
 
-        mongoStorage.saveDownloadInfo("user2", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.1", true);
+        Map<String, Object> stat = mongoStorage.getDownloadsInfoByUserId("user1");
+        assertEquals(stat.size(), 5);
+        assertEquals(stat.get(MongoStorage.USER_ID), "user1");
+        assertEquals(stat.get(MongoStorage.TOTAL), 7L);
+        assertEquals(stat.get(MongoStorage.SUCCESS), 4L);
+        assertEquals(stat.get(MongoStorage.FAIL), 3L);
+        assertNotNull(stat.get(MongoStorage.ARTIFACTS));
 
-        List downloadedInfo = mongoStorage.getDownloadsInfoByUserId("user1");
-        assertEquals(downloadedInfo.size(), 2);
-        assertEquals(downloadedInfo.get(0).toString(),"{artifact=artifact2, version=1.0.1, success=2, fail=1, userId=user1}");
-        assertEquals(downloadedInfo.get(1).toString(),"{artifact=artifact1, version=1.0.1, success=2, fail=2, userId=user1}");
+        List l = (List)stat.get(MongoStorage.ARTIFACTS);
+        assertEquals(l.size(), 2);
 
-        downloadedInfo = mongoStorage.getDownloadsInfoByUserId("user2");
-        assertEquals(downloadedInfo.size(), 3);
-        assertEquals(downloadedInfo.get(0).toString(),"{artifact=artifact3, version=1.0.1, success=1, fail=1, userId=user2}");
-        assertEquals(downloadedInfo.get(1).toString(),"{artifact=artifact2, version=1.0.1, success=2, fail=1, userId=user2}");
-        assertEquals(downloadedInfo.get(2).toString(),"{artifact=artifact1, version=1.0.1, success=1, fail=0, userId=user2}");
+        Map m = (Map)l.get(0);
+        assertEquals(m.get(MongoStorage.ARTIFACT), "artifact1");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
+        assertEquals(m.get(MongoStorage.SUCCESS), 2);
+        assertEquals(m.get(MongoStorage.FAIL), 2);
+        assertEquals(m.get(MongoStorage.TOTAL), 4);
 
-        downloadedInfo = mongoStorage.getDownloadsInfoByUserId("user3");
-        assertEquals(downloadedInfo.size(), 0);
-    }
-
-    @Test
-    public void testGetTotalDownloadsForSpecificUser() throws Exception {
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", false);
-
-        mongoStorage.saveDownloadInfo("user2", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-         mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.1", true);
-
-        Map<String, String> downloadedInfo = mongoStorage.getTotalDownloadsInfoByUserId("user1");
-        assertEquals(downloadedInfo.toString(),"{success=4, fail=3, total=7}");
-
-        downloadedInfo = mongoStorage.getTotalDownloadsInfoByUserId("user2");
-        assertEquals(downloadedInfo.toString(),"{success=4, fail=2, total=6}");
-
-        downloadedInfo = mongoStorage.getTotalDownloadsInfoByUserId("user3");
-        assertEquals(downloadedInfo.toString(),"{}");
+        m = (Map)l.get(1);
+        assertEquals(m.get(MongoStorage.ARTIFACT), "artifact2");
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
+        assertEquals(m.get(MongoStorage.SUCCESS), 2);
+        assertEquals(m.get(MongoStorage.FAIL), 1);
+        assertEquals(m.get(MongoStorage.TOTAL), 3);
     }
 
     @Test
     public void testGetDownloadStatisticsByArtifact() throws Exception {
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.2", true);
+        mongoStorage.updateDownloadStatistics("user1", "artifact2", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("user1", "artifact2", "1.0.2", true);
+        mongoStorage.updateDownloadStatistics("user2", "artifact2", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("user2", "artifact2", "1.0.1", true);
 
-        mongoStorage.saveDownloadInfo("user2", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.2", true);
+        Map<String, Object> stat = mongoStorage.getDownloadsInfoByArtifact("artifact2");
+        assertEquals(stat.size(), 5);
+        assertEquals(stat.get(MongoStorage.ARTIFACT), "artifact2");
+        assertEquals(stat.get(MongoStorage.TOTAL), 4L);
+        assertEquals(stat.get(MongoStorage.SUCCESS), 3L);
+        assertEquals(stat.get(MongoStorage.FAIL), 1L);
+        assertNotNull(stat.get(MongoStorage.VERSIONS));
 
-        List downloadedInfo = mongoStorage.getDownloadsInfoByArtifact("artifact1");
-        assertEquals(downloadedInfo.size(), 2);
-        assertEquals(downloadedInfo.get(0).toString(),"{userId=user2, version=1.0.1, success=1, fail=0, artifact=artifact1}");
-        assertEquals(downloadedInfo.get(1).toString(),"{userId=user1, version=1.0.1, success=1, fail=0, artifact=artifact1}");
+        List l = (List)stat.get(MongoStorage.VERSIONS);
+        assertEquals(l.size(), 2);
 
-        downloadedInfo = mongoStorage.getDownloadsInfoByArtifact("artifact2");
-        assertEquals(downloadedInfo.size(), 3);
-        assertEquals(downloadedInfo.get(0).toString(),"{userId=user2, version=1.0.1, success=2, fail=0, artifact=artifact2}");
-        assertEquals(downloadedInfo.get(1).toString(),"{userId=user1, version=1.0.2, success=1, fail=0, artifact=artifact2}");
-        assertEquals(downloadedInfo.get(2).toString(),"{userId=user1, version=1.0.1, success=0, fail=1, artifact=artifact2}");
+        Map m = (Map)l.get(0);
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.2");
+        assertEquals(m.get(MongoStorage.SUCCESS), 1);
+        assertEquals(m.get(MongoStorage.FAIL), 0);
+        assertEquals(m.get(MongoStorage.TOTAL), 1);
 
-        downloadedInfo = mongoStorage.getDownloadsInfoByArtifact("artifact3");
-        assertEquals(downloadedInfo.size(), 1);
-        assertEquals(downloadedInfo.get(0).toString(),"{userId=user2, version=1.0.2, success=1, fail=0, artifact=artifact3}");
-
-        downloadedInfo = mongoStorage.getDownloadsInfoByArtifact("artifact4");
-        assertEquals(downloadedInfo.size(), 0);
-    }
-
-    @Test
-    public void testGetTotalDownloadsForSpecificArtifact() throws Exception {
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user1", "artifact1", "1.0.1", false);
-
-        mongoStorage.saveDownloadInfo("user2", "artifact1", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user2", "artifact2", "1.0.1", true);
-        mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.1", false);
-        mongoStorage.saveDownloadInfo("user2", "artifact3", "1.0.1", true);
-
-        Map<String, String> downloadedInfo = mongoStorage.getTotalDownloadsInfoByArtifact("artifact1");
-        assertEquals(downloadedInfo.toString(), "{success=3, fail=2, total=5}");
-
-        downloadedInfo = mongoStorage.getTotalDownloadsInfoByArtifact("artifact2");
-        assertEquals(downloadedInfo.toString(),"{success=4, fail=2, total=6}");
-
-        downloadedInfo = mongoStorage.getTotalDownloadsInfoByArtifact("artifact3");
-        assertEquals(downloadedInfo.toString(),"{success=1, fail=1, total=2}");
-
-        downloadedInfo = mongoStorage.getTotalDownloadsInfoByArtifact("artifact4");
-        assertEquals(downloadedInfo.toString(),"{}");
+        m = (Map)l.get(1);
+        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
+        assertEquals(m.get(MongoStorage.SUCCESS), 2);
+        assertEquals(m.get(MongoStorage.FAIL), 1);
+        assertEquals(m.get(MongoStorage.TOTAL), 3);
     }
 }
