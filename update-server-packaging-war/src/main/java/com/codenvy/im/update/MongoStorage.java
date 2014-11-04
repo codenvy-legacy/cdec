@@ -171,7 +171,7 @@ public class MongoStorage {
         long success = calculateTotal(statByVersions, SUCCESS);
         long fail = calculateTotal(statByVersions, FAIL);
 
-        Map<String, Object> m = new HashMap<>();
+        Map<String, Object> m = new LinkedHashMap<>();
         m.put(ARTIFACT, artifact);
         m.put(SUCCESS, success);
         m.put(FAIL, fail);
@@ -203,7 +203,7 @@ public class MongoStorage {
         long success = calculateTotal(statByArtifacts, SUCCESS);
         long fail = calculateTotal(statByArtifacts, FAIL);
 
-        Map<String, Object> m = new HashMap<>();
+        Map<String, Object> m = new LinkedHashMap<>();
         m.put(USER_ID, userId);
         m.put(SUCCESS, success);
         m.put(FAIL, fail);
