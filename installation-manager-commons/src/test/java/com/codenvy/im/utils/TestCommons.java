@@ -17,7 +17,9 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
 import org.testng.annotations.Test;
@@ -119,6 +121,16 @@ public class TestCommons {
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "b");
         assertEquals(m.get("c"), "d");
+    }
+
+    @Test
+    public void testMapToJson() throws Exception {
+        AccountReference ar = DtoFactory.getInstance().createDto(AccountReference.class);
+        ar.setId("id");
+        ar.setName("name");
+
+        String json = Commons.toJson(ar);
+        assertEquals(json, "{\"name\":\"name\",\"id\":\"id\",\"links\":[]}");
     }
 
     @Test

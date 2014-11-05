@@ -17,6 +17,7 @@
  */
 package com.codenvy.im;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
@@ -56,6 +57,7 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
+import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
 
@@ -510,10 +512,11 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     @Nullable
-    public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
-        return AccountUtils.getAccountIdWhereUserIsOwner(transport, apiEndpoint, token);
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport, apiEndpoint, token);
+        return accountReference == null ? null : toJson(accountReference);
     }
 
     /** {@inheritDoc} */

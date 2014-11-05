@@ -82,6 +82,11 @@ public class Commons {
         return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
     }
 
+    /** Translates DTO object to JSON. */
+    public static <DTO> String  toJson(DTO dtoInterface) {
+        return DtoFactory.getInstance().toJson(dtoInterface);
+    }
+
     /** Translates JSON to object. */
     public static <T> T fromJson(String json, Class<T> t) {
         return gson.fromJson(json, t);

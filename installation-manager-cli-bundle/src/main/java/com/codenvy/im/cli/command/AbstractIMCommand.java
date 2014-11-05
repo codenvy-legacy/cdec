@@ -17,10 +17,12 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
+import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.restlet.InstallationManagerService;
@@ -40,6 +42,7 @@ import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
@@ -65,10 +68,20 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Override
     public void init() {
         super.init();
+        initDtoFactory();
         preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForUpdateServer());
         validateIfUserLoggedIn();
     }
 
+    private void initDtoFactory() {
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+            DtoFactory.getInstance();
+        } finally {
+            Thread.currentThread().setContextClassLoader(tccl);
+        }
+    }
 
     /**
      * @throws IllegalStateException
@@ -193,8 +206,9 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     @Nullable
-    protected String getAccountIdWhereUserIsOwner() throws IOException {
-        return installationManagerProxy.getAccountIdWhereUserIsOwner(getCredentialsRep());
+    protected AccountReference getAccountReferenceWhereUserIsOwner() throws IOException {
+        String json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(getCredentialsRep());
+        return json == null ? null : createDtoFromJson(json, AccountReference.class);
     }
 
     protected boolean isValidAccount() throws IOException {

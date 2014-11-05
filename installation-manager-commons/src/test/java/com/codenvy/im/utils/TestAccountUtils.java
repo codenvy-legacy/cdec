@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.user.UserCredentials;
 
@@ -82,13 +83,14 @@ public class TestAccountUtils {
                                                                                             + "accountReference:{id:\"member-id\"}"
                                                                                             + "},{"
                                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                                            + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                                                                                            + "accountReference:{id:\"" + testCredentials.getAccountId() + "\",name:\"accountName\"}"
                                                                                             + "},{"
                                                                                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                                                                                             + "accountReference:{id:\"another-id\"}"
                                                                                             + "}]");
-
-        assertEquals(AccountUtils.getAccountIdWhereUserIsOwner(mockTransport, "", testCredentials.getToken()), testCredentials.getAccountId());
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", testCredentials.getToken());
+        assertEquals(accountReference.getId(), testCredentials.getAccountId());
+        assertEquals(accountReference.getName(), "accountName");
     }
 
     @Test

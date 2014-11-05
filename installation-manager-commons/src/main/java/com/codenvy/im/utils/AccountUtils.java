@@ -31,8 +31,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
@@ -130,11 +128,11 @@ public class AccountUtils {
     /**
      * This method iterates over all user's accounts and returns the first one where user in question is owner.
      *
-     * @return String accountId
+     * @return AccountReference
      * @throws IOException
      */
     @Nullable
-    public static String getAccountIdWhereUserIsOwner(HttpTransport transport,
+    public static AccountReference getAccountReferenceWhereUserIsOwner(HttpTransport transport,
                                                       String apiEndpoint,
                                                       String userToken) throws IOException {
         List<MemberDescriptor> members =
@@ -143,7 +141,7 @@ public class AccountUtils {
 
         for (MemberDescriptor m : members) {
             if (hasRole(m, ACCOUNT_OWNER_ROLE)) {
-                return getAccountId(m);
+                return m.getAccountReference();
             }
         }
 
@@ -188,20 +186,7 @@ public class AccountUtils {
             return member.getAccountReference().getId();
         }
 
-        // Platform API issue.
-        // Workaround: read id from subscriptions href
-        String subscriptionsHref = getSubscriptionsHref(member);
-        if (subscriptionsHref == null) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("account/([0-9a-z-]+)/subscriptions");
-        Matcher m = pattern.matcher(subscriptionsHref);
-        if (m.find()) {
-            return m.group(1);
-        }
-
-        return null; // almost impossible case
+        return null;
     }
 
     /** Checks if user has specific role. */

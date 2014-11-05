@@ -138,12 +138,12 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String checkSubscription(@PathParam(value = "subscription") String subscription,
                                     JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-    /** Returns id of first valid account of user based on his/her auth token passed into service within the body of request */
+    /** Returns account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @POST
     @Path("account")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
 
     /** @see com.codenvy.im.utils.AccountUtils#isValidAccountId(com.codenvy.im.utils.HttpTransport, String, com.codenvy.im.user.UserCredentials) */

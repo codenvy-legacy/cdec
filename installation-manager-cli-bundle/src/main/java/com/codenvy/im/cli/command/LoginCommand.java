@@ -19,6 +19,8 @@ package com.codenvy.im.cli.command;
 
 import jline.console.ConsoleReader;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -33,8 +35,8 @@ import java.nio.charset.Charset;
 @Command(scope = "codenvy", name = "login", description = "Login to Codenvy Update Server or another remote Codenvy cloud")
 public class LoginCommand extends AbstractIMCommand {
 
-    public static final String CANNOT_RECOGNISE_ACCOUNT_ID_MSG =
-            "It is impossible to obtain your Codenvy account ID. Please, type your account ID by hand as argument of this command.";
+    public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
+            "You are logged as a user which does not have an account/owner role in any account. This likely means that you used the wrong credentials to access Codenvy.";
 
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;
@@ -42,8 +44,8 @@ public class LoginCommand extends AbstractIMCommand {
     @Argument(name = "password", description = "The user's password", required = false, multiValued = false, index = 1)
     private String password;
 
-    @Argument(name = "accountId", description = "The user's account ID", required = false, multiValued = false, index = 2)
-    private String accountId;
+    @Argument(name = "accountName", description = "The user's account name", required = false, multiValued = false, index = 2)
+    private String accountName;
 
     @Option(name = "--remote", description = "Name of the remote codenvy", required = false)
     private String remoteName;
@@ -93,26 +95,21 @@ public class LoginCommand extends AbstractIMCommand {
                 return null;
             }
 
-            if (accountId == null) {
-                accountId = getAccountIdWhereUserIsOwner();
+            AccountReference accountReference = getAccountReferenceWhereUserIsOwner();
+            if (accountReference == null || accountReference.getId() == null || accountReference.getId().isEmpty()) {
+                printError(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                preferencesStorage.invalidate();
+                return null;
+            }
 
-                if (accountId == null || accountId.isEmpty()) {
-                    printError(CANNOT_RECOGNISE_ACCOUNT_ID_MSG);
-                    preferencesStorage.invalidate();
+            preferencesStorage.setAccountId(accountReference.getId());
 
-                    return null;
-                }
-
-                preferencesStorage.setAccountId(accountId);
-
-                printSuccess("Your Codenvy account ID '" + accountId + "' has been obtained and will be used to verify subscription.");
+            if (accountName == null) {
+                printSuccess("Your Codenvy account '" + accountReference.getName() + "' has been obtained and will be used to verify subscription.");
             } else {
-                preferencesStorage.setAccountId(accountId);
-
-                if (!isValidAccount()) {
-                    printError("Account ID you entered is not yours or may be you aren't owner of this account.");
+                if (!isValidAccount() || !accountName.equals(accountReference.getName())) {
+                    printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                     preferencesStorage.invalidate();
-
                     return null;
                 }
             }

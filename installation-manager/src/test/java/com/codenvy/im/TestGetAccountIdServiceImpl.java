@@ -41,8 +41,9 @@ import static org.testng.AssertJUnit.assertNull;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestGetAccountIdServiceImpl {
+public class TestGetAccountIdServiceImpl { //TODO
     public static final String TEST_ACCOUNT_ID = "accountId";
+    public static final String ACCOUNT_NAME    = "accountName";
     private InstallationManagerService installationManagerService;
     private final UserCredentials testCredentials = new UserCredentials("auth token", null);
     private String accountApiEndpoint;
@@ -63,27 +64,27 @@ public class TestGetAccountIdServiceImpl {
     @Test
     public void testGetAccountId() throws Exception {
         when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
-            .thenReturn("[{"
-                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
-                        + "}]");
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
-        assertEquals(response, TEST_ACCOUNT_ID);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
+        assertEquals(response, "{\"name\":\"" + ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}");
     }
 
     @Test
     public void testGetAccountIdFromSeveral() throws Exception {
         when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
-            .thenReturn("[{"
-                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
-                        + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"another-account-id\"}"
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"another-account-id\"}"
                         + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
-        assertEquals(response, TEST_ACCOUNT_ID);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
+        assertEquals(response, "{\"name\":\"" + ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}");
     }
 
     @Test
@@ -94,7 +95,7 @@ public class TestGetAccountIdServiceImpl {
                         + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
                         + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
         assertNull(response);
     }
 
@@ -103,6 +104,6 @@ public class TestGetAccountIdServiceImpl {
         when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         
-        installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
+        installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
     }
 }

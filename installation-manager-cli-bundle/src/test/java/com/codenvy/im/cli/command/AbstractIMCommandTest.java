@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
@@ -48,18 +49,26 @@ import static org.testng.AssertJUnit.assertTrue;
 /** @author Dmytro Nochevnov */
 public class AbstractIMCommandTest {
     private TestAbstractIMCommand spyCommand;
-    private Preferences globalPreferences;
+    private Preferences           globalPreferences;
 
-    @Mock private InstallationManagerService mockInstallationManagerProxy;
-    @Mock private CommandSession             session;
-    @Mock private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
-    @Mock private Remote                     mockUpdateServerRemote;
-    @Mock private Remote                     mockAnotherRemote;
+    @Mock
+    private InstallationManagerService mockInstallationManagerProxy;
+    @Mock
+    private CommandSession             session;
+    @Mock
+    private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
+    @Mock
+    private Remote                     mockUpdateServerRemote;
+    @Mock
+    private Remote                     mockAnotherRemote;
 
     private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
-    private final static String UPDATE_SERVER_URL = "https://test.com";
-    private final static String TEST_ACCOUNT_ID   = "test-account-id";
-    private final static String TEST_TOKEN        = "authToken";
+    private final static String UPDATE_SERVER_URL         = "https://test.com";
+    private final static String TEST_ACCOUNT_ID           = "test-account-id";
+    private static final String TEST_ACCOUNT_NAME         = "test-account-name";
+    private static final String TEST_ACCOUNT_REFERENCE    =
+            "{\"name\":\"" + TEST_ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}";
+    private final static String TEST_TOKEN                = "authToken";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
     private static final String ANOTHER_REMOTE_URL  = "another remote url";
@@ -96,9 +105,11 @@ public class AbstractIMCommandTest {
         spyCommand.init();
 
         JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
-        doReturn(TEST_ACCOUNT_ID).when(mockInstallationManagerProxy).getAccountIdWhereUserIsOwner(testCredentialsRep);
+        doReturn(TEST_ACCOUNT_REFERENCE).when(mockInstallationManagerProxy).getAccountReferenceWhereUserIsOwner(testCredentialsRep);
 
-        assertEquals(spyCommand.getAccountIdWhereUserIsOwner(), TEST_ACCOUNT_ID);
+        AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner();
+        assertEquals(accountReference.getId(), TEST_ACCOUNT_ID);
+        assertEquals(accountReference.getName(), TEST_ACCOUNT_NAME);
     }
 
     @Test
