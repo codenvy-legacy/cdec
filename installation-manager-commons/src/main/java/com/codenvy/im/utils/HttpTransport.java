@@ -58,18 +58,26 @@ public class HttpTransport {
     }
 
     /**
-     * Performs GET request.
+     * Performs OPTION request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
-    public String doGetRequest(String path) throws IOException {
-        return doGetRequest(path, null);
+    public String doOption(String path, String accessToken) throws IOException {
+        return request(path, "OPTIONS", MediaType.APPLICATION_JSON, accessToken);
     }
 
     /**
      * Performs GET request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
-    public String doGetRequest(String path, String accessToken) throws IOException {
+    public String doGet(String path) throws IOException {
+        return doGet(path, null);
+    }
+
+    /**
+     * Performs GET request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doGet(String path, String accessToken) throws IOException {
         return request(path, "GET", MediaType.APPLICATION_JSON, accessToken);
     }
 

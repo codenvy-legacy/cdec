@@ -24,6 +24,7 @@ import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.InjectorBootstrap;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -62,7 +63,7 @@ public class TestIsValidAccountIdServiceImpl {
     @Test
     public void testIsValidAccountId() throws Exception {
         UserCredentials testCredentials = new UserCredentials("auth token", TEST_ACCOUNT_ID);
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
             .thenReturn("[{"
                         + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                         + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
@@ -76,7 +77,7 @@ public class TestIsValidAccountIdServiceImpl {
     public void testIsValidAccountIdFromSeveral() throws Exception {
         UserCredentials testCredentials = new UserCredentials("auth token", TEST_ACCOUNT_ID);
 
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
             .thenReturn("[{"
                         + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                         + "accountReference:{id:\"another-account-id\"}"
@@ -90,7 +91,7 @@ public class TestIsValidAccountIdServiceImpl {
     @Test
     public void testIsValidAccountIdFromEmpty() throws Exception {
         UserCredentials testCredentials = new UserCredentials(TEST_AUTH_TOKEN, TEST_ACCOUNT_ID);
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
             .thenReturn("[{"
                         + "roles:[\"account/member\"],"
                         + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
@@ -102,7 +103,7 @@ public class TestIsValidAccountIdServiceImpl {
     @Test(expectedExceptions = IOException.class)
     public void testIsValidAccountIdErrorIfAuthenticationFailed() throws Exception {
         UserCredentials testCredentials = new UserCredentials(TEST_AUTH_TOKEN, TEST_ACCOUNT_ID);
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         
         installationManagerService.isValidAccountId(userCredentialsRep);

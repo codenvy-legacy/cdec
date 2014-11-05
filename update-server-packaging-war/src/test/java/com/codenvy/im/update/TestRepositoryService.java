@@ -248,13 +248,13 @@ public class TestRepositoryService extends BaseTest {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
+        when(transport.doGet("/account", userManager.getCurrentUser().getToken()))
         .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
-        when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
+        when(transport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
         .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
 
-        when(transport.doGetRequest("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
+        when(transport.doGet("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
         .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
@@ -276,8 +276,8 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateArtifactWithoutSubscription() throws Exception {
-        when(transport.doGetRequest("/account")).thenReturn("[{accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions")).thenReturn("[]");
+        when(transport.doGet("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGet("/account/accountId/subscriptions")).thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given()
@@ -297,9 +297,9 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateWhenUserWithoutSubscriptionError() throws Exception {
-        when(transport.doGetRequest("/account", userManager.getCurrentUser().getToken()))
+        when(transport.doGet("/account", userManager.getCurrentUser().getToken()))
                  .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
+        when(transport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
                  .thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
 

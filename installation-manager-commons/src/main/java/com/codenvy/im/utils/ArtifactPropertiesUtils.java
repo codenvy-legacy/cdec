@@ -57,7 +57,7 @@ public class ArtifactPropertiesUtils {
                                                              HttpTransport transport,
                                                              String updateEndpoint) throws IOException {
         String versionInfoServiceHref = combinePaths(updateEndpoint, "repository/properties/" + artifactName + "/" + version);
-        Map<String, String> properties = (Map<String, String>)fromJson(transport.doGetRequest(versionInfoServiceHref), Map.class);
+        Map<String, String> properties = (Map<String, String>)fromJson(transport.doGet(versionInfoServiceHref), Map.class);
         if (properties == null) {
             throw new ArtifactNotFoundException(artifactName, version);
         }

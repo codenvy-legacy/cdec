@@ -48,13 +48,13 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
+import static com.codenvy.im.utils.Commons.ArtifactsSet;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
@@ -97,7 +97,7 @@ public class InstallationManagerImpl implements InstallationManager {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
-        this.artifacts = new TreeSet<>(artifacts); // keep order
+        this.artifacts = new ArtifactsSet(artifacts); // keep order
 
         try {
             createAndSetDownloadDir(Paths.get(downloadDir));
@@ -351,7 +351,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     protected Map getArtifactProperties(Artifact artifact) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
-        Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
+        Map m = fromJson(transport.doGet(requestUrl), Map.class);
 
         validateArtifactProperties(m);
         return m;
@@ -359,7 +359,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     protected Map getArtifactProperties(Artifact artifact, String version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
-        Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
+        Map m = fromJson(transport.doGet(requestUrl), Map.class);
 
         validateArtifactProperties(m);
         return m;

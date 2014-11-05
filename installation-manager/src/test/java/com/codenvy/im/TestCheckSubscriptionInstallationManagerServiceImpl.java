@@ -72,11 +72,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -91,9 +91,9 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfSubscriptionIsAbsent() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[]");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -108,7 +108,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfAuthenticationFailed() throws Exception {
-        doThrow(new AuthenticationException()).when(transport).doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token"));
+        doThrow(new AuthenticationException()).when(transport).doGet(endsWith("account/accountId/subscriptions"), eq("auth token"));
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
@@ -125,11 +125,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{endDate:\"" + endDate + "\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -144,11 +144,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfEndDateIsAbsent() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -163,11 +163,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfStartDateIsWrongFormat() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{startDate:\"2014.11.21\",endDate:\"21/11/2015\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -182,11 +182,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfEndDateIsWrongFormat() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{startDate:\"11/21/2014\",endDate:\"2015.11.21\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));

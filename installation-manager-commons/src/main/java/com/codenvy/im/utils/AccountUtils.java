@@ -113,7 +113,7 @@ public class AccountUtils {
                                                                  String apiEndpoint,
                                                                  UserCredentials userCredentials) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/" + userCredentials.getAccountId() + "/subscriptions");
-        return createListDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionDescriptor.class);
+        return createListDtoFromJson(transport.doGet(requestUrl, userCredentials.getToken()), SubscriptionDescriptor.class);
     }
 
     private static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
@@ -121,7 +121,7 @@ public class AccountUtils {
                                                                               String apiEndpoint,
                                                                               UserCredentials userCredentials) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId + "/attributes");
-        return createDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionAttributesDescriptor.class);
+        return createDtoFromJson(transport.doGet(requestUrl, userCredentials.getToken()), SubscriptionAttributesDescriptor.class);
     }
 
 
@@ -136,7 +136,7 @@ public class AccountUtils {
                                                       String apiEndpoint,
                                                       String userToken) throws IOException {
         List<MemberDescriptor> members =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userToken),
+                createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userToken),
                                       MemberDescriptor.class);
 
         for (MemberDescriptor m : members) {
@@ -154,7 +154,7 @@ public class AccountUtils {
                                            String apiEndpoint,
                                            UserCredentials userCredentials) throws IOException {
         List<MemberDescriptor> members =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
+                createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
                                       MemberDescriptor.class);
 
         for (MemberDescriptor m : members) {

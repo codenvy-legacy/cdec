@@ -372,8 +372,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
-    /** {@inheritDoc}
-     * @param userCredentialsRep*/
+    /** {@inheritDoc} */
     @Override
     public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {

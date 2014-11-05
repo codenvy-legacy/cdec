@@ -35,8 +35,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
@@ -208,6 +211,21 @@ public class Commons {
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+
+    /** Set of artifacts to keep them in the specific order. */
+    public static class ArtifactsSet extends TreeSet<Artifact> {
+        public ArtifactsSet(Collection<Artifact> s) {
+            super(new Comparator<Artifact>() {
+                @Override
+                public int compare(Artifact o1, Artifact o2) {
+                    return o2.getPriority() - o1.getPriority();
+                }
+            });
+
+            addAll(s);
         }
     }
 }

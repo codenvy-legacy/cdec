@@ -27,15 +27,11 @@ import java.nio.file.Path;
  */
 public interface Artifact extends Comparable<Artifact> {
 
-    /**
-     * Installs artifact
-     *
-     * @param pathToBinaries
-     */
+    /** Installs artifact */
     void install(Path pathToBinaries) throws IOException;
 
     /** @return current installed version of the artifact */
-    String getInstalledVersion(String accessToken) throws IOException;
+    String getInstalledVersion(String authToken) throws IOException;
 
     /** @return the artifact name */
     String getName();
