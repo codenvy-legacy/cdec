@@ -38,16 +38,16 @@ public class ConfigFactory {
     private static final String DEFAULT_CONFIG_PATH = InjectorBootstrap.getProperty("config.path.default");
 
     protected static final String CDEC_CONFIG_PATH                                  = "cdec";
-    protected static final String SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE = "single-node-without-puppet-master.properties";
+    protected static final String SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE = "single-node-with-puppet-master.properties";
 
     protected static Map<String, Path> configFilesAbsolutePaths = new HashMap<String, Path>() {{
-        put(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString(),
-            getConfigFileAbsolutePath(SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE));
+        put(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+            getConfigFileAbsolutePath(SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
     }};
 
     protected static Map<String, Path> defaultConfigFilesRelativePaths = new HashMap<String, Path>() {{
-        put(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString(),
-            getDefaultConfigFileRelativePath(SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE));
+        put(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+            getDefaultConfigFileRelativePath(SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
     }};
 
     /**

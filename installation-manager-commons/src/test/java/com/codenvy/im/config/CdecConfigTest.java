@@ -35,19 +35,19 @@ import static org.testng.Assert.fail;
  */
 public class CdecConfigTest {
     @Test
-    public void testConfigSingleNodeWithoutPuppetMaster() throws IOException {
+    public void testConfigSingleNodeWithPuppetMaster() throws IOException {
         setupConfig(getTestConfigDirAbsolutePath(), "codenvy");
 
         try {
-            ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
+            ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString());
             fail("ConfigException should be thrown.");
         } catch(ConfigException e) {
             assertEquals(e.getMessage(),
                          format("Please complete install config file '%s'.",
-                                ConfigFactory.configFilesAbsolutePaths.get(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString())));
+                                ConfigFactory.configFilesAbsolutePaths.get(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString())));
         }
 
-        CdecConfig testConfig = ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
+        CdecConfig testConfig = ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString());
         assertEquals(testConfig.getHost(), "");
         assertEquals(testConfig.getSSHPort(), "");
         assertEquals(testConfig.getUser(), "");
@@ -59,7 +59,7 @@ public class CdecConfigTest {
 
         // tearDown
         Files.delete(Paths.get(System.getProperty("user.home"))
-                          .resolve(ConfigFactory.configFilesAbsolutePaths.get(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString())));
+                          .resolve(ConfigFactory.configFilesAbsolutePaths.get(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString())));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -69,18 +69,18 @@ public class CdecConfigTest {
     }
 
     @Test(expectedExceptions = ConfigException.class,
-          expectedExceptionsMessageRegExp = "Config 'SINGLE_NODE_WITHOUT_PUPPET_MASTER' error: AccessDeniedException: .*../cdec")
+          expectedExceptionsMessageRegExp = "Config 'SINGLE_NODE_WITH_PUPPET_MASTER' error: AccessDeniedException: .*../cdec")
     public void testHandlingIOException() {
         setupConfig(getTestConfigDirAbsolutePath() + "/../../../../../../../../../../../../../../", "codenvy");
-        ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
+        ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString());
     }
 
     @Test(expectedExceptions = ConfigException.class,
-          expectedExceptionsMessageRegExp = "Config 'SINGLE_NODE_WITHOUT_PUPPET_MASTER' error: IOException: Default config not " +
-                                            "found at 'unexists_path_to_default_config/cdec/single-node-without-puppet-master.properties'.")
+          expectedExceptionsMessageRegExp = "Config 'SINGLE_NODE_WITH_PUPPET_MASTER' error: IOException: Default config not " +
+                                            "found at 'unexists_path_to_default_config/cdec/single-node-with-puppet-master.properties'.")
     public void testHandlingDefaultConfigException() {
         setupConfig(getTestConfigDirAbsolutePath(), "unexists_path_to_default_config");
-        ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
+        ConfigFactory.loadConfig(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString());
     }
 
     // use "target/config" directory to store test config file
@@ -90,13 +90,13 @@ public class CdecConfigTest {
 
     private void setupConfig(final String configPath, final String defaultConfigPath) {
         ConfigFactory.configFilesAbsolutePaths = new HashMap<String, Path>() {{
-            put(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString(),
-                Paths.get(configPath).resolve(ConfigFactory.CDEC_CONFIG_PATH).resolve(ConfigFactory.SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE));
+            put(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+                Paths.get(configPath).resolve(ConfigFactory.CDEC_CONFIG_PATH).resolve(ConfigFactory.SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
         }};
 
         ConfigFactory.defaultConfigFilesRelativePaths = new HashMap<String, Path>() {{
-            put(CDECArtifact.InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString(),
-                Paths.get(defaultConfigPath).resolve(ConfigFactory.CDEC_CONFIG_PATH).resolve(ConfigFactory.SINGLE_NODE_WITHOUT_PUPPET_MASTER_PROPERTIES_FILE));
+            put(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+                Paths.get(defaultConfigPath).resolve(ConfigFactory.CDEC_CONFIG_PATH).resolve(ConfigFactory.SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
         }};
     }
 }

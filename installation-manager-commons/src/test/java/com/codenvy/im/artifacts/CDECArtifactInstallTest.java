@@ -76,7 +76,7 @@ public class CDECArtifactInstallTest {
         doReturn(TEST_USER).when(mockConfig).getUser();
         doReturn(TEST_PASSWORD).when(mockConfig).getPassword();
 
-        List<Command> commands = spyCdecArtifact.getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Paths.get(""), mockConfig);
+        List<Command> commands = spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
         assertNotNull(commands);
         assertEquals(commands.size(), 5);
 
@@ -84,7 +84,7 @@ public class CDECArtifactInstallTest {
         doReturn("").when(mockConfig).getPassword();
         doReturn(TEST_AUTH_PRIVATE_KEY).when(mockConfig).getPrivateKeyFileAbsolutePath();
 
-        commands = spyCdecArtifact.getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Paths.get(""), mockConfig);
+        commands = spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
         assertNotNull(commands);
         assertEquals(commands.size(), 5);
     }
@@ -96,7 +96,7 @@ public class CDECArtifactInstallTest {
         doReturn("").when(mockConfig).getSSHPort();
         doReturn("config file").when(mockConfig).getConfigSource();
 
-        spyCdecArtifact.getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Paths.get(""), mockConfig);
+        spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
     }
 
     @Test(expectedExceptions = AgentException.class,
@@ -108,7 +108,7 @@ public class CDECArtifactInstallTest {
         doReturn("wrong user").when(mockConfig).getUser();
         doReturn("wrong password").when(mockConfig).getPassword();
 
-        spyCdecArtifact.getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Paths.get(""), mockConfig);
+        spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
     }
 
     @AfterTest

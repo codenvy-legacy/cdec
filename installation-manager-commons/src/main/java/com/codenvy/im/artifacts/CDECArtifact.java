@@ -60,7 +60,6 @@ public class CDECArtifact extends AbstractArtifact {
 
     public enum InstallType {
         SINGLE_NODE_WITH_PUPPET_MASTER,
-        SINGLE_NODE_WITHOUT_PUPPET_MASTER,
         MULTI_NODES_WITH_PUPPET_MASTER
     }
 
@@ -74,7 +73,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public void install(Path pathToBinaries) throws CommandException, AgentException, ConfigException {
-        install(pathToBinaries, InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER);
+        install(pathToBinaries, InstallType.SINGLE_NODE_WITH_PUPPET_MASTER);
     }
 
     public void install(Path pathToBinaries, InstallType installType) throws CommandException, AgentException, ConfigException {
@@ -85,8 +84,8 @@ public class CDECArtifact extends AbstractArtifact {
                         Arrays.toString(installCommands.toArray()).replace(", ", ",\n")));
 
         for (Command command : installCommands) {
-            LOG.info(format("\n\n--- Executing %s-th command %s.\n", installCommands.lastIndexOf(command) + 1, command.toString()));
-            command.execute();
+            LOG.info(format("\n\n--- Executing %s-th command %s...\n", installCommands.lastIndexOf(command) + 1, command.toString()));
+            LOG.info(command.execute());
         }
 
         LOG.info("\n\n--- Finish installation.\n");
@@ -114,15 +113,12 @@ public class CDECArtifact extends AbstractArtifact {
 
     private List<Command> getInstallCommands(Path pathToBinaries, InstallType type) throws AgentException, ConfigException {
         switch (type) {
-            case SINGLE_NODE_WITHOUT_PUPPET_MASTER:
-                CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
-                return getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(pathToBinaries, config);
-
             case SINGLE_NODE_WITH_PUPPET_MASTER:
-                return getInstallCdecOnSingleNodeWithPuppetMaster(pathToBinaries);
+                CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString());
+                return getInstallCdecOnSingleNodeWithPuppetMasterCommands(pathToBinaries, config);
 
             case MULTI_NODES_WITH_PUPPET_MASTER:
-                return getInstallCdecOnMultiNodesWithPappetMaster(pathToBinaries);
+                return getInstallCdecOnMultiNodesWithPappetMasterCommands(pathToBinaries);
 
             default:
                 return Collections.emptyList();
@@ -133,7 +129,7 @@ public class CDECArtifact extends AbstractArtifact {
      * @throws ConfigException if required config parameter isn't present in configuration.
      * @throws AgentException if required agent isn't ready to perform commands.
      */
-    protected List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Path pathToBinaries, final CdecConfig config) throws
+    protected List<Command> getInstallCdecOnSingleNodeWithPuppetMasterCommands(Path pathToBinaries, final CdecConfig config) throws
                                                                                                                               AgentException,
                                                                                                                               ConfigException {
         // check readiness of config
@@ -164,27 +160,9 @@ public class CDECArtifact extends AbstractArtifact {
             );
         }
 
-        // TODO issue CDEC-58
 
-        commands.addAll(new ArrayList<Command>() {{
-            add(new RemoteCommand("sudo setenforce 0", agent, "Disable SELinux"));
-            add(new RemoteCommand("sudo cp /etc/selinux/config /etc/selinux/config.bak", agent, "Disable SELinux"));
-            add(new RemoteCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config", agent,
-                                  "Disable SELinux"));
-        }});
+        // TODO issue CDEC-59
 
-        commands.addAll(new ArrayList<Command>() {{
-            add(new RemoteCommand(format("sudo rpm -ivh %s", config.getPuppetResourceUrl()), agent, "Install puppet client"));
-            add(new RemoteCommand(format("sudo yum install %s -y", config.getPuppetVersion()), agent, "Install puppet client"));
-        }});
-
-        return commands;
-    }
-
-    /**
-     * TODO issue CDEC-59
-     */
-    private List<Command> getInstallCdecOnSingleNodeWithPuppetMaster(Path pathToBinaries) {
         /**
          * CDEC installation sequence.
          * 1) On Puppet Master host :
@@ -217,13 +195,26 @@ public class CDECArtifact extends AbstractArtifact {
          * 1.1 Validate nodes requests available;
          * 1.2 Sign nodes connection request.
          */
-        return Collections.emptyList();
+
+        commands.addAll(new ArrayList<Command>() {{
+            add(new RemoteCommand("sudo setenforce 0", agent, "Disable SELinux"));
+            add(new RemoteCommand("sudo cp /etc/selinux/config /etc/selinux/config.bak", agent, "Disable SELinux"));
+            add(new RemoteCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config", agent,
+                                  "Disable SELinux"));
+        }});
+
+        commands.addAll(new ArrayList<Command>() {{
+            add(new RemoteCommand(format("sudo rpm -ivh %s", config.getPuppetResourceUrl()), agent, "Install puppet client"));
+            add(new RemoteCommand(format("sudo yum install %s -y", config.getPuppetVersion()), agent, "Install puppet client"));
+        }});
+
+        return commands;
     }
 
     /**
      * TODO issue CDEC-60
      */
-    private List<Command> getInstallCdecOnMultiNodesWithPappetMaster(Path pathToBinaries) {
+    private List<Command> getInstallCdecOnMultiNodesWithPappetMasterCommands(Path pathToBinaries) {
     //                CdecConfig installationConfig = new CdecConfig();
     //
     //                installPuppetMaster(installationConfig.getPuppetMaster(),
