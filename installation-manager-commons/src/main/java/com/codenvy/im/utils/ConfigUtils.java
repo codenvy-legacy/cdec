@@ -64,7 +64,6 @@ public class ConfigUtils {
             propertiesToStore.put(key, value);
         }
 
-
         try {
             propertiesToStore.store(out, null);
         } catch (IOException e) {

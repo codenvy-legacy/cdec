@@ -43,7 +43,7 @@ public abstract class Config {
         ConfigUtils.storeProperties(this.properties, out);
     }
 
-    public final String getConfigSource() {
+    public String getConfigSource() {
         return configSource;
     }
 

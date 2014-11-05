@@ -31,12 +31,15 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,6 +51,8 @@ import static java.lang.String.format;
  * */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
+    private static final Logger LOG = LoggerFactory.getLogger(CDECArtifact.class);
+
     public static final String NAME = "cdec";
 
     private final HttpTransport transport;
@@ -75,11 +80,16 @@ public class CDECArtifact extends AbstractArtifact {
     public void install(Path pathToBinaries, InstallType installType) throws CommandException, AgentException, ConfigException {
         List<Command> installCommands = getInstallCommands(pathToBinaries, installType);
 
+        // display list of commands
+        LOG.info(format("\n\n--- There are next %s commands will be executed:\n%s\n", installCommands.size(),
+                        Arrays.toString(installCommands.toArray()).replace(", ", ",\n")));
+
         for (Command command : installCommands) {
-            System.out.print(format("Executing command %s ...", toString()));  // TODO display status in CLI
+            LOG.info(format("\n\n--- Executing %s-th command %s.\n", installCommands.lastIndexOf(command) + 1, command.toString()));
             command.execute();
-            System.out.println(" Ready.");                                     // TODO display status in CLI
         }
+
+        LOG.info("\n\n--- Finish installation.\n");
     }
 
     @Override
@@ -105,7 +115,8 @@ public class CDECArtifact extends AbstractArtifact {
     private List<Command> getInstallCommands(Path pathToBinaries, InstallType type) throws AgentException, ConfigException {
         switch (type) {
             case SINGLE_NODE_WITHOUT_PUPPET_MASTER:
-                return getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(pathToBinaries);
+                CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
+                return getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(pathToBinaries, config);
 
             case SINGLE_NODE_WITH_PUPPET_MASTER:
                 return getInstallCdecOnSingleNodeWithPuppetMaster(pathToBinaries);
@@ -122,15 +133,15 @@ public class CDECArtifact extends AbstractArtifact {
      * @throws ConfigException if required config parameter isn't present in configuration.
      * @throws AgentException if required agent isn't ready to perform commands.
      */
-    private List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Path pathToBinaries) throws AgentException, ConfigException {
-        final CdecConfig config = ConfigFactory.loadConfig(InstallType.SINGLE_NODE_WITHOUT_PUPPET_MASTER.toString());
-
+    protected List<Command> getInstallCdecOnSingleNodeWithoutPuppetMasterCommands(Path pathToBinaries, final CdecConfig config) throws
+                                                                                                                              AgentException,
+                                                                                                                              ConfigException {
         // check readiness of config
         if (config.getHost().isEmpty() || config.getSSHPort().isEmpty()) {
             throw new ConfigException(format("Installation config file '%s' is incomplete.", config.getConfigSource()));
         }
 
-        System.out.println(format("Config file '%s' will being used to install CDEC.", config.getConfigSource()));  // TODO display in CLI
+        LOG.info(format("\n\n--- Config file '%s' will being used to install CDEC.\n", config.getConfigSource()));
 
         List<Command> commands = new ArrayList<>();
 
