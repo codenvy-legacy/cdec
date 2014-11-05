@@ -32,6 +32,7 @@ import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -130,7 +131,9 @@ public class TestCommons {
         ar.setName("name");
 
         String json = Commons.toJson(ar);
-        assertEquals(json, "{\"name\":\"name\",\"id\":\"id\",\"links\":[]}");
+        assertTrue(json.contains("\"name\":\"name\""));
+        assertTrue(json.contains("\"id\":\"id\""));
+        assertTrue(json.contains("\"links\":[]"));
     }
 
     @Test
