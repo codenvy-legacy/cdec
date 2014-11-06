@@ -1,4 +1,5 @@
 /*
+/*
  * CODENVY CONFIDENTIAL
  * __________________
  *
@@ -15,18 +16,10 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.response;
+package com.codenvy.im.installer;
 
 /**
  * @author Dmytro Nochevnov
  */
-public enum Status {
-    SUCCESS,
-    READY_TO_INSTALL,
-    INSTALL_STARTED,
-    INSTALLING,
-    INSTALL_FINISHED,
-    DOWNLOADED,
-    DOWNLOADING,
-    FAILURE
+public class InstallInProgressException extends RuntimeException {
 }

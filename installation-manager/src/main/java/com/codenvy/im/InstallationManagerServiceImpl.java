@@ -21,6 +21,8 @@ import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.installer.InstallInProgressException;
+import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.ArtifactInfoEx;
 import com.codenvy.im.response.DownloadArtifactInfo;
@@ -35,7 +37,6 @@ import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
 
@@ -500,6 +501,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             doInstall(artifact, toInstallVersion, token);
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+        } catch (InstallStartedException e) {
+            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.INSTALL_STARTED);
+            return new Response.Builder().withStatus(ResponseCode.OK).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+        } catch (InstallInProgressException e) {
+            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.INSTALLING);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
         } catch (Exception e) {
             ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);

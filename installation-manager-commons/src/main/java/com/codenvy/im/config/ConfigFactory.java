@@ -17,8 +17,9 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.installer.Installer;
 import com.codenvy.im.utils.InjectorBootstrap;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -37,17 +38,16 @@ public class ConfigFactory {
     private static final String CONFIG_PATH         = InjectorBootstrap.getProperty("config.path");
     private static final String DEFAULT_CONFIG_PATH = InjectorBootstrap.getProperty("config.path.default");
 
-    protected static final String CDEC_CONFIG_PATH                                  = "cdec";
-    protected static final String SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE = "single-node-with-puppet-master.properties";
+    protected static final String CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE = "cdec-single-node-with-puppet-master.properties";
 
     protected static Map<String, Path> configFilesAbsolutePaths = new HashMap<String, Path>() {{
-        put(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
-            getConfigFileAbsolutePath(SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
+        put(Installer.InstallType.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+            getConfigFileAbsolutePath(CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
     }};
 
     protected static Map<String, Path> defaultConfigFilesRelativePaths = new HashMap<String, Path>() {{
-        put(CDECArtifact.InstallType.SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
-            getDefaultConfigFileRelativePath(SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
+        put(Installer.InstallType.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+            getDefaultConfigFileRelativePath(CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
     }};
 
     /**
@@ -109,7 +109,7 @@ public class ConfigFactory {
      * Return path to existed config file on file system = [fileSystemAccountRootPath]/[configFileRelativePath].
      */
     private static Path getConfigFileAbsolutePath(String configFileName) {
-        Path configFileRelativePath = Paths.get(CONFIG_PATH).resolve(CDEC_CONFIG_PATH).resolve(configFileName);
+        Path configFileRelativePath = Paths.get(CONFIG_PATH).resolve(configFileName);
         Path fileSystemAccountRootPath = Paths.get(System.getProperty("user.home"));
         return fileSystemAccountRootPath.resolve(configFileRelativePath);
     }
@@ -118,7 +118,7 @@ public class ConfigFactory {
      * Return relative path to default config file on file system = [classResourceDir]/[defaultConfigFileRelativePath].
      */
     private static Path getDefaultConfigFileRelativePath(String configFileName) {
-        return Paths.get(DEFAULT_CONFIG_PATH).resolve(CDEC_CONFIG_PATH).resolve(configFileName);
+        return Paths.get(DEFAULT_CONFIG_PATH).resolve(configFileName);
     }
 
 

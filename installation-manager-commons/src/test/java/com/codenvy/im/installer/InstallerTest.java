@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.artifacts;
+package com.codenvy.im.installer;
 
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.Command;
@@ -45,9 +45,9 @@ import static org.testng.Assert.assertNotNull;
 /**
  * @author Dmytro Nochevnov
  */
-public class CDECArtifactInstallTest {
+public class InstallerTest {
     SshServer spySshd;
-    CDECArtifact spyCdecArtifact;
+    Installer installer;
 
     static final String TEST_USER             = "vagrant";
     static final String TEST_HOST             = "127.0.0.1";
@@ -62,10 +62,10 @@ public class CDECArtifactInstallTest {
     public void setUp() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        spyCdecArtifact = (CDECArtifact) spy(ArtifactFactory.createArtifact(CDECArtifact.NAME));
-
         spySshd = getSpySshd();
         spySshd.start();
+
+        installer = new Installer();
     }
 
     @Test
@@ -76,15 +76,15 @@ public class CDECArtifactInstallTest {
         doReturn(TEST_USER).when(mockConfig).getUser();
         doReturn(TEST_PASSWORD).when(mockConfig).getPassword();
 
-        List<Command> commands = spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        List<Command> commands = installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
         assertNotNull(commands);
         assertEquals(commands.size(), 5);
 
-        // connect to agent using auth key
+        // use connect to agent using auth key
         doReturn("").when(mockConfig).getPassword();
         doReturn(TEST_AUTH_PRIVATE_KEY).when(mockConfig).getPrivateKeyFileAbsolutePath();
 
-        commands = spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        commands = installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
         assertNotNull(commands);
         assertEquals(commands.size(), 5);
     }
@@ -96,7 +96,7 @@ public class CDECArtifactInstallTest {
         doReturn("").when(mockConfig).getSSHPort();
         doReturn("config file").when(mockConfig).getConfigSource();
 
-        spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
     }
 
     @Test(expectedExceptions = AgentException.class,
@@ -108,7 +108,7 @@ public class CDECArtifactInstallTest {
         doReturn("wrong user").when(mockConfig).getUser();
         doReturn("wrong password").when(mockConfig).getPassword();
 
-        spyCdecArtifact.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
     }
 
     @AfterTest
