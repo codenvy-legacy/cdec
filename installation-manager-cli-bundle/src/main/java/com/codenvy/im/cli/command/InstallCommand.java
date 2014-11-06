@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.Status;
 
+import com.codenvy.im.restlet.InstallationManager;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -39,7 +40,9 @@ import java.util.Properties;
 public class InstallCommand extends AbstractIMCommand {
 
 
-    @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install", required = false, multiValued = false)
+    @Argument(index = 0, name = "artifact",
+              description = "The name of the specific artifact to install. Installation manager will be updated by default.",
+              required = false, multiValued = false)
     private String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
@@ -47,6 +50,8 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
+
+    private static final String DEFAULT_ARTIFACT_NAME = InstallManagerArtifact.NAME;
 
     @Override
     protected Void doExecute() {
@@ -72,7 +77,7 @@ public class InstallCommand extends AbstractIMCommand {
         } else if (artifactName != null) {
             response = installationManagerProxy.install(artifactName, getCredentialsRep());
         } else {
-            response = installationManagerProxy.install(getCredentialsRep());
+            response = installationManagerProxy.install(DEFAULT_ARTIFACT_NAME, getCredentialsRep());
         }
 
         printResponse(response);
