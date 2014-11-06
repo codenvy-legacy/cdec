@@ -51,7 +51,7 @@ public class LoginCommand extends AbstractIMCommand {
     private String remoteName;
 
     @Override
-    protected Void doExecute() throws Exception {
+    protected Void execute() throws Exception {
         try {
             init();
 

@@ -125,7 +125,7 @@ else
     main "$@"
 fi</replacevalue>
                                 </replace>
-                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy-cli">
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>if [ -f "/home/codenvy-shared/codenvy-cli-update-script.sh" ]; then
     echo "Installation Manager CLI is being updated ..."

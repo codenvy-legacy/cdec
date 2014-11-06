@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.cli.command;
 
-import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 
@@ -35,7 +34,7 @@ public class SubscriptionCommand extends AbstractIMCommand {
     private String subscription;
 
     @Override
-    protected Void doExecute() {
+    protected Void execute() {
         try {
             init();
 

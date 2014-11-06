@@ -49,7 +49,7 @@ public class InstallCommand extends AbstractIMCommand {
     private boolean list;
 
     @Override
-    protected Void doExecute() {
+    protected Void execute() {
         try {
             init();
 

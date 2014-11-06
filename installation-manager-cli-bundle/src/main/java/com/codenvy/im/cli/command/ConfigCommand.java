@@ -37,7 +37,7 @@ public class ConfigCommand extends AbstractIMCommand {
     private String proxyPort;
 
     @Override
-    protected Void doExecute() {
+    protected Void execute() {
         try {
             init();
 

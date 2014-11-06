@@ -50,7 +50,7 @@ public class DownloadCommand extends AbstractIMCommand {
     private boolean checkRemote;
 
     @Override
-    protected Void doExecute() {
+    protected Void execute() {
         try {
             init();
 

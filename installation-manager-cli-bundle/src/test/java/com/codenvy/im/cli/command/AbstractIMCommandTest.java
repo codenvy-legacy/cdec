@@ -241,7 +241,7 @@ public class AbstractIMCommandTest {
 
     class TestAbstractIMCommand extends AbstractIMCommand {
         @Override
-        protected Object doExecute() throws Exception {
+        protected Object execute() throws Exception {
             return null;
         }
 
