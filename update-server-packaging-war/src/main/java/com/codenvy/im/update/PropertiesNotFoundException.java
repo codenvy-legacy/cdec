@@ -17,12 +17,12 @@
  */
 package com.codenvy.im.update;
 
-import java.io.FileNotFoundException;
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
 /**
  * @author Anatoliy Bazko
  */
-public class PropertiesNotFoundException extends FileNotFoundException {
+public class PropertiesNotFoundException extends ArtifactNotFoundException {
 
     public PropertiesNotFoundException(String artifact, String version) {
         super("Artifact properties '" + artifact + "' version '" + version + "' not found");

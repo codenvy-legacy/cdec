@@ -299,7 +299,7 @@ public class RepositoryService {
             }
 
             return doDownloadArtifact(artifact, version, false);
-        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+        } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
                     "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
@@ -327,7 +327,7 @@ public class RepositoryService {
                                            @PathParam("version") String version) {
         try {
             return doDownloadArtifact(artifact, version, true);
-        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+        } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
                     "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
@@ -353,7 +353,7 @@ public class RepositoryService {
         try {
             String version = artifactStorage.getLatestVersion(artifact);
             return doDownloadArtifact(artifact, version, true);
-        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+        } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
