@@ -32,7 +32,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -56,7 +58,7 @@ public class Installer {
 
     public Installer(Path pathToBinaries, InstallType installType) throws ConfigException, AgentException {
         this.commands = getInstallCommands(pathToBinaries, installType);
-        LOG.info("\n--- " + toString());
+        LOG.info("\n--- Installation commands: " + toString());
     }
 
     public void executeNextCommand() {
@@ -195,7 +197,18 @@ public class Installer {
         return new LinkedList<>();
     }
 
-    @Override public String toString() {
-        return format("Installation commands: %s", Arrays.toString(commands.toArray()));
+    public List<String> getCommandsInfo() {
+        List<String> commandsInfo = new ArrayList<>();
+
+        for (Command command: commands) {
+            commandsInfo.add(command.toString());
+        }
+
+        return commandsInfo;
+    }
+
+    @Override
+    public String toString() {
+        return "Installation commands list: " + Arrays.toString(getCommandsInfo().toArray());
     }
 }

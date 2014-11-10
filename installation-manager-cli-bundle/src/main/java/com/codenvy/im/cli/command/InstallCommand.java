@@ -17,20 +17,26 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-
-import com.codenvy.im.restlet.InstallationManager;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Properties;
+
+import static java.lang.String.format;
 
 /**
  * @author Alexander Reshetnyak
@@ -38,7 +44,6 @@ import java.util.Properties;
  */
 @Command(scope = "codenvy", name = "im-install", description = "Install updates")
 public class InstallCommand extends AbstractIMCommand {
-
 
     @Argument(index = 0, name = "artifact",
               description = "The name of the specific artifact to install. Installation manager will be updated by default.",
@@ -51,7 +56,7 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
 
-    private static final String DEFAULT_ARTIFACT_NAME = InstallManagerArtifact.NAME;
+    protected static final String DEFAULT_ARTIFACT_NAME = InstallManagerArtifact.NAME;
 
     @Override
     protected Void doExecute() {
@@ -70,7 +75,7 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    private Void doExecuteInstall() throws JSONException, IOException {
+    private Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         String response;
         if (artifactName != null && version != null) {
             response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
@@ -80,9 +85,17 @@ public class InstallCommand extends AbstractIMCommand {
             response = installationManagerProxy.install(DEFAULT_ARTIFACT_NAME, getCredentialsRep());
         }
 
+        Response responseObj = Response.fromJson(response);
+        if (isStepwiseInstallStarted(responseObj)) {
+            List<String> steps = extractStepInfo(responseObj);
+            if (steps != null && !steps.isEmpty()) {
+                return doInstallStepwisely(steps);
+            }
+        }
+
         printResponse(response);
 
-        if (isIMSuccessfullyUpdated(response)) {
+        if (isIMSuccessfullyUpdated(responseObj)) {
             printInfo("'Installation Manager CLI' is being updated! Press any key to exit...");
 
             session.getKeyboard().read();
@@ -94,26 +107,28 @@ public class InstallCommand extends AbstractIMCommand {
 
     private Void doExecuteListOption() throws IOException, JSONException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
-        JSONObject jsonResponse = new JSONObject(response);
-        jsonResponse.put("CLI client version", getClientBuildVersion());
-
-        printResponse(jsonResponse.toString());
-
+        response = insertClientVersionInfo(response);
+        printResponse(response);
         return null;
     }
 
-    private boolean isIMSuccessfullyUpdated(String response) throws JSONException {
-        JSONObject jsonResponse = new JSONObject(response);
+    private String insertClientVersionInfo(String response) throws IOException {
+        StringBuffer newResponse = new StringBuffer(response);
+        String clientVersionInfo = format("  \"CLI client version\" : \"%s\",\n", getClientBuildVersion());
+        newResponse.insert(2, clientVersionInfo);
+        return newResponse.toString();
+    }
 
-        if (response.contains("artifacts")) {
-            JSONArray l = jsonResponse.getJSONArray("artifacts");
-            for (int i = 0; i < l.length(); i++) {
-                String artifact = ((JSONObject)l.get(i)).getString("artifact");
-                String status = ((JSONObject)l.get(i)).getString("status");
+    private boolean isIMSuccessfullyUpdated(Response response) throws JSONException {
+        List<ArtifactInfo> artifacts = response.getArtifacts();
+        if (artifacts == null) {
+            return false;
+        }
 
-                if (artifact != null && artifact.equalsIgnoreCase(InstallManagerArtifact.NAME)) {
-                    return status != null && status.equals(Status.SUCCESS.name());
-                }
+        for (ArtifactInfo artifact: artifacts) {
+            if (artifact.getArtifact().equals(InstallManagerArtifact.NAME)
+                && artifact.getStatus() == Status.SUCCESS) {
+                return true;
             }
         }
 
@@ -132,4 +147,80 @@ public class InstallCommand extends AbstractIMCommand {
             }
         }
     }
+
+    private Void doInstallStepwisely(List<String> steps) throws IOException, JsonParseException {
+        String response = "";
+        for(String step: steps) {
+            printInfo(format("Executing command %s ...", step));
+
+            if (artifactName != null && version != null) {
+                response = installationManagerProxy.install(artifactName, version, getCredentialsRep());
+            } else if (artifactName != null) {
+                response = installationManagerProxy.install(artifactName, getCredentialsRep());
+            } else {
+                response = installationManagerProxy.install(DEFAULT_ARTIFACT_NAME, getCredentialsRep());
+            }
+
+            Response responseObj = Response.fromJson(response);
+            if (responseObj.getStatus() == ResponseCode.ERROR) {
+                printLineSeparator();
+                printError(responseObj.getMessage());
+
+                printInfo("Is it ok [y/N]: ");
+                String userAnswer = null;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+                    userAnswer = reader.readLine();
+                    printLineSeparator();
+                }
+
+                if (userAnswer != null && userAnswer.equals("y")) {
+                    continue;
+                }
+
+                // TODO clear installer commands list
+                break;
+
+            } else {
+                printInfo(" Ready.");
+                printLineSeparator();
+            }
+        }
+
+        printInfo(response);
+
+        return null;
+    }
+
+    private boolean isStepwiseInstallStarted(Response response) {
+        List<ArtifactInfo> artifacts = response.getArtifacts();
+        if (artifacts == null) {
+            return false;
+        }
+
+        for (ArtifactInfo artifact: artifacts) {
+            if (artifact.getArtifact().equals(artifactName)
+                && artifact.getStatus() == Status.INSTALL_STARTED) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private List<String> extractStepInfo(Response response) throws JSONException, JsonParseException {
+        List<ArtifactInfo> artifacts = response.getArtifacts();
+        if (artifacts == null) {
+            return null;
+        }
+
+        for (ArtifactInfo artifact: artifacts) {
+            if (artifact.getArtifact().equals(artifactName)
+                && artifact.getStatus() == Status.INSTALL_STARTED) {
+                return artifact.getInstallCommandsInfo();
+            }
+        }
+
+        return null;
+    }
+
 }

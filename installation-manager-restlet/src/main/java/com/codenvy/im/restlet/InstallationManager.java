@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.restlet;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.Version;
@@ -76,7 +77,9 @@ public interface InstallationManager {
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
+    Path download(UserCredentials userCredentials, Artifact artifact, String version) throws
+                                                                                      IOException,
+                                                                                      IllegalStateException;
 
     /** @return the configuration */
     Map<String, String> getConfig();

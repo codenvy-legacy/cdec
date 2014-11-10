@@ -17,7 +17,10 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.DownloadStatusInfo;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -70,8 +73,8 @@ public class DownloadCommand extends AbstractIMCommand {
         return null;
     }
 
-    private void doDownload() throws JSONException, InterruptedException {
-        printInfo("Downloading might take several minutes depending on your internet connection. Please wait. \n");
+    private void doDownload() throws InterruptedException, JsonParseException, JSONException {
+        printInfo("Downloading might take several minutes depending on your internet connection. Please wait.\n");
 
         final String downloadDescriptorId = generateDownloadDescriptorId();
 
@@ -84,20 +87,21 @@ public class DownloadCommand extends AbstractIMCommand {
             startResponse = installationManagerProxy.startDownload(downloadDescriptorId, getCredentialsRep());
         }
 
-        if (!OK.in(startResponse)) {
+        Response responseObj = Response.fromJson(startResponse);
+        if (responseObj.getStatus() != ResponseCode.OK) {
             printResponse(startResponse);
             return;
         }
 
         for (; ; ) {
             String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
-
-            if (!OK.in(startResponse)) {
+            responseObj = Response.fromJson(startResponse);
+            if (responseObj.getStatus() != ResponseCode.OK) {
                 printResponse(statusResponse);
                 break;
             }
 
-            DownloadStatusInfo downloadStatusInfo = DownloadStatusInfo.valueOf(statusResponse);
+            DownloadStatusInfo downloadStatusInfo = Response.fromJson(statusResponse).getDownloadInfo();
 
             printProgress(downloadStatusInfo.getPercents());
             sleep(1000);
@@ -106,7 +110,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 downloadStatusInfo.getStatus() == Status.FAILURE) {
                 cleanCurrentLine();
 
-                printResponse(downloadStatusInfo.getDownloadResult());
+                printResponse(downloadStatusInfo.getDownloadResult().toJson());
                 break;
             }
         }

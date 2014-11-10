@@ -17,14 +17,15 @@
  */
 package com.codenvy.im.response;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.utils.Commons;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,11 +34,16 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
+@JsonPropertyOrder({"downloadInfo","config","artifacts","subscription","message","status"})
 public class Response {
-    private final Map<String, Object> params;
+    private List<ArtifactInfo> artifacts;
+    private String message;
+    private ResponseCode status;
+    private DownloadStatusInfo downloadInfo;
+    private JsonStringMapImpl<String> config;
+    private String subscription;
 
-    private Response(Map<String, Object> params) {
-        this.params = params;
+    public Response() {
     }
 
     public static Response valueOf(Exception e) {
@@ -46,19 +52,24 @@ public class Response {
     }
 
     public String toJson() {
-        return new JsonStringMapImpl<>(params).toJson();
+        return Commons.toJson(this);   // TODO add test
+    }
+
+    // TODO add test
+    public static Response fromJson(String json) throws JsonParseException {
+        return Commons.fromJson(json, Response.class);
     }
 
     /** Response builder. */
     public static class Builder {
-        private final Map<String, Object> params;
+        private Response response;
 
         public Builder() {
-            params = new LinkedHashMap<>();
+            response = new Response();
         }
 
         public Response build() {
-            return new Response(params);
+            return response;
         }
 
         public Builder withArtifacts(Map<Artifact, String> m) {
@@ -76,11 +87,7 @@ public class Response {
         }
 
         public Builder withArtifacts(@Nullable List<ArtifactInfo> l) {
-            if (l == null) {
-                params.put(Property.ARTIFACTS.toString().toLowerCase(), Collections.emptyList());
-            } else {
-                params.put(Property.ARTIFACTS.toString().toLowerCase(), l);
-            }
+            response.setArtifacts(l);
             return this;
         }
 
@@ -89,26 +96,76 @@ public class Response {
         }
 
         public Builder withStatus(ResponseCode value) {
-            return withParam(Property.STATUS, value.toString());
-        }
-
-        public Builder withMessage(String value) {
-            return withParam(Property.MESSAGE, value);
-        }
-
-        public Builder withParam(String key, Object value) {
-            params.put(key.toLowerCase(), value);
+            response.setStatus(value);
             return this;
         }
 
-        private Builder withParam(Property key, String value) {
-            params.put(key.toString().toLowerCase(), value);
+        public Builder withMessage(String value) {
+            response.setMessage(value);
             return this;
         }
 
         public Builder withDownloadInfo(DownloadStatusInfo info) {
-            params.put(Property.DOWNLOAD_INFO.toString().toLowerCase(), info);
+            response.setDownloadInfo(info);
             return this;
         }
+
+        public Builder withConfig(JsonStringMapImpl<String> config) {
+            response.setConfig(config);
+            return this;
+        }
+
+        public Builder withSubscription(String subscription) {
+            response.setSubscription(subscription);
+            return this;
+        }
+    }
+
+    public ResponseCode getStatus() {
+        return status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public List<ArtifactInfo> getArtifacts() {
+        return artifacts;
+    }
+
+    public void setArtifacts(List<ArtifactInfo> artifacts) {
+        this.artifacts = artifacts;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setStatus(ResponseCode status) {
+        this.status = status;
+    }
+
+    public DownloadStatusInfo getDownloadInfo() {
+        return downloadInfo;
+    }
+
+    public void setDownloadInfo(DownloadStatusInfo downloadInfo) {
+        this.downloadInfo = downloadInfo;
+    }
+
+    public JsonStringMapImpl<String> getConfig() {
+        return config;
+    }
+
+    public void setConfig(JsonStringMapImpl<String> config) {
+        this.config = config;
+    }
+
+    public String getSubscription() {
+        return subscription;
+    }
+
+    public void setSubscription(String subscription) {
+        this.subscription = subscription;
     }
 }

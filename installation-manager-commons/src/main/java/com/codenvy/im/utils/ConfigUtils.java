@@ -46,7 +46,7 @@ public class ConfigUtils {
         }
 
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            String key = entry.getKey().toString().toUpperCase();   // set property name into UPPER case
+            String key = entry.getKey().toString().toLowerCase();   // set property name into UPPER case
             String value = (String)entry.getValue();
 
             propertiesCandidate.put(key, value);
@@ -58,7 +58,7 @@ public class ConfigUtils {
     public static void storeProperties(Map<String, String> properties, OutputStream out) throws ConfigException {
         Properties propertiesToStore = new Properties();
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String key = entry.getKey().toString().toUpperCase();   // set property name into Upper case
+            String key = entry.getKey().toString().toLowerCase();   // set property name into Upper case
             String value = entry.getValue();
 
             propertiesToStore.put(key, value);

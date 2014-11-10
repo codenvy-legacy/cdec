@@ -36,7 +36,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -78,19 +77,16 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
 
         String response = installationManagerService.getUpdates(userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"installation-manager\",\n" +
-                                                      "      \"version\": \"1.0.1\"\n" +
-                                                      "    },\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"cdec\",\n" +
-                                                      "      \"version\": \"2.10.5\"\n" +
-                                                      "    }\n" +
-                                                      "  ],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"version\" : \"1.0.1\"\n" +
+                               "  }, {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
     
     @Test
@@ -100,10 +96,10 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token"));   
         
         String response = installationManagerService.getUpdates(userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Authentication error. Authentication token might be expired or invalid.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"message\" : \"Authentication error. Authentication token might be expired or invalid.\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -114,10 +110,10 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
 
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -128,9 +124,9 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Error\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"message\" : \"Error\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 }

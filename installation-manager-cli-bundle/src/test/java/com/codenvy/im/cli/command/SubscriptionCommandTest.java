@@ -64,10 +64,10 @@ public class SubscriptionCommandTest {
     @Test
     public void testCheckDefaultSubscription() throws Exception {
         String okServiceResponse = "{\n"
-                                   + "  \"message\": \"Subscription is valid\",\n"
-                                   + "  \"status\": \"OK\",\n"
-                                   + "  \"subscription\": \"OnPremises\"\n"
-                                   + "}\n";
+                                   + "  \"message\" : \"Subscription is valid\",\n"
+                                   + "  \"status\" : \"OK\",\n"
+                                   + "  \"subscription\" : \"OnPremises\"\n"
+                                   + "}";
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SubscriptionCommand.DEFAULT_SUBSCRIPTION,
                                                                                          userCredentialsRep);
 
@@ -75,16 +75,16 @@ public class SubscriptionCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, okServiceResponse);
+        assertEquals(output, okServiceResponse + "\n");
     }
 
     @Test
     public void testCheckSubscriptionReturnOkResponse() throws Exception {
         String okServiceResponse = "{\n"
-                                   + "  \"message\": \"Subscription is valid\",\n"
-                                   + "  \"status\": \"OK\",\n"
+                                   + "  \"message\" : \"Subscription is valid\",\n"
+                                   + "  \"status\" : \"OK\",\n"
                                    + "  \"subscription\": \"AnotherSubscription\"\n"
-                                   + "}\n";
+                                   + "}";
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription("AnotherSubscription", userCredentialsRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -92,15 +92,15 @@ public class SubscriptionCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, okServiceResponse );
+        assertEquals(output, okServiceResponse + "\n");
     }
 
     @Test
     public void testCheckSubscriptionWhenServiceThrowsError() throws Exception {
         String expectedOutput = "{\n"
-                                + "  \"message\": \"Server Error Exception\",\n"
-                                + "  \"status\": \"ERROR\"\n"
-                                + "}\n";
+                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
+                                + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
             .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(userCredentialsRep));
 
@@ -108,6 +108,6 @@ public class SubscriptionCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput);
+        assertEquals(output, expectedOutput + "\n");
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.codenvy.im;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
@@ -30,6 +31,7 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import com.google.inject.TypeLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,6 +195,8 @@ public class InstallationManagerImpl implements InstallationManager {
             return file;
         } catch (IOException e) {
             throw getProperException(e, artifact);
+        } catch (JsonParseException e) {
+            throw new IOException(e);
         }
     }
 
@@ -352,7 +356,14 @@ public class InstallationManagerImpl implements InstallationManager {
 
     protected Map getArtifactProperties(Artifact artifact) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
-        Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
+        Map m = null;
+        try {
+            m = fromJson(transport.doGetRequest(requestUrl),
+                         Map.class,
+                         new TypeLiteral<Map<String, String>>() {}.getType());
+        } catch (JsonParseException e) {
+            throw new IOException(e);
+        }
 
         validateArtifactProperties(m);
         return m;
@@ -360,7 +371,14 @@ public class InstallationManagerImpl implements InstallationManager {
 
     protected Map getArtifactProperties(Artifact artifact, String version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
-        Map m = fromJson(transport.doGetRequest(requestUrl), Map.class);
+        Map m = null;
+        try {
+            m = fromJson(transport.doGetRequest(requestUrl),
+                         Map.class,
+                         new TypeLiteral<Map<String, String>>() {}.getType());
+        } catch (JsonParseException e) {
+            throw new IOException(e);
+        }
 
         validateArtifactProperties(m);
         return m;

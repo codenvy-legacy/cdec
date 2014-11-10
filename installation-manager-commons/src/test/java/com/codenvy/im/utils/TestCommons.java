@@ -18,8 +18,10 @@
 package com.codenvy.im.utils;
 
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
+import com.codenvy.commons.json.JsonHelper;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
+import com.google.inject.TypeLiteral;
 import org.testng.annotations.Test;
 
 import java.nio.file.Files;
@@ -37,19 +39,6 @@ import static org.testng.Assert.assertNotNull;
 public class TestCommons {
 
     public static final Path DOWNLOAD_DIR = Paths.get("target", "download");
-
-    @Test
-    public void testGetPrettyPrintJson() throws Exception {
-        String value = Commons.getPrettyPrintingJson("{a:1,b:{bb:2},c:[{c1:1},{c2:2}]}");
-        assertEquals(value, "{\n" +
-                            "  \"a\": 1,\n" +
-                            "  \"b\": {\"bb\": 2},\n" +
-                            "  \"c\": [\n" +
-                            "    {\"c1\": 1},\n" +
-                            "    {\"c2\": 2}\n" +
-                            "  ]\n" +
-                            "}");
-    }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testGetLatestVersionThrowExceptionIfArtifactDirectoryAbsent() throws Exception {
@@ -115,7 +104,7 @@ public class TestCommons {
 
     @Test
     public void testMapFromJson() throws Exception {
-        Map m = Commons.fromJson("{a=b,c=d}", Map.class);
+        Map<String, String> m = Commons.fromJson("{\"a\":\"b\",\"c\":\"d\"}", Map.class, new TypeLiteral<Map<String, String>>() {}.getType());
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "b");
         assertEquals(m.get("c"), "d");

@@ -21,6 +21,7 @@ import com.codenvy.commons.user.UserImpl;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
+import com.google.inject.TypeLiteral;
 import com.jayway.restassured.response.Response;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -167,7 +168,9 @@ public class TestRepositoryService extends BaseTest {
         Response response = given().when().get("repository/properties/installation-manager");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
-        Map value = Commons.fromJson(response.body().asString(), Map.class);
+        Map value = Commons.fromJson(response.body().asString(),
+                                     Map.class,
+                                     new TypeLiteral<Map<String, String>>() {}.getType());
         assertEquals(value.size(), 3);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
@@ -189,7 +192,9 @@ public class TestRepositoryService extends BaseTest {
         Response response = given().when().get("repository/properties/installation-manager/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
-        Map value = Commons.fromJson(response.body().asString(), Map.class);
+        Map value = Commons.fromJson(response.body().asString(),
+                                     Map.class,
+                                     new TypeLiteral<Map<String, String>>() {}.getType());
         assertEquals(value.size(), 4);
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.1");

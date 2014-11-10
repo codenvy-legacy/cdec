@@ -18,6 +18,7 @@
 package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.response.Response;
 import com.codenvy.im.restlet.InstallationManager;
 
 import javax.annotation.Nullable;
@@ -33,9 +34,9 @@ import static java.nio.file.Files.size;
 /** @author Alexander Reshetnyak */
 public class DownloadingDescriptor {
 
-    private final Map<Path, Long>         artifacts;
-    private final long                    totalSize;
-    private final AtomicReference<String> downloadResult;
+    private final Map<Path, Long>           artifacts;
+    private final long                      totalSize;
+    private final AtomicReference<Response> downloadResult;
 
     public DownloadingDescriptor(Map<Path, Long> artifacts) {
         this.artifacts = artifacts;
@@ -84,12 +85,12 @@ public class DownloadingDescriptor {
 
     /** @return the downloading status. */
     @Nullable
-    public String getDownloadResult() {
+    public Response getDownloadResult() {
         return downloadResult.get();
     }
 
     /** Sets the download status. */
-    public void setDownloadResult(String downloadResult) {
+    public void setDownloadResult(Response downloadResult) {
         if (isDownloadingFinished()) {
             throw new IllegalStateException("Impossible to set download result twice.");
         }

@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 
@@ -75,21 +74,18 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"cdec\",\n" +
-                                                      "      \"status\": \"SUCCESS\",\n" +
-                                                      "      \"version\": \"2.10.5\"\n" +
-                                                      "    },\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"installation-manager\",\n" +
-                                                      "      \"status\": \"SUCCESS\",\n" +
-                                                      "      \"version\": \"1.0.1\"\n" +
-                                                      "    }\n" +
-                                                      "  ],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                              "  \"artifacts\" : [ {\n" +
+                              "    \"artifact\" : \"cdec\",\n" +
+                              "    \"version\" : \"2.10.5\",\n" +
+                              "    \"status\" : \"SUCCESS\"\n" +
+                              "  }, {\n" +
+                              "    \"artifact\" : \"installation-manager\",\n" +
+                              "    \"version\" : \"1.0.1\",\n" +
+                              "    \"status\" : \"SUCCESS\"\n" +
+                              "  } ],\n" +
+                              "  \"status\" : \"OK\"\n" +
+                              "}");
     }
 
     @Test
@@ -109,21 +105,18 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"cdec\",\n" +
-                                                      "      \"status\": \"SUCCESS\",\n" +
-                                                      "      \"version\": \"2.10.5\"\n" +
-                                                      "    },\n" +
-                                                      "    {\n" +
-                                                      "      \"artifact\": \"installation-manager\",\n" +
-                                                      "      \"status\": \"SUCCESS\",\n" +
-                                                      "      \"version\": \"1.0.1\"\n" +
-                                                      "    }\n" +
-                                                      "  ],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  }, {\n" +
+                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"version\" : \"1.0.1\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -140,15 +133,15 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"FAILURE\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"message\": \"Can not install artifact.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"FAILURE\"\n" +
+                               "  } ],\n" +
+                               "  \"message\" : \"Can not install artifact.\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -166,14 +159,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"SUCCESS\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -191,14 +184,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"SUCCESS\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -221,15 +214,15 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"FAILURE\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                                "  \"artifacts\" : [ {\n" +
+                                "    \"artifact\" : \"cdec\",\n" +
+                                "    \"version\" : \"2.10.5\",\n" +
+                                "    \"status\" : \"FAILURE\"\n" +
+                                "  } ],\n" +
+                                "  \"message\" : \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
+                                "  \"status\" : \"ERROR\"\n" +
+                                "}");
     }
 
     @Test
@@ -243,10 +236,10 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Artifact 'cdec' isn't available to update.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"message\" : \"Artifact 'cdec' isn't available to update.\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -261,14 +254,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"SUCCESS\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -286,14 +279,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"SUCCESS\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -311,14 +304,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"SUCCESS\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -341,15 +334,15 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"FAILURE\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"FAILURE\"\n" +
+                               "  } ],\n" +
+                               "  \"message\" : \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -368,15 +361,15 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.7", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"FAILURE\",\n" +
-                                                      "    \"version\": \"2.10.7\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"message\": \"Artifact 'cdec'  isn't available to update.\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.7\",\n" +
+                               "    \"status\" : \"FAILURE\"\n" +
+                               "  } ],\n" +
+                               "  \"message\" : \"Artifact 'cdec'  isn't available to update.\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -390,14 +383,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install(mockCdecArtifact.getName(), "2.10.5", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"artifacts\": [{\n" +
-                                                      "    \"artifact\": \"cdec\",\n" +
-                                                      "    \"status\": \"SUCCESS\",\n" +
-                                                      "    \"version\": \"2.10.5\"\n" +
-                                                      "  }],\n" +
-                                                      "  \"status\": \"OK\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.10.5\",\n" +
+                               "    \"status\" : \"SUCCESS\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
@@ -411,9 +404,9 @@ public class TestInstallInstallationManagerServiceImpl {
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         String response = installationManagerService.install("qwerty", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Artifact 'qwerty' not found\",\n" +
-                                                      "  \"status\": \"ERROR\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"message\" : \"Artifact 'qwerty' not found\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 }

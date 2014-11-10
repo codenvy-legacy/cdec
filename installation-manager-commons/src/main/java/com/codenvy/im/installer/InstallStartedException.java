@@ -18,11 +18,19 @@
  */
 package com.codenvy.im.installer;
 
+import java.util.List;
+
 /**
  * @author Dmytro Nochevnov
  */
 public class InstallStartedException extends RuntimeException {
-    public InstallStartedException(String message) {
-        super(message);
+    private List<String> commandsInfo;
+
+    public InstallStartedException(List<String> commandsInfo) {
+        this.commandsInfo = commandsInfo;
+    }
+
+    public List<String> getCommandsInfo() {
+        return commandsInfo;
     }
 }

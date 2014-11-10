@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ public class TestArtifactPropertiesUtils {
     }
     
     @Test
-    public void testAuthenticationRequiredProperty() throws IOException {
+    public void testAuthenticationRequiredProperty() throws IOException, JsonParseException {
         when(mockTransport.doGetRequest("/repository/properties/installation-manager/1.0.1"))
         .thenReturn("{"
             + "\"artifact\":\"installation-manager\","
@@ -52,7 +53,7 @@ public class TestArtifactPropertiesUtils {
     }
     
     @Test
-    public void testSubsctiptionProperty() throws IOException {
+    public void testSubsctiptionProperty() throws IOException, JsonParseException {
         when(mockTransport.doGetRequest("/repository/properties/installation-manager/1.0.1"))
         .thenReturn("{"
             + "\"artifact\":\"installation-manager\","

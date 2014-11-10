@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -38,23 +37,20 @@ public class TestResponse {
     @Test
     public void testToJsonArtifactInfoList() throws Exception {
         ArtifactInfo info1 = new ArtifactInfo("cdec", "1.0.1");
-        ArtifactInfo info2 = new ArtifactInfoEx("cdec", "1.0.2", Status.SUCCESS);
+        ArtifactInfo info2 = new ArtifactInfo("cdec", "1.0.2", Status.SUCCESS);
         Response response = new Response.Builder().withArtifacts(Arrays.asList(info1, info2)).withStatus(ResponseCode.OK).build();
 
-        assertEquals(getPrettyPrintingJson(response.toJson()), "{\n" +
-                                                               "  \"artifacts\": [\n" +
-                                                               "    {\n" +
-                                                               "      \"artifact\": \"cdec\",\n" +
-                                                               "      \"version\": \"1.0.1\"\n" +
-                                                               "    },\n" +
-                                                               "    {\n" +
-                                                               "      \"artifact\": \"cdec\",\n" +
-                                                               "      \"status\": \"SUCCESS\",\n" +
-                                                               "      \"version\": \"1.0.2\"\n" +
-                                                               "    }\n" +
-                                                               "  ],\n" +
-                                                               "  \"status\": \"OK\"\n" +
-                                                               "}");
+        assertEquals(response.toJson(), "{\n" +
+                                        "  \"artifacts\" : [ {\n" +
+                                        "    \"artifact\" : \"cdec\",\n" +
+                                        "    \"version\" : \"1.0.1\"\n" +
+                                        "  }, {\n" +
+                                        "    \"artifact\" : \"cdec\",\n" +
+                                        "    \"version\" : \"1.0.2\",\n" +
+                                        "    \"status\" : \"SUCCESS\"\n" +
+                                        "  } ],\n" +
+                                        "  \"status\" : \"OK\"\n" +
+                                        "}");
     }
 
     @Test
@@ -65,12 +61,12 @@ public class TestResponse {
 
         Response response = new Response.Builder().withArtifacts(m).withStatus(ResponseCode.OK).build();
 
-        assertEquals(getPrettyPrintingJson(response.toJson()), "{\n" +
-                                                               "  \"artifacts\": [{\n" +
-                                                               "    \"artifact\": \"cdec\",\n" +
-                                                               "    \"version\": \"1.0.1\"\n" +
-                                                               "  }],\n" +
-                                                               "  \"status\": \"OK\"\n" +
-                                                               "}");
+        assertEquals(response.toJson(), "{\n" +
+                                        "  \"artifacts\" : [ {\n" +
+                                        "    \"artifact\" : \"cdec\",\n" +
+                                        "    \"version\" : \"1.0.1\"\n" +
+                                        "  } ],\n" +
+                                        "  \"status\" : \"OK\"\n" +
+                                        "}");
     }
 }

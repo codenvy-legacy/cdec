@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
@@ -82,10 +81,10 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Subscription is valid\",\n" +
-                                                      "  \"status\": \"OK\",\n" +
-                                                      "  \"subscription\": \"OnPremises\"\n" +
+        assertEquals(response, "{\n" +
+                                                      "  \"subscription\" : \"OnPremises\",\n" +
+                                                      "  \"message\" : \"Subscription is valid\",\n" +
+                                                      "  \"status\" : \"OK\"\n" +
                                                       "}");
     }
 
@@ -99,11 +98,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Subscription not found or outdated\",\n" +
-                                                      "  \"status\": \"ERROR\",\n" +
-                                                      "  \"subscription\": \"OnPremises\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Subscription not found or outdated\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -113,9 +112,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(response, "{\"status\":\"ERROR\"," +
-                               "\"subscription\":\"OnPremises\"," +
-                               "\"message\":\"Authentication error. Authentication token might be expired or invalid.\"}");
+        assertEquals(response, "{\n" +
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Authentication error. Authentication token might be expired or invalid.\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -135,11 +136,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. Start date attribute is absent\",\n" +
-                                                      "  \"status\": \"ERROR\",\n" +
-                                                      "  \"subscription\": \"OnPremises\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Can't validate subscription. Start date attribute is absent\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -154,10 +155,10 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. Start date attribute is absent\",\n" +
-                                                      "  \"status\": \"ERROR\",\n" +
-                                                      "  \"subscription\": \"OnPremises\"\n" +
+        assertEquals(response, "{\n" +
+                                                      "  \"subscription\" : \"OnPremises\",\n" +
+                                                      "  \"message\" : \"Can't validate subscription. Start date attribute is absent\",\n" +
+                                                      "  \"status\" : \"ERROR\"\n" +
                                                       "}");
     }
 
@@ -173,11 +174,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. Start date attribute has wrong format: 2014.11.21\",\n" +
-                                                      "  \"status\": \"ERROR\",\n" +
-                                                      "  \"subscription\": \"OnPremises\"\n" +
-                                                      "}");
+        assertEquals(response, "{\n" +
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Can't validate subscription. Start date attribute has wrong format: 2014.11.21\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
@@ -192,10 +193,10 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
-        assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. End date attribute has wrong format: 2015.11.21\",\n" +
-                                                      "  \"status\": \"ERROR\",\n" +
-                                                      "  \"subscription\": \"OnPremises\"\n" +
+        assertEquals(response, "{\n" +
+                                                      "  \"subscription\" : \"OnPremises\",\n" +
+                                                      "  \"message\" : \"Can't validate subscription. End date attribute has wrong format: 2015.11.21\",\n" +
+                                                      "  \"status\" : \"ERROR\"\n" +
                                                       "}");
     }
 }

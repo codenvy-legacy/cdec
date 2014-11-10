@@ -17,8 +17,10 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.google.inject.TypeLiteral;
 
 import java.io.IOException;
 import java.util.Map;
@@ -39,7 +41,7 @@ public class ArtifactPropertiesUtils {
     public static boolean isAuthenticationRequired(String artifactName,
                                                    String version,
                                                    HttpTransport transport,
-                                                   String updateEndpoint) throws IOException {
+                                                   String updateEndpoint) throws IOException, JsonParseException {
         Map<String, String> properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
         return Boolean.valueOf(properties.get(ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY));
     }
@@ -47,7 +49,7 @@ public class ArtifactPropertiesUtils {
     public static String getSubscription(String artifactName,
                                          String version,
                                          HttpTransport transport,
-                                         String updateEndpoint) throws IOException {
+                                         String updateEndpoint) throws IOException, JsonParseException {
         Map<String, String> properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
         return properties.get(ArtifactProperties.SUBSCRIPTION_PROPERTY);
     }
@@ -55,9 +57,11 @@ public class ArtifactPropertiesUtils {
     private static Map<String, String> getArtifactProperties(String artifactName,
                                                              String version,
                                                              HttpTransport transport,
-                                                             String updateEndpoint) throws IOException {
+                                                             String updateEndpoint) throws IOException, JsonParseException {
         String versionInfoServiceHref = combinePaths(updateEndpoint, "repository/properties/" + artifactName + "/" + version);
-        Map<String, String> properties = (Map<String, String>)fromJson(transport.doGetRequest(versionInfoServiceHref), Map.class);
+        Map<String, String> properties = fromJson(transport.doGetRequest(versionInfoServiceHref),
+                                                  Map.class,
+                                                  new TypeLiteral<Map<String, String>>() {}.getType());
         if (properties == null) {
             throw new ArtifactNotFoundException(artifactName, version);
         }

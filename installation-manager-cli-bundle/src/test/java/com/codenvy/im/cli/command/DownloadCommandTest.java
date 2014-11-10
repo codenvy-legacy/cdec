@@ -18,13 +18,9 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-import com.codenvy.im.utils.Commons;
-
 import org.apache.felix.service.command.CommandSession;
-import org.json.JSONException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -32,13 +28,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
-
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
-import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class DownloadCommandTest {
@@ -50,28 +41,36 @@ public class DownloadCommandTest {
     private CommandSession             commandSession;
 
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
-    private String okResponse                   = "{status: \"OK\"}";
-    private String ok100DownloadStatusResponse  = "{\n" +
-                                                  "  \"download_info\": {\n" +
-                                                  "    \"downloadResult\": \"{\\\"status\\\":\\\"OK\\\"," +
-                                                  "\\\"artifacts\\\":[{\\\"status\\\":\\\"SUCCESS\\\"," +
-                                                  "\\\"file\\\":\\\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\\\"," +
-                                                  "\\\"artifact\\\":\\\"cdec\\\",\\\"version\\\":\\\"3.0.0\\\"}]}\",\n" +
-                                                  "    \"percents\": 100,\n" +
-                                                  "    \"status\": \"DOWNLOADED\"\n" +
-                                                  "  },\n" +
-                                                  "  \"status\": \"OK\"\n" +
-                                                  "}\n";
-    private String ok100DownloadCommandResponse = "{\n" +
-                                                  "  \"artifacts\": [{\n" +
-                                                  "    \"artifact\": \"cdec\",\n" +
-                                                  "    \"file\": \"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
-                                                  "    \"status\": \"SUCCESS\",\n" +
-                                                  "    \"version\": \"3.0.0\"\n" +
-                                                  "  }],\n" +
-                                                  "  \"status\": \"OK\"\n" +
+    private String okResponse                   = "{\n" +
+                                                  "  \"status\" : \"OK\"\n" +
                                                   "}";
 
+    private String ok100DownloadStatusResponse  = "{\n" +
+                                                  "  \"downloadInfo\" : {\n" +
+                                                  "     \"downloadResult\" : {\n" +
+                                                  "       \"artifacts\" :[ {\n" +
+                                                  "         \"artifact\" :\"cdec\",\n" +
+                                                  "         \"version\" : \"3.0.0\",\n" +
+                                                  "         \"file\" :\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
+                                                  "         \"status\" :\"SUCCESS\"\n" +
+                                                  "       } ],\n" +
+                                                  "       \"status\" :\"OK\"\n" +
+                                                  "    },\n" +
+                                                  "    \"percents\" : 100,\n" +
+                                                  "    \"status\" : \"DOWNLOADED\"\n" +
+                                                  "  },\n" +
+                                                  "  \"status\" : \"OK\"\n" +
+                                                  "}";
+
+    private String ok100DownloadCommandResponse = "{\n" +
+                                                  "  \"artifacts\" : [ {\n" +
+                                                  "    \"artifact\" : \"cdec\",\n" +
+                                                  "    \"version\" : \"3.0.0\",\n" +
+                                                  "    \"file\" : \"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
+                                                  "    \"status\" : \"SUCCESS\"\n" +
+                                                  "  } ],\n" +
+                                                  "  \"status\" : \"OK\"\n" +
+                                                  "}";
 
     @BeforeMethod
     public void initMocks() {
@@ -97,7 +96,9 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok100DownloadCommandResponse)));
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
+                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
+                             ok100DownloadCommandResponse + "\n");
     }
 
     @Test
@@ -111,7 +112,9 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok100DownloadCommandResponse)));
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
+                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
+                             ok100DownloadCommandResponse + "\n");
     }
 
     @Test
@@ -126,32 +129,40 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok100DownloadCommandResponse)));
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
+                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
+                             ok100DownloadCommandResponse + "\n");
     }
 
     @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
         String downloadStatusResponse = "{\n" +
-                                        "  \"download_info\": {\n" +
-                                        "    \"downloadResult\": \"{\\\"status\\\":\\\"ERROR\\\",\\\"message\\\":\\\"There is no any version of " +
-                                        "artifact 'cdec'\\\",\\\"artifacts\\\":[{\\\"status\\\":\\\"FAILURE\\\",\\\"artifact\\\":\\\"cdec\\\"," +
-                                        "\\\"version\\\":\\\"3.0.0\\\"}]}\",\n" +
-                                        "    \"percents\": 0,\n" +
-                                        "    \"status\": \"FAILURE\"\n" +
+                                        "  \"downloadInfo\" : {\n" +
+                                        "    \"downloadResult\" : {\n" +
+                                        "      \"artifacts\" : [ {\n" +
+                                        "        \"artifact\" :\"cdec\",\n" +
+                                        "        \"version\" :\"3.0.0\",\n" +
+                                        "        \"status\" :\"FAILURE\"\n" +
+                                        "      } ],\n" +
+                                        "      \"message\" :\"There is no any version of artifact 'cdec'\"," +
+                                        "      \"status\" :\"ERROR\"" +
+                                        "    },\n" +
+                                        "    \"percents\" : 0,\n" +
+                                        "    \"status\" : \"FAILURE\"\n" +
                                         "  },\n" +
-                                        "  \"status\": \"OK\"\n" +
-                                        "}\n";
+                                        "  \"status\" : \"OK\"\n" +
+                                        "}";
 
 
         String serviceErrorResponse = "{\n" +
-                                      "  \"artifacts\": [{\n" +
-                                      "    \"artifact\": \"cdec\",\n" +
-                                      "    \"status\": \"FAILURE\",\n" +
-                                      "    \"version\": \"3.0.0\"\n" +
-                                      "  }],\n" +
-                                      "  \"message\": \"There is no any version of artifact 'cdec'\",\n" +
-                                      "  \"status\": \"ERROR\"\n" +
-                                      "}\n";
+                                      "  \"artifacts\" : [ {\n" +
+                                      "    \"artifact\" : \"cdec\",\n" +
+                                      "    \"version\" : \"3.0.0\",\n" +
+                                      "    \"status\" : \"FAILURE\"\n" +
+                                      "  } ],\n" +
+                                      "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
+                                      "  \"status\" : \"ERROR\"\n" +
+                                      "}";
         when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id4");
         doReturn(okResponse).when(mockInstallationManagerProxy).startDownload("id4", userCredentialsRep);
         doReturn(downloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id4");
@@ -160,14 +171,16 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(serviceErrorResponse)));
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
+                             "\u001B[s[>                                                 ]   0%     \u001B[u\u001B[2K" +
+                             serviceErrorResponse + "\n");
     }
 
     @Test
     public void testDownloadWhenServiceThrowsError() throws Exception {
-        String expectedOutput = "{"
-                                + "message: \"Server Error Exception\","
-                                + "status: \"ERROR\""
+        String expectedOutput = "{\n"
+                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id5");
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
@@ -177,7 +190,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(expectedOutput)));
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" + expectedOutput + "\n");
     }
 
     @Test
@@ -189,7 +202,7 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(okResponse) + "\n");
+        assertEquals(output, okResponse + "\n");
     }
 
     @Test
@@ -205,14 +218,14 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(serviceErrorResponse) + "\n");
+        assertEquals(output, serviceErrorResponse + "\n");
     }
 
     @Test
     public void testCheckUpdatesWhenServiceThrowsError() throws Exception {
-        String expectedOutput = "{"
-                                + "message: \"Server Error Exception\","
-                                + "status: \"ERROR\""
+        String expectedOutput = "{\n"
+                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
                 .when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
@@ -222,13 +235,13 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
+        assertEquals(output, expectedOutput + "\n");
     }
 
     @Test
     public void testListLocalOption() throws Exception {
-        final String ok = "{"
-                          + "status: \"OK\""
+        final String ok = "{\n"
+                          + "  status: \"OK\"\n"
                           + "}";
         doReturn(ok).when(mockInstallationManagerProxy).getDownloads(userCredentialsRep);
 
@@ -237,30 +250,30 @@ public class DownloadCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertTrue(output.contains(Commons.getPrettyPrintingJson(ok)));
+        assertEquals(output, ok + "\n");
     }
 
 
-    @Test(enabled = false)
-    public void testDownloadWhenErrorInResponseSubscriptionNotFound() throws Exception {
-        String downloadStatusResponse = "{\"status\":\"ERROR\",\"download_info\":{\"status\":\"FAILURE\",\"percents\":0," +
-                                        "\"downloadResult\":\"{\"status\":\\\"ERROR\\\",\\\"message\\\":\\\"Unexpected error. Can't download " +
-                                        "the artifact 'cdec' version 3.0.0. {\\\\\\\"message\\\\\\\":\\\\\\\"Subscription not found " +
-                                        "communityaccountvyiu9z02hxyfcapj\\\"}\\\",\\\"artifacts\\\":[{\\\"status\\\":\\\"FAILURE\\\"," +
-                                        "\"artifact\":\"cdec\",\"version\":\"3.0.0\"}]}\"}}";
-
-
-        printResponse(downloadStatusResponse);
-        DownloadStatusInfo downloadStatusInfo = DownloadStatusInfo.valueOf(downloadStatusResponse);
-        printResponse(downloadStatusInfo.getDownloadResult());
-    }
-
-    protected void printResponse(@Nullable String response) {
-        try {
-            String message = getPrettyPrintingJson(response);
-            System.out.println(ansi().a(message));
-        } catch (JSONException e) {
-            System.out.println("Unexpected error: " + e.getMessage());
-        }
-    }
+//    @Test(enabled = false)
+//    public void testDownloadWhenErrorInResponseSubscriptionNotFound() throws Exception {
+//        String downloadStatusResponse = "{\"status\" :\"ERROR\",\"downloadInfo\" :{\"status\" :\"FAILURE\",\"percents\" :0," +
+//                                        "\"downloadResult\" :\"{\"status\" :\"ERROR\",\"message\" :\"Unexpected error. Can't download " +
+//                                        "the artifact 'cdec' version 3.0.0. {\"message\" :\"Subscription not found " +
+//                                        "communityaccountvyiu9z02hxyfcapj\"}\",\"artifacts\" :[{\"status\" :\"FAILURE\"," +
+//                                        "\"artifact\" :\"cdec\",\"version\" :\"3.0.0\"}]}\"}}";
+//
+//
+//        printResponse(downloadStatusResponse);
+//        DownloadStatusInfo downloadStatusInfo = Response.fromJson(downloadStatusResponse).getDownloadInfo();
+//        printResponse(downloadStatusInfo.getDownloadResult());
+//    }
+//
+//    protected void printResponse(@Nullable String response) {
+//        try {
+//            String message = getPrettyPrintingJson(response);
+//            System.out.println(ansi().a(message));
+//        } catch (JSONException e) {
+//            System.out.println("Unexpected error: " + e.getMessage());
+//        }
+//    }
 }

@@ -28,10 +28,10 @@ public class TestDownloadStatusInfo {
 
     @Test
     public void testValueOf() throws Exception {
-        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, "result");
+        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, new Response.Builder().withMessage("result").build());
         String json = new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(expectedInfo).build().toJson();
 
-        DownloadStatusInfo info = DownloadStatusInfo.valueOf(json);
-        assertEquals(info, expectedInfo);
+        Response response = Response.fromJson(json);
+        assertEquals(response.getDownloadInfo(), expectedInfo);
     }
 }

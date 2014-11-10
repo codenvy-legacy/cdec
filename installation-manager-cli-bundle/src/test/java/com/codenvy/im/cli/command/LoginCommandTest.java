@@ -18,11 +18,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.restlet.InstallationManagerService;
-import com.codenvy.im.utils.Commons;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,13 +27,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
 /** @author Dmytro Nochevnov */
 public class LoginCommandTest {
@@ -146,10 +138,10 @@ public class LoginCommandTest {
 
     @Test
     public void testLoginWhenServiceThrowsError() throws Exception {
-        String expectedOutput = "{"
-                                  + "message: \"Server Error Exception\","
-                                  + "status: \"ERROR\""
-                                  + "}";
+        String expectedOutput = "{\n"
+                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
+                                + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
             .when(mockInstallationManagerProxy).getUpdateServerEndpoint();
         
@@ -157,7 +149,7 @@ public class LoginCommandTest {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Commons.getPrettyPrintingJson(expectedOutput) + "\n");
+        assertEquals(output, expectedOutput + "\n");
     }
 
     @Test

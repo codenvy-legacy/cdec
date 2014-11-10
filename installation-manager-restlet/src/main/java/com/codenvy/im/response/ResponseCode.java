@@ -17,23 +17,10 @@
  */
 package com.codenvy.im.response;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import static com.codenvy.im.response.Property.STATUS;
-
 /**
  * @author Dmytro Nochevnov
  */
 public enum ResponseCode {
     OK,
-    ERROR;
-
-    /** Checks if a response has the specific status. */
-    public boolean in(String response) throws JSONException {
-        JSONObject jsonResponse = new JSONObject(response);
-
-        String statusValue = (String)jsonResponse.get(STATUS.toString().toLowerCase());
-        return statusValue != null && this.toString().equals(statusValue);
-    }
+    ERROR
 }

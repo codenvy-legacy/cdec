@@ -20,6 +20,7 @@ package com.codenvy.im.utils;
 import com.codenvy.api.core.ServerException;
 import com.codenvy.dto.server.JsonStringMapImpl;
 
+import com.google.inject.TypeLiteral;
 import org.apache.commons.io.IOUtils;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.testng.MockitoTestNGListener;
@@ -63,7 +64,9 @@ public class TestHttpTransport {
     @Test
     public void testDoGetRequest(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        Map value = Commons.fromJson(httpTransport.doGetRequest("http://0.0.0.0:" + port + "/rest/test/get/json"), Map.class);
+        Map value = Commons.fromJson(httpTransport.doGetRequest("http://0.0.0.0:" + port + "/rest/test/get/json"),
+                                     Map.class,
+                                     new TypeLiteral<Map<String, String>>() {}.getType());
 
         assertEquals(value.size(), 1);
         assertEquals(value.get("key"), "value");

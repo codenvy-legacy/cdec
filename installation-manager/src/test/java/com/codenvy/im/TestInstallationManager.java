@@ -182,8 +182,8 @@ public class TestInstallationManager {
         String version = "1.0.0";
         when(transport.doGetRequest("api/endpoint/account", testCredentials.getToken()))
                 .thenReturn("[{"
-                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                            + "accountReference:{id:\"" + testCredentials.getAccountId() + "\"}"
+                            + "\"roles\":[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "\"accountReference\":{\"id\":\"" + testCredentials.getAccountId() + "\"}"
                             + "}]");
 
         when(transport.doGetRequest("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
@@ -215,7 +215,7 @@ public class TestInstallationManager {
     @Test
     public void testGetInstalledArtifacts() throws Exception {
         when(transport.doGetRequest("update/endpoint/repository/installationinfo/" + CDECArtifact.NAME, testCredentials.getToken()))
-                .thenReturn("{version:2.10.4}");
+                .thenReturn("{\"version\":\"2.10.4\"}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts(testCredentials.getToken());
         assertNull(m.get(cdecArtifact));
@@ -225,8 +225,8 @@ public class TestInstallationManager {
     @Test
     public void testGetLatestVersionsToDownload() throws Exception {
         doNothing().when(manager).validateArtifactProperties(anyMap());
-        when(transport.doGetRequest(endsWith("repository/properties/" + InstallManagerArtifact.NAME))).thenReturn("{version:1.0.1}");
-        when(transport.doGetRequest(endsWith("repository/properties/" + CDECArtifact.NAME))).thenReturn("{version:2.10.5}");
+        when(transport.doGetRequest(endsWith("repository/properties/" + InstallManagerArtifact.NAME))).thenReturn("{\"version\":\"1.0.1\"}");
+        when(transport.doGetRequest(endsWith("repository/properties/" + CDECArtifact.NAME))).thenReturn("{\"version\":\"2.10.5\"}");
         Map<Artifact, String> m = manager.getLatestVersionsToDownload();
 
         assertEquals(m.size(), 2);
@@ -236,8 +236,8 @@ public class TestInstallationManager {
 
     @Test
     public void testGetDownloadedArtifacts() throws Exception {
-        doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("installation-manager/1.0.2"));
-        doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
+        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("installation-manager/1.0.2"));
+        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
         doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
@@ -264,9 +264,9 @@ public class TestInstallationManager {
 
     @Test
     public void testGetDownloadedArtifactsShouldKeepOrder() throws Exception {
-        doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
-        doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
-        doReturn("{file:file3, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.3"));
+        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
+        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
+        doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("cdec/1.0.3"));
         doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
@@ -292,8 +292,8 @@ public class TestInstallationManager {
 
     @Test
     public void testGetDownloadedArtifactsSeveralVersions() throws Exception {
-        doReturn("{file:file1, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
-        doReturn("{file:file2, md5=d41d8cd98f00b204e9800998ecf8427e}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
+        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
+        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGetRequest(endsWith("cdec/1.0.2"));
         doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
@@ -322,7 +322,7 @@ public class TestInstallationManager {
 
     @Test
     public void testGetArtifactPropertiesWithVersion() throws Exception {
-        doReturn("{file:file1, md5=a}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
+        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(transport).doGetRequest(endsWith("cdec/1.0.1"));
         doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Map m = manager.getArtifactProperties(cdecArtifact, "1.0.1");
@@ -334,7 +334,7 @@ public class TestInstallationManager {
 
     @Test
     public void testGetArtifactProperties() throws Exception {
-        doReturn("{file:file1, md5=a}").when(transport).doGetRequest(endsWith("cdec"));
+        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(transport).doGetRequest(endsWith("cdec"));
         doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Map m = manager.getArtifactProperties(cdecArtifact);

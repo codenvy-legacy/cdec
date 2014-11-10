@@ -17,15 +17,21 @@
  */
 package com.codenvy.im.response;
 
+import com.codenvy.commons.json.JsonHelper;
+import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.utils.Commons;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /** @author Alexander Reshetnyak */
 public class DownloadStatusInfo {
 
-    private final Status status;
-    private final int    percents;
-    private final String downloadResult;
+    private Status status;
+    private int    percents;
+    private Response downloadResult;
+
+    public DownloadStatusInfo() {
+    }
 
     /**
      * @param status
@@ -43,9 +49,9 @@ public class DownloadStatusInfo {
      * @param percents
      *         the percentage of done downloading artifacts
      * @param downloadResult
-     *         the result of downloading in json format
+     *         the result of downloading
      */
-    public DownloadStatusInfo(Status status, int percents, String downloadResult) {
+    public DownloadStatusInfo(Status status, int percents, Response downloadResult) {
         this.status = status;
         this.percents = percents;
         this.downloadResult = downloadResult;
@@ -59,20 +65,20 @@ public class DownloadStatusInfo {
         return percents;
     }
 
-    public String getDownloadResult() {
-        return downloadResult == null ? null : downloadResult.replaceAll("\\\\", "");
+    public Response getDownloadResult() {
+        return downloadResult;
     }
 
-    /** Factory method. */
-    public static DownloadStatusInfo valueOf(String response) throws JSONException {
-        JSONObject json = new JSONObject(response);
-        JSONObject downloadInfoJson = json.getJSONObject(Property.DOWNLOAD_INFO.toString().toLowerCase());
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 
-        Status status = Status.valueOf(downloadInfoJson.getString("status"));
-        int percents = downloadInfoJson.getInt("percents");
-        String downloadResult = downloadInfoJson.getString("downloadResult");
+    public void setPercents(int percents) {
+        this.percents = percents;
+    }
 
-        return new DownloadStatusInfo(status, percents, downloadResult);
+    public void setDownloadResult(Response downloadResult) {
+        this.downloadResult = downloadResult;
     }
 
     @Override
@@ -83,7 +89,7 @@ public class DownloadStatusInfo {
         DownloadStatusInfo that = (DownloadStatusInfo)o;
 
         if (percents != that.percents) return false;
-        if (!downloadResult.equals(that.downloadResult)) return false;
+        if (!downloadResult.toJson().equals(that.downloadResult.toJson())) return false;
         if (status != that.status) return false;
 
         return true;

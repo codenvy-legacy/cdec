@@ -69,6 +69,16 @@ public class InstallerTest {
     }
 
     @Test
+    public void testGetCommandsInfo() {
+        // TODO
+    }
+
+    @Test
+    public void testToString() {
+        // TODO
+    }
+
+    @Test
     public void testGetSingleNodeWithoutPuppetMasterInstallCommandsUsing() {
         // connect to agent using password
         doReturn(TEST_HOST).when(mockConfig).getHost();

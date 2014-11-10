@@ -26,9 +26,7 @@ import com.codenvy.im.response.Response;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 import com.codenvy.im.user.UserCredentials;
-
 import org.fusesource.jansi.Ansi;
-import org.json.JSONException;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
@@ -40,7 +38,6 @@ import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static com.codenvy.im.utils.Commons.getPrettyPrintingJson;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -96,20 +93,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void printError(Exception ex) {
-        try {
-            if (isConnectionException(ex)) {
-                printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                           "please retry a bit later.");
-            } else {
-                printError(getPrettyPrintingJson(Response.valueOf(ex).toJson()));
-            }
-        } catch (JSONException e) {
-            Ansi ansi = ansi().fg(RED)
-                              .a("Unexpected error: " + e.getMessage())
-                              .newline()
-                              .a("Suppressed error: " + ex.getMessage())
-                              .reset();
-            System.out.println(ansi);
+        if (isConnectionException(ex)) {
+            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
+                       "please retry a bit later.");
+        } else {
+            printError(Response.valueOf(ex).toJson());
         }
     }
 
@@ -162,12 +150,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         if (response == null) {
             printError(new IllegalArgumentException("Unexpected error occurred. Response is empty"));
         } else {
-            try {
-                String message = getPrettyPrintingJson(response);
-                System.out.println(ansi().a(message));
-            } catch (JSONException e) {
-                printError("Unexpected error: " + e.getMessage());
-            }
+            System.out.println(ansi().a(response));
         }
     }
 

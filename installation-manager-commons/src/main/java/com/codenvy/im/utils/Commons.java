@@ -17,18 +17,23 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.commons.json.JsonHelper;
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -45,10 +50,12 @@ import static java.nio.file.Files.newInputStream;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 public class Commons {
-
-    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().serializeNulls().create();
+    /** include only non null fields into json; write pretty printed json.  */
+    private static final ObjectWriter jsonWriter =
+        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
 
     /** Simplifies the way to combine paths. Takes care about normalization. */
     public static String combinePaths(String apiEndpoint, String path) {
@@ -82,9 +89,25 @@ public class Commons {
         return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
     }
 
-    /** Translates JSON to object. */
-    public static <T> T fromJson(String json, Class<T> t) {
-        return gson.fromJson(json, t);
+    /** Translates JSON to object. TODO add test */
+    @Nullable
+    public static <T> T fromJson(String json, Class<T> clazz) throws JsonParseException {
+        return JsonHelper.fromJson(json, clazz, null);
+    }
+
+    /** Translates JSON to object. TODO add test */
+    @Nullable
+    public static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
+        return JsonHelper.fromJson(json, clazz, type);
+    }
+
+    /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. TODO add test */
+    public static String toJson(Object obj) {
+        try {
+            return jsonWriter.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
     }
 
     /** @return the version of the artifact out of path */
@@ -135,7 +158,6 @@ public class Commons {
 
     /**
      * Convert one-line json string to pretty formatted multiline string.
-     *
      * @throws JSONException
      */
     public static String getPrettyPrintingJson(String json) throws JSONException {

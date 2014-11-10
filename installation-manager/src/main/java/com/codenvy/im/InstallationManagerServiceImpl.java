@@ -24,8 +24,6 @@ import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.installer.InstallInProgressException;
 import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactInfoEx;
-import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -108,17 +106,17 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (subscriptionValidated) {
                 return new Response.Builder().withStatus(ResponseCode.OK)
-                                             .withParam("Subscription", subscription)
+                                             .withSubscription(subscription)
                                              .withMessage("Subscription is valid")
                                              .build().toJson();
             } else {
                 return new Response.Builder().withStatus(ERROR)
-                                             .withParam("Subscription", subscription)
+                                             .withSubscription(subscription)
                                              .withMessage("Subscription not found or outdated").build().toJson();
             }
         } catch (Exception e) {
             return new Response.Builder().withStatus(ERROR)
-                                         .withParam("Subscription", subscription)
+                                         .withSubscription(subscription)
                                          .withMessage(e.getMessage())
                                          .build().toJson();
         }
@@ -195,35 +193,32 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
                 try {
                     Path pathToBinaries = doDownload(userCredentials, artToDownload, verToDownload);
-                    infos.add(new DownloadArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
+                    infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
                 } catch (Exception exp) {
-                    infos.add(new ArtifactInfoEx(artToDownload, verToDownload, Status.FAILURE));
+                    infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
                     downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                                   .withMessage(exp.getMessage())
                                                                                   .withArtifacts(infos)
-                                                                                  .build()
-                                                                                  .toJson());
+                                                                                  .build());
                     return;
                 }
             }
 
             downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
                                                                           .withArtifacts(infos)
-                                                                          .build()
-                                                                          .toJson());
+                                                                          .build());
         } catch (Exception e) {
             DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
                 descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
-                descriptor.setDownloadResult(Response.valueOf(e).toJson());
+                descriptor.setDownloadResult(Response.valueOf(e));
                 downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
             } else {
                 descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                    .withMessage(e.getMessage())
                                                                    .withArtifacts(infos)
-                                                                   .build()
-                                                                   .toJson());
+                                                                   .build());
             }
 
             if (latcher.getCount() == 1) {
@@ -293,8 +288,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                                              .withMessage("Can't get downloading descriptor ID").build().toJson();
             }
 
-            if (descriptor.getDownloadResult() != null && ERROR.in(descriptor.getDownloadResult())) {
-                DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, descriptor.getDownloadResult());
+            Response downloadResult = descriptor.getDownloadResult();
+            if ((downloadResult != null) && (downloadResult.getStatus() == ResponseCode.ERROR)) {
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, downloadResult);
                 return new Response.Builder().withStatus(ResponseCode.ERROR).withDownloadInfo(info).build().toJson();
             }
 
@@ -302,7 +298,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             int percents = (int)Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
 
             if (descriptor.isDownloadingFinished()) {
-                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, descriptor.getDownloadResult());
+                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, downloadResult);
                 return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
             } else {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
@@ -332,7 +328,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     Artifact artifact = ArtifactFactory.createArtifact(artifactName);
                     Status status = artifact.isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                    infos.add(new DownloadArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), status));
+                    infos.add(new ArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), status));
                 }
             }
 
@@ -360,7 +356,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
                 Status status = artifact.isInstallable(v, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                infos.add(new DownloadArtifactInfo(artifactName, version, pathToBinaries.toString(), status));
+                infos.add(new ArtifactInfo(artifactName, version, pathToBinaries.toString(), status));
 
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
             } else {
@@ -388,7 +384,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     Path pathToBinaries = e.getValue();
                     Status status = artifact.getKey().isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                    infos.add(new DownloadArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), status));
+                    infos.add(new ArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), status));
                 }
             }
 
@@ -416,7 +412,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 if (downloadedArtifacts.containsKey(artifact)
                     && downloadedArtifacts.get(artifact).containsKey(Version.valueOf(version))) {
 
-                    infos.add(new ArtifactInfoEx(artifact, version, Status.DOWNLOADED));
+                    infos.add(new ArtifactInfo(artifact, version, Status.DOWNLOADED));
                 } else {
                     infos.add(new ArtifactInfo(artifact, version));
                 }
@@ -450,9 +446,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             try {
                 doInstall(artifact, version, token);
-                infos.add(new ArtifactInfoEx(artifact, version, Status.SUCCESS));
+                infos.add(new ArtifactInfo(artifact, version, Status.SUCCESS));
             } catch (Exception e) {
-                infos.add(new ArtifactInfoEx(artifact, version, Status.FAILURE));
+                infos.add(new ArtifactInfo(artifact, version, Status.FAILURE));
                 return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
             }
         }
@@ -500,16 +496,20 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
         try {
             doInstall(artifact, toInstallVersion, token);
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.SUCCESS);
+            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.SUCCESS);
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+
         } catch (InstallStartedException e) {
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.INSTALL_STARTED);
-            return new Response.Builder().withStatus(ResponseCode.OK).withMessage(e.getMessage()).withArtifact(info).build().toJson();
-        } catch (InstallInProgressException e) {
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.INSTALLING);
+            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.INSTALL_STARTED);
+            info.setInstallCommandsInfo(e.getCommandsInfo());
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+
+        } catch (InstallInProgressException e) {
+            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.INSTALLING);
+            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+
         } catch (Exception e) {
-            ArtifactInfo info = new ArtifactInfoEx(artifactName, toInstallVersion, Status.FAILURE);
+            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.FAILURE);
             return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
         }
     }
@@ -534,7 +534,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Override
     public String getConfig() {
         JsonStringMapImpl<String> config = new JsonStringMapImpl<>(manager.getConfig());
-        return new Response.Builder().withStatus(ResponseCode.OK).withParam("config", config).build().toJson();
+        return new Response.Builder().withStatus(ResponseCode.OK).withConfig(config).build().toJson();
     }
 
     /** {@inheritDoc} */

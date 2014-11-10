@@ -45,14 +45,14 @@ public class ConfigTest {
         assertEquals(testConfig.getConfigSource(), "test source");
     }
 
-    @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Property 'TEST_PROPERTY' hasn't been found.")
+    @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Property 'test_property' hasn't been found.")
     public void testGetUnexistsProperty () {
         Config testConfig = new TestConfig();
         testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
     }
 
     @Test(expectedExceptions = ConfigException.class,
-          expectedExceptionsMessageRegExp = "Property 'TEST_PROPERTY' hasn't been found at 'test source'.")
+          expectedExceptionsMessageRegExp = "Property 'test_property' hasn't been found at 'test source'.")
     public void testGetUnexistsPropertyAfterLoad () {
         InputStream mockIs = new ByteArrayInputStream(("unknown_property=test_value").getBytes());
 
@@ -78,7 +78,7 @@ public class ConfigTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         testConfig.store(os);
 
-        assertTrue(os.toString().contains("TEST_PROPERTY=test_value"), "Config '" + os.toString() + "' didn't contain 'TEST_PROPERTY=test_value'.");
+        assertTrue(os.toString().contains("test_property=test_value"), "Config '" + os.toString() + "' didn't contain 'test_property=test_value'.");
     }
 
     static class TestConfig extends Config {

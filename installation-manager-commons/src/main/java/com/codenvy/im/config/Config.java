@@ -48,7 +48,7 @@ public abstract class Config {
     }
 
     protected final String getProperty(ConfigProperty property) throws ConfigException {
-        String propertyName = property.toString().toUpperCase();
+        String propertyName = property.toString().toLowerCase();
         if (! properties.containsKey(propertyName)) {
             if (configSource != null) {
                 throw new ConfigException(format("Property '%s' hasn't been found at '%s'.", propertyName, getConfigSource()));
@@ -61,7 +61,7 @@ public abstract class Config {
     }
 
     protected final void setProperty(ConfigProperty property, String value) {
-        String propertyName = property.toString().toUpperCase();
+        String propertyName = property.toString().toLowerCase();
         properties.put(propertyName, value);
     }
 }

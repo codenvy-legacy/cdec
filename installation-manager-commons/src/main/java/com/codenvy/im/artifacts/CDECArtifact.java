@@ -69,7 +69,7 @@ public class CDECArtifact extends AbstractArtifact {
                                                                       InstallInProgressException {
         if (installer == null) {
             installer = new Installer(pathToBinaries, installType);
-            throw new InstallStartedException(installer.toString());
+            throw new InstallStartedException(installer.getCommandsInfo());
         }
 
         installer.executeNextCommand();
