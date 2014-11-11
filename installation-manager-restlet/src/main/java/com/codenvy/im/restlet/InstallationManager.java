@@ -81,6 +81,9 @@ public interface InstallationManager {
     /** Checks if FS has enough free space, for instance to download artifacts */
     void checkEnoughDiskSpace(long size) throws IOException;
 
+    /** Checks connection to server is available */
+    void checkIfConnectionIsAvailable() throws IOException;
+
     /** @return the configuration */
     Map<String, String> getConfig();
 

@@ -20,6 +20,7 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
@@ -202,6 +203,12 @@ public class InstallationManagerImpl implements InstallationManager {
         if (freeSpace < requiredSize) {
             throw new IOException(String.format("Not enough disk space. Required %d bytes but available only %d bytes", requiredSize, freeSpace));
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void checkIfConnectionIsAvailable() throws IOException {
+        transport.doGet(combinePaths(updateEndpoint, "repository/properties/" + InstallManagerArtifact.NAME));
     }
 
     /** {@inheritDoc} */

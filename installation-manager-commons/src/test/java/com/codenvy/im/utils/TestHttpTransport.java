@@ -101,6 +101,13 @@ public class TestHttpTransport {
         assertEquals(value.get("key"), "value");
     }
 
+
+    @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "Can't establish connection with http://1.1.1.1")
+    public void testDoRequestToUnknownHost(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        httpTransport.doOption("http://1.1.1.1:" + port + "/rest/test", null);
+    }
+
     @Path("test")
     public class TestService {
 

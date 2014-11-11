@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,13 +86,19 @@ public class HttpTransport {
     }
 
     private String request(String path, String method, String expectedContentType, @Nullable String accessToken) throws IOException {
-        final HttpURLConnection conn = openConnection(path, accessToken);
+        HttpURLConnection conn = null;
 
         try {
+            conn = openConnection(path, accessToken);
             request(method, expectedContentType, conn);
             return IoUtil.readAndCloseQuietly(conn.getInputStream());
+        } catch (SocketTimeoutException e) { // catch exception and throw a new one with proper message
+            URL url = new URL(path);
+            throw new HttpException(-1, String.format("Can't establish connection with %s://%s", url.getProtocol(), url.getHost()));
         } finally {
-            conn.disconnect();
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 

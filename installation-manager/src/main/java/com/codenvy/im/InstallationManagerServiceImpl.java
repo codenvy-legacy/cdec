@@ -155,6 +155,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                                    final String downloadDescriptorId,
                                    final JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
+            manager.checkIfConnectionIsAvailable();
+
             final CountDownLatch latcher = new CountDownLatch(1);
 
             new Thread() {
