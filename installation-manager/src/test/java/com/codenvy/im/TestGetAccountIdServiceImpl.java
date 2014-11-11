@@ -57,7 +57,7 @@ public class TestGetAccountIdServiceImpl { //TODO
     @BeforeMethod
     public void init() {
         MockitoAnnotations.initMocks(this);
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
         accountApiEndpoint = combinePaths(InjectorBootstrap.getProperty("api.endpoint"), "account");
     }
 

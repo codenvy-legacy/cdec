@@ -151,8 +151,7 @@ public class TestInstallationManager {
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0");
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class,
-          expectedExceptionsMessageRegExp = "CDEC installation is not supported yet.")
+    @Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "CDEC installation is not supported yet.")
     public void testInstallCDECArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
@@ -161,6 +160,17 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
 
         manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0");
+    }
+
+    @Test
+    public void testCheckEnoughDiskSpace() throws Exception {
+        manager.checkEnoughDiskSpace(100);
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "Not enough disk space. Required [0-9]* bytes but available only [0-9]* bytes")
+    public void testCheckEnoughDiskSpaceThrowIOException() throws Exception {
+        manager.checkEnoughDiskSpace(Long.MAX_VALUE);
     }
 
     @Test

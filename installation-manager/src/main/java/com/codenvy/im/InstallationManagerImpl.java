@@ -197,8 +197,17 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
+    public void checkEnoughDiskSpace(long requiredSize) throws IOException {
+        long freeSpace = downloadDir.toFile().getFreeSpace();
+        if (freeSpace < requiredSize) {
+            throw new IOException(String.format("Not enough disk space. Required %d bytes but available only %d bytes", requiredSize, freeSpace));
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Map<String, String> getConfig() {
-        return new HashMap<String, String>() {{
+        return new LinkedHashMap<String, String>() {{
             put("download directory", downloadDir.toString());
             put("base url", extractServerUrl(updateEndpoint));
 
@@ -212,6 +221,7 @@ public class InstallationManagerImpl implements InstallationManager {
         }};
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setConfig(InstallationManagerConfig config) throws IOException {
         if (config.getProxyPort() != null) {
@@ -329,7 +339,7 @@ public class InstallationManagerImpl implements InstallationManager {
         return newVersions;
     }
 
-    protected Path getDownloadDirectory(Artifact artifact, String version) {
+    private Path getDownloadDirectory(Artifact artifact, String version) {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }
 

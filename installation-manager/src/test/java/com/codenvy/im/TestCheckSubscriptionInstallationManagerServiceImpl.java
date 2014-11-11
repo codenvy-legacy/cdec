@@ -53,7 +53,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
     }
 
     public void initMocks() {

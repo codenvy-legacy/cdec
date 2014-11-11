@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.CountDownLatch;
 
-import static com.codenvy.im.DownloadingDescriptor.createDescriptor;
+import static com.codenvy.im.DownloadDescriptor.createDescriptor;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -60,6 +60,8 @@ import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.size;
 
 /**
  * @author Dmytro Nochevnov
@@ -69,7 +71,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     protected final InstallationManager manager;
     protected final HttpTransport       transport;
 
-    private final DownloadingDescriptorHolder downloadingDescriptorHolder;
+    private final DownloadDescriptorHolder downloadDescriptorHolder;
 
     private final String updateServerEndpoint;
     private final String apiEndpoint;
@@ -77,7 +79,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
         this.transport = INJECTOR.getInstance(HttpTransport.class);
-        this.downloadingDescriptorHolder = INJECTOR.getInstance(DownloadingDescriptorHolder.class);
+        this.downloadDescriptorHolder = INJECTOR.getInstance(DownloadDescriptorHolder.class);
         this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
         this.apiEndpoint = getProperty("api.endpoint");
     }
@@ -86,12 +88,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Deprecated
     protected InstallationManagerServiceImpl(InstallationManager manager,
                                              HttpTransport transport,
-                                             DownloadingDescriptorHolder downloadingDescriptorHolder) {
+                                             DownloadDescriptorHolder downloadDescriptorHolder) {
         this.manager = manager;
         this.transport = transport;
         this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
         this.apiEndpoint = getProperty("api.endpoint");
-        this.downloadingDescriptorHolder = downloadingDescriptorHolder;
+        this.downloadDescriptorHolder = downloadDescriptorHolder;
     }
 
     /** {@inheritDoc} */
@@ -186,8 +188,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             infos = new ArrayList<>(updates.size());
 
-            DownloadingDescriptor downloadingDescriptor = createDescriptor(updates, manager, currentThread);
-            downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
+            DownloadDescriptor downloadDescriptor = createDescriptor(updates, manager, currentThread);
+            downloadDescriptorHolder.put(downloadDescriptorId, downloadDescriptor);
+
+            manager.checkEnoughDiskSpace(downloadDescriptor.getTotalSize());
 
             latcher.countDown();
 
@@ -200,26 +204,26 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     infos.add(new DownloadArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
                 } catch (Exception exp) {
                     infos.add(new ArtifactInfoEx(artToDownload, verToDownload, Status.FAILURE));
-                    downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
-                                                                                  .withMessage(exp.getMessage())
-                                                                                  .withArtifacts(infos)
-                                                                                  .build()
-                                                                                  .toJson());
+                    downloadDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
+                                                                               .withMessage(exp.getMessage())
+                                                                               .withArtifacts(infos)
+                                                                               .build()
+                                                                               .toJson());
                     return;
                 }
             }
 
-            downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
-                                                                          .withArtifacts(infos)
-                                                                          .build()
-                                                                          .toJson());
+            downloadDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
+                                                                       .withArtifacts(infos)
+                                                                       .build()
+                                                                       .toJson());
         } catch (Exception e) {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+            DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
-                descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
+                descriptor = new DownloadDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
                 descriptor.setDownloadResult(Response.valueOf(e).toJson());
-                downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
+                downloadDescriptorHolder.put(downloadDescriptorId, descriptor);
             } else {
                 descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                    .withMessage(e.getMessage())
@@ -288,7 +292,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Override
     public String downloadStatus(final String downloadDescriptorId) {
         try {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+            DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
                 return new Response.Builder().withStatus(ERROR)
@@ -300,7 +304,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 return new Response.Builder().withStatus(ResponseCode.ERROR).withDownloadInfo(info).build().toJson();
             }
 
-            long downloadedSize = descriptor.getDownloadedSize();
+            long downloadedSize = getDownloadedSize(descriptor);
             int percents = (int)Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
 
             if (descriptor.isDownloadingFinished()) {
@@ -315,11 +319,23 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
+    /** @return the size of downloaded artifacts */
+    private long getDownloadedSize(DownloadDescriptor descriptor) throws IOException {
+        long downloadedSize = 0;
+        for (Path path : descriptor.getArtifactPaths()) {
+            if (exists(path)) {
+                downloadedSize += size(path);
+            }
+        }
+        return downloadedSize;
+    }
+
+
     /** {@inheritDoc} */
     @Override
     public String stopDownload(final String downloadDescriptorId) {
         try {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+            DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
             if (descriptor == null) {
                 return new Response.Builder().withStatus(ERROR)
                                              .withMessage("Can't get downloading descriptor ID").build().toJson();

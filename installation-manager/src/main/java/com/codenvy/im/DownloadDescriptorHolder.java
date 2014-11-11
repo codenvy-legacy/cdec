@@ -25,27 +25,27 @@ import java.util.Map;
  * @author Alexander Reshetnyak
  */
 @Singleton
-public class DownloadingDescriptorHolder {
+public class DownloadDescriptorHolder {
 
-    private final LinkedHashMap<String, DownloadingDescriptor> downloadingMap;
+    private final LinkedHashMap<String, DownloadDescriptor> downloadingMap;
 
-    public DownloadingDescriptorHolder() {
+    public DownloadDescriptorHolder() {
         final int MAX_ENTRIES = 10;
 
-        this.downloadingMap = new LinkedHashMap<String, DownloadingDescriptor>(MAX_ENTRIES + 1) {
+        this.downloadingMap = new LinkedHashMap<String, DownloadDescriptor>(MAX_ENTRIES + 1) {
             public boolean removeEldestEntry(Map.Entry eldest) {
                 return size() > MAX_ENTRIES;
             }
         };
     }
 
-    public DownloadingDescriptor get(String downloadDescriptorId) {
+    public DownloadDescriptor get(String downloadDescriptorId) {
         return downloadingMap.get(downloadDescriptorId);
     }
 
-    public void put(String downloadDescriptorId, DownloadingDescriptor downloadingDescriptor) throws IllegalStateException {
+    public void put(String downloadDescriptorId, DownloadDescriptor downloadDescriptor) throws IllegalStateException {
         if (!downloadingMap.containsKey(downloadDescriptorId)) {
-            downloadingMap.put(downloadDescriptorId, downloadingDescriptor);
+            downloadingMap.put(downloadDescriptorId, downloadDescriptor);
         } else {
             throw new IllegalStateException("Download descriptor already exists");
         }

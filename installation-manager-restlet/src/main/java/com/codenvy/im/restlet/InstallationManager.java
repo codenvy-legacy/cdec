@@ -78,6 +78,9 @@ public interface InstallationManager {
      */
     Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException;
 
+    /** Checks if FS has enough free space, for instance to download artifacts */
+    void checkEnoughDiskSpace(long size) throws IOException;
+
     /** @return the configuration */
     Map<String, String> getConfig();
 
