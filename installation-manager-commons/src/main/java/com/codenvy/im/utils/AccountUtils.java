@@ -21,7 +21,6 @@ import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.api.core.rest.shared.dto.Link;
 import com.codenvy.im.user.UserCredentials;
 
 import javax.annotation.Nullable;
@@ -166,18 +165,6 @@ public class AccountUtils {
         }
 
         return false;
-    }
-
-    @Nullable
-    private static String getSubscriptionsHref(MemberDescriptor member) {
-        List<Link> links = member.getLinks();
-        for (Link link : links) {
-            if (link.getRel().equals("subscriptions")) {
-                return link.getHref();
-            }
-        }
-
-        return null;
     }
 
     @Nullable
