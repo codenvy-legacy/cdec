@@ -18,17 +18,41 @@
  */
 package com.codenvy.im.installer;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * @author Dmytro Nochevnov
  */
-public class InstallStartedException extends RuntimeException {
-    private InstallOptions installOptions;
+public class InstallOptions {
+    private List<String>   commandsInfo;
+    private UUID           id;
+    private Installer.Type type;
 
-    public InstallStartedException(InstallOptions installOptions) {
-        this.installOptions = installOptions;
+    public List<String> getCommandsInfo() {
+        return commandsInfo;
     }
 
-    public InstallOptions getInstallOptions() {
-        return installOptions;
+    public UUID getId() {
+        return id;
+    }
+
+    public Installer.Type getType() {
+        return type;
+    }
+
+    public InstallOptions setCommandsInfo(List<String> commandsInfo) {
+        this.commandsInfo = commandsInfo;
+        return this;
+    }
+
+    public InstallOptions setId(UUID id) {
+        this.id = id;
+        return this;
+    }
+
+    public InstallOptions setType(Installer.Type type) {
+        this.type = type;
+        return this;
     }
 }

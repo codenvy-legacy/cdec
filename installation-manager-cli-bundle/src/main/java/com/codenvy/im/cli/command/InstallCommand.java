@@ -19,6 +19,7 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -28,11 +29,10 @@ import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
 
-import java.io.BufferedReader;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -87,9 +87,9 @@ public class InstallCommand extends AbstractIMCommand {
 
         Response responseObj = Response.fromJson(response);
         if (isStepwiseInstallStarted(responseObj)) {
-            List<String> steps = extractStepInfo(responseObj);
-            if (steps != null && !steps.isEmpty()) {
-                return doInstallStepwisely(steps);
+            InstallOptions options = getInstallOptions(responseObj);
+            if (options != null) {
+                return doInstallStepwisely(options);
             }
         }
 
@@ -113,7 +113,7 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     private String insertClientVersionInfo(String response) throws IOException {
-        StringBuffer newResponse = new StringBuffer(response);
+        StringBuilder newResponse = new StringBuilder(response);
         String clientVersionInfo = format("  \"CLI client version\" : \"%s\",\n", getClientBuildVersion());
         newResponse.insert(2, clientVersionInfo);
         return newResponse.toString();
@@ -148,9 +148,19 @@ public class InstallCommand extends AbstractIMCommand {
         }
     }
 
-    private Void doInstallStepwisely(List<String> steps) throws IOException, JsonParseException {
+    private Void doInstallStepwisely(InstallOptions options) throws IOException, JsonParseException {
         String response = "";
-        for(String step: steps) {
+        List<String> steps = options.getCommandsInfo();
+        if (steps == null) {
+            return null;
+        }
+
+        printInfo(format("Installation commands list: %s ...", Arrays.toString(steps.toArray()).replace(",", "\n,")));
+        if (!askUser("Start installation [y/N]: ")) {
+            return null;
+        }
+
+        for (String step: steps) {
             printInfo(format("Executing command %s ...", step));
 
             if (artifactName != null && version != null) {
@@ -166,18 +176,10 @@ public class InstallCommand extends AbstractIMCommand {
                 printLineSeparator();
                 printError(responseObj.getMessage());
 
-                printInfo("Is it ok [y/N]: ");
-                String userAnswer = null;
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-                    userAnswer = reader.readLine();
-                    printLineSeparator();
-                }
-
-                if (userAnswer != null && userAnswer.equals("y")) {
+                if (askUser("Is it ok [y/N]: ")) {
                     continue;
                 }
 
-                // TODO clear installer commands list
                 break;
 
             } else {
@@ -207,7 +209,8 @@ public class InstallCommand extends AbstractIMCommand {
         return false;
     }
 
-    private List<String> extractStepInfo(Response response) throws JSONException, JsonParseException {
+    @Nullable
+    private InstallOptions getInstallOptions(Response response) throws JSONException, JsonParseException {
         List<ArtifactInfo> artifacts = response.getArtifacts();
         if (artifacts == null) {
             return null;
@@ -216,7 +219,7 @@ public class InstallCommand extends AbstractIMCommand {
         for (ArtifactInfo artifact: artifacts) {
             if (artifact.getArtifact().equals(artifactName)
                 && artifact.getStatus() == Status.INSTALL_STARTED) {
-                return artifact.getInstallCommandsInfo();
+                return artifact.getInstallOptions();
             }
         }
 

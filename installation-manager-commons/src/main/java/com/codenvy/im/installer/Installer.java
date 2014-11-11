@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 import static java.lang.String.format;
 
@@ -43,22 +43,19 @@ import static java.lang.String.format;
  */
 public class Installer {
     private static final Logger LOG = LoggerFactory.getLogger(Installer.class);
-
     private LinkedList<Command> commands;
+    private InstallOptions options;
+    private Path pathToBinaries;
 
-    public enum InstallType {
-        CDEC_SINGLE_NODE_WITH_PUPPET_MASTER,
-        CDEC_MULTI_NODES_WITH_PUPPET_MASTER
-    }
+    public Installer(Path pathToBinaries, Type installType) throws ConfigException, AgentException {
+        this.commands = getInstallCommands();
+        this.pathToBinaries = pathToBinaries;
+        this.options = new InstallOptions()
+            .setType(installType)
+            .setCommandsInfo(getCommandsInfo())
+            .setId(UUID.randomUUID());
 
-    @Deprecated
-    /** For testing propose only. */
-    public Installer() {
-    }
-
-    public Installer(Path pathToBinaries, InstallType installType) throws ConfigException, AgentException {
-        this.commands = getInstallCommands(pathToBinaries, installType);
-        LOG.info("\n--- Installation commands: " + toString());
+        LOG.info("\n--- " + toString());
     }
 
     public void executeNextCommand() {
@@ -69,9 +66,7 @@ public class Installer {
         Command command = commands.pollFirst();
 
         LOG.info(format("\n--- Executing command %s...\n", command.toString()));
-
         String result = command.execute();
-
         LOG.info(format("Result: %s", result));
     }
 
@@ -79,125 +74,18 @@ public class Installer {
         return commands.isEmpty();
     }
 
-    private LinkedList<Command> getInstallCommands(Path pathToBinaries, InstallType type) throws AgentException, ConfigException {
-        CdecConfig config = ConfigFactory.loadConfig(type.toString());
-        LOG.info(format("\n--- Config file '%s' is used to install CDEC.", config.getConfigSource()));
-
-        switch (type) {
-            case CDEC_SINGLE_NODE_WITH_PUPPET_MASTER:
-                return getInstallCdecOnSingleNodeWithPuppetMasterCommands(pathToBinaries, config);
-
-            case CDEC_MULTI_NODES_WITH_PUPPET_MASTER:
-                return getInstallCdecOnMultiNodesWithPappetMasterCommands(pathToBinaries, config);
-
-            default:
-                return new LinkedList<>();
-        }
-    }
-
     /**
      * @throws ConfigException if required config parameter isn't present in configuration.
      * @throws AgentException if required agent isn't ready to perform commands.
      */
-    protected LinkedList<Command> getInstallCdecOnSingleNodeWithPuppetMasterCommands(Path pathToBinaries, final CdecConfig config) throws
-                                                                                                                                   AgentException,
-                                                                                                                                   ConfigException {
-        // check readiness of config
-        if (config.getHost().isEmpty() || config.getSSHPort().isEmpty()) {
-            throw new ConfigException(format("Installation config file '%s' is incomplete.", config.getConfigSource()));
-        }
+    private LinkedList<Command> getInstallCommands() throws AgentException, ConfigException {
+        CdecConfig config = ConfigFactory.loadConfig(options.getType().toString());
+        LOG.info(format("\n--- Config file '%s' is used to install CDEC.", config.getConfigSource()));
 
-        LinkedList<Command> commands = new LinkedList<>();
-
-        final Agent agent;
-        // select use password or auth key
-        if (!config.getPassword().isEmpty()) {
-            agent = new SecureShellAgent(
-                config.getHost(),
-                Integer.valueOf(config.getSSHPort()),
-                config.getUser(),
-                config.getPassword()
-            );
-        } else {
-            agent = new SecureShellAgent(
-                config.getHost(),
-                Integer.valueOf(config.getSSHPort()),
-                config.getUser(),
-                config.getPrivateKeyFileAbsolutePath(),
-                null
-            );
-        }
-
-
-        // TODO issue CDEC-59
-
-        /**
-         * CDEC installation sequence.
-         * 1) On Puppet Master host :
-         * 1.1 Validate all hosts name and set their if need. //TODO set ?
-         * 1.2 Add rule in firewall for puppet master.
-         * 1.3 Install puppet master;
-         * 1.4 Install unzip if need //TODO
-         * 1.5 Upload CDEC in puppet master.
-         *
-         * // http://www.jcraft.com/jsch/examples/ScpTo.java.html
-         *
-         * 1.6 Unzip CDEC in puppet;
-         *
-         * ssh.execute("sudo unzip " + remouteBinariesPath + " /etc/puppet/");
-         *
-         * 1.7 Configure CDEC in puppet master;
-         * 1.8 Start puppet master
-         *
-         * ssh.execute("sudo service puppetmaster start");
-         *
-         * 2) On other hosts :
-         * 1.1 Validate all hosts name and set their if need; //TODO set ?
-         * 1.2 Install puppet client;
-         * 1.3 Configure puppet client;
-         *
-         * String result = ssh.execute("sudo iptables " + rule); //TODO or echo in /etc/sysconfig/iptables
-         *
-         * 1.4 Start puppet client;
-         * 3) Sign nodes connection request on puppet master;
-         * 1.1 Validate nodes requests available;
-         * 1.2 Sign nodes connection request.
-         */
-
-        commands.addAll(new ArrayList<Command>() {{
-            add(new RemoteCommand("sudo setenforce 0", agent, "Disable SELinux"));
-            add(new RemoteCommand("sudo cp /etc/selinux/config /etc/selinux/config.bak", agent, "Disable SELinux"));
-            add(new RemoteCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config", agent,
-                                  "Disable SELinux"));
-        }});
-
-        commands.addAll(new ArrayList<Command>() {{
-            add(new RemoteCommand(format("sudo rpm -ivh %s", config.getPuppetResourceUrl()), agent, "Install puppet client"));
-            add(new RemoteCommand(format("sudo yum install %s -y", config.getPuppetVersion()), agent, "Install puppet client"));
-        }});
-
-        return commands;
+        return options.getType().getCommands(config, pathToBinaries);
     }
 
-    /**
-     * TODO issue CDEC-60
-     */
-    private LinkedList<Command> getInstallCdecOnMultiNodesWithPappetMasterCommands(Path pathToBinaries, final CdecConfig config) {
-        //                CdecConfig installationConfig = new CdecConfig();
-        //
-        //                installPuppetMaster(installationConfig.getPuppetMaster(),
-        //                                    installationConfig.getHostsName(),
-        //                                    pathToBinaries);
-        //
-        //                for (PuppetClientConfig clientConfig : installationConfig.getPuppetClients()) {
-        //                    //            installPuppetClient(clientConfig, insta);
-        //                }
-        //
-        //                signNodesOnPuppetMaster();
-        return new LinkedList<>();
-    }
-
-    public List<String> getCommandsInfo() {
+    private List<String> getCommandsInfo() {
         List<String> commandsInfo = new ArrayList<>();
 
         for (Command command: commands) {
@@ -209,6 +97,121 @@ public class Installer {
 
     @Override
     public String toString() {
-        return "Installation commands list: " + Arrays.toString(getCommandsInfo().toArray());
+        return format("Installation '%s', type '%s', commands list: ",
+                      options.getId(),
+                      options.getType(),
+                      Arrays.toString(getCommandsInfo().toArray()));
+    }
+
+    public InstallOptions getOptions() {
+        return options;
+    }
+
+    public enum Type {
+        CDEC_SINGLE_NODE_WITH_PUPPET_MASTER {
+            @Override protected LinkedList<Command> getCommands(final CdecConfig config, Path pathToBinaries) throws
+                                                                                                           AgentException,
+                                                                                                           ConfigException {
+                // check readiness of config
+                if (config.getHost().isEmpty() || config.getSSHPort().isEmpty()) {
+                    throw new ConfigException(format("Installation config file '%s' is incomplete.", config.getConfigSource()));
+                }
+
+                LinkedList<Command> commands = new LinkedList<>();
+
+                final Agent agent;
+                // select use password or auth key
+                if (!config.getPassword().isEmpty()) {
+                    agent = new SecureShellAgent(
+                        config.getHost(),
+                        Integer.valueOf(config.getSSHPort()),
+                        config.getUser(),
+                        config.getPassword()
+                    );
+                } else {
+                    agent = new SecureShellAgent(
+                        config.getHost(),
+                        Integer.valueOf(config.getSSHPort()),
+                        config.getUser(),
+                        config.getPrivateKeyFileAbsolutePath(),
+                        null
+                    );
+                }
+
+
+                // TODO issue CDEC-59
+
+                /**
+                 * CDEC installation sequence.
+                 * 1) On Puppet Master host :
+                 * 1.1 Validate all hosts name and set their if need. //TODO set ?
+                 * 1.2 Add rule in firewall for puppet master.
+                 * 1.3 Install puppet master;
+                 * 1.4 Install unzip if need //TODO
+                 * 1.5 Upload CDEC in puppet master.
+                 *
+                 * // http://www.jcraft.com/jsch/examples/ScpTo.java.html
+                 *
+                 * 1.6 Unzip CDEC in puppet;
+                 *
+                 * ssh.execute("sudo unzip " + remouteBinariesPath + " /etc/puppet/");
+                 *
+                 * 1.7 Configure CDEC in puppet master;
+                 * 1.8 Start puppet master
+                 *
+                 * ssh.execute("sudo service puppetmaster start");
+                 *
+                 * 2) On other hosts :
+                 * 1.1 Validate all hosts name and set their if need; //TODO set ?
+                 * 1.2 Install puppet client;
+                 * 1.3 Configure puppet client;
+                 *
+                 * String result = ssh.execute("sudo iptables " + rule); //TODO or echo in /etc/sysconfig/iptables
+                 *
+                 * 1.4 Start puppet client;
+                 * 3) Sign nodes connection request on puppet master;
+                 * 1.1 Validate nodes requests available;
+                 * 1.2 Sign nodes connection request.
+                 */
+
+                commands.addAll(new ArrayList<Command>() {{
+                    add(new RemoteCommand("sudo setenforce 0", agent, "Disable SELinux"));
+                    add(new RemoteCommand("sudo cp /etc/selinux/config /etc/selinux/config.bak", agent, "Disable SELinux"));
+                    add(new RemoteCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config", agent,
+                                          "Disable SELinux"));
+                }});
+
+                commands.addAll(new ArrayList<Command>() {{
+                    add(new RemoteCommand(format("sudo rpm -ivh %s", config.getPuppetResourceUrl()), agent, "Install puppet client"));
+                    add(new RemoteCommand(format("sudo yum install %s -y", config.getPuppetVersion()), agent, "Install puppet client"));
+                }});
+
+                return commands;
+            }
+        },
+
+        CDEC_MULTI_NODES_WITH_PUPPET_MASTER {
+            /** TODO issue CDEC-60 */
+            @Override protected LinkedList<Command> getCommands(final CdecConfig config, Path pathToBinaries) throws
+                                                                                                           AgentException,
+                                                                                                           ConfigException {
+                //                CdecConfig installationConfig = new CdecConfig();
+                //
+                //                installPuppetMaster(installationConfig.getPuppetMaster(),
+                //                                    installationConfig.getHostsName(),
+                //                                    pathToBinaries);
+                //
+                //                for (PuppetClientConfig clientConfig : installationConfig.getPuppetClients()) {
+                //                    //            installPuppetClient(clientConfig, insta);
+                //                }
+                //
+                //                signNodesOnPuppetMaster();
+                return new LinkedList<>();
+            }
+        };
+
+        protected LinkedList<Command> getCommands(final CdecConfig config, Path pathToBinaries) {
+            return new LinkedList<>();
+        }
     }
 }

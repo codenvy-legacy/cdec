@@ -58,10 +58,10 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public void install(Path pathToBinaries) throws CommandException, AgentException, ConfigException, InstallStartedException,
                                                     InstallInProgressException {
-        install(pathToBinaries, Installer.InstallType.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
+        install(pathToBinaries, Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
     }
 
-    public void install(Path pathToBinaries, Installer.InstallType installType) throws
+    public void install(Path pathToBinaries, Installer.Type installType) throws
                                                                       CommandException,
                                                                       AgentException,
                                                                       ConfigException,
@@ -69,7 +69,7 @@ public class CDECArtifact extends AbstractArtifact {
                                                                       InstallInProgressException {
         if (installer == null) {
             installer = new Installer(pathToBinaries, installType);
-            throw new InstallStartedException(installer.getCommandsInfo());
+            throw new InstallStartedException(installer.getOptions());
         }
 
         installer.executeNextCommand();

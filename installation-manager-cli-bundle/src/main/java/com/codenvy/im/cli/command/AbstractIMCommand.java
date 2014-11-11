@@ -33,8 +33,11 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -57,6 +60,26 @@ public abstract class AbstractIMCommand extends AbsCommand {
         } catch (MissingAnnotationException | IllegalPathException e) {
             throw new IllegalStateException("Can't initialize proxy service", e);
         }
+    }
+
+    /**
+     * @return "true" if only user typed line equals "y".
+     */
+    protected boolean askUser(String prompt) {
+        printInfo(prompt);
+        String userAnswer = null;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+            userAnswer = reader.readLine();
+            printLineSeparator();
+        } catch (IOException e) {
+            return false;
+        }
+
+        if (userAnswer != null && userAnswer.equals("y")) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override

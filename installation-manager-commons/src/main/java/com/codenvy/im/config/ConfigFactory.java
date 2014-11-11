@@ -41,12 +41,12 @@ public class ConfigFactory {
     protected static final String CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE = "cdec-single-node-with-puppet-master.properties";
 
     protected static Map<String, Path> configFilesAbsolutePaths = new HashMap<String, Path>() {{
-        put(Installer.InstallType.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+        put(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
             getConfigFileAbsolutePath(CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
     }};
 
     protected static Map<String, Path> defaultConfigFilesRelativePaths = new HashMap<String, Path>() {{
-        put(Installer.InstallType.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
+        put(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
             getDefaultConfigFileRelativePath(CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
     }};
 

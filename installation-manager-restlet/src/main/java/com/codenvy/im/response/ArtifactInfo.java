@@ -18,18 +18,19 @@
 package com.codenvy.im.response;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.installer.InstallOptions;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 
 /** @author Dmytro Nochevnov */
-@JsonPropertyOrder({"artifact","version","file","installCommandsInfo","status"})
+@JsonPropertyOrder({"artifact","version","file","installOptions","status"})
 public class ArtifactInfo {
     private String artifact;
     private String version;
     private Status status;
     private String file;
-    private List<String> installCommandsInfo;
+    private InstallOptions installOptions;
 
     public ArtifactInfo() {
     }
@@ -94,11 +95,11 @@ public class ArtifactInfo {
         this.file = file;
     }
 
-    public List<String> getInstallCommandsInfo() {
-        return installCommandsInfo;
+    public InstallOptions getInstallOptions() {
+        return installOptions;
     }
 
-    public void setInstallCommandsInfo(List<String> installCommandsInfo) {
-        this.installCommandsInfo = installCommandsInfo;
+    public void setInstallOptions(InstallOptions installOptions) {
+        this.installOptions = installOptions;
     }
 }

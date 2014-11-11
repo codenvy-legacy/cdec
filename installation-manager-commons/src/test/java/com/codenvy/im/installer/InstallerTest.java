@@ -34,7 +34,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static org.mockito.Mockito.doReturn;
@@ -47,7 +46,6 @@ import static org.testng.Assert.assertNotNull;
  */
 public class InstallerTest {
     SshServer spySshd;
-    Installer installer;
 
     static final String TEST_USER             = "vagrant";
     static final String TEST_HOST             = "127.0.0.1";
@@ -64,13 +62,6 @@ public class InstallerTest {
 
         spySshd = getSpySshd();
         spySshd.start();
-
-        installer = new Installer();
-    }
-
-    @Test
-    public void testGetCommandsInfo() {
-        // TODO
     }
 
     @Test
@@ -79,14 +70,19 @@ public class InstallerTest {
     }
 
     @Test
-    public void testGetSingleNodeWithoutPuppetMasterInstallCommandsUsing() {
+    public void testGetInstallOptions() {
+        // TODO
+    }
+
+    @Test
+    public void testGetSingleNodeWithoutPuppetMasterInstallCommands() {
         // connect to agent using password
         doReturn(TEST_HOST).when(mockConfig).getHost();
         doReturn(String.valueOf(TEST_PORT)).when(mockConfig).getSSHPort();
         doReturn(TEST_USER).when(mockConfig).getUser();
         doReturn(TEST_PASSWORD).when(mockConfig).getPassword();
 
-        List<Command> commands = installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        List<Command> commands = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.getCommands(mockConfig, null);
         assertNotNull(commands);
         assertEquals(commands.size(), 5);
 
@@ -94,31 +90,31 @@ public class InstallerTest {
         doReturn("").when(mockConfig).getPassword();
         doReturn(TEST_AUTH_PRIVATE_KEY).when(mockConfig).getPrivateKeyFileAbsolutePath();
 
-        commands = installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        commands = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.getCommands(mockConfig, null);
         assertNotNull(commands);
         assertEquals(commands.size(), 5);
     }
 
     @Test(expectedExceptions = ConfigException.class,
           expectedExceptionsMessageRegExp = "Installation config file 'config file' is incomplete.")
-    public void testGetSingleNodeWithoutPuppetMasterInstallCommandsWithIncompleteConfig() {
+    public void testIncompleteConfig() {
         doReturn("").when(mockConfig).getHost();
         doReturn("").when(mockConfig).getSSHPort();
         doReturn("config file").when(mockConfig).getConfigSource();
 
-        installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.getCommands(mockConfig, null);
     }
 
     @Test(expectedExceptions = AgentException.class,
           expectedExceptionsMessageRegExp = "Can't connect to host 'wrong user@wrong host:0'. " +
                                             "Error: java.net.UnknownHostException: wrong host")
-    public void testGetSingleNodeWithoutPuppetMasterInstallCommandsWhenConnectionToServerError() {
+    public void testConnectionToServerError() {
         doReturn("wrong host").when(mockConfig).getHost();
         doReturn("0").when(mockConfig).getSSHPort();
         doReturn("wrong user").when(mockConfig).getUser();
         doReturn("wrong password").when(mockConfig).getPassword();
 
-        installer.getInstallCdecOnSingleNodeWithPuppetMasterCommands(Paths.get(""), mockConfig);
+        Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.getCommands(mockConfig, null);
     }
 
     @AfterTest

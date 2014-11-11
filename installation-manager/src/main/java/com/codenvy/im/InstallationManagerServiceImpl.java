@@ -501,7 +501,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
         } catch (InstallStartedException e) {
             ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.INSTALL_STARTED);
-            info.setInstallCommandsInfo(e.getCommandsInfo());
+            info.setInstallOptions(e.getInstallOptions());
             return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
 
         } catch (InstallInProgressException e) {
