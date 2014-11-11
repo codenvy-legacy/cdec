@@ -26,6 +26,7 @@ import com.codenvy.im.user.UserCredentials;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -44,7 +45,6 @@ import static com.codenvy.im.utils.Commons.getProperException;
 public class AccountUtils {
     public static final  String           ACCOUNT_OWNER_ROLE       = "account/owner";
     public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
-    private static final SimpleDateFormat subscriptionDateFormat   = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
 
     /** Utility class so there is no public constructor. */
     private AccountUtils() {
@@ -78,6 +78,8 @@ public class AccountUtils {
     }
 
     private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalStateException {
+        DateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+
         Date startDate;
         Date endDate;
 

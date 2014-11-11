@@ -73,7 +73,7 @@ public class UpdateManager {
     }
 
     /** Job to check and download updates. */
-    public class IMJob implements Job {
+    private static class IMJob implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
             // do nothing yet
