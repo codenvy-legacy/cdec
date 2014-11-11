@@ -89,6 +89,8 @@ public class DownloadCommand extends AbstractIMCommand {
             return;
         }
 
+        boolean isCanceled = false;
+
         for (; ; ) {
             String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
 
@@ -99,8 +101,17 @@ public class DownloadCommand extends AbstractIMCommand {
 
             DownloadStatusInfo downloadStatusInfo = DownloadStatusInfo.valueOf(statusResponse);
 
-            printProgress(downloadStatusInfo.getPercents());
-            sleep(1000);
+            if (!isCanceled) {
+                printProgress(downloadStatusInfo.getPercents());
+            }
+
+            try {
+                sleep(1000);
+            } catch (InterruptedException ie) {
+                installationManagerProxy.stopDownload(downloadDescriptorId);
+                cleanLineAbove();
+                isCanceled = true;
+            }
 
             if (downloadStatusInfo.getStatus() == Status.DOWNLOADED ||
                 downloadStatusInfo.getStatus() == Status.FAILURE) {

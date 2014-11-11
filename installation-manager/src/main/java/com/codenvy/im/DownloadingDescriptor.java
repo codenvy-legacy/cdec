@@ -36,8 +36,10 @@ public class DownloadingDescriptor {
     private final Map<Path, Long>         artifacts;
     private final long                    totalSize;
     private final AtomicReference<String> downloadResult;
+    private final Thread                  downloadDescriptorOwner;
 
-    public DownloadingDescriptor(Map<Path, Long> artifacts) {
+    public DownloadingDescriptor(Map<Path, Long> artifacts, Thread downloadDescriptorOwner) {
+        this.downloadDescriptorOwner = downloadDescriptorOwner;
         this.artifacts = artifacts;
         this.downloadResult = new AtomicReference<>();
 
@@ -66,7 +68,7 @@ public class DownloadingDescriptor {
     }
 
     /** Factory method */
-    public static DownloadingDescriptor createDescriptor(Map<Artifact, String> artifacts, InstallationManager manager) throws IOException {
+    public static DownloadingDescriptor createDescriptor(Map<Artifact, String> artifacts, InstallationManager manager, Thread downloadDescriptorOwner) throws IOException {
         Map<Path, Long> m = new LinkedHashMap<>();
 
         for (Map.Entry<Artifact, String> e : artifacts.entrySet()) {
@@ -79,7 +81,7 @@ public class DownloadingDescriptor {
             m.put(pathToBinaries, binariesSize);
         }
 
-        return new DownloadingDescriptor(m);
+        return new DownloadingDescriptor(m, downloadDescriptorOwner);
     }
 
     /** @return the downloading status. */
@@ -101,4 +103,7 @@ public class DownloadingDescriptor {
     public boolean isDownloadingFinished() {
         return downloadResult.get() != null;
     }
+
+    /** Get thread which downloading artifacts. */
+    public Thread getDownloadThread() { return downloadDescriptorOwner; }
 }

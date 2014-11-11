@@ -20,7 +20,6 @@ package com.codenvy.im.utils;
 import com.codenvy.commons.lang.IoUtil;
 import com.google.inject.Inject;
 
-import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -39,6 +38,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.codenvy.commons.lang.IoUtil.deleteRecursive;
+import static com.codenvy.im.utils.Commons.copyInterruptable;
+import static java.nio.file.Files.newOutputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -135,8 +138,11 @@ public class HttpTransport {
                 }
 
                 Path file = destinationDir.resolve(fileName);
-                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
-                    IOUtils.copy(in, out);
+                try (OutputStream out = new BufferedOutputStream(newOutputStream(file))) {
+                    copyInterruptable(in, out);
+                } catch (CopyStreamInterruptedException e) {
+                    deleteRecursive(destinationDir.toFile());
+                    throw new IOException("Downloading was canceled");
                 }
 
                 return file;

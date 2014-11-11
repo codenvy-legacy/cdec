@@ -22,14 +22,22 @@ import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -143,5 +151,52 @@ public class TestCommons {
 
         String expectedMD5Sum = "5b6865e9622804fd70324543d06869c4"; // calculated by md5sum linux command
         assertEquals(Commons.calculateMD5Sum(testFile), expectedMD5Sum);
+    }
+
+    @Test
+    public void testCopyInterruptable() throws Exception {
+        String context = new String(Arrays.copyOf("test content".getBytes("UTF-8"), 10000), "UTF-8");
+
+        Path inFile = Paths.get("target", "inFile");
+        Path outFile = Paths.get("target", "outFile");
+        FileOutputStream out = new FileOutputStream(outFile.toFile());
+
+        FileUtils.write(inFile.toFile(), context);
+
+        Commons.copyInterruptable(new FileInputStream(inFile.toFile()), out);
+        String output = FileUtils.readFileToString(outFile.toFile());
+
+        assertEquals(output, context);
+
+    }
+
+    @Test(expectedExceptions = CopyStreamInterruptedException.class, expectedExceptionsMessageRegExp = "The copying was interrupted.")
+    public void testFailCopyInterruptable() throws Exception {
+        final Path inFile = Paths.get("target", "inFile");
+        final Path outFile = Paths.get("target", "outFile");
+
+        IOUtils.write(Arrays.copyOf("test content".getBytes(), 10000), new FileOutputStream(inFile.toFile()));
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<Exception> exception = new AtomicReference<>();
+
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try (FileOutputStream out = new FileOutputStream(outFile.toFile()); FileInputStream in = new FileInputStream(inFile.toFile())) {
+                    currentThread().interrupt();
+                    Commons.copyInterruptable(in, out);
+                } catch (Exception ex) {
+                    exception.set(ex);
+                }
+
+                latch.countDown();
+            }
+        });
+        t.start();
+        latch.await();
+
+        assertNotNull(exception.get());
+        throw exception.get();
     }
 }

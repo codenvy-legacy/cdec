@@ -68,6 +68,11 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String downloadStatus(@PathParam(value = "download-descriptor-id") String downloadDescriptorId);
 
+    @GET
+    @Path("download-stop/{download-descriptor-id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    String stopDownload(@PathParam(value = "download-descriptor-id") String downloadDescriptorId);
+
     @POST
     @Path("check-updates")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -163,4 +168,5 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep);
+
 }

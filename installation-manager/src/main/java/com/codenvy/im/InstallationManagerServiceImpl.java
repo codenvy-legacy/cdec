@@ -158,7 +158,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             new Thread() {
                 @Override
                 public void run() {
-                    download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher);
+                    download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher, this);
                 }
             }.start();
 
@@ -174,7 +174,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                           @Nullable String version,
                           String downloadDescriptorId,
                           JacksonRepresentation<UserCredentials> userCredentialsRep,
-                          CountDownLatch latcher) {
+                          CountDownLatch latcher,
+                          Thread currentThread) {
 
         List<ArtifactInfo> infos = null;
         try {
@@ -185,7 +186,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             infos = new ArrayList<>(updates.size());
 
-            DownloadingDescriptor downloadingDescriptor = createDescriptor(updates, manager);
+            DownloadingDescriptor downloadingDescriptor = createDescriptor(updates, manager, currentThread);
             downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
 
             latcher.countDown();
@@ -216,7 +217,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
-                descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
+                descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
                 descriptor.setDownloadResult(Response.valueOf(e).toJson());
                 downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
             } else {
@@ -309,6 +310,23 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
                 return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
             }
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String stopDownload(final String downloadDescriptorId) {
+        try {
+            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+            if (descriptor == null) {
+                return new Response.Builder().withStatus(ERROR)
+                                             .withMessage("Can't get downloading descriptor ID").build().toJson();
+            }
+
+            descriptor.getDownloadThread().interrupt();
+            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }

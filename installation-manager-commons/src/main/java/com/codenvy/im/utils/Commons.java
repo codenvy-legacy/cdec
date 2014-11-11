@@ -29,6 +29,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -43,6 +44,7 @@ import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
+import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 
@@ -67,6 +69,19 @@ public class Commons {
             } else {
                 return apiEndpoint + "/" + path;
             }
+        }
+    }
+
+    /** Copies input stream to output stream, and stop copying if current thread was interrupted. */
+    public static void copyInterruptable(InputStream in, OutputStream out) throws CopyStreamInterruptedException, IOException {
+        byte[] buffer = new byte[8196];
+        int length;
+        while ((length = in.read(buffer)) != -1) {
+            if (currentThread().isInterrupted()) {
+                throw new CopyStreamInterruptedException("The copying was interrupted.");
+            }
+
+            out.write(buffer, 0, length);
         }
     }
 

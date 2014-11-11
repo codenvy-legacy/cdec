@@ -161,6 +161,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
         System.out.print(ansi().eraseLine(Ansi.Erase.ALL));
         System.out.flush();
     }
+    protected void cleanLineAbove() {
+        System.out.print(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
+        System.out.flush();
+    }
 
     protected void printInfo(String message) {
         System.out.print(message);
