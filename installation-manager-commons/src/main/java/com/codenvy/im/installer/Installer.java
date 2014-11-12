@@ -45,16 +45,15 @@ public class Installer {
     private static final Logger LOG = LoggerFactory.getLogger(Installer.class);
     private LinkedList<Command> commands;
     private InstallOptions options;
-    private Path pathToBinaries;
 
     public Installer(Path pathToBinaries, Type installType) throws ConfigException, AgentException {
-        this.commands = getInstallCommands();
-        this.pathToBinaries = pathToBinaries;
         this.options = new InstallOptions()
             .setType(installType)
-            .setCommandsInfo(getCommandsInfo())
-            .setId(UUID.randomUUID());
+            .setId(UUID.randomUUID().toString());
 
+        this.commands = getInstallCommands(pathToBinaries);
+        this.options.setCommandsInfo(getCommandsInfo());
+        
         LOG.info("\n--- " + toString());
     }
 
@@ -78,7 +77,7 @@ public class Installer {
      * @throws ConfigException if required config parameter isn't present in configuration.
      * @throws AgentException if required agent isn't ready to perform commands.
      */
-    private LinkedList<Command> getInstallCommands() throws AgentException, ConfigException {
+    private LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
         CdecConfig config = ConfigFactory.loadConfig(options.getType().toString());
         LOG.info(format("\n--- Config file '%s' is used to install CDEC.", config.getConfigSource()));
 
@@ -97,10 +96,10 @@ public class Installer {
 
     @Override
     public String toString() {
-        return format("Installation '%s', type '%s', commands list: ",
+        return format("Installation '%s', type '%s', commands list: \n%s",
                       options.getId(),
                       options.getType(),
-                      Arrays.toString(getCommandsInfo().toArray()));
+                      Arrays.toString(getCommandsInfo().toArray()).replace(", ", ",\n"));
     }
 
     public InstallOptions getOptions() {
@@ -193,8 +192,8 @@ public class Installer {
         CDEC_MULTI_NODES_WITH_PUPPET_MASTER {
             /** TODO issue CDEC-60 */
             @Override protected LinkedList<Command> getCommands(final CdecConfig config, Path pathToBinaries) throws
-                                                                                                           AgentException,
-                                                                                                           ConfigException {
+                                                                                                              AgentException,
+                                                                                                              ConfigException {
                 //                CdecConfig installationConfig = new CdecConfig();
                 //
                 //                installPuppetMaster(installationConfig.getPuppetMaster(),

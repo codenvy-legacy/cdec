@@ -27,7 +27,7 @@ public class ArtifactFactory {
     /**
      * Artifact factory.
      */
-    public static Artifact createArtifact(String name) {
+    public static Artifact createArtifact(String name) throws IllegalArgumentException {
         switch (name) {
             case CDECArtifact.NAME:
                 return INJECTOR.getInstance(CDECArtifact.class);

@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.CommandException;
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
@@ -130,7 +131,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void install(String authToken, Artifact artifact, String version) throws IOException, CommandException {
+    public void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException, CommandException {
         Map<Artifact, String> installedArtifacts = getInstalledArtifacts(authToken);
         Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = getDownloadedArtifacts();
 
@@ -143,7 +144,7 @@ public class InstallationManagerImpl implements InstallationManager {
             String installedVersion = installedArtifacts.get(artifact);
 
             if (installedVersion == null || compare(version, installedVersion) > 0) {
-                artifact.install(pathToBinaries);
+                artifact.install(pathToBinaries, options);
 
             } else if (compare(version, installedVersion) <= 0) {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version

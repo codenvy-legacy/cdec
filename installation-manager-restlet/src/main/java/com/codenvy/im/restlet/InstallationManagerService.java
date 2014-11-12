@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.restlet;
 
+import com.codenvy.im.request.Request;
 import com.codenvy.im.user.UserCredentials;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -94,13 +95,6 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep);
 
-    /** Install all latest updates. */
-    @POST
-    @Path("install")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public String install(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
-
     /** Get versions of installed artifacts. */
     @POST
     @Path("version")
@@ -108,21 +102,11 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String getVersions(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-
     @POST
-    @Path("install/{artifact}")
+    @Path("install")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value = "artifact") String artifactName,
-                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
-
-    @POST
-    @Path("install/{artifact}/{version}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public String install(@PathParam(value = "artifact") String artifactName,
-                          @PathParam(value = "version") String version,
-                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+    public String install(JacksonRepresentation<Request> requestRep) throws IOException;
 
     /** Get the url of the update server. */
     @GET

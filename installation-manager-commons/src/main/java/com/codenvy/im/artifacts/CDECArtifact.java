@@ -22,6 +22,7 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.config.ConfigException;
 import com.codenvy.im.installer.InstallInProgressException;
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.installer.Installer;
 import com.codenvy.im.utils.HttpTransport;
@@ -56,19 +57,22 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     @Override
-    public void install(Path pathToBinaries) throws CommandException, AgentException, ConfigException, InstallStartedException,
-                                                    InstallInProgressException {
-        install(pathToBinaries, Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
-    }
-
-    public void install(Path pathToBinaries, Installer.Type installType) throws
+    public void install(Path pathToBinaries, InstallOptions options) throws
                                                                       CommandException,
                                                                       AgentException,
                                                                       ConfigException,
                                                                       InstallStartedException,
-                                                                      InstallInProgressException {
-        if (installer == null) {
-            installer = new Installer(pathToBinaries, installType);
+                                                                      InstallInProgressException,
+                                                                      IllegalArgumentException {
+        if (installer == null
+            || ! installer.getOptions().getId().equals(options.getId())) {
+
+            if (options == null
+                || options.getType() == null) {
+                throw new IllegalArgumentException("Install type is unknown.");
+            }
+
+            installer = new Installer(pathToBinaries, options.getType());
             throw new InstallStartedException(installer.getOptions());
         }
 

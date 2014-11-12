@@ -19,21 +19,20 @@
 package com.codenvy.im.installer;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class InstallOptions {
     private List<String>   commandsInfo;
-    private UUID           id;
+    private String         id;
     private Installer.Type type;
 
     public List<String> getCommandsInfo() {
         return commandsInfo;
     }
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
@@ -46,7 +45,7 @@ public class InstallOptions {
         return this;
     }
 
-    public InstallOptions setId(UUID id) {
+    public InstallOptions setId(String id) {
         this.id = id;
         return this;
     }

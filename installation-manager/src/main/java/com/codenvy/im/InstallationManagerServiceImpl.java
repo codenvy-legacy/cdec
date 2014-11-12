@@ -22,7 +22,9 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.installer.InstallInProgressException;
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.installer.InstallStartedException;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
@@ -36,10 +38,13 @@ import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import org.restlet.ext.jackson.JacksonRepresentation;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -432,85 +437,61 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String install(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
-        UserCredentials userCredentials = userCredentialsRep.getObject();
-        String token = userCredentials.getToken();
-
-        Map<Artifact, String> updates = manager.getUpdates(token);
-
-        List<ArtifactInfo> infos = new ArrayList<>();
-
-        for (Map.Entry<Artifact, String> entry : updates.entrySet()) {
-            Artifact artifact = entry.getKey();
-            String version = entry.getValue();
-
-            try {
-                doInstall(artifact, version, token);
-                infos.add(new ArtifactInfo(artifact, version, Status.SUCCESS));
-            } catch (Exception e) {
-                infos.add(new ArtifactInfo(artifact, version, Status.FAILURE));
-                return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifacts(infos).build().toJson();
-            }
-        }
-
-        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public String getVersions(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         Map<Artifact, String> installedArtifacts = manager.getInstalledArtifacts(userCredentials.getToken());
         return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(installedArtifacts).build().toJson();
     }
 
-
-    /** {@inheritDoc} */
     @Override
-    public String install(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
-        return install(artifactName, null, userCredentialsRep);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String install(String artifactName,
-                          @Nullable String version,
-                          JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
-        String token;
-        Artifact artifact;
-        String toInstallVersion;
-
+    public String install(@Nonnull JacksonRepresentation<Request> requestRep) throws IOException {
         try {
-            UserCredentials userCredentials = userCredentialsRep.getObject();
-            token = userCredentials.getToken();
+            if (requestRep == null) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete.", "Request is empty.", "");
+            }
 
-            artifact = createArtifact(artifactName);
-            toInstallVersion = version != null ? version : manager.getUpdates(token).get(artifact);
+            Request request = Request.fromRepresentation(requestRep);
+            UserCredentials userCredentials = request.getUserCredentials();
+            if (userCredentials == null) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete.", "User credentials were missed.", "");
+            }
+            String token = userCredentials.getToken();
+
+            String artifactName = request.getArtifactName();
+            if (artifactName == null || artifactName.isEmpty()) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete.", "Artifact name was missed.", "");
+            }
+
+            Artifact artifact = createArtifact(artifactName);
+
+            String version = request.getVersion();
+            version = version != null ? version : manager.getUpdates(token).get(artifact);
+            if (version == null) {
+                return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
+            }
+
+            InstallOptions installOption = request.getInstallOptions();
+
+            try {
+                doInstall(artifact, version, token, installOption);
+                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.SUCCESS);
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+
+            } catch (InstallStartedException e) {
+                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.INSTALL_STARTED);
+                info.setInstallOptions(e.getInstallOptions());
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+
+            } catch (InstallInProgressException e) {
+                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.INSTALLING);
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+
+            } catch (Exception e) {
+                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.FAILURE);
+                return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            }
         } catch (Exception e) {
-            return Response.valueOf(e).toJson();
-        }
-
-        if (toInstallVersion == null) {
-            return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
-        }
-
-        try {
-            doInstall(artifact, toInstallVersion, token);
-            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.SUCCESS);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-
-        } catch (InstallStartedException e) {
-            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.INSTALL_STARTED);
-            info.setInstallOptions(e.getInstallOptions());
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-
-        } catch (InstallInProgressException e) {
-            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.INSTALLING);
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-
-        } catch (Exception e) {
-            ArtifactInfo info = new ArtifactInfo(artifactName, toInstallVersion, Status.FAILURE);
-            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
         }
     }
 
@@ -548,7 +529,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
-    protected void doInstall(Artifact artifact, String version, String token) throws IOException, IllegalStateException {
-        manager.install(token, artifact, version);
+    protected void doInstall(Artifact artifact, String version, String token, @Nullable InstallOptions installOption) throws IOException {
+        manager.install(token, artifact, version, installOption);
     }
 }

@@ -17,8 +17,10 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.utils.Version;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -31,8 +33,9 @@ public interface Artifact extends Comparable<Artifact> {
      * Installs artifact
      *
      * @param pathToBinaries
+     * @param options
      */
-    void install(Path pathToBinaries) throws IOException;
+    void install(Path pathToBinaries, @Nullable InstallOptions options) throws IOException;
 
     /** @return current installed version of the artifact */
     String getInstalledVersion(String accessToken) throws IOException;

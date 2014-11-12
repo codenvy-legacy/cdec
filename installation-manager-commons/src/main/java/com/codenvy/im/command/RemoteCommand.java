@@ -40,7 +40,7 @@ public class RemoteCommand implements Command {
         try {
             return agent.execute(command);
         } catch (AgentException e) {
-            String errorMessage = format("Remote command %s execution fail.", toString());
+            String errorMessage = "Remote command execution fail.";
             if (e.getMessage() != null && !e.getMessage().isEmpty()) {
                 errorMessage += format(" Error: %s", e.getMessage());
             }
@@ -53,7 +53,7 @@ public class RemoteCommand implements Command {
         try {
             return agent.execute(command, timeoutMillis);
         } catch (AgentException e) {
-            String errorMessage = format("Remote command %s execution fail.", toString());
+            String errorMessage = "Remote command execution fail.";
             if (e.getMessage() != null && !e.getMessage().isEmpty()) {
                 errorMessage += format(" Error: %s", e.getMessage());
             }
@@ -64,6 +64,6 @@ public class RemoteCommand implements Command {
 
     @Override
     public String toString() {
-        return format("'%s' ('%s')", this.command, this.description);
+        return format("'%s' command: '%s'", this.description, this.command);
     }
 }

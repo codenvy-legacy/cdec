@@ -111,16 +111,16 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.1");
+        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.1", null);
 
-        verify(installManagerArtifact, never()).install(any(Path.class));
+        verify(installManagerArtifact, never()).install(any(Path.class), null);
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1");
+        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1", null);
     }
 
     @Test
@@ -130,11 +130,11 @@ public class TestInstallationManager {
                 put(Version.valueOf("1.0.1"), Paths.get("target/download/cdec/1.0.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doNothing().when(cdecArtifact).install(any(Path.class));
+        doNothing().when(cdecArtifact).install(any(Path.class), null);
         doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1");
-        verify(cdecArtifact).install(any(Path.class));
+        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1", null);
+        verify(cdecArtifact).install(any(Path.class), null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -148,7 +148,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0");
+        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0", null);
     }
 
     //@Test TODO
@@ -159,7 +159,7 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0");
+        manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0", null);
     }
 
     @Test
@@ -172,9 +172,9 @@ public class TestInstallationManager {
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
-        doNothing().when(installManagerArtifact).install(any(Path.class));
+        doNothing().when(installManagerArtifact).install(any(Path.class), null);
 
-        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.2");
+        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.2", null);
     }
 
     @Test

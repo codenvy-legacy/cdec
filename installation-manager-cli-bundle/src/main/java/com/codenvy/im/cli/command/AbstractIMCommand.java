@@ -208,8 +208,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected JacksonRepresentation<UserCredentials> getCredentialsRep() {
-        UserCredentials userCredentials = new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
-        return new JacksonRepresentation<>(userCredentials);
+        return new JacksonRepresentation<>(getCredentials());
+    }
+
+    protected UserCredentials getCredentials() {
+        return new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
     }
 
     @Nonnull

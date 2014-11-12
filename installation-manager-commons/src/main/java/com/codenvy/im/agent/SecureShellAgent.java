@@ -76,7 +76,8 @@ public class SecureShellAgent implements Agent {
 
             session.connect();
         } catch (JSchException e) {
-            String errorMessage = format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
+            String errorMessage =
+                format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
             if (e.getMessage() != null && !e.getMessage().isEmpty()) {
                 errorMessage += format(" Error: %s", e.getMessage());
             }
@@ -138,7 +139,7 @@ public class SecureShellAgent implements Agent {
 
     private String read(BufferedReader reader) throws IOException {
         StringBuffer output = new StringBuffer();
-        String msg = null;
+        String msg;
 
         while ((msg = reader.readLine()) != null) {
             output.append(msg + "\n");

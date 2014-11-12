@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -74,7 +75,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
-    public void install(Path pathToBinaries) throws IOException {
+    public void install(Path pathToBinaries, InstallOptions options) throws IOException {
         Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
         try {
             if (exists(dirForUpdate)) {
