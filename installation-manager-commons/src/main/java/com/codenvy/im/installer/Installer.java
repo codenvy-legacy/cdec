@@ -29,6 +29,7 @@ import com.codenvy.im.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,11 @@ public class Installer {
     private LinkedList<Command> commands;
     private InstallOptions options;
 
+    /** for testing propose only */
+    @Deprecated
+    public Installer() {
+    }
+
     public Installer(Path pathToBinaries, Type installType) throws ConfigException, AgentException {
         this.options = new InstallOptions()
             .setType(installType)
@@ -57,9 +63,10 @@ public class Installer {
         LOG.info("\n--- " + toString());
     }
 
-    public void executeNextCommand() {
+    @Nullable
+    public String executeNextCommand() {
         if (isFinished()) {
-            return;
+            return null;
         }
 
         Command command = commands.pollFirst();
@@ -67,6 +74,8 @@ public class Installer {
         LOG.info(format("\n--- Executing command %s...\n", command.toString()));
         String result = command.execute();
         LOG.info(format("Result: %s", result));
+
+        return result;
     }
 
     public boolean isFinished() {
@@ -77,7 +86,7 @@ public class Installer {
      * @throws ConfigException if required config parameter isn't present in configuration.
      * @throws AgentException if required agent isn't ready to perform commands.
      */
-    private LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
+    protected LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
         CdecConfig config = ConfigFactory.loadConfig(options.getType().toString());
         LOG.info(format("\n--- Config file '%s' is used to install CDEC.", config.getConfigSource()));
 

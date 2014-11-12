@@ -43,10 +43,10 @@ public class SecureShellAgentTest {
 
     SecureShellAgent testAgent;
 
-    static final String TEST_USER             = "vagrant";
+    static final String TEST_USER             = "testUser";
     static final String TEST_HOST             = "127.0.0.1";
     static final int    TEST_PORT             = 2223;
-    static final String TEST_PASSWORD         = "vagrant";
+    static final String TEST_PASSWORD         = "testPassword";
     static final String TEST_AUTH_PRIVATE_KEY = "~/.ssh/id_rsa";
     static final String TEST_PASSPHRASE       = null;
 

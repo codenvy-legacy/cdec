@@ -22,6 +22,8 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.installer.InstallStartedException;
+import com.codenvy.im.installer.Installer;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
@@ -53,18 +55,8 @@ import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
 /**
  * @author Anatoliy Bazko
@@ -152,15 +144,28 @@ public class TestInstallationManager {
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0", null);
     }
 
-    //@Test TODO
-    public void testInstallCDECArtifact() throws Exception {
+    @Test
+    public void testInstallWithInstallOptions() throws Exception {
+        final Path testPathToBinaries = Paths.get("target/download/cdec/3.0.0/file1");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("3.0.0"), Paths.get("target/download/cdec/3.0.0/file1"));
+                put(Version.valueOf("3.0.0"), testPathToBinaries);
             }});
         }}).when(manager).getDownloadedArtifacts();
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0", null);
+        InstallOptions testOptions = new InstallOptions()
+            .setType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
+
+        doThrow(new InstallStartedException(testOptions)).when(cdecArtifact).install(testPathToBinaries, testOptions);
+
+        try {
+            manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0", testOptions);
+        } catch(InstallStartedException e) {
+            assertEquals(e.getInstallOptions(), testOptions);
+            return;
+        }
+
+        fail();
     }
 
     @Test

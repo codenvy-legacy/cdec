@@ -46,7 +46,7 @@ public class CDECArtifact extends AbstractArtifact {
     private final HttpTransport transport;
     private final String        updateEndpoint;
 
-    private Installer installer;
+    protected Installer installer;
 
     @Inject
     public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -72,7 +72,7 @@ public class CDECArtifact extends AbstractArtifact {
                 throw new IllegalArgumentException("Install type is unknown.");
             }
 
-            installer = new Installer(pathToBinaries, options.getType());
+            installer = createInstaller(pathToBinaries, options);
             throw new InstallStartedException(installer.getOptions());
         }
 
@@ -84,6 +84,10 @@ public class CDECArtifact extends AbstractArtifact {
         }
 
         throw new InstallInProgressException();
+    }
+
+    protected Installer createInstaller(Path pathToBinaries, InstallOptions options) {
+        return new Installer(pathToBinaries, options.getType());
     }
 
     @Override

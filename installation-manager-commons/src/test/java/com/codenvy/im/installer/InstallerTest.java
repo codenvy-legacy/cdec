@@ -34,12 +34,13 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 /**
  * @author Dmytro Nochevnov
@@ -47,11 +48,20 @@ import static org.testng.Assert.assertNotNull;
 public class InstallerTest {
     SshServer spySshd;
 
-    static final String TEST_USER             = "vagrant";
+    static final String TEST_USER             = "anyUser";
     static final String TEST_HOST             = "127.0.0.1";
     static final int    TEST_PORT             = 2224;
-    static final String TEST_PASSWORD         = "vagrant";
+    static final String TEST_PASSWORD         = "anyPassword";
     static final String TEST_AUTH_PRIVATE_KEY = "~/.ssh/id_rsa";
+
+    static final String TEST_COMMAND_1 = "test command 1";
+    static final String TEST_COMMAND_2 = "test command 2";
+
+    @Mock
+    static Command mockTestCommand1;
+
+    @Mock
+    static Command mockTestCommand2;
 
     @Mock
     CdecConfig mockConfig;
@@ -65,13 +75,53 @@ public class InstallerTest {
     }
 
     @Test
+    public void testInstallSequence() {
+        doReturn(TEST_COMMAND_1).when(mockTestCommand1).execute();
+        doReturn(TEST_COMMAND_2).when(mockTestCommand2).execute();
+
+        Installer.Type testType = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
+        Installer testInstaller = new TestInstaller(null, testType);
+
+        assertFalse(testInstaller.isFinished());
+        assertEquals(testInstaller.executeNextCommand(), TEST_COMMAND_1);
+
+        assertFalse(testInstaller.isFinished());
+        assertEquals(testInstaller.executeNextCommand(), TEST_COMMAND_2);
+
+        assertTrue(testInstaller.isFinished());
+        assertNull(testInstaller.executeNextCommand());
+    }
+
+
+    @Test
     public void testToString() {
-        // TODO
+        doReturn(TEST_COMMAND_1).when(mockTestCommand1).toString();
+        doReturn(TEST_COMMAND_2).when(mockTestCommand2).toString();
+
+        Installer.Type testType = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
+        Installer testInstaller = new TestInstaller(null, testType);
+
+        assertEquals(testInstaller.toString(), "Installation '" + testInstaller.getOptions().getId() + "', "
+                                               + "type 'CDEC_SINGLE_NODE_WITH_PUPPET_MASTER', commands list: \n"
+                                               + "[test command 1,\n"
+                                               + "test command 2]");
     }
 
     @Test
     public void testGetInstallOptions() {
-        // TODO
+        doReturn(TEST_COMMAND_1).when(mockTestCommand1).toString();
+        doReturn(TEST_COMMAND_2).when(mockTestCommand2).toString();
+
+        Installer.Type testType = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
+        Installer testInstaller = new TestInstaller(null, testType);
+
+        assertEquals(testInstaller.getOptions().getType(), testType);
+        assertNotNull(testInstaller.getOptions().getId());
+
+        List<String> commandsInfo = testInstaller.getOptions().getCommandsInfo();
+        assertEquals(commandsInfo.size(), 2);
+        assertEquals(commandsInfo.get(0), TEST_COMMAND_1);
+        assertEquals(commandsInfo.get(1), TEST_COMMAND_2);
     }
 
     @Test
@@ -141,5 +191,19 @@ public class InstallerTest {
         });
 
         return sshdSpy;
+    }
+
+    public static class TestInstaller extends Installer {
+
+        public TestInstaller(Path pathToBinaries, Installer.Type installType) throws ConfigException, AgentException {
+            super(pathToBinaries, installType);
+        }
+
+        @Override protected LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
+            return new LinkedList<Command>(){{
+                add(mockTestCommand1);
+                add(mockTestCommand2);
+            }};
+        }
     }
 }
