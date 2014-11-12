@@ -29,6 +29,8 @@ public class ArtifactFactory {
                 return INJECTOR.getInstance(CDECArtifact.class);
             case InstallManagerArtifact.NAME:
                 return INJECTOR.getInstance(InstallManagerArtifact.class);
+            case TrialCDECArtifact.NAME:
+                return INJECTOR.getInstance(TrialCDECArtifact.class);
         }
 
         throw new IllegalArgumentException("Artifact '" + name + "' not found");
