@@ -151,6 +151,13 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String getAccountReferenceWhereUserIsOwner(@PathParam(value = "accountName") String accountName,
                                                       JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
+    /** Returns account reference of first valid account of user based on his/her auth token passed into service within the body of request */
+    @POST
+    @Path("account")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+
 
     /** Returns the configuration of the Installation Manager */
     @GET

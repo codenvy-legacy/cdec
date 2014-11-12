@@ -148,17 +148,6 @@ public class AccountUtils {
         return null;
     }
 
-    @Nullable
-    private static String getAccountId(MemberDescriptor member) {
-        AccountReference accountRef = member.getAccountReference();
-
-        if (accountRef != null) {
-            return member.getAccountReference().getId();
-        }
-
-        return null;
-    }
-
     /** Checks if user has specific role. */
     private static boolean hasRole(MemberDescriptor member, String role) throws IllegalStateException {
         List<String> roles = member.getRoles();

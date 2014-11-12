@@ -558,6 +558,16 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
+    @Nullable
+    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+        UserCredentials userCredentials = userCredentialsRep.getObject();
+        String token = userCredentials.getToken();
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport, apiEndpoint, token, null);
+        return accountReference == null ? null : toJson(accountReference);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public String getConfig() {
         JsonStringMapImpl<String> config = new JsonStringMapImpl<>(manager.getConfig());
         return new Response.Builder().withStatus(ResponseCode.OK).withParam("config", config).build().toJson();
