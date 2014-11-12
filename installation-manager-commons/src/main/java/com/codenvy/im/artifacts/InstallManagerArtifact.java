@@ -206,12 +206,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
                 .append("cp -r ")
                 .append(unpackedUpdates.toFile().getAbsolutePath())
                 .append("/* ")
-                .append(installedPath)
-                .append(" ; ")
-                .append("chmod +x " + installedPath + "/installation-manager ; ")
-                .append("rm -rf ")
-                .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
-                .append(" ; ")
+                .append(installedPath).append(" ; ")
+                .append("chmod +x ").append(installedPath).append("/installation-manager ; ")
+                .append("rm -rf ").append(unpackedUpdates.getParent().toFile().getAbsolutePath()).append(" ; ")
                 .append(installedPath).append("/installation-manager start ");
 
         runCommand(stringBuilder.toString());
@@ -245,7 +242,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Override
     public int getPriority() {
-        return 10;
+        return 1;
     }
 
     @Override

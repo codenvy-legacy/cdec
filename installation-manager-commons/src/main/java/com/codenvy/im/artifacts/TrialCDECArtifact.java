@@ -20,7 +20,6 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -34,14 +33,14 @@ import static com.codenvy.im.utils.Commons.createDtoFromJson;
 
 /** @author Anatoliy Bazko */
 @Singleton
-public class CDECArtifact extends AbstractArtifact {
-    public static final String NAME = "cdec";
+public class TrialCDECArtifact extends AbstractArtifact {
+    public static final String NAME = "trial-cdec";
 
     private final HttpTransport transport;
-    private final String apiNodeUrl;
+    private final String        apiNodeUrl;
 
     @Inject
-    public CDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
+    public TrialCDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
         super(NAME);
         this.transport = transport;
         this.apiNodeUrl = apiNodeUrl;
@@ -50,7 +49,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public void install(Path pathToBinaries) throws IOException {
-        throw new UnsupportedOperationException("CDEC installation is not supported yet.");
+        throw new UnsupportedOperationException("Trial CDEC installation is not supported yet.");
     }
 
     /** {@inheritDoc} */
@@ -63,13 +62,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public int getPriority() {
-        return 10;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean isInstallable(Version versionToInstall, String accessToken) {
-        return false; // temporarily
+        return 5;
     }
 
     /** {@inheritDoc} */

@@ -31,11 +31,13 @@ import static org.testng.Assert.assertEquals;
 /** @author Anatoliy Bazko */
 public class TestArtifacts {
     private Artifact cdecArtifact;
+    private Artifact trialCdecArtifact;
     private Artifact imArtifact;
 
     @BeforeMethod
     public void setUp() throws Exception {
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
+        trialCdecArtifact = ArtifactFactory.createArtifact(TrialCDECArtifact.NAME);
         imArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
     }
 
@@ -44,10 +46,12 @@ public class TestArtifacts {
         Set<Artifact> artifacts = new Commons.ArtifactsSet(new HashSet<Artifact>() {{
             add(cdecArtifact);
             add(imArtifact);
+            add(trialCdecArtifact);
         }});
 
         Iterator<Artifact> iter = artifacts.iterator();
-        assertEquals(iter.next(), imArtifact);
         assertEquals(iter.next(), cdecArtifact);
+        assertEquals(iter.next(), trialCdecArtifact);
+        assertEquals(iter.next(), imArtifact);
     }
 }

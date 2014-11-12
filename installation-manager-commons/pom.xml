@@ -174,13 +174,12 @@
                                             version = ${project.version}
                                         </echo>
                                         <?SORTPOM RESUME?>
-
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
                                             <replacetoken>codenvy.com</replacetoken>
                                             <replacevalue>codenvy-stg.com</replacevalue>
                                         </replace>
                                         <tstamp>
-                                            <format property="touch.time" pattern="MM/dd/yyyy hh:mm aa" offset="1" unit="minute" />
+                                            <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                         </tstamp>
                                         <touch datetime="${touch.time}">
                                             <fileset dir="${project.build.directory}/classes/codenvy" />
