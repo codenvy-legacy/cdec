@@ -211,7 +211,12 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
-        String json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(accountName, getCredentialsRep());
+        String json;
+        if (accountName == null) {
+            json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(getCredentialsRep());
+        } else {
+            json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(accountName, getCredentialsRep());
+        }
         return json == null ? null : createDtoFromJson(json, AccountReference.class);
     }
 
