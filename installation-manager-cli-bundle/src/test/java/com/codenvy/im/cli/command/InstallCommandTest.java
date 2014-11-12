@@ -17,10 +17,9 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -29,10 +28,7 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov
@@ -46,7 +42,8 @@ public class InstallCommandTest {
     @Mock
     private CommandSession             commandSession;
 
-    private JacksonRepresentation<UserCredentials> userCredentialsRep;
+    private static final String ANY = "any";
+    private UserCredentials userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
                                        + "    \"artifact\" : \"any\",\n"
@@ -65,28 +62,16 @@ public class InstallCommandTest {
 
         doNothing().when(spyCommand).init();
 
-        UserCredentials credentials = new UserCredentials("token", "accountId");
-        userCredentialsRep = new JacksonRepresentation<>(credentials);
-        doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
-    }
-
-    @Test
-    public void testInstall() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(InstallCommand.DEFAULT_ARTIFACT_NAME, userCredentialsRep);
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
+        userCredentials = new UserCredentials("token", "accountId");
+        doReturn(userCredentials).when(spyCommand).getCredentials();
     }
 
     @Test
     public void testInstallArtifact() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(CDECArtifact.NAME, userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("artifact", ANY);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
@@ -96,10 +81,10 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(CDECArtifact.NAME, "2.0.5", userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("artifact", ANY);
         commandInvoker.argument("version", "2.0.5");
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -110,16 +95,17 @@ public class InstallCommandTest {
     @Test
     public void testInstallWhenUnknownArtifact() throws Exception {
         String serviceErrorResponse = "{\n"
-                                      + "  \"message\" : \"Artifact 'qwerty' not found\",\n"
+                                      + "  \"message\" : \"Artifact 'non-exists' not found\",\n"
                                       + "  \"status\" : \"ERROR\"\n"
                                       + "}";
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install("qwerty", userCredentialsRep);
+
+        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", "qwerty");
+        commandInvoker.argument("artifact", ANY);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, serviceErrorResponse + "\n");
     }
 
@@ -129,12 +115,15 @@ public class InstallCommandTest {
                                       + "  \"message\" : \"Server Error Exception\",\n"
                                       + "  \"status\" : \"ERROR\"\n"
                                       + "}";
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install(InstallCommand.DEFAULT_ARTIFACT_NAME, userCredentialsRep);
+
+        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        commandInvoker.argument("artifact", ANY);
+
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, serviceErrorResponse + "\n");
     }
 
@@ -144,10 +133,12 @@ public class InstallCommandTest {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
+
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(mockInstallationManagerProxy).install(InstallCommand.DEFAULT_ARTIFACT_NAME, userCredentialsRep);
+                .when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", ANY);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -156,7 +147,7 @@ public class InstallCommandTest {
 
     @Test
     public void testListOption() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getVersions(userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getVersions(new JacksonRepresentation<>(userCredentials));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -176,8 +167,9 @@ public class InstallCommandTest {
 
     @Test
     public void testListOptionWhenServiceError() throws Exception {
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost")).when(mockInstallationManagerProxy)
-                                                                                                 .getVersions(userCredentialsRep);
+        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+            .when(mockInstallationManagerProxy)
+            .getVersions(new JacksonRepresentation<>(userCredentials));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -191,7 +183,7 @@ public class InstallCommandTest {
     }
 
     @Test
-    public void testCdecInstall() {
+    public void testInstallStepwisely() {
         // TODO
     }
 }

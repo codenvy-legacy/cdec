@@ -64,12 +64,13 @@ public class TestInstallInstallationManagerServiceImpl {
     }
 
     @Test
-    public void testInstallUpdateSpecificArtifact() throws Exception {
+    public void testInstallArtifact() throws Exception {
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.5");
             }
         }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
+
         doReturn(new LinkedHashMap<Artifact, String>() {
             {
                 put(createArtifact(mockCdecArtifact.getName()), "2.10.4");
@@ -114,34 +115,6 @@ public class TestInstallInstallationManagerServiceImpl {
                                "    \"status\" : \"SUCCESS\"\n" +
                                "  } ],\n" +
                                "  \"status\" : \"OK\"\n" +
-                               "}");
-    }
-
-    @Test
-    public void testInstallErrorIfTryToInstallLowerVersions() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, String>() {
-            {
-                put(mockCdecArtifact, "2.10.5");
-                put(mockInstallManagerArtifact, "1.0.1");
-            }
-        }).when(mockInstallationManager).getUpdates(testCredentials.getToken());
-
-        doThrow(new IllegalStateException("Can not install artifact."))
-                .when(mockInstallationManager).install(testCredentials.getToken(), mockCdecArtifact, "2.10.5", null);
-
-        Request request = new Request()
-            .setUserCredentials(testCredentials)
-            .setArtifactName(mockCdecArtifact.getName())
-            .setVersion("2.10.5");
-        String response = installationManagerService.install(new JacksonRepresentation<>(request));
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
-                               "    \"version\" : \"2.10.5\",\n" +
-                               "    \"status\" : \"FAILURE\"\n" +
-                               "  } ],\n" +
-                               "  \"message\" : \"Can not install artifact.\",\n" +
-                               "  \"status\" : \"ERROR\"\n" +
                                "}");
     }
 

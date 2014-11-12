@@ -21,6 +21,7 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
@@ -130,11 +131,11 @@ public class TestInstallationManager {
                 put(Version.valueOf("1.0.1"), Paths.get("target/download/cdec/1.0.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doNothing().when(cdecArtifact).install(any(Path.class), null);
+        doNothing().when(cdecArtifact).install(any(Path.class), any(InstallOptions.class));
         doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1", null);
-        verify(cdecArtifact).install(any(Path.class), null);
+        verify(cdecArtifact).install(any(Path.class), any(InstallOptions.class));
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -172,7 +173,7 @@ public class TestInstallationManager {
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
-        doNothing().when(installManagerArtifact).install(any(Path.class), null);
+        doNothing().when(installManagerArtifact).install(any(Path.class), any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.2", null);
     }
