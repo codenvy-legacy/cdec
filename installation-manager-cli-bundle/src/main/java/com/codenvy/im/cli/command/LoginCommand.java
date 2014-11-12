@@ -95,25 +95,22 @@ public class LoginCommand extends AbstractIMCommand {
                 return null;
             }
 
-            AccountReference accountReference = getAccountReferenceWhereUserIsOwner();
-            if (accountReference == null || accountReference.getId() == null || accountReference.getId().isEmpty()) {
-                printError(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+            AccountReference accountReference = getAccountReferenceWhereUserIsOwner(accountName);
+            if (accountReference == null) {
+                if (accountName == null) {
+                    printError(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                } else {
+                    printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
+                }
                 preferencesStorage.invalidate();
                 return null;
             }
 
-            preferencesStorage.setAccountId(accountReference.getId());
-
             if (accountName == null) {
                 printSuccess("Your Codenvy account '" + accountReference.getName() + "' has been obtained and will be used to verify subscription.");
-            } else {
-                if (!isValidAccount() || !accountName.equals(accountReference.getName())) {
-                    printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
-                    preferencesStorage.invalidate();
-                    return null;
-                }
             }
 
+            preferencesStorage.setAccountId(accountReference.getId());
             printSuccess(String.format("Login success on remote '%s' [%s] which is used by installation manager commands.",
                                        remoteName,
                                        getRemoteUrlByName(remoteName)));

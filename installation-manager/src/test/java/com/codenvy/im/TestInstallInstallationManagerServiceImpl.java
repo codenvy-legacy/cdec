@@ -46,11 +46,11 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager         mockInstallationManager;
-    private HttpTransport               mockTransport;
-    private Artifact                    mockInstallManagerArtifact;
-    private Artifact                    mockCdecArtifact;
-    private UserCredentials             testCredentials;
+    private InstallationManager mockInstallationManager;
+    private HttpTransport       mockTransport;
+    private Artifact            mockInstallManagerArtifact;
+    private Artifact            mockCdecArtifact;
+    private UserCredentials     testCredentials;
 
     @BeforeMethod
     public void init() {
@@ -230,7 +230,8 @@ public class TestInstallInstallationManagerServiceImpl {
                                                       "    \"status\": \"FAILURE\",\n" +
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +
-                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
+                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', " +
+                                                      "because we don't support downgrade artifacts.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }
@@ -350,7 +351,8 @@ public class TestInstallInstallationManagerServiceImpl {
                                                       "    \"status\": \"FAILURE\",\n" +
                                                       "    \"version\": \"2.10.5\"\n" +
                                                       "  }],\n" +
-                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', because we don't support downgrade artifacts.\",\n" +
+                                                      "  \"message\": \"Can not install the artifact 'cdec:2.10.5', " +
+                                                      "because we don't support downgrade artifacts.\",\n" +
                                                       "  \"status\": \"ERROR\"\n" +
                                                       "}");
     }

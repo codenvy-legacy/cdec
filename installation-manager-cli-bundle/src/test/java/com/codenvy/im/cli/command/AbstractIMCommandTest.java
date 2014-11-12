@@ -105,9 +105,10 @@ public class AbstractIMCommandTest {
         spyCommand.init();
 
         JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
-        doReturn(TEST_ACCOUNT_REFERENCE).when(mockInstallationManagerProxy).getAccountReferenceWhereUserIsOwner(testCredentialsRep);
+        doReturn(TEST_ACCOUNT_REFERENCE).when(mockInstallationManagerProxy).getAccountReferenceWhereUserIsOwner("accountName", testCredentialsRep);
 
-        AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner();
+        AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner("accountName");
+        assertNotNull(accountReference);
         assertEquals(accountReference.getId(), TEST_ACCOUNT_ID);
         assertEquals(accountReference.getName(), TEST_ACCOUNT_NAME);
     }

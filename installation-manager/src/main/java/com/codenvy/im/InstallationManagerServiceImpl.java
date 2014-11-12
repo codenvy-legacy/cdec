@@ -382,7 +382,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String getDownloads(String artifactName,
-                               String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+                               String version,
+                               JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
@@ -547,18 +548,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     @Nullable
-    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+    public String getAccountReferenceWhereUserIsOwner(String accountName,
+                                                      JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport, apiEndpoint, token);
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport, apiEndpoint, token, accountName);
         return accountReference == null ? null : toJson(accountReference);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
-        UserCredentials userCredentials = userCredentialsRep.getObject();
-        return AccountUtils.isValidAccountId(transport, apiEndpoint, userCredentials);
     }
 
     /** {@inheritDoc} */

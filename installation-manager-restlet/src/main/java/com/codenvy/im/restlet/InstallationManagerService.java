@@ -145,17 +145,12 @@ public interface InstallationManagerService extends DigestAuthSupport {
 
     /** Returns account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @POST
-    @Path("account")
+    @Path("account/{accountName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+    public String getAccountReferenceWhereUserIsOwner(@PathParam(value = "accountName") String accountName,
+                                                      JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-
-    /** @see com.codenvy.im.utils.AccountUtils#isValidAccountId(com.codenvy.im.utils.HttpTransport, String, com.codenvy.im.user.UserCredentials) */
-    @POST
-    @Path("validate-account-id")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
     /** Returns the configuration of the Installation Manager */
     @GET

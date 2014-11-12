@@ -153,7 +153,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
 
-        bar.append("]   " + percent + "%     ");
+        bar.append("]   ").append(percent).append("%     ");
         return bar.toString();
     }
 
@@ -210,13 +210,9 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     @Nullable
-    protected AccountReference getAccountReferenceWhereUserIsOwner() throws IOException {
-        String json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(getCredentialsRep());
+    protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
+        String json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(accountName, getCredentialsRep());
         return json == null ? null : createDtoFromJson(json, AccountReference.class);
-    }
-
-    protected boolean isValidAccount() throws IOException {
-        return installationManagerProxy.isValidAccountId(getCredentialsRep());
     }
 
     protected JacksonRepresentation<UserCredentials> getCredentialsRep() {

@@ -174,7 +174,8 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. Start date attribute has wrong format: 2014.11.21\",\n" +
+                                                      "  \"message\": \"Can't validate subscription. Start date attribute has wrong format: 2014.11" +
+                                                      ".21\",\n" +
                                                       "  \"status\": \"ERROR\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");
@@ -193,7 +194,8 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(getPrettyPrintingJson(response), "{\n" +
-                                                      "  \"message\": \"Can't validate subscription. End date attribute has wrong format: 2015.11.21\",\n" +
+                                                      "  \"message\": \"Can't validate subscription. End date attribute has wrong format: 2015.11" +
+                                                      ".21\",\n" +
                                                       "  \"status\": \"ERROR\",\n" +
                                                       "  \"subscription\": \"OnPremises\"\n" +
                                                       "}");

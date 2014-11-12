@@ -92,7 +92,8 @@ public class LoginCommandTest {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
-        doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class)).when(spyCommand).getAccountReferenceWhereUserIsOwner();
+        doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
+                .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -105,26 +106,7 @@ public class LoginCommandTest {
     }
 
     @Test
-    public void testLoginWithAccountId() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("username", TEST_USER);
-        commandInvoker.argument("password", TEST_USER_PASSWORD);
-        commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
-
-        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
-        doReturn(true).when(spyCommand).isValidAccount();
-        doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class)).when(spyCommand).getAccountReferenceWhereUserIsOwner();
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Login success on remote '%s' [%s] which is used by installation manager commands.\n",
-                                           UPDATE_SERVER_REMOTE_NAME,
-                                           UPDATE_SERVER_URL));
-        assertFalse(output.contains(TEST_USER_ACCOUNT_NAME));
-    }
-
-    @Test
-    public void testFailLogin() throws Exception {
+    public void testLoginFailed() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
@@ -138,14 +120,14 @@ public class LoginCommandTest {
     }
 
     @Test
-    public void testFailGetAccountId() throws Exception {
+    public void testLoginFailedNoAppropriateAccountWasFound() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
-        doReturn(null).when(spyCommand).getAccountReferenceWhereUserIsOwner();
+        doReturn(null).when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -153,7 +135,42 @@ public class LoginCommandTest {
     }
 
     @Test
-    public void testLoginWhenServiceThrowsError() throws Exception {
+    public void testLoginWithAccountId() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+        commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
+
+        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
+                .when(spyCommand).getAccountReferenceWhereUserIsOwner(TEST_USER_ACCOUNT_NAME);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, String.format("Login success on remote '%s' [%s] which is used by installation manager commands.\n",
+                                           UPDATE_SERVER_REMOTE_NAME,
+                                           UPDATE_SERVER_URL));
+        assertFalse(output.contains(TEST_USER_ACCOUNT_NAME));
+    }
+
+    @Test
+    public void testLoginFailedWithAccountId() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+        commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
+
+        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(null).when(spyCommand).getAccountReferenceWhereUserIsOwner(TEST_USER_ACCOUNT_NAME);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, String.format("Account '%s' is not yours or may be you aren't owner of this account.\n", TEST_USER_ACCOUNT_NAME));
+    }
+
+
+    @Test
+    public void testLoginFailedWhenServiceThrowsError() throws Exception {
         String expectedOutput = "{"
                                   + "message: \"Server Error Exception\","
                                   + "status: \"ERROR\""
@@ -185,7 +202,7 @@ public class LoginCommandTest {
     }
 
     @Test
-    public void testFailLoginToSpecificRemote() throws Exception {
+    public void testLoginFailedToSpecificRemote() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--remote", ANOTHER_REMOTE_NAME);
         commandInvoker.argument("username", TEST_USER);

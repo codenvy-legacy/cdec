@@ -34,6 +34,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -83,59 +85,69 @@ public class TestAccountUtils {
     @Test
     public void testGetAccountIdWhereUserIsOwner() throws IOException {
         when(mockTransport.doGet("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                                            + "roles:[\"account/member\"],"
-                                                                                            + "accountReference:{id:\"member-id\"}"
-                                                                                            + "},{"
-                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                                            + "accountReference:{id:\"" + testCredentials.getAccountId() + "\",name:\"accountName\"}"
-                                                                                            + "},{"
-                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                                            + "accountReference:{id:\"another-id\"}"
-                                                                                            + "}]");
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", testCredentials.getToken());
-        assertEquals(accountReference.getId(), testCredentials.getAccountId());
-        assertEquals(accountReference.getName(), "accountName");
+                                                                                     + "roles:[\"account/member\"],"
+                                                                                     + "accountReference:{id:\"member-id\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                     + "accountReference:{id:\"id1\",name:\"name1\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                     + "accountReference:{id:\"id2\",name:\"name2\"}"
+                                                                                     + "}]");
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", testCredentials.getToken(), null);
+        assertNotNull(accountReference);
+        assertEquals(accountReference.getId(), "id1");
+        assertEquals(accountReference.getName(), "name1");
     }
 
     @Test
-    public void testValidateAccountIdTrue() throws IOException {
+    public void testGetAccountIdWhereUserIsOwnerReturnNull() throws IOException {
         when(mockTransport.doGet("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                                            + "roles:[\"account/member\"],"
-                                                                                            + "accountReference:{id:\"member-id\"}"
-                                                                                            + "},{"
-                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                                            + "accountReference:{id:\"" +
-                                                                                            testCredentials.getAccountId() + "\"}"
-                                                                                            + "},{"
-                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                                            + "accountReference:{id:\"another-id\"}"
-                                                                                            + "}]");
-
-        assertTrue(AccountUtils.isValidAccountId(mockTransport, "", testCredentials));
+                                                                                     + "roles:[\"account/member\"],"
+                                                                                     + "accountReference:{id:\"member-id\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"account/member \"],"
+                                                                                     + "accountReference:{id:\"id1\",name:\"name1\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"account/member\"],"
+                                                                                     + "accountReference:{id:\"id2\",name:\"name2\"}"
+                                                                                     + "}]");
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", testCredentials.getToken(), null);
+        assertNull(accountReference);
     }
 
     @Test
-    public void testValidateAccountIdFalseNoValidAccountId() throws IOException {
+    public void testGetAccountIdWhereUserIsOwnerSpecificAccountName() throws IOException {
         when(mockTransport.doGet("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                                            + "roles:[\"account/member\"],"
-                                                                                            + "accountReference:{id:\"member-id\"}"
-                                                                                            + "},{"
-                                                                                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                                            + "accountReference:{id:\"another-id\"}"
-                                                                                            + "}]");
-
-        assertFalse(AccountUtils.isValidAccountId(mockTransport, "", testCredentials));
+                                                                                     + "roles:[\"account/member\"],"
+                                                                                     + "accountReference:{id:\"member-id\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                     + "accountReference:{id:\"id1\",name:\"name1\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                     + "accountReference:{id:\"id2\",name:\"name2\"}"
+                                                                                     + "}]");
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", testCredentials.getToken(), "name2");
+        assertNotNull(accountReference);
+        assertEquals(accountReference.getId(), "id2");
+        assertEquals(accountReference.getName(), "name2");
     }
 
     @Test
-    public void testValidateAccountIdFalseNoValidRoles() throws IOException {
+    public void testGetAccountIdWhereUserIsOwnerSpecificAccountNameReturnNullIfAccountWasNotFound() throws IOException {
         when(mockTransport.doGet("/account", testCredentials.getToken())).thenReturn("[{"
-                                                                                            + "roles:[\"account/member\"],"
-                                                                                            + "accountReference:{id:\"" +
-                                                                                            testCredentials.getAccountId() + "\"}"
-                                                                                            + "}]");
-
-        assertFalse(AccountUtils.isValidAccountId(mockTransport, "", testCredentials));
+                                                                                     + "roles:[\"account/member\"],"
+                                                                                     + "accountReference:{id:\"member-id\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                     + "accountReference:{id:\"id1\",name:\"name1\"}"
+                                                                                     + "},{"
+                                                                                     + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                                     + "accountReference:{id:\"id2\",name:\"name2\"}"
+                                                                                     + "}]");
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", testCredentials.getToken(), "name3");
+        assertNull(accountReference);
     }
 
     @Test
@@ -154,6 +166,7 @@ public class TestAccountUtils {
                                                                 + "/subscriptions\"}],"
                                                                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
                                                                 + "}]");
+
         when(mockTransport.doGet("/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
                 .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", testCredentials.getToken()))

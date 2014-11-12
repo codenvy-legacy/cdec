@@ -181,7 +181,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id2");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -220,7 +220,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id3");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -259,7 +259,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id5");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -274,7 +274,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id6");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -302,7 +302,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id7");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -322,7 +322,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id8");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -373,7 +373,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id10");
             info = DownloadStatusInfo.valueOf(response);
         } while (info.getDownloadResult() == null);
@@ -466,7 +466,8 @@ public class TestDownloadInstallationManagerServiceImpl {
     public void testGetDownloadsOlderVersionInstallManagerArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0-SNAPSHOT"), Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
+                put(Version.valueOf("1.0.0-SNAPSHOT"),
+                    Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
@@ -486,7 +487,8 @@ public class TestDownloadInstallationManagerServiceImpl {
     public void testGetDownloadsNewVersionInstallManagerArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.0.0-SNAPSHOT"), Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
+                put(Version.valueOf("2.0.0-SNAPSHOT"),
+                    Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 

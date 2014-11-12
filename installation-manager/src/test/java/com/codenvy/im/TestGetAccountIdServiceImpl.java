@@ -62,52 +62,78 @@ public class TestGetAccountIdServiceImpl { //TODO
     }
 
     @Test
-    public void testGetAccountId() throws Exception {
+    public void testGetAccountReference() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
                 .thenReturn("[{"
                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
         assertTrue(response.contains("\"name\":\"" + ACCOUNT_NAME + "\""));
         assertTrue(response.contains("\"id\":\"" + TEST_ACCOUNT_ID + "\""));
         assertTrue(response.contains("\"links\":[]"));
     }
 
     @Test
-    public void testGetAccountIdFromSeveral() throws Exception {
+    public void testGetAccountReferenceWithSpecificName() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(ACCOUNT_NAME, userCredentialsRep);
+        assertTrue(response.contains("\"name\":\"" + ACCOUNT_NAME + "\""));
+        assertTrue(response.contains("\"id\":\"" + TEST_ACCOUNT_ID + "\""));
+        assertTrue(response.contains("\"links\":[]"));
+    }
+
+    @Test
+    public void testGetAccountReferenceWithSpecificNameReturnNullIfAccountWasNotFound() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner("some name", userCredentialsRep);
+        assertNull(response);
+    }
+
+    @Test
+    public void testGetAccountReferenceFromSeveral() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
                 .thenReturn("[{"
                             + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"another-account-id\"}"
-                        + "}]");
+                            + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
         assertTrue(response.contains("\"name\":\"" + ACCOUNT_NAME + "\""));
         assertTrue(response.contains("\"id\":\"" + TEST_ACCOUNT_ID + "\""));
         assertTrue(response.contains("\"links\":[]"));
     }
 
     @Test
-    public void testGetAccountIdFromEmpty() throws Exception {
+    public void testGetAccountReferenceReturnNullIfAccountWasNotFound() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
                 .thenReturn("[{"
-                        + "roles:[\"account/member\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
-                        + "}]");
+                            + "roles:[\"account/member\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
+                            + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
         assertNull(response);
     }
 
     @Test(expectedExceptions = IOException.class)
-    public void testGetAccountIdErrorIfAuthenticationFailed() throws Exception {
+    public void testGetAccountReferenceErrorIfAuthenticationFailed() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        
-        installationManagerService.getAccountReferenceWhereUserIsOwner(userCredentialsRep);
+
+        installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
     }
 }

@@ -35,7 +35,7 @@ public class DownloadDescriptor {
     private final Map<Path, Long>         artifacts;
     private final long                    totalSize;
     private final AtomicReference<String> downloadResult;
-    private final Thread downloadThread;
+    private final Thread                  downloadThread;
 
     public DownloadDescriptor(Map<Path, Long> artifacts, Thread downloadThread) {
         this.downloadThread = downloadThread;

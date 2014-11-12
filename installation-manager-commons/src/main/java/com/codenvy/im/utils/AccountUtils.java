@@ -42,8 +42,8 @@ import static com.codenvy.im.utils.Commons.getProperException;
  * @author Dmytro Nochevnov
  */
 public class AccountUtils {
-    public static final  String           ACCOUNT_OWNER_ROLE       = "account/owner";
-    public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
+    public static final String ACCOUNT_OWNER_ROLE       = "account/owner";
+    public static final String SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
 
     /** Utility class so there is no public constructor. */
     private AccountUtils() {
@@ -127,44 +127,25 @@ public class AccountUtils {
 
 
     /**
-     * This method iterates over all user's accounts and returns the first one where user in question is owner.
-     *
-     * @return AccountReference
+     * @return the specific account where user has {@link #ACCOUNT_OWNER_ROLE} role or the first one if accountName parameter is null.
      * @throws IOException
      */
     @Nullable
     public static AccountReference getAccountReferenceWhereUserIsOwner(HttpTransport transport,
-                                                      String apiEndpoint,
-                                                      String userToken) throws IOException {
-        List<MemberDescriptor> members =
-                createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userToken),
-                                      MemberDescriptor.class);
+                                                                       String apiEndpoint,
+                                                                       String userToken,
+                                                                       @Nullable String accountName) throws IOException {
+
+        List<MemberDescriptor> members = createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userToken),
+                                                               MemberDescriptor.class);
 
         for (MemberDescriptor m : members) {
-            if (hasRole(m, ACCOUNT_OWNER_ROLE)) {
+            if (hasRole(m, ACCOUNT_OWNER_ROLE) && (accountName == null || accountName.equals(m.getAccountReference().getName()))) {
                 return m.getAccountReference();
             }
         }
 
         return null;
-    }
-
-
-    /** Checks if user is owner of specific account. */
-    public static boolean isValidAccountId(HttpTransport transport,
-                                           String apiEndpoint,
-                                           UserCredentials userCredentials) throws IOException {
-        List<MemberDescriptor> members =
-                createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
-                                      MemberDescriptor.class);
-
-        for (MemberDescriptor m : members) {
-            if (userCredentials.getAccountId().equals(getAccountId(m)) && hasRole(m, ACCOUNT_OWNER_ROLE)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Nullable

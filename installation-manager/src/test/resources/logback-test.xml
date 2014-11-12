@@ -42,18 +42,18 @@
             <onMismatch>DENY</onMismatch>
         </filter>
     </appender>
-    
+
     <root level="ERROR">
         <appender-ref ref="stdout"/>
     </root>
-    
+
     <root level="INFO">
-	    <appender-ref ref="file"/>
-	</root>
-    
+        <appender-ref ref="file"/>
+    </root>
+
     <logger name="com.codenvy.im" level="INFO"/>
-    
-    <!-- setup logging of restlet server -->    
+
+    <!-- setup logging of restlet server -->
     <appender name="restlet-log-file" class="ch.qos.logback.core.FileAppender">
         <File>target/restlet.log</File>
         <encoder>
@@ -61,6 +61,6 @@
         </encoder>
     </appender>
     <logger name="LogService" additivity="false" level="INFO">
-        <appender-ref ref="restlet-log-file" />
+        <appender-ref ref="restlet-log-file"/>
     </logger>
 </configuration>
