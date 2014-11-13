@@ -24,22 +24,23 @@ import com.codenvy.im.restlet.InstallationManager;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.size;
-
 /** @author Alexander Reshetnyak */
-public class DownloadingDescriptor {
+public class DownloadDescriptor {
 
-    private final Map<Path, Long>           artifacts;
-    private final long                      totalSize;
+    private final Map<Path, Long>         artifacts;
+    private final long                    totalSize;
     private final AtomicReference<Response> downloadResult;
+    private final Thread                    downloadThread;
 
-    public DownloadingDescriptor(Map<Path, Long> artifacts) {
-        this.artifacts = artifacts;
+    public DownloadDescriptor(Map<Path, Long> artifacts, Thread downloadThread) {
+        this.downloadThread = downloadThread;
+        this.artifacts = new ConcurrentHashMap<>(artifacts);
         this.downloadResult = new AtomicReference<>();
 
         long tSize = 0;
@@ -54,20 +55,15 @@ public class DownloadingDescriptor {
         return totalSize;
     }
 
-    /** @return the size of downloaded artifacts */
-    public long getDownloadedSize() throws IOException {
-        long downloadedSize = 0;
-        for (Path path : artifacts.keySet()) {
-            if (exists(path)) {
-                downloadedSize += size(path);
-            }
-        }
-
-        return downloadedSize;
+    /** @return the downloads paths for artifacts */
+    public Collection<Path> getArtifactPaths() {
+        return artifacts.keySet();
     }
 
     /** Factory method */
-    public static DownloadingDescriptor createDescriptor(Map<Artifact, String> artifacts, InstallationManager manager) throws IOException {
+    public static DownloadDescriptor createDescriptor(Map<Artifact, String> artifacts,
+                                                      InstallationManager manager,
+                                                      Thread downloadThread) throws IOException {
         Map<Path, Long> m = new LinkedHashMap<>();
 
         for (Map.Entry<Artifact, String> e : artifacts.entrySet()) {
@@ -80,7 +76,7 @@ public class DownloadingDescriptor {
             m.put(pathToBinaries, binariesSize);
         }
 
-        return new DownloadingDescriptor(m);
+        return new DownloadDescriptor(m, downloadThread);
     }
 
     /** @return the downloading status. */
@@ -101,5 +97,10 @@ public class DownloadingDescriptor {
     /** Indicates if downloading finished or didn't. */
     public boolean isDownloadingFinished() {
         return downloadResult.get() != null;
+    }
+
+    /** Get thread which downloading artifacts. */
+    public Thread getDownloadThread() {
+        return downloadThread;
     }
 }

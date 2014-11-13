@@ -43,7 +43,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -57,6 +56,8 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class TestDownloadInstallationManagerServiceImpl {
+    private static final String TEST_TOKEN = "auth token";
+
     private InstallationManagerService installationManagerService;
 
     private InstallationManager                    mockInstallationManager;
@@ -71,7 +72,7 @@ public class TestDownloadInstallationManagerServiceImpl {
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
 
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
@@ -90,7 +91,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         transport = mock(HttpTransport.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
-        testCredentials = new UserCredentials("auth token", "accountId");
+        testCredentials = new UserCredentials(TEST_TOKEN, "accountId");
     }
 
     @Test
@@ -171,7 +172,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id2");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -210,7 +211,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id3");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -249,7 +250,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id5");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -263,7 +264,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id6");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -291,7 +292,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id7");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -311,7 +312,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id8");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -362,7 +363,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         DownloadStatusInfo info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
-            
+
             String response = installationManagerService.downloadStatus("id10");
             info = Response.fromJson(response).getDownloadInfo();
         } while (info.getDownloadResult() == null);
@@ -376,10 +377,16 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloads() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
+        final Artifact spyCdecArtifact = spy(cdecArtifact);
+        doReturn("1.0.1").when(spyCdecArtifact).getInstalledVersion(TEST_TOKEN);
+
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(spyCdecArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
                 put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
+            }});
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
@@ -389,11 +396,16 @@ public class TestDownloadInstallationManagerServiceImpl {
                                "    \"artifact\" : \"cdec\",\n" +
                                "    \"version\" : \"1.0.1\",\n" +
                                "    \"file\" : \"target/file1\",\n" +
-                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
+                               "    \"status\" : \"DOWNLOADED\"\n" +
                                "  }, {\n" +
                                "    \"artifact\" : \"cdec\",\n" +
                                "    \"version\" : \"1.0.2\",\n" +
                                "    \"file\" : \"target/file2\",\n" +
+                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
+                               "  }, {\n" +
+                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"version\" : \"2.0.0\",\n" +
+                               "    \"file\" : \"target/file3\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
                                "  } ],\n" +
                                "  \"status\" : \"OK\"\n" +
@@ -402,7 +414,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloadsSpecificArtifact() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
                 put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
@@ -425,34 +437,11 @@ public class TestDownloadInstallationManagerServiceImpl {
     }
 
     @Test
-    public void testGetDownloadsSpecificVersionCDECArtifact() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
-                put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
-            }});
-            put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
-            }});
-        }}).when(mockInstallationManager).getDownloadedArtifacts();
-
-        String response = installationManagerService.getDownloads(cdecArtifact.getName(), "1.0.1", userCredentialsRep);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
-                               "    \"version\" : \"1.0.1\",\n" +
-                               "    \"file\" : \"target/file1\",\n" +
-                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
-                               "  } ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
-    }
-
-    @Test
     public void testGetDownloadsOlderVersionInstallManagerArtifact() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0-SNAPSHOT"), Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
+                put(Version.valueOf("1.0.0-SNAPSHOT"),
+                    Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
@@ -470,9 +459,10 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloadsNewVersionInstallManagerArtifact() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.0.0-SNAPSHOT"), Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
+                put(Version.valueOf("2.0.0-SNAPSHOT"),
+                    Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
@@ -491,7 +481,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("1.0.1"), Paths.get("target/file1"));
                 put(Version.valueOf("1.0.2"), Paths.get("target/file2"));
@@ -524,7 +514,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         doReturn(50L).when(mockInstallationManager).getBinariesSize(installManagerArtifact, "1.0.1");
 
         // mark IM as already downloaded artifact
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("1.0.1"), Paths.get("im.zip"));
             }});

@@ -27,12 +27,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,11 +39,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
+import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 
@@ -74,6 +77,19 @@ public class Commons {
         }
     }
 
+    /** Copies input stream to output stream, and stop copying if current thread was interrupted. */
+    public static void copyInterruptable(InputStream in, OutputStream out) throws CopyStreamInterruptedException, IOException {
+        byte[] buffer = new byte[8196];
+        int length;
+        while ((length = in.read(buffer)) != -1) {
+            if (currentThread().isInterrupted()) {
+                throw new CopyStreamInterruptedException("The copying was interrupted.");
+            }
+
+            out.write(buffer, 0, length);
+        }
+    }
+
     /** Adds query parameter to url. */
     public static String addQueryParam(String path, String key, String value) {
         return path + (path.contains("?") ? "&" : "?") + key + "=" + value;
@@ -89,7 +105,7 @@ public class Commons {
         return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
     }
 
-    /** Translates JSON to object. TODO add test */
+    /** Translates JSON to object. */
     @Nullable
     public static <T> T fromJson(String json, Class<T> clazz) throws JsonParseException {
         return JsonHelper.fromJson(json, clazz, null);
@@ -156,15 +172,6 @@ public class Commons {
         return latestVersion.toString();
     }
 
-    /**
-     * Convert one-line json string to pretty formatted multiline string.
-     * @throws JSONException
-     */
-    public static String getPrettyPrintingJson(String json) throws JSONException {
-        JSONObject obj = new JSONObject(json);
-        return obj.toString(2);
-    }
-
     /** Extract server url from url with path */
     public static String extractServerUrl(String urlString) {
         try {
@@ -225,6 +232,21 @@ public class Commons {
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+
+    /** Set of artifacts to keep them in the specific order. */
+    public static class ArtifactsSet extends TreeSet<Artifact> {
+        public ArtifactsSet(Collection<Artifact> s) {
+            super(new Comparator<Artifact>() {
+                @Override
+                public int compare(Artifact o1, Artifact o2) {
+                    return o2.getPriority() - o1.getPriority();
+                }
+            });
+
+            addAll(s);
         }
     }
 }

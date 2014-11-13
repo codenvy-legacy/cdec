@@ -25,22 +25,32 @@ import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.installer.Installer;
 import com.codenvy.im.utils.HttpTransport;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 
+import static org.mockito.Matchers.endsWith;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
-/**
- * @author Dmytro Nochevnov
- */
-public class CDECArtifactTest {
+/** @author Anatoliy Bazko
+ *  @author Dmytro Nochevnov
+ * */
+public class TestCDECArtifact {
+    private CDECArtifact spyCdecArtifact;
+
+    @Mock
+    private HttpTransport mockTransport;
+
     @Mock
     static Command mockTestCommand1;
 
@@ -52,20 +62,18 @@ public class CDECArtifactTest {
     static final String TEST_COMMAND_1 = "test command 1";
     static final String TEST_COMMAND_2 = "test command 2";
 
-    static final Installer.Type testType = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
+    static final Installer.Type testType    = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
     static final InstallOptions testOptions = new InstallOptions().setType(testType);
 
-    CDECArtifact spyCdecArtifact;
-
-    @BeforeTest
-    public void setUp() {
+    @BeforeMethod
+    public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         doReturn(TEST_COMMAND_1).when(mockTestCommand1).toString();
         doReturn(TEST_COMMAND_2).when(mockTestCommand2).toString();
         Installer testInstaller = new TestInstaller(testPath, testType);
 
-        spyCdecArtifact = spy(new CDECArtifact("", mock(HttpTransport.class)));
+        spyCdecArtifact = spy(new CDECArtifact("", mockTransport));
         doReturn(testInstaller).when(spyCdecArtifact).createInstaller(testPath, testOptions);
     }
 
@@ -86,7 +94,7 @@ public class CDECArtifactTest {
 
             try {
                 spyCdecArtifact.install(testPath, installOptions);
-            } catch(InstallInProgressException ipe) {
+            } catch (InstallInProgressException ipe) {
                 spyCdecArtifact.install(testPath, installOptions);
                 return;
             }
@@ -108,5 +116,13 @@ public class CDECArtifactTest {
                 add(mockTestCommand2);
             }};
         }
+    }
+
+    @Test
+    public void testInstalledVersion() throws Exception {
+        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{ideVersion:3.2.0-SNAPSHOT}");
+
+        String version = spyCdecArtifact.getInstalledVersion("authToken");
+        assertEquals(version, "3.2.0-SNAPSHOT");
     }
 }

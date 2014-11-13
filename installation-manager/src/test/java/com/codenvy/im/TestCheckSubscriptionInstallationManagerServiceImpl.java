@@ -52,7 +52,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
     }
 
     public void initMocks() {
@@ -71,28 +71,28 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(response, "{\n" +
-                                                      "  \"subscription\" : \"OnPremises\",\n" +
-                                                      "  \"message\" : \"Subscription is valid\",\n" +
-                                                      "  \"status\" : \"OK\"\n" +
-                                                      "}");
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Subscription is valid\",\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test
     public void testCheckSubscriptionErrorIfSubscriptionIsAbsent() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[]");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -107,7 +107,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfAuthenticationFailed() throws Exception {
-        doThrow(new AuthenticationException()).when(transport).doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token"));
+        doThrow(new AuthenticationException()).when(transport).doGet(endsWith("account/accountId/subscriptions"), eq("auth token"));
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
@@ -126,11 +126,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{endDate:\"" + endDate + "\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -145,30 +145,30 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfEndDateIsAbsent() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(response, "{\n" +
-                                                      "  \"subscription\" : \"OnPremises\",\n" +
-                                                      "  \"message\" : \"Can't validate subscription. Start date attribute is absent\",\n" +
-                                                      "  \"status\" : \"ERROR\"\n" +
-                                                      "}");
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Can't validate subscription. Start date attribute is absent\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 
     @Test
     public void testCheckSubscriptionErrorIfStartDateIsWrongFormat() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{startDate:\"2014.11.21\",endDate:\"21/11/2015\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
@@ -183,20 +183,20 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
 
     @Test
     public void testCheckSubscriptionErrorIfEndDateIsWrongFormat() throws Exception {
-        when(transport.doGetRequest(endsWith("account"), eq("auth token")))
+        when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGetRequest(endsWith("account/accountId/subscriptions"), eq("auth token")))
+        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGetRequest(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
+        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
                 .thenReturn("{startDate:\"11/21/2014\",endDate:\"2015.11.21\"}");
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token", "accountId"));
 
         String response = installationManagerService.checkSubscription("OnPremises", userCredentialsRep);
         assertEquals(response, "{\n" +
-                                                      "  \"subscription\" : \"OnPremises\",\n" +
-                                                      "  \"message\" : \"Can't validate subscription. End date attribute has wrong format: 2015.11.21\",\n" +
-                                                      "  \"status\" : \"ERROR\"\n" +
-                                                      "}");
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Can't validate subscription. End date attribute has wrong format: 2015.11.21\",\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
     }
 }

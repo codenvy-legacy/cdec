@@ -20,7 +20,6 @@ package com.codenvy.im.utils;
 import com.codenvy.commons.lang.IoUtil;
 import com.google.inject.Inject;
 
-import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,11 +33,16 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.codenvy.commons.lang.IoUtil.deleteRecursive;
+import static com.codenvy.im.utils.Commons.copyInterruptable;
+import static java.nio.file.Files.newOutputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -58,29 +62,43 @@ public class HttpTransport {
     }
 
     /**
-     * Performs GET request.
+     * Performs OPTION request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
-    public String doGetRequest(String path) throws IOException {
-        return doGetRequest(path, null);
+    public String doOption(String path, String accessToken) throws IOException {
+        return request(path, "OPTIONS", MediaType.APPLICATION_JSON, accessToken);
     }
 
     /**
      * Performs GET request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
-    public String doGetRequest(String path, String accessToken) throws IOException {
+    public String doGet(String path) throws IOException {
+        return doGet(path, null);
+    }
+
+    /**
+     * Performs GET request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doGet(String path, String accessToken) throws IOException {
         return request(path, "GET", MediaType.APPLICATION_JSON, accessToken);
     }
 
     private String request(String path, String method, String expectedContentType, @Nullable String accessToken) throws IOException {
-        final HttpURLConnection conn = openConnection(path, accessToken);
+        HttpURLConnection conn = null;
 
         try {
+            conn = openConnection(path, accessToken);
             request(method, expectedContentType, conn);
             return IoUtil.readAndCloseQuietly(conn.getInputStream());
+        } catch (SocketTimeoutException e) { // catch exception and throw a new one with proper message
+            URL url = new URL(path);
+            throw new HttpException(-1, String.format("Can't establish connection with %s://%s", url.getProtocol(), url.getHost()));
         } finally {
-            conn.disconnect();
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
@@ -127,8 +145,11 @@ public class HttpTransport {
                 }
 
                 Path file = destinationDir.resolve(fileName);
-                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
-                    IOUtils.copy(in, out);
+                try (OutputStream out = new BufferedOutputStream(newOutputStream(file))) {
+                    copyInterruptable(in, out);
+                } catch (CopyStreamInterruptedException e) {
+                    deleteRecursive(destinationDir.toFile());
+                    throw new IOException("Downloading was canceled");
                 }
 
                 return file;
@@ -162,7 +183,7 @@ public class HttpTransport {
     private String getErrorMessageIfPossible(String json) {
         try {
             JSONObject jsonResponse = new JSONObject(json);
-            String message = (String)jsonResponse.get(MESSAGE.toLowerCase());
+            String message = (String)jsonResponse.get(MESSAGE);
 
             return message != null ? message : json;
         } catch (JSONException e) {

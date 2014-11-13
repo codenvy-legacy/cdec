@@ -41,7 +41,7 @@ public class TestArtifactPropertiesUtils {
     
     @Test
     public void testAuthenticationRequiredProperty() throws IOException, JsonParseException {
-        when(mockTransport.doGetRequest("/repository/properties/installation-manager/1.0.1"))
+        when(mockTransport.doGet("/repository/properties/installation-manager/1.0.1"))
         .thenReturn("{"
             + "\"artifact\":\"installation-manager\","
             + "\"version\":\"2.0.4\","
@@ -54,7 +54,7 @@ public class TestArtifactPropertiesUtils {
     
     @Test
     public void testSubsctiptionProperty() throws IOException, JsonParseException {
-        when(mockTransport.doGetRequest("/repository/properties/installation-manager/1.0.1"))
+        when(mockTransport.doGet("/repository/properties/installation-manager/1.0.1"))
         .thenReturn("{"
             + "\"artifact\":\"installation-manager\","
             + "\"version\":\"2.0.4\","

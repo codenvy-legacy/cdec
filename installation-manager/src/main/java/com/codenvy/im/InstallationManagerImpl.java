@@ -21,6 +21,7 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.restlet.InstallationManager;
@@ -44,7 +45,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -52,13 +52,13 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
+import static com.codenvy.im.utils.Commons.ArtifactsSet;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
@@ -101,7 +101,7 @@ public class InstallationManagerImpl implements InstallationManager {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
-        this.artifacts = new TreeSet<>(artifacts); // keep order
+        this.artifacts = new ArtifactsSet(artifacts); // keep order
 
         try {
             createAndSetDownloadDir(Paths.get(downloadDir));
@@ -203,8 +203,23 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
+    public void checkEnoughDiskSpace(long requiredSize) throws IOException {
+        long freeSpace = downloadDir.toFile().getFreeSpace();
+        if (freeSpace < requiredSize) {
+            throw new IOException(String.format("Not enough disk space. Required %d bytes but available only %d bytes", requiredSize, freeSpace));
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void checkIfConnectionIsAvailable() throws IOException {
+        transport.doGet(combinePaths(updateEndpoint, "repository/properties/" + InstallManagerArtifact.NAME));
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Map<String, String> getConfig() {
-        return new HashMap<String, String>() {{
+        return new LinkedHashMap<String, String>() {{
             put("download directory", downloadDir.toString());
             put("base url", extractServerUrl(updateEndpoint));
 
@@ -218,6 +233,7 @@ public class InstallationManagerImpl implements InstallationManager {
         }};
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setConfig(InstallationManagerConfig config) throws IOException {
         if (config.getProxyPort() != null) {
@@ -276,7 +292,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     @Override
     public Map<Artifact, SortedMap<Version, Path>> getDownloadedArtifacts() throws IOException {
-        Map<Artifact, SortedMap<Version, Path>> downloaded = new HashMap<>(artifacts.size());
+        Map<Artifact, SortedMap<Version, Path>> downloaded = new LinkedHashMap<>(artifacts.size());
 
         for (Artifact artifact : artifacts) {
             Path artifactDir = downloadDir.resolve(artifact.getName());
@@ -335,7 +351,7 @@ public class InstallationManagerImpl implements InstallationManager {
         return newVersions;
     }
 
-    protected Path getDownloadDirectory(Artifact artifact, String version) {
+    private Path getDownloadDirectory(Artifact artifact, String version) {
         return downloadDir.resolve(artifact.getName()).resolve(version);
     }
 
@@ -359,7 +375,7 @@ public class InstallationManagerImpl implements InstallationManager {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
         Map m = null;
         try {
-            m = fromJson(transport.doGetRequest(requestUrl),
+            m = fromJson(transport.doGet(requestUrl),
                          Map.class,
                          new TypeLiteral<Map<String, String>>() {}.getType());
         } catch (JsonParseException e) {
@@ -374,7 +390,7 @@ public class InstallationManagerImpl implements InstallationManager {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
         Map m = null;
         try {
-            m = fromJson(transport.doGetRequest(requestUrl),
+            m = fromJson(transport.doGet(requestUrl),
                          Map.class,
                          new TypeLiteral<Map<String, String>>() {}.getType());
         } catch (JsonParseException e) {

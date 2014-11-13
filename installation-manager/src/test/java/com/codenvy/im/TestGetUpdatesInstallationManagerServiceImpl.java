@@ -47,15 +47,15 @@ import static org.testng.Assert.assertEquals;
 public class TestGetUpdatesInstallationManagerServiceImpl {
     private InstallationManagerService installationManagerService;
 
-    private InstallationManager         mockInstallationManager;
-    private HttpTransport               transport;
-    private Artifact                    installManagerArtifact;
-    private Artifact                    cdecArtifact;
+    private InstallationManager mockInstallationManager;
+    private HttpTransport       transport;
+    private Artifact            installManagerArtifact;
+    private Artifact            cdecArtifact;
 
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
     }
 
     public void initMocks() {
@@ -88,13 +88,13 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
                                "  \"status\" : \"OK\"\n" +
                                "}");
     }
-    
+
     @Test
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
 
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token"));   
-        
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token"));
+
         String response = installationManagerService.getUpdates(userCredentialsRep);
         assertEquals(response, "{\n" +
                                "  \"message\" : \"Authentication error. Authentication token might be expired or invalid.\",\n" +
@@ -105,7 +105,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     @Test
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
-        
+
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
 
         String response = installationManagerService.getUpdates(userCredentialsRep);
@@ -119,9 +119,9 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     @Test
     public void testGetUpdatesCatchesException() throws Exception {
         when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
-        
-        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token")); 
-        
+
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("incorrect-token"));
+
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
         assertEquals(response, "{\n" +

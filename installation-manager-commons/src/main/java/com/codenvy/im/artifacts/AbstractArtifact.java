@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.utils.Version;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -107,8 +109,12 @@ public abstract class AbstractArtifact implements Artifact {
         LOG.info("Unpacked " + pathToBinaries + " into " + unpackToDir);
     }
 
-    /**
-     * @return path where artifact located
-     */
+    /** {@inheritDoc} */
+    @Override
+    public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
+        return Version.valueOf(getInstalledVersion(accessToken)).compareTo(versionToInstall) < 0;
+    }
+
+    /** @return path where artifact located */
     protected abstract Path getInstalledPath() throws URISyntaxException;
 }

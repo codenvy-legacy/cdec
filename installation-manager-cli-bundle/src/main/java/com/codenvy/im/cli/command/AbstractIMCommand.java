@@ -17,10 +17,12 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
+import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.restlet.InstallationManagerService;
@@ -41,6 +43,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -85,10 +88,20 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Override
     public void init() {
         super.init();
+        initDtoFactory();
         preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForUpdateServer());
         validateIfUserLoggedIn();
     }
 
+    private void initDtoFactory() {
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+            DtoFactory.getInstance();
+        } finally {
+            Thread.currentThread().setContextClassLoader(tccl);
+        }
+    }
 
     /**
      * @throws IllegalStateException
@@ -151,12 +164,16 @@ public abstract class AbstractIMCommand extends AbsCommand {
             }
         }
 
-        bar.append("]   " + percent + "%     ");
+        bar.append("]   ").append(percent).append("%     ");
         return bar.toString();
     }
 
     protected void cleanCurrentLine() {
         System.out.print(ansi().eraseLine(Ansi.Erase.ALL));
+        System.out.flush();
+    }
+    protected void cleanLineAbove() {
+        System.out.print(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
         System.out.flush();
     }
 
@@ -199,12 +216,14 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     @Nullable
-    protected String getAccountIdWhereUserIsOwner() throws IOException {
-        return installationManagerProxy.getAccountIdWhereUserIsOwner(getCredentialsRep());
-    }
-
-    protected boolean isValidAccount() throws IOException {
-        return installationManagerProxy.isValidAccountId(getCredentialsRep());
+    protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
+        String json;
+        if (accountName == null) {
+            json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(getCredentialsRep());
+        } else {
+            json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(accountName, getCredentialsRep());
+        }
+        return json == null ? null : createDtoFromJson(json, AccountReference.class);
     }
 
     protected JacksonRepresentation<UserCredentials> getCredentialsRep() {

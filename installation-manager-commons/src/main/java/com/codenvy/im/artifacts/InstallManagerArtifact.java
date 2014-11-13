@@ -18,7 +18,6 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -208,12 +207,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
                 .append("cp -r ")
                 .append(unpackedUpdates.toFile().getAbsolutePath())
                 .append("/* ")
-                .append(installedPath)
-                .append(" ; ")
-                .append("chmod +x " + installedPath + "/installation-manager ; ")
-                .append("rm -rf ")
-                .append(unpackedUpdates.getParent().toFile().getAbsolutePath())
-                .append(" ; ")
+                .append(installedPath).append(" ; ")
+                .append("chmod +x ").append(installedPath).append("/installation-manager ; ")
+                .append("rm -rf ").append(unpackedUpdates.getParent().toFile().getAbsolutePath()).append(" ; ")
                 .append(installedPath).append("/installation-manager start ");
 
         runCommand(stringBuilder.toString());
@@ -232,7 +228,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
-    public String getInstalledVersion(String accessToken) throws IOException {
+    public String getInstalledVersion(String authToken) throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);
@@ -248,11 +244,6 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public int getPriority() {
         return 1;
-    }
-
-    @Override
-    public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
-        return Version.valueOf(getInstalledVersion(accessToken)).compareTo(versionToInstall) < 0;
     }
 
     @Override

@@ -21,18 +21,16 @@ import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
 import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
-import com.codenvy.api.core.rest.shared.dto.Link;
 import com.codenvy.im.user.UserCredentials;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
@@ -44,9 +42,8 @@ import static com.codenvy.im.utils.Commons.getProperException;
  * @author Dmytro Nochevnov
  */
 public class AccountUtils {
-    public static final  String           ACCOUNT_OWNER_ROLE       = "account/owner";
-    public static final  String           SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
-    private static final SimpleDateFormat subscriptionDateFormat   = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+    public static final String ACCOUNT_OWNER_ROLE       = "account/owner";
+    public static final String SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
 
     /** Utility class so there is no public constructor. */
     private AccountUtils() {
@@ -80,6 +77,8 @@ public class AccountUtils {
     }
 
     private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalStateException {
+        DateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+
         Date startDate;
         Date endDate;
 
@@ -115,7 +114,7 @@ public class AccountUtils {
                                                                  String apiEndpoint,
                                                                  UserCredentials userCredentials) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/" + userCredentials.getAccountId() + "/subscriptions");
-        return createListDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionDescriptor.class);
+        return createListDtoFromJson(transport.doGet(requestUrl, userCredentials.getToken()), SubscriptionDescriptor.class);
     }
 
     private static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
@@ -123,85 +122,30 @@ public class AccountUtils {
                                                                               String apiEndpoint,
                                                                               UserCredentials userCredentials) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId + "/attributes");
-        return createDtoFromJson(transport.doGetRequest(requestUrl, userCredentials.getToken()), SubscriptionAttributesDescriptor.class);
+        return createDtoFromJson(transport.doGet(requestUrl, userCredentials.getToken()), SubscriptionAttributesDescriptor.class);
     }
 
 
     /**
-     * This method iterates over all user's accounts and returns the first one where user in question is owner.
-     *
-     * @return String accountId
+     * @return the specific account where user has {@link #ACCOUNT_OWNER_ROLE} role or the first one if accountName parameter is null.
      * @throws IOException
      */
     @Nullable
-    public static String getAccountIdWhereUserIsOwner(HttpTransport transport,
-                                                      String apiEndpoint,
-                                                      String userToken) throws IOException {
-        List<MemberDescriptor> members =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userToken),
-                                      MemberDescriptor.class);
+    public static AccountReference getAccountReferenceWhereUserIsOwner(HttpTransport transport,
+                                                                       String apiEndpoint,
+                                                                       String userToken,
+                                                                       @Nullable String accountName) throws IOException {
+
+        List<MemberDescriptor> members = createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userToken),
+                                                               MemberDescriptor.class);
 
         for (MemberDescriptor m : members) {
-            if (hasRole(m, ACCOUNT_OWNER_ROLE)) {
-                return getAccountId(m);
+            if (hasRole(m, ACCOUNT_OWNER_ROLE) && (accountName == null || accountName.equals(m.getAccountReference().getName()))) {
+                return m.getAccountReference();
             }
         }
 
         return null;
-    }
-
-
-    /** Checks if user is owner of specific account. */
-    public static boolean isValidAccountId(HttpTransport transport,
-                                           String apiEndpoint,
-                                           UserCredentials userCredentials) throws IOException {
-        List<MemberDescriptor> members =
-                createListDtoFromJson(transport.doGetRequest(combinePaths(apiEndpoint, "account"), userCredentials.getToken()),
-                                      MemberDescriptor.class);
-
-        for (MemberDescriptor m : members) {
-            if (userCredentials.getAccountId().equals(getAccountId(m)) && hasRole(m, ACCOUNT_OWNER_ROLE)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Nullable
-    private static String getSubscriptionsHref(MemberDescriptor member) {
-        List<Link> links = member.getLinks();
-        for (Link link : links) {
-            if (link.getRel().equals("subscriptions")) {
-                return link.getHref();
-            }
-        }
-
-        return null;
-    }
-
-    @Nullable
-    private static String getAccountId(MemberDescriptor member) {
-        AccountReference accountRef = member.getAccountReference();
-
-        if (accountRef != null) {
-            return member.getAccountReference().getId();
-        }
-
-        // Platform API issue.
-        // Workaround: read id from subscriptions href
-        String subscriptionsHref = getSubscriptionsHref(member);
-        if (subscriptionsHref == null) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("account/([0-9a-z-]+)/subscriptions");
-        Matcher m = pattern.matcher(subscriptionsHref);
-        if (m.find()) {
-            return m.group(1);
-        }
-
-        return null; // almost impossible case
     }
 
     /** Checks if user has specific role. */

@@ -49,7 +49,7 @@ import static java.lang.String.format;
 public class InstallCommand extends AbstractIMCommand {
 
     @Argument(index = 0, name = "artifact",
-              description = "The name of the specific artifact to install.", required = true, multiValued = false)
+              description = "The name of the specific artifact to install.", required = false, multiValued = false)
     private String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
@@ -61,7 +61,7 @@ public class InstallCommand extends AbstractIMCommand {
     protected static final Installer.Type DEFAULT_INSTALL_TYPE = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
 
     @Override
-    protected Void doExecute() {
+    protected Void execute() {
         try {
             init();
 
@@ -78,6 +78,11 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     private Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
+        if (artifactName == null) {
+            printError("Argument 'artifact' is required.");
+            return null;
+        }
+
         JacksonRepresentation<Request> requestRep = getRequestRep(DEFAULT_INSTALL_TYPE);
         String response = installationManagerProxy.install(requestRep);
 

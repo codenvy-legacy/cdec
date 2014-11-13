@@ -120,21 +120,13 @@ public class InstallCommandTest {
     }
 
     @Test
-    public void testInstallWhenErrorInResponse() throws Exception {
-        String serviceErrorResponse = "{\n"
-                                      + "  \"message\" : \"Server Error Exception\",\n"
-                                      + "  \"status\" : \"ERROR\"\n"
-                                      + "}";
-
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
-
+    public void testInstallWhenArtifactNameIsAbsent() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        commandInvoker.argument("artifact", ANY);
 
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, serviceErrorResponse + "\n");
+        assertEquals(output, "Argument 'artifact' is required.\n");
     }
 
     @Test

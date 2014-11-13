@@ -36,6 +36,7 @@ import java.io.IOException;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNull;
 
 /**
@@ -43,6 +44,7 @@ import static org.testng.AssertJUnit.assertNull;
  */
 public class TestGetAccountIdServiceImpl {
     public static final String TEST_ACCOUNT_ID = "accountId";
+    public static final String ACCOUNT_NAME    = "accountName";
     private InstallationManagerService installationManagerService;
     private final UserCredentials testCredentials = new UserCredentials("auth token", null);
     private String accountApiEndpoint;
@@ -56,53 +58,61 @@ public class TestGetAccountIdServiceImpl {
     @BeforeMethod
     public void init() {
         MockitoAnnotations.initMocks(this);
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadingDescriptorHolder());
+        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
         accountApiEndpoint = combinePaths(InjectorBootstrap.getProperty("api.endpoint"), "account");
     }
 
     @Test
-    public void testGetAccountId() throws Exception {
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
-            .thenReturn("[{"
-                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
-                        + "}]");
+    public void testGetAccountReference() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
-        assertEquals(response, TEST_ACCOUNT_ID);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
+        assertEquals(response, "{\n"
+                               + "  \"links\" : [ ],\n"
+                               + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
+                               + "}");
     }
 
     @Test
-    public void testGetAccountIdFromSeveral() throws Exception {
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
-            .thenReturn("[{"
-                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
-                        + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"another-account-id\"}"
-                        + "}]");
+    public void testGetAccountReferenceFromSeveral() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"another-account-id\"}"
+                            + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
-        assertEquals(response, TEST_ACCOUNT_ID);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
+        assertEquals(response, "{\n"
+                               + "  \"links\" : [ ],\n"
+                               + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
+                               + "}");
     }
 
     @Test
-    public void testGetAccountIdFromEmpty() throws Exception {
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken()))
-            .thenReturn("[{"
-                        + "roles:[\"account/member\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
-                        + "}]");
+    public void testGetAccountReferenceReturnNullIfAccountWasNotFound() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"account/member\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\"}"
+                            + "}]");
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        String response = installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
         assertNull(response);
     }
 
     @Test(expectedExceptions = IOException.class)
-    public void testGetAccountIdErrorIfAuthenticationFailed() throws Exception {
-        when(transport.doGetRequest(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
+    public void testGetAccountReferenceErrorIfAuthenticationFailed() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken())).thenThrow(new AuthenticationException());
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        
-        installationManagerService.getAccountIdWhereUserIsOwner(userCredentialsRep);
+
+        installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
     }
 }

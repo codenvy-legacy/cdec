@@ -59,7 +59,7 @@ public class ArtifactPropertiesUtils {
                                                              HttpTransport transport,
                                                              String updateEndpoint) throws IOException, JsonParseException {
         String versionInfoServiceHref = combinePaths(updateEndpoint, "repository/properties/" + artifactName + "/" + version);
-        Map<String, String> properties = fromJson(transport.doGetRequest(versionInfoServiceHref),
+        Map<String, String> properties = fromJson(transport.doGet(versionInfoServiceHref),
                                                   Map.class,
                                                   new TypeLiteral<Map<String, String>>() {}.getType());
         if (properties == null) {

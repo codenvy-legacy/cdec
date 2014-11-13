@@ -18,6 +18,7 @@
 package com.codenvy.im.utils;
 
 import com.codenvy.api.core.ServerException;
+import com.codenvy.api.core.rest.annotations.OPTIONS;
 import com.codenvy.dto.server.JsonStringMapImpl;
 
 import com.google.inject.TypeLiteral;
@@ -62,11 +63,11 @@ public class TestHttpTransport {
     }
 
     @Test
-    public void testDoGetRequest(ITestContext context) throws Exception {
+    public void testDoGet(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        Map value = Commons.fromJson(httpTransport.doGetRequest("http://0.0.0.0:" + port + "/rest/test/get/json"),
-                                     Map.class,
-                                     new TypeLiteral<Map<String, String>>() {}.getType());
+        Map value = Commons.fromJson(httpTransport.doGet("http://0.0.0.0:" + port + "/rest/test/get"),
+                    Map.class,
+                    new TypeLiteral<Map<String, String>>() {}.getType());
 
         assertEquals(value.size(), 1);
         assertEquals(value.get("key"), "value");
@@ -86,23 +87,48 @@ public class TestHttpTransport {
         }
     }
 
-    @Test(expectedExceptions = HttpException.class,
-          expectedExceptionsMessageRegExp = "Not Found")
+    @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "Not Found")
     public void testFailDownload(ITestContext context) throws Exception {
         java.nio.file.Path destDir = Paths.get("target", "download");
-
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
 
-        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/downloadfail", destDir);
+        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/throwException", destDir);
+    }
+
+    @Test
+    public void testDoOption(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        Map<String, String> value = Commons.fromJson(httpTransport.doOption("http://0.0.0.0:" + port + "/rest/test", null),
+                                                     Map.class,
+                                                     new TypeLiteral<Map<String, String>>() {}.getType());
+
+        assertEquals(value.size(), 1);
+        assertEquals(value.get("key"), "value");
+    }
+
+
+    @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "Can't establish connection with http://1.1.1.1")
+    public void testDoRequestToUnknownHost(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        httpTransport.doOption("http://1.1.1.1:" + port + "/rest/test", null);
     }
 
     @Path("test")
     public class TestService {
 
+        @OPTIONS
+        @Produces(MediaType.APPLICATION_JSON)
+        public Response option() {
+            Map<String, String> value = new HashMap<String, String>() {{
+                put("key", "value");
+            }};
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
+        }
+
         @GET
         @Produces(MediaType.APPLICATION_JSON)
-        @Path("get/json")
-        public Response getJson() {
+        @Path("get")
+        public Response get() {
             Map<String, String> value = new HashMap<String, String>() {{
                 put("key", "value");
             }};
@@ -112,7 +138,7 @@ public class TestHttpTransport {
         @GET
         @Path("download")
         @Produces(MediaType.APPLICATION_OCTET_STREAM)
-        public Response doDownloadArtifact() throws IOException {
+        public Response download() throws IOException {
             java.nio.file.Path file = Paths.get("target", "tmp");
             Files.copy(new ByteArrayInputStream("content".getBytes()), file, StandardCopyOption.REPLACE_EXISTING);
             return Response.ok(file.toFile(), MediaType.APPLICATION_OCTET_STREAM)
@@ -122,23 +148,10 @@ public class TestHttpTransport {
         }
 
         @GET
-        @Path("downloadfail")
+        @Path("throwException")
         @Produces(MediaType.APPLICATION_OCTET_STREAM)
-        public Response doFailDownloadArtifact() throws ServerException {
-            try {
-                java.nio.file.Path file = Paths.get("target", "tmp.file");
-                file.toFile().length(); // Will throw FileNotFoundException.
-
-                //will didn't run
-                return Response.ok(file.toFile(), MediaType.APPLICATION_OCTET_STREAM)
-                               .header("Content-Length", String.valueOf(Files.size(file)))
-                               .header("Content-Disposition", "attachment; filename=" + file.getFileName().toString())
-                               .build();
-
-            } catch (Exception e) {
-                throw new ServerException("{message:Not Found}");
-            }
-
+        public Response doThrowException() throws ServerException {
+            throw new ServerException("{message:Not Found}");
         }
     }
 }

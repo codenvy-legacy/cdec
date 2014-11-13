@@ -17,6 +17,7 @@
  */
 package com.codenvy.im;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
@@ -55,13 +56,16 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.CountDownLatch;
 
-import static com.codenvy.im.DownloadingDescriptor.createDescriptor;
+import static com.codenvy.im.DownloadDescriptor.createDescriptor;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
+import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.size;
 
 /**
  * @author Dmytro Nochevnov
@@ -71,7 +75,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     protected final InstallationManager manager;
     protected final HttpTransport       transport;
 
-    private final DownloadingDescriptorHolder downloadingDescriptorHolder;
+    private final DownloadDescriptorHolder downloadDescriptorHolder;
 
     private final String updateServerEndpoint;
     private final String apiEndpoint;
@@ -79,7 +83,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public InstallationManagerServiceImpl() {
         this.manager = INJECTOR.getInstance(InstallationManagerImpl.class);
         this.transport = INJECTOR.getInstance(HttpTransport.class);
-        this.downloadingDescriptorHolder = INJECTOR.getInstance(DownloadingDescriptorHolder.class);
+        this.downloadDescriptorHolder = INJECTOR.getInstance(DownloadDescriptorHolder.class);
         this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
         this.apiEndpoint = getProperty("api.endpoint");
     }
@@ -88,12 +92,12 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Deprecated
     protected InstallationManagerServiceImpl(InstallationManager manager,
                                              HttpTransport transport,
-                                             DownloadingDescriptorHolder downloadingDescriptorHolder) {
+                                             DownloadDescriptorHolder downloadDescriptorHolder) {
         this.manager = manager;
         this.transport = transport;
         this.updateServerEndpoint = extractServerUrl(getProperty("installation-manager.update_server_endpoint"));
         this.apiEndpoint = getProperty("api.endpoint");
-        this.downloadingDescriptorHolder = downloadingDescriptorHolder;
+        this.downloadDescriptorHolder = downloadDescriptorHolder;
     }
 
     /** {@inheritDoc} */
@@ -155,12 +159,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                                    final String downloadDescriptorId,
                                    final JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
+            manager.checkIfConnectionIsAvailable();
+
             final CountDownLatch latcher = new CountDownLatch(1);
 
             new Thread() {
                 @Override
                 public void run() {
-                    download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher);
+                    download(artifactName, version, downloadDescriptorId, userCredentialsRep, latcher, this);
                 }
             }.start();
 
@@ -176,7 +182,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                           @Nullable String version,
                           String downloadDescriptorId,
                           JacksonRepresentation<UserCredentials> userCredentialsRep,
-                          CountDownLatch latcher) {
+                          CountDownLatch latcher,
+                          Thread currentThread) {
 
         List<ArtifactInfo> infos = null;
         try {
@@ -187,8 +194,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             infos = new ArrayList<>(updates.size());
 
-            DownloadingDescriptor downloadingDescriptor = createDescriptor(updates, manager);
-            downloadingDescriptorHolder.put(downloadDescriptorId, downloadingDescriptor);
+            DownloadDescriptor downloadDescriptor = createDescriptor(updates, manager, currentThread);
+            downloadDescriptorHolder.put(downloadDescriptorId, downloadDescriptor);
+
+            manager.checkEnoughDiskSpace(downloadDescriptor.getTotalSize());
 
             latcher.countDown();
 
@@ -201,7 +210,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries.toString(), Status.SUCCESS));
                 } catch (Exception exp) {
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
-                    downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
+                    downloadDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                                   .withMessage(exp.getMessage())
                                                                                   .withArtifacts(infos)
                                                                                   .build());
@@ -209,16 +218,16 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 }
             }
 
-            downloadingDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
-                                                                          .withArtifacts(infos)
-                                                                          .build());
+            downloadDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
+                                                                       .withArtifacts(infos)
+                                                                       .build());
         } catch (Exception e) {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+            DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
-                descriptor = new DownloadingDescriptor(Collections.<Path, Long>emptyMap());
+                descriptor = new DownloadDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
                 descriptor.setDownloadResult(Response.valueOf(e));
-                downloadingDescriptorHolder.put(downloadDescriptorId, descriptor);
+                downloadDescriptorHolder.put(downloadDescriptorId, descriptor);
             } else {
                 descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
                                                                    .withMessage(e.getMessage())
@@ -286,7 +295,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     @Override
     public String downloadStatus(final String downloadDescriptorId) {
         try {
-            DownloadingDescriptor descriptor = downloadingDescriptorHolder.get(downloadDescriptorId);
+            DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
                 return new Response.Builder().withStatus(ERROR)
@@ -299,7 +308,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 return new Response.Builder().withStatus(ResponseCode.ERROR).withDownloadInfo(info).build().toJson();
             }
 
-            long downloadedSize = descriptor.getDownloadedSize();
+            long downloadedSize = getDownloadedSize(descriptor);
             int percents = (int)Math.round((downloadedSize * 100D / descriptor.getTotalSize()));
 
             if (descriptor.isDownloadingFinished()) {
@@ -309,6 +318,35 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
                 return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
             }
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** @return the size of downloaded artifacts */
+    private long getDownloadedSize(DownloadDescriptor descriptor) throws IOException {
+        long downloadedSize = 0;
+        for (Path path : descriptor.getArtifactPaths()) {
+            if (exists(path)) {
+                downloadedSize += size(path);
+            }
+        }
+        return downloadedSize;
+    }
+
+
+    /** {@inheritDoc} */
+    @Override
+    public String stopDownload(final String downloadDescriptorId) {
+        try {
+            DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
+            if (descriptor == null) {
+                return new Response.Builder().withStatus(ERROR)
+                                             .withMessage("Can't get downloading descriptor ID").build().toJson();
+            }
+
+            descriptor.getDownloadThread().interrupt();
+            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
         } catch (Exception e) {
             return Response.valueOf(e).toJson();
         }
@@ -346,7 +384,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String getDownloads(String artifactName,
-                               String version, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+                               String version,
+                               JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
@@ -372,8 +411,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
-    /** {@inheritDoc}
-     * @param userCredentialsRep*/
+    /** {@inheritDoc} */
     @Override
     public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep) {
         try {
@@ -498,17 +536,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     @Nullable
-    public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+    public String getAccountReferenceWhereUserIsOwner(String accountName,
+                                                      JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         String token = userCredentials.getToken();
-        return AccountUtils.getAccountIdWhereUserIsOwner(transport, apiEndpoint, token);
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport, apiEndpoint, token, accountName);
+        return accountReference == null ? null : toJson(accountReference);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
+    @Nullable
+    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
-        return AccountUtils.isValidAccountId(transport, apiEndpoint, userCredentials);
+        String token = userCredentials.getToken();
+        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport, apiEndpoint, token, null);
+        return accountReference == null ? null : toJson(accountReference);
     }
 
     /** {@inheritDoc} */

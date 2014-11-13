@@ -30,7 +30,6 @@ import org.json.JSONException;
 
 import java.util.UUID;
 
-import static com.codenvy.im.response.ResponseCode.OK;
 import static java.lang.Thread.sleep;
 
 /**
@@ -53,7 +52,7 @@ public class DownloadCommand extends AbstractIMCommand {
     private boolean checkRemote;
 
     @Override
-    protected Void doExecute() {
+    protected Void execute() {
         try {
             init();
 
@@ -93,6 +92,8 @@ public class DownloadCommand extends AbstractIMCommand {
             return;
         }
 
+        boolean isCanceled = false;
+
         for (; ; ) {
             String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
             responseObj = Response.fromJson(startResponse);
@@ -103,8 +104,17 @@ public class DownloadCommand extends AbstractIMCommand {
 
             DownloadStatusInfo downloadStatusInfo = Response.fromJson(statusResponse).getDownloadInfo();
 
-            printProgress(downloadStatusInfo.getPercents());
-            sleep(1000);
+            if (!isCanceled) {
+                printProgress(downloadStatusInfo.getPercents());
+            }
+
+            try {
+                sleep(1000);
+            } catch (InterruptedException ie) {
+                installationManagerProxy.stopDownload(downloadDescriptorId);
+                cleanLineAbove();
+                isCanceled = true;
+            }
 
             if (downloadStatusInfo.getStatus() == Status.DOWNLOADED ||
                 downloadStatusInfo.getStatus() == Status.FAILURE) {

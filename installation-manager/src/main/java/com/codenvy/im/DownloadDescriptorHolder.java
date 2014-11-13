@@ -21,31 +21,31 @@ import javax.inject.Singleton;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author Alexander Reshetnyak
- */
+/** @author Alexander Reshetnyak */
 @Singleton
-public class DownloadingDescriptorHolder {
+public class DownloadDescriptorHolder {
 
-    private final LinkedHashMap<String, DownloadingDescriptor> downloadingMap;
+    private final LinkedHashMap<String, DownloadDescriptor> downloadingMap;
 
-    public DownloadingDescriptorHolder() {
-        final int MAX_ENTRIES = 10;
+    public DownloadDescriptorHolder() {
+        final int MAX_ENTRIES = 100000;
 
-        this.downloadingMap = new LinkedHashMap<String, DownloadingDescriptor>(MAX_ENTRIES + 1) {
+        this.downloadingMap = new LinkedHashMap<String, DownloadDescriptor>(MAX_ENTRIES + 1) {
             public boolean removeEldestEntry(Map.Entry eldest) {
                 return size() > MAX_ENTRIES;
             }
         };
     }
 
-    public DownloadingDescriptor get(String downloadDescriptorId) {
+    /** Gets download descriptor */
+    public DownloadDescriptor get(String downloadDescriptorId) {
         return downloadingMap.get(downloadDescriptorId);
     }
 
-    public void put(String downloadDescriptorId, DownloadingDescriptor downloadingDescriptor) throws IllegalStateException {
+    /** Puts download descriptor */
+    public void put(String downloadDescriptorId, DownloadDescriptor downloadDescriptor) throws IllegalStateException {
         if (!downloadingMap.containsKey(downloadDescriptorId)) {
-            downloadingMap.put(downloadDescriptorId, downloadingDescriptor);
+            downloadingMap.put(downloadDescriptorId, downloadDescriptor);
         } else {
             throw new IllegalStateException("Download descriptor already exists");
         }

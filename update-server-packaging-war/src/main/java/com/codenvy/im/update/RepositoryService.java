@@ -20,11 +20,11 @@ package com.codenvy.im.update;
 
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.dto.server.JsonStringMapImpl;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-import com.google.inject.Singleton;
 import com.mongodb.MongoException;
 
 import org.apache.commons.fileupload.FileItem;
@@ -40,11 +40,29 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.io.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
@@ -57,7 +75,6 @@ import static java.lang.String.format;
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
-@Singleton
 @Path("repository")
 public class RepositoryService {
 
@@ -216,130 +233,42 @@ public class RepositoryService {
         }
     }
 
-/*    *//**
-     * Saves info for fail download state: user, artifact, version and date. Only trusted agent allowed.
-     *
-     *
-     * @param artifact
-     *         the name of the artifact
-     * @param version
-     *         the version of the artifact
-     * @return Response
-     * @see com.codenvy.im.update.MongoStorage#saveDownloadInfo(String, String, String, boolean)
-     *//*
-    @GenerateLink(rel = "save fail downloaded info")
-    @POST
-    @Path("/download/info/fail/{artifact}/{version}")
-    @RolesAllowed({"user", "system/admin"})
-    public Response saveDownloadFailInfo(@PathParam("artifact") final String artifact,
-                                         @PathParam("version") String version,
-                                         @HeaderParam("user-agent") String userAgent) {
-
-        if (!VALID_USER_AGENT.equals(userAgent)) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        } else if (!Version.isValidVersion(version)) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("The version format is invalid '" + version + "'").build();
-        }
-
-        try {
-            mongoStorage.saveDownloadInfo(userManager.getCurrentUser().getId(), artifact, version, false);
-            return Response.status(Response.Status.OK).build();
-        } catch (MongoException e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't save information").build();
-        }
-    }
-
-    *//**
-     * Saves info: user, artifact, version and date. Only trusted agent allowed.
-     *
-     * @param artifact
-     *         the name of the artifact
-     * @param version
-     *         the version of the artifact
-     * @return Response
-     * @see com.codenvy.im.update.MongoStorage#saveDownloadInfo(String, String, String, boolean)
-     *//*
-    @GenerateLink(rel = "save success downloaded info")
-    @POST
-    @Path("/download/info/{artifact}/{version}")
-    @RolesAllowed({"user", "system/admin"})
-    public Response saveDownloadInfo(@PathParam("artifact") final String artifact,
-                                     @PathParam("version") String version,
-                                     @HeaderParam("user-agent") String userAgent) {
-
-        if (!VALID_USER_AGENT.equals(userAgent)) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        } else if (!Version.isValidVersion(version)) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("The version format is invalid '" + version + "'").build();
-        }
-
-        try {
-            mongoStorage.saveDownloadInfo(userManager.getCurrentUser().getId(), artifact, version, true);
-            return Response.status(Response.Status.OK).build();
-        } catch (MongoException e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't save information").build();
-        }
-    }*/
-
     /**
-     * Get download statistic by artifacts for specific user.
-     *
-     * @return Response
-     * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByUserId(String)
-     * @see com.codenvy.im.update.MongoStorage#getTotalDownloadsByUserId(String)
-     */
-    @GenerateLink(rel = "get download statistic by artifacts for specific user")
-    @GET
-    @Path("/download/statistic/user/{user-id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"system/admin"})
-    public Response getDownloadStatisticByUser(@PathParam("user-id") final String userId) {
-        try {
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.putAll(mongoStorage.getTotalDownloadsInfoByUserId(userId));
-            response.put("list", mongoStorage.getDownloadsInfoByUserId(userId));
-
-            return Response.status(Response.Status.OK)
-                           .entity(new JsonStringMapImpl<>(response))
-                           .build();
-        } catch (ArtifactNotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
-        } catch (MongoException e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
-        }
-    }
-
-    /**
-     * Get download statistic by users for specific artifact.
+     * Gets download statistic.
      *
      * @return Response
      * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByArtifact(String)
-     * @see com.codenvy.im.update.MongoStorage#getTotalDownloadsInfoByArtifact(String)
+     * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByUserId(String)
      */
     @GenerateLink(rel = "get download statistic by users for specific artifact")
     @GET
-    @Path("/download/statistic/artifact/{artifact}")
+    @Path("/download/statistic/{entity}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({"system/admin"})
-    public Response getDownloadStatisticByArtifact(@PathParam("artifact") final String artifact) {
+    public Response getDownloadStatistic(@PathParam("entity") final String entity) {
         try {
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.putAll(mongoStorage.getTotalDownloadsInfoByArtifact(artifact));
-            response.put("list", mongoStorage.getDownloadsInfoByArtifact(artifact));
+            Map<String, Object> response;
+            if (isArtifactName(entity)) {
+                response = mongoStorage.getDownloadsInfoByArtifact(entity);
+            } else {
+                response = mongoStorage.getDownloadsInfoByUserId(entity);
+            }
 
-            return Response.status(Response.Status.OK)
-                           .entity(new JsonStringMapImpl<>(response))
-                           .build();
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(response)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         } catch (MongoException e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
+        }
+    }
+
+    private boolean isArtifactName(String entity) {
+        try {
+            ArtifactFactory.createArtifact(entity);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 
@@ -366,12 +295,11 @@ public class RepositoryService {
             if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
 
                 return Response.status(Response.Status.FORBIDDEN)
-                               .entity("You can't download the artifact '" + artifact + (version != null ? ":" + version : "") + "'," +
-                                       " because you don't have the valid '" + requiredSubscription + "' subscription.").build();
+                               .entity("You do not have a valid subscription. You are not permitted to download '" + artifact + (version != null ? ":" + version : "") + "'.").build();
             }
 
             return doDownloadArtifact(artifact, version, false);
-        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+        } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
                     "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
@@ -399,7 +327,7 @@ public class RepositoryService {
                                            @PathParam("version") String version) {
         try {
             return doDownloadArtifact(artifact, version, true);
-        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+        } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
                     "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
@@ -425,7 +353,7 @@ public class RepositoryService {
         try {
             String version = artifactStorage.getLatestVersion(artifact);
             return doDownloadArtifact(artifact, version, true);
-        } catch (ArtifactNotFoundException | PropertiesNotFoundException e) {
+        } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -463,17 +391,23 @@ public class RepositoryService {
                     IOUtils.copyLarge(input, output);
 
                     if (userId != null) {
-                        mongoStorage.saveDownloadInfo(userId, artifact, version, true);
+                        try {
+                            mongoStorage.updateDownloadStatistics(userId, artifact, version, true);
+                        } catch (MongoException ex) {
+                            String errMsg = format("Can't update download statistics artifact '%s':'%s' for user '%s'", artifact, version, userId);
+                            LOG.error(errMsg, ex);
+                        }
                     }
                 } catch (Exception e) {
                     if (userId != null) {
                         try {
-                            mongoStorage.saveDownloadInfo(userId, artifact, version, false);
-                        } catch (Exception ex) {
-                            LOG.error("Can't save info about fail on downloading an artifact " + artifact + ":" + version + " to user ", ex);
+                            mongoStorage.updateDownloadStatistics(userId, artifact, version, false);
+                        } catch (MongoException ex) {
+                            String errMsg = format("Can't update download statistics artifact '%s':'%s' for user '%s'", artifact, version, userId);
+                            LOG.error(errMsg, ex);
                         }
                     }
-                    
+
                     LOG.error("Can't send an artifact " + artifact + ":" + version, e);
                     throw new IOException(e.getMessage(), e);
                 }

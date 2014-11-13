@@ -15,16 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.update;
+package com.codenvy.im.utils;
 
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import java.io.IOException;
 
 /**
- * @author Anatoliy Bazko
+ * @author Alexander Reshetnyak
  */
-public class PropertiesNotFoundException extends ArtifactNotFoundException {
+public class CopyStreamInterruptedException extends IOException {
 
-    public PropertiesNotFoundException(String artifact, String version) {
-        super("Artifact properties '" + artifact + "' version '" + version + "' not found");
+    public CopyStreamInterruptedException(String message) {
+        super(message);
     }
 }

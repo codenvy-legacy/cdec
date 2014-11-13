@@ -19,6 +19,8 @@ package com.codenvy.im.cli.command;
 
 import jline.console.ConsoleReader;
 
+import com.codenvy.api.account.shared.dto.AccountReference;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -33,8 +35,8 @@ import java.nio.charset.Charset;
 @Command(scope = "codenvy", name = "login", description = "Login to Codenvy Update Server or another remote Codenvy cloud")
 public class LoginCommand extends AbstractIMCommand {
 
-    public static final String CANNOT_RECOGNISE_ACCOUNT_ID_MSG =
-            "It is impossible to obtain your Codenvy account ID. Please, type your account ID by hand as argument of this command.";
+    public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
+            "You are logged as a user which does not have an account/owner role in any account. This likely means that you used the wrong credentials to access Codenvy.";
 
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;
@@ -42,14 +44,14 @@ public class LoginCommand extends AbstractIMCommand {
     @Argument(name = "password", description = "The user's password", required = false, multiValued = false, index = 1)
     private String password;
 
-    @Argument(name = "accountId", description = "The user's account ID", required = false, multiValued = false, index = 2)
-    private String accountId;
+    @Argument(name = "accountName", description = "The user's account name", required = false, multiValued = false, index = 2)
+    private String accountName;
 
     @Option(name = "--remote", description = "Name of the remote codenvy", required = false)
     private String remoteName;
 
     @Override
-    protected Void doExecute() throws Exception {
+    protected Void execute() throws Exception {
         try {
             init();
 
@@ -93,30 +95,22 @@ public class LoginCommand extends AbstractIMCommand {
                 return null;
             }
 
-            if (accountId == null) {
-                accountId = getAccountIdWhereUserIsOwner();
-
-                if (accountId == null || accountId.isEmpty()) {
-                    printError(CANNOT_RECOGNISE_ACCOUNT_ID_MSG);
-                    preferencesStorage.invalidate();
-
-                    return null;
+            AccountReference accountReference = getAccountReferenceWhereUserIsOwner(accountName);
+            if (accountReference == null) {
+                if (accountName == null) {
+                    printError(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                } else {
+                    printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
-
-                preferencesStorage.setAccountId(accountId);
-
-                printSuccess("Your Codenvy account ID '" + accountId + "' has been obtained and will be used to verify subscription.");
-            } else {
-                preferencesStorage.setAccountId(accountId);
-
-                if (!isValidAccount()) {
-                    printError("Account ID you entered is not yours or may be you aren't owner of this account.");
-                    preferencesStorage.invalidate();
-
-                    return null;
-                }
+                preferencesStorage.invalidate();
+                return null;
             }
 
+            if (accountName == null) {
+                printSuccess("Your Codenvy account '" + accountReference.getName() + "' has been obtained and will be used to verify subscription.");
+            }
+
+            preferencesStorage.setAccountId(accountReference.getId());
             printSuccess(String.format("Login success on remote '%s' [%s] which is used by installation manager commands.",
                                        remoteName,
                                        getRemoteUrlByName(remoteName)));

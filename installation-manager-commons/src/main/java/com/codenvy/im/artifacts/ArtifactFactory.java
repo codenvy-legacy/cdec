@@ -19,9 +19,7 @@ package com.codenvy.im.artifacts;
 
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 
-/**
- * @author Anatoliy Bazko
- */
+/** @author Anatoliy Bazko */
 public class ArtifactFactory {
 
     /**
@@ -33,6 +31,8 @@ public class ArtifactFactory {
                 return INJECTOR.getInstance(CDECArtifact.class);
             case InstallManagerArtifact.NAME:
                 return INJECTOR.getInstance(InstallManagerArtifact.class);
+            case TrialCDECArtifact.NAME:
+                return INJECTOR.getInstance(TrialCDECArtifact.class);
         }
 
         throw new IllegalArgumentException("Artifact '" + name + "' not found");

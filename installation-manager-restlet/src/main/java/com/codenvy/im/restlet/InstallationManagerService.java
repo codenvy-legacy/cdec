@@ -69,6 +69,11 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     public String downloadStatus(@PathParam(value = "download-descriptor-id") String downloadDescriptorId);
 
+    @GET
+    @Path("download-stop/{download-descriptor-id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    String stopDownload(@PathParam(value = "download-descriptor-id") String downloadDescriptorId);
+
     @POST
     @Path("check-updates")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -122,19 +127,21 @@ public interface InstallationManagerService extends DigestAuthSupport {
     public String checkSubscription(@PathParam(value = "subscription") String subscription,
                                     JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-    /** Returns id of first valid account of user based on his/her auth token passed into service within the body of request */
+    /** Returns account reference of first valid account of user based on his/her auth token passed into service within the body of request */
+    @POST
+    @Path("account/{accountName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAccountReferenceWhereUserIsOwner(@PathParam(value = "accountName") String accountName,
+                                                      JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+
+    /** Returns account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @POST
     @Path("account")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getAccountIdWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAccountReferenceWhereUserIsOwner(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
-
-    /** @see com.codenvy.im.utils.AccountUtils#isValidAccountId(com.codenvy.im.utils.HttpTransport, String, com.codenvy.im.user.UserCredentials) */
-    @POST
-    @Path("validate-account-id")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Boolean isValidAccountId(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException;
 
     /** Returns the configuration of the Installation Manager */
     @GET
@@ -147,4 +154,5 @@ public interface InstallationManagerService extends DigestAuthSupport {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep);
+
 }

@@ -25,6 +25,7 @@ import com.codenvy.im.installer.InstallInProgressException;
 import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.installer.Installer;
+import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -35,6 +36,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
+import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
+
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
@@ -44,21 +48,21 @@ public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
 
     private final HttpTransport transport;
-    private final String        updateEndpoint;
+    private final String apiNodeUrl;
 
     protected Installer installer;
 
     @Inject
-    public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
-                        HttpTransport transport) {
+    public CDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
         super(NAME);
-        this.updateEndpoint = updateEndpoint;
         this.transport = transport;
+        this.apiNodeUrl = apiNodeUrl;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void install(Path pathToBinaries, InstallOptions options) throws
-                                                                      CommandException,
+                                                                  CommandException,
                                                                       AgentException,
                                                                       ConfigException,
                                                                       InstallStartedException,
@@ -86,25 +90,24 @@ public class CDECArtifact extends AbstractArtifact {
         throw new InstallInProgressException();
     }
 
+    /** {@inheritDoc} */
     protected Installer createInstaller(Path pathToBinaries, InstallOptions options) {
         return new Installer(pathToBinaries, options.getType());
     }
 
     @Override
-    public String getInstalledVersion(String accessToken) throws IOException {
-        return null;  // TODO issue CDEC-62
+    public String getInstalledVersion(String authToken) throws IOException {
+        ApiInfo apiInfo = createDtoFromJson(transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken), ApiInfo.class);
+        return apiInfo.getIdeVersion();
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getPriority() {
-        return 2;
+        return 10;
     }
 
-    @Override
-    public boolean isInstallable(Version versionToInstall, String accessToken) {
-        return true;
-    }
-
+    /** {@inheritDoc} */
     @Override
     protected Path getInstalledPath() throws URISyntaxException {
         throw new UnsupportedOperationException();
