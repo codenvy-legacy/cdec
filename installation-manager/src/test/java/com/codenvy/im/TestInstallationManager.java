@@ -104,6 +104,8 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
+        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
+
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.1", null);
 
         verify(installManagerArtifact, never()).install(any(Path.class), null);
@@ -133,7 +135,8 @@ public class TestInstallationManager {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0', " +
                                             "because greater or equal version has already been installed.")
-    public void testInstallArtifactErrorIfInstalledArtifactHasGreaterVersion() throws Exception {
+    public void testUpdateIMErrorIfInstalledIMHasGreaterVersion() throws Exception {
+        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("2.10.0"), Paths.get("target/download/installation-manager/2.10.0/file1"));
@@ -144,12 +147,26 @@ public class TestInstallationManager {
         manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0", null);
     }
 
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0', " +
+                                            "because greater or equal version has already been installed.")
+    public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
+        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
+        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.0"), Paths.get("target/download/cdec/1.0.0/file1"));
+            }});
+        }}).when(manager).getDownloadedArtifacts();
+
+        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.0", null);
+    }
+
     @Test
     public void testInstallWithInstallOptions() throws Exception {
         final Path testPathToBinaries = Paths.get("target/download/cdec/3.0.0/file1");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("3.0.0"), testPathToBinaries);
+                put(Version.valueOf("3.0.1"), testPathToBinaries);
             }});
         }}).when(manager).getDownloadedArtifacts();
 
@@ -158,8 +175,10 @@ public class TestInstallationManager {
 
         doThrow(new InstallStartedException(testOptions)).when(cdecArtifact).install(testPathToBinaries, testOptions);
 
+        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");
+
         try {
-            manager.install(testCredentials.getToken(), cdecArtifact, "3.0.0", testOptions);
+            manager.install(testCredentials.getToken(), cdecArtifact, "3.0.1", testOptions);
         } catch(InstallStartedException e) {
             assertEquals(e.getInstallOptions(), testOptions);
             return;
@@ -235,9 +254,10 @@ public class TestInstallationManager {
                 .thenReturn("{version:2.10.4}");
         when(transport.doGet("update/endpoint/repository/installationinfo/" + CDECArtifact.NAME, testCredentials.getToken()))
                 .thenReturn("{\"version\":\"2.10.4\"}");
+        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts(testCredentials.getToken());
-        assertNull(m.get(cdecArtifact));
+        assertNotNull(m.get(cdecArtifact));
         assertNotNull(m.get(installManagerArtifact));
     }
 

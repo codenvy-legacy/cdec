@@ -161,9 +161,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Map<Artifact, String> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                if (!(artifact instanceof CDECArtifact)) {
-                    installed.put(artifact, artifact.getInstalledVersion(authToken));
-                }
+                installed.put(artifact, artifact.getInstalledVersion(authToken));
             } catch (IOException e) {
                 throw getProperException(e, artifact);
             }
