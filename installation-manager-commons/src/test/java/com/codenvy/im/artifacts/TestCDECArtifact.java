@@ -120,7 +120,7 @@ public class TestCDECArtifact {
 
     @Test
     public void testInstalledVersion() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{ideVersion:3.2.0-SNAPSHOT}");
+        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
         String version = spyCdecArtifact.getInstalledVersion("authToken");
         assertEquals(version, "3.2.0-SNAPSHOT");

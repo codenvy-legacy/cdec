@@ -19,10 +19,13 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.IOException;
@@ -56,9 +59,16 @@ public class TrialCDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public String getInstalledVersion(String authToken) throws IOException {
-        ApiInfo apiInfo = createDtoFromJson(transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken), ApiInfo.class);
+        String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
+        ApiInfo apiInfo = null;
+        try {
+            apiInfo = Commons.fromJson(response, ApiInfo.class);
+        } catch (JsonParseException e) {
+            throw new IOException(e);
+        }
         return apiInfo.getIdeVersion();
     }
+
 
     /** {@inheritDoc} */
     @Override

@@ -31,17 +31,17 @@ import static org.testng.Assert.assertEquals;
 /** @author Anatoliy Bazko */
 public class TestTrialCDECArtifact {
     private Artifact      trialCdecArtifact;
-    private HttpTransport transport;
+    private HttpTransport mockTransport;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        transport = mock(HttpTransport.class);
-        trialCdecArtifact = new TrialCDECArtifact("", transport);
+        mockTransport = mock(HttpTransport.class);
+        trialCdecArtifact = new TrialCDECArtifact("", mockTransport);
     }
 
     @Test
     public void testInstalledVersion() throws Exception {
-        when(transport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{ideVersion:3.2.0-SNAPSHOT}");
+        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
         String version = trialCdecArtifact.getInstalledVersion("authToken");
         assertEquals(version, "3.2.0-SNAPSHOT");
