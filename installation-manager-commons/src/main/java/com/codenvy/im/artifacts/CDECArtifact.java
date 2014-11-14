@@ -62,6 +62,12 @@ public class CDECArtifact extends AbstractArtifact {
         this.apiNodeUrl = apiNodeUrl;
     }
 
+    public CDECArtifact(String apiNodeUrl, HttpTransport transport, String name) {
+        super(name);
+        this.transport = transport;
+        this.apiNodeUrl = apiNodeUrl;
+    }
+
     /** {@inheritDoc} */
     @Override
     public void install(Path pathToBinaries, InstallOptions options) throws

@@ -31,6 +31,8 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
@@ -124,5 +126,10 @@ public class TestCDECArtifact {
 
         String version = spyCdecArtifact.getInstalledVersion("authToken");
         assertEquals(version, "3.2.0-SNAPSHOT");
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testGetInstalledPath() throws URISyntaxException {
+        spyCdecArtifact.getInstalledPath();
     }
 }

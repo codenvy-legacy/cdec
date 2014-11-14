@@ -18,57 +18,30 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.api.core.rest.shared.dto.ApiInfo;
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
-
-import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.Commons.createDtoFromJson;
 
 /** @author Anatoliy Bazko */
 @Singleton
-public class TrialCDECArtifact extends AbstractArtifact {
+public class TrialCDECArtifact extends CDECArtifact {
     public static final String NAME = "trial-cdec";
-
-    private final HttpTransport transport;
-    private final String        apiNodeUrl;
 
     @Inject
     public TrialCDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
-        super(NAME);
-        this.transport = transport;
-        this.apiNodeUrl = apiNodeUrl;
+        super(apiNodeUrl, transport, NAME);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void install(Path pathToBinaries, InstallOptions options) throws IOException {
+    public void install(Path pathToBinaries, InstallOptions options) {
         throw new UnsupportedOperationException("Trial CDEC installation is not supported yet.");
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getInstalledVersion(String authToken) throws IOException {
-        String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
-        ApiInfo apiInfo = null;
-        try {
-            apiInfo = Commons.fromJson(response, ApiInfo.class);
-        } catch (JsonParseException e) {
-            throw new IOException(e);
-        }
-        return apiInfo.getIdeVersion();
-    }
-
 
     /** {@inheritDoc} */
     @Override
@@ -76,9 +49,4 @@ public class TrialCDECArtifact extends AbstractArtifact {
         return 5;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    protected Path getInstalledPath() throws URISyntaxException {
-        throw new UnsupportedOperationException();
-    }
 }

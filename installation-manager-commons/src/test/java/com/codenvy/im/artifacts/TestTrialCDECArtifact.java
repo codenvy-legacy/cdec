@@ -22,6 +22,8 @@ import com.codenvy.im.utils.HttpTransport;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -39,11 +41,9 @@ public class TestTrialCDECArtifact {
         trialCdecArtifact = new TrialCDECArtifact("", mockTransport);
     }
 
-    @Test
-    public void testInstalledVersion() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
-
-        String version = trialCdecArtifact.getInstalledVersion("authToken");
-        assertEquals(version, "3.2.0-SNAPSHOT");
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = "Trial CDEC installation is not supported yet.")
+    public void testInstall() throws IOException {
+        trialCdecArtifact.install(null, null);
     }
 }
