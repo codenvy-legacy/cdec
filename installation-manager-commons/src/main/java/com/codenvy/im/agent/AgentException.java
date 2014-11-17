@@ -18,9 +18,7 @@
  */
 package com.codenvy.im.agent;
 
-/**
- * @author Dmytro Nochevnov
- */
+/** @author Dmytro Nochevnov */
 public class AgentException extends RuntimeException {
     public AgentException() {
         super();

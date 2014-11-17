@@ -18,14 +18,22 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.api.core.rest.shared.dto.ApiInfo;
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
+
+import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
 
 /** @author Anatoliy Bazko */
 @Singleton
@@ -49,4 +57,9 @@ public class TrialCDECArtifact extends CDECArtifact {
         return 5;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    protected Path getInstalledPath() throws URISyntaxException {
+        throw new UnsupportedOperationException();
+    }
 }

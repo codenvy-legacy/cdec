@@ -18,24 +18,12 @@
 package com.codenvy.im.request;
 
 import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.dto.server.JsonStringMapImpl;
-import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.DownloadStatusInfo;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.user.UserCredentials;
-import com.codenvy.im.utils.Commons;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import org.restlet.ext.jackson.JacksonRepresentation;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Dmytro Nochevnov
@@ -43,8 +31,8 @@ import java.util.Set;
 public class Request {
     private InstallOptions  installOptions;
     private UserCredentials userCredentials;
-    private String artifactName;
-    private String version;
+    private String          artifactName;
+    private String          version;
 
     public Request() {
     }

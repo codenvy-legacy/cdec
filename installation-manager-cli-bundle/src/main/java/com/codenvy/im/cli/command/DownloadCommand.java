@@ -96,8 +96,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
         for (; ; ) {
             String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
-            responseObj = Response.fromJson(startResponse);
-            if (responseObj.getStatus() != ResponseCode.OK) {
+            if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
                 printResponse(statusResponse);
                 break;
             }

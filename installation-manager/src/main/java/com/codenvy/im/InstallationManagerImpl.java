@@ -33,7 +33,6 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import com.google.inject.TypeLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,10 +58,10 @@ import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.ArtifactsSet;
+import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
-import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
@@ -316,7 +315,7 @@ public class InstallationManagerImpl implements InstallationManager {
                             }
                         }
                     } catch (IllegalArgumentException | IOException e) {
-                        // maybe it isn't a version directory  // TODO handle exceptions
+                        // maybe it isn't a version directory
                     }
                 }
 
@@ -371,11 +370,9 @@ public class InstallationManagerImpl implements InstallationManager {
 
     protected Map getArtifactProperties(Artifact artifact) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
-        Map m = null;
+        Map m;
         try {
-            m = fromJson(transport.doGet(requestUrl),
-                         Map.class,
-                         new TypeLiteral<Map<String, String>>() {}.getType());
+            m = asMap(transport.doGet(requestUrl));
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
@@ -386,11 +383,9 @@ public class InstallationManagerImpl implements InstallationManager {
 
     protected Map getArtifactProperties(Artifact artifact, String version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
-        Map m = null;
+        Map m;
         try {
-            m = fromJson(transport.doGet(requestUrl),
-                         Map.class,
-                         new TypeLiteral<Map<String, String>>() {}.getType());
+            m = asMap(transport.doGet(requestUrl));
         } catch (JsonParseException e) {
             throw new IOException(e);
         }

@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -28,7 +29,11 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
@@ -254,6 +259,7 @@ public class DownloadCommandTest {
     }
 
 
+    // TODO
 //    @Test(enabled = false)
 //    public void testDownloadWhenErrorInResponseSubscriptionNotFound() throws Exception {
 //        String downloadStatusResponse = "{\"status\" :\"ERROR\",\"downloadInfo\" :{\"status\" :\"FAILURE\",\"percents\" :0," +

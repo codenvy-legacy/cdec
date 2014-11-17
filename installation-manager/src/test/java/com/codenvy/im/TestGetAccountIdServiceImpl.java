@@ -36,7 +36,6 @@ import java.io.IOException;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNull;
 
 /**
@@ -115,4 +114,33 @@ public class TestGetAccountIdServiceImpl {
 
         installationManagerService.getAccountReferenceWhereUserIsOwner(null, userCredentialsRep);
     }
+
+    @Test
+    public void testGetAccountReferenceWithSpecificName() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner(ACCOUNT_NAME, userCredentialsRep);
+        assertEquals(response, "{\n"
+                               + "  \"links\" : [ ],\n"
+                               + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
+                               + "}");
+    }
+
+    @Test
+    public void testGetAccountReferenceWithSpecificNameReturnNullIfAccountWasNotFound() throws Exception {
+        when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
+                .thenReturn("[{"
+                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
+        JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(testCredentials);
+        String response = installationManagerService.getAccountReferenceWhereUserIsOwner("some name", userCredentialsRep);
+        assertNull(response);
+    }
+
 }

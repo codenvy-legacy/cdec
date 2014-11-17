@@ -17,17 +17,11 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.commons.json.JsonHelper;
-import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.im.utils.Commons;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /** @author Alexander Reshetnyak */
 public class DownloadStatusInfo {
 
-    private Status status;
-    private int    percents;
+    private Status   status;
+    private int      percents;
     private Response downloadResult;
 
     public DownloadStatusInfo() {

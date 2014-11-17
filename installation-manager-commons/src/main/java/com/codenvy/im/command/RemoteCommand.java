@@ -25,9 +25,7 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class RemoteCommand implements Command {
     private String description;
-
     private String command;
-
     private Agent agent;
 
     public RemoteCommand(String command, Agent agent, String description) {
@@ -36,34 +34,38 @@ public class RemoteCommand implements Command {
         this.description = description;
     }
 
-    @Override public String execute() throws CommandException {
+    /** {@inheritDoc} */
+    @Override
+    public String execute() throws CommandException {
         try {
             return agent.execute(command);
         } catch (AgentException e) {
-            String errorMessage = "Remote command execution fail.";
-            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                errorMessage += format(" Error: %s", e.getMessage());
-            }
-
-            throw new CommandException(errorMessage, e);
+            throw makeCommandException(e);
         }
     }
 
-    @Override public String execute(int timeoutMillis) throws CommandException {
+    /** {@inheritDoc} */
+    @Override
+    public String execute(int timeoutMillis) throws CommandException {
         try {
             return agent.execute(command, timeoutMillis);
         } catch (AgentException e) {
-            String errorMessage = "Remote command execution fail.";
-            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                errorMessage += format(" Error: %s", e.getMessage());
-            }
-
-            throw new CommandException(errorMessage, e);
+            throw makeCommandException(e);
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public String toString() {
         return format("'%s' command: '%s'", this.description, this.command);
+    }
+
+    private CommandException makeCommandException(AgentException e) {
+        String errorMessage = "Remote command execution fail.";
+        if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+            errorMessage += format(" Error: %s", e.getMessage());
+        }
+
+        return new CommandException(errorMessage, e);
     }
 }

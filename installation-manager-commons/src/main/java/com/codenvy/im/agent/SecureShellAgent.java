@@ -23,10 +23,11 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
+import org.apache.commons.io.IOUtils;
+
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
@@ -42,55 +43,58 @@ public class SecureShellAgent implements Agent {
     private final Session session;
     private final JSch jsch = getJSch();
 
-    /**
-     * Create ssh session object and try to connect to remote host by using password.
-     */
-    public SecureShellAgent(String host, int port, String user, String password) throws AgentException {
+    /** Create ssh session object and try to connect to remote host using password. */
+    public SecureShellAgent(final String host,
+                            final int port,
+                            final String user,
+                            final String password) throws AgentException {
         try {
             session = getSession(host, port, user);
             session.setPassword(password);
             session.connect();
         } catch (JSchException e) {
             String errorMessage = format("Can't connect to host '%s@%s:%s'.", user, host, port);
-            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                errorMessage += format(" Error: %s", e.getMessage());
-            }
-
-            throw new AgentException(errorMessage, e);
+            throw makeAgentException(errorMessage, e);
         }
     }
 
-    /**
-     * Create ssh session object and try to connect to remote host by using auth key.
-     */
-    public SecureShellAgent(String host, int port, String user, String privateKeyFileAbsolutePath, @Nullable String passphrase) throws
-                                                                                                                                AgentException {
+    /** Create ssh session object and try to connect to remote host by using auth key. */
+    public SecureShellAgent(final String host,
+                            final int port,
+                            final String user,
+                            final String privateKeyFileAbsolutePath,
+                            final @Nullable String passPhrase) throws AgentException {
         try {
             session = getSession(host, port, user);
 
-            if (passphrase != null) {
-                jsch.addIdentity(privateKeyFileAbsolutePath, passphrase);
+            if (passPhrase != null) {
+                jsch.addIdentity(privateKeyFileAbsolutePath, passPhrase);
             } else {
                 jsch.addIdentity(privateKeyFileAbsolutePath);
             }
 
             session.connect();
         } catch (JSchException e) {
-            String errorMessage =
-                format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
-            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                errorMessage += format(" Error: %s", e.getMessage());
-            }
-
-            throw new AgentException(errorMessage, e);
+            String errorMessage = format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
+            throw makeAgentException(errorMessage, e);
         }
     }
 
-    @Override public String execute(String command) throws AgentException {
+    /** for unit testing propose */
+    @Deprecated
+    JSch getJSch() {
+        return new JSch();
+    } // TODO
+
+    /** {@inheritDoc} */
+    @Override
+    public String execute(String command) throws AgentException {
         return execute(command, 0);
     }
 
-    @Override public String execute(String command, int timeoutMillis) throws AgentException {
+    /** {@inheritDoc} */
+    @Override
+    public String execute(String command, int timeoutMillis) throws AgentException {
         ChannelExec channel = null;
 
         try {
@@ -108,10 +112,10 @@ public class SecureShellAgent implements Agent {
             int exitStatus = channel.getExitStatus();
             if (exitStatus != 0) {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(error));
-                throw new Exception(read(bufferedReader));
+                throw new Exception(IOUtils.toString(bufferedReader));
             } else {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
-                return read(bufferedReader);
+                return IOUtils.toString(bufferedReader);
             }
         } catch (Exception e) {
             throw new AgentException(e.getMessage(), e);
@@ -120,11 +124,6 @@ public class SecureShellAgent implements Agent {
                 channel.disconnect();
             }
         }
-    }
-
-    /** for unit testing propose */
-    JSch getJSch() {
-        return new JSch();
     }
 
     private Session getSession(String host, int port, String user) throws JSchException {
@@ -137,17 +136,6 @@ public class SecureShellAgent implements Agent {
         return session;
     }
 
-    private String read(BufferedReader reader) throws IOException {
-        StringBuffer output = new StringBuffer();
-        String msg;
-
-        while ((msg = reader.readLine()) != null) {
-            output.append(msg + "\n");
-        }
-
-        return output.toString();
-    }
-
     private void waitForChannelClosed(Channel channel) throws InterruptedException {
         while (!channel.isClosed()) {
             Thread.sleep(100);
@@ -155,7 +143,14 @@ public class SecureShellAgent implements Agent {
     }
 
     @PreDestroy
-    public void disconnect () {
+    public void disconnect() {
         session.disconnect();
+    } // TODO
+
+    private AgentException makeAgentException(String errorMessage, JSchException e) {
+        if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+            errorMessage += format(" Error: %s", e.getMessage());
+        }
+        return new AgentException(errorMessage, e);
     }
 }

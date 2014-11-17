@@ -21,6 +21,7 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.ConfigException;
+
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.PasswordAuthenticator;
@@ -40,7 +41,11 @@ import java.util.List;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -52,7 +57,7 @@ public class InstallerTest {
     static final String TEST_HOST             = "127.0.0.1";
     static final int    TEST_PORT             = 2224;
     static final String TEST_PASSWORD         = "anyPassword";
-    static final String TEST_AUTH_PRIVATE_KEY = "~/.ssh/id_rsa";
+    static final String TEST_AUTH_PRIVATE_KEY = "~/.ssh/id_rsa"; // TODO
 
     static final String TEST_COMMAND_1 = "test command 1";
     static final String TEST_COMMAND_2 = "test command 2";
@@ -146,7 +151,7 @@ public class InstallerTest {
     }
 
     @Test(expectedExceptions = ConfigException.class,
-          expectedExceptionsMessageRegExp = "Installation config file 'config file' is incomplete.")
+            expectedExceptionsMessageRegExp = "Installation config file 'config file' is incomplete.")
     public void testIncompleteConfig() {
         doReturn("").when(mockConfig).getHost();
         doReturn("").when(mockConfig).getSSHPort();
@@ -156,8 +161,8 @@ public class InstallerTest {
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Can't connect to host 'wrong user@wrong host:0'. " +
-                                            "Error: java.net.UnknownHostException: wrong host")
+            expectedExceptionsMessageRegExp = "Can't connect to host 'wrong user@wrong host:0'. " +
+                                              "Error: java.net.UnknownHostException: wrong host")
     public void testConnectionToServerError() {
         doReturn("wrong host").when(mockConfig).getHost();
         doReturn("0").when(mockConfig).getSSHPort();
@@ -199,8 +204,9 @@ public class InstallerTest {
             super(pathToBinaries, installType);
         }
 
-        @Override protected LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
-            return new LinkedList<Command>(){{
+        @Override
+        protected LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
+            return new LinkedList<Command>() {{
                 add(mockTestCommand1);
                 add(mockTestCommand2);
             }};

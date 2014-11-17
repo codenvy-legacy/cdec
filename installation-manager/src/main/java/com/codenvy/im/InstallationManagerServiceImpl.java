@@ -38,6 +38,7 @@ import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
@@ -528,7 +529,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.SUCCESS);
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
 
-            } catch (InstallStartedException e) {
+            } catch (InstallStartedException e) { // TODO check only exception ?
                 ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.INSTALL_STARTED);
                 info.setInstallOptions(e.getInstallOptions());
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
@@ -588,6 +589,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         }
     }
 
+    // TODO nullable
     protected void doInstall(Artifact artifact, String version, String token, @Nullable InstallOptions installOption) throws IOException {
         manager.install(token, artifact, version, installOption);
     }

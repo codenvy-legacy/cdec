@@ -18,6 +18,7 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CommandException;
@@ -26,13 +27,10 @@ import com.codenvy.im.installer.InstallInProgressException;
 import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.installer.Installer;
-import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.IOException;
@@ -40,12 +38,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.Commons.createDtoFromJson;
 
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
- * */
+ */
+// TODO
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
@@ -53,7 +51,7 @@ public class CDECArtifact extends AbstractArtifact {
     private final HttpTransport transport;
     private final String apiNodeUrl;
 
-    protected Installer installer;
+    protected Installer installer; // TODO
 
     @Inject
     public CDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
@@ -70,15 +68,14 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public void install(Path pathToBinaries, InstallOptions options) throws
-                                                                  CommandException,
-                                                                      AgentException,
-                                                                      ConfigException,
-                                                                      InstallStartedException,
-                                                                      InstallInProgressException,
-                                                                      IllegalArgumentException {
+    public void install(Path pathToBinaries, InstallOptions options) throws CommandException,
+                                                                            AgentException,
+                                                                            ConfigException,
+                                                                            InstallStartedException,
+                                                                            InstallInProgressException,
+                                                                            IllegalArgumentException {
         if (installer == null
-            || ! installer.getOptions().getId().equals(options.getId())) {
+            || !installer.getOptions().getId().equals(options.getId())) {
 
             if (options == null
                 || options.getType() == null) {
@@ -104,6 +101,8 @@ public class CDECArtifact extends AbstractArtifact {
         return new Installer(pathToBinaries, options.getType());
     }
 
+    // TODO
+    /** {@inheritDoc} */
     @Override
     public String getInstalledVersion(String authToken) throws IOException {
         String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);

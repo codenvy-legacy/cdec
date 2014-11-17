@@ -20,7 +20,10 @@ package com.codenvy.im.agent;
 
 /** @author Dmytro Nochevnov */
 public interface Agent {
+
+    /** Executes commands. */
     String execute(String command) throws AgentException;
 
+    /** Executes commands for specific period of time. */
     String execute(String command, int timeoutMillis) throws AgentException;
 }

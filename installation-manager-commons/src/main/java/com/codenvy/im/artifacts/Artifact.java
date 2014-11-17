@@ -28,6 +28,7 @@ import java.nio.file.Path;
  * @author Anatoliy Bazko
  */
 public interface Artifact extends Comparable<Artifact> {
+
     /** Installs artifact */
     void install(Path pathToBinaries, @Nullable InstallOptions options) throws IOException;
 

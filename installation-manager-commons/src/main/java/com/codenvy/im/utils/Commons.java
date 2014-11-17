@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.inject.TypeLiteral;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -43,6 +44,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
@@ -58,7 +60,7 @@ import static java.nio.file.Files.newInputStream;
 public class Commons {
     /** include only non null fields into json; write pretty printed json.  */
     private static final ObjectWriter jsonWriter =
-        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
+            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
 
     /** Simplifies the way to combine paths. Takes care about normalization. */
     public static String combinePaths(String apiEndpoint, String path) {
@@ -113,16 +115,23 @@ public class Commons {
 
     /** Translates JSON to object. TODO add test */
     @Nullable
+    public static Map asMap(String json) throws JsonParseException {
+        return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {}.getType());
+    }
+
+    /** Translates JSON to object. TODO add test */
+    @Nullable
     public static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
         return JsonHelper.fromJson(json, clazz, type);
     }
 
     /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. TODO add test */
+    @Nullable // TODO check
     public static String toJson(Object obj) {
         try {
             return jsonWriter.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            return null;
+            return null; // TODO
         }
     }
 
