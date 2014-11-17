@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -53,7 +52,7 @@ public class ConfigTest {
 
     @Test(expectedExceptions = ConfigException.class,
           expectedExceptionsMessageRegExp = "Property 'test_property' hasn't been found at 'test source'.")
-    public void testGetUnexistsPropertyAfterLoad () {
+    public void testGetUnexistedPropertyAfterLoad () {
         InputStream mockIs = new ByteArrayInputStream(("unknown_property=test_value").getBytes());
 
         Config testConfig = new TestConfig();

@@ -34,14 +34,14 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"downloadInfo","config","artifacts","subscription","message","status"})
+@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "message", "status"})
 public class Response {
-    private List<ArtifactInfo> artifacts;
-    private String message;
-    private ResponseCode status;
-    private DownloadStatusInfo downloadInfo;
+    private List<ArtifactInfo>        artifacts;
+    private String                    message;
+    private ResponseCode              status;
+    private DownloadStatusInfo        downloadInfo;
     private JsonStringMapImpl<String> config;
-    private String subscription;
+    private String                    subscription;
 
     public Response() {
     }

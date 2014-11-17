@@ -26,6 +26,7 @@ import com.codenvy.im.command.RemoteCommand;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.ConfigException;
 import com.codenvy.im.config.ConfigFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ import static java.lang.String.format;
 /**
  * @author Dmytro Nochevnov
  */
+// TODO
 public class Installer {
     private static final Logger LOG = LoggerFactory.getLogger(Installer.class);
     private LinkedList<Command> commands;

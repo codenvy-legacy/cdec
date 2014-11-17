@@ -21,7 +21,6 @@ import com.codenvy.api.core.ServerException;
 import com.codenvy.api.core.rest.annotations.OPTIONS;
 import com.codenvy.dto.server.JsonStringMapImpl;
 
-import com.google.inject.TypeLiteral;
 import org.apache.commons.io.IOUtils;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.testng.MockitoTestNGListener;
@@ -45,6 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -65,10 +65,9 @@ public class TestHttpTransport {
     @Test
     public void testDoGet(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        Map value = Commons.fromJson(httpTransport.doGet("http://0.0.0.0:" + port + "/rest/test/get"),
-                    Map.class,
-                    new TypeLiteral<Map<String, String>>() {}.getType());
+        Map value = Commons.asMap(httpTransport.doGet("http://0.0.0.0:" + port + "/rest/test/get"));
 
+        assertNotNull(value);
         assertEquals(value.size(), 1);
         assertEquals(value.get("key"), "value");
     }
@@ -98,10 +97,9 @@ public class TestHttpTransport {
     @Test
     public void testDoOption(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        Map<String, String> value = Commons.fromJson(httpTransport.doOption("http://0.0.0.0:" + port + "/rest/test", null),
-                                                     Map.class,
-                                                     new TypeLiteral<Map<String, String>>() {}.getType());
+        Map value = Commons.asMap(httpTransport.doOption("http://0.0.0.0:" + port + "/rest/test", null));
 
+        assertNotNull(value);
         assertEquals(value.size(), 1);
         assertEquals(value.get("key"), "value");
     }

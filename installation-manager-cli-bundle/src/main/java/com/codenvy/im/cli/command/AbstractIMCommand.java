@@ -28,6 +28,7 @@ import com.codenvy.im.response.Response;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 import com.codenvy.im.user.UserCredentials;
+
 import org.fusesource.jansi.Ansi;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
@@ -65,12 +66,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /**
-     * @return "true" if only user typed line equals "y".
-     */
+    /** @return "true" only if only user typed line equals "y". */
     protected boolean askUser(String prompt) {
         printInfo(prompt);
-        String userAnswer = null;
+
+        String userAnswer;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
             userAnswer = reader.readLine();
             printLineSeparator();
@@ -78,11 +78,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             return false;
         }
 
-        if (userAnswer != null && userAnswer.equals("y")) {
-            return true;
-        }
-
-        return false;
+        return userAnswer != null && userAnswer.equalsIgnoreCase("y");
     }
 
     @Override
@@ -172,6 +168,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         System.out.print(ansi().eraseLine(Ansi.Erase.ALL));
         System.out.flush();
     }
+
     protected void cleanLineAbove() {
         System.out.print(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
         System.out.flush();

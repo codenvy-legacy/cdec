@@ -20,48 +20,45 @@ package com.codenvy.im.utils;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.google.inject.TypeLiteral;
 
 import java.io.IOException;
 import java.util.Map;
 
+import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.Commons.fromJson;
 
 /** @author Dmytro Nochevnov */
 public class ArtifactPropertiesUtils {
 
-    /**
-     * Utility class so no public constructor.
-     */
+    /** Utility class so no public constructor. */
     private ArtifactPropertiesUtils() {
-        
+
     }
-    
+
+    /** Checks if Artifact property {@link com.codenvy.im.artifacts.ArtifactProperties#AUTHENTICATION_REQUIRED_PROPERTY} is set to true */
     public static boolean isAuthenticationRequired(String artifactName,
                                                    String version,
                                                    HttpTransport transport,
                                                    String updateEndpoint) throws IOException, JsonParseException {
-        Map<String, String> properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
-        return Boolean.valueOf(properties.get(ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY));
+        Map properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
+        return Boolean.valueOf((String)properties.get(ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY));
     }
 
-    public static String getSubscription(String artifactName,
+    /** Returns {@link com.codenvy.im.artifacts.ArtifactProperties#SUBSCRIPTION_PROPERTY} property */
+    public static Object getSubscription(String artifactName,
                                          String version,
                                          HttpTransport transport,
                                          String updateEndpoint) throws IOException, JsonParseException {
-        Map<String, String> properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
+        Map properties = getArtifactProperties(artifactName, version, transport, updateEndpoint);
         return properties.get(ArtifactProperties.SUBSCRIPTION_PROPERTY);
     }
 
-    private static Map<String, String> getArtifactProperties(String artifactName,
-                                                             String version,
-                                                             HttpTransport transport,
-                                                             String updateEndpoint) throws IOException, JsonParseException {
+    private static Map getArtifactProperties(String artifactName,
+                                             String version,
+                                             HttpTransport transport,
+                                             String updateEndpoint) throws IOException, JsonParseException {
         String versionInfoServiceHref = combinePaths(updateEndpoint, "repository/properties/" + artifactName + "/" + version);
-        Map<String, String> properties = fromJson(transport.doGet(versionInfoServiceHref),
-                                                  Map.class,
-                                                  new TypeLiteral<Map<String, String>>() {}.getType());
+        Map properties = asMap(transport.doGet(versionInfoServiceHref));
         if (properties == null) {
             throw new ArtifactNotFoundException(artifactName, version);
         }

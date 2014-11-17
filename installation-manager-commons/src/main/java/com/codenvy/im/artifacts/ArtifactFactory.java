@@ -22,9 +22,7 @@ import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 /** @author Anatoliy Bazko */
 public class ArtifactFactory {
 
-    /**
-     * Artifact factory.
-     */
+    /** Artifact factory. */
     public static Artifact createArtifact(String name) throws IllegalArgumentException {
         switch (name) {
             case CDECArtifact.NAME:

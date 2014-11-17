@@ -21,15 +21,13 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.installer.InstallOptions;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.List;
-
 /** @author Dmytro Nochevnov */
-@JsonPropertyOrder({"artifact","version","file","installOptions","status"})
+@JsonPropertyOrder({"artifact", "version", "file", "installOptions", "status"})
 public class ArtifactInfo {
-    private String artifact;
-    private String version;
-    private Status status;
-    private String file;
+    private String         artifact;
+    private String         version;
+    private Status         status;
+    private String         file;
     private InstallOptions installOptions;
 
     public ArtifactInfo() {

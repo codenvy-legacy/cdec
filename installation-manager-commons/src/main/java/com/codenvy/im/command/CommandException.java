@@ -17,18 +17,8 @@
  */
 package com.codenvy.im.command;
 
-/**
- * @author Dmytro Nochevnov
- */
+/** @author Dmytro Nochevnov */
 public class CommandException extends RuntimeException {
-    public CommandException() {
-        super();
-    }
-
-    public CommandException(String message) {
-        super(message);
-    }
-
     public CommandException(String message, Throwable cause) {
         super(message, cause);
     }

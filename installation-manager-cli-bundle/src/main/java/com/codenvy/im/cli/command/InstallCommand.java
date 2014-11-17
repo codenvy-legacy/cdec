@@ -26,6 +26,7 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -45,6 +46,7 @@ import static java.lang.String.format;
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
+// TODO
 @Command(scope = "codenvy", name = "im-install", description = "Install updates")
 public class InstallCommand extends AbstractIMCommand {
 

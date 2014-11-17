@@ -53,7 +53,7 @@ public abstract class Config {
             if (configSource != null) {
                 throw new ConfigException(format("Property '%s' hasn't been found at '%s'.", propertyName, getConfigSource()));
             } else {
-                throw new ConfigException(format("Property '%s' hasn't been found.", propertyName, getConfigSource()));
+                throw new ConfigException(format("Property '%s' hasn't been found.", propertyName));
             }
         }
 
