@@ -21,10 +21,6 @@ package com.codenvy.im.config;
  * @author Dmytro Nochevnov
  */
 public class ConfigException extends RuntimeException {
-    public ConfigException() {
-        super();
-    }
-
     public ConfigException(String message) {
         super(message);
     }
