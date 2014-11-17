@@ -93,6 +93,9 @@ public class CDECArtifact extends AbstractArtifact {
 
         if (installer.isFinished()) {
             installer = null;
+
+            // TODO save version of installed CDEC (issue CDEC-62)
+
             return;
         }
 
@@ -127,5 +130,4 @@ public class CDECArtifact extends AbstractArtifact {
     protected Path getInstalledPath() throws URISyntaxException {
         throw new UnsupportedOperationException();
     }
-
 }

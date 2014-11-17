@@ -132,7 +132,6 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException, CommandException {
-        Map<Artifact, String> installedArtifacts = getInstalledArtifacts(authToken);
         Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = getDownloadedArtifacts();
 
         Version v = Version.valueOf(version);
@@ -141,14 +140,10 @@ public class InstallationManagerImpl implements InstallationManager {
             && downloadedArtifacts.get(artifact).containsKey(v)) {
 
             Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
-            String installedVersion = installedArtifacts.get(artifact);
-
-            if (installedVersion == null || compare(version, installedVersion) > 0) {
+            if (artifact.isInstallable(v, authToken)) {
                 artifact.install(pathToBinaries, options);
-
-            } else if (compare(version, installedVersion) <= 0) {
-                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version
-                                                + "', because greater or equal version has already been installed.");
+            } else {
+                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
             }
         } else {
             throw new FileNotFoundException("Binaries to install artifact '" + artifact.getName() + "' version '" + version + "' not found");

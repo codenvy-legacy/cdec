@@ -47,7 +47,7 @@ public class SecureShellAgentTest {
     static final String TEST_HOST             = "127.0.0.1";
     static final int    TEST_PORT             = 2223;
     static final String TEST_PASSWORD         = "testPassword";
-    static final String TEST_AUTH_PRIVATE_KEY = "~/.ssh/id_rsa";
+    static final String TEST_AUTH_PRIVATE_KEY = SecureShellAgentTest.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
     static final String TEST_PASSPHRASE       = null;
 
     static final String TEST_COMMAND          = "echo test";
@@ -92,10 +92,7 @@ public class SecureShellAgentTest {
         assertEquals(result, TEST_COMMAND_OUTPUT);
     }
 
-    @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Can't connect to host '" + TEST_USER + "@" + UNEXISTS_HOST + ":" + TEST_PORT
-                                            + "' by using private key '" + TEST_AUTH_PRIVATE_KEY
-                                            + "'. Error: java.net.UnknownHostException: " + UNEXISTS_HOST)
+    @Test(expectedExceptions = AgentException.class)
     public void testAuthKeyError() {
         testAgent = new SecureShellAgent("unexists", TEST_PORT, TEST_USER, TEST_AUTH_PRIVATE_KEY, TEST_PASSPHRASE);
 

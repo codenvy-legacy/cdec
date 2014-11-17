@@ -94,8 +94,7 @@ public class TestInstallationManager {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1', " +
-                                            "because greater or equal version has already been installed.")
+          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
@@ -126,15 +125,14 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
         doNothing().when(cdecArtifact).install(any(Path.class), any(InstallOptions.class));
-        doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn("1.0.0").when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1", null);
         verify(cdecArtifact).install(any(Path.class), any(InstallOptions.class));
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0', " +
-                                            "because greater or equal version has already been installed.")
+          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0'.")
     public void testUpdateIMErrorIfInstalledIMHasGreaterVersion() throws Exception {
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
@@ -148,17 +146,20 @@ public class TestInstallationManager {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0', " +
-                                            "because greater or equal version has already been installed.")
+          expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
     public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
+        final Path pathToBinaries = Paths.get("target/download/cdec/1.0.0/file1");
+        InstallOptions options = new InstallOptions().setType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
+
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0"), Paths.get("target/download/cdec/1.0.0/file1"));
+                put(Version.valueOf("1.0.0"), pathToBinaries);
             }});
         }}).when(manager).getDownloadedArtifacts();
+        doNothing().when(cdecArtifact).install(pathToBinaries, options);
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.0", null);
+        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.0", options);
     }
 
     @Test
@@ -250,10 +251,6 @@ public class TestInstallationManager {
 
     @Test
     public void testGetInstalledArtifacts() throws Exception {
-        when(transport.doGet("update/endpoint/repository/installationinfo/" + CDECArtifact.NAME, testCredentials.getToken()))
-                .thenReturn("{version:2.10.4}");
-        when(transport.doGet("update/endpoint/repository/installationinfo/" + CDECArtifact.NAME, testCredentials.getToken()))
-                .thenReturn("{\"version\":\"2.10.4\"}");
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
 
         Map<Artifact, String> m = manager.getInstalledArtifacts(testCredentials.getToken());
