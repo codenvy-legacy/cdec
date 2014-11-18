@@ -67,14 +67,14 @@ public class RemoteCommandTest {
         assertEquals(command.toString(), "'test description' command: 'ls'");
     }
 
-    //@Test  TODO fix
+    @Test
     public void testCommandException() {
         doThrow(new AgentException("agent error")).when(mockAgent).execute("ls");
 
         Command command = new RemoteCommand("ls", mockAgent, "test description");
 
         try {
-            command.execute(123);
+            command.execute();
         } catch(CommandException e) {
             assertEquals(e.getMessage(), "Remote command execution fail. Error: agent error");
             return;
@@ -83,7 +83,7 @@ public class RemoteCommandTest {
         fail("CommandException should be thrown.");
     }
 
-    //@Test  TODO fix
+    @Test
     public void testCommandExceptionWithoutAgentErrorMessage() {
         doThrow(new AgentException()).when(mockAgent).execute("ls", 123);
 
