@@ -51,7 +51,7 @@ public class TestDaemon {
     @Test
     public void testObtainChallengeRequest() throws Exception {
         try {
-            installationManagerServiceProxy.obtainChallengeRequest();
+            installationManagerServiceProxy.getUpdateServerEndpoint();
         } catch (ResourceException re) {
             fail(re.getStatus().toString() + ". " + re.getMessage());
         }

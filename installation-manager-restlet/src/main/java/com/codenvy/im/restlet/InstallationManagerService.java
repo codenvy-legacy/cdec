@@ -35,7 +35,7 @@ import java.io.IOException;
  * @author Dmytro Nochevnov
  */
 @Path("im")
-public interface InstallationManagerService extends DigestAuthSupport {
+public interface InstallationManagerService {
 
     /** Starts downloading all latest updates */
     @POST
