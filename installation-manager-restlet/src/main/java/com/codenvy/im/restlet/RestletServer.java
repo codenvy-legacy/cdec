@@ -19,12 +19,13 @@ package com.codenvy.im.restlet;
 
 import org.restlet.Component;
 import org.restlet.Context;
+import org.restlet.data.ChallengeScheme;
 import org.restlet.data.Protocol;
 import org.restlet.engine.Engine;
-import org.restlet.ext.crypto.DigestAuthenticator;
 import org.restlet.ext.jaxrs.JaxRsApplication;
 import org.restlet.ext.slf4j.Slf4jLoggerFacade;
 import org.restlet.security.Authenticator;
+import org.restlet.security.ChallengeAuthenticator;
 import org.restlet.security.MapVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class RestletServer {
         Engine.getInstance().setLoggerFacade(new Slf4jLoggerFacade());
 
         try {
-            createApplicationWithDigestAuth(application);
+            createApplicationWithBasicAuth(application);
         } catch (Exception e) {
             LOG.error("Can't create application. ", e);
         }
@@ -68,14 +69,14 @@ public class RestletServer {
         component.stop();
     }
 
-    private void createApplicationWithDigestAuth(Application application) throws Exception {
+    private void createApplicationWithBasicAuth(Application application) throws Exception {
         // create JAX-RS runtime environment
         JaxRsApplication applicationContainer = new JaxRsApplication(context);
 
         // attach Application
         applicationContainer.add(application);
 
-        Authenticator authenticator = getDigestAuthenticator(applicationContainer);
+        Authenticator authenticator = getBasicAuthenticator(applicationContainer);
 
         applicationContainer.setAuthenticator(authenticator);
 
@@ -83,16 +84,12 @@ public class RestletServer {
         component.getDefaultHost().attach(applicationContainer);
     }
 
-    private Authenticator getDigestAuthenticator(JaxRsApplication applicationContainer) {
-        // Create authenticator
-        DigestAuthenticator authenticator = new DigestAuthenticator(applicationContainer.getContext(),
-                                                                    ServerDescription.REALM,
-                                                                    ServerDescription.SERVER_DIGEST_KEY);
-
+    private Authenticator getBasicAuthenticator(JaxRsApplication applicationContainer) {
+        ChallengeAuthenticator authenticator = new ChallengeAuthenticator(applicationContainer.getContext(), ChallengeScheme.HTTP_BASIC, "Codenvy-IM");
         // Load a single static login/secret pair
         MapVerifier mapVerifier = new MapVerifier();
         mapVerifier.getLocalSecrets().put(ServerDescription.LOGIN, ServerDescription.PASSWORD);
-        authenticator.setWrappedVerifier(mapVerifier);
+        authenticator.setVerifier(mapVerifier);
 
         return authenticator;
     }

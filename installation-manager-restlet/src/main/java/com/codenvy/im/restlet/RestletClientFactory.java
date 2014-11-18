@@ -17,11 +17,12 @@
  */
 package com.codenvy.im.restlet;
 
-import org.restlet.data.*;
+import org.restlet.data.ChallengeResponse;
+import org.restlet.data.ChallengeScheme;
+import org.restlet.data.Reference;
 import org.restlet.ext.jaxrs.JaxRsClientResource;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
-import org.restlet.resource.ResourceException;
 
 import javax.ws.rs.Path;
 
@@ -49,35 +50,16 @@ public class RestletClientFactory {
 
         JaxRsClientResource clientResource = new JaxRsClientResource(null, reference);
         T proxy = clientResource.wrap(resourceInterface);
-        doAuthentication(clientResource, proxy);
+        doBasicAuthentication(clientResource);
 
         return proxy;
     }
 
-    private static <T extends DigestAuthSupport> void doAuthentication(JaxRsClientResource clientResource, T proxy) {
-        try {
-            proxy.obtainChallengeRequest();
-        } catch (ResourceException re) {
-            if (Status.CLIENT_ERROR_UNAUTHORIZED.equals(re.getStatus())) {
-                ChallengeRequest digestChallenge = null;
-
-                // Retrieve HTTP Digest hints
-                for (ChallengeRequest challengeRequest : clientResource.getChallengeRequests()) {
-                    if (ChallengeScheme.HTTP_DIGEST.equals(challengeRequest.getScheme())) {
-                        digestChallenge = challengeRequest;
-
-                        break;
-                    }
-                }
-
-                // Configure authentication credentials
-                ChallengeResponse authentication = new ChallengeResponse(digestChallenge,
-                                                                         clientResource.getResponse(),
-                                                                         ServerDescription.LOGIN,
-                                                                         new String(ServerDescription.PASSWORD));
-                clientResource.setChallengeResponse(authentication);
-            }
-        }
+    private static void doBasicAuthentication(JaxRsClientResource clientResource) {
+        ChallengeResponse authentication = new ChallengeResponse(ChallengeScheme.HTTP_BASIC,
+                                                                 ServerDescription.LOGIN,
+                                                                 new String(ServerDescription.PASSWORD));
+        clientResource.setChallengeResponse(authentication);
     }
 
     private static String getResourcePath(Class resourceInterface) throws MissingAnnotationException, IllegalPathException {
