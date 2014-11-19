@@ -19,6 +19,7 @@ package com.codenvy.im.response;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.utils.Version;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /** @author Dmytro Nochevnov */
@@ -42,6 +43,10 @@ public class ArtifactInfo {
         this(artifact.getName(), version);
     }
 
+    public ArtifactInfo(Artifact artifact, Version version) {
+        this(artifact.getName(), version.toString());
+    }
+
     public ArtifactInfo(String artifact, String version, Status status) {
         this(artifact, version);
         this.status = status;
@@ -49,6 +54,10 @@ public class ArtifactInfo {
 
     public ArtifactInfo(Artifact artifact, String version, Status status) {
         this(artifact.getName(), version, status);
+    }
+
+    public ArtifactInfo(Artifact artifact, Version version, Status status) {
+        this(artifact.getName(), version.toString(), status);
     }
 
     public ArtifactInfo(Artifact artifact, String version, String file, Status status) {

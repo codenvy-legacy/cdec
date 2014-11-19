@@ -17,6 +17,9 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.utils.HttpException;
+import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -25,6 +28,8 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.core.Response;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -32,11 +37,24 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.newInputStream;
-import static java.nio.file.Files.newOutputStream;
-import static java.nio.file.Files.setLastModifiedTime;
+import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
+import static com.codenvy.im.utils.Commons.asMap;
+import static com.codenvy.im.utils.Commons.calculateMD5Sum;
+import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Version.compare;
+import static com.codenvy.im.utils.Version.valueOf;
+import static java.nio.file.Files.*;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.isDirectory;
 import static org.apache.commons.io.IOUtils.copy;
 
 /**
@@ -112,9 +130,104 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
-        return Version.valueOf(getInstalledVersion(accessToken)).compareTo(versionToInstall) < 0;
+        Version installedVersion = getInstalledVersion(accessToken);
+        if (installedVersion == null) {
+            return true;
+        }
+
+        return installedVersion.compareTo(versionToInstall) < 0;
     }
 
     /** @return path where artifact located */
     protected abstract Path getInstalledPath() throws URISyntaxException;
+
+    @Override
+    @Nullable
+    public Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {
+        Version latestVersionToDownload = getLatestVersionToDownload(updateEndpoint, transport);
+
+        if (latestVersionToDownload == null || isInstallable(latestVersionToDownload, authToken)) {
+            return latestVersionToDownload;
+        }
+
+        return null;
+    }
+
+    @Override
+    public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException {
+        SortedMap<Version, Path> versions = new TreeMap<>();
+
+        Path artifactDir = downloadDir.resolve(getName());
+
+        if (exists(artifactDir)) {
+            Iterator<Path> pathIterator = Files.newDirectoryStream(artifactDir).iterator();
+
+            while (pathIterator.hasNext()) {
+                try {
+                    Path versionDir = pathIterator.next();
+                    if (isDirectory(versionDir)) {
+                        Version version = valueOf(versionDir.getFileName().toString());
+
+                        Map properties = getProperties(version, updateEndpoint, transport);
+                        String md5sum = properties.get(MD5_PROPERTY).toString();
+                        String fileName = properties.get(FILE_NAME_PROPERTY).toString();
+
+                        Path file = versionDir.resolve(fileName);
+                        if (exists(file) && md5sum.equals(calculateMD5Sum(file))) {
+                            versions.put(version, file);
+                        }
+                    }
+                } catch (IllegalArgumentException | IOException e) {
+                    // maybe it isn't a version directory
+                }
+            }
+        }
+
+        return versions;
+    }
+
+    Map getLatestVersionProperties(String updateEndpoint, HttpTransport transport) throws IOException {
+        String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName());
+        Map m;
+        try {
+            m = asMap(transport.doGet(requestUrl));
+        } catch (JsonParseException e) {
+            throw new IOException(e);
+        }
+
+        validateProperties(m);
+        return m;
+    }
+
+    @Override
+    public Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException {
+        String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName() + "/" + version.toString());
+        Map m;
+        try {
+            m = asMap(transport.doGet(requestUrl));
+        } catch (JsonParseException e) {
+            throw new IOException(e);
+        }
+
+        validateProperties(m);
+        return m;
+    }
+
+    @Override
+    public void validateProperties(Map properties) throws IOException {
+        if (properties == null) {
+            throw new IOException("Can't get artifact properties.");
+        }
+
+        for (String p : ArtifactProperties.PUBLIC_PROPERTIES) {
+            if (!properties.containsKey(p)) {
+                throw new IOException("Can't get artifact property: " + p);
+            }
+        }
+    }
+
+    protected Version getLatestVersionToDownload(String updateEndpoint, HttpTransport transport) throws IOException {
+        Map m = getLatestVersionProperties(updateEndpoint, transport);
+        return valueOf(m.get(VERSION_PROPERTY).toString());
+    }
 }

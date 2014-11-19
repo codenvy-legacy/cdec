@@ -26,6 +26,7 @@ import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.installer.Installer;
 import com.codenvy.im.utils.HttpTransport;
 
+import com.codenvy.im.utils.Version;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -125,8 +126,8 @@ public class TestCDECArtifact {
     public void testInstalledVersion() throws Exception {
         when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
-        String version = spyCdecArtifact.getInstalledVersion("authToken");
-        assertEquals(version, "3.2.0-SNAPSHOT");
+        Version version = spyCdecArtifact.getInstalledVersion("authToken");
+        assertEquals(version.toString(), "3.2.0-SNAPSHOT");
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)

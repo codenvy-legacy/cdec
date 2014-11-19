@@ -42,7 +42,7 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    void install(String authToken, Artifact artifact, String version, @Nullable InstallOptions options) throws IOException;
+    void install(String authToken, Artifact artifact, Version version, @Nullable InstallOptions options) throws IOException;
 
     /**
      * Scans all installed artifacts and returns their versions.
@@ -52,7 +52,7 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException;
+    Map<Artifact, Version> getInstalledArtifacts(String authToken) throws IOException;
 
     /**
      * @return downloaded artifacts from the local repository
@@ -62,13 +62,30 @@ public interface InstallationManager {
     Map<Artifact, SortedMap<Version, Path>> getDownloadedArtifacts() throws IOException;
 
     /**
+     * @return set of downloaded into local repository versions of artifact
+     * @throws IOException
+     *         if an I/O error occurs
+     */
+    SortedMap<Version, Path> getDownloadedVersions(Artifact artifact) throws IOException;
+
+    /**
      * @param authToken
      *         the authentication token
      * @return the list of the artifacts to update.
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Map<Artifact, String> getUpdates(String authToken) throws IOException;
+    Map<Artifact, Version> getUpdates(String authToken) throws IOException;
+
+    /**
+     * @param authToken
+     *         the authentication token
+     * @return version of artifact to update.
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    Version getLatestVersionToDownload(String authToken, Artifact artifact) throws IOException;
+
 
     /**
      * Download the specific version of the artifact.
@@ -79,7 +96,7 @@ public interface InstallationManager {
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    Path download(UserCredentials userCredentials, Artifact artifact, String version) throws
+    Path download(UserCredentials userCredentials, Artifact artifact, Version version) throws
                                                                                       IOException,
                                                                                       IllegalStateException;
 
@@ -100,12 +117,17 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Path getPathToBinaries(Artifact artifact, String version) throws IOException;
+    Path getPathToBinaries(Artifact artifact, Version version) throws IOException;
 
     /**
      * @return size in bytes of the artifact
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Long getBinariesSize(Artifact artifact, String version) throws IOException;
+    Long getBinariesSize(Artifact artifact, Version version) throws IOException;
+
+    /** Filters what need to download, either all updates or a specific one. */
+    Map<Artifact, Version> getUpdatesToDownload(@Nullable final Artifact artifact,
+                                               @Nullable final Version version,
+                                               String authToken) throws IOException;
 }

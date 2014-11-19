@@ -28,6 +28,7 @@ import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 
+import com.codenvy.im.utils.Version;
 import org.mockito.Mockito;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
@@ -67,10 +68,10 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
 
     @Test
     public void testGetUpdates() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenReturn(new LinkedHashMap<Artifact, String>() {
+        when(mockInstallationManager.getUpdates(anyString())).thenReturn(new LinkedHashMap<Artifact, Version>() {
             {
-                put(installManagerArtifact, "1.0.1");
-                put(cdecArtifact, "2.10.5");
+                put(installManagerArtifact, Version.valueOf("1.0.1"));
+                put(cdecArtifact, Version.valueOf("2.10.5"));
             }
         });
 

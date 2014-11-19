@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 
+import com.codenvy.im.utils.Version;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -55,8 +56,8 @@ public class TestResponse {
 
     @Test
     public void testToJsonArtifactsMap() throws Exception {
-        Map<Artifact, String> m = new LinkedHashMap<Artifact, String>() {{
-            put(ArtifactFactory.createArtifact(CDECArtifact.NAME), "1.0.1");
+        Map<Artifact, Version> m = new LinkedHashMap<Artifact, Version>() {{
+            put(ArtifactFactory.createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
         }};
 
         Response response = new Response.Builder().withArtifacts(m).withStatus(ResponseCode.OK).build();

@@ -29,6 +29,7 @@ import com.codenvy.im.installer.InstallStartedException;
 import com.codenvy.im.installer.Installer;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -107,7 +108,7 @@ public class CDECArtifact extends AbstractArtifact {
     // TODO
     /** {@inheritDoc} */
     @Override
-    public String getInstalledVersion(String authToken) throws IOException {
+    public Version getInstalledVersion(String authToken) throws IOException {
         String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
         ApiInfo apiInfo = null;
         try {
@@ -115,7 +116,7 @@ public class CDECArtifact extends AbstractArtifact {
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
-        return apiInfo.getIdeVersion();
+        return Version.valueOf(apiInfo.getIdeVersion());
     }
 
     /** {@inheritDoc} */

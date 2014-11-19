@@ -137,13 +137,8 @@ public class Version implements Comparable<Version> {
         }
     }
 
-    public String getAsString() {
-        return major + "." + minor + "." + bugFix + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "") + (snapshot ? "-SNAPSHOT" : "");
-    }
-
-
     @Override
     public String toString() {
-        return getAsString();
+        return major + "." + minor + "." + bugFix + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "") + (snapshot ? "-SNAPSHOT" : "");
     }
 }

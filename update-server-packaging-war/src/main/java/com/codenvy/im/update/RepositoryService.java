@@ -469,7 +469,7 @@ public class RepositoryService {
                         }
 
                         try (InputStream in = item.getInputStream()) {
-                            artifactStorage.upload(in, artifact, v.getAsString(), fileName, props);
+                            artifactStorage.upload(in, artifact, v.toString(), fileName, props);
                             return Response.status(Response.Status.OK).build();
                         } catch (IOException e) {
                             LOG.error(e.getMessage(), e);

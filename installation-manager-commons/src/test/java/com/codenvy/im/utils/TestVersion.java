@@ -85,10 +85,10 @@ public class TestVersion {
 
     @Test
     public void testToString() throws Exception {
-        assertEquals(Version.valueOf("10.150.200").getAsString(), "10.150.200");
-        assertEquals(Version.valueOf("10.150.200-M20-SNAPSHOT").getAsString(), "10.150.200-M20-SNAPSHOT");
-        assertEquals(Version.valueOf("10.150.200-M20").getAsString(), "10.150.200-M20");
-        assertEquals(Version.valueOf("10.150.200-SNAPSHOT").getAsString(), "10.150.200-SNAPSHOT");
+        assertEquals(Version.valueOf("10.150.200").toString(), "10.150.200");
+        assertEquals(Version.valueOf("10.150.200-M20-SNAPSHOT").toString(), "10.150.200-M20-SNAPSHOT");
+        assertEquals(Version.valueOf("10.150.200-M20").toString(), "10.150.200-M20");
+        assertEquals(Version.valueOf("10.150.200-SNAPSHOT").toString(), "10.150.200-SNAPSHOT");
     }
 
     @Test

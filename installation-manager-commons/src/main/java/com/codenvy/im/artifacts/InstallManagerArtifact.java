@@ -18,6 +18,7 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -228,13 +229,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
-    public String getInstalledVersion(String authToken) throws IOException {
+    public Version getInstalledVersion(String authToken) throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);
 
             if (props.containsKey("version")) {
-                return (String)props.get("version");
+                return Version.valueOf((String)props.get("version"));
             } else {
                 throw new IOException(this.getName());
             }

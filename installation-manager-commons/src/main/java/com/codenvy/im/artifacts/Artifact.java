@@ -18,11 +18,14 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * @author Anatoliy Bazko
@@ -33,7 +36,8 @@ public interface Artifact extends Comparable<Artifact> {
     void install(Path pathToBinaries, @Nullable InstallOptions options) throws IOException;
 
     /** @return current installed version of the artifact */
-    String getInstalledVersion(String authToken) throws IOException;
+    @Nullable
+    Version getInstalledVersion(String authToken) throws IOException;
 
     /** @return the artifact name */
     String getName();
@@ -46,4 +50,15 @@ public interface Artifact extends Comparable<Artifact> {
      * version of the artifact
      */
     boolean isInstallable(Version versionToInstall, String accessToken) throws IOException;
+
+    /** @return properties stored at update server */
+    Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException;
+
+    /** @return version at the update server which is could be used to update already installed version */
+    @Nullable
+    Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException;
+
+    public void validateProperties(Map properties) throws IOException;
+
+    SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
 }
