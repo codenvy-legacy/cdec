@@ -49,7 +49,7 @@ public class TestDaemon {
     }
 
     @Test
-    public void testObtainChallengeRequest() throws Exception {
+    public void testConnection() throws Exception {
         try {
             installationManagerServiceProxy.getUpdateServerEndpoint();
         } catch (ResourceException re) {
