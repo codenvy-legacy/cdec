@@ -38,12 +38,12 @@ public class RestletClientFactory {
      */
     private RestletClientFactory() {
     }
-    
+
     /**
      * Creates proxy service to communicate with server.
      */
     public static synchronized <T> T createServiceProxy(Class<T> resourceInterface) throws MissingAnnotationException,
-                                                                                                                     IllegalPathException {
+                                                                                           IllegalPathException {
 
         String resourceUri = combinePaths(ServerDescription.SERVER_URL, getResourcePath(InstallationManagerService.class));
         Reference reference = new Reference(resourceUri);
