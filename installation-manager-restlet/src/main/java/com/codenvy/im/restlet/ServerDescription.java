@@ -26,7 +26,4 @@ public class ServerDescription {
     static final String SERVER_URL        = InjectorBootstrap.getProperty("installation-manager.restlet.server_url");
     static final String LOGIN             = InjectorBootstrap.getProperty("installation-manager.restlet.server_login");
     static final char[] PASSWORD          = InjectorBootstrap.getProperty("installation-manager.restlet.server_password").toCharArray();
-    static final String REALM             = InjectorBootstrap.getProperty("installation-manager.restlet.server_realm");
-    static final String SERVER_DIGEST_KEY = InjectorBootstrap.getProperty("installation-manager.restlet.server_digest_key");
-
 }

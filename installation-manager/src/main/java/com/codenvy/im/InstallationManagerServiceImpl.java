@@ -431,12 +431,6 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public void obtainChallengeRequest() {
-        // do nothing
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public String getVersions(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(userCredentials.getToken());

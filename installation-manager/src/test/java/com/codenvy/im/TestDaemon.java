@@ -20,21 +20,14 @@ package com.codenvy.im;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 
-import org.restlet.resource.ResourceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.fail;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class TestDaemon {
-    protected static final Logger LOG = LoggerFactory.getLogger(TestDaemon.class);
-
     private InstallationManagerService installationManagerServiceProxy;
 
     @BeforeTest
@@ -49,11 +42,7 @@ public class TestDaemon {
     }
 
     @Test
-    public void testObtainChallengeRequest() throws Exception {
-        try {
-            installationManagerServiceProxy.obtainChallengeRequest();
-        } catch (ResourceException re) {
-            fail(re.getStatus().toString() + ". " + re.getMessage());
-        }
+    public void testConnection() throws Exception {
+        installationManagerServiceProxy.getUpdateServerEndpoint();
     }
 }
