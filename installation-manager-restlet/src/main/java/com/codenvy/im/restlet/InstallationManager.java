@@ -130,4 +130,6 @@ public interface InstallationManager {
     Map<Artifact, Version> getUpdatesToDownload(@Nullable final Artifact artifact,
                                                @Nullable final Version version,
                                                String authToken) throws IOException;
+
+    boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException;
 }

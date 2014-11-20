@@ -401,13 +401,16 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloads() throws Exception {
-        final Artifact spyCdecArtifact = spy(cdecArtifact);
         final Version version100 = Version.valueOf("1.0.0");
+        final Version version101 = Version.valueOf("1.0.1");
+        final Version version200 = Version.valueOf("2.0.0");
 
-        doReturn(version100).when(spyCdecArtifact).getInstalledVersion(TEST_TOKEN);
+        doReturn(false).when(mockInstallationManager).isInstallable(cdecArtifact, version100, TEST_TOKEN);
+        doReturn(true).when(mockInstallationManager).isInstallable(cdecArtifact, version101, TEST_TOKEN);
+        doReturn(true).when(mockInstallationManager).isInstallable(installManagerArtifact, version200, TEST_TOKEN);
 
         doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(spyCdecArtifact, new TreeMap<Version, Path>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
                 put(version100, Paths.get("target/file1"));
                 put(Version.valueOf("1.0.1"), Paths.get("target/file2"));
             }});
@@ -440,22 +443,28 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloadsSpecificArtifact() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0"), Paths.get("target/file1"));
-                put(Version.valueOf("1.0.1"), Paths.get("target/file2"));
-            }});
-            put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
-            }});
-        }}).when(mockInstallationManager).getDownloadedArtifacts();
+        final Version version200 = Version.valueOf("2.0.0");
+        final Version version201 = Version.valueOf("2.0.1");
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version200, Paths.get("target/file1"));
+            put(version201, Paths.get("target/file2"));
+        }}).when(mockInstallationManager).getDownloadedVersions(installManagerArtifact);
+
+        doReturn(false).when(mockInstallationManager).isInstallable(installManagerArtifact, version200, testCredentials.getToken());
+        doReturn(true).when(mockInstallationManager).isInstallable(installManagerArtifact, version201, testCredentials.getToken());
 
         String response = installationManagerService.getDownloads(installManagerArtifact.getName(), userCredentialsRep);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"installation-manager\",\n" +
                                "    \"version\" : \"2.0.0\",\n" +
-                               "    \"file\" : \"target/file3\",\n" +
+                               "    \"file\" : \"target/file1\",\n" +
+                               "    \"status\" : \"DOWNLOADED\"\n" +
+                               "  }, {\n" +
+                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"version\" : \"2.0.1\",\n" +
+                               "    \"file\" : \"target/file2\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
                                "  } ],\n" +
                                "  \"status\" : \"OK\"\n" +
@@ -464,46 +473,24 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloadsOlderVersionInstallManagerArtifact() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0-SNAPSHOT"),
-                    Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
-            }});
-        }}).when(mockInstallationManager).getDownloadedArtifacts();
+        final Version version200 = Version.valueOf("2.0.0");
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version200, Paths.get("target/file1"));
+        }}).when(mockInstallationManager).getDownloadedVersions(cdecArtifact);
 
-        String response = installationManagerService.getDownloads(installManagerArtifact.getName(), "1.0.0-SNAPSHOT", userCredentialsRep);
+        doReturn(true).when(mockInstallationManager).isInstallable(cdecArtifact, version200, testCredentials.getToken());
+
+        String response = installationManagerService.getDownloads(cdecArtifact.getName(), "2.0.0", userCredentialsRep);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"installation-manager\",\n" +
-                               "    \"version\" : \"1.0.0-SNAPSHOT\",\n" +
-                               "    \"file\" : \"target/file1\",\n" +
-                               "    \"status\" : \"DOWNLOADED\"\n" +
-                               "  } ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
-    }
-
-    @Test
-    public void testGetDownloadsNewVersionInstallManagerArtifact() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.0.0-SNAPSHOT"),
-                    Paths.get("target/file1"));  // current version of IM is stored in the test/resources/codenvy/BuildInfo.properties
-            }});
-        }}).when(mockInstallationManager).getDownloadedArtifacts();
-
-        String response = installationManagerService.getDownloads(userCredentialsRep);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"installation-manager\",\n" +
-                               "    \"version\" : \"2.0.0-SNAPSHOT\",\n" +
+                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"version\" : \"2.0.0\",\n" +
                                "    \"file\" : \"target/file1\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
                                "  } ],\n" +
                                "  \"status\" : \"OK\"\n" +
                                "}");
     }
-
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {

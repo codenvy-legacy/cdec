@@ -56,6 +56,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -362,5 +363,17 @@ public class TestInstallationManager {
         config.setDownloadDir("hello");
 
         manager.setConfig(config);
+    }
+
+    @Test
+    public void testIsInstallable() throws IOException {
+        final Version version200 = Version.valueOf("2.0.0");
+        final Version version201 = Version.valueOf("2.0.1");
+
+        doReturn(true).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
+        assertTrue(manager.isInstallable(installManagerArtifact, version200, testCredentials.getToken()));
+
+        doReturn(false).when(installManagerArtifact).isInstallable(version201, testCredentials.getToken());
+        assertFalse(manager.isInstallable(installManagerArtifact, version201, testCredentials.getToken()));
     }
 }

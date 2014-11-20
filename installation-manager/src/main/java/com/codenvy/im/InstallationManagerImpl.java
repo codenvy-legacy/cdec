@@ -21,11 +21,11 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.command.CommandException;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
@@ -54,8 +54,16 @@ import java.util.TreeMap;
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
-import static com.codenvy.im.utils.Commons.*;
-import static java.nio.file.Files.*;
+import static com.codenvy.im.utils.Commons.ArtifactsSet;
+import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.extractServerUrl;
+import static com.codenvy.im.utils.Commons.getProperException;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.createFile;
+import static java.nio.file.Files.delete;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
@@ -287,7 +295,16 @@ public class InstallationManagerImpl implements InstallationManager {
         Map<Artifact, Version> newVersions = new LinkedHashMap<>();
 
         for (Artifact artifact : artifacts) {
-            Version newVersion = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+            Version newVersion = null;
+            try {
+                newVersion = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+            } catch(HttpException e) {
+                // ignore update server error when there is no version of certain artifact there
+                if (e.getStatus() == javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode()) {
+                    continue;
+                }
+                throw e;
+            }
 
             if (newVersion != null) {
                 newVersions.put(artifact, newVersion);
@@ -370,5 +387,9 @@ public class InstallationManagerImpl implements InstallationManager {
                 put(artifact, versionToUpdate);
             }};
         }
+    }
+
+    @Override public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
+        return artifact.isInstallable(version, authToken);
     }
 }

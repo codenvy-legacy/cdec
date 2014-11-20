@@ -323,17 +323,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             UserCredentials userCredentials = userCredentialsRep.getObject();
             String token = userCredentials.getToken();
 
-            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
-
             List<ArtifactInfo> infos = new ArrayList<>();
-            SortedMap<Version, Path> versions = downloadedArtifacts.get(ArtifactFactory.createArtifact(artifactName));
-
+            SortedMap<Version, Path> versions = manager.getDownloadedVersions(ArtifactFactory.createArtifact(artifactName));
             if (versions != null && !versions.isEmpty()) {
                 for (Map.Entry<Version, Path> e : versions.entrySet()) {
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
                     Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-                    Status status = artifact.isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+                    Status status = manager.isInstallable(artifact, version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
                     infos.add(new ArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), status));
                 }
@@ -359,11 +356,11 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             Version v = Version.valueOf(version);
 
             List<ArtifactInfo> infos = new ArrayList<>();
-            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+            SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(artifact);
 
-            if (downloadedArtifacts.get(artifact) != null && downloadedArtifacts.get(artifact).containsKey(v)) {
-                Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
-                Status status = artifact.isInstallable(v, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+            if (downloadedVersions.containsKey(v)) {
+                Path pathToBinaries = downloadedVersions.get(v);
+                Status status = manager.isInstallable(artifact, v, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
                 infos.add(new ArtifactInfo(artifactName, version, pathToBinaries.toString(), status));
 
@@ -387,13 +384,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
             List<ArtifactInfo> infos = new ArrayList<>();
-            for (Map.Entry<Artifact, SortedMap<Version, Path>> artifact : downloadedArtifacts.entrySet()) {
-                for (Map.Entry<Version, Path> e : artifact.getValue().entrySet()) {
+            for (Map.Entry<Artifact, SortedMap<Version, Path>> artifactEntry : downloadedArtifacts.entrySet()) {
+                for (Map.Entry<Version, Path> e : artifactEntry.getValue().entrySet()) {
                     Version version = e.getKey();
                     Path pathToBinaries = e.getValue();
-                    Status status = artifact.getKey().isInstallable(version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+                    Artifact artifact = artifactEntry.getKey();
+                    Status status = manager.isInstallable(artifact, version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-                    infos.add(new ArtifactInfo(artifact.getKey(), version.toString(), pathToBinaries.toString(), status));
+                    infos.add(new ArtifactInfo(artifactEntry.getKey(), version.toString(), pathToBinaries.toString(), status));
                 }
             }
 
