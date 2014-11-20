@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -27,6 +28,7 @@ import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
+import org.restlet.ext.jackson.JacksonRepresentation;
 
 import java.util.UUID;
 
@@ -130,13 +132,13 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doList() {
-        if (artifactName != null && version != null) {
-            printResponse(installationManagerProxy.getDownloads(artifactName, version, getCredentialsRep()));
-        } else if (artifactName != null) {
-            printResponse(installationManagerProxy.getDownloads(artifactName, getCredentialsRep()));
-        } else {
-            printResponse(installationManagerProxy.getDownloads(getCredentialsRep()));
-        }
+        JacksonRepresentation<Request> requestRep = new Request()
+            .setArtifactName(artifactName)
+            .setVersion(version)
+            .setUserCredentials(getCredentials())
+            .toRepresentation();
+
+        printResponse(installationManagerProxy.getDownloads(requestRep));
     }
 
     protected String generateDownloadDescriptorId() {

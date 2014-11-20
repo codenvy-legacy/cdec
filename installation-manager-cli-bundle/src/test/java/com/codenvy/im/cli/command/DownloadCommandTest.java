@@ -18,9 +18,9 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -45,6 +45,7 @@ public class DownloadCommandTest {
     @Mock
     private CommandSession             commandSession;
 
+    private UserCredentials testCredentials = new UserCredentials("token", "accountId");
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
     private String okResponse                   = "{\n" +
                                                   "  \"status\" : \"OK\"\n" +
@@ -86,9 +87,9 @@ public class DownloadCommandTest {
 
         doNothing().when(spyCommand).init();
 
-        UserCredentials credentials = new UserCredentials("token", "accountId");
-        userCredentialsRep = new JacksonRepresentation<>(credentials);
+        userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
+        doReturn(testCredentials).when(spyCommand).getCredentials();
     }
 
     @Test
@@ -248,7 +249,12 @@ public class DownloadCommandTest {
         final String ok = "{\n"
                           + "  status: \"OK\"\n"
                           + "}";
-        doReturn(ok).when(mockInstallationManagerProxy).getDownloads(userCredentialsRep);
+
+        JacksonRepresentation<Request> requestRep = new Request()
+            .setUserCredentials(testCredentials)
+            .toRepresentation();
+
+        doReturn(ok).when(mockInstallationManagerProxy).getDownloads(requestRep);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);

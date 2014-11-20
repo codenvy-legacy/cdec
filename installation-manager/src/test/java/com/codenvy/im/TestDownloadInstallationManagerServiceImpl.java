@@ -23,9 +23,9 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
@@ -50,7 +50,10 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static java.lang.Thread.sleep;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -419,7 +422,11 @@ public class TestDownloadInstallationManagerServiceImpl {
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
-        String response = installationManagerService.getDownloads(userCredentialsRep);
+        JacksonRepresentation<Request> requestRep = new Request()
+            .setUserCredentials(testCredentials)
+            .toRepresentation();
+
+        String response = installationManagerService.getDownloads(requestRep);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"cdec\",\n" +
@@ -454,7 +461,12 @@ public class TestDownloadInstallationManagerServiceImpl {
         doReturn(false).when(mockInstallationManager).isInstallable(installManagerArtifact, version200, testCredentials.getToken());
         doReturn(true).when(mockInstallationManager).isInstallable(installManagerArtifact, version201, testCredentials.getToken());
 
-        String response = installationManagerService.getDownloads(installManagerArtifact.getName(), userCredentialsRep);
+        JacksonRepresentation<Request> requestRep = new Request()
+            .setArtifactName(installManagerArtifact.getName())
+            .setUserCredentials(testCredentials)
+            .toRepresentation();
+
+        String response = installationManagerService.getDownloads(requestRep);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"installation-manager\",\n" +
@@ -480,7 +492,13 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         doReturn(true).when(mockInstallationManager).isInstallable(cdecArtifact, version200, testCredentials.getToken());
 
-        String response = installationManagerService.getDownloads(cdecArtifact.getName(), "2.0.0", userCredentialsRep);
+        JacksonRepresentation<Request> requestRep = new Request()
+            .setArtifactName(cdecArtifact.getName())
+            .setVersion("2.0.0")
+            .setUserCredentials(testCredentials)
+            .toRepresentation();
+
+        String response = installationManagerService.getDownloads(requestRep);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"cdec\",\n" +
@@ -501,7 +519,12 @@ public class TestDownloadInstallationManagerServiceImpl {
             }});
         }}).when(mockInstallationManager).getDownloadedArtifacts();
 
-        String response = installationManagerService.getDownloads(installManagerArtifact.getName(), userCredentialsRep);
+        JacksonRepresentation<Request> requestRep = new Request()
+            .setArtifactName(installManagerArtifact.getName())
+            .setUserCredentials(testCredentials)
+            .toRepresentation();
+
+        String response = installationManagerService.getDownloads(requestRep);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ ],\n" +
                                "  \"status\" : \"OK\"\n" +

@@ -22,6 +22,8 @@ import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.nio.file.Path;
+
 /** @author Dmytro Nochevnov */
 @JsonPropertyOrder({"artifact", "version", "file", "installOptions", "status"})
 public class ArtifactInfo {
@@ -62,6 +64,10 @@ public class ArtifactInfo {
 
     public ArtifactInfo(Artifact artifact, String version, String file, Status status) {
         this(artifact.getName(), version, file, status);
+    }
+
+    public ArtifactInfo(Artifact artifact, Version version, Path file, Status status) {
+        this(artifact.getName(), version.toString(), file.toString(), status);
     }
 
     public ArtifactInfo(String artifact, String version, String file, Status status) {

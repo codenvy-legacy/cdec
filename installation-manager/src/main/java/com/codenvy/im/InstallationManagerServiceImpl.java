@@ -53,6 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.DownloadDescriptor.createDescriptor;
@@ -318,88 +319,73 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
     /** {@inheritDoc} */
     @Override
-    public String getDownloads(String artifactName, JacksonRepresentation<UserCredentials> userCredentialsRep) {
+    public String getDownloads(JacksonRepresentation<Request> requestRep) {
         try {
-            UserCredentials userCredentials = userCredentialsRep.getObject();
+            if (requestRep == null) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is empty.", "", "");
+            }
+
+            Request request = Request.fromRepresentation(requestRep);
+            UserCredentials userCredentials = request.getUserCredentials();
+            if (userCredentials == null) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete: user credentials were missed.", "", "");
+            }
             String token = userCredentials.getToken();
 
-            List<ArtifactInfo> infos = new ArrayList<>();
-            SortedMap<Version, Path> versions = manager.getDownloadedVersions(ArtifactFactory.createArtifact(artifactName));
-            if (versions != null && !versions.isEmpty()) {
-                for (Map.Entry<Version, Path> e : versions.entrySet()) {
-                    Version version = e.getKey();
-                    Path pathToBinaries = e.getValue();
+            try {
+                List<ArtifactInfo> info = new ArrayList<>();
+
+                String artifactName = request.getArtifactName();
+                if (artifactName == null || artifactName.isEmpty()) {
+                    Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+
+                    for (Map.Entry<Artifact, SortedMap<Version, Path>> artifactEntry : downloadedArtifacts.entrySet()) {
+                        info.addAll(getDownloadedArtifactsInfo(token, artifactEntry.getKey(), artifactEntry.getValue()));
+                    }
+                } else {
                     Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-                    Status status = manager.isInstallable(artifact, version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+                    SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(artifact);
 
-                    infos.add(new ArtifactInfo(artifactName, version.toString(), pathToBinaries.toString(), status));
+                    if ((downloadedVersions != null) && !downloadedVersions.isEmpty()) {
+                        String versionName = request.getVersion();
+                        if ((versionName != null) && downloadedVersions.containsKey(Version.valueOf(versionName))) {
+                            final Version version = Version.valueOf(versionName);
+                            final Path path = downloadedVersions.get(version);
+                            downloadedVersions = new TreeMap<Version, Path>() {{
+                                put(version, path);
+                            }};
+                        }
+
+                        info = getDownloadedArtifactsInfo(token, artifact, downloadedVersions);
+                    }
                 }
-            }
 
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(info).build().toJson();
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+                return Response.valueOf(e).toJson();
+            }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getDownloads(String artifactName,
-                               String version,
-                               JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();
+    private List<ArtifactInfo> getDownloadedArtifactsInfo(String token,
+                                                          Artifact artifact,
+                                                          SortedMap<Version, Path> downloadedVersions) throws
+                                                                                                       IOException {
+        List<ArtifactInfo> info = new ArrayList<>();
 
-            Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-            Version v = Version.valueOf(version);
+        for (Map.Entry<Version, Path> e : downloadedVersions.entrySet()) {
+            Version version = e.getKey();
+            Path pathToBinaries = e.getValue();
+            Status status = manager.isInstallable(artifact, version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
-            List<ArtifactInfo> infos = new ArrayList<>();
-            SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(artifact);
-
-            if (downloadedVersions.containsKey(v)) {
-                Path pathToBinaries = downloadedVersions.get(v);
-                Status status = manager.isInstallable(artifact, v, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
-
-                infos.add(new ArtifactInfo(artifactName, version, pathToBinaries.toString(), status));
-
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
-            } else {
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            info.add(new ArtifactInfo(artifact, version, pathToBinaries, status));
         }
-    }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep) {
-        try {
-            UserCredentials userCredentials = userCredentialsRep.getObject();
-            String token = userCredentials.getToken();
-
-            Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
-
-            List<ArtifactInfo> infos = new ArrayList<>();
-            for (Map.Entry<Artifact, SortedMap<Version, Path>> artifactEntry : downloadedArtifacts.entrySet()) {
-                for (Map.Entry<Version, Path> e : artifactEntry.getValue().entrySet()) {
-                    Version version = e.getKey();
-                    Path pathToBinaries = e.getValue();
-                    Artifact artifact = artifactEntry.getKey();
-                    Status status = manager.isInstallable(artifact, version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
-
-                    infos.add(new ArtifactInfo(artifactEntry.getKey(), version.toString(), pathToBinaries.toString(), status));
-                }
-            }
-
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-            return Response.valueOf(e).toJson();
-        }
+        return info;
     }
 
     /** {@inheritDoc} */
