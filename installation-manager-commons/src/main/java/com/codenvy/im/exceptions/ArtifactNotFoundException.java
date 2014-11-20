@@ -34,11 +34,11 @@ public class ArtifactNotFoundException extends FileNotFoundException {
         this(artifact.toString(), version.toString());
     }
 
-    public ArtifactNotFoundException(String artifact) {
-        super("There is no any version of artifact '" + artifact + "'");
+    public ArtifactNotFoundException(Artifact artifact) {
+        super("Artifact '" + artifact + "' not found");
     }
 
-    public ArtifactNotFoundException(Artifact artifact) {
-        this(artifact.getName());
+    public ArtifactNotFoundException(String message) {
+        super(message);
     }
 }

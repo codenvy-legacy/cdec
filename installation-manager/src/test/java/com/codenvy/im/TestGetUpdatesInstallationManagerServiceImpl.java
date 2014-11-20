@@ -116,14 +116,14 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
 
     @Test
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException("cdec"));
+        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException(cdecArtifact));
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
 
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
         assertEquals(response, "{\n" +
-                               "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
+                               "  \"message\" : \"Artifact 'cdec' not found\",\n" +
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
     }
