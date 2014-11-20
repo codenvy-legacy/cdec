@@ -177,7 +177,7 @@ public abstract class AbstractArtifact implements Artifact {
                             versions.put(version, file);
                         }
                     }
-                } catch (IllegalArgumentException | IOException e) {
+                } catch (IllegalArgumentException e) {
                     // maybe it isn't a version directory
                 }
             }

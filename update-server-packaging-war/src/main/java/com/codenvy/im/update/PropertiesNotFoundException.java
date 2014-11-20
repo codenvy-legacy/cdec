@@ -25,6 +25,6 @@ import com.codenvy.im.exceptions.ArtifactNotFoundException;
 public class PropertiesNotFoundException extends ArtifactNotFoundException {
 
     public PropertiesNotFoundException(String artifact, String version) {
-        super("Artifact properties '" + artifact + "' version '" + version + "' not found");
+        super("Properties of artifact '" + artifact + "' version '" + version + "' were not found");
     }
 }

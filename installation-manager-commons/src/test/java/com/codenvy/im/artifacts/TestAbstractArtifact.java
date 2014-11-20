@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.installer.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -36,10 +37,13 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.SortedMap;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -175,6 +179,19 @@ public class TestAbstractArtifact {
         assertEquals(versions.toString(), "{1.0.1=target/download/" + TEST_ARTIFACT_NAME + "/1.0.1/file1, " +
                                            "1.0.2=target/download/" + TEST_ARTIFACT_NAME + "/1.0.2/file2" +
                                            "}");
+    }
+
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Artifact 'test_artifact_name' not found")
+    public void testGetDownloadedVersionsWhenPropertiesAbsent() throws Exception {
+        Path file1 = Paths.get("target", "download", spyTestArtifact.getName(), "1.0.1", "file1");
+        Files.createDirectories(file1.getParent());
+        Files.createFile(file1);
+
+        doThrow(new ArtifactNotFoundException(spyTestArtifact)).when(spyTestArtifact).getProperties(any(Version.class), anyString(), any(HttpTransport.class));
+
+        spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT, mockTransport);
     }
 
     class AbstractArtifactTest extends AbstractArtifact {
