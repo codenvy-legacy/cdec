@@ -415,7 +415,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 Artifact artifact = e.getKey();
                 Version version = e.getValue();
 
-                if (manager.getDownloadedVersions(artifact).containsKey(artifact)) {
+                if (manager.getDownloadedVersions(artifact).containsKey(version)) {
                     infos.add(new ArtifactInfo(artifact, version, Status.DOWNLOADED));
                 } else {
                     infos.add(new ArtifactInfo(artifact, version));

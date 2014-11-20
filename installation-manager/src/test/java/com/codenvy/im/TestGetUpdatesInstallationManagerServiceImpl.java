@@ -35,7 +35,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.TreeMap;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -68,12 +71,19 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
 
     @Test
     public void testGetUpdates() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
         when(mockInstallationManager.getUpdates(anyString())).thenReturn(new LinkedHashMap<Artifact, Version>() {
             {
-                put(installManagerArtifact, Version.valueOf("1.0.1"));
+                put(installManagerArtifact, version100);
                 put(cdecArtifact, Version.valueOf("2.10.5"));
             }
         });
+
+        when(mockInstallationManager.getDownloadedVersions(installManagerArtifact)).thenReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }});
+
+        when(mockInstallationManager.getDownloadedVersions(cdecArtifact)).thenReturn(new TreeMap<Version, Path>());
 
         JacksonRepresentation<UserCredentials> userCredentialsRep = new JacksonRepresentation<>(new UserCredentials("auth token"));
 
@@ -81,7 +91,8 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"installation-manager\",\n" +
-                               "    \"version\" : \"1.0.1\"\n" +
+                               "    \"version\" : \"1.0.0\",\n" +
+                               "    \"status\" : \"DOWNLOADED\"\n" +
                                "  }, {\n" +
                                "    \"artifact\" : \"cdec\",\n" +
                                "    \"version\" : \"2.10.5\"\n" +
