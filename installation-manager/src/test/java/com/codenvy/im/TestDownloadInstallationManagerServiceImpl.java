@@ -18,7 +18,6 @@
 package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
@@ -33,7 +32,6 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.io.FileUtils;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -50,10 +48,12 @@ import java.util.LinkedHashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static java.lang.Thread.sleep;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -65,11 +65,8 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     private InstallationManagerService installationManagerService;
 
-    @Mock
-    private InstallationManager                    mockInstallationManager;
-
-    @Mock
-    private HttpTransport mockTransport;
+    private InstallationManager mockInstallationManager;
+    private HttpTransport       mockTransport;
 
     private Artifact                               installManagerArtifact;
     private Artifact                               cdecArtifact;
@@ -80,7 +77,10 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @BeforeMethod
     public void init() throws Exception {
-        installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, mockTransport, new DownloadDescriptorHolder());
+        mockInstallationManager = mock(InstallationManager.class);
+        mockTransport = mock(HttpTransport.class);
+        installationManagerService =
+                new InstallationManagerServiceImpl(mockInstallationManager, mockTransport, new DownloadDescriptorHolder());
         MockitoAnnotations.initMocks(this);
 
         this.pathCDEC = Paths.get("./target/cdec.zip");
@@ -89,8 +89,8 @@ public class TestDownloadInstallationManagerServiceImpl {
         testCredentials = new UserCredentials(TEST_TOKEN, "accountId");
         userCredentialsRep = new JacksonRepresentation<>(testCredentials);
 
-        installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
-        cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
+        installManagerArtifact = createArtifact(InstallManagerArtifact.NAME);
+        cdecArtifact = createArtifact(CDECArtifact.NAME);
     }
 
     @AfterMethod
@@ -288,7 +288,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         } while (info.getDownloadResult() == null);
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
-                                                        "  \"message\" : \"'unknown' artifact not found\",\n" +
+                                                        "  \"message\" : \"Artifact 'unknown' not found\",\n" +
                                                         "  \"status\" : \"ERROR\"\n" +
                                                         "}");
     }
@@ -512,12 +512,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
-        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0"), Paths.get("target/file1"));
-                put(Version.valueOf("1.0.1"), Paths.get("target/file2"));
-            }});
-        }}).when(mockInstallationManager).getDownloadedArtifacts();
+        doReturn(new TreeMap<>()).when(mockInstallationManager).getDownloadedVersions(installManagerArtifact);
 
         JacksonRepresentation<Request> requestRep = new Request()
                 .setArtifactName(installManagerArtifact.getName())

@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

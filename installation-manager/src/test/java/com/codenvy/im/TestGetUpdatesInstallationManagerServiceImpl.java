@@ -27,8 +27,8 @@ import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
-
 import com.codenvy.im.utils.Version;
+
 import org.mockito.Mockito;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
@@ -36,7 +36,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -123,11 +122,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
         assertEquals(response, "{\n" +
-<<<<<<< HEAD
-                               "  \"message\" : \"'cdec' artifact not found\",\n" +
-=======
                                "  \"message\" : \"Artifact 'cdec' not found\",\n" +
->>>>>>> origin/master
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
     }

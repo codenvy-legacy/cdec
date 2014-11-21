@@ -90,7 +90,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         List<String> infos = responseObj.getInfos();
         for (int step = 1; step < infos.size() + 1; step++) {
-            printInfo(infos.get(step));
+            printInfo(infos.get(step - 1) + "\n");
 
             installOptions.setStep(step);
             response = installationManagerProxy.install(requestRep);

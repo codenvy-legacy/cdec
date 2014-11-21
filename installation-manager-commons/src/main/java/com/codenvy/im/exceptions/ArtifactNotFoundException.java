@@ -35,10 +35,10 @@ public class ArtifactNotFoundException extends FileNotFoundException {
     }
 
     public ArtifactNotFoundException(Artifact artifact) {
-        super("Artifact '" + artifact + "' not found");
+        this(artifact.getName());
     }
 
-    public ArtifactNotFoundException(String message) {
-        super(message);
+    public ArtifactNotFoundException(String artifact) {
+        super("Artifact '" + artifact + "' not found");
     }
 }

@@ -18,59 +18,56 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.install.CdecInstallOptions;
-import com.codenvy.im.install.Installer;
-import com.codenvy.im.request.Request;
-import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 
 import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
-/** @author Dmytro Nochevnov
- *          Alexander Reshetnyak
+/**
+ * @author Dmytro Nochevnov
+ *         Alexander Reshetnyak
  */
 public class InstallCommandTest {
     private AbstractIMCommand spyCommand;
 
-    @Mock
     private InstallationManagerService mockInstallationManagerProxy;
-    @Mock
     private CommandSession             commandSession;
 
-    private static final String ANY = "any";
     private UserCredentials userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
-                                       + "    \"artifact\" : \"any\",\n"
-                                       + "    \"version\" : \"any\",\n"
+                                       + "    \"artifact\" : \"cdec\",\n"
+                                       + "    \"version\" : \"1.0.1\",\n"
                                        + "    \"status\" : \"SUCCESS\"\n"
                                        + "  } ],\n"
                                        + "  \"status\" : \"OK\"\n"
                                        + "}";
 
     @BeforeMethod
-    public void initMocks() {
-        MockitoAnnotations.initMocks(this);
+    public void initMocks() throws Exception {
+        mockInstallationManagerProxy = mock(InstallationManagerService.class);
+        doReturn(new Response.Builder().withInfos(new ArrayList<String>() {
+            {
+                add("step 1");
+                add("step 2");
+            }
+        }).build().toJson()).when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+        commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
@@ -83,41 +80,63 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallArtifact() throws Exception {
+        final String expectedOutput = "step 1\n" +
+                                      "step 2\n" +
+                                      "{\n" +
+                                      "  \"artifacts\" : [ {\n" +
+                                      "    \"artifact\" : \"cdec\",\n" +
+                                      "    \"version\" : \"1.0.1\",\n" +
+                                      "    \"status\" : \"SUCCESS\"\n" +
+                                      "  } ],\n" +
+                                      "  \"status\" : \"OK\"\n" +
+                                      "}\n";
+
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", ANY);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
+        assertEquals(output, expectedOutput);
 
     }
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
+        final String expectedOutput = "step 1\n" +
+                                      "step 2\n" +
+                                      "{\n" +
+                                      "  \"artifacts\" : [ {\n" +
+                                      "    \"artifact\" : \"cdec\",\n" +
+                                      "    \"version\" : \"1.0.1\",\n" +
+                                      "    \"status\" : \"SUCCESS\"\n" +
+                                      "  } ],\n" +
+                                      "  \"status\" : \"OK\"\n" +
+                                      "}\n";
+
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", ANY);
-        commandInvoker.argument("version", "2.0.5");
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.1");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, (okServiceResponse) + "\n");
+        assertEquals(output, expectedOutput);
     }
 
     @Test
     public void testInstallWhenUnknownArtifact() throws Exception {
         String serviceErrorResponse = "{\n"
-                                      + "  \"message\" : \"Artifact 'non-exists' not found\",\n"
+                                      + "  \"message\" : \"Artifact 'any' not found\",\n"
                                       + "  \"status\" : \"ERROR\"\n"
                                       + "}";
 
         doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", ANY);
+        commandInvoker.argument("artifact", "any");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -136,7 +155,8 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallWhenServiceThrowsError() throws Exception {
-        String expectedOutput = "{\n"
+        String expectedOutput = "step 1\n" +
+                                "{\n"
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
@@ -145,7 +165,7 @@ public class InstallCommandTest {
                 .when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", ANY);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -164,8 +184,8 @@ public class InstallCommandTest {
         assertEquals(output, "{\n"
                              + "  \"CLI client version\" : \"1.1.0-SNAPSHOT\",\n"
                              + "  \"artifacts\" : [ {\n"
-                             + "    \"artifact\" : \"any\",\n"
-                             + "    \"version\" : \"any\",\n"
+                             + "    \"artifact\" : \"cdec\",\n"
+                             + "    \"version\" : \"1.0.1\",\n"
                              + "    \"status\" : \"SUCCESS\"\n"
                              + "  } ],\n"
                              + "  \"status\" : \"OK\"\n"
@@ -175,8 +195,8 @@ public class InstallCommandTest {
     @Test
     public void testListOptionWhenServiceError() throws Exception {
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(mockInstallationManagerProxy)
-            .getVersions(new JacksonRepresentation<>(userCredentials));
+                .when(mockInstallationManagerProxy)
+                .getVersions(new JacksonRepresentation<>(userCredentials));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -187,50 +207,5 @@ public class InstallCommandTest {
                              + "  \"message\" : \"Server Error Exception\",\n"
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
-    }
-
-    @Test
-    public void testInstallStepwisely() throws Exception {
-        String testVersion = "2.0.5";
-        String testInstallId = "install id";
-        List<String> commandsInfo = new ArrayList<String>() {{
-            add("test command 1");
-            add("test command 2");
-        }};
-
-        CdecInstallOptions testOptions = new CdecInstallOptions()
-            .setId(testInstallId)
-            .setCommandsInfo(commandsInfo);
-
-        ArtifactInfo testArtifactInfo = new ArtifactInfo(CDECArtifact.NAME, testVersion, Status.INSTALL_STARTED);
-        testArtifactInfo.setInstallOptions(testOptions);
-
-        Response startInstallResponse = new Response.Builder()
-            .withStatus(ResponseCode.OK)
-            .withArtifact(testArtifactInfo)
-            .build();
-
-        Request startRequest = new Request()
-            .setUserCredentials(userCredentials)
-            .setArtifactName(CDECArtifact.NAME)
-            .setInstallOptions(new CdecInstallOptions().setCdecInstallType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER))
-            .setVersion(testVersion);
-
-        doReturn(startInstallResponse.toJson()).when(mockInstallationManagerProxy).install(new JacksonRepresentation<>(startRequest));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
-        commandInvoker.argument("version", testVersion);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, ("List of commands to install artifact 'cdec' version '2.0.5': \n"
-                              + "[test command 1,\n"
-                              + "test command 2]\n"
-                              + "Start installation? [y/N]: {\n"
-                              + "  \"status\" : \"ERROR\"\n"
-                              + "}\n"));
-
-        // TODO process input of 'y' to start installation
     }
 }

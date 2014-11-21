@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.DefaultOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
@@ -107,17 +108,21 @@ public class TestInstallationManager {
     @Test(expectedExceptions = IllegalStateException.class,
             expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
+        final Version version2101 = Version.valueOf("2.10.1");
+
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.10.1"), Paths.get("target/download/installation-manager/2.10.1/file1"));
+                put(version2101, Paths.get("target/download/installation-manager/2.10.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        manager.install(testCredentials.getToken(), installManagerArtifact, version2101, new CdecInstallOptions());
     }
 
     @Test
     public void testInstallArtifact() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
+        final InstallOptions options = new CdecInstallOptions();
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, null);
@@ -131,12 +136,12 @@ public class TestInstallationManager {
             put(version100, null);
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        manager.install(testCredentials.getToken(), cdecArtifact, version100, null);
-        verify(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
+        manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
+        verify(installer).install(cdecArtifact, version100, options);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.0.0'.")
+    @Test(expectedExceptions = FileNotFoundException.class,
+            expectedExceptionsMessageRegExp = "Binaries to install artifact 'installation-manager' version '2.10.1' not found")
     public void testNotInstallableUpdate() throws Exception {
         final Version version200 = Version.valueOf("2.0.0");
 
@@ -157,40 +162,27 @@ public class TestInstallationManager {
         manager.install("auth token", cdecArtifact, Version.valueOf("2.10.1"), new CdecInstallOptions());
     }
 
-    // TODO (2)
-    @Test
-    public void testInstallArtifact2() throws Exception {
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.1"), Paths.get("target/download/cdec/1.0.1/file1"));
-            }});
-        }}).when(manager).getDownloadedArtifacts();
-        doNothing().when(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
-        doReturn("1.0.0").when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
-
-        manager.install("auth toke", cdecArtifact, Version.valueOf("1.0.1"), new CdecInstallOptions());
-        verify(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
-    }
-
     @Test(expectedExceptions = IllegalStateException.class,
             expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0'.")
     public void testUpdateIMErrorIfInstalledIMHasGreaterVersion() throws Exception {
+        final Version version2100 = Version.valueOf("2.10.0");
+        Version version2101 = Version.valueOf("2.10.1");
+
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.10.0"), Paths.get("target/download/installation-manager/2.10.0/file1"));
+                put(version2100, Paths.get("target/download/installation-manager/2.10.0/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.0"), new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, version2100, new DefaultOptions());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
             expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
     public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
-        final Path pathToBinaries = Paths.get("target/download/cdec/1.0.0/file1");
         CdecInstallOptions options = new CdecInstallOptions();
         options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
         options.setStep(1);
@@ -237,17 +229,20 @@ public class TestInstallationManager {
 
     @Test
     public void testInstallArtifactNewlyArtifact() throws Exception {
+        final Version version2102 = Version.valueOf("2.10.2");
+        final Version version2101 = Version.valueOf("2.10.1");
+
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("2.10.2"), Paths.get("target/download/installation-manager/2.10.2/file1"));
+                put(version2102, Paths.get("target/download/installation-manager/2.10.2/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
-        doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
         doNothing().when(installManagerArtifact).install(any(Path.class), any(CdecInstallOptions.class));
 
-        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.2"), new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, version2102, new DefaultOptions());
     }
 
     @Test
