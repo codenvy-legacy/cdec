@@ -17,51 +17,18 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.utils.ConfigUtils;
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
-import static java.lang.String.format;
-
-/**
- * @author Dmytro Nochevnov
- */
+/** @author Dmytro Nochevnov */
 public abstract class Config {
-    private Map<String, String> properties = new HashMap<>();
+    private Map<String, String> properties;
 
-    private String configSource;
-
-    public final void load(InputStream in, String configSource) throws ConfigException {
-        this.properties = ConfigUtils.readProperties(in);
-        this.configSource = configSource;
+    Config(Map<String, String> properties) {
+        this.properties = Collections.unmodifiableMap(properties);
     }
 
-    public final void store(OutputStream out) throws ConfigException {
-        ConfigUtils.storeProperties(this.properties, out);
-    }
-
-    public String getConfigSource() {
-        return configSource;
-    }
-
-    protected final String getProperty(ConfigProperty property) throws ConfigException {
-        String propertyName = property.toString().toLowerCase();
-        if (! properties.containsKey(propertyName)) {
-            if (configSource != null) {
-                throw new ConfigException(format("Property '%s' hasn't been found at '%s'.", propertyName, getConfigSource()));
-            } else {
-                throw new ConfigException(format("Property '%s' hasn't been found.", propertyName));
-            }
-        }
-
-        return properties.get(propertyName);
-    }
-
-    protected final void setProperty(ConfigProperty property, String value) {
-        String propertyName = property.toString().toLowerCase();
-        properties.put(propertyName, value);
+    protected final String getProperty(ConfigProperty property) {
+        return properties.get(property.toString().toLowerCase());
     }
 }

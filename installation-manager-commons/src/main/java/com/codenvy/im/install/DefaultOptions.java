@@ -1,5 +1,4 @@
 /*
-/*
  * CODENVY CONFIDENTIAL
  * __________________
  *
@@ -16,17 +15,23 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.agent;
+package com.codenvy.im.install;
 
-import java.io.IOException;
+/**
+ * @author Anatoliy Bazko
+ */
+public class DefaultOptions implements InstallOptions {
 
-/** @author Dmytro Nochevnov */
-public class AgentException extends IOException {
-    public AgentException(String message) {
-        super(message);
+    private int step;
+
+    /** Getter for {@link #step} */
+    public int getStep() {
+        return step;
     }
 
-    public AgentException(String message, Throwable cause) {
-        super(message, cause);
+    /** Setter for {@link #step} */
+    @Override
+    public void setStep(int step) {
+        this.step = step;
     }
 }

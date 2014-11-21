@@ -29,6 +29,6 @@ public class ArtifactNotFoundException extends FileNotFoundException {
     }
 
     public ArtifactNotFoundException(String artifact) {
-        super("There is no any version of artifact '" + artifact + "'");
+        super(String.format("'%s' artifact not found", artifact));
     }
 }

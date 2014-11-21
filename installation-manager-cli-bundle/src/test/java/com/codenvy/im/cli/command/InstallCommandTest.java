@@ -18,8 +18,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.Installer;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.Installer;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
@@ -27,6 +27,7 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -38,7 +39,11 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov
@@ -193,7 +198,7 @@ public class InstallCommandTest {
             add("test command 2");
         }};
 
-        InstallOptions testOptions = new InstallOptions()
+        CdecInstallOptions testOptions = new CdecInstallOptions()
             .setId(testInstallId)
             .setCommandsInfo(commandsInfo);
 
@@ -208,7 +213,7 @@ public class InstallCommandTest {
         Request startRequest = new Request()
             .setUserCredentials(userCredentials)
             .setArtifactName(CDECArtifact.NAME)
-            .setInstallOptions(new InstallOptions().setType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER))
+            .setInstallOptions(new CdecInstallOptions().setCdecInstallType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER))
             .setVersion(testVersion);
 
         doReturn(startInstallResponse.toJson()).when(mockInstallationManagerProxy).install(new JacksonRepresentation<>(startRequest));

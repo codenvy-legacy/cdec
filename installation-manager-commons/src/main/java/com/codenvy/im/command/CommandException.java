@@ -17,8 +17,10 @@
  */
 package com.codenvy.im.command;
 
+import java.io.IOException;
+
 /** @author Dmytro Nochevnov */
-public class CommandException extends RuntimeException {
+public class CommandException extends IOException {
     public CommandException(String message, Throwable cause) {
         super(message, cause);
     }

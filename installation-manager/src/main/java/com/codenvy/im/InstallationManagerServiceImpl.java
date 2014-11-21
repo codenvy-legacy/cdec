@@ -22,9 +22,7 @@ import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.installer.InstallInProgressException;
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.InstallStartedException;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.DownloadStatusInfo;
@@ -40,14 +38,12 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -489,52 +485,51 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(installedArtifacts).build().toJson();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String getInstallInfo(JacksonRepresentation<Request> requestRep) throws IOException {
+        // TODO check full config
+        try {
+            Request request = Request.fromRepresentation(requestRep);
+            request.validate(Request.ValidationType.ARTIFACT + Request.ValidationType.INSTALL_OPTIONS);
+
+            Artifact artifact = createArtifact(request.getArtifactName());
+
+            List<String> infos = manager.getInstallInfo(artifact, null, request.getInstallOptions());
+            return new Response.Builder().withStatus(ResponseCode.OK).withInfos(infos).build().toJson();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
     @Override
     public String install(JacksonRepresentation<Request> requestRep) throws IOException {
         try {
-            if (requestRep == null) {
-                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete.", "Request is empty.", "");
-            }
-
             Request request = Request.fromRepresentation(requestRep);
+            request.validate(Request.ValidationType.FULL);
+
             UserCredentials userCredentials = request.getUserCredentials();
-            if (userCredentials == null) {
-                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete.", "User credentials were missed.", "");
-            }
-            String token = userCredentials.getToken();
-
-            String artifactName = request.getArtifactName();
-            if (artifactName == null || artifactName.isEmpty()) {
-                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete.", "Artifact name was missed.", "");
-            }
-
-            Artifact artifact = createArtifact(artifactName);
-
+            InstallOptions installOption = request.getInstallOptions();
             String version = request.getVersion();
+
+            String token = userCredentials.getToken();
+            Artifact artifact = createArtifact(request.getArtifactName());
+
             version = version != null ? version : manager.getUpdates(token).get(artifact);
             if (version == null) {
-                return Response.valueOf(new IllegalStateException("Artifact '" + artifactName + "' isn't available to update.")).toJson();
+                return Response.valueOf(new IllegalStateException("Artifact '" + artifact.getName() + "' isn't available to install.")).toJson();
             }
 
-            InstallOptions installOption = request.getInstallOptions();
-
             try {
-                doInstall(artifact, version, token, installOption);
-                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.SUCCESS);
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-
-            } catch (InstallStartedException e) { // TODO check only exception ?
-                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.INSTALL_STARTED);
-                info.setInstallOptions(e.getInstallOptions());
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
-
-            } catch (InstallInProgressException e) {
-                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.INSTALLING);
+                manager.install(token, artifact, version, installOption);
+                ArtifactInfo info = new ArtifactInfo(artifact.getName(), version, Status.SUCCESS);
                 return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
 
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
-                ArtifactInfo info = new ArtifactInfo(artifactName, version, Status.FAILURE);
+                ArtifactInfo info = new ArtifactInfo(artifact.getName(), version, Status.FAILURE);
                 return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
             }
         } catch (Exception e) {
@@ -581,10 +576,5 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
-    }
-
-    // TODO nullable
-    protected void doInstall(Artifact artifact, String version, String token, @Nullable InstallOptions installOption) throws IOException {
-        manager.install(token, artifact, version, installOption);
     }
 }

@@ -18,9 +18,12 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.Installer;
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.DefaultOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
@@ -33,10 +36,8 @@ import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
 import org.restlet.ext.jackson.JacksonRepresentation;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -46,12 +47,10 @@ import static java.lang.String.format;
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-// TODO
-@Command(scope = "codenvy", name = "im-install", description = "Install updates")
+@Command(scope = "codenvy", name = "im-install", description = "Install artifact or update it")
 public class InstallCommand extends AbstractIMCommand {
 
-    @Argument(index = 0, name = "artifact",
-              description = "The name of the specific artifact to install.", required = false, multiValued = false)
+    @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     private String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
@@ -59,8 +58,6 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
-
-    protected static final Installer.Type DEFAULT_INSTALL_TYPE = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
 
     @Override
     protected Void execute() {
@@ -85,71 +82,33 @@ public class InstallCommand extends AbstractIMCommand {
             return null;
         }
 
-        JacksonRepresentation<Request> requestRep = getRequestRep(DEFAULT_INSTALL_TYPE);
-        String response = installationManagerProxy.install(requestRep);
+        InstallOptions installOptions = askAdditionalInstallOptions();
+        JacksonRepresentation<Request> requestRep = prepareRequest(installOptions);
 
+        String response = installationManagerProxy.getInstallInfo(requestRep);
         Response responseObj = Response.fromJson(response);
-        if (responseObj.getStatus() == ResponseCode.ERROR) {
-            printError(response);
-            return null;
-        }
 
-        ArtifactInfo artifact = getInstallingArtifactInfo(responseObj);
-        if ((artifact != null) && (artifact.getStatus() == Status.INSTALL_STARTED)) {
-            return doInstallStepwisely(artifact);
-        }
+        List<String> infos = responseObj.getInfos();
+        for (int step = 1; step < infos.size() + 1; step++) {
+            printInfo(infos.get(step));
 
-        printResponse(response);
+            installOptions.setStep(step);
+            response = installationManagerProxy.install(requestRep);
 
-        if (isIMSuccessfullyUpdated(artifact)) {
-            printInfo("'Installation Manager CLI' is being updated! Press any key to exit...\n");
-
-            session.getKeyboard().read();
-            System.exit(0);
-        }
-
-        return null;
-    }
-
-    private Void doInstallStepwisely(ArtifactInfo artifact) throws IOException, JsonParseException {
-        InstallOptions options = artifact.getInstallOptions();
-        if (options == null) {
-            return null;
-        }
-
-        List<String> commands = artifact.getInstallOptions().getCommandsInfo();
-        if (commands == null) {
-            return null;
-        }
-
-        printInfo(format("List of commands to install artifact '%s' version '%s': \n%s\n",
-                         artifact.getArtifact(),
-                         artifact.getVersion(),
-                         Arrays.toString(commands.toArray()).replace(", ", ",\n")));
-
-        if (!askUser("Start installation? [y/N]: ")) {
-            return null;
-        }
-
-        for (String command: commands) {
-            printInfo(format("Executing %s ...", command));
-
-            JacksonRepresentation<Request> requestRep = getRequestRep(options.getId()); // do this before each call of install service
-            String response = installationManagerProxy.install(requestRep);
-            Response responseObj = Response.fromJson(response);
-
-            if (responseObj.getStatus() == ResponseCode.OK) {
-                printInfo(" Done.\n");
-            } else {
-                printError("\n" + responseObj.getMessage());
-                if (!askUser("Continue installation? [y/N]: ")) {
-                    printError("Installation has been interrupted.");
-                    return null;
-                }
+            if (responseObj.getStatus() == ResponseCode.ERROR) {
+                printError(response);
+                return null;
             }
         }
 
-        printInfo("Installation has been finished.\n");
+        printResponse(response);
+        responseObj = Response.fromJson(response);
+
+        if (isIMSuccessfullyUpdated(responseObj)) {
+            pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
+            System.exit(0);
+        }
+
         return null;
     }
 
@@ -167,10 +126,14 @@ public class InstallCommand extends AbstractIMCommand {
         return newResponse.toString();
     }
 
-    private boolean isIMSuccessfullyUpdated(ArtifactInfo artifact) {
-        if (InstallManagerArtifact.NAME.equals(artifact.getArtifact())
-            && artifact.getStatus() == Status.SUCCESS) {
-            return true;
+    private boolean isIMSuccessfullyUpdated(Response response) {
+        List<ArtifactInfo> artifacts = response.getArtifacts();
+        if (artifacts != null) {
+            for (ArtifactInfo artifact : artifacts) {
+                if (InstallManagerArtifact.NAME.equals(artifact.getArtifact()) && artifact.getStatus() == Status.SUCCESS) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -189,40 +152,24 @@ public class InstallCommand extends AbstractIMCommand {
         }
     }
 
-    private JacksonRepresentation<Request> getRequestRep(String installId) {
-        return getRequestRep(installId, null);
-    }
 
-    private JacksonRepresentation<Request> getRequestRep(Installer.Type installType) {
-        return getRequestRep(null, installType);
-    }
-
-    private JacksonRepresentation<Request> getRequestRep(@Nullable String installId, @Nullable Installer.Type installType) {
-        InstallOptions options = new InstallOptions()
-                                     .setId(installId)
-                                     .setType(installType);
-
+    private JacksonRepresentation<Request> prepareRequest(InstallOptions installOptions) {
         return new Request().setArtifactName(artifactName)
                             .setVersion(version)
                             .setUserCredentials(getCredentials())
-                            .setInstallOptions(options)
+                            .setInstallOptions(installOptions)
                             .toRepresentation();
     }
 
-    @Nullable
-    private ArtifactInfo getInstallingArtifactInfo(Response response) {
-        List<ArtifactInfo> artifacts = response.getArtifacts();
-        if (artifacts == null) {
-            return null;
+    private InstallOptions askAdditionalInstallOptions() throws ArtifactNotFoundException {
+        switch (artifactName) {
+            case InstallManagerArtifact.NAME:
+                return new DefaultOptions();
+            case CDECArtifact.NAME:
+                // we can ask for additional options
+                return new CdecInstallOptions().setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+            default:
+                throw new ArtifactNotFoundException(artifactName);
         }
-
-        for (ArtifactInfo artifact: artifacts) {
-            if (artifactName.equals(artifact.getArtifact())) {
-                return artifact;
-            }
-        }
-
-        return null;
     }
-
 }

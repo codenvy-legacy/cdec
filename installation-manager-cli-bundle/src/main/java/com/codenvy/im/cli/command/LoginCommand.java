@@ -36,7 +36,8 @@ import java.nio.charset.Charset;
 public class LoginCommand extends AbstractIMCommand {
 
     public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
-            "You are logged as a user which does not have an account/owner role in any account. This likely means that you used the wrong credentials to access Codenvy.";
+            "You are logged as a user which does not have an account/owner role in any account. " +
+            "This likely means that you used the wrong credentials to access Codenvy.";
 
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;

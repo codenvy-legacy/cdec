@@ -21,9 +21,9 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.InstallStartedException;
-import com.codenvy.im.installer.Installer;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.DefaultOptions;
+import com.codenvy.im.install.Installer;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
@@ -31,7 +31,6 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 
-import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -45,20 +44,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -66,9 +64,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 /**
  * @author Anatoliy Bazko
@@ -80,12 +76,14 @@ public class TestInstallationManager {
 
     private InstallationManagerImpl manager;
     private HttpTransport           transport;
+    private Installer installer;
 
     private UserCredentials testCredentials;
 
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
+        installer = mock(Installer.class);
 
         installManagerArtifact = spy(new InstallManagerArtifact());
         cdecArtifact = spy(new CDECArtifact("update/endpoint", transport));
@@ -95,6 +93,7 @@ public class TestInstallationManager {
                                                   "target/download",
                                                   new HttpTransportConfiguration("", "0"),
                                                   transport,
+                                                  installer,
                                                   new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
 
         testCredentials = new UserCredentials("auth token", "accountId");
@@ -102,11 +101,11 @@ public class TestInstallationManager {
 
     @AfterMethod
     public void tearDown() throws Exception {
-        FileUtils.deleteDirectory(Paths.get("target", "download").toFile());
+        deleteDirectory(Paths.get("target", "download").toFile());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
@@ -117,7 +116,7 @@ public class TestInstallationManager {
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
 
-        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.1", null);
+        manager.install("auth token", installManagerArtifact, "2.10.1", new DefaultOptions());
 
         verify(installManagerArtifact, never()).install(any(Path.class), null);
     }
@@ -126,7 +125,7 @@ public class TestInstallationManager {
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "2.10.1", null);
+        manager.install("auth token", cdecArtifact, "2.10.1", new CdecInstallOptions());
     }
 
     @Test
@@ -136,15 +135,15 @@ public class TestInstallationManager {
                 put(Version.valueOf("1.0.1"), Paths.get("target/download/cdec/1.0.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doNothing().when(cdecArtifact).install(any(Path.class), any(InstallOptions.class));
+        doNothing().when(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
         doReturn("1.0.0").when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.1", null);
-        verify(cdecArtifact).install(any(Path.class), any(InstallOptions.class));
+        manager.install("auth toke", cdecArtifact, "1.0.1", new CdecInstallOptions());
+        verify(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0'.")
     public void testUpdateIMErrorIfInstalledIMHasGreaterVersion() throws Exception {
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
@@ -154,14 +153,16 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.0", null);
+        manager.install("auth token", installManagerArtifact, "2.10.0", new DefaultOptions());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
     public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
         final Path pathToBinaries = Paths.get("target/download/cdec/1.0.0/file1");
-        InstallOptions options = new InstallOptions().setType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
+        CdecInstallOptions options = new CdecInstallOptions();
+        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        options.setStep(1);
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
@@ -171,7 +172,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doNothing().when(cdecArtifact).install(pathToBinaries, options);
 
-        manager.install(testCredentials.getToken(), cdecArtifact, "1.0.0", options);
+        manager.install("auth token", cdecArtifact, "1.0.0", options);
     }
 
     @Test
@@ -183,21 +184,13 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
 
-        InstallOptions testOptions = new InstallOptions()
-            .setType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
-
-        doThrow(new InstallStartedException(testOptions)).when(cdecArtifact).install(testPathToBinaries, testOptions);
+        CdecInstallOptions testOptions = new CdecInstallOptions();
+        testOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        testOptions.setStep(1);
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");
 
-        try {
-            manager.install(testCredentials.getToken(), cdecArtifact, "3.0.1", testOptions);
-        } catch(InstallStartedException e) {
-            assertEquals(e.getInstallOptions(), testOptions);
-            return;
-        }
-
-        fail();
+        manager.install("auth token", cdecArtifact, "3.0.1", testOptions);
     }
 
     @Test
@@ -206,7 +199,7 @@ public class TestInstallationManager {
     }
 
     @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "Not enough disk space. Required [0-9]* bytes but available only [0-9]* bytes")
+            expectedExceptionsMessageRegExp = "Not enough disk space. Required [0-9]* bytes but available only [0-9]* bytes")
     public void testCheckEnoughDiskSpaceThrowIOException() throws Exception {
         manager.checkEnoughDiskSpace(Long.MAX_VALUE);
     }
@@ -221,9 +214,9 @@ public class TestInstallationManager {
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
-        doNothing().when(installManagerArtifact).install(any(Path.class), any(InstallOptions.class));
+        doNothing().when(installManagerArtifact).install(any(Path.class), any(CdecInstallOptions.class));
 
-        manager.install(testCredentials.getToken(), installManagerArtifact, "2.10.2", null);
+        manager.install("auth token", installManagerArtifact, "2.10.2", new DefaultOptions());
     }
 
     @Test
@@ -287,7 +280,7 @@ public class TestInstallationManager {
         doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.1"));
         doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.2"));
         doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(
-            endsWith("installation-manager/2.0.1"));
+                endsWith("installation-manager/2.0.1"));
         doNothing().when(manager).validateArtifactProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");

@@ -1,5 +1,4 @@
 /*
-/*
  * CODENVY CONFIDENTIAL
  * __________________
  *
@@ -16,19 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.installer;
+package com.codenvy.im.config;
+
+import java.util.Collections;
 
 /**
- * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
-public class InstallStartedException extends RuntimeException {
-    private InstallOptions installOptions;
-
-    public InstallStartedException(InstallOptions installOptions) {
-        this.installOptions = installOptions;
-    }
-
-    public InstallOptions getInstallOptions() {
-        return installOptions;
+public class DefaultConfig extends Config {
+    public DefaultConfig() {
+        super(Collections.<String, String>emptyMap());
     }
 }

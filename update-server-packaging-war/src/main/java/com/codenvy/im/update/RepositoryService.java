@@ -20,7 +20,6 @@ package com.codenvy.im.update;
 
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.dto.server.JsonStringMapImpl;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
@@ -64,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static java.lang.String.format;
@@ -224,7 +224,7 @@ public class RepositoryService {
     public Response getInstalledInfo(@PathParam("artifact") final String artifact) {
         try {
             Map info = mongoStorage.getInstalledInfo(userManager.getCurrentUser().getId(), artifact);
-            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<String>(info)).build();
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(info)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         } catch (MongoException e) {
@@ -265,9 +265,9 @@ public class RepositoryService {
 
     private boolean isArtifactName(String entity) {
         try {
-            ArtifactFactory.createArtifact(entity);
+            createArtifact(entity);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (ArtifactNotFoundException e) {
             return false;
         }
     }

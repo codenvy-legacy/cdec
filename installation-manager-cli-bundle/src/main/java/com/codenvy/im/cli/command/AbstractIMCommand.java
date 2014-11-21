@@ -66,21 +66,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /** @return "true" only if only user typed line equals "y". */
-    protected boolean askUser(String prompt) {
-        printInfo(prompt);
-
-        String userAnswer;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-            userAnswer = reader.readLine();
-            printLineSeparator();
-        } catch (IOException e) {
-            return false;
-        }
-
-        return userAnswer != null && userAnswer.equalsIgnoreCase("y");
-    }
-
     @Override
     public void init() {
         super.init();
@@ -189,6 +174,26 @@ public abstract class AbstractIMCommand extends AbsCommand {
         } else {
             System.out.println(ansi().a(response));
         }
+    }
+
+    /** @return "true" only if only user typed line equals "y". */
+    protected boolean askUser(String prompt) {
+        printInfo(prompt);
+
+        String userAnswer;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+            userAnswer = reader.readLine();
+            printLineSeparator();
+        } catch (IOException e) {
+            return false;
+        }
+
+        return userAnswer != null && userAnswer.equalsIgnoreCase("y");
+    }
+
+    protected void pressAnyKey(String prompt) throws IOException {
+        printInfo(prompt);
+        session.getKeyboard().read();
     }
 
     /**

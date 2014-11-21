@@ -17,29 +17,40 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.command.Command;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * @author Anatoliy Bazko
  */
 public interface Artifact extends Comparable<Artifact> {
 
+    /** @return the artifact name */
+    String getName();
+
     /** Installs artifact */
-    void install(Path pathToBinaries, @Nullable InstallOptions options) throws IOException;
+    // TODO remove
+    void install(Path pathToBinaries, @Nullable CdecInstallOptions options) throws IOException;
 
     /** @return current installed version of the artifact */
     String getInstalledVersion(String authToken) throws IOException;
 
-    /** @return the artifact name */
-    String getName();
-
     /** @return the priority of the artifact to install, update etc. */
     int getPriority();
+
+    // TODO test
+    List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException;
+
+    /** @return list of commands to perform installation. */
+    Command getInstallCommand(Config config, InstallOptions installOptions) throws IOException;
 
     /**
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed

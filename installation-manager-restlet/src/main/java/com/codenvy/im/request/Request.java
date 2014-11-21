@@ -17,17 +17,20 @@
  */
 package com.codenvy.im.request;
 
-import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.Version;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
+import org.restlet.resource.ResourceException;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
-/**
- * @author Dmytro Nochevnov
- */
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+
+/** @author Dmytro Nochevnov */
 public class Request {
     private InstallOptions  installOptions;
     private UserCredentials userCredentials;
@@ -37,12 +40,16 @@ public class Request {
     public Request() {
     }
 
-    public static Request fromRepresentation(JacksonRepresentation<Request> representation) throws JsonParseException, IOException {
+    /** Factory */
+    public static Request fromRepresentation(JacksonRepresentation<Request> representation) throws ResourceException, IOException {
+        if (representation == null) {
+            throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete. Request is empty.", "", "");
+        }
         return representation.getObject();
     }
 
     public JacksonRepresentation<Request> toRepresentation() {
-        return new JacksonRepresentation<Request>(this);
+        return new JacksonRepresentation<>(this);
     }
 
     public InstallOptions getInstallOptions() {
@@ -79,5 +86,40 @@ public class Request {
     public Request setVersion(String version) {
         this.version = version;
         return this;
+    }
+
+    /** Validates requests depending on {@link Request.ValidationType} */
+    public void validate(int validationType) throws ResourceException, ArtifactNotFoundException {
+        if ((validationType & ValidationType.CREDENTIALS) == ValidationType.CREDENTIALS) {
+            if (userCredentials == null) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete. User credentials are missed.", "", "");
+            }
+        }
+
+        if ((validationType & ValidationType.ARTIFACT) == ValidationType.ARTIFACT) {
+            if (artifactName == null || artifactName.isEmpty()) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete. Artifact name is missed.", "", "");
+            } else {
+                createArtifact(artifactName); // checks if artifact name is valid
+            }
+
+            if (version != null) {
+                Version.valueOf(version); // checks if version is valid
+            }
+        }
+
+        if ((validationType & ValidationType.INSTALL_OPTIONS) == ValidationType.INSTALL_OPTIONS) {
+            if (installOptions == null) {
+                throw new ResourceException(HttpURLConnection.HTTP_BAD_REQUEST, "Request is incomplete. Installation options are missed.", "", "");
+            }
+        }
+    }
+
+    /** Validation types */
+    public static class ValidationType {
+        public static final int CREDENTIALS     = 0b001;
+        public static final int ARTIFACT        = 0b010;
+        public static final int INSTALL_OPTIONS = 0b100;
+        public static final int FULL            = 0b111;
     }
 }

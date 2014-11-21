@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.inject.TypeLiteral;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -58,7 +57,7 @@ import static java.nio.file.Files.newInputStream;
  * @author Dmytro Nochevnov
  */
 public class Commons {
-    /** include only non null fields into json; write pretty printed json.  */
+    /** include only non null fields into json; write pretty printed json. */
     private static final ObjectWriter jsonWriter =
             new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
 
@@ -108,31 +107,24 @@ public class Commons {
     }
 
     /** Translates JSON to object. */
-    @Nullable
     public static <T> T fromJson(String json, Class<T> clazz) throws JsonParseException {
         return JsonHelper.fromJson(json, clazz, null);
     }
 
     /** Translates JSON to object. TODO add test */
-    @Nullable
     public static Map asMap(String json) throws JsonParseException {
-        return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {}.getType());
+        return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {
+        }.getType());
     }
 
     /** Translates JSON to object. TODO add test */
-    @Nullable
     public static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
         return JsonHelper.fromJson(json, clazz, type);
     }
 
     /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. TODO add test */
-    @Nullable // TODO check
-    public static String toJson(Object obj) {
-        try {
-            return jsonWriter.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            return null; // TODO
-        }
+    public static String toJson(Object obj) throws JsonProcessingException {
+        return jsonWriter.writeValueAsString(obj);
     }
 
     /** @return the version of the artifact out of path */

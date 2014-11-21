@@ -18,6 +18,7 @@
 package com.codenvy.im.agent;
 
 import com.jcraft.jsch.JSchException;
+
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
@@ -39,24 +40,21 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class SecureShellAgentTest {
-    SshServer spySshd;
 
-    SecureShellAgent testAgent;
+    private static final String TEST_USER             = "testUser";
+    private static final String TEST_HOST             = "127.0.0.1";
+    private static final int    TEST_PORT             = 2223;
+    private static final String TEST_PASSWORD         = "testPassword";
+    private static final String TEST_AUTH_PRIVATE_KEY = SecureShellAgentTest.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
+    private static final String TEST_PASSPHRASE       = null;
 
-    static final String TEST_USER             = "testUser";
-    static final String TEST_HOST             = "127.0.0.1";
-    static final int    TEST_PORT             = 2223;
-    static final String TEST_PASSWORD         = "testPassword";
-    static final String TEST_AUTH_PRIVATE_KEY = SecureShellAgentTest.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
-    static final String TEST_PASSPHRASE       = null;
+    private static final String TEST_COMMAND        = "echo test";
+    private static final String TEST_COMMAND_OUTPUT = "test\n";
 
-    static final String TEST_COMMAND          = "echo test";
-    static final String TEST_COMMAND_OUTPUT   = "test\n";
+    private static final String UNEXISTS_HOST = "unexists";
 
-    static final String INVALID_COMMAND        = "ls unexists_file";
-    static final String INVALID_COMMAND_OUTPUT = "ls: cannot access unexists_file: No such file or directory\n";
-
-    static final String UNEXISTS_HOST = "unexists";
+    private SshServer        spySshd;
+    private SecureShellAgent testAgent;
 
     @BeforeTest
     public void setUp() throws JSchException, IOException {
@@ -65,19 +63,20 @@ public class SecureShellAgentTest {
     }
 
     @Test
-    public void testUserPasswd() {
+    public void testUserPasswd() throws Exception {
         testAgent = new SecureShellAgent(TEST_HOST, TEST_PORT, TEST_USER, TEST_PASSWORD);
-
         String result = testAgent.execute(TEST_COMMAND);
+
+        testAgent = new SecureShellAgent(TEST_HOST, TEST_PORT, TEST_USER, TEST_PASSWORD);
         result += testAgent.execute(TEST_COMMAND);
 
         assertEquals(result, TEST_COMMAND_OUTPUT + TEST_COMMAND_OUTPUT);
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Can't connect to host '" + TEST_USER + "@" + UNEXISTS_HOST + ":" + TEST_PORT
-                                            + "'. Error: java.net.UnknownHostException: " + UNEXISTS_HOST)
-    public void testUserPasswdError() {
+            expectedExceptionsMessageRegExp = "Can't connect to host '" + TEST_USER + "@" + UNEXISTS_HOST + ":" + TEST_PORT
+                                              + "'. Error: java.net.UnknownHostException: " + UNEXISTS_HOST)
+    public void testUserPasswdError() throws Exception {
         testAgent = new SecureShellAgent("unexists", TEST_PORT, TEST_USER, TEST_PASSWORD);
 
         String result = testAgent.execute(TEST_COMMAND);
@@ -85,7 +84,7 @@ public class SecureShellAgentTest {
     }
 
     @Test
-    public void testAuthKey() {
+    public void testAuthKey() throws Exception {
         testAgent = new SecureShellAgent(TEST_HOST, TEST_PORT, TEST_USER, TEST_AUTH_PRIVATE_KEY, TEST_PASSPHRASE);
 
         String result = testAgent.execute(TEST_COMMAND);
@@ -93,7 +92,7 @@ public class SecureShellAgentTest {
     }
 
     @Test(expectedExceptions = AgentException.class)
-    public void testAuthKeyError() {
+    public void testAuthKeyError() throws Exception {
         testAgent = new SecureShellAgent("unexists", TEST_PORT, TEST_USER, TEST_AUTH_PRIVATE_KEY, TEST_PASSPHRASE);
 
         String result = testAgent.execute(TEST_COMMAND);
@@ -101,15 +100,15 @@ public class SecureShellAgentTest {
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = INVALID_COMMAND_OUTPUT)
-    public void testErrorOnCommandExecution() {
+            expectedExceptionsMessageRegExp = "Can't execute command 'ls unExisted_file'. " +
+                                              "Error: ls: cannot access unExisted_file: No such file or directory\n")
+    public void testErrorOnCommandExecution() throws Exception {
         testAgent = new SecureShellAgent(TEST_HOST, TEST_PORT, TEST_USER, TEST_AUTH_PRIVATE_KEY, TEST_PASSPHRASE);
-        testAgent.execute(INVALID_COMMAND);
+        testAgent.execute("ls unExisted_file");
     }
 
     @AfterTest
     public void tearDown() throws InterruptedException {
-        testAgent.disconnect();
         spySshd.stop();
     }
 

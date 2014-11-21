@@ -22,6 +22,7 @@ import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.utils.Commons;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class Response {
     private ResponseCode              status;
     private DownloadStatusInfo        downloadInfo;
     private JsonStringMapImpl<String> config;
+    private List<String> infos;
     private String                    subscription;
 
     public Response() {
@@ -52,10 +54,13 @@ public class Response {
     }
 
     public String toJson() {
-        return Commons.toJson(this);   // TODO add test
+        try {
+            return Commons.toJson(this);
+        } catch (JsonProcessingException e) {
+            return String.format("{status : ERROR, message : %s}", e.getMessage());
+        }
     }
 
-    // TODO add test
     public static Response fromJson(String json) throws JsonParseException {
         return Commons.fromJson(json, Response.class);
     }
@@ -115,6 +120,11 @@ public class Response {
             return this;
         }
 
+        public Builder withInfos(List<String> infos) {
+            response.setInfos(infos);
+            return this;
+        }
+
         public Builder withSubscription(String subscription) {
             response.setSubscription(subscription);
             return this;
@@ -167,5 +177,13 @@ public class Response {
 
     public void setSubscription(String subscription) {
         this.subscription = subscription;
+    }
+
+    public List<String> getInfos() {
+        return infos;
+    }
+
+    public void setInfos(List<String> infos) {
+        this.infos = infos;
     }
 }

@@ -76,40 +76,20 @@ installJava() {
 
         wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
 
-        echo "> Unpacking JDK binaries to ${HOME}"
+        echo "> Unpacking JDK binaries to /etc"
 
-        sudo tar -xf jdk.tar.gz -C ${HOME}
+        sudo tar -xf jdk.tar.gz -C /etc
+        rm jdk.tar.gz
 
         if [ ! -f ~/.bashrc ]; then echo -e "\n" > ~/.bashrc; fi
-        sed -i '1i\export JAVA_HOME=${HOME}/jdk1.7.0_17' ~/.bashrc
-        sed -i '2i\export PATH=$PATH:${HOME}/jdk1.7.0_17/bin' ~/.bashrc
 
-        echo "> Java has been installed for ${USER} user"
+        sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${HOME}/.bashrc
+        sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${HOME}/.bashrc
+        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${CODENVY_HOME}/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
+
+        echo "> Java has been installed"
     }
-
-    # check if requered program had already installed earlier for codenvy user
-    if [ `sudo su - codenvy -c "if hash java 2>/dev/null; then echo "0"; else echo "1"; fi"` == "1" ]; then
-        if [ ! -f jdk.tar.gz ]; then
-            echo "> Installation manager requires java to be installed for codenvy user"
-            read -p "> Press any key to start installing java into ${CODENVY_HOME}" -n1 -s
-            echo ""
-
-            wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
-        fi
-
-        echo "> Unpacking JDK binaries to ${CODENVY_HOME}"
-
-        sudo tar -xf jdk.tar.gz -C ${CODENVY_HOME}
-
-        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=${CODENVY_HOME}/jdk1.7.0_17' ${CODENVY_HOME}/.bashrc"
-        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:${CODENVY_HOME}/jdk1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
-
-        echo "> Java has been installed for ${CODENVY_USER} user"
-    fi
-
-    if [ -f jdk.tar.gz ]; then
-        rm jdk.tar.gz
-    fi
 }
 
 registerIMServiceOnDebian() {
@@ -248,7 +228,19 @@ else
     exit
 fi
 
-echo "> System is run on ${os} based distributive."
+echo "System is run on ${os} based distributive."
+echo "Wellcome to Codenvy. This programm will install Codenvy onto this node."
+echo "When the installation is complete, the Codenvy URL will be displayed."
+echo ""
+echo "The installer will:"
+echo "1. Install java."
+echo "2. Install the Codenvy Installation Manager, which runs as a CLI and daemon."
+echo "3. Download Codenvy"
+echo "4. Install Codenvy by installing Puppte and configuring system parameters."
+echo "5. Boot Codenvy."
+echo ""
+read -p "Press any key to continue" -n1 -s
+
 cd ~
 
 createCodenvyUserAndGroup

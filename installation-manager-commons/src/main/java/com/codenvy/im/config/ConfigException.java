@@ -17,14 +17,10 @@
  */
 package com.codenvy.im.config;
 
-/**
- * @author Dmytro Nochevnov
- */
-public class ConfigException extends RuntimeException {
-    public ConfigException(String message) {
-        super(message);
-    }
+import java.io.IOException;
 
+/** @author Dmytro Nochevnov */
+public class ConfigException extends IOException {
     public ConfigException(String message, Throwable cause) {
         super(message, cause);
     }

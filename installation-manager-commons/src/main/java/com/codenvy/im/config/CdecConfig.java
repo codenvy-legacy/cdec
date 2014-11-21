@@ -17,14 +17,18 @@
  */
 package com.codenvy.im.config;
 
-import com.google.inject.Singleton;
+import java.util.Map;
 
 /**
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-@Singleton
 public class CdecConfig extends Config {
+
+    public CdecConfig(Map<String, String> properties) {
+        super(properties);
+    }
+
     public enum Property implements ConfigProperty {
         HOST,
         SSH_PORT,
@@ -35,6 +39,7 @@ public class CdecConfig extends Config {
         PUPPET_RESOURCE_URL,
         PUPPET_MASTER_PORT
     }
+
 
     public String getHost() throws ConfigException {
         return getProperty(Property.HOST);

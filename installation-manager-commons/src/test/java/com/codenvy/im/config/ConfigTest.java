@@ -17,72 +17,62 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.DefaultOptions;
+
+import org.apache.commons.io.FileUtils;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
+import static org.apache.commons.io.FileUtils.write;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class ConfigTest {
-    @Test
-    public void testLoad() throws IOException {
-        InputStream mockIs = new ByteArrayInputStream((TestConfig.Property.TEST_PROPERTY.toString() + "=test_value").getBytes());
 
-        Config testConfig = new TestConfig();
-        testConfig.load(mockIs, "test source");
+    private ConfigFactory configFactory;
+    private Path          configPath;
 
-        String testPropertyValue = testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
-        assertEquals(testPropertyValue, "test_value");
 
-        assertEquals(testConfig.getConfigSource(), "test source");
-    }
+    @BeforeMethod
+    public void setUp() throws Exception {
+        configPath = Paths.get("target", "config");
+        FileUtils.deleteDirectory(configPath.toFile());
 
-    @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Property 'test_property' hasn't been found.")
-    public void testGetUnexistsProperty () {
-        Config testConfig = new TestConfig();
-        testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
-    }
-
-    @Test(expectedExceptions = ConfigException.class,
-          expectedExceptionsMessageRegExp = "Property 'test_property' hasn't been found at 'test source'.")
-    public void testGetUnexistedPropertyAfterLoad () {
-        InputStream mockIs = new ByteArrayInputStream(("unknown_property=test_value").getBytes());
-
-        Config testConfig = new TestConfig();
-        testConfig.load(mockIs, "test source");
-        testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
+        configFactory = new ConfigFactory(configPath.toString());
     }
 
     @Test
-    public void testSetProperty () {
-        Config testConfig = new TestConfig();
-        testConfig.setProperty(TestConfig.Property.TEST_PROPERTY, "test value");
-
-        String testPropertyValue = testConfig.getProperty(TestConfig.Property.TEST_PROPERTY);
-        assertEquals(testPropertyValue, "test value");
+    public void testDefaultConfig() throws Exception {
+        Config config = configFactory.loadOrCreateDefaultConfig(new DefaultOptions());
+        assertTrue(config instanceof DefaultConfig);
     }
 
     @Test
-    public void testStore() throws IOException {
-        Config testConfig = new TestConfig();
-        testConfig.setProperty(TestConfig.Property.TEST_PROPERTY, "test_value");
+    public void testCdecConfigSingleNode() throws Exception {
+        CdecInstallOptions installOptions = new CdecInstallOptions();
+        installOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        testConfig.store(os);
+        write(configPath.resolve(ConfigFactory.CDEC_SINGLE_NODE_PROPERTIES_FILE).toFile(), "host=172.0.0.1\nuser=anonym\npassword=secret\n");
 
-        assertTrue(os.toString().contains("test_property=test_value"), "Config '" + os.toString() + "' didn't contain 'test_property=test_value'.");
-    }
+        Config config = configFactory.loadOrCreateDefaultConfig(installOptions);
+        assertTrue(config instanceof CdecConfig);
 
-    static class TestConfig extends Config {
-        enum Property implements ConfigProperty {
-            TEST_PROPERTY
-        }
+        CdecConfig cdecConfig = (CdecConfig)config;
+        assertEquals(cdecConfig.getHost(), "172.0.0.1");
+        assertEquals(cdecConfig.getUser(), "anonym");
+        assertEquals(cdecConfig.getPassword(), "secret");
+        assertNull(cdecConfig.getPuppetMasterPort());
+        assertNull(cdecConfig.getPrivateKeyFileAbsolutePath());
+        assertNull(cdecConfig.getPuppetResourceUrl());
+        assertNull(cdecConfig.getPuppetVersion());
+        assertNull(cdecConfig.getSSHPort());
     }
 }

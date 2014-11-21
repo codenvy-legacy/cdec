@@ -17,15 +17,14 @@
  */
 package com.codenvy.im.restlet;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.Version;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -34,15 +33,16 @@ import java.util.SortedMap;
  */
 public interface InstallationManager {
 
+    /** @retrun installation information. */
+    List<String> getInstallInfo(Artifact artifact, String version, InstallOptions options) throws IOException;
+
     /**
-     * Install the specific version of the artifact with version greater than installed.
+     * Install the specific version of the artifact.
      *
-     * @param authToken
-     *         the authentication token
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    void install(String authToken, Artifact artifact, String version, @Nullable InstallOptions options) throws IOException;
+    void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException;
 
     /**
      * Scans all installed artifacts and returns their versions.

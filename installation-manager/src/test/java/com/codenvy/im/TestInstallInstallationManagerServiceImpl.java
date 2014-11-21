@@ -19,7 +19,7 @@ package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
@@ -48,7 +48,6 @@ public class TestInstallInstallationManagerServiceImpl {
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       mockTransport;
-    private Artifact            mockInstallManagerArtifact;
     private Artifact            mockCdecArtifact;
     private UserCredentials     testCredentials;
 
@@ -62,7 +61,6 @@ public class TestInstallInstallationManagerServiceImpl {
     public void initMocks() {
         mockTransport = mock(HttpTransport.class);
         mockInstallationManager = mock(InstallationManagerImpl.class);
-        mockInstallManagerArtifact = spy(new InstallManagerArtifact());
         mockCdecArtifact = spy(new CDECArtifact("update/endpoint", mockTransport));
     }
 
@@ -82,7 +80,8 @@ public class TestInstallInstallationManagerServiceImpl {
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
-            .setArtifactName(mockCdecArtifact.getName());
+            .setArtifactName(mockCdecArtifact.getName())
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -109,7 +108,8 @@ public class TestInstallInstallationManagerServiceImpl {
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
-            .setArtifactName(mockCdecArtifact.getName());
+            .setArtifactName(mockCdecArtifact.getName())
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -137,11 +137,12 @@ public class TestInstallInstallationManagerServiceImpl {
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install(testCredentials.getToken(), artifact, "2.10.5", null);
+                .when(mockInstallationManager).install("auth token", artifact, "2.10.5", new CdecInstallOptions());
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
-            .setArtifactName(mockCdecArtifact.getName());
+            .setArtifactName(mockCdecArtifact.getName())
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                 "  \"artifacts\" : [ {\n" +
@@ -165,7 +166,8 @@ public class TestInstallInstallationManagerServiceImpl {
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
-            .setArtifactName(mockCdecArtifact.getName());
+            .setArtifactName(mockCdecArtifact.getName())
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"message\" : \"Artifact 'cdec' isn't available to update.\",\n" +
@@ -185,7 +187,8 @@ public class TestInstallInstallationManagerServiceImpl {
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
-            .setArtifactName(mockCdecArtifact.getName());
+            .setArtifactName(mockCdecArtifact.getName())
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -213,7 +216,8 @@ public class TestInstallInstallationManagerServiceImpl {
         Request request = new Request()
             .setUserCredentials(testCredentials)
             .setArtifactName(mockCdecArtifact.getName())
-            .setVersion("2.10.5");
+            .setVersion("2.10.5")
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -241,7 +245,8 @@ public class TestInstallInstallationManagerServiceImpl {
         Request request = new Request()
             .setUserCredentials(testCredentials)
             .setArtifactName(mockCdecArtifact.getName())
-            .setVersion("2.10.5");
+            .setVersion("2.10.5")
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -269,12 +274,13 @@ public class TestInstallInstallationManagerServiceImpl {
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Can not install the artifact '" + mockCdecArtifact.getName() + ":2.10.5', because we don't support downgrade artifacts."))
-                .when(mockInstallationManager).install(testCredentials.getToken(), artifact, "2.10.5", null);
+                .when(mockInstallationManager).install("auth tokne", artifact, "2.10.5", new CdecInstallOptions());
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
             .setArtifactName(mockCdecArtifact.getName())
-            .setVersion("2.10.5");
+            .setVersion("2.10.5")
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -299,12 +305,13 @@ public class TestInstallInstallationManagerServiceImpl {
         Artifact artifact = createArtifact(mockCdecArtifact.getName());
         doThrow(new IllegalStateException(
                 "Artifact '" + mockCdecArtifact.getName() + "'  isn't available to update."))
-                .when(mockInstallationManager).install(testCredentials.getToken(), artifact, "2.10.7", null);
+                .when(mockInstallationManager).install("auth token", artifact, "2.10.7", new CdecInstallOptions());
 
         Request request = new Request()
             .setUserCredentials(testCredentials)
             .setArtifactName(mockCdecArtifact.getName())
-            .setVersion("2.10.7");
+            .setVersion("2.10.7")
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -329,7 +336,8 @@ public class TestInstallInstallationManagerServiceImpl {
         Request request = new Request()
             .setUserCredentials(testCredentials)
             .setArtifactName(mockCdecArtifact.getName())
-            .setVersion("2.10.5");
+            .setVersion("2.10.5")
+            .setInstallOptions(new CdecInstallOptions());
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -355,7 +363,7 @@ public class TestInstallInstallationManagerServiceImpl {
             .setArtifactName("qwerty");
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
-                               "  \"message\" : \"Artifact 'qwerty' not found\",\n" +
+                               "  \"message\" : \"'qwerty' artifact not found\",\n" +
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
     }

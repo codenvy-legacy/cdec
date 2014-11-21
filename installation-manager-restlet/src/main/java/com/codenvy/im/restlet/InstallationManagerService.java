@@ -113,6 +113,13 @@ public interface InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     public String install(JacksonRepresentation<Request> requestRep) throws IOException;
 
+    /** @retrun installation information. */
+    @POST
+    @Path("install-info")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getInstallInfo(JacksonRepresentation<Request> requestRep) throws IOException;
+
     /** Get the url of the update server. */
     @GET
     @Path("update-server-url")
@@ -145,7 +152,7 @@ public interface InstallationManagerService {
 
     /** Returns the configuration of the Installation Manager */
     @GET
-    @Path("get-config")
+    @Path("config")
     @Produces(MediaType.APPLICATION_JSON)
     public String getConfig();
 
@@ -153,6 +160,7 @@ public interface InstallationManagerService {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Path("config")
     public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep);
 
 }

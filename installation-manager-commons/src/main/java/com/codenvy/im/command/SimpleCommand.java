@@ -23,15 +23,15 @@ import com.codenvy.im.agent.AgentException;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
-public class RemoteCommand implements Command {
-    private String description;
-    private String command;
-    private Agent agent;
+public class SimpleCommand implements Command {
+    private final String description;
+    private final String command;
+    private final Agent  agent;
 
-    public RemoteCommand(String command, Agent agent, String description) {
-        this.command = command;
+    public SimpleCommand(String command, Agent agent, String description) {
         this.agent = agent;
         this.description = description;
+        this.command = command;
     }
 
     /** {@inheritDoc} */
@@ -46,21 +46,17 @@ public class RemoteCommand implements Command {
 
     /** {@inheritDoc} */
     @Override
-    public String execute(int timeoutMillis) throws CommandException {
-        try {
-            return agent.execute(command, timeoutMillis);
-        } catch (AgentException e) {
-            throw makeCommandException(e);
-        }
+    public String getDescription() {
+        return description;
     }
 
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return format("'%s' command: '%s'", this.description, this.command);
+        return command;
     }
 
-    private CommandException makeCommandException(AgentException e) {
+    protected CommandException makeCommandException(Exception e) {
         String errorMessage = "Remote command execution fail.";
         if (e.getMessage() != null && !e.getMessage().isEmpty()) {
             errorMessage += format(" Error: %s", e.getMessage());

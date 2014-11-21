@@ -18,29 +18,30 @@
 package com.codenvy.im.request;
 
 
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.Installer;
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.user.UserCredentials;
+
 import org.restlet.ext.jackson.JacksonRepresentation;
+import org.restlet.resource.ResourceException;
 import org.testng.annotations.Test;
 
-import java.util.UUID;
-
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class TestRequest {
+
     @Test
     public void testJacksonRepresentation() throws Exception {
-        String testId = UUID.randomUUID().toString();
         Request testRequest = new Request()
-            .setArtifactName("artifact name")
-            .setVersion("artifact version")
-            .setUserCredentials(new UserCredentials("test token", "test account id"))
-            .setInstallOptions(new InstallOptions().setType(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER).setId(testId));
+                .setArtifactName("artifact name")
+                .setVersion("artifact version")
+                .setUserCredentials(new UserCredentials("test token", "test account id"))
+                .setInstallOptions(new CdecInstallOptions().setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE));
 
         JacksonRepresentation<Request> requestRep = testRequest.toRepresentation();
         assertNotNull(requestRep);
@@ -53,8 +54,39 @@ public class TestRequest {
 
         assertEquals(restoredRequest.getUserCredentials().getToken(), "test token");
         assertEquals(restoredRequest.getUserCredentials().getAccountId(), "test account id");
+        assertTrue(restoredRequest.getInstallOptions() instanceof CdecInstallOptions);
+    }
 
-        assertEquals(restoredRequest.getInstallOptions().getType(), Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER);
-        assertEquals(restoredRequest.getInstallOptions().getId(), testId);
+    @Test
+    public void testValidate() throws Exception {
+        Request request = new Request()
+                .setArtifactName("cdec")
+                .setVersion("3.1.0")
+                .setUserCredentials(new UserCredentials("test token", "test account id"));
+        request.validate(Request.ValidationType.CREDENTIALS);
+    }
+
+    @Test(expectedExceptions = ResourceException.class)
+    public void testValidateCredentials() throws Exception {
+        Request request = new Request();
+        request.validate(Request.ValidationType.CREDENTIALS);
+    }
+
+    @Test(expectedExceptions = ResourceException.class)
+    public void testValidateArtifact() throws Exception {
+        Request request = new Request();
+        request.validate(Request.ValidationType.ARTIFACT);
+    }
+
+    @Test(expectedExceptions = ResourceException.class)
+    public void testValidateInstallOptions() throws Exception {
+        Request request = new Request();
+        request.validate(Request.ValidationType.INSTALL_OPTIONS);
+    }
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
+    public void testValidateUnknownArtifact() throws Exception {
+        Request request = new Request().setArtifactName("artifact");
+        request.validate(Request.ValidationType.ARTIFACT);
     }
 }

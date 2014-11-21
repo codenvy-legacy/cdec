@@ -1,5 +1,4 @@
 /*
-/*
  * CODENVY CONFIDENTIAL
  * __________________
  *
@@ -16,10 +15,16 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.installer;
+package com.codenvy.im.install;
 
 /**
- * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
-public class InstallInProgressException extends RuntimeException {
+public interface InstallOptions {
+
+    /** Sets the step number of the installation. */
+    void setStep(int step);
+
+    /** Gets the step number of the installation. */
+    int getStep();
 }

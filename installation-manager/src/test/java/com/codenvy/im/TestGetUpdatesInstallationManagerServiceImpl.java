@@ -53,12 +53,12 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     private Artifact            cdecArtifact;
 
     @BeforeMethod
-    public void init() {
+    public void init() throws ArtifactNotFoundException {
         initMocks();
         installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
     }
 
-    public void initMocks() {
+    public void initMocks() throws ArtifactNotFoundException {
         mockInstallationManager = mock(InstallationManagerImpl.class);
         transport = Mockito.mock(HttpTransport.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
@@ -111,7 +111,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         String response = installationManagerService.getUpdates(userCredentialsRep);
 
         assertEquals(response, "{\n" +
-                               "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
+                               "  \"message\" : \"'cdec' artifact not found\",\n" +
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
     }

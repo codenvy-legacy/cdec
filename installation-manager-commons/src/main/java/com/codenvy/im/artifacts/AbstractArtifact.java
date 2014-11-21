@@ -81,7 +81,7 @@ public abstract class AbstractArtifact implements Artifact {
         return getPriority() - o.getPriority();
     }
 
-    public void unpack(Path pathToBinaries, Path unpackToDir) throws IOException, URISyntaxException {
+    protected void unpack(Path pathToBinaries, Path unpackToDir) throws IOException, URISyntaxException {
         try (TarArchiveInputStream in = new TarArchiveInputStream(
                 new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pathToBinaries))))) {
 

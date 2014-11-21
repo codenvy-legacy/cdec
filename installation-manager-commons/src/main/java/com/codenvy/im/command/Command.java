@@ -19,9 +19,10 @@ package com.codenvy.im.command;
 
 /** @author Dmytro Nochevnov */
 public interface Command {
+
     /** Execution. */
     String execute() throws CommandException;
 
-    /** Execution. */
-    String execute(int timeoutMillis) throws CommandException;
+    /** @return the command description. */
+    String getDescription();
 }

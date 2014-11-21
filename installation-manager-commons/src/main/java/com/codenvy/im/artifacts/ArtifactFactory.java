@@ -17,22 +17,22 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
+
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 
 /** @author Anatoliy Bazko */
 public class ArtifactFactory {
 
     /** Artifact factory. */
-    public static Artifact createArtifact(String name) throws IllegalArgumentException {
+    public static Artifact createArtifact(String name) throws ArtifactNotFoundException {
         switch (name) {
             case CDECArtifact.NAME:
                 return INJECTOR.getInstance(CDECArtifact.class);
             case InstallManagerArtifact.NAME:
                 return INJECTOR.getInstance(InstallManagerArtifact.class);
-            case TrialCDECArtifact.NAME:
-                return INJECTOR.getInstance(TrialCDECArtifact.class);
         }
 
-        throw new IllegalArgumentException("Artifact '" + name + "' not found");
+        throw new ArtifactNotFoundException(name);
     }
 }

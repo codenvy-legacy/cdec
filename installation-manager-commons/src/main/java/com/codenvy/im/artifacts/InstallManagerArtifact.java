@@ -17,7 +17,10 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.command.Command;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -36,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -74,7 +78,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     }
 
     @Override
-    public void install(Path pathToBinaries, InstallOptions options) throws IOException {
+    public void install(Path pathToBinaries, CdecInstallOptions options) throws IOException {
         Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
         try {
             if (exists(dirForUpdate)) {
@@ -244,6 +248,19 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public int getPriority() {
         return 1;
+    }
+
+    @Override
+    public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
+        return Collections.emptyList();
+        // TODO
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Command getInstallCommand(Config config, InstallOptions installOptions) {
+        return null;
+        // TODO
     }
 
     @Override

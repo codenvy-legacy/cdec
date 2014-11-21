@@ -31,6 +31,7 @@ import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+
 import org.apache.commons.io.FileUtils;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -49,7 +50,12 @@ import java.util.TreeMap;
 
 import static java.lang.Thread.sleep;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -70,7 +76,7 @@ public class TestDownloadInstallationManagerServiceImpl {
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
 
     @BeforeMethod
-    public void init() {
+    public void init() throws Exception {
         initMocks();
         installationManagerService = new InstallationManagerServiceImpl(mockInstallationManager, transport, new DownloadDescriptorHolder());
 
@@ -86,7 +92,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         Files.deleteIfExists(pathIM);
     }
 
-    public void initMocks() {
+    public void initMocks() throws Exception {
         mockInstallationManager = mock(InstallationManagerImpl.class);
         transport = mock(HttpTransport.class);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
@@ -256,7 +262,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         } while (info.getDownloadResult() == null);
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
-                                                        "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
+                                                        "  \"message\" : \"'cdec' artifact not found\",\n" +
                                                         "  \"status\" : \"ERROR\"\n" +
                                                         "}");
 
@@ -270,7 +276,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         } while (info.getDownloadResult() == null);
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
-                                                        "  \"message\" : \"Artifact 'unknown' not found\",\n" +
+                                                        "  \"message\" : \"'unknown' artifact not found\",\n" +
                                                         "  \"status\" : \"ERROR\"\n" +
                                                         "}");
     }
@@ -447,14 +453,14 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         String response = installationManagerService.getDownloads(installManagerArtifact.getName(), "1.0.0-SNAPSHOT", userCredentialsRep);
         assertEquals(response, "{\n" +
-                                "  \"artifacts\" : [ {\n" +
-                                "    \"artifact\" : \"installation-manager\",\n" +
-                                "    \"version\" : \"1.0.0-SNAPSHOT\",\n" +
-                                "    \"file\" : \"target/file1\",\n" +
-                                "    \"status\" : \"DOWNLOADED\"\n" +
-                                "  } ],\n" +
-                                "  \"status\" : \"OK\"\n" +
-                                "}");
+                               "  \"artifacts\" : [ {\n" +
+                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"version\" : \"1.0.0-SNAPSHOT\",\n" +
+                               "    \"file\" : \"target/file1\",\n" +
+                               "    \"status\" : \"DOWNLOADED\"\n" +
+                               "  } ],\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
     }
 
     @Test

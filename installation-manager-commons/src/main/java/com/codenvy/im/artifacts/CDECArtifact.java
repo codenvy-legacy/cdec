@@ -20,38 +20,43 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.command.CommandException;
+import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.agent.SecureShellAgent;
+import com.codenvy.im.command.Command;
+import com.codenvy.im.command.SimpleCommand;
+import com.codenvy.im.config.CdecConfig;
+import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigException;
-import com.codenvy.im.installer.InstallInProgressException;
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.InstallStartedException;
-import com.codenvy.im.installer.Installer;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
-// TODO
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
 
     private final HttpTransport transport;
     private final String apiNodeUrl;
-
-    protected Installer installer; // TODO
 
     @Inject
     public CDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
@@ -66,62 +71,96 @@ public class CDECArtifact extends AbstractArtifact {
         this.apiNodeUrl = apiNodeUrl;
     }
 
-    /** {@inheritDoc} */
     @Override
-    public void install(Path pathToBinaries, InstallOptions options) throws CommandException,
-                                                                            AgentException,
-                                                                            ConfigException,
-                                                                            InstallStartedException,
-                                                                            InstallInProgressException,
-                                                                            IllegalArgumentException {
-        if (installer == null
-            || !installer.getOptions().getId().equals(options.getId())) {
-
-            if (options == null
-                || options.getType() == null) {
-                throw new IllegalArgumentException("Install type is unknown.");
-            }
-
-            installer = createInstaller(pathToBinaries, options);
-            throw new InstallStartedException(installer.getOptions());
-        }
-
-        installer.executeNextCommand();
-
-        if (installer.isFinished()) {
-            installer = null;
-
-            // TODO save version of installed CDEC (issue CDEC-62)
-
-            return;
-        }
-
-        throw new InstallInProgressException();
+    public void install(Path pathToBinaries, @Nullable CdecInstallOptions options) throws IOException {
     }
 
-    /** {@inheritDoc} */
-    protected Installer createInstaller(Path pathToBinaries, InstallOptions options) {
-        return new Installer(pathToBinaries, options.getType());
-    }
-
-    // TODO
     /** {@inheritDoc} */
     @Override
     public String getInstalledVersion(String authToken) throws IOException {
         String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
-        ApiInfo apiInfo = null;
         try {
-            apiInfo = Commons.fromJson(response, ApiInfo.class);
+            ApiInfo apiInfo = Commons.fromJson(response, ApiInfo.class);
+            return apiInfo.getIdeVersion();
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
-        return apiInfo.getIdeVersion();
     }
 
     /** {@inheritDoc} */
     @Override
     public int getPriority() {
         return 10;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
+        List<String> infos = new ArrayList<>();
+
+        for (int step = 1; ; step++) {
+            installOptions.setStep(step);
+            try {
+                infos.add(getInstallCommand(config, installOptions).getDescription());
+            } catch (IllegalArgumentException e) {
+                break;
+            }
+        }
+
+        return infos;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Command getInstallCommand(Config config, InstallOptions installOptions) throws IOException {
+        if (!(config instanceof CdecConfig)) {
+            throw new IllegalArgumentException("Unexpected config class " + config.getClass().getName());
+        }
+
+        final CdecConfig cdecConfig = (CdecConfig)config;
+
+        StringBuilder command;
+        int step = installOptions.getStep();
+
+        switch (step) {
+            case 1:
+                command = new StringBuilder();
+                command.append("sudo setenforce 0");
+                command.append(" && ");
+                command.append("sudo cp /etc/selinux/config /etc/selinux/config.bak");
+                command.append(" && ");
+                command.append("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config");
+                new SimpleCommand(command.toString(), new LocalAgent(), "Disable SELinux");
+
+            case 2:
+                command = new StringBuilder();
+                command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
+                command.append(" && ");
+                command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
+                return new SimpleCommand(command.toString(), new LocalAgent(), "Install puppet client");
+
+            default:
+                throw new IllegalArgumentException(String.format("Step number %d is out of range", step));
+        }
+    }
+
+    private Agent getSecureAgent(CdecConfig cdecConfig) throws ConfigException, AgentException {
+        if (!cdecConfig.getPassword().isEmpty()) {
+            return new SecureShellAgent(
+                    cdecConfig.getHost(),
+                    Integer.valueOf(cdecConfig.getSSHPort()),
+                    cdecConfig.getUser(),
+                    cdecConfig.getPassword()
+            );
+        } else {
+            return new SecureShellAgent(
+                    cdecConfig.getHost(),
+                    Integer.valueOf(cdecConfig.getSSHPort()),
+                    cdecConfig.getUser(),
+                    cdecConfig.getPrivateKeyFileAbsolutePath(),
+                    null
+            );
+        }
     }
 
     /** {@inheritDoc} */

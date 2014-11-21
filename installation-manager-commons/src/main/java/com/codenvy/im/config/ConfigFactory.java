@@ -17,114 +17,99 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.installer.Installer;
-import com.codenvy.im.utils.InjectorBootstrap;
+import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.DefaultOptions;
+import com.codenvy.im.install.InstallOptions;
+import com.google.inject.Singleton;
 
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
-import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
+import static org.apache.commons.io.IOUtils.copy;
 
-/**
- * @author Dmytro Nochevnov
- */
+/** @author Dmytro Nochevnov */
+@Singleton
 public class ConfigFactory {
-    private static final String CONFIG_PATH         = InjectorBootstrap.getProperty("config.path");
-    private static final String DEFAULT_CONFIG_PATH = InjectorBootstrap.getProperty("config.path.default");
+    public static final String CDEC_SINGLE_NODE_PROPERTIES_FILE = "cdec-single-node.properties";
 
-    protected static final String CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE = "cdec-single-node-with-puppet-master.properties";
+    private final String configPath;
 
-    protected static Map<String, Path> configFilesAbsolutePaths = new HashMap<String, Path>() {{
-        put(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
-            getConfigFileAbsolutePath(CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
-    }};
+    public ConfigFactory(@Named("installation-manager.config.path") String configPath) {
+        this.configPath = configPath;
 
-    protected static Map<String, Path> defaultConfigFilesRelativePaths = new HashMap<String, Path>() {{
-        put(Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER.toString(),
-            getDefaultConfigFileRelativePath(CDEC_SINGLE_NODE_WITH_PUPPET_MASTER_PROPERTIES_FILE));
-    }};
-
-    /**
-     * This is utility class.
-     */
-    private ConfigFactory() {
     }
-
     /**
      * Config factory.
      * If config file doesn't exist, create it with default content from file [classResourceDir]/[defaultConfigFileRelativePath]
-     * @throws ConfigException if it's impossible to create config file with default content.
-     * @throws IllegalArgumentException if config of configType isn't supported.
+     *
+     * @throws java.io.IOException
+     *         in case of the I/O error
+     * @throws IllegalArgumentException
+     *         unknown class of {@link com.codenvy.im.install.InstallOptions}
      */
-    public static CdecConfig loadConfig(String configType) throws IllegalArgumentException, ConfigException {
-        Path configFileAbsolutePath = configFilesAbsolutePaths.get(configType);
-        if (configFileAbsolutePath == null) {
-            throw new IllegalArgumentException("Config '" + configType + "' isn't supported.");
-        }
+    public Config loadOrCreateDefaultConfig(InstallOptions installOptions) throws IOException, IllegalArgumentException {
+        // TODO validate config
 
-        try {
-            if (!Files.exists(configFileAbsolutePath)) {
-                Path defaultConfigFilesRelativePath = defaultConfigFilesRelativePaths.get(configType);
-                createConfigFile(defaultConfigFilesRelativePath, configFileAbsolutePath);
-                throw new ConfigException(format("Please complete install config file '%s'.", configFileAbsolutePath));
+        if (installOptions instanceof DefaultOptions) {
+            return new DefaultConfig();
+
+        } else if (installOptions instanceof CdecInstallOptions) {
+            String propertiesFile = CDEC_SINGLE_NODE_PROPERTIES_FILE;
+
+            if (!exists(propertiesFile)) {
+                createDefaultConfig(propertiesFile);
             }
+            return new CdecConfig(loadConfig(propertiesFile));
+        }
 
-            return loadConfig(Files.newInputStream(configFileAbsolutePath), CdecConfig.class, configFileAbsolutePath.toString());
+        throw new IllegalArgumentException("There is no configuration for " + installOptions.getClass().getName());
+    }
+
+    private boolean exists(String propertiesFile) {
+        return Files.exists(Paths.get(configPath).resolve(propertiesFile));
+    }
+
+    /** Creates config from the template. */
+    private void createDefaultConfig(String propertiesFile) throws IOException {
+        Path confFile = getConfFile(propertiesFile);
+        Files.createDirectories(confFile.getParent());
+
+        try (InputStream in = ConfigFactory.class.getClassLoader().getResourceAsStream(propertiesFile);
+             OutputStream out = Files.newOutputStream(confFile)) {
+
+            copy(in, out);
+        }
+    }
+
+    private Path getConfFile(String propertiesFile) {
+        return Paths.get(configPath).resolve(propertiesFile);
+    }
+
+    protected Map<String, String> loadConfig(String propertiesFile) throws ConfigException {
+        Properties properties = new Properties();
+        try (InputStream in = Files.newInputStream(getConfFile(propertiesFile))) {
+            properties.load(in);
         } catch (IOException e) {
-            throw new ConfigException(format("Config '%s' error: %s: %s",
-                                             configType,
-                                             e.getClass().getSimpleName(),
-                                             e.getMessage()));
-        }
-    }
-
-    /**
-     * Load content of default config file [classResourceDir]/[defaultConfigFileRelativePath] into file [configFileAbsolutePath]
-     */
-    private static void createConfigFile(Path defaultConfigFilesRelativePath, Path configFileAbsolutePath) throws
-                                                                                                           ConfigException,
-                                                                                                           IOException {
-        InputStream defaultConfigContent =
-            ConfigFactory.class.getClassLoader().getResourceAsStream(String.valueOf(defaultConfigFilesRelativePath));
-
-        if (defaultConfigContent == null) {
-            throw new IOException(format("Default config not found at '%s'.", defaultConfigFilesRelativePath));
+            throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
 
-        Config config = new Config() {
-        };
-        config.load(defaultConfigContent, defaultConfigFilesRelativePath.toString());
+        Map<String, String> propertiesCandidate = new HashMap<>();
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            String key = entry.getKey().toString().toLowerCase();
+            String value = (String)entry.getValue();
 
-        Files.createDirectories(configFileAbsolutePath.getParent());
-        config.store(Files.newOutputStream(configFileAbsolutePath));
-    }
+            propertiesCandidate.put(key, value);
+        }
 
-    /**
-     * Return path to existed config file on file system = [fileSystemAccountRootPath]/[configFileRelativePath].
-     */
-    private static Path getConfigFileAbsolutePath(String configFileName) {
-        Path configFileRelativePath = Paths.get(CONFIG_PATH).resolve(configFileName);
-        Path fileSystemAccountRootPath = Paths.get(System.getProperty("user.home"));
-        return fileSystemAccountRootPath.resolve(configFileRelativePath);
-    }
-
-    /**
-     * Return relative path to default config file on file system = [classResourceDir]/[defaultConfigFileRelativePath].
-     */
-    private static Path getDefaultConfigFileRelativePath(String configFileName) {
-        return Paths.get(DEFAULT_CONFIG_PATH).resolve(configFileName);
-    }
-
-
-    private static <T extends Config> T loadConfig(InputStream configFile, Class<T> configDataClass, String configSource) throws ConfigException {
-        T config = INJECTOR.getInstance(configDataClass);
-        config.load(configFile, configSource);
-        return config;
+        return propertiesCandidate;
     }
 }

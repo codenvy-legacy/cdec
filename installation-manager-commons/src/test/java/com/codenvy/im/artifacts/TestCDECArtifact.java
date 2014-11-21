@@ -17,13 +17,9 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.Command;
-import com.codenvy.im.config.ConfigException;
-import com.codenvy.im.installer.InstallInProgressException;
-import com.codenvy.im.installer.InstallOptions;
-import com.codenvy.im.installer.InstallStartedException;
-import com.codenvy.im.installer.Installer;
+import com.codenvy.im.config.CdecConfig;
+import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 
 import org.mockito.Mock;
@@ -31,19 +27,12 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.List;
 
-import static org.mockito.Matchers.endsWith;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.assertTrue;
 
 /** @author Anatoliy Bazko
  *  @author Dmytro Nochevnov
@@ -54,83 +43,42 @@ public class TestCDECArtifact {
     @Mock
     private HttpTransport mockTransport;
 
-    @Mock
-    static Command mockTestCommand1;
-
-    @Mock
-    static Command mockTestCommand2;
-
-    static final Path testPath = Paths.get("test path");
-
-    static final String TEST_COMMAND_1 = "test command 1";
-    static final String TEST_COMMAND_2 = "test command 2";
-
-    static final Installer.Type testType    = Installer.Type.CDEC_SINGLE_NODE_WITH_PUPPET_MASTER;
-    static final InstallOptions testOptions = new InstallOptions().setType(testType);
-
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        doReturn(TEST_COMMAND_1).when(mockTestCommand1).toString();
-        doReturn(TEST_COMMAND_2).when(mockTestCommand2).toString();
-        Installer testInstaller = new TestInstaller(testPath, testType);
-
         spyCdecArtifact = spy(new CDECArtifact("", mockTransport));
-        doReturn(testInstaller).when(spyCdecArtifact).createInstaller(testPath, testOptions);
     }
 
     @Test
-    public void testInstallSequence() {
-        try {
-            spyCdecArtifact.install(testPath, testOptions);
-        } catch (InstallStartedException ise) {
-            InstallOptions installOptions = ise.getInstallOptions();
-            assertEquals(installOptions.getType(), testOptions.getType());
+    public void testGetInstallInfo() throws Exception {
+        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
+        CdecInstallOptions options = new CdecInstallOptions();
+        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        options.setStep(1);
 
-            assertEquals(installOptions.getCommandsInfo().size(), 2);
-            assertEquals(installOptions.getCommandsInfo().get(0), TEST_COMMAND_1);
-            assertEquals(installOptions.getCommandsInfo().get(1), TEST_COMMAND_2);
-
-            String installId = installOptions.getId();
-            assertNotNull(installId);
-
-            try {
-                spyCdecArtifact.install(testPath, installOptions);
-            } catch (InstallInProgressException ipe) {
-                spyCdecArtifact.install(testPath, installOptions);
-                return;
-            }
-
-            fail("InstallInProgressException wasn't thrown.");
-        }
-
-        fail("InstallStartedException wasn't thrown");
-    }
-
-    public static class TestInstaller extends Installer {
-        public TestInstaller(Path pathToBinaries, Installer.Type installType) throws ConfigException, AgentException {
-            super(pathToBinaries, installType);
-        }
-
-        @Override protected LinkedList<Command> getInstallCommands(Path pathToBinaries) throws AgentException, ConfigException {
-            return new LinkedList<Command>() {{
-                add(mockTestCommand1);
-                add(mockTestCommand2);
-            }};
-        }
+        List<String> info = spyCdecArtifact.getInstallInfo(config, options);
+        assertNotNull(info);
+        assertTrue(info.size() > 1);
     }
 
     @Test
-    public void testInstalledVersion() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+    public void testGetInstallCommand() throws Exception {
+        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
+        CdecInstallOptions options = new CdecInstallOptions();
+        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        options.setStep(1);
 
-        String version = spyCdecArtifact.getInstalledVersion("authToken");
-        assertEquals(version, "3.2.0-SNAPSHOT");
+        Command command = spyCdecArtifact.getInstallCommand(config, options);
+        assertNotNull(command);
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testGetInstalledPath() throws URISyntaxException {
-        spyCdecArtifact.getInstalledPath();
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testGetInstallCommandError() throws Exception {
+        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
+        CdecInstallOptions options = new CdecInstallOptions();
+        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        options.setStep(Integer.MAX_VALUE);
+
+        spyCdecArtifact.getInstallCommand(config, options);
     }
 }

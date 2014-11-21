@@ -20,10 +20,9 @@ package com.codenvy.im;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.command.CommandException;
-import com.codenvy.im.installer.InstallOptions;
+import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.Installer;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
@@ -46,6 +45,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -87,6 +87,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private final HttpTransportConfiguration transportConf;
 
     private final String        updateEndpoint;
+    private final Installer installer;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 
@@ -96,10 +97,12 @@ public class InstallationManagerImpl implements InstallationManager {
                                    @Named("installation-manager.download_dir") String downloadDir,
                                    HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
+                                   Installer installer,
                                    Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
+        this.installer = installer;
         this.artifacts = new ArtifactsSet(artifacts); // keep order
 
         try {
@@ -130,17 +133,23 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException, CommandException {
+    // TODO test
+    public List<String> getInstallInfo(Artifact artifact, String version, InstallOptions options) throws IOException {
+        return installer.getInstallInfo(artifact, options);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException {
         Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = getDownloadedArtifacts();
 
         Version v = Version.valueOf(version);
 
-        if (downloadedArtifacts.containsKey(artifact)
-            && downloadedArtifacts.get(artifact).containsKey(v)) {
+        if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(v)) {
 
             Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
             if (artifact.isInstallable(v, authToken)) {
-                artifact.install(pathToBinaries, options);
+                installer.install(artifact, Version.valueOf(version), options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
             }
