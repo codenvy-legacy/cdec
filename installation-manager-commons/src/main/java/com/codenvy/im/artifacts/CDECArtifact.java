@@ -33,6 +33,7 @@ import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -77,11 +78,11 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public String getInstalledVersion(String authToken) throws IOException {
+    public Version getInstalledVersion(String authToken) throws IOException {
         String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
         try {
             ApiInfo apiInfo = Commons.fromJson(response, ApiInfo.class);
-            return apiInfo.getIdeVersion();
+            return Version.valueOf(apiInfo.getIdeVersion());
         } catch (JsonParseException e) {
             throw new IOException(e);
         }

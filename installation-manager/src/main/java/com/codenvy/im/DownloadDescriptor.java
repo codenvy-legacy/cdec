@@ -20,6 +20,7 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.restlet.InstallationManager;
+import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -61,14 +62,14 @@ public class DownloadDescriptor {
     }
 
     /** Factory method */
-    public static DownloadDescriptor createDescriptor(Map<Artifact, String> artifacts,
+    public static DownloadDescriptor createDescriptor(Map<Artifact, Version> artifacts,
                                                       InstallationManager manager,
                                                       Thread downloadThread) throws IOException {
         Map<Path, Long> m = new LinkedHashMap<>();
 
-        for (Map.Entry<Artifact, String> e : artifacts.entrySet()) {
+        for (Map.Entry<Artifact, Version> e : artifacts.entrySet()) {
             Artifact artifact = e.getKey();
-            String version = e.getValue();
+            Version version = e.getValue();
 
             Path pathToBinaries = manager.getPathToBinaries(artifact, version);
             Long binariesSize = manager.getBinariesSize(artifact, version);

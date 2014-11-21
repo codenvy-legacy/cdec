@@ -22,6 +22,7 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.Version;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -34,7 +35,7 @@ import java.util.SortedMap;
 public interface InstallationManager {
 
     /** @retrun installation information. */
-    List<String> getInstallInfo(Artifact artifact, String version, InstallOptions options) throws IOException;
+    List<String> getInstallInfo(Artifact artifact, Version version, InstallOptions options) throws IOException;
 
     /**
      * Install the specific version of the artifact.
@@ -42,7 +43,7 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException;
+    void install(String authToken, Artifact artifact, Version version, InstallOptions options) throws IOException;
 
     /**
      * Scans all installed artifacts and returns their versions.
@@ -52,7 +53,7 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException;
+    Map<Artifact, Version> getInstalledArtifacts(String authToken) throws IOException;
 
     /**
      * @return downloaded artifacts from the local repository
@@ -62,13 +63,30 @@ public interface InstallationManager {
     Map<Artifact, SortedMap<Version, Path>> getDownloadedArtifacts() throws IOException;
 
     /**
+     * @return set of downloaded into local repository versions of artifact
+     * @throws IOException
+     *         if an I/O error occurs
+     */
+    SortedMap<Version, Path> getDownloadedVersions(Artifact artifact) throws IOException;
+
+    /**
      * @param authToken
      *         the authentication token
      * @return the list of the artifacts to update.
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Map<Artifact, String> getUpdates(String authToken) throws IOException;
+    Map<Artifact, Version> getUpdates(String authToken) throws IOException;
+
+    /**
+     * @param authToken
+     *         the authentication token
+     * @return version of artifact to update.
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    Version getLatestVersionToDownload(String authToken, Artifact artifact) throws IOException;
+
 
     /**
      * Download the specific version of the artifact.
@@ -79,9 +97,9 @@ public interface InstallationManager {
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    Path download(UserCredentials userCredentials, Artifact artifact, String version) throws
-                                                                                      IOException,
-                                                                                      IllegalStateException;
+    Path download(UserCredentials userCredentials, Artifact artifact, Version version) throws
+                                                                                       IOException,
+                                                                                       IllegalStateException;
 
     /** Checks if FS has enough free space, for instance to download artifacts */
     void checkEnoughDiskSpace(long size) throws IOException;
@@ -100,12 +118,20 @@ public interface InstallationManager {
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Path getPathToBinaries(Artifact artifact, String version) throws IOException;
+    Path getPathToBinaries(Artifact artifact, Version version) throws IOException;
 
     /**
      * @return size in bytes of the artifact
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Long getBinariesSize(Artifact artifact, String version) throws IOException;
+    Long getBinariesSize(Artifact artifact, Version version) throws IOException;
+
+    /** Filters what need to download, either all updates or a specific one. */
+    // TODO do we really need nullable
+    Map<Artifact, Version> getUpdatesToDownload(@Nullable final Artifact artifact,
+                                                @Nullable final Version version,
+                                                String authToken) throws IOException;
+
+    boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException;
 }

@@ -19,12 +19,10 @@ package com.codenvy.im.update;
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
-/**
- * @author Anatoliy Bazko
- */
+/** @author Anatoliy Bazko */
 public class PropertiesNotFoundException extends ArtifactNotFoundException {
 
     public PropertiesNotFoundException(String artifact, String version) {
-        super("Artifact properties '" + artifact + "' version '" + version + "' not found");
+        super(String.format("Properties of the artifact '%s' version '%s' were not found", artifact, version));
     }
 }

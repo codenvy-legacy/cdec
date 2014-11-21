@@ -21,16 +21,20 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * @author Anatoliy Bazko
  */
+// TODO java doc
 public interface Artifact extends Comparable<Artifact> {
 
     /** @return the artifact name */
@@ -41,12 +45,12 @@ public interface Artifact extends Comparable<Artifact> {
     void install(Path pathToBinaries, @Nullable CdecInstallOptions options) throws IOException;
 
     /** @return current installed version of the artifact */
-    String getInstalledVersion(String authToken) throws IOException;
+    @Nullable
+    Version getInstalledVersion(String authToken) throws IOException;
 
     /** @return the priority of the artifact to install, update etc. */
     int getPriority();
 
-    // TODO test
     List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException;
 
     /** @return list of commands to perform installation. */
@@ -57,4 +61,15 @@ public interface Artifact extends Comparable<Artifact> {
      * version of the artifact
      */
     boolean isInstallable(Version versionToInstall, String accessToken) throws IOException;
+
+    /** @return properties stored at update server */
+    Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException;
+
+    /** @return version at the update server which is could be used to update already installed version */
+    @Nullable
+    Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException;
+
+    public void validateProperties(Map properties) throws IOException;
+
+    SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
 }

@@ -17,18 +17,28 @@
  */
 package com.codenvy.im.exceptions;
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.utils.Version;
+
 import java.io.FileNotFoundException;
 
 /**
  * @author Anatoliy Bazko
  */
 public class ArtifactNotFoundException extends FileNotFoundException {
-
     public ArtifactNotFoundException(String artifact, String version) {
         super("Artifact '" + artifact + "' version '" + version + "' not found");
     }
 
-    public ArtifactNotFoundException(String artifact) {
-        super(String.format("'%s' artifact not found", artifact));
+    public ArtifactNotFoundException(Artifact artifact, Version version) {
+        this(artifact.toString(), version.toString());
+    }
+
+    public ArtifactNotFoundException(Artifact artifact) {
+        super("Artifact '" + artifact + "' not found");
+    }
+
+    public ArtifactNotFoundException(String message) {
+        super(message);
     }
 }

@@ -22,8 +22,7 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     AS_IP=update.codenvycorp.com
     echo "Uploading on production"
 elif [ "$1" == "stg" ]; then
-    #SSH_KEY_NAME=as1-cldide_cl-server.skey TODO
-    SSH_KEY_NAME=git_nopass.key
+    SSH_KEY_NAME=as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "Uploading on staging"

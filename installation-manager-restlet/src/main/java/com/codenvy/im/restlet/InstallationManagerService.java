@@ -80,25 +80,12 @@ public interface InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     public String getUpdates(JacksonRepresentation<UserCredentials> requestRepresentation);
 
-    @POST
-    @Path("download-list/{artifact}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getDownloads(@PathParam(value = "artifact") String artifactName,
-                               JacksonRepresentation<UserCredentials> userCredentialsRep);
-
-    @POST
-    @Path("download-list/{artifact}/{version}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getDownloads(@PathParam(value = "artifact") String artifactName,
-                               @PathParam(value = "version") String version, JacksonRepresentation<UserCredentials> userCredentialsRep);
-
+    /** Get list of downloaded artifacts */
     @POST
     @Path("download-list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getDownloads(JacksonRepresentation<UserCredentials> userCredentialsRep);
+    public String getDownloads(JacksonRepresentation<Request> requestRep);
 
     /** Get versions of installed artifacts. */
     @POST

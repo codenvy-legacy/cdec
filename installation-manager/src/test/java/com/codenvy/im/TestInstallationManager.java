@@ -17,7 +17,6 @@
  */
 package com.codenvy.im;
 
-
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
@@ -51,7 +50,6 @@ import java.util.TreeMap;
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.any;
@@ -63,7 +61,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -71,6 +69,8 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstallationManager {
 
+    public static final String UPDATE_ENDPOINT = "http://update.com/endpoint";
+    public static final String DOWNLOAD_DIR    = "target/download";
     private Artifact cdecArtifact;
     private Artifact installManagerArtifact;
 
@@ -86,11 +86,11 @@ public class TestInstallationManager {
         installer = mock(Installer.class);
 
         installManagerArtifact = spy(new InstallManagerArtifact());
-        cdecArtifact = spy(new CDECArtifact("update/endpoint", transport));
+        cdecArtifact = spy(new CDECArtifact(UPDATE_ENDPOINT, transport));
 
         manager = spy(new InstallationManagerImpl("api/endpoint",
-                                                  "http://update.com/endpoint",
-                                                  "target/download",
+                                                  UPDATE_ENDPOINT,
+                                                  DOWNLOAD_DIR,
                                                   new HttpTransportConfiguration("", "0"),
                                                   transport,
                                                   installer,
@@ -113,23 +113,53 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+    }
 
-        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
+    @Test
+    public void testInstallArtifact() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
 
-        manager.install("auth token", installManagerArtifact, "2.10.1", new DefaultOptions());
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
+        doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+
+        doNothing().when(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        manager.install(testCredentials.getToken(), cdecArtifact, version100, null);
+        verify(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+            expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.0.0'.")
+    public void testNotInstallableUpdate() throws Exception {
+        final Version version200 = Version.valueOf("2.0.0");
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version200, null);
+        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.1"), new DefaultOptions());
+        doReturn(false).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
+
+        manager.install(testCredentials.getToken(), installManagerArtifact, version200, null);
         verify(installManagerArtifact, never()).install(any(Path.class), null);
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
-
-        manager.install("auth token", cdecArtifact, "2.10.1", new CdecInstallOptions());
+        manager.install("auth token", cdecArtifact, Version.valueOf("2.10.1"), new CdecInstallOptions());
     }
 
+    // TODO (2)
     @Test
-    public void testInstallArtifact() throws Exception {
+    public void testInstallArtifact2() throws Exception {
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("1.0.1"), Paths.get("target/download/cdec/1.0.1/file1"));
@@ -138,7 +168,7 @@ public class TestInstallationManager {
         doNothing().when(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
         doReturn("1.0.0").when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install("auth toke", cdecArtifact, "1.0.1", new CdecInstallOptions());
+        manager.install("auth toke", cdecArtifact, Version.valueOf("1.0.1"), new CdecInstallOptions());
         verify(cdecArtifact).install(any(Path.class), any(CdecInstallOptions.class));
     }
 
@@ -153,36 +183,37 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install("auth token", installManagerArtifact, "2.10.0", new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.0"), new DefaultOptions());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
             expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
     public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
         final Path pathToBinaries = Paths.get("target/download/cdec/1.0.0/file1");
         CdecInstallOptions options = new CdecInstallOptions();
         options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
         options.setStep(1);
 
-        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.1\"}");
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("1.0.0"), pathToBinaries);
-            }});
-        }}).when(manager).getDownloadedArtifacts();
-        doNothing().when(cdecArtifact).install(pathToBinaries, options);
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        manager.install("auth token", cdecArtifact, "1.0.0", options);
+        doReturn(false).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+        doNothing().when(cdecArtifact).install(null, options);
+
+        manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
     }
 
     @Test
     public void testInstallWithInstallOptions() throws Exception {
-        final Path testPathToBinaries = Paths.get("target/download/cdec/3.0.0/file1");
-        doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
-            put(cdecArtifact, new TreeMap<Version, Path>() {{
-                put(Version.valueOf("3.0.1"), testPathToBinaries);
-            }});
-        }}).when(manager).getDownloadedArtifacts();
+        final Version version100 = Version.valueOf("1.0.0");
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
 
         CdecInstallOptions testOptions = new CdecInstallOptions();
         testOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
@@ -190,7 +221,7 @@ public class TestInstallationManager {
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");
 
-        manager.install("auth token", cdecArtifact, "3.0.1", testOptions);
+        manager.install("auth token", cdecArtifact, version100, testOptions);
     }
 
     @Test
@@ -216,12 +247,12 @@ public class TestInstallationManager {
         doReturn("2.10.1").when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
         doNothing().when(installManagerArtifact).install(any(Path.class), any(CdecInstallOptions.class));
 
-        manager.install("auth token", installManagerArtifact, "2.10.2", new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.2"), new DefaultOptions());
     }
 
     @Test
     public void testDownloadVersion() throws Exception {
-        String version = "1.0.0";
+        Version version100 = Version.valueOf("1.0.0");
         when(transport.doGet("api/endpoint/account", testCredentials.getToken()))
                 .thenReturn("[{"
                             + "\"roles\":[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
@@ -231,57 +262,84 @@ public class TestInstallationManager {
         when(transport.doGet("api/endpoint/account/" + testCredentials.getAccountId() + "/subscriptions", testCredentials.getToken()))
                 .thenReturn("[{serviceId:\"OnPremises\"}]");
 
-        when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version)))
+        when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version100.toString())))
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
-        manager.download(testCredentials, cdecArtifact, version);
-
+        manager.download(testCredentials, cdecArtifact, version100);
     }
 
     @Test
     public void testGetUpdates() throws Exception {
-        doReturn(new HashMap<Artifact, String>() {{
-            put(cdecArtifact, "2.10.5");
-            put(installManagerArtifact, "1.0.0");
-        }}).when(manager).getInstalledArtifacts(testCredentials.getToken());
-        doReturn(new HashMap<Artifact, String>() {{
-            put(cdecArtifact, "2.10.5");
-            put(installManagerArtifact, "1.0.1");
-        }}).when(manager).getLatestVersionsToDownload();
+        final Version version100 = Version.valueOf("1.0.0");
+        final Version version200 = Version.valueOf("2.0.0");
 
-        Map<Artifact, String> m = manager.getUpdates(testCredentials.getToken());
-        assertEquals(m.size(), 1);
-        assertEquals(m.get(installManagerArtifact), "1.0.1");
+        doReturn(version100).when(cdecArtifact)
+                            .getLatestInstallableVersionToDownload(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+
+        doReturn(version200).when(installManagerArtifact)
+                            .getLatestInstallableVersionToDownload(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+
+        Map<Artifact, Version> updates = manager.getUpdates(testCredentials.getToken());
+        assertEquals(updates.size(), 2);
+        assertEquals(updates.toString(), "{cdec=1.0.0, installation-manager=2.0.0}");
     }
 
     @Test
     public void testGetInstalledArtifacts() throws Exception {
-        when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
+        Version version100 = Version.valueOf("1.0.0");
+        Version version200 = Version.valueOf("2.0.0");
 
-        Map<Artifact, String> m = manager.getInstalledArtifacts(testCredentials.getToken());
-        assertNotNull(m.get(cdecArtifact));
-        assertNotNull(m.get(installManagerArtifact));
+        doReturn(version100).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version200).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+
+        Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(testCredentials.getToken());
+
+        assertEquals(installedArtifacts.size(), 2);
+        assertEquals(installedArtifacts.toString(), "{cdec=1.0.0, installation-manager=2.0.0}");
     }
 
     @Test
-    public void testGetLatestVersionsToDownload() throws Exception {
-        doNothing().when(manager).validateArtifactProperties(anyMap());
-        when(transport.doGet(endsWith("repository/properties/" + InstallManagerArtifact.NAME))).thenReturn("{\"version\":\"1.0.1\"}");
-        when(transport.doGet(endsWith("repository/properties/" + CDECArtifact.NAME))).thenReturn("{\"version\":\"2.10.5\"}");
-        Map<Artifact, String> m = manager.getLatestVersionsToDownload();
+    public void testUpdatesToDownload() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
+        final Version version200 = Version.valueOf("2.0.0");
 
-        assertEquals(m.size(), 2);
-        assertEquals(m.get(installManagerArtifact), "1.0.1");
-        assertEquals(m.get(cdecArtifact), "2.10.5");
+        doReturn(new TreeMap<Artifact, Version>() {{
+            put(cdecArtifact, version100);
+            put(installManagerArtifact, version200);
+        }}).when(manager).getUpdates(testCredentials.getToken());
+
+        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
+        assertEquals(artifactsToDownload.size(), 2);
+        assertEquals(artifactsToDownload.toString(), "{installation-manager=2.0.0, cdec=1.0.0}");
+    }
+
+    @Test
+    public void testAlreadyDownloadedUpdatesToDownload() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
+        final Version version200 = Version.valueOf("2.0.0");
+
+        doReturn(new TreeMap<Artifact, Version>() {{
+            put(cdecArtifact, version200);
+            put(installManagerArtifact, version100);
+        }}).when(manager).getUpdates(testCredentials.getToken());
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version200, null);
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
+        assertEquals(artifactsToDownload.size(), 0);
     }
 
     @Test
     public void testGetDownloadedArtifacts() throws Exception {
         doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.1"));
         doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.2"));
-        doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(
-                endsWith("installation-manager/2.0.1"));
-        doNothing().when(manager).validateArtifactProperties(anyMap());
+        doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("installation-manager/2.0.1"));
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
@@ -293,71 +351,38 @@ public class TestInstallationManager {
         Files.createFile(file2);
         Files.createFile(file3);
 
+        doReturn(new TreeMap<Version, Path>() {{
+            put(Version.valueOf("1.0.0"), Paths.get("file1"));
+            put(Version.valueOf("1.0.1"), Paths.get("file2"));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(Version.valueOf("2.0.0"), Paths.get("file3"));
+        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
         Map<Artifact, SortedMap<Version, Path>> artifacts = manager.getDownloadedArtifacts();
         assertEquals(artifacts.size(), 2);
 
         // check order
         assertEquals(artifacts.toString(), "{cdec={" +
-                                           "1.0.1=target/download/cdec/1.0.1/file1, " +
-                                           "1.0.2=target/download/cdec/1.0.2/file2" +
+                                           "1.0.0=file1, " +
+                                           "1.0.1=file2" +
                                            "}, " +
                                            "installation-manager={" +
-                                           "2.0.1=target/download/installation-manager/2.0.1/file3" +
+                                           "2.0.0=file3" +
                                            "}}");
     }
 
     @Test
-    public void testGetDownloadedArtifactsSeveralVersions() throws Exception {
-        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.1"));
-        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.2"));
-        doNothing().when(manager).validateArtifactProperties(anyMap());
-
-        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
-        Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
-        Files.createDirectories(file1.getParent());
-        Files.createDirectories(file2.getParent());
-        Files.createFile(file1);
-        Files.createFile(file2);
-
-        Map<Artifact, SortedMap<Version, Path>> m = manager.getDownloadedArtifacts();
-        assertEquals(m.size(), 1);
-        assertTrue(m.containsKey(cdecArtifact));
-
-        SortedMap<Version, Path> v = m.get(cdecArtifact);
-        assertTrue(v.containsKey(Version.valueOf("1.0.1")));
-        assertTrue(v.containsKey(Version.valueOf("1.0.2")));
-        assertEquals(v.get(Version.valueOf("1.0.1")), file1);
-        assertEquals(v.get(Version.valueOf("1.0.2")), file2);
-    }
-
-    @Test
     public void testGetDownloadedArtifactsReturnsEmptyMap() throws Exception {
+        doReturn(new TreeMap<Version, Path>()).when(cdecArtifact)
+                                              .getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        doReturn(new TreeMap<Version, Path>()).when(installManagerArtifact)
+                                              .getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
         Map<Artifact, SortedMap<Version, Path>> m = manager.getDownloadedArtifacts();
         assertTrue(m.isEmpty());
-    }
-
-    @Test
-    public void testGetArtifactPropertiesWithVersion() throws Exception {
-        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(transport).doGet(endsWith("cdec/1.0.1"));
-        doNothing().when(manager).validateArtifactProperties(anyMap());
-
-        Map m = manager.getArtifactProperties(cdecArtifact, "1.0.1");
-        assertTrue(m.containsKey("file"));
-        assertTrue(m.containsKey("md5"));
-        assertEquals(m.get("file"), "file1");
-        assertEquals(m.get("md5"), "a");
-    }
-
-    @Test
-    public void testGetArtifactProperties() throws Exception {
-        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(transport).doGet(endsWith("cdec"));
-        doNothing().when(manager).validateArtifactProperties(anyMap());
-
-        Map m = manager.getArtifactProperties(cdecArtifact);
-        assertTrue(m.containsKey("file"));
-        assertTrue(m.containsKey("md5"));
-        assertEquals(m.get("file"), "file1");
-        assertEquals(m.get("md5"), "a");
     }
 
     @Test
@@ -415,5 +440,17 @@ public class TestInstallationManager {
         config.setDownloadDir("hello");
 
         manager.setConfig(config);
+    }
+
+    @Test
+    public void testIsInstallable() throws IOException {
+        final Version version200 = Version.valueOf("2.0.0");
+        final Version version201 = Version.valueOf("2.0.1");
+
+        doReturn(true).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
+        assertTrue(manager.isInstallable(installManagerArtifact, version200, testCredentials.getToken()));
+
+        doReturn(false).when(installManagerArtifact).isInstallable(version201, testCredentials.getToken());
+        assertFalse(manager.isInstallable(installManagerArtifact, version201, testCredentials.getToken()));
     }
 }

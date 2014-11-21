@@ -21,6 +21,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,13 +31,18 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.Matchers.endsWith;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
-/** @author Anatoliy Bazko
- *  @author Dmytro Nochevnov
- * */
+/**
+ * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
+ */
 public class TestCDECArtifact {
     private CDECArtifact spyCdecArtifact;
 
@@ -80,5 +86,13 @@ public class TestCDECArtifact {
         options.setStep(Integer.MAX_VALUE);
 
         spyCdecArtifact.getInstallCommand(config, options);
+    }
+
+    @Test
+    public void testInstalledVersion() throws Exception {
+        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+
+        Version version = spyCdecArtifact.getInstalledVersion("authToken");
+        assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
     }
 }

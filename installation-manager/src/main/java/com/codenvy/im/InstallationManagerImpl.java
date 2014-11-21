@@ -19,13 +19,13 @@ package com.codenvy.im;
 
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerConfig;
 import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
@@ -35,15 +35,16 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,23 +54,16 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.ArtifactsSet;
-import static com.codenvy.im.utils.Commons.asMap;
-import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.Commons.getProperException;
-import static com.codenvy.im.utils.Version.compare;
-import static com.codenvy.im.utils.Version.valueOf;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -133,23 +127,19 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    // TODO test
-    public List<String> getInstallInfo(Artifact artifact, String version, InstallOptions options) throws IOException {
+    public List<String> getInstallInfo(Artifact artifact, Version version, InstallOptions options) throws IOException {
         return installer.getInstallInfo(artifact, options);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void install(String authToken, Artifact artifact, String version, InstallOptions options) throws IOException {
+    public void install(String authToken, Artifact artifact, Version version, InstallOptions options) throws IOException {
         Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = getDownloadedArtifacts();
 
-        Version v = Version.valueOf(version);
-
-        if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(v)) {
-
-            Path pathToBinaries = downloadedArtifacts.get(artifact).get(v);
-            if (artifact.isInstallable(v, authToken)) {
-                installer.install(artifact, Version.valueOf(version), options);
+        if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(version)) {
+            Path pathToBinaries = downloadedArtifacts.get(artifact).get(version);
+            if (artifact.isInstallable(version, authToken)) {
+                installer.install(artifact, version, options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
             }
@@ -160,8 +150,8 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Map<Artifact, String> getInstalledArtifacts(String authToken) throws IOException {
-        Map<Artifact, String> installed = new LinkedHashMap<>();
+    public Map<Artifact, Version> getInstalledArtifacts(String authToken) throws IOException {
+        Map<Artifact, Version> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {
                 installed.put(artifact, artifact.getInstalledVersion(authToken));
@@ -175,9 +165,9 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Path download(UserCredentials userCredentials, Artifact artifact, String version) throws IOException, IllegalStateException {
+    public Path download(UserCredentials userCredentials, Artifact artifact, Version version) throws IOException, IllegalStateException {
         try {
-            boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version, transport, updateEndpoint);
+            boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version.toString(), transport, updateEndpoint);
 
             String requestUrl;
             if (isAuthenticationRequired) {
@@ -276,16 +266,16 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     @Override
-    public Path getPathToBinaries(Artifact artifact, String version) throws IOException {
-        Map properties = getArtifactProperties(artifact, version);
+    public Path getPathToBinaries(Artifact artifact, Version version) throws IOException {
+        Map properties = artifact.getProperties(version, updateEndpoint, transport);
         String fileName = properties.get(FILE_NAME_PROPERTY).toString();
 
         return getDownloadDirectory(artifact, version).resolve(fileName);
     }
 
     @Override
-    public Long getBinariesSize(Artifact artifact, String version) throws IOException, NumberFormatException {
-        Map properties = getArtifactProperties(artifact, version);
+    public Long getBinariesSize(Artifact artifact, Version version) throws IOException, NumberFormatException {
+        Map properties = artifact.getProperties(version, updateEndpoint, transport);
         String size = properties.get(SIZE_PROPERTY).toString();
 
         return Long.valueOf(size);
@@ -296,55 +286,39 @@ public class InstallationManagerImpl implements InstallationManager {
         Map<Artifact, SortedMap<Version, Path>> downloaded = new LinkedHashMap<>(artifacts.size());
 
         for (Artifact artifact : artifacts) {
-            Path artifactDir = downloadDir.resolve(artifact.getName());
+            SortedMap<Version, Path> versions = artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport);
 
-            if (exists(artifactDir)) {
-
-                SortedMap<Version, Path> versions = new TreeMap<>();
-                Iterator<Path> pathIterator = Files.newDirectoryStream(artifactDir).iterator();
-
-                while (pathIterator.hasNext()) {
-                    try {
-                        Path versionDir = pathIterator.next();
-                        if (isDirectory(versionDir)) {
-                            Version version = valueOf(versionDir.getFileName().toString());
-
-                            Map properties = getArtifactProperties(artifact, version.getAsString());
-                            String md5sum = properties.get(MD5_PROPERTY).toString();
-                            String fileName = properties.get(FILE_NAME_PROPERTY).toString();
-
-                            Path file = versionDir.resolve(fileName);
-                            if (exists(file) && md5sum.equals(calculateMD5Sum(file))) {
-                                versions.put(version, file);
-                            }
-                        }
-                    } catch (IllegalArgumentException | IOException e) {
-                        // maybe it isn't a version directory
-                    }
-                }
-
-                if (!versions.isEmpty()) {
-                    downloaded.put(artifact, versions);
-                }
+            if (!versions.isEmpty()) {
+                downloaded.put(artifact, versions);
             }
         }
 
         return downloaded;
     }
 
+    @Override
+    public SortedMap<Version, Path> getDownloadedVersions(Artifact artifact) throws IOException {
+        return artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport);
+    }
+
     /** {@inheritDoc} */
     @Override
-    public Map<Artifact, String> getUpdates(String authToken) throws IOException {
-        Map<Artifact, String> newVersions = new LinkedHashMap<>();
+    public Map<Artifact, Version> getUpdates(String authToken) throws IOException {
+        Map<Artifact, Version> newVersions = new LinkedHashMap<>();
 
-        Map<Artifact, String> installed = getInstalledArtifacts(authToken);
-        Map<Artifact, String> available2Download = getLatestVersionsToDownload();
+        Version newVersion;
+        for (Artifact artifact : artifacts) {
+            try {
+                newVersion = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+            } catch (HttpException e) {
+                // ignore update server error when there is no version of certain artifact there
+                if (e.getStatus() == javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode()) {
+                    continue;
+                }
+                throw e;
+            }
 
-        for (Map.Entry<Artifact, String> entry : available2Download.entrySet()) {
-            Artifact artifact = entry.getKey();
-            String newVersion = entry.getValue();
-
-            if (!installed.containsKey(artifact) || compare(newVersion, installed.get(artifact)) > 0) {
+            if (newVersion != null) {
                 newVersions.put(artifact, newVersion);
             }
         }
@@ -352,62 +326,13 @@ public class InstallationManagerImpl implements InstallationManager {
         return newVersions;
     }
 
-    private Path getDownloadDirectory(Artifact artifact, String version) {
-        return downloadDir.resolve(artifact.getName()).resolve(version);
+    @Override
+    public Version getLatestVersionToDownload(String authToken, Artifact artifact) throws IOException {
+        return artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
     }
 
-    /** Retrieves the latest versions from the Update Server. */
-    protected Map<Artifact, String> getLatestVersionsToDownload() throws IOException {
-        Map<Artifact, String> available2Download = new LinkedHashMap<>();
-
-        for (Artifact artifact : artifacts) {
-            try {
-                Map m = getArtifactProperties(artifact);
-                available2Download.put(artifact, m.get(VERSION_PROPERTY).toString());
-            } catch (IOException e) {
-                LOG.error("Can't retrieve the last version of " + artifact, e);
-            }
-        }
-
-        return available2Download;
-    }
-
-    protected Map getArtifactProperties(Artifact artifact) throws IOException {
-        String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName());
-        Map m;
-        try {
-            m = asMap(transport.doGet(requestUrl));
-        } catch (JsonParseException e) {
-            throw new IOException(e);
-        }
-
-        validateArtifactProperties(m);
-        return m;
-    }
-
-    protected Map getArtifactProperties(Artifact artifact, String version) throws IOException {
-        String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + artifact.getName() + "/" + version);
-        Map m;
-        try {
-            m = asMap(transport.doGet(requestUrl));
-        } catch (JsonParseException e) {
-            throw new IOException(e);
-        }
-
-        validateArtifactProperties(m);
-        return m;
-    }
-
-    protected void validateArtifactProperties(Map m) throws IOException {
-        if (m == null) {
-            throw new IOException("Can't get artifact properties.");
-        }
-
-        for (String p : ArtifactProperties.PUBLIC_PROPERTIES) {
-            if (!m.containsKey(p)) {
-                throw new IOException("Can't get artifact property: " + p);
-            }
-        }
+    private Path getDownloadDirectory(Artifact artifact, Version version) {
+        return downloadDir.resolve(artifact.getName()).resolve(version.toString());
     }
 
     protected void storeProperty(String property, String value) throws IOException {
@@ -428,5 +353,56 @@ public class InstallationManagerImpl implements InstallationManager {
         try (OutputStream out = newOutputStream(conf)) {
             props.store(out, null);
         }
+    }
+
+    /** Filters what need to download, either all updates or a specific one. */
+    @Override
+    public Map<Artifact, Version> getUpdatesToDownload(@Nullable final Artifact artifact,
+                                                       @Nullable final Version version,
+                                                       String authToken) throws IOException {
+        if (artifact == null) {
+            Map<Artifact, Version> latestVersions = getUpdates(authToken);
+            Map<Artifact, Version> updates = new TreeMap<>(latestVersions);
+            for (Map.Entry<Artifact, Version> artifactEntry : latestVersions.entrySet()) {
+
+                Artifact eachArtifact = artifactEntry.getKey();
+                Version eachVersion = artifactEntry.getValue();
+                if (eachArtifact.getDownloadedVersions(downloadDir, updateEndpoint, transport).containsKey(eachVersion)) {
+                    updates.remove(eachArtifact);
+                }
+            }
+
+            return updates;
+        } else {
+            if (version != null) {
+                // verify if version had been already downloaded
+                if (artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport).containsKey(version)) {
+                    return Collections.emptyMap();
+                }
+
+                return new HashMap<Artifact, Version>() {{
+                    put(artifact, version);
+                }};
+            }
+
+            final Version versionToUpdate = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+            if (versionToUpdate == null) {
+                return Collections.emptyMap();
+            }
+
+            // verify if version had been already downloaded
+            if (artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport).containsKey(versionToUpdate)) {
+                return Collections.emptyMap();
+            }
+
+            return new HashMap<Artifact, Version>() {{
+                put(artifact, versionToUpdate);
+            }};
+        }
+    }
+
+    @Override
+    public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
+        return artifact.isInstallable(version, authToken);
     }
 }

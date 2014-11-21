@@ -21,6 +21,7 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.Version;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -77,13 +78,13 @@ public class Response {
             return response;
         }
 
-        public Builder withArtifacts(Map<Artifact, String> m) {
-            Set<Map.Entry<Artifact, String>> entries = m.entrySet();
+        public Builder withArtifacts(Map<Artifact, Version> m) {
+            Set<Map.Entry<Artifact, Version>> entries = m.entrySet();
             List<ArtifactInfo> infos = new ArrayList<>(entries.size());
 
-            for (Map.Entry<Artifact, String> e : entries) {
+            for (Map.Entry<Artifact, Version> e : entries) {
                 Artifact artifactName = e.getKey();
-                String version = e.getValue();
+                Version version = e.getValue();
 
                 infos.add(new ArtifactInfo(artifactName, version));
             }

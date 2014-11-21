@@ -19,8 +19,8 @@ package com.codenvy.im.response;
 
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.utils.Version;
 
 import org.testng.annotations.Test;
 
@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -36,8 +37,8 @@ import static org.testng.Assert.assertEquals;
 public class TestResponse {
     @Test
     public void testToJsonArtifactInfoList() throws Exception {
-        ArtifactInfo info1 = new ArtifactInfo("cdec", "1.0.1");
-        ArtifactInfo info2 = new ArtifactInfo("cdec", "1.0.2", Status.SUCCESS);
+        ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
+        ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
         Response response = new Response.Builder().withArtifacts(Arrays.asList(info1, info2)).withStatus(ResponseCode.OK).build();
 
         assertEquals(response.toJson(), "{\n" +
@@ -55,8 +56,8 @@ public class TestResponse {
 
     @Test
     public void testToJsonArtifactsMap() throws Exception {
-        Map<Artifact, String> m = new LinkedHashMap<Artifact, String>() {{
-            put(ArtifactFactory.createArtifact(CDECArtifact.NAME), "1.0.1");
+        Map<Artifact, Version> m = new LinkedHashMap<Artifact, Version>() {{
+            put(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
         }};
 
         Response response = new Response.Builder().withArtifacts(m).withStatus(ResponseCode.OK).build();
