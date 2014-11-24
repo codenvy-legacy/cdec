@@ -31,4 +31,7 @@ public abstract class Config {
     protected final String getProperty(ConfigProperty property) {
         return properties.get(property.toString().toLowerCase());
     }
+
+    /** Validates the configuration */
+    public abstract void validate() throws IllegalStateException;
 }

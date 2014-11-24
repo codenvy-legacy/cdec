@@ -19,7 +19,6 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.Config;
-import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -34,15 +33,10 @@ import java.util.SortedMap;
 /**
  * @author Anatoliy Bazko
  */
-// TODO java doc
 public interface Artifact extends Comparable<Artifact> {
 
     /** @return the artifact name */
     String getName();
-
-    /** Installs artifact */
-    // TODO remove
-    void install(Path pathToBinaries, @Nullable CdecInstallOptions options) throws IOException;
 
     /** @return current installed version of the artifact */
     @Nullable
@@ -51,6 +45,7 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return the priority of the artifact to install, update etc. */
     int getPriority();
 
+    /** @return the some information about future installation process */
     List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException;
 
     /** @return list of commands to perform installation. */
@@ -69,7 +64,9 @@ public interface Artifact extends Comparable<Artifact> {
     @Nullable
     Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException;
 
+    /** Validates artifact properties */
     public void validateProperties(Map properties) throws IOException;
 
+    /** @return the list of downloaded versions */
     SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
 }

@@ -19,10 +19,7 @@ package com.codenvy.im.agent;
 
 import java.io.InputStream;
 
-/**
- * @author Anatoliy Bazko
- * TODO test
- */
+/** @author Anatoliy Bazko */
 public class LocalAgent extends AbstractAgent {
 
     /** {@inheritDoc} */

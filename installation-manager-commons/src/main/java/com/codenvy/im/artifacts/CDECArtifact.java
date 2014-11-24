@@ -29,7 +29,6 @@ import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigException;
-import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -37,7 +36,6 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -70,10 +68,6 @@ public class CDECArtifact extends AbstractArtifact {
         super(name);
         this.transport = transport;
         this.apiNodeUrl = apiNodeUrl;
-    }
-
-    @Override
-    public void install(Path pathToBinaries, @Nullable CdecInstallOptions options) throws IOException {
     }
 
     /** {@inheritDoc} */

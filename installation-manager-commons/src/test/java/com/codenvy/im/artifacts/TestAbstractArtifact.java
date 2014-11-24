@@ -20,7 +20,6 @@ package com.codenvy.im.artifacts;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -210,11 +209,6 @@ public class TestAbstractArtifact {
 
         @Override
         protected Path getInstalledPath() throws URISyntaxException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void install(Path pathToBinaries, @Nullable CdecInstallOptions options) throws IOException {
             throw new UnsupportedOperationException();
         }
 

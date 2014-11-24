@@ -28,6 +28,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.apache.commons.io.FileUtils.write;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -35,7 +38,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Dmytro Nochevnov
  */
-public class ConfigTest {
+public class TestConfig {
 
     private ConfigFactory configFactory;
     private Path          configPath;
@@ -46,7 +49,7 @@ public class ConfigTest {
         configPath = Paths.get("target", "config");
         FileUtils.deleteDirectory(configPath.toFile());
 
-        configFactory = new ConfigFactory(configPath.toString());
+        configFactory = spy(new ConfigFactory(configPath.toString()));
     }
 
     @Test
@@ -56,7 +59,9 @@ public class ConfigTest {
     }
 
     @Test
-    public void testCdecConfigSingleNode() throws Exception {
+    public void testLoadCdecConfigSingleNode() throws Exception {
+        doNothing().when(configFactory).validateConfig(any(Config.class));
+
         CdecInstallOptions installOptions = new CdecInstallOptions();
         installOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
 
@@ -74,5 +79,15 @@ public class ConfigTest {
         assertNull(cdecConfig.getPuppetResourceUrl());
         assertNull(cdecConfig.getPuppetVersion());
         assertNull(cdecConfig.getSSHPort());
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testLoadConfigErrorValidateFailed() throws Exception {
+        CdecInstallOptions installOptions = new CdecInstallOptions();
+        installOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+
+        write(configPath.resolve(ConfigFactory.CDEC_SINGLE_NODE_PROPERTIES_FILE).toFile(), "host=172.0.0.1\nuser=anonym\npassword=secret\n");
+
+        configFactory.loadOrCreateDefaultConfig(installOptions);
     }
 }

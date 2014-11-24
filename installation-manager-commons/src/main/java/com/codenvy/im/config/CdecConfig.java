@@ -40,7 +40,6 @@ public class CdecConfig extends Config {
         PUPPET_MASTER_PORT
     }
 
-
     public String getHost() throws ConfigException {
         return getProperty(Property.HOST);
     }
@@ -71,5 +70,15 @@ public class CdecConfig extends Config {
 
     public String getPuppetMasterPort() throws ConfigException {
         return getProperty(Property.PUPPET_MASTER_PORT);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void validate() throws IllegalStateException {
+        for (ConfigProperty property : Property.values()) {
+            if (getProperty(property) == null) {
+                throw new IllegalStateException(String.format("Property '%s' is missed in the configuration", property.toString().toLowerCase()));
+            }
+        }
     }
 }

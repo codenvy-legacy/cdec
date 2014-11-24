@@ -39,13 +39,13 @@ import static org.testng.Assert.assertEquals;
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
-public class SecureShellAgentTest {
+public class TestSecureShellAgent {
 
     private static final String TEST_USER             = "testUser";
     private static final String TEST_HOST             = "127.0.0.1";
     private static final int    TEST_PORT             = 2223;
     private static final String TEST_PASSWORD         = "testPassword";
-    private static final String TEST_AUTH_PRIVATE_KEY = SecureShellAgentTest.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
+    private static final String TEST_AUTH_PRIVATE_KEY = TestSecureShellAgent.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
     private static final String TEST_PASSPHRASE       = null;
 
     private static final String TEST_COMMAND        = "echo test";

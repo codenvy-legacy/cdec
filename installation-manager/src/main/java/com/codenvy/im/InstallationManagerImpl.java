@@ -81,7 +81,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private final HttpTransportConfiguration transportConf;
 
     private final String        updateEndpoint;
-    private final Installer installer;
+    private final Installer     installer;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
 

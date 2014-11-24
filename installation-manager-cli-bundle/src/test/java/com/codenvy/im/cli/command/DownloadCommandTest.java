@@ -264,29 +264,4 @@ public class DownloadCommandTest {
         String output = result.getOutputStream();
         assertEquals(output, ok + "\n");
     }
-
-
-    // TODO
-//    @Test(enabled = false)
-//    public void testDownloadWhenErrorInResponseSubscriptionNotFound() throws Exception {
-//        String downloadStatusResponse = "{\"status\" :\"ERROR\",\"downloadInfo\" :{\"status\" :\"FAILURE\",\"percents\" :0," +
-//                                        "\"downloadResult\" :\"{\"status\" :\"ERROR\",\"message\" :\"Unexpected error. Can't download " +
-//                                        "the artifact 'cdec' version 3.0.0. {\"message\" :\"Subscription not found " +
-//                                        "communityaccountvyiu9z02hxyfcapj\"}\",\"artifacts\" :[{\"status\" :\"FAILURE\"," +
-//                                        "\"artifact\" :\"cdec\",\"version\" :\"3.0.0\"}]}\"}}";
-//
-//
-//        printResponse(downloadStatusResponse);
-//        DownloadStatusInfo downloadStatusInfo = Response.fromJson(downloadStatusResponse).getDownloadInfo();
-//        printResponse(downloadStatusInfo.getDownloadResult());
-//    }
-//
-//    protected void printResponse(@Nullable String response) {
-//        try {
-//            String message = getPrettyPrintingJson(response);
-//            System.out.println(ansi().a(message));
-//        } catch (JSONException e) {
-//            System.out.println("Unexpected error: " + e.getMessage());
-//        }
-//    }
 }

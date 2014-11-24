@@ -44,7 +44,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Dmytro Nochevnov
  */
-public class InstallerTest {
+public class TestInstaller {
 
     @Mock
     private ConfigFactory configFactory;

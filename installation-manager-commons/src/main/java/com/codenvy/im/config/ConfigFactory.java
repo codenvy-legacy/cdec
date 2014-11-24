@@ -20,6 +20,7 @@ package com.codenvy.im.config;
 import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.DefaultOptions;
 import com.codenvy.im.install.InstallOptions;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import javax.inject.Named;
@@ -43,10 +44,11 @@ public class ConfigFactory {
 
     private final String configPath;
 
+    @Inject
     public ConfigFactory(@Named("installation-manager.config.path") String configPath) {
         this.configPath = configPath;
-
     }
+    
     /**
      * Config factory.
      * If config file doesn't exist, create it with default content from file [classResourceDir]/[defaultConfigFileRelativePath]
@@ -57,10 +59,9 @@ public class ConfigFactory {
      *         unknown class of {@link com.codenvy.im.install.InstallOptions}
      */
     public Config loadOrCreateDefaultConfig(InstallOptions installOptions) throws IOException, IllegalArgumentException {
-        // TODO validate config
-
+        Config config;
         if (installOptions instanceof DefaultOptions) {
-            return new DefaultConfig();
+            config = new DefaultConfig();
 
         } else if (installOptions instanceof CdecInstallOptions) {
             String propertiesFile = CDEC_SINGLE_NODE_PROPERTIES_FILE;
@@ -68,10 +69,17 @@ public class ConfigFactory {
             if (!exists(propertiesFile)) {
                 createDefaultConfig(propertiesFile);
             }
-            return new CdecConfig(loadConfig(propertiesFile));
+            config = new CdecConfig(loadConfig(propertiesFile));
+        } else {
+            throw new IllegalArgumentException("There is no configuration for " + installOptions.getClass().getName());
         }
 
-        throw new IllegalArgumentException("There is no configuration for " + installOptions.getClass().getName());
+        validateConfig(config);
+        return config;
+    }
+
+    protected void validateConfig(Config config) {
+        config.validate();
     }
 
     private boolean exists(String propertiesFile) {

@@ -19,7 +19,6 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.Config;
-import com.codenvy.im.install.CdecInstallOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -46,10 +45,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
-import static org.apache.commons.io.FileUtils.cleanDirectory;
-import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.IOUtils.toByteArray;
 
 /**
@@ -78,63 +74,63 @@ public class InstallManagerArtifact extends AbstractArtifact {
         super(NAME);
     }
 
-    @Override
-    public void install(Path pathToBinaries, CdecInstallOptions options) throws IOException {
-        Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
-        try {
-            if (exists(dirForUpdate)) {
-                cleanDirectory(dirForUpdate.toFile());
-            } else {
-                createDirectories(dirForUpdate);
-            }
-
-            unpack(pathToBinaries, dirForUpdate);
-
-            File im = null;
-            File imCli = null;
-
-            for (File file : listFiles(dirForUpdate.toFile(), null, false)) {
-                if (file.getName().startsWith(NAME + "-cli")) {
-                    imCli = file;
-                } else {
-                    im = file;
-                }
-            }
-
-            if (im == null) {
-                throw new IOException("Installation Manager binaries not found");
-            } else if (imCli == null) {
-                throw new IOException("Installation Manager CLI binaries not found");
-            }
-
-            Path dirImUpdateUnpack = dirForUpdate.resolve("im");
-            unpack(im.toPath(), dirImUpdateUnpack);
-
-            Path dirImCliUpdate = getImCliUpdateScriptDir().resolve("codenvy-cli");
-            if (exists(dirImCliUpdate)) {
-                cleanDirectory(dirImCliUpdate.toFile());
-            }
-            createDirectories(dirImCliUpdate);
-            Path fileImCliUpdate = dirImCliUpdate.resolve(imCli.getName());
-
-            Files.createFile(fileImCliUpdate);
-            Files.copy(imCli.toPath(), new FileOutputStream(fileImCliUpdate.toFile()));
-
-            createImCliUpdateScript(fileImCliUpdate);
-
-            restart(dirImUpdateUnpack);
-        } catch (InterruptedException | URISyntaxException e) {
-            if (exists(dirForUpdate)) {
-                try {
-                    cleanDirectory(dirForUpdate.toFile());
-                } catch (IOException ioe) {
-                    LOG.error("Can't remove temporary unpacked files in : " + dirForUpdate);
-                }
-            }
-
-            throw new IOException(e.getMessage(), e);
-        }
-    }
+//    @Override
+//    public void install(Path pathToBinaries, CdecInstallOptions options) throws IOException {
+//        Path dirForUpdate = pathToBinaries.getParent().resolve("unpack");
+//        try {
+//            if (exists(dirForUpdate)) {
+//                cleanDirectory(dirForUpdate.toFile());
+//            } else {
+//                createDirectories(dirForUpdate);
+//            }
+//
+//            unpack(pathToBinaries, dirForUpdate);
+//
+//            File im = null;
+//            File imCli = null;
+//
+//            for (File file : listFiles(dirForUpdate.toFile(), null, false)) {
+//                if (file.getName().startsWith(NAME + "-cli")) {
+//                    imCli = file;
+//                } else {
+//                    im = file;
+//                }
+//            }
+//
+//            if (im == null) {
+//                throw new IOException("Installation Manager binaries not found");
+//            } else if (imCli == null) {
+//                throw new IOException("Installation Manager CLI binaries not found");
+//            }
+//
+//            Path dirImUpdateUnpack = dirForUpdate.resolve("im");
+//            unpack(im.toPath(), dirImUpdateUnpack);
+//
+//            Path dirImCliUpdate = getImCliUpdateScriptDir().resolve("codenvy-cli");
+//            if (exists(dirImCliUpdate)) {
+//                cleanDirectory(dirImCliUpdate.toFile());
+//            }
+//            createDirectories(dirImCliUpdate);
+//            Path fileImCliUpdate = dirImCliUpdate.resolve(imCli.getName());
+//
+//            Files.createFile(fileImCliUpdate);
+//            Files.copy(imCli.toPath(), new FileOutputStream(fileImCliUpdate.toFile()));
+//
+//            createImCliUpdateScript(fileImCliUpdate);
+//
+//            restart(dirImUpdateUnpack);
+//        } catch (InterruptedException | URISyntaxException e) {
+//            if (exists(dirForUpdate)) {
+//                try {
+//                    cleanDirectory(dirForUpdate.toFile());
+//                } catch (IOException ioe) {
+//                    LOG.error("Can't remove temporary unpacked files in : " + dirForUpdate);
+//                }
+//            }
+//
+//            throw new IOException(e.getMessage(), e);
+//        }
+//    }
 
     private void createImCliUpdateScript(Path fileImCliUpdateTarGz) throws IOException, URISyntaxException {
         String[] imCliInstalledParams = getImCliInstalledProperties();
@@ -262,8 +258,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Command getInstallCommand(Config config, InstallOptions installOptions) {
-        return null;
         // TODO
+        return null;
     }
 
     @Override
