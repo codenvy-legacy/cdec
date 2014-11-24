@@ -78,7 +78,7 @@ public class TestInstaller {
         doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateDefaultConfig(options);
         doNothing().when(installer).executeCommand(any(Command.class));
 
-        installer.install(artifact, Version.valueOf("1.0.1"), options);
+        installer.install(artifact, Version.valueOf("1.0.1"), pathToBinaries, options);
         verify(installer).executeCommand(any(Command.class));
     }
 

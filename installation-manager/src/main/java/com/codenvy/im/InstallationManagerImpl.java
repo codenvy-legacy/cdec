@@ -139,7 +139,7 @@ public class InstallationManagerImpl implements InstallationManager {
         if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(version)) {
             Path pathToBinaries = downloadedArtifacts.get(artifact).get(version);
             if (artifact.isInstallable(version, authToken)) {
-                installer.install(artifact, version, options);
+                installer.install(artifact, pathToBinaries, options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
             }

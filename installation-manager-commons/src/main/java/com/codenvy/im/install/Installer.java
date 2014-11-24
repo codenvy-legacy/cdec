@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -43,10 +44,10 @@ public class Installer {
     }
 
     /** Installs specific artifact. */
-    public void install(Artifact artifact, Version version, InstallOptions options) throws IOException {
+    public void install(Artifact artifact, Path pathToBinaries, InstallOptions options) throws IOException {
         Config config = configFactory.loadOrCreateDefaultConfig(options);
 
-        Command command = artifact.getInstallCommand(config, options);
+        Command command = artifact.getInstallCommand(pathToBinaries, config, options);
         executeCommand(command);
     }
 

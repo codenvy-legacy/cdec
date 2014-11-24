@@ -74,7 +74,7 @@ public class TestCDECArtifact {
         options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
         options.setStep(1);
 
-        Command command = spyCdecArtifact.getInstallCommand(config, options);
+        Command command = spyCdecArtifact.getInstallCommand(pathToBinaries, config, options);
         assertNotNull(command);
     }
 
@@ -85,7 +85,7 @@ public class TestCDECArtifact {
         options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
         options.setStep(Integer.MAX_VALUE);
 
-        spyCdecArtifact.getInstallCommand(config, options);
+        spyCdecArtifact.getInstallCommand(pathToBinaries, config, options);
     }
 
     @Test

@@ -130,14 +130,14 @@ public class TestInstallationManager {
 
         doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
 
-        doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doNothing().when(installer).install(any(Artifact.class), any(Version.class), pathToBinaries, any(InstallOptions.class));
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, null);
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
-        verify(installer).install(cdecArtifact, version100, options);
+        verify(installer).install(cdecArtifact, version100, pathToBinaries, options);
     }
 
     @Test(expectedExceptions = FileNotFoundException.class,
@@ -153,7 +153,7 @@ public class TestInstallationManager {
         doReturn(false).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), installManagerArtifact, version200, null);
-        verify(installer, never()).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        verify(installer, never()).install(any(Artifact.class), any(Version.class), pathToBinaries, any(InstallOptions.class));
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)
@@ -192,7 +192,7 @@ public class TestInstallationManager {
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
         doReturn(false).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
-        doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doNothing().when(installer).install(any(Artifact.class), any(Version.class), pathToBinaries, any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
     }
@@ -240,7 +240,7 @@ public class TestInstallationManager {
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
-        doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doNothing().when(installer).install(any(Artifact.class), any(Version.class), pathToBinaries, any(InstallOptions.class));
 
         manager.install("auth token", installManagerArtifact, version2102, new DefaultOptions());
     }

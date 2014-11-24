@@ -20,15 +20,11 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.im.agent.Agent;
-import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
-import com.codenvy.im.agent.SecureShellAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -91,23 +87,16 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
-        List<String> infos = new ArrayList<>();
-
-        for (int step = 0; ; step++) {
-            installOptions.setStep(step);
-            try {
-                infos.add(getInstallCommand(config, installOptions).getDescription());
-            } catch (IllegalArgumentException e) {
-                break;
-            }
-        }
-
-        return infos;
+        return new ArrayList<String>() {{
+            add("Disable SELinux");
+            add("Install puppet client");
+            add("Unzip the CDEC binaries");
+        }};
     }
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(Config config, InstallOptions installOptions) throws IOException {
+    public Command getInstallCommand(Path pathToBinaries, Config config, InstallOptions installOptions) throws IOException {
         if (!(config instanceof CdecConfig)) {
             throw new IllegalArgumentException("Unexpected config class " + config.getClass().getName());
         }
@@ -136,9 +125,7 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 2:
                 command = new StringBuilder();
-                command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
-                command.append(" && ");
-                command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
+                command.append(format("sudo unzip %s -d /etc/puppet", pathToBinaries.toString()));
                 return new SimpleCommand(command.toString(), new LocalAgent(), "Unzip the CDEC binaries");
 
 
@@ -147,24 +134,24 @@ public class CDECArtifact extends AbstractArtifact {
         }
     }
 
-    private Agent getSecureAgent(CdecConfig cdecConfig) throws ConfigException, AgentException {
-        if (!cdecConfig.getPassword().isEmpty()) {
-            return new SecureShellAgent(
-                    cdecConfig.getHost(),
-                    Integer.valueOf(cdecConfig.getSSHPort()),
-                    cdecConfig.getUser(),
-                    cdecConfig.getPassword()
-            );
-        } else {
-            return new SecureShellAgent(
-                    cdecConfig.getHost(),
-                    Integer.valueOf(cdecConfig.getSSHPort()),
-                    cdecConfig.getUser(),
-                    cdecConfig.getPrivateKeyFileAbsolutePath(),
-                    null
-            );
-        }
-    }
+//    private Agent getSecureAgent(CdecConfig cdecConfig) throws ConfigException, AgentException {
+//        if (!cdecConfig.getPassword().isEmpty()) {
+//            return new SecureShellAgent(
+//                    cdecConfig.getHost(),
+//                    Integer.valueOf(cdecConfig.getSSHPort()),
+//                    cdecConfig.getUser(),
+//                    cdecConfig.getPassword()
+//            );
+//        } else {
+//            return new SecureShellAgent(
+//                    cdecConfig.getHost(),
+//                    Integer.valueOf(cdecConfig.getSSHPort()),
+//                    cdecConfig.getUser(),
+//                    cdecConfig.getPrivateKeyFileAbsolutePath(),
+//                    null
+//            );
+//        }
+//    }
 
     /** {@inheritDoc} */
     @Override

@@ -257,7 +257,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(Config config, InstallOptions installOptions) {
+    public Command getInstallCommand(Path pathToBinaries, Config config, InstallOptions installOptions) {
         // TODO
         return null;
     }

@@ -128,7 +128,7 @@ installOnOpensuse() {
 }
 
 # $1 - command name
-installCommand() {
+installIfNeedCommand() {
     command -v $1 >/dev/null 2>&1 || {     # check if requered command had already installed earlier
         echo "> Installation $1 "
         installOn${os} $1
@@ -136,7 +136,7 @@ installCommand() {
     }
 }
 
-installIM() {
+installIMCli() {
     echo "> Downloading Installation Manager "
 
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
@@ -233,25 +233,29 @@ echo "Wellcome to Codenvy. This programm will install Codenvy onto this node."
 echo "When the installation is complete, the Codenvy URL will be displayed."
 echo ""
 echo "The installer will:"
-echo "1. Install java."
-echo "2. Install the Codenvy Installation Manager, which runs as a CLI and daemon."
+echo "1. Install java"
+echo "2. Install the Codenvy Installation Manager, which runs as a CLI and daemon"
 echo "3. Download Codenvy"
-echo "4. Install Codenvy by installing Puppte and configuring system parameters."
-echo "5. Boot Codenvy."
+echo "4. Install Codenvy by installing Puppte and configuring system parameters"
+echo "5. Boot Codenvy"
 echo ""
 read -p "Press any key to continue" -n1 -s
+echo ""
 
 cd ~
 
 createCodenvyUserAndGroup
 
-installCommand curl
-installCommand tar
-installCommand wget
+installIfNeedCommand curl
+installIfNeedCommand tar
+installIfNeedCommand wget
 installJava
-installIM
+installIMCli
 
 registerIMServiceOn${os}
 launchingIMService
+
+~/codenvy-cli/bin/codenvy login
+~/codenvy-cli/bin/codenvy im-download cdec
 
 
