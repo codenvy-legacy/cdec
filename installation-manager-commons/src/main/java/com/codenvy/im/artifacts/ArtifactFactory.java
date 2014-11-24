@@ -33,6 +33,6 @@ public class ArtifactFactory {
                 return INJECTOR.getInstance(InstallManagerArtifact.class);
         }
 
-        throw new ArtifactNotFoundException(name);
+        throw ArtifactNotFoundException.from(name);
     }
 }

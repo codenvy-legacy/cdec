@@ -26,19 +26,23 @@ import java.io.FileNotFoundException;
  * @author Anatoliy Bazko
  */
 public class ArtifactNotFoundException extends FileNotFoundException {
-    public ArtifactNotFoundException(String artifact, String version) {
-        super("Artifact '" + artifact + "' version '" + version + "' not found");
-    }
-
     public ArtifactNotFoundException(Artifact artifact, Version version) {
         this(artifact.toString(), version.toString());
     }
 
-    public ArtifactNotFoundException(Artifact artifact) {
-        this(artifact.getName());
+    public ArtifactNotFoundException(String artifact, String version) {
+        super(String.format("Artifact '%s' version '%s' not found", artifact, version));
     }
 
-    public ArtifactNotFoundException(String artifact) {
-        super("Artifact '" + artifact + "' not found");
+    public ArtifactNotFoundException(Artifact artifact) {
+        super(String.format("Artifact '%s' not found", artifact));
+    }
+
+    public ArtifactNotFoundException(String message) {
+        super(message);
+    }
+
+    public static ArtifactNotFoundException from(String artifact) {
+        return new ArtifactNotFoundException(String.format("Artifact '%s' not found", artifact));
     }
 }

@@ -122,7 +122,7 @@ public class MongoStorage {
             doc.removeField(ID);
             return doc.toMap();
         } else {
-            throw new ArtifactNotFoundException(artifact);
+            throw ArtifactNotFoundException.from(artifact);
         }
     }
 

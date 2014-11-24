@@ -148,7 +148,7 @@ public class Commons {
         Version latestVersion = null;
 
         if (!exists(dir)) {
-            throw new ArtifactNotFoundException(artifact);
+            throw ArtifactNotFoundException.from(artifact);
         }
 
         Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
@@ -167,7 +167,7 @@ public class Commons {
         }
 
         if (latestVersion == null) {
-            throw new ArtifactNotFoundException(artifact);
+            throw ArtifactNotFoundException.from(artifact);
         }
 
         return latestVersion.toString();

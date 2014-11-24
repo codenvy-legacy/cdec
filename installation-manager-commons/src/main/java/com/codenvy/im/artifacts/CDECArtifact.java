@@ -93,7 +93,7 @@ public class CDECArtifact extends AbstractArtifact {
     public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
         List<String> infos = new ArrayList<>();
 
-        for (int step = 1; ; step++) {
+        for (int step = 0; ; step++) {
             installOptions.setStep(step);
             try {
                 infos.add(getInstallCommand(config, installOptions).getDescription());
@@ -118,7 +118,7 @@ public class CDECArtifact extends AbstractArtifact {
         int step = installOptions.getStep();
 
         switch (step) {
-            case 1:
+            case 0:
                 command = new StringBuilder();
                 command.append("sudo setenforce 0");
                 command.append(" && ");
@@ -127,12 +127,20 @@ public class CDECArtifact extends AbstractArtifact {
                 command.append("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config");
                 new SimpleCommand(command.toString(), new LocalAgent(), "Disable SELinux");
 
-            case 2:
+            case 1:
                 command = new StringBuilder();
                 command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
                 command.append(" && ");
                 command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
                 return new SimpleCommand(command.toString(), new LocalAgent(), "Install puppet client");
+
+            case 2:
+                command = new StringBuilder();
+                command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
+                command.append(" && ");
+                command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
+                return new SimpleCommand(command.toString(), new LocalAgent(), "Unzip the CDEC binaries");
+
 
             default:
                 throw new IllegalArgumentException(String.format("Step number %d is out of range", step));

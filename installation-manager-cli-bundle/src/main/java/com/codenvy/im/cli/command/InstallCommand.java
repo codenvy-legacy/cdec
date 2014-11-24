@@ -89,8 +89,8 @@ public class InstallCommand extends AbstractIMCommand {
         Response responseObj = Response.fromJson(response);
 
         List<String> infos = responseObj.getInfos();
-        for (int step = 1; step < infos.size() + 1; step++) {
-            printInfo(infos.get(step - 1) + "\n");
+        for (int step = 0; step < infos.size(); step++) {
+            printInfo(infos.get(step) + "\n");
 
             installOptions.setStep(step);
             response = installationManagerProxy.install(requestRep);
@@ -169,7 +169,7 @@ public class InstallCommand extends AbstractIMCommand {
                 // we can ask for additional options
                 return new CdecInstallOptions().setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
             default:
-                throw new ArtifactNotFoundException(artifactName);
+                throw ArtifactNotFoundException.from(artifactName);
         }
     }
 }
