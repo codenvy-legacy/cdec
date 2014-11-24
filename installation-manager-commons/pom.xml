@@ -186,7 +186,7 @@
                                     <target>
                                         <?SORTPOM IGNORE?>
                                         <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
-                                            version = ${project.version}
+                                            ver sion = ${project.version}
                                         </echo>
                                         <?SORTPOM RESUME?>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">

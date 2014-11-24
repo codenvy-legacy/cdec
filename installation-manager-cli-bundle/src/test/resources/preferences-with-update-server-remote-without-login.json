@@ -6,7 +6,7 @@
             "defaultRemote" : true,
             "url" : "http://codenvy-next.com"
         },
-        "CodenvyUpdateServer" : {
+        "update-server" : {
             "defaultRemote" : false,
             "url" : "https://test.com"
         }

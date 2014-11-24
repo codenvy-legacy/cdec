@@ -47,7 +47,7 @@ public class LoginCommandTest {
     private static final String TEST_USER_PASSWORD          = "testUserPassword";
     private static final String TEST_USER                   = "testUser";
     private final static String UPDATE_SERVER_URL           = "http://codenvy-stg.com/update";
-    private final static String UPDATE_SERVER_REMOTE_NAME   = "Codenvy Update Server";
+    private final static String UPDATE_SERVER_REMOTE_NAME   = "update-server";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
     private static final String ANOTHER_REMOTE_URL  = "another remote url";

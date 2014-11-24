@@ -55,59 +55,58 @@ addGroupOnOpensuse() {
 
 createCodenvyUserAndGroup() {
     if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
-        echo "> Creating group codenvy"
+        echo "Creating group codenvy"
         addGroupOn${os} ${CODENVY_USER} 5001
     fi
 
     if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
-        echo "> Creating user codenvy"
+        echo "Creating user codenvy"
         addUserOn${os} ${CODENVY_USER} 5001
     fi
 
-    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then echo -e "\n" > ${CODENVY_HOME}/.bashrc; fi"
+    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then echo -e "\n" ${CODENVY_HOME}/.bashrc; fi"
 }
 
 installJava() {
     # check if requered program had already installed earlier for current user
     hash java 2>/dev/null || {
-        echo "> Installation manager requires java to be installed"
-        read -p "> Press any key to start installing java" -n1 -s
         echo ""
+        echo "Installing java ..."
 
         wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
 
-        echo "> Unpacking JDK binaries to /etc"
+        echo "Unpacking JDK binaries to /etc"
 
         sudo tar -xf jdk.tar.gz -C /etc
         rm jdk.tar.gz
 
-        if [ ! -f ~/.bashrc ]; then echo -e "\n" > ~/.bashrc; fi
+        if [ ! -f ~/.bashrc ]; then echo -e "\n" ~/.bashrc; fi
 
         sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${HOME}/.bashrc
         sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${HOME}/.bashrc
         sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${CODENVY_HOME}/.bashrc"
         sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
 
-        echo "> Java has been installed"
+        echo "Java has been installed"
     }
 }
 
 registerIMServiceOnDebian() {
     # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
-    echo "> Register Codenvy Installation Manage Service"
+    echo "Register Codenvy Installation Manage Service"
     sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
 }
 
 registerIMServiceOnRedhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
-    echo "> Registering Codenvy Installation Manage Service"
+    echo "Registering Codenvy Installation Manage Service"
     sudo chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo chkconfig ${SERVICE_NAME} on &>/dev/null
 }
 
 registerIMServiceOnOpensuse() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
-    echo "> Registering Codenvy Installation Manage Service"
+    echo "Registering Codenvy Installation Manage Service"
     sudo -s chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo -s chkconfig ${SERVICE_NAME} on &>/dev/null
 }
@@ -130,14 +129,14 @@ installOnOpensuse() {
 # $1 - command name
 installIfNeedCommand() {
     command -v $1 >/dev/null 2>&1 || {     # check if requered command had already installed earlier
-        echo "> Installation $1 "
+        echo "Installation $1 "
         installOn${os} $1
-        echo "> $1 has been installed"
+        echo "$1 has been installed"
     }
 }
 
 installIMCli() {
-    echo "> Downloading Installation Manager "
+    echo "Downloading Installation Manager "
 
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
@@ -208,7 +207,7 @@ installIMCli() {
 }
 
 launchingIMService() {
-    echo "> Launching Codenvy Installation Manage Service"
+    echo "Launching Codenvy Installation Manage Service"
     # try to stop exists installation-manager
     sudo /etc/init.d/${SERVICE_NAME} stop
     sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>/dev/null  # kill manager if stop isn't work
@@ -224,7 +223,7 @@ elif [ -f /etc/redhat-release ]; then
 elif [ -f /etc/os-release ]; then
     os="Opensuse"
 else
-    echo "> Operation system isn't supported."
+    echo "Operation system isn't supported."
     exit
 fi
 
@@ -241,6 +240,7 @@ echo "5. Boot Codenvy"
 echo ""
 read -p "Press any key to continue" -n1 -s
 echo ""
+echo ""
 
 cd ~
 
@@ -255,7 +255,13 @@ installIMCli
 registerIMServiceOn${os}
 launchingIMService
 
-~/codenvy-cli/bin/codenvy login
+echo ""
+echo "Login into Codenvy ..."
+sleep 2s
+~/codenvy-cli/bin/codenvy login --remote "update-server"
+
+echo ""
+echo "Downloading CDEC binaries ..."
 ~/codenvy-cli/bin/codenvy im-download cdec
 
 

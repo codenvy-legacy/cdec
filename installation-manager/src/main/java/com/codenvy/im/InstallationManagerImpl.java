@@ -138,6 +138,10 @@ public class InstallationManagerImpl implements InstallationManager {
 
         if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(version)) {
             Path pathToBinaries = downloadedArtifacts.get(artifact).get(version);
+            if (pathToBinaries == null) {
+                throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
+            }
+
             if (artifact.isInstallable(version, authToken)) {
                 installer.install(artifact, pathToBinaries, options);
             } else {

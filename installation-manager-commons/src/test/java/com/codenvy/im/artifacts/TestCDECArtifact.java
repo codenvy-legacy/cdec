@@ -28,6 +28,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -74,7 +75,7 @@ public class TestCDECArtifact {
         options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
         options.setStep(1);
 
-        Command command = spyCdecArtifact.getInstallCommand(pathToBinaries, config, options);
+        Command command = spyCdecArtifact.getInstallCommand(Paths.get("some path"), config, options);
         assertNotNull(command);
     }
 
@@ -85,7 +86,7 @@ public class TestCDECArtifact {
         options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
         options.setStep(Integer.MAX_VALUE);
 
-        spyCdecArtifact.getInstallCommand(pathToBinaries, config, options);
+        spyCdecArtifact.getInstallCommand(Paths.get("some path"), config, options);
     }
 
     @Test

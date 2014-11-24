@@ -56,7 +56,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     protected InstallationManagerService installationManagerProxy;
     protected PreferencesStorage         preferencesStorage;
 
-    private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "Codenvy Update Server";
+    private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
 
     public AbstractIMCommand() {
         try {

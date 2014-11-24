@@ -62,7 +62,7 @@ public class AbstractIMCommandTest {
     @Mock
     private Remote                     mockAnotherRemote;
 
-    private final static String UPDATE_SERVER_REMOTE_NAME = "CodenvyUpdateServer";
+    private final static String UPDATE_SERVER_REMOTE_NAME = "update-server";
     private final static String UPDATE_SERVER_URL         = "https://test.com";
     private final static String TEST_ACCOUNT_ID           = "test-account-id";
     private static final String TEST_ACCOUNT_NAME         = "test-account-name";
@@ -153,7 +153,7 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'Codenvy Update Server' remote.")
+          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
     public void testInitWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -161,7 +161,7 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'CodenvyUpdateServer' remote.")
+          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
     public void testInitWhenUserDidNotLogin() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -169,7 +169,7 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'CodenvyUpdateServer' remote.")
+          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
     public void testInitWhenUserDidNotObtainAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);

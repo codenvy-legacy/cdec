@@ -23,7 +23,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.ConfigFactory;
-import com.codenvy.im.utils.Version;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -31,6 +30,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,7 +78,7 @@ public class TestInstaller {
         doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateDefaultConfig(options);
         doNothing().when(installer).executeCommand(any(Command.class));
 
-        installer.install(artifact, Version.valueOf("1.0.1"), pathToBinaries, options);
+        installer.install(artifact, Paths.get("some path"), options);
         verify(installer).executeCommand(any(Command.class));
     }
 
