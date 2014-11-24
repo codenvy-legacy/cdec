@@ -107,9 +107,8 @@ public class Version implements Comparable<Version> {
         if (major != version.major) return false;
         if (minor != version.minor) return false;
         if (milestone != version.milestone) return false;
-        if (snapshot != version.snapshot) return false;
+        return snapshot == version.snapshot;
 
-        return true;
     }
 
     @Override

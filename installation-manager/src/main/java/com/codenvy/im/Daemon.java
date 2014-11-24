@@ -105,7 +105,6 @@ public class Daemon {
             restletServer.start();
         } catch (Exception e) {
             LOG.error("Can't start Restlet server. ", e);
-            return;
         }
     }
 

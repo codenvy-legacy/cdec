@@ -27,7 +27,7 @@ import java.util.Set;
 public class InstallationManagerApplication extends Application {
 
     public Set<Class<?>> getClasses() {
-        Set<Class<?>> rrcs = new HashSet<Class<?>>();
+        Set<Class<?>> rrcs = new HashSet<>();
         rrcs.add(InstallationManagerServiceImpl.class);
         return rrcs;
     }

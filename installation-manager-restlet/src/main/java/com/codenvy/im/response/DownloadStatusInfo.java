@@ -84,9 +84,7 @@ public class DownloadStatusInfo {
 
         if (percents != that.percents) return false;
         if (!downloadResult.toJson().equals(that.downloadResult.toJson())) return false;
-        if (status != that.status) return false;
-
-        return true;
+        return status == that.status;
     }
 
     @Override
