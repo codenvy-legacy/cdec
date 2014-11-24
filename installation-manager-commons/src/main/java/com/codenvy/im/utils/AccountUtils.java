@@ -88,7 +88,7 @@ public class AccountUtils {
                 throw new IllegalStateException("Can't validate subscription. Start date attribute is absent");
             }
 
-            startDate = subscriptionDateFormat.parse(startDateStr);  // TODO make parsing of date attribute as independent of date string format
+            startDate = subscriptionDateFormat.parse(startDateStr);
         } catch (ParseException e) {
             throw new IllegalStateException("Can't validate subscription. Start date attribute has wrong format: " + startDateStr, e);
         }
@@ -99,7 +99,7 @@ public class AccountUtils {
                 throw new IllegalStateException("Can't validate subscription. End date attribute is absent");
             }
 
-            endDate = subscriptionDateFormat.parse(endDateStr);  // TODO make parsing of date attribute as independent of date string format
+            endDate = subscriptionDateFormat.parse(endDateStr);
         } catch (ParseException e) {
             throw new IllegalStateException(
                     "Can't validate subscription. End date attribute has wrong format: " + endDateStr, e);

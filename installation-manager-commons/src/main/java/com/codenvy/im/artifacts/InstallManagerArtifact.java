@@ -232,6 +232,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
         LOG.info("Executed command: " + command);
     }
 
+    /** {@inheritDoc} */
     @Override
     public Version getInstalledVersion(String authToken) throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
@@ -246,15 +247,16 @@ public class InstallManagerArtifact extends AbstractArtifact {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getPriority() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
         return Collections.emptyList();
-        // TODO
     }
 
     /** {@inheritDoc} */

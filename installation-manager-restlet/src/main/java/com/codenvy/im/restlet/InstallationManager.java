@@ -128,7 +128,6 @@ public interface InstallationManager {
     Long getBinariesSize(Artifact artifact, Version version) throws IOException;
 
     /** Filters what need to download, either all updates or a specific one. */
-    // TODO do we really need nullable
     Map<Artifact, Version> getUpdatesToDownload(@Nullable final Artifact artifact,
                                                 @Nullable final Version version,
                                                 String authToken) throws IOException;

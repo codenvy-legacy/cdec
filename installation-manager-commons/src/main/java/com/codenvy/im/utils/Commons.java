@@ -111,18 +111,18 @@ public class Commons {
         return JsonHelper.fromJson(json, clazz, null);
     }
 
-    /** Translates JSON to object. TODO add test */
+    /** Translates JSON to object. */
     public static Map asMap(String json) throws JsonParseException {
         return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {
         }.getType());
     }
 
-    /** Translates JSON to object. TODO add test */
+    /** Translates JSON to object. */
     public static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
         return JsonHelper.fromJson(json, clazz, type);
     }
 
-    /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. TODO add test */
+    /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. */
     public static String toJson(Object obj) throws JsonProcessingException {
         return jsonWriter.writeValueAsString(obj);
     }

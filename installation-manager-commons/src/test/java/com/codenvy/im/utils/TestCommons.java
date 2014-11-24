@@ -22,6 +22,7 @@ import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.google.inject.TypeLiteral;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;
@@ -131,6 +132,17 @@ public class TestCommons {
                            + "  \"name\" : \"name\",\n"
                            + "  \"id\" : \"id\"\n"
                            + "}");
+    }
+
+    @Test
+    public void testAsMap() throws Exception {
+        Map m = Commons.asMap("{\n"
+                              + "  \"name\" : \"name\",\n"
+                              + "  \"id\" : \"id\"\n"
+                              + "}");
+        assertEquals(m.size(), 2);
+        assertEquals(m.get("name"), "name");
+        assertEquals(m.get("id"), "id");
     }
 
     @Test

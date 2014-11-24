@@ -417,10 +417,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String getInstallInfo(JacksonRepresentation<Request> requestRep) throws IOException {
-        // TODO check full config
         try {
             Request request = Request.fromRepresentation(requestRep);
-            request.validate(Request.ValidationType.ARTIFACT + Request.ValidationType.INSTALL_OPTIONS);
+            request.validate(Request.ValidationType.FULL);
 
             Artifact artifact = createArtifact(request.getArtifactName());
 
