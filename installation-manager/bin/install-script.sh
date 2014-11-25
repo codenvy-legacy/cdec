@@ -264,4 +264,9 @@ echo ""
 echo "Downloading CDEC binaries ..."
 ~/codenvy-cli/bin/codenvy im-download cdec
 
+echo ""
+echo "Installing CDEC ..."
+~/codenvy-cli/bin/codenvy im-install cdec
+
+
 
