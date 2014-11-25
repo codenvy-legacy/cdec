@@ -33,8 +33,10 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -73,6 +75,8 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstallCommand() throws Exception {
+        doReturn(null).when(spyCdecArtifact).getSecureAgent(any(CdecConfig.class));
+
         CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);

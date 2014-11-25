@@ -30,8 +30,28 @@ public class CdecConfig extends Config {
     }
 
     public enum Property implements ConfigProperty {
+        HOST,
+        PORT,
+        USER,
+        PRIVATE_KEY,
         PUPPET_VERSION,
         PUPPET_RESOURCE_URL,
+    }
+
+    public String getHost() throws ConfigException {
+        return getProperty(Property.HOST);
+    }
+
+    public int getPort() throws ConfigException {
+        return Integer.parseInt(getProperty(Property.PORT));
+    }
+
+    public String getUser() throws ConfigException {
+        return getProperty(Property.USER);
+    }
+
+    public String getPrivateKey() throws ConfigException {
+        return getProperty(Property.PRIVATE_KEY);
     }
 
     public String getPuppetVersion() throws ConfigException {

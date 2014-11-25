@@ -24,14 +24,17 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.ConfigFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
@@ -45,6 +48,8 @@ import static org.testng.Assert.assertTrue;
  * @author Dmytro Nochevnov
  */
 public class TestInstaller {
+
+    private static final String PRIVATE_KEY = TestInstaller.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
 
     @Mock
     private ConfigFactory configFactory;
@@ -69,13 +74,20 @@ public class TestInstaller {
 
     @Test
     public void testInstall() throws Exception {
+        FileUtils.write(new File("target/key"), "key");
+
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
 
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
-        doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateDefaultConfig(options);
+        doReturn(new CdecConfig(new HashMap<String, String>() {{
+            put("host", "localhost");
+            put("port", "22");
+            put("user", "user");
+            put("private_key", PRIVATE_KEY);
+        }})).when(configFactory).loadOrCreateDefaultConfig(options);
         doNothing().when(installer).executeCommand(any(Command.class));
 
         installer.install(artifact, Paths.get("some path"), options);

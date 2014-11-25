@@ -20,11 +20,14 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.agent.Agent;
+import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.agent.SecureShellAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -120,19 +123,19 @@ public class CDECArtifact extends AbstractArtifact {
                 command.append("sudo cp /etc/selinux/config /etc/selinux/config.bak");
                 command.append(" && ");
                 command.append("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config");
-                new SimpleCommand(command.toString(), new LocalAgent(), "Disable SELinux");
+                new SimpleCommand(command.toString(), getSecureAgent(cdecConfig), "Disable SELinux");
 
             case 1:
                 command = new StringBuilder();
                 command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
                 command.append(" && ");
                 command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
-                return new SimpleCommand(command.toString(), new LocalAgent(), "Install puppet client");
+                return new SimpleCommand(command.toString(), getSecureAgent(cdecConfig), "Install puppet client");
 
             case 2:
                 command = new StringBuilder();
                 command.append(format("sudo unzip %s -d /etc/puppet", pathToBinaries.toString()));
-                return new SimpleCommand(command.toString(), new LocalAgent(), "Unzip the CDEC binaries");
+                return new SimpleCommand(command.toString(), getSecureAgent(cdecConfig), "Unzip the CDEC binaries");
 
 
             default:
@@ -140,24 +143,14 @@ public class CDECArtifact extends AbstractArtifact {
         }
     }
 
-//    private Agent getSecureAgent(CdecConfig cdecConfig) throws ConfigException, AgentException {
-//        if (!cdecConfig.getPassword().isEmpty()) {
-//            return new SecureShellAgent(
-//                    cdecConfig.getHost(),
-//                    Integer.valueOf(cdecConfig.getSSHPort()),
-//                    cdecConfig.getUser(),
-//                    cdecConfig.getPassword()
-//            );
-//        } else {
-//            return new SecureShellAgent(
-//                    cdecConfig.getHost(),
-//                    Integer.valueOf(cdecConfig.getSSHPort()),
-//                    cdecConfig.getUser(),
-//                    cdecConfig.getPrivateKeyFileAbsolutePath(),
-//                    null
-//            );
-//        }
-//    }
+    protected Agent getSecureAgent(CdecConfig cdecConfig) throws ConfigException, AgentException {
+        return new SecureShellAgent(cdecConfig.getHost(),
+                                    cdecConfig.getPort(),
+                                    cdecConfig.getUser(),
+                                    cdecConfig.getPrivateKey(),
+                                    null
+        );
+    }
 
     /** {@inheritDoc} */
     @Override

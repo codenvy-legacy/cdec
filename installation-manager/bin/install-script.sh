@@ -258,7 +258,6 @@ launchingIMService
 
 echo ""
 echo "> Loging into Codenvy"
-sleep 2s
 ~/codenvy-cli/bin/codenvy login --remote "update-server"
 
 echo ""
