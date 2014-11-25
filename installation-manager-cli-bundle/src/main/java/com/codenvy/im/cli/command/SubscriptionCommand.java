@@ -24,7 +24,7 @@ import org.apache.karaf.shell.commands.Option;
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "codenvy", name = "im-subscription", description = "Check subscription")
+@Command(scope = "codenvy", name = "im-subscription", description = "Check Codenvy subscription")
 public class SubscriptionCommand extends AbstractIMCommand {
 
     /** The default subscription name to check. */

@@ -35,5 +35,8 @@
         <command>
             <action class="com.codenvy.im.cli.command.ConfigCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.HelpCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

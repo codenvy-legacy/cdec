@@ -47,7 +47,7 @@ import static java.lang.String.format;
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
  */
-@Command(scope = "codenvy", name = "im-install", description = "Install artifact or update it")
+@Command(scope = "codenvy", name = "im-install", description = "Install, update artifact or print the list of already installed ones")
 public class InstallCommand extends AbstractIMCommand {
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
