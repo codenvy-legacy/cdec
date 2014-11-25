@@ -24,34 +24,85 @@ import java.util.Map;
  * @author Dmytro Nochevnov
  */
 public class CdecConfig extends Config {
-
     public CdecConfig(Map<String, String> properties) {
         super(properties);
     }
 
+    public CdecConfig() {
+        super();
+    }
+
     public enum Property implements ConfigProperty {
-        HOST,
-        PORT,
-        USER,
-        PRIVATE_KEY,
-        PUPPET_VERSION,
-        PUPPET_RESOURCE_URL,
+        DNS_NAME,
+
+        MONGO_ADMIN_PASSWORD,
+        MONGO_USER_PASSWORD,
+        MONGO_ORGSERVICE_USER_PASSWORD,
+
+        ADMIN_LDAP_USER_NAME,
+        ADMIN_LDAP_PASSWORD,
+
+        MYSQL_ROOT_USER_PASSWORD,
+
+        ZABBIX_DATABASE_PASSWORD,
+        ZABBIX_ADMIN_EMAIL,
+        ZABBIX_ADMIN_PASSWORD,
+
+        PUPPET_VERSION("puppet-3.4.3-1.el6.noarch"),
+        PUPPET_RESOURCE_URL("http://yum.puppetlabs.com/el/6/products/x86_64/puppetlabs-release-6-7.noarch.rpm");
+
+        private String defaultValue;
+
+        Property() {
+        }
+
+        Property(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        public String getDefaultValue() {
+            return defaultValue;
+        }
     }
 
-    public String getHost() throws ConfigException {
-        return getProperty(Property.HOST);
+    public String getDnsName() throws ConfigException {
+        return getProperty(Property.DNS_NAME);
     }
 
-    public int getPort() throws ConfigException {
-        return Integer.parseInt(getProperty(Property.PORT));
+    public String getMongoAdminPassword() throws ConfigException {
+        return getProperty(Property.MONGO_ADMIN_PASSWORD);
     }
 
-    public String getUser() throws ConfigException {
-        return getProperty(Property.USER);
+    public String getMongoUserPassword() throws ConfigException {
+        return getProperty(Property.MONGO_USER_PASSWORD);
     }
 
-    public String getPrivateKey() throws ConfigException {
-        return getProperty(Property.PRIVATE_KEY);
+    public String getMongoOrgserviceUserPassword() throws ConfigException {
+        return getProperty(Property.MONGO_ORGSERVICE_USER_PASSWORD);
+    }
+
+    public String getAdminLdapUserName() throws ConfigException {
+        return getProperty(Property.ADMIN_LDAP_USER_NAME);
+    }
+
+    public String getAdminLdapPassword() throws ConfigException {
+        return getProperty(Property.ADMIN_LDAP_PASSWORD);
+    }
+
+    public String getMysqlRootUserPassword() throws ConfigException {
+        return getProperty(Property.MYSQL_ROOT_USER_PASSWORD);
+    }
+
+    public String getZabbixDatabasePassword() throws ConfigException {
+        return getProperty(Property.ZABBIX_DATABASE_PASSWORD);
+    }
+
+    public String getZabbixAdminEmail() throws ConfigException {
+        return getProperty(Property.ZABBIX_ADMIN_EMAIL);
+    }
+
+    public String getZabbixAdminPassword() throws ConfigException {
+        return getProperty(Property.ZABBIX_ADMIN_PASSWORD);
     }
 
     public String getPuppetVersion() throws ConfigException {

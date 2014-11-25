@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.install;
 
+import java.util.Map;
+
 /**
  * @author Anatoliy Bazko
  */
@@ -24,6 +26,12 @@ public class InstallOptions {
 
     private int         step;
     private InstallType installType;
+    private Map<String, String> configProperties;
+
+    /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
+    public static enum InstallType {
+        CDEC_SINGLE_NODE
+    }
 
     /** Getter for {@link #installType} */
     public InstallType getInstallType() {
@@ -46,8 +54,12 @@ public class InstallOptions {
         this.step = step;
     }
 
-    /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
-    public static enum InstallType {
-        CDEC_SINGLE_NODE
+    public Map<String, String> getConfigProperties() {
+        return configProperties;
+    }
+
+    public InstallOptions setConfigProperties(Map<String, String> configProperties) {
+        this.configProperties = configProperties;
+        return this;
     }
 }

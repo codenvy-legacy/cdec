@@ -62,12 +62,19 @@ public class ConfigFactory {
             config = new DefaultConfig();
 
         } else if (installOptions.getInstallType() == InstallOptions.InstallType.CDEC_SINGLE_NODE) {
-            String propertiesFile = CDEC_SINGLE_NODE_PROPERTIES_FILE;
+            // create config with properties stored in installOptions
+            if (installOptions.getConfigProperties() != null) {
+                return new CdecConfig(installOptions.getConfigProperties());
+            }
 
+            // load config from file
+            String propertiesFile = CDEC_SINGLE_NODE_PROPERTIES_FILE;
             if (!exists(propertiesFile)) {
                 createDefaultConfig(propertiesFile);
             }
-            config = new CdecConfig(loadConfig(propertiesFile));
+
+            Path configFile = getConfFile(propertiesFile);
+            config = new CdecConfig(load(configFile));
         } else {
             throw new IllegalArgumentException("There is no configuration for installation type: " + installOptions.getInstallType());
         }
@@ -100,22 +107,22 @@ public class ConfigFactory {
         return Paths.get(configPath).resolve(propertiesFile);
     }
 
-    protected Map<String, String> loadConfig(String propertiesFile) throws ConfigException {
+    public static Map<String, String> load(Path propertiesFile) throws ConfigException {
         Properties properties = new Properties();
-        try (InputStream in = Files.newInputStream(getConfFile(propertiesFile))) {
+        try (InputStream in = Files.newInputStream(propertiesFile)) {
             properties.load(in);
         } catch (IOException e) {
             throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
 
-        Map<String, String> propertiesCandidate = new HashMap<>();
+        Map<String, String> map = new HashMap<>();
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             String key = entry.getKey().toString().toLowerCase();
             String value = (String)entry.getValue();
 
-            propertiesCandidate.put(key, value);
+            map.put(key, value);
         }
 
-        return propertiesCandidate;
+        return map;
     }
 }

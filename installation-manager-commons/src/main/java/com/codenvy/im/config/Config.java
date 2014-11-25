@@ -24,14 +24,34 @@ import java.util.Map;
 public abstract class Config {
     private Map<String, String> properties;
 
-    Config(Map<String, String> properties) {
+    public Config(Map<String, String> properties) {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
-    protected final String getProperty(ConfigProperty property) {
-        return properties.get(property.toString().toLowerCase());
+    public Config() {
+        this.properties = Collections.emptyMap();
+    }
+
+    public final String getProperty(ConfigProperty property) {
+        String value = properties.get(property.toString().toLowerCase());
+        if (value == null) {
+            return property.getDefaultValue();
+        }
+
+        return value;
     }
 
     /** Validates the configuration */
     public abstract void validate() throws IllegalStateException;
+
+    /** @return "mongo admin password" if property is Enum and has name "MONGO_ADMIN_PASSWORD",
+     * or "" otherwise. */
+    public static String getPropertyTranscription(ConfigProperty property) {
+        Class propertyClass = property.getClass();
+        if (propertyClass instanceof Class && ((Class<?>) propertyClass).isEnum()) {
+            return property.toString().replace("_", " ").toLowerCase();
+        }
+
+        return "";
+    }
 }

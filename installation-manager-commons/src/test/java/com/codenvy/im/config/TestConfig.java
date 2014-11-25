@@ -30,6 +30,7 @@ import static org.apache.commons.io.FileUtils.write;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -69,8 +70,9 @@ public class TestConfig {
         assertTrue(config instanceof CdecConfig);
 
         CdecConfig cdecConfig = (CdecConfig)config;
-        assertNull(cdecConfig.getPuppetResourceUrl());
-        assertNull(cdecConfig.getPuppetVersion());
+        assertEquals(cdecConfig.getPuppetResourceUrl(), CdecConfig.Property.PUPPET_RESOURCE_URL.getDefaultValue());
+        assertEquals(cdecConfig.getPuppetVersion(), CdecConfig.Property.PUPPET_VERSION.getDefaultValue());
+        assertNull(cdecConfig.getDnsName());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)

@@ -191,6 +191,22 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return userAnswer != null && userAnswer.equalsIgnoreCase("y");
     }
 
+    /** @return line typed by user */
+    protected String readLine(String prompt) {
+        printInfo(prompt);
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+            String userAnswer = reader.readLine();
+            if (userAnswer.isEmpty()) {
+                return null;
+            }
+
+            return userAnswer;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     protected void pressAnyKey(String prompt) throws IOException {
         printInfo(prompt);
         session.getKeyboard().read();

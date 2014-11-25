@@ -20,6 +20,11 @@ package com.codenvy.im.cli.command;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.config.CdecConfig;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigException;
+import com.codenvy.im.config.ConfigFactory;
+import com.codenvy.im.config.ConfigProperty;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
@@ -36,7 +41,10 @@ import org.restlet.ext.jackson.JacksonRepresentation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import static java.lang.String.format;
@@ -56,6 +64,9 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
+
+    @Option(name = "--config", aliases = "-c", description = "Path to configuration file", required = false)
+    private String configFilePath;
 
     @Override
     protected Void execute() {
@@ -168,16 +179,38 @@ public class InstallCommand extends AbstractIMCommand {
                             .toRepresentation();
     }
 
-    private InstallOptions askAdditionalInstallOptions() throws ArtifactNotFoundException {
+    private InstallOptions askAdditionalInstallOptions() throws ArtifactNotFoundException, ConfigException {
         InstallOptions options = new InstallOptions();
         switch (artifactName) {
             case CDECArtifact.NAME:
-                options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
-                break;
+                CdecConfig config;
+                Map<String, String> configProperties;
+
+                if (configFilePath != null) {
+                    configProperties = ConfigFactory.load(Paths.get(configFilePath));
+                    config = new CdecConfig(configProperties);
+                } else {
+                    configProperties = new HashMap<>();
+                    config = new CdecConfig();
+                }
+
+                try {
+                    config.validate();
+                } catch(IllegalStateException e) {
+                    printInfo("Please, enter CDEC required parameters:/n");
+                    for (ConfigProperty property : CdecConfig.Property.values()) {
+                        if (config.getProperty(property) == null
+                            || config.getProperty(property).isEmpty()) {
+                            String value = readLine(format("/n%s: ", Config.getPropertyTranscription(property)));
+                            configProperties.put(property.toString().toLowerCase(), value);
+                        }
+                    }
+                }
+
+                return options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE)
+                              .setConfigProperties(configProperties);
             default:
                 throw ArtifactNotFoundException.from(artifactName);
         }
-
-        return options;
     }
 }
