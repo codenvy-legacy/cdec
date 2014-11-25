@@ -81,24 +81,33 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         InstallOptions installOptions = askAdditionalInstallOptions();
-        JacksonRepresentation<Request> requestRep = prepareRequest(installOptions);
 
-        String response = installationManagerProxy.getInstallInfo(requestRep);
+        String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
         Response responseObj = Response.fromJson(response);
+
+        if (responseObj.getStatus() == ResponseCode.ERROR) {
+            printError(response);
+            return null;
+        }
 
         List<String> infos = responseObj.getInfos();
         for (int step = 0; step < infos.size(); step++) {
-            printInfo(infos.get(step) + "\n");
+            printInfo("Step " + (step + 1) + ": " + infos.get(step));
 
             installOptions.setStep(step);
-            response = installationManagerProxy.install(requestRep);
+            response = installationManagerProxy.install(prepareRequest(installOptions));
+            responseObj = Response.fromJson(response);
 
             if (responseObj.getStatus() == ResponseCode.ERROR) {
+                printInfo(" [FAIL]\n");
                 printError(response);
                 return null;
+            } else {
+                printInfo(" [OK]\n");
             }
         }
 
+        // only OK response can be here
         printResponse(response);
         responseObj = Response.fromJson(response);
 

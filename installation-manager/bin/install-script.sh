@@ -80,7 +80,7 @@ installJava() {
         sudo tar -xf jdk.tar.gz -C /etc
         rm jdk.tar.gz
 
-        if [ ! -f ~/.bashrc ]; then echo -e "\n" ~/.bashrc; fi
+        if [ ! -f "~/.bashrc" ]; then echo -e "\n" ~/.bashrc; fi
 
         sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${HOME}/.bashrc
         sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${HOME}/.bashrc
@@ -198,10 +198,10 @@ installIMCli() {
 
     # creates Codenvy configuration directory
     sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=${CODENVY_HOME}/codenvy_conf' ${CODENVY_HOME}/.bashrc"
-    if [ ! -d  ${CODENVY_HOME}/codenvy_conf ]; then
+    if [ ! -d  "${CODENVY_HOME}/codenvy_conf" ]; then
         sudo su - ${CODENVY_USER} -c "mkdir ${CODENVY_HOME}/codenvy_conf"
     fi
-    if [ ! -f  ${CODENVY_HOME}/codenvy_conf/im.properties ]; then
+    if [ ! -f  "${CODENVY_HOME}/codenvy_conf/im.properties" ]; then
         sudo su - ${CODENVY_USER} -c "touch ${CODENVY_HOME}/codenvy_conf/im.properties"
     fi
 }
@@ -228,6 +228,7 @@ else
 fi
 
 echo "System is run on ${os} based distributive."
+echo ""
 echo "Wellcome to Codenvy. This programm will install Codenvy onto this node."
 echo "When the installation is complete, the Codenvy URL will be displayed."
 echo ""
@@ -256,7 +257,7 @@ registerIMServiceOn${os}
 launchingIMService
 
 echo ""
-echo "> Login into Codenvy"
+echo "> Loging into Codenvy"
 sleep 2s
 ~/codenvy-cli/bin/codenvy login --remote "update-server"
 
@@ -265,7 +266,11 @@ echo "> Downloading CDEC binaries"
 ~/codenvy-cli/bin/codenvy im-download cdec
 
 echo ""
-echo "> Installing CDEC"
+echo "> Checking list of downloaded binaries"
+~/codenvy-cli/bin/codenvy im-download --list-local cdec
+
+echo ""
+echo "> Installing the latest CDEC version"
 ~/codenvy-cli/bin/codenvy im-install cdec
 
 

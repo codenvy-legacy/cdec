@@ -80,8 +80,8 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallArtifact() throws Exception {
-        final String expectedOutput = "step 1\n" +
-                                      "step 2\n" +
+        final String expectedOutput = "Step 1: step 1 [OK]\n" +
+                                      "Step 2: step 2 [OK]\n" +
                                       "{\n" +
                                       "  \"artifacts\" : [ {\n" +
                                       "    \"artifact\" : \"cdec\",\n" +
@@ -104,8 +104,8 @@ public class InstallCommandTest {
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
-        final String expectedOutput = "step 1\n" +
-                                      "step 2\n" +
+        final String expectedOutput = "Step 1: step 1 [OK]\n" +
+                                      "Step 2: step 2 [OK]\n" +
                                       "{\n" +
                                       "  \"artifacts\" : [ {\n" +
                                       "    \"artifact\" : \"cdec\",\n" +
@@ -154,21 +154,39 @@ public class InstallCommandTest {
     }
 
     @Test
-    public void testInstallWhenServiceThrowsError() throws Exception {
-        String expectedOutput = "step 1\n" +
+    public void testInstallErrorStepFailed() throws Exception {
+        String expectedOutput = "Step 1: step 1 [FAIL]\n" +
                                 "{\n"
-                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"message\" : \"step failed\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
+        doReturn("{\n"
+                 + "  \"message\" : \"step failed\",\n"
+                 + "  \"status\" : \"ERROR\"\n"
+                 + "}").when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, expectedOutput + "\n");
+    }
+
+    @Test
+    public void testInstallWhenServiceThrowsError2() throws Exception {
+        String expectedOutput = "{\n"
+                                + "  \"message\" : \"Property is missed\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
+                                + "}";
+        doReturn(expectedOutput).when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+
         assertEquals(output, expectedOutput + "\n");
     }
 

@@ -30,7 +30,6 @@ import static org.apache.commons.io.FileUtils.write;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -70,14 +69,8 @@ public class TestConfig {
         assertTrue(config instanceof CdecConfig);
 
         CdecConfig cdecConfig = (CdecConfig)config;
-        assertEquals(cdecConfig.getHost(), "172.0.0.1");
-        assertEquals(cdecConfig.getUser(), "anonym");
-        assertEquals(cdecConfig.getPassword(), "secret");
-        assertNull(cdecConfig.getPuppetMasterPort());
-        assertNull(cdecConfig.getPrivateKeyFileAbsolutePath());
         assertNull(cdecConfig.getPuppetResourceUrl());
         assertNull(cdecConfig.getPuppetVersion());
-        assertNull(cdecConfig.getSSHPort());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)

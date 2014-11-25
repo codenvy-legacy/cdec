@@ -46,7 +46,7 @@ public class ConfigFactory {
     public ConfigFactory(@Named("installation-manager.config.path") String configPath) {
         this.configPath = configPath;
     }
-    
+
     /**
      * Config factory.
      * If config file doesn't exist, create it with default content from file [classResourceDir]/[defaultConfigFileRelativePath]
