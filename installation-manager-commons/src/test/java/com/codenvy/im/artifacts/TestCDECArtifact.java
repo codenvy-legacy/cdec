@@ -28,16 +28,19 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -90,10 +93,23 @@ public class TestCDECArtifact {
     }
 
     @Test
-    public void testInstalledVersion() throws Exception {
+    public void testGetInstalledVersion() throws Exception {
         when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
         Version version = spyCdecArtifact.getInstalledVersion("authToken");
         assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
+    }
+
+    @Test
+    public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
+        doThrow(new IOException()).when(mockTransport).doOption(endsWith("api/"), eq("authToken"));
+        Version version = spyCdecArtifact.getInstalledVersion("authToken");
+        assertNull(version);
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testGetInstalledVersionError() throws Exception {
+        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"some text\"}");
+        spyCdecArtifact.getInstalledVersion("authToken");
     }
 }

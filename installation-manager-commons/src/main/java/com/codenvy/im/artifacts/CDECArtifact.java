@@ -69,7 +69,13 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Version getInstalledVersion(String authToken) throws IOException {
-        String response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
+        String response;
+        try {
+            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
+        } catch (IOException e) {
+            return null;
+        }
+
         try {
             ApiInfo apiInfo = Commons.fromJson(response, ApiInfo.class);
             return Version.valueOf(apiInfo.getIdeVersion());
