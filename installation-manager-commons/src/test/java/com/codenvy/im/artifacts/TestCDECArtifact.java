@@ -19,7 +19,7 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.CdecConfig;
-import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -62,8 +62,8 @@ public class TestCDECArtifact {
     @Test
     public void testGetInstallInfo() throws Exception {
         CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
-        CdecInstallOptions options = new CdecInstallOptions();
-        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
         List<String> info = spyCdecArtifact.getInstallInfo(config, options);
@@ -74,8 +74,8 @@ public class TestCDECArtifact {
     @Test
     public void testGetInstallCommand() throws Exception {
         CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
-        CdecInstallOptions options = new CdecInstallOptions();
-        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
         Command command = spyCdecArtifact.getInstallCommand(Paths.get("some path"), config, options);
@@ -85,8 +85,8 @@ public class TestCDECArtifact {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testGetInstallCommandError() throws Exception {
         CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
-        CdecInstallOptions options = new CdecInstallOptions();
-        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(Integer.MAX_VALUE);
 
         spyCdecArtifact.getInstallCommand(Paths.get("some path"), config, options);

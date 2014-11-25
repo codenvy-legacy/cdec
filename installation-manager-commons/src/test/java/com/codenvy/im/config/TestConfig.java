@@ -17,8 +17,7 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.install.CdecInstallOptions;
-import com.codenvy.im.install.DefaultOptions;
+import com.codenvy.im.install.InstallOptions;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
@@ -54,7 +53,7 @@ public class TestConfig {
 
     @Test
     public void testDefaultConfig() throws Exception {
-        Config config = configFactory.loadOrCreateDefaultConfig(new DefaultOptions());
+        Config config = configFactory.loadOrCreateDefaultConfig(new InstallOptions());
         assertTrue(config instanceof DefaultConfig);
     }
 
@@ -62,8 +61,8 @@ public class TestConfig {
     public void testLoadCdecConfigSingleNode() throws Exception {
         doNothing().when(configFactory).validateConfig(any(Config.class));
 
-        CdecInstallOptions installOptions = new CdecInstallOptions();
-        installOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
 
         write(configPath.resolve(ConfigFactory.CDEC_SINGLE_NODE_PROPERTIES_FILE).toFile(), "host=172.0.0.1\nuser=anonym\npassword=secret\n");
 
@@ -83,8 +82,8 @@ public class TestConfig {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testLoadConfigErrorValidateFailed() throws Exception {
-        CdecInstallOptions installOptions = new CdecInstallOptions();
-        installOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
 
         write(configPath.resolve(ConfigFactory.CDEC_SINGLE_NODE_PROPERTIES_FILE).toFile(), "host=172.0.0.1\nuser=anonym\npassword=secret\n");
 

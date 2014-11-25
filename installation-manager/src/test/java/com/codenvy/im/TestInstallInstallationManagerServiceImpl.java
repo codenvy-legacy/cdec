@@ -19,7 +19,7 @@ package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManager;
 import com.codenvy.im.restlet.InstallationManagerService;
@@ -62,7 +62,7 @@ public class TestInstallInstallationManagerServiceImpl {
 
     @Test
     public void testInstall() throws Exception {
-        CdecInstallOptions installOptions = new CdecInstallOptions();
+        InstallOptions installOptions = new InstallOptions();
         Version version = Version.valueOf("2.10.5");
 
         doReturn(version).when(mockInstallationManager).getLatestVersionToDownload(testCredentials.getToken(), cdecArtifact);
@@ -71,7 +71,7 @@ public class TestInstallInstallationManagerServiceImpl {
         Request request = new Request()
                 .setUserCredentials(testCredentials)
                 .setArtifactName(cdecArtifact.getName())
-                .setInstallOptions(new CdecInstallOptions());
+                .setInstallOptions(installOptions);
 
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +
@@ -86,7 +86,7 @@ public class TestInstallInstallationManagerServiceImpl {
 
     @Test
     public void testInstallError() throws Exception {
-        CdecInstallOptions installOptions = new CdecInstallOptions();
+        InstallOptions installOptions = new InstallOptions();
 
         doThrow(new IOException("I/O error")).when(mockInstallationManager)
                                              .install(testCredentials.getToken(), cdecArtifact, Version.valueOf("1.0.1"), installOptions);
@@ -113,7 +113,7 @@ public class TestInstallInstallationManagerServiceImpl {
     public void testInstallErrorIfArtifactIsMissed() throws Exception {
         Request request = new Request()
                 .setUserCredentials(testCredentials)
-                .setInstallOptions(new CdecInstallOptions());
+                .setInstallOptions(new InstallOptions());
 
         String response = installationManagerService.install(new JacksonRepresentation<>(request));
         assertEquals(response, "{\n" +

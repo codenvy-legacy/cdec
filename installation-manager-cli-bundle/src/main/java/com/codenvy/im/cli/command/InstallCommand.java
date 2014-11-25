@@ -21,8 +21,6 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.install.CdecInstallOptions;
-import com.codenvy.im.install.DefaultOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
@@ -162,14 +160,15 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     private InstallOptions askAdditionalInstallOptions() throws ArtifactNotFoundException {
+        InstallOptions options = new InstallOptions();
         switch (artifactName) {
-            case InstallManagerArtifact.NAME:
-                return new DefaultOptions();
             case CDECArtifact.NAME:
-                // we can ask for additional options
-                return new CdecInstallOptions().setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+                options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+                break;
             default:
                 throw ArtifactNotFoundException.from(artifactName);
         }
+
+        return options;
     }
 }

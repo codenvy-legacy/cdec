@@ -20,8 +20,6 @@ package com.codenvy.im;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.install.CdecInstallOptions;
-import com.codenvy.im.install.DefaultOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.restlet.InstallationManagerConfig;
@@ -116,13 +114,13 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
-        manager.install(testCredentials.getToken(), installManagerArtifact, version2101, new CdecInstallOptions());
+        manager.install(testCredentials.getToken(), installManagerArtifact, version2101, new InstallOptions());
     }
 
     @Test
     public void testInstallArtifact() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
-        final InstallOptions options = new CdecInstallOptions();
+        final InstallOptions options = new InstallOptions();
         final Path pathToBinaries = Paths.get("some path");
 
         doReturn(new TreeMap<Version, Path>() {{
@@ -150,7 +148,7 @@ public class TestInstallationManager {
             put(version200, null);
         }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.1"), new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.1"), new InstallOptions());
         doReturn(false).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
 
         manager.install(testCredentials.getToken(), installManagerArtifact, version200, null);
@@ -160,7 +158,7 @@ public class TestInstallationManager {
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
         doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
-        manager.install("auth token", cdecArtifact, Version.valueOf("2.10.1"), new CdecInstallOptions());
+        manager.install("auth token", cdecArtifact, Version.valueOf("2.10.1"), new InstallOptions());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -177,15 +175,15 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
 
-        manager.install("auth token", installManagerArtifact, version2100, new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
             expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
     public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
-        CdecInstallOptions options = new CdecInstallOptions();
-        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
         doReturn(new TreeMap<Version, Path>() {{
@@ -208,8 +206,8 @@ public class TestInstallationManager {
 
         doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
 
-        CdecInstallOptions testOptions = new CdecInstallOptions();
-        testOptions.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions testOptions = new InstallOptions();
+        testOptions.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         testOptions.setStep(1);
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");
@@ -243,7 +241,7 @@ public class TestInstallationManager {
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
         doNothing().when(installer).install(any(Artifact.class), any(Path.class), any(InstallOptions.class));
 
-        manager.install("auth token", installManagerArtifact, version2102, new DefaultOptions());
+        manager.install("auth token", installManagerArtifact, version2102, new InstallOptions());
     }
 
     @Test

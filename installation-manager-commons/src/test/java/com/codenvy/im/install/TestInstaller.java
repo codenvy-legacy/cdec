@@ -59,7 +59,7 @@ public class TestInstaller {
     @Test
     public void testGetInstallInfo() throws Exception {
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
-        InstallOptions options = new CdecInstallOptions().setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions options = new InstallOptions().setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
 
         doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateDefaultConfig(options);
 
@@ -71,8 +71,8 @@ public class TestInstaller {
     public void testInstall() throws Exception {
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
 
-        CdecInstallOptions options = new CdecInstallOptions();
-        options.setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE);
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
         doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateDefaultConfig(options);

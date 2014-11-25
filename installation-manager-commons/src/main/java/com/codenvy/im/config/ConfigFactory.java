@@ -17,8 +17,6 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.install.CdecInstallOptions;
-import com.codenvy.im.install.DefaultOptions;
 import com.codenvy.im.install.InstallOptions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -60,10 +58,10 @@ public class ConfigFactory {
      */
     public Config loadOrCreateDefaultConfig(InstallOptions installOptions) throws IOException, IllegalArgumentException {
         Config config;
-        if (installOptions instanceof DefaultOptions) {
+        if (installOptions.getInstallType() == null) {
             config = new DefaultConfig();
 
-        } else if (installOptions instanceof CdecInstallOptions) {
+        } else if (installOptions.getInstallType() == InstallOptions.InstallType.CDEC_SINGLE_NODE) {
             String propertiesFile = CDEC_SINGLE_NODE_PROPERTIES_FILE;
 
             if (!exists(propertiesFile)) {
@@ -71,7 +69,7 @@ public class ConfigFactory {
             }
             config = new CdecConfig(loadConfig(propertiesFile));
         } else {
-            throw new IllegalArgumentException("There is no configuration for " + installOptions.getClass().getName());
+            throw new IllegalArgumentException("There is no configuration for installation type: " + installOptions.getInstallType());
         }
 
         validateConfig(config);

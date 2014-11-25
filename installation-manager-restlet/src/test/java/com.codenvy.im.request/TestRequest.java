@@ -19,7 +19,7 @@ package com.codenvy.im.request;
 
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.install.CdecInstallOptions;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.user.UserCredentials;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -27,7 +27,6 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.Test;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertNotNull;
 
 /**
@@ -41,7 +40,7 @@ public class TestRequest {
                 .setArtifactName("artifact name")
                 .setVersion("artifact version")
                 .setUserCredentials(new UserCredentials("test token", "test account id"))
-                .setInstallOptions(new CdecInstallOptions().setCdecInstallType(CdecInstallOptions.CDECInstallType.SINGLE_NODE));
+                .setInstallOptions(new InstallOptions().setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE));
 
         JacksonRepresentation<Request> requestRep = testRequest.toRepresentation();
         assertNotNull(requestRep);
@@ -54,7 +53,8 @@ public class TestRequest {
 
         assertEquals(restoredRequest.getUserCredentials().getToken(), "test token");
         assertEquals(restoredRequest.getUserCredentials().getAccountId(), "test account id");
-        assertTrue(restoredRequest.getInstallOptions() instanceof CdecInstallOptions);
+        assertNotNull(restoredRequest.getInstallOptions());
+        assertEquals(restoredRequest.getInstallOptions().getInstallType(), InstallOptions.InstallType.CDEC_SINGLE_NODE);
     }
 
     @Test

@@ -20,11 +20,34 @@ package com.codenvy.im.install;
 /**
  * @author Anatoliy Bazko
  */
-public interface InstallOptions {
+public class InstallOptions {
 
-    /** Sets the step number of the installation. */
-    void setStep(int step);
+    private int         step;
+    private InstallType installType;
 
-    /** Gets the step number of the installation. */
-    int getStep();
+    /** Getter for {@link #installType} */
+    public InstallType getInstallType() {
+        return installType;
+    }
+
+    /** Setter for {@link #installType} */
+    public InstallOptions setInstallType(InstallType installType) {
+        this.installType = installType;
+        return this;
+    }
+
+    /** Getter for {@link #step} */
+    public int getStep() {
+        return step;
+    }
+
+    /** Setter for {@link #step} */
+    public void setStep(int step) {
+        this.step = step;
+    }
+
+    /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
+    public static enum InstallType {
+        CDEC_SINGLE_NODE
+    }
 }
