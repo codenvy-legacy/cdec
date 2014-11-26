@@ -262,7 +262,7 @@ public class TestInstallCommand {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 InstallCommand installCommand = (InstallCommand)invocationOnMock.getMock();
-                installCommand.printInfo("some value\n");
+                installCommand.printInfo(": some value\n");
                 return "some value";
             }
         }).when(spyCommand).readLine(anyString());

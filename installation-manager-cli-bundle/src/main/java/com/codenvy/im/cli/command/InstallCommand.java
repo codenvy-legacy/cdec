@@ -220,10 +220,8 @@ public class InstallCommand extends AbstractIMCommand {
                     if (!isEmpty(currentValue)) {
                         printInfo(String.format(" (%s)", currentValue));
                     }
-                    printInfo(": ");
-
                     for (; ; ) {
-                        String newValue = readLine(format("%s: ", Config.getPropertyName(property)));
+                        String newValue = readLine(": ");
 
                         if (!isEmpty(newValue)) {
                             m.put(propName, newValue);
