@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
-public class DownloadCommandTest {
+public class TestDownloadCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock

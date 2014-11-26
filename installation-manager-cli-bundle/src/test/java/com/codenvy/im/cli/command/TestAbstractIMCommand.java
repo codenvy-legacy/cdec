@@ -47,9 +47,9 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
-public class AbstractIMCommandTest {
-    private TestAbstractIMCommand spyCommand;
-    private Preferences           globalPreferences;
+public class TestAbstractIMCommand {
+    private TestedAbstractIMCommand spyCommand;
+    private Preferences             globalPreferences;
 
     @Mock
     private InstallationManagerService mockInstallationManagerProxy;
@@ -84,7 +84,7 @@ public class AbstractIMCommandTest {
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
-        spyCommand = spy(new TestAbstractIMCommand());
+        spyCommand = spy(new TestedAbstractIMCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
         updateServerRemote = new Remote();
@@ -153,7 +153,7 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
     public void testInitWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -161,7 +161,7 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
     public void testInitWhenUserDidNotLogin() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -169,7 +169,7 @@ public class AbstractIMCommandTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
     public void testInitWhenUserDidNotObtainAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -216,7 +216,7 @@ public class AbstractIMCommandTest {
         assertEquals(spyCommand.getRemoteUrlByName(ANOTHER_REMOTE_NAME), ANOTHER_REMOTE_URL);
     }
 
-    private void prepareTestAbstractIMCommand(TestAbstractIMCommand command) {
+    private void prepareTestAbstractIMCommand(TestedAbstractIMCommand command) {
         doReturn(globalPreferences).when(session).get(Preferences.class.getName());
 
         DummyCodenvyClient codenvyClient = new DummyCodenvyClient();
@@ -240,7 +240,7 @@ public class AbstractIMCommandTest {
         return PreferencesAPI.getPreferences(tempPreferencesFile.toURI());
     }
 
-    class TestAbstractIMCommand extends AbstractIMCommand {
+    class TestedAbstractIMCommand extends AbstractIMCommand {
         @Override
         protected Object execute() throws Exception {
             return null;

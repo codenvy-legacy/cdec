@@ -24,8 +24,8 @@ import java.util.Map;
  */
 public class InstallOptions {
 
-    private int         step;
-    private InstallType installType;
+    private int                 step;
+    private InstallType         installType;
     private Map<String, String> configProperties;
 
     /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
@@ -54,10 +54,12 @@ public class InstallOptions {
         this.step = step;
     }
 
+    /** Getter for {@link #configProperties} */
     public Map<String, String> getConfigProperties() {
         return configProperties;
     }
 
+    /** Setter for {@link #configProperties} */
     public InstallOptions setConfigProperties(Map<String, String> configProperties) {
         this.configProperties = configProperties;
         return this;

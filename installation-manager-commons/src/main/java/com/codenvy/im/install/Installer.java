@@ -45,7 +45,7 @@ public class Installer {
 
     /** Installs specific artifact. */
     public void install(Artifact artifact, Path pathToBinaries, InstallOptions options) throws IOException {
-        Config config = configFactory.loadOrCreateDefaultConfig(options);
+        Config config = configFactory.loadOrCreateConfig(options);
 
         Command command = artifact.getInstallCommand(pathToBinaries, config, options);
         executeCommand(command);
@@ -53,7 +53,7 @@ public class Installer {
 
     /** @retrun installation information. */
     public List<String> getInstallInfo(Artifact artifact, InstallOptions options) throws IOException {
-        Config config = configFactory.loadOrCreateDefaultConfig(options);
+        Config config = configFactory.loadOrCreateConfig(options);
         return artifact.getInstallInfo(config, options);
     }
 

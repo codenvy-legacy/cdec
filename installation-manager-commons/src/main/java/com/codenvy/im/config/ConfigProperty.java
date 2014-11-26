@@ -21,5 +21,7 @@ package com.codenvy.im.config;
  * @author Dmytro Nochevnov
  */
 public interface ConfigProperty {
+
+    /** @retrun property default value */
     String getDefaultValue();
 }

@@ -18,7 +18,6 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
-import com.codenvy.im.config.AgentConfig;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
@@ -34,10 +33,8 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -76,8 +73,6 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstallCommand() throws Exception {
-        doReturn(null).when(spyCdecArtifact).getSecureAgent(any(AgentConfig.class));
-
         CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
@@ -87,7 +82,7 @@ public class TestCDECArtifact {
         assertNotNull(command);
     }
 
-// TODO   @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testGetInstallCommandError() throws Exception {
         CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();

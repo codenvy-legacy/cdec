@@ -33,11 +33,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import static java.lang.String.format;
+import static java.nio.file.Files.newInputStream;
 import static org.apache.commons.io.IOUtils.copy;
 
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigFactory {
+    public static final String SSH_AGENT_PROPERTIES_FILE = "ssh-agent.properties";
     public static final String CDEC_SINGLE_NODE_PROPERTIES_FILE = "cdec-single-node.properties";
 
     private final String configPath;
@@ -56,31 +58,35 @@ public class ConfigFactory {
      * @throws IllegalArgumentException
      *         unknown class of {@link com.codenvy.im.install.InstallOptions}
      */
-    public Config loadOrCreateDefaultConfig(InstallOptions installOptions) throws IOException, IllegalArgumentException {
+    public Config loadOrCreateConfig(InstallOptions installOptions) throws IOException, IllegalArgumentException {
         Config config;
+
         if (installOptions.getInstallType() == null) {
             config = new DefaultConfig();
 
         } else if (installOptions.getInstallType() == InstallOptions.InstallType.CDEC_SINGLE_NODE) {
             // create config with properties stored in installOptions
-            if (installOptions.getConfigProperties() != null) {
-                return new CdecConfig(installOptions.getConfigProperties());
+            Map<String, String> properties = installOptions.getConfigProperties();
+            if (properties == null) {
+                properties = doLoadOrCreateDefaultProperties(CDEC_SINGLE_NODE_PROPERTIES_FILE);
             }
+            config = new CdecConfig(properties);
 
-            // load config from file
-            String propertiesFile = CDEC_SINGLE_NODE_PROPERTIES_FILE;
-            if (!exists(propertiesFile)) {
-                createDefaultConfig(propertiesFile);
-            }
-
-            Path configFile = getConfFile(propertiesFile);
-            config = new CdecConfig(load(configFile));
         } else {
             throw new IllegalArgumentException("There is no configuration for installation type: " + installOptions.getInstallType());
         }
 
         validateConfig(config);
         return config;
+    }
+
+    /** Loads agent config */
+    public AgentConfig loadOrCreateAgentConfig() throws IOException {
+        Map<String, String> properties = doLoadOrCreateDefaultProperties(SSH_AGENT_PROPERTIES_FILE);
+        AgentConfig agentConfig = new AgentConfig(properties);
+
+        validateConfig(agentConfig);
+        return agentConfig;
     }
 
     protected void validateConfig(Config config) {
@@ -92,7 +98,7 @@ public class ConfigFactory {
     }
 
     /** Creates config from the template. */
-    private void createDefaultConfig(String propertiesFile) throws IOException {
+    private void createConfig(String propertiesFile) throws IOException {
         Path confFile = getConfFile(propertiesFile);
         Files.createDirectories(confFile.getParent());
 
@@ -107,22 +113,49 @@ public class ConfigFactory {
         return Paths.get(configPath).resolve(propertiesFile);
     }
 
-    public static Map<String, String> load(Path propertiesFile) throws ConfigException {
+    private Map<String, String> doLoadOrCreateDefaultProperties(String propertiesFile) throws IOException {
+        if (!exists(propertiesFile)) {
+            createConfig(propertiesFile);
+        }
+
+        Path configFile = getConfFile(propertiesFile);
+        return loadConfigProperties(configFile);
+    }
+
+    /** Write properties into the file */
+    public void writeConfig(CdecConfig config) throws IOException {
+        Path confFile = getConfFile(CDEC_SINGLE_NODE_PROPERTIES_FILE);
+        Files.createDirectories(confFile.getParent());
+
         Properties properties = new Properties();
-        try (InputStream in = Files.newInputStream(propertiesFile)) {
+        for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+            if (e.getValue() != null) {
+                properties.put(e.getKey(), e.getValue());
+            }
+        }
+
+        try (OutputStream out = Files.newOutputStream(confFile)) {
+            properties.store(out, null);
+        }
+    }
+
+    /** Loads properties from the given file. */
+    public Map<String, String> loadConfigProperties(Path propertiesFile) throws ConfigException {
+        Properties properties = new Properties();
+        try (InputStream in = newInputStream(propertiesFile)) {
             properties.load(in);
         } catch (IOException e) {
             throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
 
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> m = new HashMap<>();
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             String key = entry.getKey().toString().toLowerCase();
-            String value = (String)entry.getValue();
+            String value = entry.getValue().toString();
 
-            map.put(key, value);
+            m.put(key, value);
         }
 
-        return map;
+        return m;
     }
 }

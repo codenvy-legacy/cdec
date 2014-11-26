@@ -39,7 +39,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
-public class LoginCommandTest {
+public class TestLoginCommand {
     private static final String TEST_USER_ACCOUNT_ID        = "testUserAccountId";
     private static final String TEST_USER_ACCOUNT_NAME      = "testUserAccountName";
     private static final String TEST_USER_ACCOUNT_REFERENCE =
@@ -53,7 +53,7 @@ public class LoginCommandTest {
     private static final String ANOTHER_REMOTE_URL  = "another remote url";
 
 
-    private TestLoginCommand spyCommand;
+    private TestedLoginCommand spyCommand;
 
     @Mock
     private InstallationManagerService mockInstallationManagerProxy;
@@ -72,7 +72,7 @@ public class LoginCommandTest {
 
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
 
-        spyCommand = spy(new TestLoginCommand());
+        spyCommand = spy(new TestedLoginCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
@@ -215,7 +215,7 @@ public class LoginCommandTest {
         assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
     }
 
-    class TestLoginCommand extends LoginCommand {
+    class TestedLoginCommand extends LoginCommand {
         protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
             return mockMultiRemoteCodenvy;
         }

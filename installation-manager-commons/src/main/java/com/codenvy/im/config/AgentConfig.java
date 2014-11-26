@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.config;
 
+import java.util.Map;
+
 import static java.lang.String.format;
 
 /**
@@ -32,43 +34,45 @@ public class AgentConfig extends Config {
 
         private String defaultValue;
 
-        Property() {
-        }
-
         Property(String defaultValue) {
             this.defaultValue = defaultValue;
         }
 
+        /** {@inheritDoc} */
         public String getDefaultValue() {
             return defaultValue;
         }
     }
 
+    public AgentConfig(Map<String, String> properties) {
+        super(properties);
+    }
+
     public String getHost() throws ConfigException {
-        return getProperty(Property.HOST);
+        return getValue(Property.HOST);
     }
 
     public int getPort() throws ConfigException {
         try {
-            return Integer.parseInt(getProperty(Property.PORT));
-        } catch(NumberFormatException e) {
+            return Integer.parseInt(getValue(Property.PORT));
+        } catch (NumberFormatException e) {
             throw new ConfigException(format("Incorrect value of property '%s'.", Property.PORT), e);
         }
     }
 
     public String getUser() throws ConfigException {
-        return getProperty(Property.USER);
+        return getValue(Property.USER);
     }
 
     public String getPrivateKeyFileAbsolutePath() throws ConfigException {
-        return getProperty(Property.PRIVATE_KEY_FILE_ABSOLUTE_PATH);
+        return getValue(Property.PRIVATE_KEY_FILE_ABSOLUTE_PATH);
     }
 
     /** {@inheritDoc} */
     @Override
     public void validate() throws IllegalStateException {
         for (ConfigProperty property : Property.values()) {
-            if (getProperty(property) == null) {
+            if (getValue(property) == null) {
                 throw new IllegalStateException(format("Property '%s' is missed in the configuration", property.toString().toLowerCase()));
             }
         }

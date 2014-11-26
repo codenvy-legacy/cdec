@@ -17,7 +17,7 @@ addUserOnDebian() {
 # $1 - username; $2 - uid/gid
 addUserOnRedhat() {
     sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
-    sudo passwd -l $1
+    sudo passwd -q -l $1
 }
 
 # $1 - username; $2 - uid/gid
@@ -64,7 +64,8 @@ createCodenvyUserAndGroup() {
         addUserOn${os} ${CODENVY_USER} 5001
     fi
 
-    sudo su - ${CODENVY_USER} -c "if [ ! -f ${CODENVY_HOME}/.bashrc ]; then echo -e "\n" ${CODENVY_HOME}/.bashrc; fi"
+    sudo su - ${CODENVY_USER} -c "if [ ! -f "${CODENVY_HOME}/.bashrc" ]; then echo -e "\n" ${CODENVY_HOME}/.bashrc; fi"
+    sudo su - ${CODENVY_USER} -c "if [ ! -f "${CODENVY_HOME}/.ssh" ]; then mkdir ${CODENVY_HOME}/.ssh; fi"
 }
 
 installJava() {

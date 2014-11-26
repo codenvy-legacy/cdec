@@ -33,7 +33,7 @@ import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /** @author Anatoliy Bazko */
-public class ConfigCommandTest {
+public class TestConfigCommand {
     private AbstractIMCommand spyCommand;
     private String okStatus = "{\"status\": \"OK\"}";
 

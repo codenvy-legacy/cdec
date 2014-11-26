@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.config;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,10 +28,6 @@ import java.util.Map;
 public class CdecConfig extends Config {
     public CdecConfig(Map<String, String> properties) {
         super(properties);
-    }
-
-    public CdecConfig() {
-        super();
     }
 
     public enum Property implements ConfigProperty {
@@ -66,58 +64,66 @@ public class CdecConfig extends Config {
     }
 
     public String getDnsName() throws ConfigException {
-        return getProperty(Property.DNS_NAME);
+        return getValue(Property.DNS_NAME);
     }
 
     public String getMongoAdminPassword() throws ConfigException {
-        return getProperty(Property.MONGO_ADMIN_PASSWORD);
+        return getValue(Property.MONGO_ADMIN_PASSWORD);
     }
 
     public String getMongoUserPassword() throws ConfigException {
-        return getProperty(Property.MONGO_USER_PASSWORD);
+        return getValue(Property.MONGO_USER_PASSWORD);
     }
 
     public String getMongoOrgserviceUserPassword() throws ConfigException {
-        return getProperty(Property.MONGO_ORGSERVICE_USER_PASSWORD);
+        return getValue(Property.MONGO_ORGSERVICE_USER_PASSWORD);
     }
 
     public String getAdminLdapUserName() throws ConfigException {
-        return getProperty(Property.ADMIN_LDAP_USER_NAME);
+        return getValue(Property.ADMIN_LDAP_USER_NAME);
     }
 
     public String getAdminLdapPassword() throws ConfigException {
-        return getProperty(Property.ADMIN_LDAP_PASSWORD);
+        return getValue(Property.ADMIN_LDAP_PASSWORD);
     }
 
     public String getMysqlRootUserPassword() throws ConfigException {
-        return getProperty(Property.MYSQL_ROOT_USER_PASSWORD);
+        return getValue(Property.MYSQL_ROOT_USER_PASSWORD);
     }
 
     public String getZabbixDatabasePassword() throws ConfigException {
-        return getProperty(Property.ZABBIX_DATABASE_PASSWORD);
+        return getValue(Property.ZABBIX_DATABASE_PASSWORD);
     }
 
     public String getZabbixAdminEmail() throws ConfigException {
-        return getProperty(Property.ZABBIX_ADMIN_EMAIL);
+        return getValue(Property.ZABBIX_ADMIN_EMAIL);
     }
 
     public String getZabbixAdminPassword() throws ConfigException {
-        return getProperty(Property.ZABBIX_ADMIN_PASSWORD);
+        return getValue(Property.ZABBIX_ADMIN_PASSWORD);
     }
 
     public String getPuppetVersion() throws ConfigException {
-        return getProperty(Property.PUPPET_VERSION);
+        return getValue(Property.PUPPET_VERSION);
     }
 
     public String getPuppetResourceUrl() throws ConfigException {
-        return getProperty(Property.PUPPET_RESOURCE_URL);
+        return getValue(Property.PUPPET_RESOURCE_URL);
+    }
+
+    public Map<String, String> getProperties() {
+        Map<String, String> m = new HashMap<>(Property.values().length);
+        for (ConfigProperty property : Property.values()) {
+            m.put(property.toString().toLowerCase(), getValue(property));
+        }
+        return Collections.unmodifiableMap(m);
     }
 
     /** {@inheritDoc} */
     @Override
     public void validate() throws IllegalStateException {
         for (ConfigProperty property : Property.values()) {
-            if (getProperty(property) == null) {
+            if (getValue(property) == null) {
                 throw new IllegalStateException(String.format("Property '%s' is missed in the configuration", property.toString().toLowerCase()));
             }
         }

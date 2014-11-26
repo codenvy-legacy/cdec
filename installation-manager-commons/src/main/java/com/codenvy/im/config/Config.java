@@ -28,30 +28,24 @@ public abstract class Config {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
-    public Config() {
-        this.properties = Collections.emptyMap();
-    }
-
-    public final String getProperty(ConfigProperty property) {
+    /** @retrun the property value */
+    public final String getValue(ConfigProperty property) {
         String value = properties.get(property.toString().toLowerCase());
-        if (value == null) {
-            return property.getDefaultValue();
-        }
-
-        return value;
+        return value != null ? value : property.getDefaultValue();
     }
 
-    /** Validates the configuration */
+    /**
+     * Checks if all properties are set and have valid values.
+     *
+     * @throws java.lang.IllegalStateException
+     *         if at least one property is missed
+     */
     public abstract void validate() throws IllegalStateException;
 
-    /** @return "mongo admin password" if property is Enum and has name "MONGO_ADMIN_PASSWORD",
-     * or "" otherwise. */
-    public static String getPropertyTranscription(ConfigProperty property) {
-        Class propertyClass = property.getClass();
-        if (propertyClass instanceof Class && ((Class<?>) propertyClass).isEnum()) {
-            return property.toString().replace("_", " ").toLowerCase();
-        }
-
-        return "";
+    /**
+     * @return property name, for instance, if property name is "MONGO_ADMIN_PASSWORD" then "mongo admin password" will be returned
+     */
+    public static String getPropertyName(ConfigProperty property) {
+        return property.toString().replace("_", " ").toLowerCase();
     }
 }

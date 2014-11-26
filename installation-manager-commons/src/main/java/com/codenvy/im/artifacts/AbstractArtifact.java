@@ -18,7 +18,11 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.agent.Agent;
+import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -61,17 +65,21 @@ import static org.apache.commons.io.IOUtils.copy;
 public abstract class AbstractArtifact implements Artifact {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractArtifact.class);
 
-    private final String name;
+    private final String        name;
+    private final ConfigFactory configFactory;
 
     public AbstractArtifact(String name) {
         this.name = name;
+        this.configFactory = InjectorBootstrap.INJECTOR.getInstance(ConfigFactory.class);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -82,16 +90,19 @@ public abstract class AbstractArtifact implements Artifact {
         return name.equals(that.name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return name.hashCode();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String toString() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int compareTo(Artifact o) {
         return getPriority() - o.getPriority();
@@ -129,16 +140,30 @@ public abstract class AbstractArtifact implements Artifact {
     @Override
     public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
         Version installedVersion = getInstalledVersion(accessToken);
-        if (installedVersion == null) {
-            return true;
-        }
+        return installedVersion == null || installedVersion.compareTo(versionToInstall) < 0;
 
-        return installedVersion.compareTo(versionToInstall) < 0;
+    }
+
+    /** Initialize SSH agent */
+//    protected Agent initSshAgent() throws IOException {
+//        AgentConfig config = configFactory.loadOrCreateAgentConfig();
+//        return new SecureShellAgent(config.getHost(),
+//                                    config.getPort(),
+//                                    config.getUser(),
+//                                    config.getPrivateKeyFileAbsolutePath(),
+//                                    null
+//        );
+//    }
+
+    /** Initialize local agent */
+    protected Agent initLocalAgent() throws IOException {
+        return new LocalAgent();
     }
 
     /** @return path where artifact located */
     protected abstract Path getInstalledPath() throws URISyntaxException;
 
+    // TODO who need this
     @Override
     @Nullable
     public Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {
@@ -151,6 +176,7 @@ public abstract class AbstractArtifact implements Artifact {
         return null;
     }
 
+    /** @retrun the list of downloaded list */
     @Override
     public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException {
         SortedMap<Version, Path> versions = new TreeMap<>();
@@ -184,7 +210,7 @@ public abstract class AbstractArtifact implements Artifact {
         return versions;
     }
 
-    Map getLatestVersionProperties(String updateEndpoint, HttpTransport transport) throws IOException {
+    protected Map getLatestVersionProperties(String updateEndpoint, HttpTransport transport) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName());
         Map m;
         try {
@@ -197,6 +223,7 @@ public abstract class AbstractArtifact implements Artifact {
         return m;
     }
 
+    /** @retrun artifact properties */
     @Override
     public Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName() + "/" + version.toString());
@@ -211,8 +238,7 @@ public abstract class AbstractArtifact implements Artifact {
         return m;
     }
 
-    @Override
-    public void validateProperties(Map properties) throws IOException {
+    protected void validateProperties(Map properties) throws IOException {
         if (properties == null) {
             throw new IOException("Can't get artifact properties.");
         }

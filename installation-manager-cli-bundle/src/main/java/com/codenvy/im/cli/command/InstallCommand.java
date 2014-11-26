@@ -22,7 +22,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigException;
 import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.config.ConfigProperty;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
@@ -47,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.im.utils.Commons.toJson;
+import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
 
 /**
@@ -55,6 +56,8 @@ import static java.lang.String.format;
  */
 @Command(scope = "codenvy", name = "im-install", description = "Install, update artifact or print the list of already installed ones")
 public class InstallCommand extends AbstractIMCommand {
+
+    private final ConfigFactory configFactory;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     private String artifactName;
@@ -67,6 +70,16 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Option(name = "--config", aliases = "-c", description = "Path to configuration file", required = false)
     private String configFilePath;
+
+    public InstallCommand() {
+        this.configFactory = INJECTOR.getInstance(ConfigFactory.class);
+    }
+
+    /** For testing purpose only */
+    @Deprecated
+    InstallCommand(ConfigFactory configFactory) {
+        this.configFactory = configFactory;
+    }
 
     @Override
     protected Void execute() {
@@ -91,7 +104,9 @@ public class InstallCommand extends AbstractIMCommand {
             return null;
         }
 
-        InstallOptions installOptions = askAdditionalInstallOptions();
+        InstallOptions installOptions = new InstallOptions();
+        enterInstallOptions(installOptions);
+        confirmOrReenterInstallOptions(installOptions);
 
         String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
         Response responseObj = Response.fromJson(response);
@@ -103,7 +118,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         List<String> infos = responseObj.getInfos();
         for (int step = 0; step < infos.size(); step++) {
-            printInfo("Step " + (step + 1) + ": " + infos.get(step));
+            printInfo(infos.get(step));
 
             installOptions.setStep(step);
             response = installationManagerProxy.install(prepareRequest(installOptions));
@@ -179,38 +194,77 @@ public class InstallCommand extends AbstractIMCommand {
                             .toRepresentation();
     }
 
-    private InstallOptions askAdditionalInstallOptions() throws ArtifactNotFoundException, ConfigException {
-        InstallOptions options = new InstallOptions();
+    protected InstallOptions enterInstallOptions(InstallOptions options) throws IOException {
         switch (artifactName) {
-            case CDECArtifact.NAME:
-                CdecConfig config;
-                Map<String, String> configProperties;
+            case InstallManagerArtifact.NAME:
+                return options;
 
-                if (configFilePath != null) {
-                    configProperties = ConfigFactory.load(Paths.get(configFilePath));
-                    config = new CdecConfig(configProperties);
-                } else {
-                    configProperties = new HashMap<>();
-                    config = new CdecConfig();
+            case CDECArtifact.NAME:
+                options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+
+                if (options.getConfigProperties() == null) {
+                    setOptionsFromConfig(options);
                 }
 
-                try {
-                    config.validate();
-                } catch(IllegalStateException e) {
-                    printInfo("Please, enter CDEC required parameters:/n");
-                    for (ConfigProperty property : CdecConfig.Property.values()) {
-                        if (config.getProperty(property) == null
-                            || config.getProperty(property).isEmpty()) {
-                            String value = readLine(format("/n%s: ", Config.getPropertyTranscription(property)));
-                            configProperties.put(property.toString().toLowerCase(), value);
+
+                printInfo("Please, enter CDEC required parameters:\n");
+
+                Map<String, String> m = new HashMap<>();
+
+                for (ConfigProperty property : CdecConfig.Property.values()) {
+                    printInfo(Config.getPropertyName(property));
+
+                    String propName = property.toString().toLowerCase();
+                    String currentValue = options.getConfigProperties().get(propName);
+
+                    if (!isEmpty(currentValue)) {
+                        printInfo(String.format(" (%s)", currentValue));
+                    }
+                    printInfo(": ");
+
+                    for (; ; ) {
+                        String newValue = readLine(format("%s: ", Config.getPropertyName(property)));
+
+                        if (!isEmpty(newValue)) {
+                            m.put(propName, newValue);
+                            break;
+                        } else if (!isEmpty(currentValue)) {
+                            m.put(propName, currentValue);
+                            break;
                         }
                     }
                 }
 
-                return options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE)
-                              .setConfigProperties(configProperties);
+                return options.setConfigProperties(m);
             default:
                 throw ArtifactNotFoundException.from(artifactName);
         }
+    }
+
+    private boolean isEmpty(String value) {
+        return value == null || value.isEmpty();
+    }
+
+    private void setOptionsFromConfig(InstallOptions options) throws IOException {
+        if (configFilePath != null) {
+            Map<String, String> m = configFactory.loadConfigProperties(Paths.get(configFilePath));
+            options.setConfigProperties(m);
+        } else {
+            CdecConfig config = (CdecConfig)configFactory.loadOrCreateConfig(options);
+            options.setConfigProperties(config.getProperties());
+        }
+    }
+
+    protected void confirmOrReenterInstallOptions(InstallOptions installOptions) throws IOException {
+        for (; ; ) {
+            printInfo(toJson(installOptions.getConfigProperties()) + "\n");
+            if (askUser("Continue installation")) {
+                break;
+            }
+
+            enterInstallOptions(installOptions);
+        }
+
+        configFactory.writeConfig(new CdecConfig(installOptions.getConfigProperties()));
     }
 }

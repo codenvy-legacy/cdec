@@ -20,15 +20,10 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.im.agent.Agent;
-import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.agent.SecureShellAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.SimpleCommand;
-import com.codenvy.im.config.AgentConfig;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -60,12 +55,6 @@ public class CDECArtifact extends AbstractArtifact {
     @Inject
     public CDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
         super(NAME);
-        this.transport = transport;
-        this.apiNodeUrl = apiNodeUrl;
-    }
-
-    public CDECArtifact(String apiNodeUrl, HttpTransport transport, String name) {
-        super(name);
         this.transport = transport;
         this.apiNodeUrl = apiNodeUrl;
     }
@@ -113,8 +102,6 @@ public class CDECArtifact extends AbstractArtifact {
 
         final CdecConfig cdecConfig = (CdecConfig)config;
 
-        Agent agent = getSecureAgent(new AgentConfig()); // TODO load agent config from ConfigFactory using agent.properties file
-
         StringBuilder command;
         int step = installOptions.getStep();
 
@@ -126,33 +113,24 @@ public class CDECArtifact extends AbstractArtifact {
                 command.append("sudo cp /etc/selinux/config /etc/selinux/config.bak");
                 command.append(" && ");
                 command.append("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config");
-                new SimpleCommand(command.toString(), agent, "Disable SELinux");
+                return new SimpleCommand(command.toString(), initLocalAgent(), "Disable SELinux");
 
             case 1:
                 command = new StringBuilder();
                 command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
                 command.append(" && ");
                 command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
-                return new SimpleCommand(command.toString(), agent, "Install puppet client");
+                return new SimpleCommand(command.toString(), initLocalAgent(), "Install puppet client");
 
             case 2:
                 command = new StringBuilder();
                 command.append(format("sudo unzip %s -d /etc/puppet", pathToBinaries.toString()));
-                return new SimpleCommand(command.toString(), agent, "Unzip the CDEC binaries");
+                return new SimpleCommand(command.toString(), initLocalAgent(), "Unzip the CDEC binaries");
 
 
             default:
                 throw new IllegalArgumentException(String.format("Step number %d is out of range", step));
         }
-    }
-
-    protected Agent getSecureAgent(AgentConfig config) throws ConfigException, AgentException {
-        return new SecureShellAgent(config.getHost(),
-                                    config.getPort(),
-                                    config.getUser(),
-                                    config.getPrivateKeyFileAbsolutePath(),
-                                    null
-        );
     }
 
     /** {@inheritDoc} */

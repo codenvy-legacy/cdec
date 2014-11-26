@@ -178,7 +178,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     /** @return "true" only if only user typed line equals "y". */
     protected boolean askUser(String prompt) {
-        printInfo(prompt);
+        printInfo(prompt + " [y/N]");
 
         String userAnswer;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
@@ -186,6 +186,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
             printLineSeparator();
         } catch (IOException e) {
             return false;
+        } finally {
+            printInfo("\n");
         }
 
         return userAnswer != null && userAnswer.equalsIgnoreCase("y");

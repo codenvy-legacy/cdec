@@ -24,13 +24,11 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.ConfigFactory;
 
-import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -49,8 +47,6 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstaller {
 
-    private static final String PRIVATE_KEY = TestInstaller.class.getClassLoader().getResource("../test-classes/test_rsa").getFile();
-
     @Mock
     private ConfigFactory configFactory;
     private Installer     installer;
@@ -66,23 +62,21 @@ public class TestInstaller {
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
         InstallOptions options = new InstallOptions().setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
 
-        doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateDefaultConfig(options);
+        doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateConfig(options);
 
         List<String> info = installer.getInstallInfo(artifact, options);
         assertTrue(info.size() > 0);
     }
 
-    // @Test TODO
+    @Test
     public void testInstall() throws Exception {
-        FileUtils.write(new File("target/key"), "key");
-
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
 
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
-        doReturn(new CdecConfig(new HashMap<String, String>())).when(configFactory).loadOrCreateDefaultConfig(options);  // TODO set CdecConfig properties
+        doReturn(new CdecConfig(new HashMap<String, String>())).when(configFactory).loadOrCreateConfig(options);
         doNothing().when(installer).executeCommand(any(Command.class));
 
         installer.install(artifact, Paths.get("some path"), options);

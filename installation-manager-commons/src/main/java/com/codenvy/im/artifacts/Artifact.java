@@ -64,9 +64,6 @@ public interface Artifact extends Comparable<Artifact> {
     @Nullable
     Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException;
 
-    /** Validates artifact properties */
-    public void validateProperties(Map properties) throws IOException;
-
     /** @return the list of downloaded versions */
     SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
 }

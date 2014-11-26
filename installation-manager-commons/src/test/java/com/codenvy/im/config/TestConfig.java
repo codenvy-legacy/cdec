@@ -23,8 +23,10 @@ import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 import static org.apache.commons.io.FileUtils.write;
 import static org.mockito.Matchers.any;
@@ -53,7 +55,7 @@ public class TestConfig {
 
     @Test
     public void testDefaultConfig() throws Exception {
-        Config config = configFactory.loadOrCreateDefaultConfig(new InstallOptions());
+        Config config = configFactory.loadOrCreateConfig(new InstallOptions());
         assertTrue(config instanceof DefaultConfig);
     }
 
@@ -66,7 +68,7 @@ public class TestConfig {
 
         write(configPath.resolve(ConfigFactory.CDEC_SINGLE_NODE_PROPERTIES_FILE).toFile(), "host=172.0.0.1\nuser=anonym\npassword=secret\n");
 
-        Config config = configFactory.loadOrCreateDefaultConfig(installOptions);
+        Config config = configFactory.loadOrCreateConfig(installOptions);
         assertTrue(config instanceof CdecConfig);
 
         CdecConfig cdecConfig = (CdecConfig)config;
@@ -82,6 +84,23 @@ public class TestConfig {
 
         write(configPath.resolve(ConfigFactory.CDEC_SINGLE_NODE_PROPERTIES_FILE).toFile(), "host=172.0.0.1\nuser=anonym\npassword=secret\n");
 
-        configFactory.loadOrCreateDefaultConfig(installOptions);
+        configFactory.loadOrCreateConfig(installOptions);
+    }
+
+    @Test
+    public void testWriteConfig() throws Exception {
+        CdecConfig cdecConfig = new CdecConfig(new HashMap<String, String>() {{
+            put("mongo_admin_password", "mongoPassword");
+            put("mongo_user_password", "mongoUserPassword");
+            put("mongo_orgservice_user_password", "mongoOrgServiceUserPassword");
+        }});
+
+        configFactory.writeConfig(cdecConfig);
+        String result = FileUtils.readFileToString(new File("target/config/cdec-single-node.properties"));
+        assertTrue(result.endsWith("mongo_admin_password=mongoPassword\n" +
+                                   "mongo_user_password=mongoUserPassword\n" +
+                                   "puppet_version=puppet-3.4.3-1.el6.noarch\n" +
+                                   "mongo_orgservice_user_password=mongoOrgServiceUserPassword\n" +
+                                   "puppet_resource_url=http\\://yum.puppetlabs.com/el/6/products/x86_64/puppetlabs-release-6-7.noarch.rpm\n"));
     }
 }

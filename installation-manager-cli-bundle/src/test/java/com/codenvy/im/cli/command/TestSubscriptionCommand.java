@@ -19,7 +19,6 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -31,12 +30,14 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /** @author Anatoliy Bazko */
-public class SubscriptionCommandTest {
+public class TestSubscriptionCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
