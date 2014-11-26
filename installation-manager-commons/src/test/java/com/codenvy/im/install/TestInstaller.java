@@ -79,7 +79,7 @@ public class TestInstaller {
         doReturn(new CdecConfig(new HashMap<String, String>())).when(configFactory).loadOrCreateConfig(options);
         doNothing().when(installer).executeCommand(any(Command.class));
 
-        installer.install(artifact, Paths.get("some path"), options);
+        installer.install(artifact, null, Paths.get("some path"), options);
         verify(installer).executeCommand(any(Command.class));
     }
 

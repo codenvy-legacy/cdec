@@ -95,7 +95,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(Path pathToBinaries, Config config, InstallOptions installOptions) throws IOException {
+    public Command getInstallCommand(Version version, Path pathToBinaries, Config config, InstallOptions installOptions) throws IOException {
         if (!(config instanceof CdecConfig)) {
             throw new IllegalArgumentException("Unexpected config class " + config.getClass().getName());
         }
@@ -107,7 +107,7 @@ public class CDECArtifact extends AbstractArtifact {
 
         switch (step) {
             case 0:
-                command = new StringBuilder();
+                command = new StringBuilder();  // TODO use MacroCommand
                 command.append("sudo setenforce 0");
                 command.append(" && ");
                 command.append("sudo cp /etc/selinux/config /etc/selinux/config.bak");
@@ -116,14 +116,14 @@ public class CDECArtifact extends AbstractArtifact {
                 return new SimpleCommand(command.toString(), initLocalAgent(), "Disable SELinux");
 
             case 1:
-                command = new StringBuilder();
+                command = new StringBuilder();   // TODO use MacroCommand
                 command.append(format("sudo rpm -ivh %s", cdecConfig.getPuppetResourceUrl()));
                 command.append(" && ");
                 command.append(format("sudo yum install %s -y", cdecConfig.getPuppetVersion()));
                 return new SimpleCommand(command.toString(), initLocalAgent(), "Install puppet client");
 
             case 2:
-                command = new StringBuilder();
+                command = new StringBuilder();   // TODO use UnpackCommand
                 command.append(format("sudo unzip %s -d /etc/puppet", pathToBinaries.toString()));
                 return new SimpleCommand(command.toString(), initLocalAgent(), "Unzip the CDEC binaries");
 

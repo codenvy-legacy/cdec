@@ -143,7 +143,7 @@ public class InstallationManagerImpl implements InstallationManager {
             }
 
             if (artifact.isInstallable(version, authToken)) {
-                installer.install(artifact, pathToBinaries, options);
+                installer.install(artifact, version, pathToBinaries, options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
             }

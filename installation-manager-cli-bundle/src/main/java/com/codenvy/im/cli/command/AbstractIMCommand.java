@@ -198,12 +198,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         printInfo(prompt);
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-            String userAnswer = reader.readLine();
-            if (userAnswer.isEmpty()) {
-                return null;
-            }
-
-            return userAnswer;
+            return reader.readLine();
         } catch (IOException e) {
             return null;
         }

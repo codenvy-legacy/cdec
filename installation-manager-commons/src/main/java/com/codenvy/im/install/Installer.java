@@ -44,10 +44,10 @@ public class Installer {
     }
 
     /** Installs specific artifact. */
-    public void install(Artifact artifact, Path pathToBinaries, InstallOptions options) throws IOException {
+    public void install(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
         Config config = configFactory.loadOrCreateConfig(options);
 
-        Command command = artifact.getInstallCommand(pathToBinaries, config, options);
+        Command command = artifact.getInstallCommand(version, pathToBinaries, config, options);
         executeCommand(command);
     }
 

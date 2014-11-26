@@ -108,34 +108,6 @@ public abstract class AbstractArtifact implements Artifact {
         return getPriority() - o.getPriority();
     }
 
-    protected void unpack(Path pathToBinaries, Path unpackToDir) throws IOException, URISyntaxException {
-        try (TarArchiveInputStream in = new TarArchiveInputStream(
-                new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pathToBinaries))))) {
-
-            TarArchiveEntry tarEntry;
-            while ((tarEntry = in.getNextTarEntry()) != null) {
-                Path destPath = unpackToDir.resolve(tarEntry.getName());
-
-                if (tarEntry.isDirectory()) {
-                    if (!Files.exists(destPath)) {
-                        createDirectories(destPath);
-                    }
-                } else {
-                    if (!Files.exists(destPath.getParent())) {
-                        createDirectories(destPath.getParent());
-                    }
-
-                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
-                        copy(in, out);
-                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
-                    }
-                }
-            }
-        }
-
-        LOG.info("Unpacked " + pathToBinaries + " into " + unpackToDir);
-    }
-
     /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {

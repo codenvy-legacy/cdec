@@ -22,13 +22,13 @@ import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -44,11 +44,10 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
- * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
-public class TestCDECArtifact {
-    private CDECArtifact spyCdecArtifact;
+public class TestInstallManagerArtifact {
+    private InstallManagerArtifact spyImArtifact;
 
     @Mock
     private HttpTransport mockTransport;
@@ -56,60 +55,52 @@ public class TestCDECArtifact {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact("", mockTransport));
+        spyImArtifact = spy(new InstallManagerArtifact());
     }
 
     @Test
     public void testGetInstallInfo() throws Exception {
-        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(1);
 
-        List<String> info = spyCdecArtifact.getInstallInfo(config, options);
+        List<String> info = spyImArtifact.getInstallInfo(null, options);
         assertNotNull(info);
-        assertTrue(info.size() > 1);
+        assertEquals(info.toString(), "[Unpack downloaded installation manager, Update installation manager]");
     }
 
     @Test
     public void testGetInstallCommand() throws Exception {
-        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
-        options.setStep(1);
+        options.setStep(0);
 
-        Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), config, options);
-        assertNotNull(command);
+//  TODO      Command command = spyImArtifact.getInstallCommand(Version.valueOf("1.0.0"), Paths.get("some path"), null, options);
+//        assertNotNull(command);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testGetInstallCommandError() throws Exception {
-        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
         options.setStep(Integer.MAX_VALUE);
 
-        spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), config, options);
+        Path executionDir = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+        spyImArtifact.getInstallCommand(Version.valueOf("1.0.0"), executionDir, null, options);
     }
 
     @Test
     public void testGetInstalledVersion() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+        Version version = spyImArtifact.getInstalledVersion("authToken");
+//  TODO      assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
+    }
 
-        Version version = spyCdecArtifact.getInstalledVersion("authToken");
-        assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
+    @Test
+    public void testGetInstalledPath() throws Exception {
+        // TODO
     }
 
     @Test
     public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
-        doThrow(new IOException()).when(mockTransport).doOption(endsWith("api/"), eq("authToken"));
-        Version version = spyCdecArtifact.getInstalledVersion("authToken");
-        assertNull(version);
-    }
-
-    @Test(expectedExceptions = IOException.class)
-    public void testGetInstalledVersionError() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"some text\"}");
-        spyCdecArtifact.getInstalledVersion("authToken");
+//  TODO      doThrow(new IOException()).when(mockTransport).doOption(endsWith("api/"), eq("authToken"));
+//        Version version = spyImArtifact.getInstalledVersion("authToken");
+//        assertNull(version);
     }
 }

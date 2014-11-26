@@ -48,6 +48,7 @@ import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
+import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
@@ -249,5 +250,17 @@ public class Commons {
 
             addAll(s);
         }
+    }
+
+    /**
+     * @return "[artifact]-[delimeter]-[version]-binary.tar.gz"
+     */
+    public static String getBinaryFileName(Artifact artifact, Version version, String artifactAndVersionDelimeter) {
+        if (artifactAndVersionDelimeter == null) {
+            return format("%s-%s-binary.tar.gz", artifact.getName(), version.toString());
+        } else {
+            return format("%s-%s-%s-binary.tar.gz", artifact.getName(), artifactAndVersionDelimeter, version.toString());
+        }
+
     }
 }

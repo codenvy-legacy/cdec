@@ -22,6 +22,6 @@ package com.codenvy.im.config;
  */
 public interface ConfigProperty {
 
-    /** @retrun property default value */
+    /** @return property default value */
     String getDefaultValue();
 }
