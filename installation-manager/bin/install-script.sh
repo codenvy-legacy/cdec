@@ -129,7 +129,7 @@ installOnOpensuse() {
 
 # $1 - command name
 installIfNeedCommand() {
-    command -v $1 >/dev/null 2>&1 || {     # check if requered command had already installed earlier
+    command -v $1 >/dev/null 2>&1 || { # check if requered command had already installed earlier
         echo "> Installation $1 "
         installOn${os} $1
         echo "> $1 has been installed"
@@ -217,61 +217,73 @@ launchingIMService() {
     sudo /etc/init.d/${SERVICE_NAME} start
 }
 
-if [ -f /etc/debian_version ]; then
-    os="Debian"
-elif [ -f /etc/redhat-release ]; then
-    os="Redhat"
-elif [ -f /etc/os-release ]; then
-    os="Opensuse"
-else
-    echo "Operation system isn't supported."
-    exit
-fi
+detectOS() {
+    if [ -f /etc/debian_version ]; then
+        os="Debian"
+    elif [ -f /etc/redhat-release ]; then
+        os="Redhat"
+    elif [ -f /etc/os-release ]; then
+        os="Opensuse"
+    else
+        echo "Operation system isn't supported."
+        exit
+    fi
 
-echo "System is run on ${os} based distributive."
-echo ""
-echo "Wellcome to Codenvy. This programm will install Codenvy onto this node."
-echo "When the installation is complete, the Codenvy URL will be displayed."
-echo ""
-echo "The installer will:"
-echo "1. Install java"
-echo "2. Install the Codenvy Installation Manager, which runs as a CLI and daemon"
-echo "3. Download Codenvy"
-echo "4. Install Codenvy by installing Puppte and configuring system parameters"
-echo "5. Boot Codenvy"
-echo ""
-read -p "Press any key to continue" -n1 -s
-echo ""
-echo ""
+    cd ~
+}
 
-cd ~
+execuetImCliCommand() {
+    echo ""
+    echo "> $1"
+    ~/codenvy-cli/bin/codenvy $2 $3 $4
+
+    RETVAL=$?
+    [ ${RETVAL} -ne 0 ] && exit
+}
+
+printPreInstallInfo() {
+    echo "System is run on ${os} based distributive."
+    echo ""
+    echo "Wellcome to Codenvy. This programm will install Codenvy onto this node."
+    echo "When the installation is complete, the Codenvy URL will be displayed."
+    echo ""
+    echo "The installer will:"
+    echo "1. Install java"
+    echo "2. Install the Codenvy Installation Manager, which runs as a CLI and daemon"
+    echo "3. Download Codenvy"
+    echo "4. Install Codenvy by installing Puppte and configuring system parameters"
+    echo "5. Boot Codenvy"
+    echo ""
+    read -p "Press any key to continue" -n1 -s
+    echo ""
+    echo ""
+}
+
+printPostInstallInfo() {
+    dnsFromConfig=`cat /home/codenvy-shared/config/cdec-single-node.properties | grep dns_name | cut -d '=' -f2`
+    echo ""
+    echo "Codenvy is installed and booted, and you can access the system at https://"${dnsFromConfig}"/"
+}
+
+detectOS
+
+printPreInstallInfo
 
 createCodenvyUserAndGroup
 
 installIfNeedCommand curl
 installIfNeedCommand tar
 installIfNeedCommand wget
+
 installJava
 installIMCli
-
 registerIMServiceOn${os}
 launchingIMService
 
-echo ""
-echo "> Loging into Codenvy"
-~/codenvy-cli/bin/codenvy login --remote "update-server"
+execuetImCliCommand "> Loging into Codenvy" login --remote update-server
+execuetImCliCommand "> Downloading CDEC binaries" im-download cdec
+execuetImCliCommand "> Checking the list of downloaded binaries" im-download --list-local cdec
+execuetImCliCommand "> Installing the latest CDEC version" im-install cdec
+execuetImCliCommand "> Checking the list of installed artifacts" im-install --list
 
-echo ""
-echo "> Downloading CDEC binaries"
-~/codenvy-cli/bin/codenvy im-download cdec
-
-echo ""
-echo "> Checking list of downloaded binaries"
-~/codenvy-cli/bin/codenvy im-download --list-local cdec
-
-echo ""
-echo "> Installing the latest CDEC version"
-~/codenvy-cli/bin/codenvy im-install cdec
-
-
-
+printPostInstallInfo
