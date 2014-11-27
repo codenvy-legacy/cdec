@@ -31,7 +31,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class MacroCommandTest {
+public class TestMacroCommand {
     @Test
     public void testDescription() {
         MacroCommand testCommand = new MacroCommand(Collections.<Command>emptyList(), "macro");
@@ -62,8 +62,7 @@ public class MacroCommandTest {
         assertEquals(result, "command1/ncommand2/n");
     }
 
-    @Test(expectedExceptions=CommandException.class,
-          expectedExceptionsMessageRegExp = "exception")
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = "exception")
     public void testInnerCommandException() throws CommandException {
         final DummyCommand spyDummyCommand = spy(new DummyCommand("command1"));
         doThrow(new CommandException("exception", new IOException())).when(spyDummyCommand).execute();

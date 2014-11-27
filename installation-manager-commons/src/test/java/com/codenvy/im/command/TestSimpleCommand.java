@@ -32,7 +32,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class SimpleCommandTest {
+public class TestSimpleCommand {
 
     @Mock
     private SecureShellAgent mockAgent;

@@ -25,20 +25,14 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
@@ -51,13 +45,8 @@ import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Version.valueOf;
-import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
-import static java.nio.file.Files.newInputStream;
-import static java.nio.file.Files.newOutputStream;
-import static java.nio.file.Files.setLastModifiedTime;
-import static org.apache.commons.io.IOUtils.copy;
 
 /**
  * @author Anatoliy Bazko
@@ -148,7 +137,7 @@ public abstract class AbstractArtifact implements Artifact {
         return null;
     }
 
-    /** @retrun the list of downloaded list */
+    /** @return the list of downloaded list */
     @Override
     public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException {
         SortedMap<Version, Path> versions = new TreeMap<>();
@@ -195,7 +184,7 @@ public abstract class AbstractArtifact implements Artifact {
         return m;
     }
 
-    /** @retrun artifact properties */
+    /** @return artifact properties */
     @Override
     public Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName() + "/" + version.toString());

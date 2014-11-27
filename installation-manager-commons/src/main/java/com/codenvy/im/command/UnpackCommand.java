@@ -39,8 +39,8 @@ import static org.apache.commons.io.IOUtils.copy;
 /** @author Dmytro Nochevnov */
 public class UnpackCommand implements Command {
     private final String description;
-    private final Path pack;
-    private final Path dirToUnpack;
+    private final Path   pack;
+    private final Path   dirToUnpack;
 
     public UnpackCommand(Path pack, Path dirToUnpack, String description) {
         this.pack = pack;
@@ -51,8 +51,7 @@ public class UnpackCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
-        try (TarArchiveInputStream in =
-                 new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
+        try (TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
 
             TarArchiveEntry tarEntry;
             while ((tarEntry = in.getNextTarEntry()) != null) {

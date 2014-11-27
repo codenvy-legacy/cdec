@@ -257,6 +257,11 @@ printPreInstallInfo() {
     echo "4. Install Codenvy by installing Puppte and configuring system parameters"
     echo "5. Boot Codenvy"
     echo ""
+    echo "Minimum recommended configuration"
+    echo "RAM           :   8GB"
+    echo "CPU	        :   4 cores"
+    echo "Disc Space    :   300 GB"
+
     read -p "Press any key to continue" -n1 -s
     echo ""
     echo ""

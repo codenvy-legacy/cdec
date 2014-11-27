@@ -32,7 +32,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 /** @author Dmytro Nochevnov */
-public class PreferencesStorageTest {
+public class TestPreferencesStorage {
     private final static String UPDATE_SERVER_REMOTE_NAME = "update-server";
     private final static String TEST_TOKEN                = "authToken";
     private final static String TEST_ACCOUNT_ID           = "test-account-id";

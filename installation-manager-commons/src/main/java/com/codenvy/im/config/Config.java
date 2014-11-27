@@ -28,7 +28,7 @@ public abstract class Config {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
-    /** @retrun the property value */
+    /** @return the property value */
     public final String getValue(ConfigProperty property) {
         String value = properties.get(property.toString().toLowerCase());
         return value != null ? value : property.getDefaultValue();

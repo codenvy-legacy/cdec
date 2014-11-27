@@ -73,7 +73,7 @@ public class TestAbstractArtifact {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyTestArtifact = spy(new AbstractArtifactTest(TEST_ARTIFACT_NAME));
+        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME));
     }
 
     @AfterMethod
@@ -202,8 +202,8 @@ public class TestAbstractArtifact {
         spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT, mockTransport);
     }
 
-    private static class AbstractArtifactTest extends AbstractArtifact {
-        public AbstractArtifactTest(String name) {
+    private static class TestedAbstractArtifact extends AbstractArtifact {
+        public TestedAbstractArtifact(String name) {
             super(name);
         }
 

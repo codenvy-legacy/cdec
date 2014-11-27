@@ -51,7 +51,7 @@ public class Installer {
         executeCommand(command);
     }
 
-    /** @retrun installation information. */
+    /** @return installation information. */
     public List<String> getInstallInfo(Artifact artifact, InstallOptions options) throws IOException {
         Config config = configFactory.loadOrCreateConfig(options);
         return artifact.getInstallInfo(config, options);

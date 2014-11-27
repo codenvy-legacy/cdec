@@ -26,7 +26,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class UnpackCommandTest {
+public class TestUnpackCommand {
     @Test
     public void testDescription() {
         UnpackCommand testCommand = new UnpackCommand(Paths.get("archive"), Paths.get("dirToUnpack"), "unpack");

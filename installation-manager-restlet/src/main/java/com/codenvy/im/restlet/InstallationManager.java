@@ -34,7 +34,7 @@ import java.util.SortedMap;
  */
 public interface InstallationManager {
 
-    /** @retrun installation information. */
+    /** @return installation information. */
     List<String> getInstallInfo(Artifact artifact, Version version, InstallOptions options) throws IOException;
 
     /**

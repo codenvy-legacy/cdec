@@ -17,31 +17,22 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.command.Command;
-import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.Matchers.endsWith;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov

@@ -100,7 +100,7 @@ public interface InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     public String install(JacksonRepresentation<Request> requestRep) throws IOException;
 
-    /** @retrun installation information. */
+    /** @return installation information. */
     @POST
     @Path("install-info")
     @Consumes(MediaType.APPLICATION_JSON)
