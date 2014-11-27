@@ -33,10 +33,14 @@ import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.setLastModifiedTime;
-import static org.apache.commons.io.FileUtils.cleanDirectory;
 import static org.apache.commons.io.IOUtils.copy;
 
-/** @author Dmytro Nochevnov */
+/**
+ * This command unpacks archives of "tar.gz" type into the directory to unpack.
+ * If directory to unpack is non-existed, it will be created.
+ *
+ * @author Dmytro Nochevnov
+ */
 public class UnpackCommand implements Command {
     private final String description;
     private final Path   pack;
@@ -52,26 +56,16 @@ public class UnpackCommand implements Command {
     @Override
     public String execute() throws CommandException {
         try (TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
+            if (!Files.exists(dirToUnpack)) {
+                createDirectories(dirToUnpack);
+            }
 
             TarArchiveEntry tarEntry;
             while ((tarEntry = in.getNextTarEntry()) != null) {
                 Path destPath = dirToUnpack.resolve(tarEntry.getName());
-
-                if (tarEntry.isDirectory()) {
-                    if (!Files.exists(destPath)) {
-                        createDirectories(destPath);
-                    }
-                } else {
-                    if (!Files.exists(destPath.getParent())) {
-                        createDirectories(destPath.getParent());
-                    } else {
-                        cleanDirectory(destPath.toFile());
-                    }
-
-                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
-                        copy(in, out);
-                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
-                    }
+                try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
+                    copy(in, out);
+                    setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
                 }
             }
         } catch (IOException e) {

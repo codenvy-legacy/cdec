@@ -17,19 +17,42 @@
  */
 package com.codenvy.im.command;
 
+import org.apache.commons.io.FileUtils;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 
+import static org.apache.commons.io.FileUtils.listFiles;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class TestUnpackCommand {
+    private static final Path TEST_RESOURCE_ROOT = Paths.get(TestUnpackCommand.class.getClassLoader().getResource("../test-classes/").getPath());
+
+    private static final String PACK_NAME = "test_installation-manager-1.0.0-binary.tar.gz";
+    private static final Path PATH_TO_PACK = TEST_RESOURCE_ROOT.resolve(PACK_NAME);
+
+    private static final String DIR_TO_UNPACK_NAME = "unpack";
+    private static final Path DIR_TO_UNPACK = TEST_RESOURCE_ROOT.resolve(DIR_TO_UNPACK_NAME);
+
+    @AfterMethod
+    public void deleteUnpackedFiles() throws IOException {
+        FileUtils.deleteDirectory(DIR_TO_UNPACK.toFile());
+    }
+
     @Test
     public void testDescription() {
-        UnpackCommand testCommand = new UnpackCommand(Paths.get("archive"), Paths.get("dirToUnpack"), "unpack");
+        UnpackCommand testCommand = new UnpackCommand(PATH_TO_PACK, DIR_TO_UNPACK, "unpack");
         assertEquals(testCommand.getDescription(), "unpack");
     }
 
@@ -41,12 +64,20 @@ public class TestUnpackCommand {
 
     @Test
     public void testExecution() throws CommandException {
-        UnpackCommand testCommand = new UnpackCommand(Paths.get("archive"), Paths.get("dirToUnpack"), "unpack");
-        // TODO String result = testCommand.execute();
+        UnpackCommand testCommand = new UnpackCommand(PATH_TO_PACK, DIR_TO_UNPACK, "unpack");
+        String result = testCommand.execute();
+        assertNull(result);
+
+        Collection<File> unpackedFiles = listFiles(DIR_TO_UNPACK.toFile(), null, true);
+        assertEquals(unpackedFiles.size(), 2);
+        assertTrue(unpackedFiles.toString().contains("installation-manager-1.0.0-binary.tar.gz"));
+        assertTrue(unpackedFiles.toString().contains("installation-manager-cli-1.0.0-binary.tar.gz"));
     }
 
-    @Test
+    @Test(expectedExceptions = CommandException.class,
+          expectedExceptionsMessageRegExp = "non-existed")
     public void testCommandException() throws CommandException {
-        // TODO
+        UnpackCommand testCommand = new UnpackCommand(Paths.get("non-existed"), DIR_TO_UNPACK, "unpack");
+        testCommand.execute();
     }
 }

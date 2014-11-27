@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.inject.TypeLiteral;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -255,7 +256,7 @@ public class Commons {
     /**
      * @return "[artifact]-[delimeter]-[version]-binary.tar.gz"
      */
-    public static String getBinaryFileName(Artifact artifact, Version version, String artifactAndVersionDelimeter) {
+    public static String getBinaryFileName(Artifact artifact, Version version, @Nullable String artifactAndVersionDelimeter) {
         if (artifactAndVersionDelimeter == null) {
             return format("%s-%s-binary.tar.gz", artifact.getName(), version.toString());
         } else {
