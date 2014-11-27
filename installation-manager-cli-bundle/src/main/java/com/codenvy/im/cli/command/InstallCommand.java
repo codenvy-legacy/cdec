@@ -93,6 +93,7 @@ public class InstallCommand extends AbstractIMCommand {
             }
         } catch (Exception e) {
             printError(e);
+            exitIfNotInteractive();
         }
 
         return null;
@@ -113,6 +114,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
             printError(response);
+            exitIfNotInteractive();
             return null;
         }
 
@@ -127,6 +129,7 @@ public class InstallCommand extends AbstractIMCommand {
             if (responseObj.getStatus() == ResponseCode.ERROR) {
                 printInfo(" [FAIL]\n");
                 printError(response);
+                exitIfNotInteractive();
                 return null;
             } else {
                 printInfo(" [OK]\n");

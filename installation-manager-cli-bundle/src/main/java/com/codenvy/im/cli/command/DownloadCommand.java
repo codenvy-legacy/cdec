@@ -69,6 +69,7 @@ public class DownloadCommand extends AbstractIMCommand {
             }
         } catch (Exception e) {
             printError(e);
+            exitIfNotInteractive();
         }
 
         return null;
@@ -91,6 +92,7 @@ public class DownloadCommand extends AbstractIMCommand {
         Response responseObj = Response.fromJson(startResponse);
         if (responseObj.getStatus() != ResponseCode.OK) {
             printResponse(startResponse);
+            exitIfNotInteractive();
             return;
         }
 
@@ -100,7 +102,7 @@ public class DownloadCommand extends AbstractIMCommand {
             String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
             if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
                 printResponse(statusResponse);
-                break;
+                exitIfNotInteractive();
             }
 
             DownloadStatusInfo downloadStatusInfo = Response.fromJson(statusResponse).getDownloadInfo();
@@ -122,7 +124,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 cleanCurrentLine();
 
                 printResponse(downloadStatusInfo.getDownloadResult().toJson());
-                break;
+                exitIfNotInteractive();
             }
         }
     }

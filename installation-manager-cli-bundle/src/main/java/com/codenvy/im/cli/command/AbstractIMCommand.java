@@ -290,4 +290,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
         return remote.getUrl();
     }
+
+    protected void exitIfNotInteractive() {
+        if (!isInteractive()) {
+            System.exit(1);
+        }
+    }
 }

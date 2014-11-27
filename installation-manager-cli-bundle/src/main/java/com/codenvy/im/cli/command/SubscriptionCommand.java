@@ -44,6 +44,7 @@ public class SubscriptionCommand extends AbstractIMCommand {
 
         } catch (Exception e) {
             printError(e);
+            exitIfNotInteractive();
         }
 
         return null;

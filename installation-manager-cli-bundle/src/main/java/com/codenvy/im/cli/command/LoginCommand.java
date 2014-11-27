@@ -86,6 +86,7 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
                 printError(String.format("Login failed on remote '%s'.", remoteName));
+                exitIfNotInteractive();
                 return null;
             }
 
@@ -93,6 +94,7 @@ public class LoginCommand extends AbstractIMCommand {
                 printSuccess(String.format("Login success on remote '%s' [%s].",
                                            remoteName,
                                            getRemoteUrlByName(remoteName)));
+                exitIfNotInteractive();
                 return null;
             }
 
@@ -104,6 +106,7 @@ public class LoginCommand extends AbstractIMCommand {
                     printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
                 preferencesStorage.invalidate();
+                exitIfNotInteractive();
                 return null;
             }
 
@@ -121,6 +124,7 @@ public class LoginCommand extends AbstractIMCommand {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
             }
+            exitIfNotInteractive();
         }
 
         return null;
