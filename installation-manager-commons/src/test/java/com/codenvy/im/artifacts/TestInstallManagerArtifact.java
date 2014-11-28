@@ -69,23 +69,22 @@ public class TestInstallManagerArtifact {
         assertEquals(command.toString(), "[rm -rf /parent/unpack, " +
                                          "Unpack '/parent/child' into '/parent/unpack', " +
                                          "Unpack '/parent/unpack/installation-manager-1.0.0-binary.tar.gz' into '/parent/unpack/daemon', " +
-                                         "Unpack '/parent/unpack/installation-manager-cli-1.0.0-binary.tar.gz' into '/parent/unpack/cli', " +
-                                         "chmod 446 /parent/unpack/cli; ]");
+                                         "Unpack '/parent/unpack/installation-manager-cli-1.0.0-binary.tar.gz' into '/parent/unpack/cli']");
 
         options.setStep(1);
         command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
         assertEquals(command.toString(), "[[echo 'rm -rf /home/dummy-user/codenvy-cli/*; " +
                                                  "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli; " +
-                                                 "chmod +x /bin/*; " +
+                                                 "chmod +x /home/dummy-user/codenvy-cli/bin/*; " +
                                                  "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh; " +
                                            "' > /home/codenvy-shared/codenvy-cli-update-script.sh;, chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh; " +
                                            "], " +
                                            "sleep 5; " +
-                                           testExecutionPath + "/installation-manager stop; " +
+                                           "service codenvy-installation-manager stop; " +
                                            "rm -rf " + testExecutionPath + "/*; " +
                                            "cp -r /parent/unpack/daemon/* " + testExecutionPath + "; " +
                                            "chmod +x " + testExecutionPath + "/installation-manager; " +
-                                           testExecutionPath + "/installation-manager start; " +
+                                           "service codenvy-installation-manager start; " +
                                          "]");
     }
 

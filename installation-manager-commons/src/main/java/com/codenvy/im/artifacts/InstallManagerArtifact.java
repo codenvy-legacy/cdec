@@ -109,15 +109,12 @@ public class InstallManagerArtifact extends AbstractArtifact {
                     final String cliClientPackName = Commons.getBinaryFileName(this, version, "cli");
 
                     return new MacroCommand(new ArrayList<Command>() {{
-                        add(new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack"));
+                        add(new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack, if exist."));
                         add(new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager"));
                         add(new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon,
                                               "Unpack installation manager daemon"));
                         add(new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient,
                                               "Unpack installation manager cli client"));
-                        add(new SimpleCommand(format("chmod 446 %s; ",
-                                                      pathToNewVersionOfCliClient.toFile().getAbsolutePath()),
-                                          syncAgent, "Set permissions to read update by cli client user."));
                     }}, "Unpack downloaded installation manager");
 
                 case 1:
@@ -130,7 +127,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                                    "rm -f %4$s; ",         // remove update script after all
                                                                    cliClientDir.toAbsolutePath(),
                                                                    pathToNewVersionOfCliClient.toAbsolutePath(),
-                                                                   cliClientDir.resolve("/bin/*").toAbsolutePath(),
+                                                                   cliClientDir.resolve("bin/*").toAbsolutePath(),
                                                                    PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath());
 
                     final Command updateCliClientCommand = new MacroCommand(new ArrayList<Command>() {{
@@ -143,11 +140,11 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
                     final Command updateDaemonCommand =
                         new SimpleCommand(format("sleep 5; " +   // a little bit time to answer to CLI before updating daemon
-                                                 "%1$s/installation-manager stop; " +     // stop daemon
+                                                 "service codenvy-installation-manager stop; " +     // stop daemon
                                                  "rm -rf %1$s/*; " +                      // remove content of directory with daemon
                                                  "cp -r %2$s/* %1$s; " +                  // copy update into the directory with daemon
                                                  "chmod +x %1$s/installation-manager; " + // set permission to execute daemon script
-                                                 "%1$s/installation-manager start; ",     // start daemon
+                                                 "service codenvy-installation-manager start; ",     // start daemon
                                                  getInstalledPath().toAbsolutePath(),
                                                  pathToNewVersionOfDaemon.toAbsolutePath(),
                                                  dirToUnpack.toAbsolutePath()),
