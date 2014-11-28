@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import static java.lang.String.format;
+
 /**
  * @author Anatoliy Bazko
  */
@@ -49,6 +51,9 @@ import java.util.Properties;
 public class InstallManagerArtifact extends AbstractArtifact {
     private static final Logger LOG = LoggerFactory.getLogger(InstallManagerArtifact.class);
     public static final String NAME = "installation-manager";
+
+    private static final String CODENVY_CLI_DIR_NAME = "codenvy-cli";
+    private static final Path PATH_TO_UPDATE_CLI_SCRIPT = Paths.get("/home/codenvy-shared/codenvy-cli-update-script.sh");
 
     @Inject
     public InstallManagerArtifact() {
@@ -80,51 +85,81 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
         return new ArrayList<String>() {{
-            add("Unpack downloaded installation manager");
+            add("Unpack update of installation manager");
             add("Update installation manager");
         }};
     }
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(Version version, Path pathToBinaries, Config config, InstallOptions installOptions) {
+    public Command getInstallCommand(Version version, final Path pathToBinaries, Config config, InstallOptions installOptions) {
         try {
             int step = installOptions.getStep();
 
-            final Agent agent = new LocalAgent();
-
             final Path dirToUnpack = pathToBinaries.getParent().resolve("unpack");
+            final Agent syncAgent = new LocalAgent();
+            final Agent asyncAgent = new LocalAgent(true);
+
+            final Path pathToNewVersionOfDaemon = dirToUnpack.resolve("daemon");
+            final Path pathToNewVersionOfCliClient = dirToUnpack.resolve("cli");
 
             switch (step) {
                 case 0:
-                    return new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager");
-
-                case 1:
-                    final String cliClientPackName = Commons.getBinaryFileName(this, version, "cli");
-                    final Path cliClientDir = Paths.get("");  // TODO
-                    final Command updateDaemonCommand = new MacroCommand(new ArrayList<Command>() {{
-                        add(new UnpackCommand(dirToUnpack.resolve(cliClientPackName), cliClientDir,
-                                              "Unpack installation manager cli client"));
-                    }}, "Update installation manager cli client");
-
                     final String imDaemonPackName = Commons.getBinaryFileName(this, version, null);
-                    final Path installedPath = getInstalledPath();
-                    final Command updateCliClientCommand = new MacroCommand(new ArrayList<Command>() {{
-                        add(new SimpleCommand("service codenvy-installation-manager stop", agent, "Stop daemon"));
-                        add(new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), installedPath,
-                                              "Unpack installation manager daemon"));
-                        add(new SimpleCommand(String.format("chmod +x %s/installation-manager", installedPath.toFile().getAbsolutePath()),
-                                              agent, "Set daemon file as executable"));
-                        add(new SimpleCommand("service installation-manager start", agent, "Start daemon"));
-                    }}, "Update installation manager daemon");
+                    final String cliClientPackName = Commons.getBinaryFileName(this, version, "cli");
 
                     return new MacroCommand(new ArrayList<Command>() {{
+                        add(new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack"));
+                        add(new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager"));
+                        add(new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon,
+                                              "Unpack installation manager daemon"));
+                        add(new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient,
+                                              "Unpack installation manager cli client"));
+                        add(new SimpleCommand(format("chmod 446 %s; ",
+                                                      pathToNewVersionOfCliClient.toFile().getAbsolutePath()),
+                                          syncAgent, "Set permissions to read update by cli client user."));
+                    }}, "Unpack downloaded installation manager");
+
+                case 1:
+
+                    final Path cliClientDir = Paths.get(format("%s/%s", installOptions.getCliUserHomeDir(), CODENVY_CLI_DIR_NAME));
+
+                    final String contentOfUpdateCliScript = format("rm -rf %1$s/*; " +     // remove content of cli client dir
+                                                                   "cp -r %2$s/* %1$s; " + // copy update into the user's home dir
+                                                                   "chmod +x %3$s; " +     // set permissions to execute CLI client scripts
+                                                                   "rm -f %4$s; ",         // remove update script after all
+                                                                   cliClientDir.toAbsolutePath(),
+                                                                   pathToNewVersionOfCliClient.toAbsolutePath(),
+                                                                   cliClientDir.resolve("/bin/*").toAbsolutePath(),
+                                                                   PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath());
+
+                    final Command updateCliClientCommand = new MacroCommand(new ArrayList<Command>() {{
+                        add(new SimpleCommand(format("echo '%s' > %s;", contentOfUpdateCliScript, PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
+                                              syncAgent, "Create script to update cli client"));
+
+                        add(new SimpleCommand(format("chmod 775 %s; ", PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
+                                              syncAgent, "Set permissions to execute update script"));
+                    }}, "Update installation manager CLI client");
+
+                    final Command updateDaemonCommand =
+                        new SimpleCommand(format("sleep 5; " +   // a little bit time to answer to CLI before updating daemon
+                                                 "%1$s/installation-manager stop; " +     // stop daemon
+                                                 "rm -rf %1$s/*; " +                      // remove content of directory with daemon
+                                                 "cp -r %2$s/* %1$s; " +                  // copy update into the directory with daemon
+                                                 "chmod +x %1$s/installation-manager; " + // set permission to execute daemon script
+                                                 "%1$s/installation-manager start; ",     // start daemon
+                                                 getInstalledPath().toAbsolutePath(),
+                                                 pathToNewVersionOfDaemon.toAbsolutePath(),
+                                                 dirToUnpack.toAbsolutePath()),
+                                          asyncAgent, "Update installation manager daemon");
+
+                    return new MacroCommand(new ArrayList<Command>() {{
+                        add(updateCliClientCommand);
                         add(updateDaemonCommand);
-                        add(updateCliClientCommand );
                     }}, "Update installation manager");
 
                 default:
-                    throw new IllegalArgumentException(String.format("Step number %d is out of range", step));
+                    throw new IllegalArgumentException(format("Step number %d is out of range", step));
             }
         } catch (URISyntaxException e) {
             LOG.error(e.getMessage(), e);

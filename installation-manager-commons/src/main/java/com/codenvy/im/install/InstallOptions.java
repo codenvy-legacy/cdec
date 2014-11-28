@@ -27,6 +27,7 @@ public class InstallOptions {
     private int                 step;
     private InstallType         installType;
     private Map<String, String> configProperties;
+    private String cliUserHomeDir;
 
     /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
     public static enum InstallType {
@@ -62,6 +63,15 @@ public class InstallOptions {
     /** Setter for {@link #configProperties} */
     public InstallOptions setConfigProperties(Map<String, String> configProperties) {
         this.configProperties = configProperties;
+        return this;
+    }
+
+    public String getCliUserHomeDir() {
+        return cliUserHomeDir;
+    }
+
+    public InstallOptions setCliUserHomeDir(String cliUserHomeDir) {
+        this.cliUserHomeDir = cliUserHomeDir;
         return this;
     }
 }

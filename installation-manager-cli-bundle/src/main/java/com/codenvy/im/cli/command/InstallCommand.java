@@ -126,13 +126,16 @@ public class InstallCommand extends AbstractIMCommand {
             response = installationManagerProxy.install(prepareRequest(installOptions));
             responseObj = Response.fromJson(response);
 
-            if (responseObj.getStatus() == ResponseCode.ERROR) {
-                printInfo(" [FAIL]\n");
-                printError(response);
-                exitIfNotInteractive();
-                return null;
-            } else {
-                printInfo(" [OK]\n");
+            switch (responseObj.getStatus()) {
+                case ERROR:
+                    printInfo(" [FAIL]\n");
+                    printError(response);
+                    exitIfNotInteractive();
+                    return null;
+
+                case OK:
+                    printInfo(" [OK]\n");
+                    break;
             }
         }
 
@@ -140,7 +143,7 @@ public class InstallCommand extends AbstractIMCommand {
         printResponse(response);
         responseObj = Response.fromJson(response);
 
-        if (isIMSuccessfullyUpdated(responseObj)) {
+        if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
             pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
             System.exit(0);
         }
@@ -200,7 +203,7 @@ public class InstallCommand extends AbstractIMCommand {
     protected InstallOptions enterInstallOptions(InstallOptions options) throws IOException {
         switch (artifactName) {
             case InstallManagerArtifact.NAME:
-                return options;
+                return options.setCliUserHomeDir(System.getProperty("user.home"));
 
             case CDECArtifact.NAME:
                 options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
@@ -257,6 +260,10 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected void confirmOrReenterInstallOptions(InstallOptions installOptions) throws IOException {
+        if (installOptions.getConfigProperties() == null) {
+            return;
+        }
+
         for (; ; ) {
             printInfo(toJson(installOptions.getConfigProperties()) + "\n");
             if (askUser("Continue installation")) {
