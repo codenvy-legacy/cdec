@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.Application;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Level;
 
 /**
  * @author Anatoliy Bazko

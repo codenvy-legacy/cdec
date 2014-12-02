@@ -21,6 +21,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+
 import org.mockito.Mock;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -54,7 +55,7 @@ public class TestInstallManagerArtifact {
         InstallOptions options = new InstallOptions();
         options.setStep(1);
 
-        List<String> info = imArtifact.getInstallInfo(null, options);
+        List<String> info = imArtifact.getInstallInfo(options);
         assertNotNull(info);
         assertEquals(info.toString(), "[Unpack update of installation manager, Update installation manager]");
     }
@@ -65,26 +66,27 @@ public class TestInstallManagerArtifact {
         options.setCliUserHomeDir("/home/dummy-user");
 
         options.setStep(0);
-        Command command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
+        Command command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
         assertEquals(command.toString(), "[rm -rf /parent/unpack, " +
                                          "Unpack '/parent/child' into '/parent/unpack', " +
                                          "Unpack '/parent/unpack/installation-manager-1.0.0-binary.tar.gz' into '/parent/unpack/daemon', " +
                                          "Unpack '/parent/unpack/installation-manager-cli-1.0.0-binary.tar.gz' into '/parent/unpack/cli']");
 
         options.setStep(1);
-        command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
+        command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
         assertEquals(command.toString(), "[[echo 'rm -rf /home/dummy-user/codenvy-cli/*; " +
-                                                 "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli; " +
-                                                 "chmod +x /home/dummy-user/codenvy-cli/bin/*; " +
-                                                 "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh; " +
-                                           "' > /home/codenvy-shared/codenvy-cli-update-script.sh;, chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh; " +
-                                           "], " +
-                                           "sleep 5; " +
-                                           "service codenvy-installation-manager stop; " +
-                                           "rm -rf " + testExecutionPath + "/*; " +
-                                           "cp -r /parent/unpack/daemon/* " + testExecutionPath + "; " +
-                                           "chmod +x " + testExecutionPath + "/installation-manager; " +
-                                           "service codenvy-installation-manager start; " +
+                                         "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli; " +
+                                         "chmod +x /home/dummy-user/codenvy-cli/bin/*; " +
+                                         "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh; " +
+                                         "' > /home/codenvy-shared/codenvy-cli-update-script.sh;, chmod 775 " +
+                                         "/home/codenvy-shared/codenvy-cli-update-script.sh; " +
+                                         "], " +
+                                         "sleep 5; " +
+                                         "service codenvy-installation-manager stop; " +
+                                         "rm -rf " + testExecutionPath + "/*; " +
+                                         "cp -r /parent/unpack/daemon/* " + testExecutionPath + "; " +
+                                         "chmod +x " + testExecutionPath + "/installation-manager; " +
+                                         "service codenvy-installation-manager start; " +
                                          "]");
     }
 
@@ -94,7 +96,7 @@ public class TestInstallManagerArtifact {
         InstallOptions options = new InstallOptions();
         options.setStep(1000);
 
-        imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
+        imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
     }
 
     @Test
