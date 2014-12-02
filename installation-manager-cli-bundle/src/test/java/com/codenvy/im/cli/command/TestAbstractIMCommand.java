@@ -86,6 +86,7 @@ public class TestAbstractIMCommand {
 
         spyCommand = spy(new TestedAbstractIMCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        doReturn(true).when(spyCommand).isInteractive();
 
         updateServerRemote = new Remote();
         updateServerRemote.setUrl(UPDATE_SERVER_URL);

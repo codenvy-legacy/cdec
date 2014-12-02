@@ -18,7 +18,6 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
-import com.codenvy.im.config.Config;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -46,10 +45,10 @@ public interface Artifact extends Comparable<Artifact> {
     int getPriority();
 
     /** @return the some information about future installation process */
-    List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException;
+    List<String> getInstallInfo(InstallOptions installOptions) throws IOException;
 
     /** @return list of commands to perform installation. */
-    Command getInstallCommand(@Nullable Version version, Path pathToBinaries, Config config, InstallOptions installOptions) throws IOException;
+    Command getInstallCommand(@Nullable Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     /**
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed

@@ -19,6 +19,7 @@ package com.codenvy.im.command;
 
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.agent.LocalAgent;
 
 import static java.lang.String.format;
 
@@ -32,6 +33,11 @@ public class SimpleCommand implements Command {
         this.agent = agent;
         this.description = description;
         this.command = command;
+    }
+
+    /** Factory method */
+    public static SimpleCommand createLocalCommand(String command) {
+        return new SimpleCommand(command, new LocalAgent(), null);
     }
 
     /** {@inheritDoc} */

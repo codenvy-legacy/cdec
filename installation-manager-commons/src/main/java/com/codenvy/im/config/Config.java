@@ -30,17 +30,8 @@ public abstract class Config {
 
     /** @return the property value */
     public final String getValue(ConfigProperty property) {
-        String value = properties.get(property.toString().toLowerCase());
-        return value != null ? value : property.getDefaultValue();
+        return properties.get(property.toString().toLowerCase());
     }
-
-    /**
-     * Checks if all properties are set and have valid values.
-     *
-     * @throws java.lang.IllegalStateException
-     *         if at least one property is missed
-     */
-    public abstract void validate() throws IllegalStateException;
 
     /**
      * @return property name, for instance, if property name is "MONGO_ADMIN_PASSWORD" then "mongo admin password" will be returned

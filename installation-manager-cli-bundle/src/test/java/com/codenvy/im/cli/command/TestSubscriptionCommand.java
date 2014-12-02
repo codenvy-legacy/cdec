@@ -56,6 +56,7 @@ public class TestSubscriptionCommand {
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
         doNothing().when(spyCommand).init();
+        doReturn(true).when(spyCommand).isInteractive();
 
         credentials = new UserCredentials("token", "accountId");
         userCredentialsRep = new JacksonRepresentation<>(credentials);

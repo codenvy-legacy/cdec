@@ -77,6 +77,7 @@ public class TestLoginCommand {
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
         doNothing().when(spyCommand).init();
+        doReturn(true).when(spyCommand).isInteractive();
         doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(UPDATE_SERVER_URL);
         doReturn(true).when(spyCommand).isRemoteForUpdateServer(UPDATE_SERVER_REMOTE_NAME);
         doReturn(false).when(spyCommand).isRemoteForUpdateServer(ANOTHER_REMOTE_NAME);

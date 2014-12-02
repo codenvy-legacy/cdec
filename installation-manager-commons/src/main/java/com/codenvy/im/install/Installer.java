@@ -20,10 +20,7 @@ package com.codenvy.im.install;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.utils.Version;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
@@ -36,25 +33,15 @@ import java.util.List;
 @Singleton
 public class Installer {
 
-    private final ConfigFactory configFactory;
-
-    @Inject
-    public Installer(ConfigFactory configFactory) {
-        this.configFactory = configFactory;
-    }
-
     /** Installs specific artifact. */
     public void install(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
-        Config config = configFactory.loadOrCreateConfig(options);
-
-        Command command = artifact.getInstallCommand(version, pathToBinaries, config, options);
+        Command command = artifact.getInstallCommand(version, pathToBinaries, options);
         executeCommand(command);
     }
 
     /** @return installation information. */
     public List<String> getInstallInfo(Artifact artifact, InstallOptions options) throws IOException {
-        Config config = configFactory.loadOrCreateConfig(options);
-        return artifact.getInstallInfo(config, options);
+        return artifact.getInstallInfo(options);
     }
 
     /** Updates specific artifact. */

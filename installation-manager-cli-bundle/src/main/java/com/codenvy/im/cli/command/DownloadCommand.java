@@ -68,15 +68,16 @@ public class DownloadCommand extends AbstractIMCommand {
                 doDownload();
             }
         } catch (Exception e) {
-            printError(e);
-            exitIfNotInteractive();
+            printErrorAndExitIfNotInteractive(e);
         }
 
         return null;
     }
 
+    // TODO [AB] test interrupt
+
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {
-        printInfo("Downloading might take several minutes depending on your internet connection. Please wait.\n");
+        printLn("Downloading might take several minutes depending on your internet connection. Please wait.");
 
         final String downloadDescriptorId = generateDownloadDescriptorId();
 
@@ -91,21 +92,21 @@ public class DownloadCommand extends AbstractIMCommand {
 
         Response responseObj = Response.fromJson(startResponse);
         if (responseObj.getStatus() != ResponseCode.OK) {
-            printResponse(startResponse);
-            exitIfNotInteractive();
+            printErrorAndExitIfNotInteractive(startResponse);
             return;
         }
 
         boolean isCanceled = false;
 
         for (; ; ) {
-            String statusResponse = installationManagerProxy.downloadStatus(downloadDescriptorId);
+            String response = installationManagerProxy.downloadStatus(downloadDescriptorId);
             if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
-                printResponse(statusResponse);
-                exitIfNotInteractive();
+                cleanCurrentLine();
+                printErrorAndExitIfNotInteractive(response);
+                break;
             }
 
-            DownloadStatusInfo downloadStatusInfo = Response.fromJson(statusResponse).getDownloadInfo();
+            DownloadStatusInfo downloadStatusInfo = Response.fromJson(response).getDownloadInfo();
 
             if (!isCanceled) {
                 printProgress(downloadStatusInfo.getPercents());
@@ -119,21 +120,24 @@ public class DownloadCommand extends AbstractIMCommand {
                 isCanceled = true;
             }
 
-            if (downloadStatusInfo.getStatus() == Status.DOWNLOADED ||
-                downloadStatusInfo.getStatus() == Status.FAILURE) {
+            if (downloadStatusInfo.getStatus() == Status.DOWNLOADED || downloadStatusInfo.getStatus() == Status.FAILURE) {
                 cleanCurrentLine();
-
-                printResponse(downloadStatusInfo.getDownloadResult().toJson());
-                exitIfNotInteractive();
+                String downloadResult = downloadStatusInfo.getDownloadResult().toJson();
+                if (downloadStatusInfo.getStatus() == Status.FAILURE) {
+                    printErrorAndExitIfNotInteractive(downloadResult);
+                } else {
+                    printLn(downloadResult);
+                }
+                break;
             }
         }
     }
 
-    private void doCheck() {
+    private void doCheck() throws JsonParseException {
         printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
     }
 
-    private void doList() {
+    private void doList() throws JsonParseException {
         JacksonRepresentation<Request> requestRep = new Request()
                 .setArtifactName(artifactName)
                 .setVersion(version)

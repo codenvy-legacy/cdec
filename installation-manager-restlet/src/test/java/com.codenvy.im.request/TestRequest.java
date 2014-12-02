@@ -40,7 +40,7 @@ public class TestRequest {
                 .setArtifactName("artifact name")
                 .setVersion("artifact version")
                 .setUserCredentials(new UserCredentials("test token", "test account id"))
-                .setInstallOptions(new InstallOptions().setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE));
+                .setInstallOptions(new InstallOptions().setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER));
 
         JacksonRepresentation<Request> requestRep = testRequest.toRepresentation();
         assertNotNull(requestRep);
@@ -54,7 +54,7 @@ public class TestRequest {
         assertEquals(restoredRequest.getUserCredentials().getToken(), "test token");
         assertEquals(restoredRequest.getUserCredentials().getAccountId(), "test account id");
         assertNotNull(restoredRequest.getInstallOptions());
-        assertEquals(restoredRequest.getInstallOptions().getInstallType(), InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        assertEquals(restoredRequest.getInstallOptions().getInstallType(), InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
     }
 
     @Test

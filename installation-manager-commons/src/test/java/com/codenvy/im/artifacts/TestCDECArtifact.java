@@ -18,7 +18,6 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
-import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -61,35 +60,34 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstallInfo() throws Exception {
-        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(1);
 
-        List<String> info = spyCdecArtifact.getInstallInfo(config, options);
+        List<String> info = spyCdecArtifact.getInstallInfo(options);
         assertNotNull(info);
         assertTrue(info.size() > 1);
     }
 
     @Test
     public void testGetInstallCommand() throws Exception {
-        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
-        Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), config, options);
+        Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
         assertNotNull(command);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testGetInstallCommandError() throws Exception {
-        CdecConfig config = new CdecConfig(Collections.<String, String>emptyMap());
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        options.setConfigProperties(Collections.<String, String>emptyMap());
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(Integer.MAX_VALUE);
 
-        spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), config, options);
+        spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
     }
 
     @Test

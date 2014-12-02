@@ -27,8 +27,4 @@ public class DefaultConfig extends Config {
         super(Collections.<String, String>emptyMap());
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void validate() throws IllegalStateException {
-    }
 }

@@ -54,7 +54,7 @@ public class TestInstallManagerArtifact {
         InstallOptions options = new InstallOptions();
         options.setStep(1);
 
-        List<String> info = imArtifact.getInstallInfo(null, options);
+        List<String> info = imArtifact.getInstallInfo(options);
         assertNotNull(info);
         assertEquals(info.toString(), "[Unpack update of installation manager, Update installation manager]");
     }
@@ -65,32 +65,32 @@ public class TestInstallManagerArtifact {
         options.setCliUserHomeDir("/home/dummy-user");
 
         options.setStep(0);
-        Command command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
+        Command command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
         assertEquals(command.toString(), "[rm -rf /parent/unpack, " +
                                          "Unpack '/parent/child' into '/parent/unpack', " +
                                          "Unpack '/parent/unpack/installation-manager-1.0.0-binary.tar.gz' into '/parent/unpack/daemon', " +
                                          "Unpack '/parent/unpack/installation-manager-cli-1.0.0-binary.tar.gz' into '/parent/unpack/cli']");
 
         options.setStep(1);
-        command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
+        command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
         assertEquals(command.toString(), "[[echo '#!/bin/bash \n" +
-                                                 "rm -rf /home/dummy-user/codenvy-cli/* \n" +
-                                                 "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli \n" +
-                                                 "chmod +x /home/dummy-user/codenvy-cli/bin/* \n" +
-                                                 "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh \n" +
-                                           "' > /home/codenvy-shared/codenvy-cli-update-script.sh ; , chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh ; " +
-                                           "], " +
-                                           "sleep 2 ; " +
-                                           "sudo " + testExecutionPath + "/installation-manager stop ; " +
-                                           "sleep 10 ; " +
-                                           "sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d\" \" -f3) &>/dev/null ; " +
-                                           "sudo rm -rf " + testExecutionPath + " ; " +
-                                           "sudo mkdir " + testExecutionPath + " ; " +
-                                           "sudo cp -r /parent/unpack/daemon/* " + testExecutionPath + " ; " +
-                                           "sudo chmod 757 " + testExecutionPath + " ; " +
-                                           "sudo chown -R codenvy:codenvy " + testExecutionPath + " ; " +
-                                           "sudo chmod +x " + testExecutionPath + "/installation-manager ; " +
-                                           "sudo " + testExecutionPath + "/installation-manager start ; " +
+                                         "rm -rf /home/dummy-user/codenvy-cli/* \n" +
+                                         "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli \n" +
+                                         "chmod +x /home/dummy-user/codenvy-cli/bin/* \n" +
+                                         "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh \n" +
+                                         "' > /home/codenvy-shared/codenvy-cli-update-script.sh ; , chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh ; " +
+                                         "], " +
+                                         "sleep 2 ; " +
+                                         "sudo " + testExecutionPath + "/installation-manager stop ; " +
+                                         "sleep 10 ; " +
+                                         "sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d\" \" -f3) &>/dev/null ; " +
+                                         "sudo rm -rf " + testExecutionPath + " ; " +
+                                         "sudo mkdir " + testExecutionPath + " ; " +
+                                         "sudo cp -r /parent/unpack/daemon/* " + testExecutionPath + " ; " +
+                                         "sudo chmod 757 " + testExecutionPath + " ; " +
+                                         "sudo chown -R codenvy:codenvy " + testExecutionPath + " ; " +
+                                         "sudo chmod +x " + testExecutionPath + "/installation-manager ; " +
+                                         "sudo " + testExecutionPath + "/installation-manager start ; " +
                                          "]");
     }
 
@@ -100,7 +100,7 @@ public class TestInstallManagerArtifact {
         InstallOptions options = new InstallOptions();
         options.setStep(1000);
 
-        imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
+        imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
     }
 
     @Test

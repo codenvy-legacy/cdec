@@ -183,7 +183,7 @@ public class TestInstallationManager {
     public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(1);
 
         doReturn(new TreeMap<Version, Path>() {{
@@ -207,7 +207,7 @@ public class TestInstallationManager {
         doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
 
         InstallOptions testOptions = new InstallOptions();
-        testOptions.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        testOptions.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         testOptions.setStep(1);
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");

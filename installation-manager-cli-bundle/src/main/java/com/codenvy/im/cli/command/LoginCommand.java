@@ -17,17 +17,11 @@
  */
 package com.codenvy.im.cli.command;
 
-import jline.console.ConsoleReader;
-
 import com.codenvy.api.account.shared.dto.AccountReference;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 
 /**
  * Installation manager Login command.
@@ -61,32 +55,15 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (username == null) {
-                if (isInteractive()) {
-                    printInfo(String.format("Username for remote '%s': ", remoteName));
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-                        username = reader.readLine();
-                    }
-                    printLineSeparator();
-                } else {
-                    username = new ConsoleReader().readLine(String.format("Username for remote '%s': ", remoteName));
-                }
+                username = readLine(String.format("Codenvy user name for remote '%s': ", remoteName));
             }
 
             if (password == null) {
-                if (isInteractive()) {
-                    printInfo(String.format("Password for %s: ", username));
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-                        password = reader.readLine();
-                    }
-                    printLineSeparator();
-                } else {
-                    password = new ConsoleReader().readLine(String.format("Password for %s: ", username), '*');
-                }
+                password = readPassword(String.format("Password for %s: ", username));
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                printError(String.format("Login failed on remote '%s'.", remoteName));
-                exitIfNotInteractive();
+                printErrorAndExitIfNotInteractive(String.format("Login failed on remote '%s'.", remoteName));
                 return null;
             }
 
@@ -94,19 +71,17 @@ public class LoginCommand extends AbstractIMCommand {
                 printSuccess(String.format("Login success on remote '%s' [%s].",
                                            remoteName,
                                            getRemoteUrlByName(remoteName)));
-                exitIfNotInteractive();
                 return null;
             }
 
             AccountReference accountReference = getAccountReferenceWhereUserIsOwner(accountName);
             if (accountReference == null) {
-                if (accountName == null) {
-                    printError(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
-                } else {
-                    printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
-                }
                 preferencesStorage.invalidate();
-                exitIfNotInteractive();
+                if (accountName == null) {
+                    printErrorAndExitIfNotInteractive(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                } else {
+                    printErrorAndExitIfNotInteractive("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
+                }
                 return null;
             }
 
@@ -120,11 +95,10 @@ public class LoginCommand extends AbstractIMCommand {
                                        getRemoteUrlByName(remoteName)));
 
         } catch (Exception e) {
-            printError(e);
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
             }
-            exitIfNotInteractive();
+            printResponse(e);
         }
 
         return null;

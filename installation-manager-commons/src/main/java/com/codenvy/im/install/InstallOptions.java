@@ -31,7 +31,7 @@ public class InstallOptions {
 
     /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
     public static enum InstallType {
-        CDEC_SINGLE_NODE
+        CODENVY_SINGLE_SERVER
     }
 
     /** Getter for {@link #installType} */
