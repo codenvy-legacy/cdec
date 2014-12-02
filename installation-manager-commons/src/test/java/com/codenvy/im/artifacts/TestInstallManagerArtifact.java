@@ -54,7 +54,7 @@ public class TestInstallManagerArtifact {
         InstallOptions options = new InstallOptions();
         options.setStep(1);
 
-        List<String> info = spyImArtifact.getInstallInfo(null, options);
+        List<String> info = spyImArtifact.getInstallInfo(options);
         assertNotNull(info);
         assertEquals(info.toString(), "[Unpack downloaded installation manager, Update installation manager]");
     }
@@ -74,7 +74,7 @@ public class TestInstallManagerArtifact {
         options.setStep(Integer.MAX_VALUE);
 
         Path executionDir = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-        spyImArtifact.getInstallCommand(Version.valueOf("1.0.0"), executionDir, null, options);
+        spyImArtifact.getInstallCommand(Version.valueOf("1.0.0"), executionDir, options);
     }
 
     @Test

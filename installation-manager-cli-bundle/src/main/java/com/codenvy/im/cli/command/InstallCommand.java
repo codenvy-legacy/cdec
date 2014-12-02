@@ -20,8 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.config.CdecConfig;
-import com.codenvy.im.config.Config;
+import com.codenvy.im.config.CodenvySingleServerConfig;
 import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.config.ConfigProperty;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
@@ -40,12 +39,13 @@ import org.restlet.ext.jackson.JacksonRepresentation;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.codenvy.im.config.Config.getPropertyName;
 import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
@@ -92,8 +92,7 @@ public class InstallCommand extends AbstractIMCommand {
                 return doExecuteInstall();
             }
         } catch (Exception e) {
-            printError(e);
-            exitIfNotInteractive();
+            printErrorAndExitIfNotInteractive(e);
         }
 
         return null;
@@ -101,43 +100,41 @@ public class InstallCommand extends AbstractIMCommand {
 
     private Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
-            printError("Argument 'artifact' is required.");
+            printErrorAndExitIfNotInteractive("Argument 'artifact' is required.");
             return null;
         }
 
         InstallOptions installOptions = new InstallOptions();
-        enterInstallOptions(installOptions);
+        enterInstallOptions(installOptions, true);
         confirmOrReenterInstallOptions(installOptions);
 
         String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
         Response responseObj = Response.fromJson(response);
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
-            printError(response);
-            exitIfNotInteractive();
+            printErrorAndExitIfNotInteractive(response);
             return null;
         }
 
         List<String> infos = responseObj.getInfos();
         for (int step = 0; step < infos.size(); step++) {
-            printInfo(infos.get(step));
+            print(infos.get(step));
 
             installOptions.setStep(step);
             response = installationManagerProxy.install(prepareRequest(installOptions));
             responseObj = Response.fromJson(response);
 
             if (responseObj.getStatus() == ResponseCode.ERROR) {
-                printInfo(" [FAIL]\n");
-                printError(response);
-                exitIfNotInteractive();
+                printError(" [FAIL]");
+                printErrorAndExitIfNotInteractive(response);
                 return null;
             } else {
-                printInfo(" [OK]\n");
+                printSuccess(" [OK]");
             }
         }
 
         // only OK response can be here
-        printResponse(response);
+        printLn(response);
         responseObj = Response.fromJson(response);
 
         if (isIMSuccessfullyUpdated(responseObj)) {
@@ -148,10 +145,9 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    private Void doExecuteListOption() throws IOException, JSONException {
+    private Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
-        response = insertClientVersionInfo(response);
-        printResponse(response);
+        printResponse(insertClientVersionInfo(response));
         return null;
     }
 
@@ -197,41 +193,43 @@ public class InstallCommand extends AbstractIMCommand {
                             .toRepresentation();
     }
 
-    protected InstallOptions enterInstallOptions(InstallOptions options) throws IOException {
+    protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {
         switch (artifactName) {
             case InstallManagerArtifact.NAME:
                 return options;
 
             case CDECArtifact.NAME:
-                options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+                options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
 
                 if (options.getConfigProperties() == null) {
                     setOptionsFromConfig(options);
                 }
 
-
-                printInfo("Please, enter CDEC required parameters:\n");
+                printLn("Please, enter CDEC required parameters:");
 
                 Map<String, String> m = new HashMap<>();
 
-                for (ConfigProperty property : CdecConfig.Property.values()) {
-                    printInfo(Config.getPropertyName(property));
-
-                    String propName = property.toString().toLowerCase();
-                    String currentValue = options.getConfigProperties().get(propName);
-
-                    if (!isEmpty(currentValue)) {
-                        printInfo(String.format(" (%s)", currentValue));
-                    }
+                for (ConfigProperty property : CodenvySingleServerConfig.Property.values()) {
                     for (; ; ) {
-                        String newValue = readLine(": ");
+                        String propName = property.toString().toLowerCase();
+                        String currentValue = options.getConfigProperties().get(propName);
 
-                        if (!isEmpty(newValue)) {
-                            m.put(propName, newValue);
-                            break;
-                        } else if (!isEmpty(currentValue)) {
-                            m.put(propName, currentValue);
-                            break;
+                        if (isEmpty(currentValue) || !askMissedOptionsOnly) {
+                            print(getPropertyName(property));
+
+                            if (!isEmpty(currentValue)) {
+                                print(format(" (%s)", currentValue));
+                            }
+
+                            String newValue = readLine(": ");
+
+                            if (!isEmpty(newValue)) {
+                                m.put(propName, newValue);
+                                break;
+                            } else if (!isEmpty(currentValue)) {
+                                m.put(propName, currentValue);
+                                break;
+                            }
                         }
                     }
                 }
@@ -243,29 +241,27 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     private boolean isEmpty(String value) {
-        return value == null || value.isEmpty();
+        return value == null || value.isEmpty() || value.equalsIgnoreCase("MANDATORY");
     }
 
     private void setOptionsFromConfig(InstallOptions options) throws IOException {
+        Map<String, String> properties;
         if (configFilePath != null) {
-            Map<String, String> m = configFactory.loadConfigProperties(Paths.get(configFilePath));
-            options.setConfigProperties(m);
+            properties = configFactory.loadConfigProperties(configFilePath);
         } else {
-            CdecConfig config = (CdecConfig)configFactory.loadOrCreateConfig(options);
-            options.setConfigProperties(config.getProperties());
+            properties = Collections.emptyMap();
         }
+        options.setConfigProperties(properties);
     }
 
     protected void confirmOrReenterInstallOptions(InstallOptions installOptions) throws IOException {
         for (; ; ) {
-            printInfo(toJson(installOptions.getConfigProperties()) + "\n");
+            printLn(toJson(installOptions.getConfigProperties()));
             if (askUser("Continue installation")) {
                 break;
             }
 
-            enterInstallOptions(installOptions);
+            enterInstallOptions(installOptions, false);
         }
-
-        configFactory.writeConfig(new CdecConfig(installOptions.getConfigProperties()));
     }
 }

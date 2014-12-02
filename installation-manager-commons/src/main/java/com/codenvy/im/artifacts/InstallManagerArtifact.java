@@ -23,12 +23,12 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.command.UnpackCommand;
-import com.codenvy.im.config.Config;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
+    public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return new ArrayList<String>() {{
             add("Unpack downloaded installation manager");
             add("Update installation manager");
@@ -87,7 +87,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(Version version, Path pathToBinaries, Config config, InstallOptions installOptions) {
+    public Command getInstallCommand(Version version, Path pathToBinaries, InstallOptions installOptions) {
         try {
             int step = installOptions.getStep();
 

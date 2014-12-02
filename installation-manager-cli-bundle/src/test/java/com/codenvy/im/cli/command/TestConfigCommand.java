@@ -50,6 +50,7 @@ public class TestConfigCommand {
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
         doNothing().when(spyCommand).init();
+        doReturn(true).when(spyCommand).isInteractive();
     }
 
     @Test

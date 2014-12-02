@@ -17,14 +17,18 @@
  */
 package com.codenvy.im.cli.command;
 
+import jline.console.ConsoleReader;
+
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 import com.codenvy.im.user.UserCredentials;
@@ -105,10 +109,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    protected void printLineSeparator() {
-        System.out.println(System.lineSeparator());
-    }
-
     protected void printError(Exception ex) {
         if (isConnectionException(ex)) {
             printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
@@ -124,7 +124,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void printError(String message) {
-        System.out.println(ansi().fg(RED).a(message).reset());
+        print(ansi().fg(RED).a(message).newline().reset());
     }
 
     protected void printProgress(int percents) {
@@ -155,57 +155,74 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void cleanLineAbove() {
-        System.out.print(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
+        System.out.print(ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL)));
         System.out.flush();
     }
 
-    protected void printInfo(String message) {
+    protected void printLn(String message) {
+        System.out.println(message);
+    }
+
+    protected void print(String message) {
         System.out.print(message);
         System.out.flush();
     }
 
-    protected void printSuccess(String message) {
-        System.out.println(ansi().fg(GREEN).a(message).reset());
+    private void print(Ansi ansi) {
+        if (!isInteractive()) {
+            System.out.print("[CODENVY] ");
+        }
+        System.out.print(ansi);
+        System.out.flush();
     }
 
-    protected void printResponse(@Nullable String response) {
-        if (response == null) {
-            printError(new IllegalArgumentException("Unexpected error occurred. Response is empty"));
+    protected void printResponse(Object response) throws JsonParseException {
+        if (response instanceof Exception) {
+            printError((Exception)response);
+            return;
+        }
+
+        Response responseObj = Response.fromJson(response.toString());
+        if (responseObj.getStatus() != ResponseCode.OK) {
+            printErrorAndExitIfNotInteractive(response);
         } else {
-            System.out.println(ansi().a(response));
+            printLn(response.toString());
         }
     }
+
+    protected void printSuccess(String message) {
+        print(ansi().fg(GREEN).a(message).newline().reset());
+    }
+
 
     /** @return "true" only if only user typed line equals "y". */
-    protected boolean askUser(String prompt) {
-        printInfo(prompt + " [y/N]");
-
-        String userAnswer;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-            userAnswer = reader.readLine();
-            printLineSeparator();
-        } catch (IOException e) {
-            return false;
-        } finally {
-            printInfo("\n");
-        }
-
+    protected boolean askUser(String prompt) throws IOException {
+        String userAnswer = readLine(prompt + " [y/N] ");
         return userAnswer != null && userAnswer.equalsIgnoreCase("y");
     }
 
     /** @return line typed by user */
-    protected String readLine(String prompt) {
-        printInfo(prompt);
+    protected String readLine(String prompt) throws IOException {
+        return doReadLine(prompt, null);
+    }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-            return reader.readLine();
-        } catch (IOException e) {
-            return null;
+    protected String readPassword(String prompt) throws IOException {
+        return doReadLine(prompt, '*');
+    }
+
+    private String doReadLine(String prompt, @Nullable Character mask) throws IOException {
+        if (isInteractive()) {
+            print(prompt);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
+                return reader.readLine();
+            }
+        } else {
+            return new ConsoleReader().readLine(prompt, mask);
         }
     }
 
     protected void pressAnyKey(String prompt) throws IOException {
-        printInfo(prompt);
+        print(prompt);
         session.getKeyboard().read();
     }
 
@@ -291,9 +308,19 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return remote.getUrl();
     }
 
-    protected void exitIfNotInteractive() {
+    protected void printErrorAndExitIfNotInteractive(Object error) {
+        if (error instanceof Exception) {
+            printError((Exception)error);
+        } else {
+            printError(error.toString());
+        }
+
         if (!isInteractive()) {
             System.exit(1);
         }
+    }
+
+    protected boolean isInteractive() {
+        return super.isInteractive();
     }
 }

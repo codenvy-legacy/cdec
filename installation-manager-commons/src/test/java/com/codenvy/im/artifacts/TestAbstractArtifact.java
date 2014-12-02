@@ -18,7 +18,6 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
-import com.codenvy.im.config.Config;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
@@ -224,12 +223,12 @@ public class TestAbstractArtifact {
         }
 
         @Override
-        public List<String> getInstallInfo(Config config, InstallOptions installOptions) throws IOException {
+        public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Command getInstallCommand(Version version, Path pathToBinaries, Config config, InstallOptions installOptions) throws IOException {
+        public Command getInstallCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
             throw new UnsupportedOperationException();
         }
     }

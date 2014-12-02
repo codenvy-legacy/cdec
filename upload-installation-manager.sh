@@ -23,6 +23,7 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     echo "Uploading on production"
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
+    SSH_KEY_NAME=git_nopass.key
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "Uploading on staging"
@@ -71,12 +72,18 @@ uploadInstallScript() {
     ARTIFACT=install-script
     FILENAME=install-script.sh
     SOURCE=installation-manager/bin/${FILENAME}
-
     doUpload
 
     if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
         ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
     fi
+}
+
+uploadInstallProperties() {
+    ARTIFACT=codenvy-single-server-properties
+    FILENAME=codenvy-single-server.properties
+    SOURCE=installation-manager-commons/src/main/resources/${FILENAME}
+    doUpload
 }
 
 doUpload() {
@@ -86,7 +93,10 @@ doUpload() {
     echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
     echo "authentication-required=false" >> .properties
-    echo "build-time="`stat -c %y ${SOURCE}` >> .properties
+    buildTime=`stat -c %y ${SOURCE}`
+    buildTime=${buildTime:0:19}
+
+    echo "build-time="${buildTime} >> .properties
     echo "md5=${MD5}" >> .properties
     echo "size=${SIZE}" >> .properties
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
@@ -97,7 +107,10 @@ doUpload() {
 }
 
 makeBundle
+
 uploadArtifact installation-manager
 uploadArtifact installation-manager-cli
+
 uploadInstallScript
+uploadInstallProperties
 

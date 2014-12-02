@@ -30,7 +30,6 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -38,7 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
-public class TestDownloadCommand {
+public class TestDownloadCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
@@ -86,7 +85,7 @@ public class TestDownloadCommand {
         spyCommand = spy(new DownloadCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
-        doNothing().when(spyCommand).init();
+        performBaseMocks(spyCommand);
 
         userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
@@ -160,7 +159,6 @@ public class TestDownloadCommand {
                                         "  \"status\" : \"OK\"\n" +
                                         "}";
 
-
         String serviceErrorResponse = "{\n" +
                                       "  \"artifacts\" : [ {\n" +
                                       "    \"artifact\" : \"cdec\",\n" +
@@ -215,8 +213,8 @@ public class TestDownloadCommand {
     @Test
     public void testCheckUpdatesWhenErrorInResponse() throws Exception {
         String serviceErrorResponse = "{"
-                                      + "message: \"Some error\","
-                                      + "status: \"ERROR\""
+                                      + "\"message\": \"Some error\","
+                                      + "\"status\": \"ERROR\""
                                       + "}";
         doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
 
@@ -248,7 +246,7 @@ public class TestDownloadCommand {
     @Test
     public void testListLocalOption() throws Exception {
         final String ok = "{\n"
-                          + "  status: \"OK\"\n"
+                          + "  \"status\": \"OK\"\n"
                           + "}";
 
         JacksonRepresentation<Request> requestRep = new Request()

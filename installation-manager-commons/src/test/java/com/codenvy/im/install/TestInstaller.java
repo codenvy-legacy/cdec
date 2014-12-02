@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
-import com.codenvy.im.config.CdecConfig;
 import com.codenvy.im.config.ConfigFactory;
 
 import org.mockito.Mock;
@@ -32,12 +31,10 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertTrue;
@@ -54,15 +51,13 @@ public class TestInstaller {
     @BeforeTest
     public void setUp() throws IOException {
         MockitoAnnotations.initMocks(this);
-        installer = spy(new Installer(configFactory));
+        installer = spy(new Installer());
     }
 
     @Test
     public void testGetInstallInfo() throws Exception {
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
-        InstallOptions options = new InstallOptions().setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
-
-        doReturn(new CdecConfig(Collections.<String, String>emptyMap())).when(configFactory).loadOrCreateConfig(options);
+        InstallOptions options = new InstallOptions().setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
 
         List<String> info = installer.getInstallInfo(artifact, options);
         assertTrue(info.size() > 0);
@@ -73,10 +68,10 @@ public class TestInstaller {
         Artifact artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CDEC_SINGLE_NODE);
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
-        doReturn(new CdecConfig(new HashMap<String, String>())).when(configFactory).loadOrCreateConfig(options);
         doNothing().when(installer).executeCommand(any(Command.class));
 
         installer.install(artifact, null, Paths.get("some path"), options);
