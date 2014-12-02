@@ -55,7 +55,9 @@ public class UnpackCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
-        try (TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
+        try (TarArchiveInputStream in = new TarArchiveInputStream(
+            new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
+
             if (!Files.exists(dirToUnpack)) {
                 createDirectories(dirToUnpack);
             }
@@ -63,9 +65,20 @@ public class UnpackCommand implements Command {
             TarArchiveEntry tarEntry;
             while ((tarEntry = in.getNextTarEntry()) != null) {
                 Path destPath = dirToUnpack.resolve(tarEntry.getName());
-                try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
-                    copy(in, out);
-                    setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
+
+                if (tarEntry.isDirectory()) {
+                    if (!Files.exists(destPath)) {
+                        createDirectories(destPath);
+                    }
+                } else {
+                    if (!Files.exists(destPath.getParent())) {
+                        createDirectories(destPath.getParent());
+                    }
+
+                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
+                        copy(in, out);
+                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
+                    }
                 }
             }
         } catch (IOException e) {

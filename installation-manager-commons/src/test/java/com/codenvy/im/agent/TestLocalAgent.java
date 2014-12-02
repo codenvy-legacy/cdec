@@ -17,12 +17,10 @@
  */
 package com.codenvy.im.agent;
 
-import com.codenvy.im.command.CommandException;
-import com.codenvy.im.command.SimpleCommand;
-
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * @author Anatoliy Bazko
@@ -30,15 +28,21 @@ import static org.testng.Assert.assertNotNull;
 public class TestLocalAgent {
     @Test
     public void testSuccessResult() throws Exception {
-        SimpleCommand command = new SimpleCommand("ls", new LocalAgent(), "simple command");
-        assertNotNull(command.execute());
+        Agent agent = new LocalAgent();
+        assertNotNull(agent.execute("sleep 1; ls;"));
     }
 
-    @Test(expectedExceptions = CommandException.class,
-            expectedExceptionsMessageRegExp = "Remote command execution fail. Error: Can't execute command 'ls d' " +
-                                              "Error: ls: cannot access d: No such file or directory\n")
+    @Test
+    public void testAsyncResult() throws Exception {
+        Agent agent = new LocalAgent(true);
+        assertNull(agent.execute("sleep 1; ls;"));
+    }
+
+    @Test(expectedExceptions = AgentException.class,
+            expectedExceptionsMessageRegExp = "Can't execute command 'ls unExisted_file'. " +
+                                              "Error: ls: cannot access unExisted_file: No such file or directory\n")
     public void testError() throws Exception {
-        SimpleCommand command = new SimpleCommand("ls d", new LocalAgent(), "simple command");
-        command.execute();
+        Agent agent = new LocalAgent();
+        agent.execute("ls unExisted_file");
     }
 }

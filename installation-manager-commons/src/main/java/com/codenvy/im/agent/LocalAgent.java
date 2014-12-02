@@ -21,6 +21,14 @@ import java.io.InputStream;
 
 /** @author Anatoliy Bazko */
 public class LocalAgent extends AbstractAgent {
+    boolean isAsynchronousExecution;
+
+    public LocalAgent() {
+    }
+
+    public LocalAgent(boolean isAsynchronousExecution) {
+        this.isAsynchronousExecution = isAsynchronousExecution;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -30,13 +38,17 @@ public class LocalAgent extends AbstractAgent {
         try {
             Process process = pb.start();
 
+            if (isAsynchronousExecution) {
+                return null;
+            }
+
             int exitStatus = process.waitFor();
             InputStream in = process.getInputStream();
             InputStream err = process.getErrorStream();
 
             return processExistCode(exitStatus, in, err);
         } catch (Exception e) {
-            String errMessage = String.format("Can't execute command '%s'", command);
+            String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);
         }
     }
