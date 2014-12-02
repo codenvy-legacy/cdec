@@ -214,7 +214,7 @@ launchingIMService() {
     echo "> Launching Codenvy Installation Manage Service"
     # try to stop exists installation-manager
     sudo /etc/init.d/${SERVICE_NAME} stop
-    sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f4) &>/dev/null  # kill manager if stop isn't work
+    sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d" " -f3) &>/dev/null  # kill manager if stop doesn't work
 
     # launch new installation-manager
     sudo /etc/init.d/${SERVICE_NAME} start

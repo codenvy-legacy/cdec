@@ -73,18 +73,24 @@ public class TestInstallManagerArtifact {
 
         options.setStep(1);
         command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, null, options);
-        assertEquals(command.toString(), "[[echo 'rm -rf /home/dummy-user/codenvy-cli/*; " +
-                                                 "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli; " +
-                                                 "chmod +x /home/dummy-user/codenvy-cli/bin/*; " +
-                                                 "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh; " +
-                                           "' > /home/codenvy-shared/codenvy-cli-update-script.sh;, chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh; " +
+        assertEquals(command.toString(), "[[echo '#!/bin/bash \n" +
+                                                 "rm -rf /home/dummy-user/codenvy-cli/* \n" +
+                                                 "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli \n" +
+                                                 "chmod +x /home/dummy-user/codenvy-cli/bin/* \n" +
+                                                 "rm -f /home/codenvy-shared/codenvy-cli-update-script.sh \n" +
+                                           "' > /home/codenvy-shared/codenvy-cli-update-script.sh ; , chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh ; " +
                                            "], " +
-                                           "sleep 5; " +
-                                           "service codenvy-installation-manager stop; " +
-                                           "rm -rf " + testExecutionPath + "/*; " +
-                                           "cp -r /parent/unpack/daemon/* " + testExecutionPath + "; " +
-                                           "chmod +x " + testExecutionPath + "/installation-manager; " +
-                                           "service codenvy-installation-manager start; " +
+                                           "sleep 2 ; " +
+                                           "sudo " + testExecutionPath + "/installation-manager stop ; " +
+                                           "sleep 10 ; " +
+                                           "sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d\" \" -f3) &>/dev/null ; " +
+                                           "sudo rm -rf " + testExecutionPath + " ; " +
+                                           "sudo mkdir " + testExecutionPath + " ; " +
+                                           "sudo cp -r /parent/unpack/daemon/* " + testExecutionPath + " ; " +
+                                           "sudo chmod 757 " + testExecutionPath + " ; " +
+                                           "sudo chown -R codenvy:codenvy " + testExecutionPath + " ; " +
+                                           "sudo chmod +x " + testExecutionPath + "/installation-manager ; " +
+                                           "sudo " + testExecutionPath + "/installation-manager start ; " +
                                          "]");
     }
 

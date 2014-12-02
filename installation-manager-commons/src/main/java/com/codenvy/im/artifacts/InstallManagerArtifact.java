@@ -121,30 +121,39 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
                     final Path cliClientDir = Paths.get(format("%s/%s", installOptions.getCliUserHomeDir(), CODENVY_CLI_DIR_NAME));
 
-                    final String contentOfUpdateCliScript = format("rm -rf %1$s/*; " +     // remove content of cli client dir
-                                                                   "cp -r %2$s/* %1$s; " + // copy update into the user's home dir
-                                                                   "chmod +x %3$s; " +     // set permissions to execute CLI client scripts
-                                                                   "rm -f %4$s; ",         // remove update script after all
+                    final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
+                                                                   "rm -rf %1$s/* \n" +     // remove content of cli client dir
+                                                                   "cp -r %2$s/* %1$s \n" + // copy update into the user's home dir
+                                                                   "chmod +x %3$s \n" +     // set permissions to execute CLI client scripts
+                                                                   "rm -f %4$s \n" +        // remove update script after all
+                                                                   "",
                                                                    cliClientDir.toAbsolutePath(),
                                                                    pathToNewVersionOfCliClient.toAbsolutePath(),
                                                                    cliClientDir.resolve("bin/*").toAbsolutePath(),
                                                                    PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath());
 
                     final Command updateCliClientCommand = new MacroCommand(new ArrayList<Command>() {{
-                        add(new SimpleCommand(format("echo '%s' > %s;", contentOfUpdateCliScript, PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
+                        add(new SimpleCommand(format("echo '%s' > %s ; ", contentOfUpdateCliScript, PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
                                               syncAgent, "Create script to update cli client"));
 
-                        add(new SimpleCommand(format("chmod 775 %s; ", PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
+                        add(new SimpleCommand(format("chmod 775 %s ; ", PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
                                               syncAgent, "Set permissions to execute update script"));
                     }}, "Update installation manager CLI client");
 
+
                     final Command updateDaemonCommand =
-                        new SimpleCommand(format("sleep 5; " +   // a little bit time to answer to CLI before updating daemon
-                                                 "service codenvy-installation-manager stop; " +     // stop daemon
-                                                 "rm -rf %1$s/*; " +                      // remove content of directory with daemon
-                                                 "cp -r %2$s/* %1$s; " +                  // copy update into the directory with daemon
-                                                 "chmod +x %1$s/installation-manager; " + // set permission to execute daemon script
-                                                 "service codenvy-installation-manager start; ",     // start daemon
+                        new SimpleCommand(format("sleep 2 ; " +   // time to send response to CLI client before updating daemon
+                                                 "sudo %1$s/installation-manager stop ; " +     // start stopping daemon
+                                                 "sleep 10 ; " +                                // wait for finish stopping
+                                                 "sudo kill -9 $(ps aux | grep [i]nstallation-manager | cut -d\" \" -f3) &>/dev/null ; " + // kill manager if stop doesn't work
+                                                 "sudo rm -rf %1$s ; " +                         // remove directory with daemon
+                                                 "sudo mkdir %1$s ; " +                          // create directory with daemon
+                                                 "sudo cp -r %2$s/* %1$s ; " +                   // copy update into the directory with daemon
+                                                 "sudo chmod 757 %1$s ; " +                      // make it possible to write files into the directory with daemon
+                                                 "sudo chown -R codenvy:codenvy %1$s ; " +       // make the user 'codenvy' group 'codenvy' as an owner files within the directory
+                                                 "sudo chmod +x %1$s/installation-manager ; " + // set permission to execute daemon script
+                                                 "sudo %1$s/installation-manager start ; " +    // start daemon
+                                                 "",
                                                  getInstalledPath().toAbsolutePath(),
                                                  pathToNewVersionOfDaemon.toAbsolutePath(),
                                                  dirToUnpack.toAbsolutePath()),

@@ -37,13 +37,17 @@ start () {
     source ~/.bashrc
 
     echo "Starting ..."
-    if [ ! -d ${LOG_DIR} ];  then
-        su - ${CODENVY_USER} -c "mkdir $LOG_DIR"
-    fi
-
     if [ ${CURRENT_USER} == ${CODENVY_USER} ]; then
+        if [ ! -d ${LOG_DIR} ];  then
+             bash -c "mkdir ${LOG_DIR}"
+        fi
+
         bash -c "$JAVA_CMD"
     else
+        if [ ! -d ${LOG_DIR} ];  then
+            su - ${CODENVY_USER} -c "mkdir $LOG_DIR"
+        fi
+
         su - ${CODENVY_USER} -c "$JAVA_CMD"
     fi
 }
