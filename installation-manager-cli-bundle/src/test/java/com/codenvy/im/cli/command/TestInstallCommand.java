@@ -333,45 +333,45 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "puppet server version: some value\n" +
                              "puppet resource url: some value\n" +
                              "{\n" +
-                             "  \"bitbucket_secret\" : \"some value\",\n" +
+                             "  \"admin_ldap_password\"                     : \"some value\",\n" +
+                             "  \"admin_ldap_user_name\"                    : \"some value\",\n" +
+                             "  \"bitbucket_client_id\"                     : \"some value\",\n" +
+                             "  \"bitbucket_secret\"                        : \"some value\",\n" +
+                             "  \"builder_keep_result_time\"                : \"some value\",\n" +
+                             "  \"builder_max_execution_time\"              : \"some value\",\n" +
+                             "  \"builder_queue_size\"                      : \"some value\",\n" +
+                             "  \"builder_waiting_time\"                    : \"some value\",\n" +
+                             "  \"codenvy_server_xmx\"                      : \"some value\",\n" +
+                             "  \"github_client_id\"                        : \"some value\",\n" +
+                             "  \"github_secret\"                           : \"some value\",\n" +
+                             "  \"google_client_id\"                        : \"some value\",\n" +
+                             "  \"google_secret\"                           : \"some value\",\n" +
+                             "  \"haproxy_statistic_pass\"                  : \"some value\",\n" +
+                             "  \"host_url\"                                : \"some value\",\n" +
+                             "  \"jmx_password\"                            : \"some value\",\n" +
+                             "  \"jmx_username\"                            : \"some value\",\n" +
+                             "  \"mongo_admin_pass\"                        : \"some value\",\n" +
+                             "  \"mongo_orgservice_user_pwd\"               : \"some value\",\n" +
+                             "  \"mongo_user_pass\"                         : \"some value\",\n" +
+                             "  \"mysql_root_password\"                     : \"some value\",\n" +
+                             "  \"projectlocker_client_id\"                 : \"some value\",\n" +
+                             "  \"projectlocker_secret\"                    : \"some value\",\n" +
+                             "  \"puppet_agent_version\"                    : \"some value\",\n" +
+                             "  \"puppet_resource_url\"                     : \"some value\",\n" +
+                             "  \"puppet_server_version\"                   : \"some value\",\n" +
+                             "  \"runner_app_lifetime\"                     : \"some value\",\n" +
+                             "  \"runner_default_app_mem_size\"             : \"some value\",\n" +
+                             "  \"runner_waiting_time\"                     : \"some value\",\n" +
+                             "  \"runner_workspace_max_memsize\"            : \"some value\",\n" +
+                             "  \"user_ldap_password\"                      : \"some value\",\n" +
                              "  \"workspace_inactive_persistent_stop_time\" : \"some value\",\n" +
-                             "  \"runner_default_app_mem_size\" : \"some value\",\n" +
-                             "  \"puppet_server_version\" : \"some value\",\n" +
-                             "  \"wso2_client_id\" : \"some value\",\n" +
-                             "  \"github_secret\" : \"some value\",\n" +
-                             "  \"runner_workspace_max_memsize\" : \"some value\",\n" +
-                             "  \"mongo_admin_pass\" : \"some value\",\n" +
-                             "  \"bitbucket_client_id\" : \"some value\",\n" +
-                             "  \"workspace_inactive_temporary_stop_time\" : \"some value\",\n" +
-                             "  \"runner_waiting_time\" : \"some value\",\n" +
-                             "  \"puppet_resource_url\" : \"some value\",\n" +
-                             "  \"haproxy_statistic_pass\" : \"some value\",\n" +
-                             "  \"admin_ldap_password\" : \"some value\",\n" +
-                             "  \"builder_queue_size\" : \"some value\",\n" +
-                             "  \"jmx_username\" : \"some value\",\n" +
-                             "  \"builder_keep_result_time\" : \"some value\",\n" +
-                             "  \"google_client_id\" : \"some value\",\n" +
-                             "  \"admin_ldap_user_name\" : \"some value\",\n" +
-                             "  \"runner_app_lifetime\" : \"some value\",\n" +
-                             "  \"github_client_id\" : \"some value\",\n" +
-                             "  \"google_secret\" : \"some value\",\n" +
-                             "  \"zabbix_admin_email\" : \"some value\",\n" +
-                             "  \"jmx_password\" : \"some value\",\n" +
-                             "  \"zabbix_admin_password\" : \"some value\",\n" +
-                             "  \"builder_max_execution_time\" : \"some value\",\n" +
-                             "  \"zabbix_db_pass\" : \"some value\",\n" +
-                             "  \"projectlocker_secret\" : \"some value\",\n" +
-                             "  \"user_ldap_password\" : \"some value\",\n" +
-                             "  \"codenvy_server_xmx\" : \"some value\",\n" +
-                             "  \"zabbix_time_zone\" : \"some value\",\n" +
-                             "  \"mongo_orgservice_user_pwd\" : \"some value\",\n" +
-                             "  \"host_url\" : \"some value\",\n" +
-                             "  \"mysql_root_password\" : \"some value\",\n" +
-                             "  \"projectlocker_client_id\" : \"some value\",\n" +
-                             "  \"wso2_secret\" : \"some value\",\n" +
-                             "  \"builder_waiting_time\" : \"some value\",\n" +
-                             "  \"mongo_user_pass\" : \"some value\",\n" +
-                             "  \"puppet_agent_version\" : \"some value\"\n" +
+                             "  \"workspace_inactive_temporary_stop_time\"  : \"some value\",\n" +
+                             "  \"wso2_client_id\"                          : \"some value\",\n" +
+                             "  \"wso2_secret\"                             : \"some value\",\n" +
+                             "  \"zabbix_admin_email\"                      : \"some value\",\n" +
+                             "  \"zabbix_admin_password\"                   : \"some value\",\n" +
+                             "  \"zabbix_db_pass\"                          : \"some value\",\n" +
+                             "  \"zabbix_time_zone\"                        : \"some value\"\n" +
                              "}\n" +
                              "Continue installation [y/N]\n" +
                              "Please, enter CDEC required parameters:\n" +
@@ -415,45 +415,45 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "puppet server version (some value): some value\n" +
                              "puppet resource url (some value): some value\n" +
                              "{\n" +
-                             "  \"bitbucket_secret\" : \"some value\",\n" +
+                             "  \"admin_ldap_password\"                     : \"some value\",\n" +
+                             "  \"admin_ldap_user_name\"                    : \"some value\",\n" +
+                             "  \"bitbucket_client_id\"                     : \"some value\",\n" +
+                             "  \"bitbucket_secret\"                        : \"some value\",\n" +
+                             "  \"builder_keep_result_time\"                : \"some value\",\n" +
+                             "  \"builder_max_execution_time\"              : \"some value\",\n" +
+                             "  \"builder_queue_size\"                      : \"some value\",\n" +
+                             "  \"builder_waiting_time\"                    : \"some value\",\n" +
+                             "  \"codenvy_server_xmx\"                      : \"some value\",\n" +
+                             "  \"github_client_id\"                        : \"some value\",\n" +
+                             "  \"github_secret\"                           : \"some value\",\n" +
+                             "  \"google_client_id\"                        : \"some value\",\n" +
+                             "  \"google_secret\"                           : \"some value\",\n" +
+                             "  \"haproxy_statistic_pass\"                  : \"some value\",\n" +
+                             "  \"host_url\"                                : \"some value\",\n" +
+                             "  \"jmx_password\"                            : \"some value\",\n" +
+                             "  \"jmx_username\"                            : \"some value\",\n" +
+                             "  \"mongo_admin_pass\"                        : \"some value\",\n" +
+                             "  \"mongo_orgservice_user_pwd\"               : \"some value\",\n" +
+                             "  \"mongo_user_pass\"                         : \"some value\",\n" +
+                             "  \"mysql_root_password\"                     : \"some value\",\n" +
+                             "  \"projectlocker_client_id\"                 : \"some value\",\n" +
+                             "  \"projectlocker_secret\"                    : \"some value\",\n" +
+                             "  \"puppet_agent_version\"                    : \"some value\",\n" +
+                             "  \"puppet_resource_url\"                     : \"some value\",\n" +
+                             "  \"puppet_server_version\"                   : \"some value\",\n" +
+                             "  \"runner_app_lifetime\"                     : \"some value\",\n" +
+                             "  \"runner_default_app_mem_size\"             : \"some value\",\n" +
+                             "  \"runner_waiting_time\"                     : \"some value\",\n" +
+                             "  \"runner_workspace_max_memsize\"            : \"some value\",\n" +
+                             "  \"user_ldap_password\"                      : \"some value\",\n" +
                              "  \"workspace_inactive_persistent_stop_time\" : \"some value\",\n" +
-                             "  \"runner_default_app_mem_size\" : \"some value\",\n" +
-                             "  \"puppet_server_version\" : \"some value\",\n" +
-                             "  \"wso2_client_id\" : \"some value\",\n" +
-                             "  \"github_secret\" : \"some value\",\n" +
-                             "  \"runner_workspace_max_memsize\" : \"some value\",\n" +
-                             "  \"mongo_admin_pass\" : \"some value\",\n" +
-                             "  \"bitbucket_client_id\" : \"some value\",\n" +
-                             "  \"workspace_inactive_temporary_stop_time\" : \"some value\",\n" +
-                             "  \"runner_waiting_time\" : \"some value\",\n" +
-                             "  \"puppet_resource_url\" : \"some value\",\n" +
-                             "  \"haproxy_statistic_pass\" : \"some value\",\n" +
-                             "  \"admin_ldap_password\" : \"some value\",\n" +
-                             "  \"builder_queue_size\" : \"some value\",\n" +
-                             "  \"jmx_username\" : \"some value\",\n" +
-                             "  \"builder_keep_result_time\" : \"some value\",\n" +
-                             "  \"google_client_id\" : \"some value\",\n" +
-                             "  \"admin_ldap_user_name\" : \"some value\",\n" +
-                             "  \"runner_app_lifetime\" : \"some value\",\n" +
-                             "  \"github_client_id\" : \"some value\",\n" +
-                             "  \"google_secret\" : \"some value\",\n" +
-                             "  \"zabbix_admin_email\" : \"some value\",\n" +
-                             "  \"jmx_password\" : \"some value\",\n" +
-                             "  \"zabbix_admin_password\" : \"some value\",\n" +
-                             "  \"builder_max_execution_time\" : \"some value\",\n" +
-                             "  \"zabbix_db_pass\" : \"some value\",\n" +
-                             "  \"projectlocker_secret\" : \"some value\",\n" +
-                             "  \"user_ldap_password\" : \"some value\",\n" +
-                             "  \"codenvy_server_xmx\" : \"some value\",\n" +
-                             "  \"zabbix_time_zone\" : \"some value\",\n" +
-                             "  \"mongo_orgservice_user_pwd\" : \"some value\",\n" +
-                             "  \"host_url\" : \"some value\",\n" +
-                             "  \"mysql_root_password\" : \"some value\",\n" +
-                             "  \"projectlocker_client_id\" : \"some value\",\n" +
-                             "  \"wso2_secret\" : \"some value\",\n" +
-                             "  \"builder_waiting_time\" : \"some value\",\n" +
-                             "  \"mongo_user_pass\" : \"some value\",\n" +
-                             "  \"puppet_agent_version\" : \"some value\"\n" +
+                             "  \"workspace_inactive_temporary_stop_time\"  : \"some value\",\n" +
+                             "  \"wso2_client_id\"                          : \"some value\",\n" +
+                             "  \"wso2_secret\"                             : \"some value\",\n" +
+                             "  \"zabbix_admin_email\"                      : \"some value\",\n" +
+                             "  \"zabbix_admin_password\"                   : \"some value\",\n" +
+                             "  \"zabbix_db_pass\"                          : \"some value\",\n" +
+                             "  \"zabbix_time_zone\"                        : \"some value\"\n" +
                              "}\n" +
                              "Continue installation [y/N]\n" +
                              "{\"infos\":{}}\n");

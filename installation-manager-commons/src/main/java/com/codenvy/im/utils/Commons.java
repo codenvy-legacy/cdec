@@ -24,7 +24,10 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.inject.TypeLiteral;
@@ -40,11 +43,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
@@ -59,9 +66,6 @@ import static java.nio.file.Files.newInputStream;
  * @author Dmytro Nochevnov
  */
 public class Commons {
-    /** include only non null fields into json; write pretty printed json. */
-    private static final ObjectWriter jsonWriter =
-            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
 
     /** Simplifies the way to combine paths. Takes care about normalization. */
     public static String combinePaths(String apiEndpoint, String path) {
@@ -100,33 +104,37 @@ public class Commons {
 
     /** Translates JSON to the list of DTO objects. */
     public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
-        return DtoFactory.getInstance().createListDtoFromJson(json, dtoInterface);
+        return JsonUtils.createListDtoFromJson(json, dtoInterface);
     }
 
     /** Translates JSON to the list of DTO objects. */
     public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
-        return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
+        return JsonUtils.createDtoFromJson(json, dtoInterface);
     }
 
     /** Translates JSON to object. */
     public static <T> T fromJson(String json, Class<T> clazz) throws JsonParseException {
-        return JsonHelper.fromJson(json, clazz, null);
+        return JsonUtils.fromJson(json, clazz, null);
     }
 
     /** Translates JSON to object. */
     public static Map asMap(String json) throws JsonParseException {
-        return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {
-        }.getType());
+        return JsonUtils.asMap(json);
     }
 
     /** Translates JSON to object. */
     public static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
-        return JsonHelper.fromJson(json, clazz, type);
+        return JsonUtils.fromJson(json, clazz, type);
     }
 
     /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. */
     public static String toJson(Object obj) throws JsonProcessingException {
-        return jsonWriter.writeValueAsString(obj);
+        return JsonUtils.jsonWriter.writeValueAsString(obj);
+    }
+
+    /** Translates object to JSON with properties sorted alphabetically and aligned by colons. */
+    public static String toJsonWithSortedAndAlignedProperties(Map<String, String> map) throws JsonProcessingException {
+        return JsonUtils.toJsonWithSortedAndAlignedProperties(map);
     }
 
     /** @return the version of the artifact out of path */
@@ -263,5 +271,99 @@ public class Commons {
             return format("%s-%s-%s-binary.tar.gz", artifact.getName(), artifactAndVersionDelimeter, version.toString());
         }
 
+    }
+
+    private static class JsonUtils {
+        private JsonUtils() {
+        }
+
+        /** include only non null fields into json; write pretty printed json. */
+        private static final ObjectWriter jsonWriter =
+            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
+
+        /** Translates JSON to the list of DTO objects. */
+        public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+            return DtoFactory.getInstance().createListDtoFromJson(json, dtoInterface);
+        }
+
+        /** Translates JSON to the list of DTO objects. */
+        public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+            return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
+        }
+
+        /** Translates JSON to object. */
+        public static Map asMap(String json) throws JsonParseException {
+            return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {
+            }.getType());
+        }
+
+        /** Translates JSON to object. */
+        private static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
+            return JsonHelper.fromJson(json, clazz, type);
+        }
+
+        /** Translates map to JSON with entries sorted alphabetically and aligned by colons. */
+        private static String toJsonWithSortedAndAlignedProperties(Map<String, String> originMap) throws JsonProcessingException {
+            Map<String, String> map = new TreeMap<>(originMap);  // sort map
+
+            removeNullValues(map);
+
+            if (map.size() < 2) {
+                return toJson(map);
+            }
+
+            final List<Integer> indentations = getIndentationsForEntryAlignment(map);
+
+            PrettyPrinter prettyPrinter = new DefaultPrettyPrinter() {
+                private int index;
+
+                @Override
+                public void writeObjectFieldValueSeparator(JsonGenerator jg) throws IOException {
+                    jg.writeRaw(getIndentationOfLength(indentations.get(index++)) + " : ");
+                }
+
+                @Override public DefaultPrettyPrinter createInstance() {
+                    return this;
+                }
+
+                private String getIndentationOfLength(Integer length) {
+                    return new String(new char[length]).replace("\0", " ");
+                }
+            };
+
+            ObjectWriter writer = new ObjectMapper().writer().with(prettyPrinter);
+            return writer.writeValueAsString(map);
+        }
+
+        private static List<Integer> getIndentationsForEntryAlignment(Map<String, String> map) {
+            int longestKeyName = getLongestKeyName(map);
+            List<Integer> indentations = new ArrayList<>(map.size());
+            for (String key: map.keySet()) {
+                int indentation = longestKeyName - key.length();
+                indentations.add(indentation);
+            }
+
+            return indentations;
+        }
+
+        private static int getLongestKeyName(Map<String, String> map) {
+            List<String> keys = new ArrayList(map.keySet());
+            Collections.sort(keys, new Comparator<String>() {
+                @Override public int compare(String s1, String s2) {
+                    return s2.length() - s1.length();  // order from the longest key to the shortest
+                }
+            });
+
+            return keys.get(0).length();
+        }
+
+        private static void removeNullValues(Map<String, String> map) {
+            Map<String, String> temp = new HashMap<>(map);
+            for (Map.Entry<String, String> entry: temp.entrySet()) {
+                if (entry.getValue() == null) {
+                    map.remove(entry.getKey());
+                }
+            }
+        }
     }
 }

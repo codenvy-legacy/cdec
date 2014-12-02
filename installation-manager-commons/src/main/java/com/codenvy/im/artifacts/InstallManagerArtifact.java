@@ -111,14 +111,11 @@ public class InstallManagerArtifact extends AbstractArtifact {
                     return new MacroCommand(new ArrayList<Command>() {{
                         add(new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack, if exist."));
                         add(new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager"));
-                        add(new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon,
-                                              "Unpack installation manager daemon"));
-                        add(new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient,
-                                              "Unpack installation manager cli client"));
+                        add(new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon, "Unpack installation manager daemon"));
+                        add(new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient, "Unpack installation manager cli client"));
                     }}, "Unpack downloaded installation manager");
 
                 case 1:
-
                     final Path cliClientDir = Paths.get(format("%s/%s", installOptions.getCliUserHomeDir(), CODENVY_CLI_DIR_NAME));
 
                     final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
@@ -140,7 +137,6 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                               syncAgent, "Set permissions to execute update script"));
                     }}, "Update installation manager CLI client");
 
-
                     final Command updateDaemonCommand =
                         new SimpleCommand(format("sleep 2 ; " +   // time to send response to CLI client before updating daemon
                                                  "sudo %1$s/installation-manager stop ; " +     // start stopping daemon
@@ -155,8 +151,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                  "sudo %1$s/installation-manager start ; " +    // start daemon
                                                  "",
                                                  getInstalledPath().toAbsolutePath(),
-                                                 pathToNewVersionOfDaemon.toAbsolutePath(),
-                                                 dirToUnpack.toAbsolutePath()),
+                                                 pathToNewVersionOfDaemon.toAbsolutePath()),
                                           asyncAgent, "Update installation manager daemon");
 
                     return new MacroCommand(new ArrayList<Command>() {{

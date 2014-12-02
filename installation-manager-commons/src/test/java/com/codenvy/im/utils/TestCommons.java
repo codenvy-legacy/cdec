@@ -25,7 +25,6 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.google.inject.TypeLiteral;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;
@@ -36,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -127,12 +127,11 @@ public class TestCommons {
     public void testMapToJson() throws Exception {
         AccountReference ar = DtoFactory.getInstance().createDto(AccountReference.class);
         ar.setId("id");
-        ar.setName("name");
+        ar.setName(null);
 
         String json = Commons.toJson(ar);
         assertEquals(json, "{\n"
                            + "  \"links\" : [ ],\n"
-                           + "  \"name\" : \"name\",\n"
                            + "  \"id\" : \"id\"\n"
                            + "}");
     }
@@ -211,5 +210,42 @@ public class TestCommons {
 
         assertEquals(Commons.getBinaryFileName(installManager, version100, null), "installation-manager-1.0.0-binary.tar.gz");
         assertEquals(Commons.getBinaryFileName(installManager, version100, "cli"), "installation-manager-cli-1.0.0-binary.tar.gz");
+    }
+
+    @Test
+    public void testMapToSortedAndAlignedJson() throws Exception {
+        Map<String, String> testProperties = new LinkedHashMap<String, String>(){{
+            put("short_prop", "1");
+            put("longer_prop", "20");
+            put("longest_prop", "300");
+            put("null_prop", null);
+        }};
+
+        String json = Commons.toJsonWithSortedAndAlignedProperties(testProperties);
+        assertEquals(json, "{\n"
+                           + "  \"longer_prop\"  : \"20\",\n"
+                           + "  \"longest_prop\" : \"300\",\n"
+                           + "  \"short_prop\"   : \"1\"\n"
+                           + "}");
+    }
+
+    @Test
+    public void testEmptyMapToSortedAndAlignedJson() throws Exception {
+        Map<String, String> testProperties = new LinkedHashMap<>();
+
+        String json = Commons.toJsonWithSortedAndAlignedProperties(testProperties);
+        assertEquals(json, "{ }");
+    }
+
+    @Test
+    public void testOneEntryMapToSortedAndAlignedJson() throws Exception {
+        Map<String, String> testProperties = new LinkedHashMap<String, String>(){{
+            put("prop", "value");
+        }};
+
+        String json = Commons.toJsonWithSortedAndAlignedProperties(testProperties);
+        assertEquals(json, "{\n"
+                           + "  \"prop\" : \"value\"\n"
+                           + "}");
     }
 }

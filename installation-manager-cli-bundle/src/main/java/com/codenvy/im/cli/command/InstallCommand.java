@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static com.codenvy.im.config.Config.getPropertyName;
-import static com.codenvy.im.utils.Commons.toJson;
+import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
 
@@ -260,7 +260,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         for (; ; ) {
-            printLn(toJson(installOptions.getConfigProperties()));
+            printLn(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
             if (askUser("Continue installation")) {
                 break;
             }
