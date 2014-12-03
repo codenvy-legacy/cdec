@@ -340,7 +340,7 @@ doInstallStep5() {
     echo "[CODENVY]"
     echo "[CODENVY] BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
     execuetCliCommand "Installing the latest Codenvy version" im-install --config ${INSTALL_CONFIG} cdec
-    execuetCliCommand "Checking the list of installed artifacts" im-install --list
+    execuetCliCommand "Checking the list of installed artifacts" im-install --list cdec
     echo "[CODENVY] COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 

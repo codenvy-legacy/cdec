@@ -33,6 +33,7 @@ import com.google.inject.Singleton;
 
 import javax.inject.Named;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public class CDECArtifact extends AbstractArtifact {
         String response;
         try {
             response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
-        } catch (IOException e) {
+        } catch (ConnectException e) {
             return null;
         }
 
