@@ -112,7 +112,7 @@ public class InstallCommand extends AbstractIMCommand {
         InstallOptions installOptions = new InstallOptions();
         setOptionsFromConfig(installOptions);
 
-        if (!installOptions.isValid()) {
+        if (!installOptions.checkValid()) {
             enterInstallOptions(installOptions, true);
             confirmOrReenterInstallOptions(installOptions);
         }
@@ -221,7 +221,8 @@ public class InstallCommand extends AbstractIMCommand {
                                 print(format(" (%s)", currentValue));
                             }
 
-                            String newValue = readLine(": ");
+                            print(": ", true);
+                            String newValue = readLine();
 
                             if (!isEmpty(newValue)) {
                                 m.put(propName, newValue);

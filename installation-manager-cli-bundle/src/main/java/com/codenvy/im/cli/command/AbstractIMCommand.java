@@ -21,6 +21,7 @@ import jline.console.ConsoleReader;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.AbsCommand;
+import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
@@ -168,6 +169,14 @@ public abstract class AbstractIMCommand extends AbsCommand {
         System.out.println();
     }
 
+    protected void print(String message, boolean suppressCodenvyPrompt) {
+        if (!isInteractive() && !suppressCodenvyPrompt) {
+            System.out.print("[CODENVY] ");
+        }
+        System.out.print(message);
+        System.out.flush();
+    }
+
     protected void print(String message) {
         if (!isInteractive()) {
             System.out.print("[CODENVY] ");
@@ -208,27 +217,27 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     /** @return "true" only if only user typed line equals "y". */
     protected boolean askUser(String prompt) throws IOException {
-        String userAnswer = readLine(prompt + " [y/N] ");
+        print(prompt + " [y/N] ");
+        String userAnswer = readLine();
         return userAnswer != null && userAnswer.equalsIgnoreCase("y");
     }
 
     /** @return line typed by user */
-    protected String readLine(String prompt) throws IOException {
-        return doReadLine(prompt, null);
+    protected String readLine() throws IOException {
+        return doReadLine(null);
     }
 
-    protected String readPassword(String prompt) throws IOException {
-        return doReadLine(prompt, '*');
+    protected String readPassword() throws IOException {
+        return doReadLine('*');
     }
 
-    private String doReadLine(String prompt, @Nullable Character mask) throws IOException {
+    private String doReadLine(@Nullable Character mask) throws IOException {
         if (isInteractive()) {
-            print(prompt);
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
                 return reader.readLine();
             }
         } else {
-            return new ConsoleReader().readLine("[CODENVY] " + prompt, mask);
+            return new ConsoleReader().readLine(mask);
         }
     }
 
@@ -329,6 +338,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
         if (!isInteractive()) {
             System.exit(1);
         }
+    }
+
+    protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
+        return super.getMultiRemoteCodenvy();
     }
 
     protected boolean isInteractive() {

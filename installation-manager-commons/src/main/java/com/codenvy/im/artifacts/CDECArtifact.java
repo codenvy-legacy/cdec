@@ -115,7 +115,7 @@ public class CDECArtifact extends AbstractArtifact {
             case 0:
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createLocalCommand("sudo setenforce 0"));
-                    add(createLocalBackupFileCommand("/etc/selinux/config"));
+                    add(createLocalRestoreOrBackupCommand("/etc/selinux/config"));
                     add(createLocalCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config"));
                     add(createLocalCommand("sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config"));
                 }}, "Disable SELinux");
@@ -135,7 +135,7 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 3:
                 return new MacroCommand(new ArrayList<Command>() {{
-                    add(createLocalBackupFileCommand("/etc/puppet/fileserver.conf"));
+                    add(createLocalRestoreOrBackupCommand("/etc/puppet/fileserver.conf"));
                     add(createLocalCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
                     add(createLocalCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
                     add(createLocalCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
@@ -193,17 +193,17 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 6:
                 return new MacroCommand(new ArrayList<Command>() {{
-                    add(createLocalBackupFileCommand("/etc/puppet/puppet.conf"));
-                    add(createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\n" +
-                                                  "  server = %s\n" +
-                                                  "  runinterval = 300\n" +
-                                                  "  configtimeout = 600\n/g' /etc/puppet/puppet.conf", config.getValue(HOST_URL))));
-                    add(createLocalCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\n" +
-                                                  "  show_diff = true\n" +
-                                                  "  pluginsync = true\n" +
-                                                  "  report = true\n" +
-                                                  "  default_schedules = false\n" +
-                                                  "  certname = %s\n/g' /etc/puppet/puppet.conf", config.getValue(HOST_URL))));
+                    add(createLocalRestoreOrBackupCommand("/etc/puppet/puppet.conf"));
+                    add(createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                  "  server = %s\\n" +
+                                                  "  runinterval = 300\\n" +
+                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getValue(HOST_URL))));
+                    add(createLocalCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                                  "  show_diff = true\\n" +
+                                                  "  pluginsync = true\\n" +
+                                                  "  report = true\\n" +
+                                                  "  default_schedules = false\\n" +
+                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", config.getValue(HOST_URL))));
                 }}, "Configure puppet agent");
 
 
@@ -215,8 +215,8 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 8:
                 return new MacroCommand(new ArrayList<Command>() {{
-                    add(createLocalCommand("puppet cert --list --all"));
-                    add(createLocalCommand(format("puppet cert --sign %s", config.getValue(HOST_URL))));
+                    add(createLocalCommand("sudo puppet cert --list --all"));
+                    add(createLocalCommand(format("sudo puppet cert --sign %s", config.getValue(HOST_URL))));
                 }}, "Boot Codenvy");
 
 
@@ -238,7 +238,7 @@ public class CDECArtifact extends AbstractArtifact {
                        value.replace("/", "\\/")));
     }
 
-    private Command createLocalBackupFileCommand(final String file) throws ConfigException {
+    private Command createLocalRestoreOrBackupCommand(final String file) throws ConfigException {
         final String backupFile = file + ".back";
         return createLocalCommand(
                 format("if [ ! -f %1$s ]; then sudo cp %2$s %1$s; else sudo cp %1$s %2$s; fi",

@@ -18,6 +18,9 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.CodenvySingleServerConfig;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigProperty;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -31,6 +34,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Matchers.endsWith;
@@ -74,11 +78,18 @@ public class TestCDECArtifact {
     public void testGetInstallCommand() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-        options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setStep(1);
+        options.setConfigProperties(new HashMap<String, String>() {{
+            for (ConfigProperty property : CodenvySingleServerConfig.Property.values()) {
+                put(Config.getPropertyName(property), "value");
+            }
+        }});
 
-        Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
-        assertNotNull(command);
+        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        for (int i = 0; i < steps; i++) {
+            options.setStep(i);
+            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+            assertNotNull(command);
+        }
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

@@ -261,10 +261,10 @@ public class TestInstallCommand extends AbstractTestCommand {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 InstallCommand installCommand = (InstallCommand)invocationOnMock.getMock();
-                installCommand.print(": some value\n");
+                installCommand.print("some value\n");
                 return "some value";
             }
-        }).when(spyCommand).readLine(anyString());
+        }).when(spyCommand).readLine();
 
         // no installation info provided
         doReturn("{\"infos\":{}}").when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));

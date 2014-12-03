@@ -55,11 +55,13 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (username == null) {
-                username = readLine(String.format("Codenvy user name for remote '%s': ", remoteName));
+                print(String.format("Codenvy user name for remote '%s': ", remoteName));
+                username = readLine();
             }
 
             if (password == null) {
-                password = readPassword(String.format("Password for %s: ", username));
+                print(String.format("Password for %s: ", username));
+                password = readPassword();
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {

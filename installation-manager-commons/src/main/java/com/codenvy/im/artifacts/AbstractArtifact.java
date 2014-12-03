@@ -124,7 +124,6 @@ public abstract class AbstractArtifact implements Artifact {
     /** @return path where artifact located */
     protected abstract Path getInstalledPath() throws URISyntaxException;
 
-    // TODO who need this
     @Override
     @Nullable
     public Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {

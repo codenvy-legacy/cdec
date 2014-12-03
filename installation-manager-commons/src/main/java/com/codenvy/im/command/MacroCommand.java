@@ -21,7 +21,7 @@ import java.util.List;
 
 /** @author Dmytro Nochevnov */
 public class MacroCommand implements Command {
-    private final String description;
+    private final String        description;
     private final List<Command> commands;
 
     public MacroCommand(List<Command> commands, String description) {

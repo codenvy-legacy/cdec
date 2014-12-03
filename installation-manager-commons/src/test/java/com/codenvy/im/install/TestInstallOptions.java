@@ -37,7 +37,7 @@ public class TestInstallOptions {
     @Test
     public void testIsValid() throws Exception {
         InstallOptions options = new InstallOptions();
-        assertTrue(options.isValid());
+        assertTrue(options.checkValid());
     }
 
     @Test
@@ -45,7 +45,7 @@ public class TestInstallOptions {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
 
-        assertFalse(options.isValid());
+        assertFalse(options.checkValid());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class TestInstallOptions {
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
 
-        assertFalse(options.isValid());
+        assertFalse(options.checkValid());
     }
 
     @Test
@@ -68,6 +68,6 @@ public class TestInstallOptions {
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setConfigProperties(properties);
 
-        assertTrue(options.isValid());
+        assertTrue(options.checkValid());
     }
 }

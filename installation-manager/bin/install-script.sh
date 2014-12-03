@@ -235,17 +235,16 @@ detectOS() {
 
 checkInstallConfig() {
     if [ -z "$INSTALL_CONFIG" ]; then
-        echo "[CODENVY] Script has been run with no existing config. Install script will download default config for you and run editor."
-        echo "[CODENVY] Please fill in MANDATORY properties and then installation will be continued"
+        echo "[CODENVY] Script has been run with no existing config. Install script will download default config for you and run vim to edit."
+        echo "[CODENVY] Please fill in MANDATORY properties and then installation will be continued."
         read -p "[CODENVY] Press any key to continue" -n1 -s
         echo ""
 
         curl -o codenvy-single-server.properties -s https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
         vi codenvy-single-server.properties
 
-        echo "[CODENVY] Continue installation [y/N]"
+        read -p "[CODENVY] Continue installation [y/N]" answer
         echo "[CODENVY]"
-        read answer
         if [ ! "${answer}" == "y" ]; then exit; fi;
 
         INSTALL_CONFIG=codenvy-single-server.properties
@@ -293,9 +292,9 @@ printPreInstallInfo() {
 }
 
 printPostInstallInfo() {
-    dnsFromConfig=`cat /home/codenvy-shared/config/cdec-single-node.properties | grep dns_name | cut -d '=' -f2`
+    hostUrl=`cat ${INSTALL_CONFIG} | grep host_url | cut -d '=' -f2`
     echo "[CODENVY]"
-    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at https://"${dnsFromConfig}"/"
+    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at https://"${hostUrl}"/"
 }
 
 doInstallStep1() {
