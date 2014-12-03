@@ -123,9 +123,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                                    "rm -rf %1$s/* \n" +      // remove content of cli client dir
                                                                    "cp -r %2$s/* %1$s \n" +  // copy update into the user's home dir
                                                                    "chmod +x %3$s \n" +      // set permissions to execute CLI client scripts
-                                                                   "newgrp %5$s << END \n" + // open block END of execution as user of CODENVY_SHARE_GROUP group
+                                                                   "newgrp %5$s << END\n" + // open block END of execution as user of CODENVY_SHARE_GROUP group
                                                                    "  rm -f %4$s ; \n" +     // remove update script
-                                                                   "END \n" +                // close block END
+                                                                   "END\n" +                // close block END
                                                                    "",
                                                                    cliClientDir.toAbsolutePath(),
                                                                    pathToNewVersionOfCliClient.toAbsolutePath(),
@@ -143,7 +143,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
                     final Command updateDaemonCommand =
                         new SimpleCommand(format("sleep 6 ; " +   // time to send response to CLI client before updating daemon
-                                                 "%1$s/installation-manager stop ; " +    // start daemon
+                                                 "%1$s/installation-manager stop ; " +     // stop daemon
                                                  "rm -rf %1$s ; " +                         // remove directory with daemon
                                                  "mkdir %1$s ; " +                          // create directory with daemon
                                                  "cp -r %2$s/* %1$s ; " +                   // copy update into the directory with daemon
