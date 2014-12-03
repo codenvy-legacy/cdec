@@ -72,6 +72,8 @@ createCodenvyUserAndGroup() {
 }
 
 installJava() {
+    source ~/.bashrc  # reload shell to get changes from previous executing of install-script.sh at the same instance of console
+
     # check if requered program had already installed earlier for current user
     hash java 2>/dev/null || {
         echo "[CODENVY] Installing java"

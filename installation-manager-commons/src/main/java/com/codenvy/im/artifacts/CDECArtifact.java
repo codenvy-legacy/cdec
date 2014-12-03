@@ -233,14 +233,16 @@ public class CDECArtifact extends AbstractArtifact {
 
     private Command createLocalReplaceCommand(String property, String value) throws ConfigException {
         return createLocalCommand(
-                format("sudo sed -i 's/%s = .*/%s = \"%s\"/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
-                       property, property, value.replace("/", "\\/")));
+                format("sudo sed -i 's/%1$s = .*/%1$s = \"%2$s\"/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
+                       property,
+                       value.replace("/", "\\/")));
     }
 
     private Command createLocalBackupFileCommand(final String file) throws ConfigException {
         final String backupFile = file + ".back";
         return createLocalCommand(
-                format("if [ ! -f %s ]; then sudo cp %s %s; else sudo cp %s %s; fi",
-                       backupFile, file, backupFile, backupFile, file));
+                format("if [ ! -f %1$s ]; then sudo cp %2$s %1$s; else sudo cp %1$s %2$s; fi",
+                       backupFile,
+                       file));
     }
 }

@@ -304,7 +304,7 @@ public class Commons {
 
         /** Translates map to JSON with entries sorted alphabetically and aligned by colons. */
         private static String toJsonWithSortedAndAlignedProperties(Map<String, String> originMap) throws JsonProcessingException {
-            Map<String, String> map = new TreeMap<>(originMap);  // sort map
+            Map<String, String> map = new TreeMap<>(originMap);  // get safe copy of origin map in the sorted view
 
             removeNullValues(map);
 
