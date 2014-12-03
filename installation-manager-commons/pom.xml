@@ -161,6 +161,22 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>com.mycila</groupId>
+                        <artifactId>license-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration combine.children="append">
+                            <excludes combine.children="append">
+                                <exclude>src/main/resources/codenvy-single-server.properties</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -186,7 +202,7 @@
                                     <target>
                                         <?SORTPOM IGNORE?>
                                         <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
-                                            ver sion = ${project.version}
+                                            version = ${project.version}
                                         </echo>
                                         <?SORTPOM RESUME?>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
@@ -206,6 +222,22 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.mycila</groupId>
+                        <artifactId>license-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration combine.children="append">
+                            <excludes combine.children="append">
+                                <exclude>src/main/resources/codenvy-single-server.properties</exclude>
+                            </excludes>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

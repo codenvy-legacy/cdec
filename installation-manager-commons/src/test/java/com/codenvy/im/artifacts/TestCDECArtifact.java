@@ -28,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -100,7 +101,7 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
-        doThrow(new IOException()).when(mockTransport).doOption(endsWith("api/"), eq("authToken"));
+        doThrow(new ConnectException()).when(mockTransport).doOption(endsWith("api/"), eq("authToken"));
         Version version = spyCdecArtifact.getInstalledVersion("authToken");
         assertNull(version);
     }

@@ -17,9 +17,10 @@
  */
 package com.codenvy.im.config;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * @author Alexander Reshetnyak
@@ -77,7 +78,12 @@ public class CodenvySingleServerConfig extends Config {
         for (ConfigProperty property : Property.values()) {
             m.put(property.toString().toLowerCase(), getValue(property));
         }
-        return Collections.unmodifiableMap(m);
+        return unmodifiableMap(m);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean isValid() {
+        return super.isValid(Property.values());
+    }
 }

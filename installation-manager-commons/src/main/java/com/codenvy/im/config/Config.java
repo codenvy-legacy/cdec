@@ -28,15 +28,33 @@ public abstract class Config {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
+    /** Indicates if property is set or isn't. */
+    public static boolean isEmpty(String value) {
+        return value == null || value.equalsIgnoreCase("MANDATORY");
+    }
+
     /** @return the property value */
     public final String getValue(ConfigProperty property) {
         return properties.get(property.toString().toLowerCase());
     }
 
-    /**
-     * @return property name, for instance, if property name is "MONGO_ADMIN_PASSWORD" then "mongo admin password" will be returned
-     */
+    /** @return property name, for instance, if property name is "MONGO_ADMIN_PASSWORD" then "mongo admin password" will be returned */
     public static String getPropertyName(ConfigProperty property) {
-        return property.toString().replace("_", " ").toLowerCase();
+        return property.toString().toLowerCase();
+    }
+
+    /** Checks if all properties are set and have correct values. */
+    public abstract boolean isValid();
+
+    /** Checks if all properties are set and have correct values. */
+    public boolean isValid(ConfigProperty[] properties) {
+        for (ConfigProperty property : properties) {
+            String value = getValue(property);
+            if (isEmpty(value)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -71,7 +71,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
             if (props.containsKey("version")) {
                 return Version.valueOf((String)props.get("version"));
             } else {
-                throw new IOException(this.getName());
+                throw new IOException(format("Can't get the version of '%s' artifact", NAME));
             }
         }
     }

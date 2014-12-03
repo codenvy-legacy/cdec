@@ -233,13 +233,20 @@ detectOS() {
 
 checkInstallConfig() {
     if [ -z "$INSTALL_CONFIG" ]; then
-        echo "[CODENVY] Script has been run with no existing config. Install script will download 'codenvy-single-server.properties' for you."
-        echo "[CODENVY] Please fill in MANDATORY properties and rerun install script one more time."
-        echo "[CODENVY]"
-        echo "[CODENVY] bash <(curl -s https://codenvy.com/update/repository/public/download/install-script) codenvy-single-server.properties"
+        echo "[CODENVY] Script has been run with no existing config. Install script will download default config for you and run editor."
+        echo "[CODENVY] Please fill in MANDATORY properties and then installation will be continued"
+        read -p "[CODENVY] Press any key to continue" -n1 -s
+        echo ""
 
         curl -o codenvy-single-server.properties -s https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
-        exit 1
+        vi codenvy-single-server.properties
+
+        echo "[CODENVY] Continue installation [y/N]"
+        echo "[CODENVY]"
+        read answer
+        if [ ! "${answer}" == "y" ]; then exit; fi;
+
+        INSTALL_CONFIG=codenvy-single-server.properties
     fi
 }
 
@@ -320,12 +327,12 @@ doInstallStep4() {
     echo "[CODENVY]"
     echo "[CODENVY] BEGINNING STEP 4: DOWNLOAD CODENVY"
 
-    codenvyUser=`grep codenvy_user_name ${INSTALL_CONFIG} | cut -d '=' -f2`
+    codenvyUser=`grep codenvy_user_name= ${INSTALL_CONFIG} | cut -d '=' -f2`
     codenvyPwd=`grep codenvy_password ${INSTALL_CONFIG} | cut -d '=' -f2`
 
     execuetCliCommand "Logging to Codenvy" login --remote update-server ${codenvyUser} ${codenvyPwd}
     execuetCliCommand "Downloading Codenvy binaries" im-download cdec
-    execuetCliCommand "Checking the list of downloaded binaries" im-download --list-local cdec
+    execuetCliCommand "Checking the list of downloaded binaries" im-download --list-local
     echo "[CODENVY] COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 
@@ -333,7 +340,7 @@ doInstallStep5() {
     echo "[CODENVY]"
     echo "[CODENVY] BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
     execuetCliCommand "Installing the latest Codenvy version" im-install --config ${INSTALL_CONFIG} cdec
-    execuetCliCommand "Checking the list of installed artifacts" im-install --list
+    execuetCliCommand "Checking the list of installed artifacts" im-install --list cdec
     echo "[CODENVY] COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 

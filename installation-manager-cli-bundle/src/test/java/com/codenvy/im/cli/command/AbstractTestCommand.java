@@ -23,6 +23,8 @@ import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -41,7 +43,15 @@ public class AbstractTestCommand {
                 System.out.println(invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(spyCommand).printError(Matchers.anyString());
+        }).when(spyCommand).printError(anyString());
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                System.out.println(invocationOnMock.getArguments()[0]);
+                return null;
+            }
+        }).when(spyCommand).printError(anyString(), anyBoolean());
 
         doAnswer(new Answer() {
             @Override
@@ -58,6 +68,14 @@ public class AbstractTestCommand {
                 System.out.println(invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(spyCommand).printSuccess(Matchers.anyString());
+        }).when(spyCommand).printSuccess(anyString());
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                System.out.println(invocationOnMock.getArguments()[0]);
+                return null;
+            }
+        }).when(spyCommand).printSuccess(anyString(), anyBoolean());
     }
 }
