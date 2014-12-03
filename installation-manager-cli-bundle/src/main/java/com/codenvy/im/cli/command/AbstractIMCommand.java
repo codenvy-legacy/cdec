@@ -124,7 +124,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void printError(String message) {
-        print(ansi().fg(RED).a(message).newline().reset());
+        print(ansi().fg(RED).a(message).newline().reset(), false);
+    }
+
+    protected void printError(String message, boolean supressCodenvyPrompt) {
+        print(ansi().fg(RED).a(message).newline().reset(), supressCodenvyPrompt);
     }
 
     protected void printProgress(int percents) {
@@ -160,16 +164,20 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void printLn(String message) {
-        System.out.println(message);
+        print(message);
+        System.out.println();
     }
 
     protected void print(String message) {
+        if (!isInteractive()) {
+            System.out.print("[CODENVY] ");
+        }
         System.out.print(message);
         System.out.flush();
     }
 
-    private void print(Ansi ansi) {
-        if (!isInteractive()) {
+    private void print(Ansi ansi, boolean suppressCodenvyPrompt) {
+        if (!isInteractive() && !suppressCodenvyPrompt) {
             System.out.print("[CODENVY] ");
         }
         System.out.print(ansi);
@@ -190,10 +198,13 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    protected void printSuccess(String message) {
-        print(ansi().fg(GREEN).a(message).newline().reset());
+    protected void printSuccess(String message, boolean suppressCodenvyPrompt) {
+        print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
+    protected void printSuccess(String message) {
+        print(ansi().fg(GREEN).a(message).newline().reset(), false);
+    }
 
     /** @return "true" only if only user typed line equals "y". */
     protected boolean askUser(String prompt) throws IOException {
@@ -217,7 +228,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
                 return reader.readLine();
             }
         } else {
-            return new ConsoleReader().readLine(prompt, mask);
+            return new ConsoleReader().readLine("[CODENVY] " + prompt, mask);
         }
     }
 

@@ -293,45 +293,45 @@ public class TestInstallCommand extends AbstractTestCommand {
         String output = result.disableAnsi().getOutputStream();
 
         assertEquals(output, "Please, enter CDEC required parameters:\n" +
-                             "host url: some value\n" +
-                             "mongo admin pass: some value\n" +
-                             "mongo user pass: some value\n" +
-                             "mongo orgservice user pwd: some value\n" +
-                             "user ldap password: some value\n" +
-                             "admin ldap user name: some value\n" +
-                             "admin ldap password: some value\n" +
-                             "mysql root password: some value\n" +
-                             "zabbix db pass: some value\n" +
-                             "zabbix time zone: some value\n" +
-                             "zabbix admin email: some value\n" +
-                             "zabbix admin password: some value\n" +
-                             "haproxy statistic pass: some value\n" +
-                             "jmx username: some value\n" +
-                             "jmx password: some value\n" +
-                             "builder max execution time: some value\n" +
-                             "builder waiting time: some value\n" +
-                             "builder keep result time: some value\n" +
-                             "builder queue size: some value\n" +
-                             "runner default app mem size: some value\n" +
-                             "runner workspace max memsize: some value\n" +
-                             "runner app lifetime: some value\n" +
-                             "runner waiting time: some value\n" +
-                             "workspace inactive temporary stop time: some value\n" +
-                             "workspace inactive persistent stop time: some value\n" +
-                             "codenvy server xmx: some value\n" +
-                             "google client id: some value\n" +
-                             "google secret: some value\n" +
-                             "github client id: some value\n" +
-                             "github secret: some value\n" +
-                             "bitbucket client id: some value\n" +
-                             "bitbucket secret: some value\n" +
-                             "wso2 client id: some value\n" +
-                             "wso2 secret: some value\n" +
-                             "projectlocker client id: some value\n" +
-                             "projectlocker secret: some value\n" +
-                             "puppet agent version: some value\n" +
-                             "puppet server version: some value\n" +
-                             "puppet resource url: some value\n" +
+                             "host_url: some value\n" +
+                             "mongo_admin_pass: some value\n" +
+                             "mongo_user_pass: some value\n" +
+                             "mongo_orgservice_user_pwd: some value\n" +
+                             "user_ldap_password: some value\n" +
+                             "admin_ldap_user_name: some value\n" +
+                             "admin_ldap_password: some value\n" +
+                             "mysql_root_password: some value\n" +
+                             "zabbix_db_pass: some value\n" +
+                             "zabbix_time_zone: some value\n" +
+                             "zabbix_admin_email: some value\n" +
+                             "zabbix_admin_password: some value\n" +
+                             "haproxy_statistic_pass: some value\n" +
+                             "jmx_username: some value\n" +
+                             "jmx_password: some value\n" +
+                             "builder_max_execution_time: some value\n" +
+                             "builder_waiting_time: some value\n" +
+                             "builder_keep_result_time: some value\n" +
+                             "builder_queue_size: some value\n" +
+                             "runner_default_app_mem_size: some value\n" +
+                             "runner_workspace_max_memsize: some value\n" +
+                             "runner_app_lifetime: some value\n" +
+                             "runner_waiting_time: some value\n" +
+                             "workspace_inactive_temporary_stop_time: some value\n" +
+                             "workspace_inactive_persistent_stop_time: some value\n" +
+                             "codenvy_server_xmx: some value\n" +
+                             "google_client_id: some value\n" +
+                             "google_secret: some value\n" +
+                             "github_client_id: some value\n" +
+                             "github_secret: some value\n" +
+                             "bitbucket_client_id: some value\n" +
+                             "bitbucket_secret: some value\n" +
+                             "wso2_client_id: some value\n" +
+                             "wso2_secret: some value\n" +
+                             "projectlocker_client_id: some value\n" +
+                             "projectlocker_secret: some value\n" +
+                             "puppet_agent_version: some value\n" +
+                             "puppet_server_version: some value\n" +
+                             "puppet_resource_url: some value\n" +
                              "{\n" +
                              "  \"admin_ldap_password\"                     : \"some value\",\n" +
                              "  \"admin_ldap_user_name\"                    : \"some value\",\n" +
@@ -375,45 +375,45 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "}\n" +
                              "Continue installation [y/N]\n" +
                              "Please, enter CDEC required parameters:\n" +
-                             "host url (some value): some value\n" +
-                             "mongo admin pass (some value): some value\n" +
-                             "mongo user pass (some value): some value\n" +
-                             "mongo orgservice user pwd (some value): some value\n" +
-                             "user ldap password (some value): some value\n" +
-                             "admin ldap user name (some value): some value\n" +
-                             "admin ldap password (some value): some value\n" +
-                             "mysql root password (some value): some value\n" +
-                             "zabbix db pass (some value): some value\n" +
-                             "zabbix time zone (some value): some value\n" +
-                             "zabbix admin email (some value): some value\n" +
-                             "zabbix admin password (some value): some value\n" +
-                             "haproxy statistic pass (some value): some value\n" +
-                             "jmx username (some value): some value\n" +
-                             "jmx password (some value): some value\n" +
-                             "builder max execution time (some value): some value\n" +
-                             "builder waiting time (some value): some value\n" +
-                             "builder keep result time (some value): some value\n" +
-                             "builder queue size (some value): some value\n" +
-                             "runner default app mem size (some value): some value\n" +
-                             "runner workspace max memsize (some value): some value\n" +
-                             "runner app lifetime (some value): some value\n" +
-                             "runner waiting time (some value): some value\n" +
-                             "workspace inactive temporary stop time (some value): some value\n" +
-                             "workspace inactive persistent stop time (some value): some value\n" +
-                             "codenvy server xmx (some value): some value\n" +
-                             "google client id (some value): some value\n" +
-                             "google secret (some value): some value\n" +
-                             "github client id (some value): some value\n" +
-                             "github secret (some value): some value\n" +
-                             "bitbucket client id (some value): some value\n" +
-                             "bitbucket secret (some value): some value\n" +
-                             "wso2 client id (some value): some value\n" +
-                             "wso2 secret (some value): some value\n" +
-                             "projectlocker client id (some value): some value\n" +
-                             "projectlocker secret (some value): some value\n" +
-                             "puppet agent version (some value): some value\n" +
-                             "puppet server version (some value): some value\n" +
-                             "puppet resource url (some value): some value\n" +
+                             "host_url (some value): some value\n" +
+                             "mongo_admin_pass (some value): some value\n" +
+                             "mongo_user_pass (some value): some value\n" +
+                             "mongo_orgservice_user_pwd (some value): some value\n" +
+                             "user_ldap_password (some value): some value\n" +
+                             "admin_ldap_user_name (some value): some value\n" +
+                             "admin_ldap_password (some value): some value\n" +
+                             "mysql_root_password (some value): some value\n" +
+                             "zabbix_db_pass (some value): some value\n" +
+                             "zabbix_time_zone (some value): some value\n" +
+                             "zabbix_admin_email (some value): some value\n" +
+                             "zabbix_admin_password (some value): some value\n" +
+                             "haproxy_statistic_pass (some value): some value\n" +
+                             "jmx_username (some value): some value\n" +
+                             "jmx_password (some value): some value\n" +
+                             "builder_max_execution_time (some value): some value\n" +
+                             "builder_waiting_time (some value): some value\n" +
+                             "builder_keep_result_time (some value): some value\n" +
+                             "builder_queue_size (some value): some value\n" +
+                             "runner_default_app_mem_size (some value): some value\n" +
+                             "runner_workspace_max_memsize (some value): some value\n" +
+                             "runner_app_lifetime (some value): some value\n" +
+                             "runner_waiting_time (some value): some value\n" +
+                             "workspace_inactive_temporary_stop_time (some value): some value\n" +
+                             "workspace_inactive_persistent_stop_time (some value): some value\n" +
+                             "codenvy_server_xmx (some value): some value\n" +
+                             "google_client_id (some value): some value\n" +
+                             "google_secret (some value): some value\n" +
+                             "github_client_id (some value): some value\n" +
+                             "github_secret (some value): some value\n" +
+                             "bitbucket_client_id (some value): some value\n" +
+                             "bitbucket_secret (some value): some value\n" +
+                             "wso2_client_id (some value): some value\n" +
+                             "wso2_secret (some value): some value\n" +
+                             "projectlocker_client_id (some value): some value\n" +
+                             "projectlocker_secret (some value): some value\n" +
+                             "puppet_agent_version (some value): some value\n" +
+                             "puppet_server_version (some value): some value\n" +
+                             "puppet_resource_url (some value): some value\n" +
                              "{\n" +
                              "  \"admin_ldap_password\"                     : \"some value\",\n" +
                              "  \"admin_ldap_user_name\"                    : \"some value\",\n" +

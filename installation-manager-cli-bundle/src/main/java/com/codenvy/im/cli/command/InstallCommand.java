@@ -21,8 +21,10 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.config.CodenvySingleServerConfig;
+import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.config.ConfigProperty;
+import com.codenvy.im.config.DefaultConfig;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
@@ -44,8 +46,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.config.Config.getPropertyName;
+import static com.codenvy.im.config.Config.isEmpty;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
@@ -56,6 +61,8 @@ import static java.lang.String.format;
  */
 @Command(scope = "codenvy", name = "im-install", description = "Install, update artifact or print the list of already installed ones")
 public class InstallCommand extends AbstractIMCommand {
+
+    private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
     private final ConfigFactory configFactory;
 
@@ -98,15 +105,19 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    private Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
+    protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
             printErrorAndExitIfNotInteractive("Argument 'artifact' is required.");
             return null;
         }
 
         InstallOptions installOptions = new InstallOptions();
-        enterInstallOptions(installOptions, true);
-        confirmOrReenterInstallOptions(installOptions);
+        setOptionsFromConfig(installOptions);
+
+        if (!isValid(installOptions)) {
+            enterInstallOptions(installOptions, true);
+            confirmOrReenterInstallOptions(installOptions);
+        }
 
         String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
         Response responseObj = Response.fromJson(response);
@@ -125,11 +136,11 @@ public class InstallCommand extends AbstractIMCommand {
             responseObj = Response.fromJson(response);
 
             if (responseObj.getStatus() == ResponseCode.ERROR) {
-                printError(" [FAIL]");
+                printError(" [FAIL]", true);
                 printErrorAndExitIfNotInteractive(response);
                 return null;
             } else {
-                printSuccess(" [OK]");
+                printSuccess(" [OK]", true);
             }
         }
 
@@ -145,20 +156,20 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    private Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
+    protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
         printResponse(insertClientVersionInfo(response));
         return null;
     }
 
-    private String insertClientVersionInfo(String response) throws IOException {
+    protected String insertClientVersionInfo(String response) throws IOException {
         StringBuilder newResponse = new StringBuilder(response);
         String clientVersionInfo = format("  \"CLI client version\" : \"%s\",\n", getClientBuildVersion());
         newResponse.insert(2, clientVersionInfo);
         return newResponse.toString();
     }
 
-    private boolean isIMSuccessfullyUpdated(Response response) {
+    protected boolean isIMSuccessfullyUpdated(Response response) {
         List<ArtifactInfo> artifacts = response.getArtifacts();
         if (artifacts != null) {
             for (ArtifactInfo artifact : artifacts) {
@@ -195,16 +206,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {
         switch (artifactName) {
-            case InstallManagerArtifact.NAME:
-                return options.setCliUserHomeDir(System.getProperty("user.home"));
-
             case CDECArtifact.NAME:
-                options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-
-                if (options.getConfigProperties() == null) {
-                    setOptionsFromConfig(options);
-                }
-
                 printLn("Please, enter CDEC required parameters:");
 
                 Map<String, String> m = new HashMap<>();
@@ -230,28 +232,68 @@ public class InstallCommand extends AbstractIMCommand {
                                 m.put(propName, currentValue);
                                 break;
                             }
+                        } else {
+                            m.put(propName, currentValue);
+                            break;
                         }
                     }
                 }
 
-                return options.setConfigProperties(m);
+                options.setConfigProperties(m);
+        }
+
+        return options;
+    }
+
+    protected void setOptionsFromConfig(InstallOptions options) throws IOException {
+        switch (artifactName) {
+            case InstallManagerArtifact.NAME:
+                options.setCliUserHomeDir(System.getProperty("user.home"));
+                break;
+
+            case CDECArtifact.NAME:
+                options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+                Map<String, String> properties;
+                if (configFilePath != null) {
+                    properties = configFactory.loadConfigProperties(configFilePath);
+                } else {
+                    properties = Collections.emptyMap();
+                }
+                options.setConfigProperties(properties);
+
+                // it's allowed to use ${} templates to set properties values
+                for (Map.Entry<String, String> e : options.getConfigProperties().entrySet()) {
+                    String key = e.getKey();
+                    String value = e.getValue();
+
+                    Matcher matcher = VARIABLE_TEMPLATE.matcher(value);
+                    if (matcher.find()) {
+                        String newValue = properties.get(matcher.group(1));
+                        properties.put(key, newValue);
+                    }
+                }
+
+                break;
+
             default:
                 throw ArtifactNotFoundException.from(artifactName);
         }
     }
 
-    private boolean isEmpty(String value) {
-        return value == null || value.isEmpty() || value.equalsIgnoreCase("MANDATORY");
-    }
+    protected boolean isValid(InstallOptions options) throws ArtifactNotFoundException {
+        switch (artifactName) {
+            case InstallManagerArtifact.NAME:
+                Config config = new DefaultConfig();
+                return config.isValid();
 
-    private void setOptionsFromConfig(InstallOptions options) throws IOException {
-        Map<String, String> properties;
-        if (configFilePath != null) {
-            properties = configFactory.loadConfigProperties(configFilePath);
-        } else {
-            properties = Collections.emptyMap();
+            case CDECArtifact.NAME:
+                config = new CodenvySingleServerConfig(options.getConfigProperties());
+                return config.isValid();
+
+            default:
+                throw ArtifactNotFoundException.from(artifactName);
         }
-        options.setConfigProperties(properties);
     }
 
     protected void confirmOrReenterInstallOptions(InstallOptions installOptions) throws IOException {

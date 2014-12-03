@@ -23,9 +23,12 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -49,5 +52,43 @@ public class TestConfig {
         assertEquals(m.size(), 2);
         assertEquals(m.get("user"), "1");
         assertEquals(m.get("pwd"), "2");
+    }
+
+    @Test
+    public void testIsEmpty() throws Exception {
+        assertTrue(Config.isEmpty(null));
+        assertTrue(Config.isEmpty("MANDATORY"));
+
+        assertFalse(Config.isEmpty(""));
+        assertFalse(Config.isEmpty("value"));
+    }
+
+    @Test
+    public void testIsValidDefaultConfig() throws Exception {
+        Config config = new DefaultConfig();
+        assertTrue(config.isValid());
+    }
+
+    @Test
+    public void testIsValidCSSConfig() throws Exception {
+        Map<String, String> properties = new HashMap<>();
+        for (CodenvySingleServerConfig.Property property : CodenvySingleServerConfig.Property.values()) {
+            properties.put(Config.getPropertyName(property), "some value");
+        }
+
+
+        Config config = new CodenvySingleServerConfig(properties);
+        assertTrue(config.isValid());
+    }
+
+    @Test
+    public void testIsValidCSSConfigError() throws Exception {
+        Map<String, String> properties = new HashMap<>();
+        for (CodenvySingleServerConfig.Property property : CodenvySingleServerConfig.Property.values()) {
+            properties.put(Config.getPropertyName(property), "MANDATORY");
+        }
+
+        Config config = new CodenvySingleServerConfig(properties);
+        assertFalse(config.isValid());
     }
 }
