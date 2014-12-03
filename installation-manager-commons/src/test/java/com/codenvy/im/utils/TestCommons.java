@@ -130,10 +130,10 @@ public class TestCommons {
         ar.setName(null);
 
         String json = Commons.toJson(ar);
-        assertEquals(json, "{\n"
-                           + "  \"links\" : [ ],\n"
-                           + "  \"id\" : \"id\"\n"
-                           + "}");
+        assertEquals(json, "{\n" +
+                           "  \"id\" : \"id\",\n" +
+                           "  \"links\" : [ ]\n" +
+                           "}");
     }
 
     @Test
