@@ -17,6 +17,9 @@
  */
 package com.codenvy.im.install;
 
+import com.codenvy.im.config.CodenvySingleServerConfig;
+import com.codenvy.im.config.Config;
+
 import java.util.Map;
 
 /**
@@ -73,5 +76,19 @@ public class InstallOptions {
     public InstallOptions setCliUserHomeDir(String cliUserHomeDir) {
         this.cliUserHomeDir = cliUserHomeDir;
         return this;
+    }
+
+    /** Indicates if all necessary options are set. */
+    public boolean isValid() {
+        if (getInstallType() == InstallType.CODENVY_SINGLE_SERVER) {
+            if (configProperties == null) {
+                return false;
+            }
+
+            Config config = new CodenvySingleServerConfig(configProperties);
+            return config.isValid();
+        }
+
+        return true;
     }
 }

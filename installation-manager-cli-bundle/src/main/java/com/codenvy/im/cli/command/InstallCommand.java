@@ -21,10 +21,8 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.config.CodenvySingleServerConfig;
-import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.config.ConfigProperty;
-import com.codenvy.im.config.DefaultConfig;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
@@ -114,7 +112,7 @@ public class InstallCommand extends AbstractIMCommand {
         InstallOptions installOptions = new InstallOptions();
         setOptionsFromConfig(installOptions);
 
-        if (!isValid(installOptions)) {
+        if (!installOptions.isValid()) {
             enterInstallOptions(installOptions, true);
             confirmOrReenterInstallOptions(installOptions);
         }
@@ -275,21 +273,6 @@ public class InstallCommand extends AbstractIMCommand {
                 }
 
                 break;
-
-            default:
-                throw ArtifactNotFoundException.from(artifactName);
-        }
-    }
-
-    protected boolean isValid(InstallOptions options) throws ArtifactNotFoundException {
-        switch (artifactName) {
-            case InstallManagerArtifact.NAME:
-                Config config = new DefaultConfig();
-                return config.isValid();
-
-            case CDECArtifact.NAME:
-                config = new CodenvySingleServerConfig(options.getConfigProperties());
-                return config.isValid();
 
             default:
                 throw ArtifactNotFoundException.from(artifactName);
