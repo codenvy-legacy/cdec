@@ -332,7 +332,7 @@ doInstallStep4() {
 
     execuetCliCommand "Logging to Codenvy" login --remote update-server ${codenvyUser} ${codenvyPwd}
     execuetCliCommand "Downloading Codenvy binaries" im-download cdec
-    execuetCliCommand "Checking the list of downloaded binaries" im-download --list-local cdec
+    execuetCliCommand "Checking the list of downloaded binaries" im-download --list-local
     echo "[CODENVY] COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 
