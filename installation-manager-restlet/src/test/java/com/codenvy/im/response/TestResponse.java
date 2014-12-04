@@ -18,18 +18,25 @@
 package com.codenvy.im.response;
 
 
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 
+import org.restlet.ext.jackson.JacksonRepresentation;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.representation.Representation;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Dmytro Nochevnov
@@ -69,5 +76,44 @@ public class TestResponse {
                                         "  } ],\n" +
                                         "  \"status\" : \"OK\"\n" +
                                         "}");
+    }
+
+    @Test
+    public void testResponseJsonParsing() throws IOException, JsonParseException {
+        ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
+        ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
+        Response response = new Response.Builder().withArtifacts(Arrays.asList(info1, info2)).withStatus(ResponseCode.OK).build();
+        String json = response.toJson();
+
+        // check real-life scenario of parsing JSON using Commons.fromJson()
+        Response restoredResponse = Commons.fromJson(json, Response.class);
+        assertNotNull(restoredResponse);
+        assertEquals(Commons.toJson(restoredResponse), "{\n"
+                                                       + "  \"artifacts\" : [ {\n"
+                                                       + "    \"artifact\" : \"cdec\",\n"
+                                                       + "    \"version\" : \"1.0.1\"\n"
+                                                       + "  }, {\n"
+                                                       + "    \"artifact\" : \"cdec\",\n"
+                                                       + "    \"version\" : \"1.0.2\",\n"
+                                                       + "    \"status\" : \"SUCCESS\"\n"
+                                                       + "  } ],\n"
+                                                       + "  \"status\" : \"OK\"\n"
+                                                       + "}");
+
+        // check real-life scenario of parsing JSON using JacksonRepresentation.getObject() to recognize errors like "Unrecognized field"
+        Representation rep = new JsonRepresentation(json);
+        restoredResponse = new JacksonRepresentation<>(rep, Response.class).getObject();
+        assertNotNull(restoredResponse);
+        assertEquals(Commons.toJson(restoredResponse), "{\n"
+                                                       + "  \"artifacts\" : [ {\n"
+                                                       + "    \"artifact\" : \"cdec\",\n"
+                                                       + "    \"version\" : \"1.0.1\"\n"
+                                                       + "  }, {\n"
+                                                       + "    \"artifact\" : \"cdec\",\n"
+                                                       + "    \"version\" : \"1.0.2\",\n"
+                                                       + "    \"status\" : \"SUCCESS\"\n"
+                                                       + "  } ],\n"
+                                                       + "  \"status\" : \"OK\"\n"
+                                                       + "}");
     }
 }

@@ -23,7 +23,10 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.user.UserCredentials;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.representation.Representation;
 import org.restlet.resource.ResourceException;
+
 import org.testng.annotations.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -45,7 +48,10 @@ public class TestRequest {
         JacksonRepresentation<Request> requestRep = testRequest.toRepresentation();
         assertNotNull(requestRep);
 
-        Request restoredRequest = Request.fromRepresentation(requestRep);
+        // check real-life scenario of parsing JSON to recognize errors like "Unrecognized field"
+        String json = requestRep.getText();
+        Representation rep = new JsonRepresentation(json);
+        Request restoredRequest = Request.fromRepresentation(new JacksonRepresentation<>(rep, Request.class));
         assertNotNull(restoredRequest);
 
         assertEquals(restoredRequest.getArtifactName(), "artifact name");
