@@ -37,7 +37,7 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return the artifact name */
     String getName();
 
-    /** @return current installed version of the artifact */
+    /** @return current installed version of the artifact or null if artifact is not installed. */
     @Nullable
     Version getInstalledVersion(String authToken) throws IOException;
 

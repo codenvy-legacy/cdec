@@ -8,28 +8,26 @@ CODENVY_HOME=/home/${CODENVY_USER}
 APP_DIR=${CODENVY_HOME}/installation-manager
 SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
-
-# TODO [AB] install hava here
 RESOURCE_DIR=/home/codenvy-shared
 
 # $1 - username; $2 - uid/gid
 addUserOnDebian() {
     sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
-    sudo passwd -q -d -l $1
+    sudo passwd -q -d -l $1 > /dev/null
     sudo su -c 'echo "codenvy   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
 }
 
 # $1 - username; $2 - uid/gid
 addUserOnRedhat() {
     sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
-    sudo passwd -l $1
+    sudo passwd -l $1 > /dev/null
     sudo su -c 'echo "codenvy   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
 }
 
 # $1 - username; $2 - uid/gid
 addUserOnOpensuse() {
     sudo -s useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
-    sudo -s passwd -q -l $1
+    sudo -s passwd -q -l $1 > /dev/null
     sudo su -c 'echo "codenvy   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
 }
 
@@ -182,8 +180,8 @@ installImCli() {
     fi
 
     sudo chown -R root.${CODENVY_SHARE_GROUP} ${RESOURCE_DIR}
-    sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
-    sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
+    sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP} > /dev/null
+    sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP} > /dev/null
     sudo chmod ug+rwx -R ${RESOURCE_DIR}
     sudo chmod g+s ${RESOURCE_DIR}
 
@@ -204,7 +202,11 @@ installImCli() {
 
 launchingImService() {
     echo "[CODENVY] Launching Codenvy Installation Manage Service"
-    sudo /etc/init.d/${SERVICE_NAME} restart
+    if sudo service codenvy-installation-manager status | grep -Fq "running"; then
+        sudo /etc/init.d/${SERVICE_NAME} restart > /dev/null
+    else
+        sudo /etc/init.d/${SERVICE_NAME} start > /dev/null
+    fi
 }
 
 detectOS() {
@@ -252,7 +254,7 @@ execuetCliCommand() {
 
 printPreInstallInfo() {
     availableRAM=`sudo cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableRAM=$(((availableRAM + 512) / 1024 / 1024))
+    availableRAM=$((availableRAM / 1024 / 1024))
 
     availableDiskSpace=`sudo df -h /home/${USER} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
@@ -282,9 +284,8 @@ printPreInstallInfo() {
 }
 
 printPostInstallInfo() {
-    hostUrl=`hostname`
     echo "[CODENVY]"
-    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at http://"${hostUrl}"/"
+    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at http://"`hostname`"/"
 }
 
 doInstallStep1() {
@@ -330,7 +331,7 @@ doInstallStep4() {
 doInstallStep5() {
     echo "[CODENVY]"
     echo "[CODENVY] BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    execuetCliCommand "Installing the latest Codenvy version, watch progress in /var/log/message" im-install --config ${INSTALL_CONFIG} cdec
+    execuetCliCommand "Installing the latest Codenvy version. It maight take about 30min, watch progress in /var/log/message" im-install --config ${INSTALL_CONFIG} cdec
     echo "[CODENVY] COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 

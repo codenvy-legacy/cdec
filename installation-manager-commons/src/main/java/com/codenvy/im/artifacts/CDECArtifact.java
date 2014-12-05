@@ -68,14 +68,18 @@ public class CDECArtifact extends AbstractArtifact {
     public Version getInstalledVersion(String authToken) throws IOException {
         String response;
         try {
-            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
+            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
         } catch (ConnectException e) {
             return null;
         }
 
         try {
             ApiInfo apiInfo = Commons.fromJson(response, ApiInfo.class);
-            return Version.valueOf(apiInfo.getIdeVersion());
+            if (apiInfo.getIdeVersion() == null) {
+                return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
+            } else {
+                return Version.valueOf(apiInfo.getIdeVersion());
+            }
         } catch (JsonParseException e) {
             throw new IOException(e);
         }

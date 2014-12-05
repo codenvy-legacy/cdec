@@ -59,6 +59,7 @@ import static com.codenvy.im.utils.Commons.extractServerUrl;
 import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static com.codenvy.im.utils.InjectorBootstrap.getProperty;
+import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.size;
 
@@ -444,7 +445,8 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String versionName = request.getVersion();
             Version version = versionName != null ? Version.valueOf(versionName) : manager.getLatestVersionToDownload(token, artifact);
             if (version == null) {
-                return Response.valueOf(new IllegalStateException("Artifact '" + artifact.getName() + "' isn't available to install.")).toJson();
+                return Response.valueOf(new IllegalStateException(
+                        format("There is no newer version to install '%s'.", artifact))).toJson();
             }
 
             try {
