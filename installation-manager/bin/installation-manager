@@ -21,9 +21,9 @@ JVM_OPTS="$JVM_OPTS $QUARTZ_OPTS -Xmx256M"
 CURRENT_USER=$USER
 CODENVY_USER=codenvy
 
-HOME=/home/codenvy
+CODENVY_HOME=/home/$CODENVY_USER
 
-APP_DIR=$HOME/installation-manager
+APP_DIR=$CODENVY_HOME/installation-manager
 LOG_DIR=${APP_DIR}/log
 
 APP=${APP_DIR}/installation-manager-binary.jar

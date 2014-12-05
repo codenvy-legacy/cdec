@@ -4,6 +4,7 @@
 
 INSTALL_CONFIG=$1
 CODENVY_USER=codenvy
+CODENVY_GROUP=codenvy
 CODENVY_HOME=/home/${CODENVY_USER}
 APP_DIR=${CODENVY_HOME}/installation-manager
 SCRIPT_NAME=installation-manager
@@ -14,21 +15,21 @@ RESOURCE_DIR=/home/codenvy-shared
 addUserOnDebian() {
     sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
     sudo passwd -q -d -l $1 > /dev/null
-    sudo su -c 'echo "codenvy   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
+    sudo su -c 'echo "$1   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
 }
 
 # $1 - username; $2 - uid/gid
 addUserOnRedhat() {
     sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
     sudo passwd -l $1 > /dev/null
-    sudo su -c 'echo "codenvy   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
+    sudo su -c 'echo "$1   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
 }
 
 # $1 - username; $2 - uid/gid
 addUserOnOpensuse() {
     sudo -s useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
     sudo -s passwd -q -l $1 > /dev/null
-    sudo su -c 'echo "codenvy   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
+    sudo su -c 'echo "$1   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
 }
 
 # $1 - groupname; $2 - gid (optional)
@@ -60,12 +61,12 @@ addGroupOnOpensuse() {
 
 createCodenvyUserAndGroup() {
     if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
-        echo "[CODENVY] Creating group codenvy"
-        addGroupOn${os} ${CODENVY_USER} 5001
+        echo "[CODENVY] Creating group ${CODENVY_GROUP}"
+        addGroupOn${os} ${CODENVY_GROUP} 5001
     fi
 
     if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
-        echo "[CODENVY] Creating user codenvy"
+        echo "[CODENVY] Creating user ${CODENVY_USER}"
         addUserOn${os} ${CODENVY_USER} 5001
     fi
 
@@ -164,7 +165,7 @@ installImCli() {
     sudo chmod 757 ${APP_DIR}
 
     # make the user ${CODENVY_USER} an owner all files into the APP_DIR
-    sudo chown -R ${CODENVY_USER}:${CODENVY_USER} ${APP_DIR}
+    sudo chown -R ${CODENVY_USER}:${CODENVY_GROUP} ${APP_DIR}
 
     # removes existed files and creates new directory
     cliinstalled=${HOME}/codenvy-cli
@@ -190,7 +191,7 @@ installImCli() {
     # stores parameters of installed Installation Manager CLI.
     sudo su - ${CODENVY_USER} -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
     sudo su -c "echo -e '${cliinstalled}\n${RESOURCE_DIR}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
-    sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
+    sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_GROUP} ${CODENVY_HOME}/.codenvy"
 
     # creates Codenvy configuration directory
     sudo su - ${CODENVY_USER} -c "sed -i '1i\export CODENVY_CONF=${CODENVY_HOME}/codenvy_conf' ${CODENVY_HOME}/.bashrc"
@@ -226,14 +227,14 @@ detectOS() {
 
 checkInstallConfig() {
     if [ -z "$INSTALL_CONFIG" ]; then
-        echo "[CODENVY] Script has been run with no existing config. Install script will download default config for you and run vim to edit."
+        echo "[CODENVY] Script has been run with no existing config. Install script will download default config for you and run default editor or vim to edit."
         echo "[CODENVY] Please fill in MANDATORY properties and then installation will be continued."
         read -p "[CODENVY] Press any key to continue" -n1 -s
         echo ""
 
         curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
         sed -i s/aio_host_url=.*/aio_host_url=`hostname`/g codenvy-single-server.properties
-        vi codenvy-single-server.properties
+        ${EDITOR:-vi} codenvy-single-server.properties
 
         read -p "[CODENVY] Continue installation [y/N]" answer
         echo "[CODENVY]"
