@@ -68,7 +68,7 @@ public class CDECArtifact extends AbstractArtifact {
     public Version getInstalledVersion(String authToken) throws IOException {
         String response;
         try {
-            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
+            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), authToken);
         } catch (ConnectException e) {
             return null;
         }
