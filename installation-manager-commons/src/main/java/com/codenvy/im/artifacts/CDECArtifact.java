@@ -114,10 +114,12 @@ public class CDECArtifact extends AbstractArtifact {
         switch (step) {
             case 0:
                 return new MacroCommand(new ArrayList<Command>() {{
-                    add(createLocalCommand("sudo setenforce 0"));
                     add(createLocalRestoreOrBackupCommand("/etc/selinux/config"));
-                    add(createLocalCommand("sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config"));
-                    add(createLocalCommand("sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config"));
+                    add(createLocalCommand("if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                           "    sudo setenforce 0; " +
+                                           "    sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                           "    sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                           "fi"));
                 }}, "Disable SELinux");
 
             case 1:
@@ -141,8 +143,8 @@ public class CDECArtifact extends AbstractArtifact {
                     add(createLocalCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
                     add(createLocalCommand(
                             format("sudo sed -i 's/%s/%s/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
-                                   "YOUR_DNS_NAME", config.getValue(HOST_URL))));
-                    add(createLocalReplaceCommand("$host_url", config.getValue(HOST_URL)));
+                                   "YOUR_DNS_NAME", config.getValue(AIO_HOST_URL))));
+                    add(createLocalReplaceCommand("$host_url", config.getValue(AIO_HOST_URL)));
                     add(createLocalReplaceCommand("$builder_max_execution_time", config.getValue(BUILDER_MAX_EXECUTION_TIME)));
                     add(createLocalReplaceCommand("$builder_waiting_time", config.getValue(BUILDER_WAITING_TIME)));
                     add(createLocalReplaceCommand("$builder_keep_result_time", config.getValue(BUILDER_KEEP_RESULT_TIME)));
@@ -186,6 +188,7 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createLocalCommand("sudo chkconfig --add puppetmaster"));
                     add(createLocalCommand("sudo chkconfig puppetmaster on"));
+                    add(createLocalCommand("sudo service puppetmaster start"));
                 }}, "Launch puppet master");
 
             case 5:
@@ -197,26 +200,33 @@ public class CDECArtifact extends AbstractArtifact {
                     add(createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                                   "  server = %s\\n" +
                                                   "  runinterval = 300\\n" +
-                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getValue(HOST_URL))));
+                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getValue(AIO_HOST_URL))));
                     add(createLocalCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
                                                   "  show_diff = true\\n" +
                                                   "  pluginsync = true\\n" +
                                                   "  report = true\\n" +
                                                   "  default_schedules = false\\n" +
-                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", config.getValue(HOST_URL))));
+                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", config.getValue(AIO_HOST_URL))));
                 }}, "Configure puppet agent");
 
 
             case 7:
                 return new MacroCommand(new ArrayList<Command>() {{
+                    add(createLocalCommand("sleep 30"));
                     add(createLocalCommand("sudo chkconfig --add puppet"));
                     add(createLocalCommand("sudo chkconfig puppet on"));
+                    add(createLocalCommand("sudo service puppet start"));
                 }}, "Launch puppet agent");
 
             case 8:
+//                TODO [AB] improve
                 return new MacroCommand(new ArrayList<Command>() {{
-                    add(createLocalCommand("sudo puppet cert --list --all"));
-                    add(createLocalCommand(format("sudo puppet cert --sign %s", config.getValue(HOST_URL))));
+                    add(createLocalCommand("doneState='Starting'; testFile=/home/codenvy/codenvy-tomcat/logs/catalina.out; " +
+                                           "while [ \"${doneState}\" != \"Started\" ]; do " +
+                                           "    if grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; fi; " +
+                                           "    if grep -Fq \"Server startup\" ${testFile}; then doneState=Started; fi; " +
+                                           "    sleep 60; " +
+                                           "done"));
                 }}, "Boot Codenvy");
 
 

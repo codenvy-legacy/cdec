@@ -41,7 +41,6 @@ import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -87,7 +86,6 @@ public class RepositoryService {
     private final HttpTransport   transport;
     private final String          apiEndpoint;
     private final UserManager userManager;
-
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
@@ -175,65 +173,6 @@ public class RepositoryService {
     }
 
     /**
-     * Saves info: user, installed artifact and its version. Only trusted agent allowed.
-     *
-     * @param artifact
-     *         the name of the artifact
-     * @param version
-     *         the version of the artifact
-     * @return Response
-     * @see com.codenvy.im.update.MongoStorage#saveInstalledInfo(String, String, String)
-     */
-    @GenerateLink(rel = "save installed info")
-    @POST
-    @Path("/installationinfo/{artifact}/{version}")
-    @RolesAllowed({"user", "system/admin"})
-    public Response saveInstalledInfo(@PathParam("artifact") final String artifact,
-                                      @PathParam("version") String version,
-                                      @HeaderParam("user-agent") String userAgent) {
-
-        if (!VALID_USER_AGENT.equals(userAgent)) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        } else if (!Version.isValidVersion(version)) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("The version format is invalid '" + version + "'").build();
-        }
-
-        try {
-            mongoStorage.saveInstalledInfo(userManager.getCurrentUser().getId(), artifact, version);
-            return Response.status(Response.Status.OK).build();
-        } catch (MongoException e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't save information").build();
-        }
-    }
-
-    /**
-     * Returns info about the latest installed artifact by user.
-     *
-     * @param artifact
-     *         the name of the artifact
-     * @return Response
-     * @see com.codenvy.im.update.MongoStorage#getInstalledInfo(String, String)
-     */
-    @GenerateLink(rel = "get installed version")
-    @GET
-    @Path("/installationinfo/{artifact}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"user", "system/admin"})
-    public Response getInstalledInfo(@PathParam("artifact") final String artifact) {
-        try {
-            Map info = mongoStorage.getInstalledInfo(userManager.getCurrentUser().getId(), artifact);
-            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(info)).build();
-        } catch (ArtifactNotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
-        } catch (MongoException e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
-        }
-    }
-
-    /**
      * Gets download statistic.
      *
      * @return Response
@@ -295,7 +234,8 @@ public class RepositoryService {
             if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
 
                 return Response.status(Response.Status.FORBIDDEN)
-                               .entity("You do not have a valid subscription. You are not permitted to download '" + artifact + (version != null ? ":" + version : "") + "'.").build();
+                               .entity("You do not have a valid subscription. You are not permitted to download '" + artifact +
+                                       (version != null ? ":" + version : "") + "'.").build();
             }
 
             return doDownloadArtifact(artifact, version, false);

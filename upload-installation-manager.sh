@@ -23,13 +23,13 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     echo "Uploading on production"
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
-    SSH_KEY_NAME=git_nopass.key
+    SSH_KEY_NAME=git_nopass.key # TODO [AB]
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "Uploading on staging"
 else
     echo "Unknown server destination"
-    exit
+    exit 1
 fi
 
 makeBundle() {
@@ -68,10 +68,11 @@ uploadArtifact() {
     doUpload
 }
 
-uploadInstallScript() {
-    ARTIFACT=install-script
-    FILENAME=install-script.sh
-    SOURCE=installation-manager/bin/${FILENAME}
+uploadCodenvySingleServerInstallScript() {
+    ARTIFACT=install-codenvy-single-server
+    FILENAME=install-codenvy-single-server.sh
+    VERSION=$1
+    SOURCE=installation-manager-resources/src/main/resources/${VERSION}/${FILENAME}
     doUpload
 
     if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
@@ -79,10 +80,11 @@ uploadInstallScript() {
     fi
 }
 
-uploadInstallProperties() {
+uploadCodenvySingleServerInstallProperties() {
     ARTIFACT=codenvy-single-server-properties
     FILENAME=codenvy-single-server.properties
-    SOURCE=installation-manager-commons/src/main/resources/${FILENAME}
+    VERSION=$1
+    SOURCE=installation-manager-resources/src/main/resources/${VERSION}/${FILENAME}
     doUpload
 }
 
@@ -111,6 +113,6 @@ makeBundle
 uploadArtifact installation-manager
 uploadArtifact installation-manager-cli
 
-uploadInstallScript
-uploadInstallProperties
+uploadCodenvySingleServerInstallScript 3.1.0
+uploadCodenvySingleServerInstallProperties 3.1.0
 

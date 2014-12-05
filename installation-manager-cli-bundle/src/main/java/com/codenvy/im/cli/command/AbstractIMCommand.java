@@ -133,7 +133,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void printProgress(int percents) {
-        System.out.print(ansi().saveCursorPosition().a(createProgressBar(percents)).restorCursorPosition());
+        printProgress(createProgressBar(percents));
+    }
+
+    protected void printProgress(String message) {
+        System.out.print(ansi().saveCursorPosition().a(message).restorCursorPosition());
         System.out.flush();
     }
 

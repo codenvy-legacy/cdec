@@ -9,6 +9,9 @@ APP_DIR=${CODENVY_HOME}/installation-manager
 SCRIPT_NAME=installation-manager
 SERVICE_NAME=codenvy-${SCRIPT_NAME}
 
+# TODO [AB] install hava here
+RESOURCE_DIR=/home/codenvy-shared
+
 # $1 - username; $2 - uid/gid
 addUserOnDebian() {
     sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
@@ -69,30 +72,27 @@ createCodenvyUserAndGroup() {
     fi
 
     sudo su - ${CODENVY_USER} -c "if [ ! -f "${CODENVY_HOME}/.bashrc" ]; then echo -e "\n" ${CODENVY_HOME}/.bashrc; fi"
+    if [ ! -d ${RESOURCE_DIR} ]; then sudo mkdir ${RESOURCE_DIR}; fi
 }
 
 installJava() {
-    source ~/.bashrc  # reload shell to get changes from previous executing of install-script.sh at the same instance of console
+    source ~/.bashrc  # reload shell to get changes from previous executing of install-codenvy-single-server.sh at the same instance of console
 
     # check if requered program had already installed earlier for current user
     hash java 2>/dev/null || {
         echo "[CODENVY] Installing java"
 
-        wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jdk-7u17-linux-x64.tar.gz' --output-document=jdk.tar.gz
+        wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jre-7u17-linux-x64.tar.gz' --output-document=jre.tar.gz
 
-        echo "[CODENVY] Unpacking JDK binaries to /etc"
-
-        sudo tar -xf jdk.tar.gz -C /etc
-        rm jdk.tar.gz
+        sudo tar -xf jre.tar.gz -C ${RESOURCE_DIR}
+        rm jre.tar.gz
 
         if [ ! -f "~/.bashrc" ]; then echo -e "\n" > ~/.bashrc; fi
 
-        sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${HOME}/.bashrc
-        sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${HOME}/.bashrc
-        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/etc/jdk1.7.0_17' ${CODENVY_HOME}/.bashrc"
-        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/etc/jdk1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
-
-        echo "[CODENVY] Java has been installed"
+        sed -i '1i\export JAVA_HOME=/home/codenvy-shared/jre1.7.0_17' ${HOME}/.bashrc
+        sed -i '2i\export PATH=$PATH:/home/codenvy-shared/jre1.7.0_17/bin' ${HOME}/.bashrc
+        sudo su - ${CODENVY_USER} -c "sed -i '1i\export JAVA_HOME=/home/codenvy-shared/jre1.7.0_17' ${CODENVY_HOME}/.bashrc"
+        sudo su - ${CODENVY_USER} -c "sed -i '2i\export PATH=$PATH:/home/codenvy-shared/jre1.7.0_17/bin' ${CODENVY_HOME}/.bashrc"
     }
 }
 
@@ -118,17 +118,17 @@ registerImServiceOnOpensuse() {
 
 # $1 - command name
 installOnDebian() {
-    sudo apt-get install $1 -y
+    sudo apt-get install $1 -y -q
 }
 
 # $1 - command name
 installOnRedhat() {
-    sudo yum install $1 -y
+    sudo yum install $1 -y -q
 }
 
 # $1 - command name
 installOnOpensuse() {
-    sudo -s zypper install $1 -y
+    sudo -s zypper install $1 -y -q
 }
 
 # $1 - command name
@@ -145,7 +145,7 @@ installImCli() {
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
     imFileName=$(curl -sI  ${DOWNLOAD_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
-    curl -o ${imFileName} -L ${DOWNLOAD_URL}
+    curl -s -o ${imFileName} -L ${DOWNLOAD_URL}
 
     imCLIFileName=$(tar -tf ${imFileName} | grep cli)
 
@@ -175,29 +175,23 @@ installImCli() {
 
     tar -xf /tmp/${imCLIFileName} -C ${cliinstalled}
 
-    # create shared directory between 'codenvy' and current user
-    cliupdatedir=/home/codenvy-shared
-    if [ ! -d ${cliupdatedir} ]; then
-        sudo mkdir ${cliupdatedir}
-    fi
-
     CODENVY_SHARE_GROUP=codenvyshare
     USER_GROUP=$(groups | cut -d ' ' -f1)
     if [ `grep -c "^${CODENVY_SHARE_GROUP}" /etc/group` == 0 ]; then
         addGroupOn${os} ${CODENVY_SHARE_GROUP}
     fi
 
-    sudo chown -R root.${CODENVY_SHARE_GROUP} ${cliupdatedir}
+    sudo chown -R root.${CODENVY_SHARE_GROUP} ${RESOURCE_DIR}
     sudo gpasswd -a ${CODENVY_USER} ${CODENVY_SHARE_GROUP}
     sudo gpasswd -a ${USER} ${CODENVY_SHARE_GROUP}
-    sudo chmod ug+rwx -R ${cliupdatedir}
-    sudo chmod g+s ${cliupdatedir}
+    sudo chmod ug+rwx -R ${RESOURCE_DIR}
+    sudo chmod g+s ${RESOURCE_DIR}
 
     sudo su - ${CODENVY_USER} -c "sed -i '1i\umask 002' ${CODENVY_HOME}/.bashrc"
 
     # stores parameters of installed Installation Manager CLI.
     sudo su - ${CODENVY_USER} -c "if [ ! -d ${CODENVY_HOME}/.codenvy ]; then mkdir ${CODENVY_HOME}/.codenvy; fi"
-    sudo su -c "echo -e '${cliinstalled}\n${cliupdatedir}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
+    sudo su -c "echo -e '${cliinstalled}\n${RESOURCE_DIR}\n${CODENVY_SHARE_GROUP}\n${USER}\n${USER_GROUP}' > ${CODENVY_HOME}/.codenvy/codenvy-cli-installed"
     sudo su -c "chown -R ${CODENVY_USER}:${CODENVY_USER} ${CODENVY_HOME}/.codenvy"
 
     # creates Codenvy configuration directory
@@ -210,12 +204,7 @@ installImCli() {
 
 launchingImService() {
     echo "[CODENVY] Launching Codenvy Installation Manage Service"
-    # try to stop exists installation-manager
-    sudo /etc/init.d/${SERVICE_NAME} stop
-    sudo kill -9 $(ps aux | grep [i]nstallation-manager-binary | cut -d" " -f4) &>/dev/null  # kill manager if stop doesn't work
-
-    # launch new installation-manager
-    sudo /etc/init.d/${SERVICE_NAME} start
+    sudo /etc/init.d/${SERVICE_NAME} restart
 }
 
 detectOS() {
@@ -240,7 +229,8 @@ checkInstallConfig() {
         read -p "[CODENVY] Press any key to continue" -n1 -s
         echo ""
 
-        curl -o codenvy-single-server.properties -s https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
+        curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
+        sed -i s/aio_host_url=.*/aio_host_url=`hostname`/g codenvy-single-server.properties
         vi codenvy-single-server.properties
 
         read -p "[CODENVY] Continue installation [y/N]" answer
@@ -262,9 +252,9 @@ execuetCliCommand() {
 
 printPreInstallInfo() {
     availableRAM=`sudo cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableRAM=$((availableRAM / 1024 / 1024))
+    availableRAM=$(((availableRAM + 512) / 1024 / 1024))
 
-    availableDiskSpace=`sudo df -h /home/${USER} | tail -1 | awk '{print $3}'`
+    availableDiskSpace=`sudo df -h /home/${USER} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
     echo "[CODENVY] Wellcome to Codenvy. This programm will install Codenvy onto this node."
@@ -292,9 +282,9 @@ printPreInstallInfo() {
 }
 
 printPostInstallInfo() {
-    hostUrl=`cat ${INSTALL_CONFIG} | grep host_url | cut -d '=' -f2`
+    hostUrl=`hostname`
     echo "[CODENVY]"
-    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at https://"${hostUrl}"/"
+    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at http://"${hostUrl}"/"
 }
 
 doInstallStep1() {
@@ -304,7 +294,7 @@ doInstallStep1() {
     echo "[CODENVY] COMPLETED STEP 1: CONFIGURE SYSTEM"
 }
 
-doInsallStep2() {
+doInstallStep2() {
     echo "[CODENVY]"
     echo "[CODENVY] BEGINNING STEP 2: INSTALL JAVA AND OTHERS REQUIRED PACKAGES"
     installPackageIfNeed tar
@@ -340,8 +330,7 @@ doInstallStep4() {
 doInstallStep5() {
     echo "[CODENVY]"
     echo "[CODENVY] BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    execuetCliCommand "Installing the latest Codenvy version" im-install --config ${INSTALL_CONFIG} cdec
-    execuetCliCommand "Checking the list of installed artifacts" im-install --list cdec
+    execuetCliCommand "Installing the latest Codenvy version, watch progress in /var/log/message" im-install --config ${INSTALL_CONFIG} cdec
     echo "[CODENVY] COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
@@ -351,7 +340,7 @@ detectOS
 printPreInstallInfo
 
 doInstallStep1
-doInsallStep2
+doInstallStep2
 doInstallStep3
 doInstallStep4
 doInstallStep5

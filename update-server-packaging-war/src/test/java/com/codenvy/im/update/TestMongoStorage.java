@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.update;
 
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 
@@ -45,27 +44,8 @@ public class TestMongoStorage {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.INSTALLED_ARTIFACTS);
+        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
         collection.remove(new BasicDBObject());
-
-        collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
-        collection.remove(new BasicDBObject());
-    }
-
-    @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void testGetInstalledVersionErrorIfArtifactAbsent() throws Exception {
-        mongoStorage.getInstalledInfo("user", "artifact");
-    }
-
-    @Test
-    public void testGetInstalledVersion() throws Exception {
-        mongoStorage.saveInstalledInfo("user", "artifact", "1.0.1");
-        assertEquals(mongoStorage.getInstalledInfo("user", "artifact").get("version"), "1.0.1");
-
-        Thread.sleep(1000);
-
-        mongoStorage.saveInstalledInfo("user", "artifact", "1.0.2");
-        assertEquals(mongoStorage.getInstalledInfo("user", "artifact").get("version"), "1.0.2");
     }
 
     @Test

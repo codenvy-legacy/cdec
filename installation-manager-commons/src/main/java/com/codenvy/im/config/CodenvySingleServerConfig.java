@@ -32,7 +32,7 @@ public class CodenvySingleServerConfig extends Config {
     }
 
     public enum Property implements ConfigProperty {
-        HOST_URL,
+        AIO_HOST_URL,
         MONGO_ADMIN_PASS,
         MONGO_USER_PASS,
         MONGO_ORGSERVICE_USER_PWD,

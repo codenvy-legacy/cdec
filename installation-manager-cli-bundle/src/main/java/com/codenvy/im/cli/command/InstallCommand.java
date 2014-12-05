@@ -31,6 +31,7 @@ import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -51,6 +52,7 @@ import static com.codenvy.im.config.Config.getPropertyName;
 import static com.codenvy.im.config.Config.isEmpty;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
+import static java.lang.Math.max;
 import static java.lang.String.format;
 
 /**
@@ -126,19 +128,34 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         List<String> infos = responseObj.getInfos();
+
+        int maxInfoLen = 0;
+        for (String i : infos) {
+            maxInfoLen = max(maxInfoLen, i.length());
+        }
+
         for (int step = 0; step < infos.size(); step++) {
-            print(infos.get(step));
+            String info = infos.get(step);
+            print(info);
+            print(StringUtils.repeat(" ", maxInfoLen - info.length()), true);
 
-            installOptions.setStep(step);
-            response = installationManagerProxy.install(prepareRequest(installOptions));
-            responseObj = Response.fromJson(response);
+            ShowProgress showProgress = new ShowProgress();
+            showProgress.start();
 
-            if (responseObj.getStatus() == ResponseCode.ERROR) {
-                printError(" [FAIL]", true);
-                printErrorAndExitIfNotInteractive(response);
-                return null;
-            } else {
-                printSuccess(" [OK]", true);
+            try {
+                installOptions.setStep(step);
+                response = installationManagerProxy.install(prepareRequest(installOptions));
+                responseObj = Response.fromJson(response);
+
+                if (responseObj.getStatus() == ResponseCode.ERROR) {
+                    printError(" [FAIL]", true);
+                    printErrorAndExitIfNotInteractive(response);
+                    return null;
+                } else {
+                    printSuccess(" [OK]", true);
+                }
+            } finally {
+                showProgress.interrupt();
             }
         }
 
@@ -292,6 +309,29 @@ public class InstallCommand extends AbstractIMCommand {
             }
 
             enterInstallOptions(installOptions, false);
+        }
+    }
+
+    /** Printing progress thread */
+    private class ShowProgress extends Thread {
+        final String[] progressChars = {"-", "\\", "|", "/", "-", "\\", "|", "/"};
+
+        @Override
+        public void run() {
+            int step = 0;
+            while (!isInterrupted()) {
+                printProgress(progressChars[step]);
+                try {
+                    sleep(250);
+                } catch (InterruptedException e) {
+                    break;
+                }
+
+                step++;
+                if (step == progressChars.length) {
+                    step = 0;
+                }
+            }
         }
     }
 }

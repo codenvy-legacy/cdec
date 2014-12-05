@@ -33,7 +33,6 @@ import com.mongodb.AggregationOutput;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -65,7 +64,6 @@ import java.util.Map;
  */
 @Singleton
 public class MongoStorage {
-    public static final String INSTALLED_ARTIFACTS = "installed_artifacts";
     public static final String DOWNLOAD_STATISTICS = "download_statistics";
 
     private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
@@ -104,40 +102,6 @@ public class MongoStorage {
 
         db = connectToDB();
         initCollections();
-    }
-
-    /** @return info about the latest installed artifact by user. */
-    public Map getInstalledInfo(String userId, String artifact) throws MongoException, ArtifactNotFoundException {
-        DBCollection collection = db.getCollection(INSTALLED_ARTIFACTS);
-
-        DBObject clause = new BasicDBObject();
-        clause.put(USER_ID, userId);
-        clause.put(ARTIFACT, artifact);
-
-        DBObject order = new BasicDBObject(DATE, -1);
-
-        DBCursor cursor = collection.find(clause).sort(order).limit(1);
-        if (cursor.hasNext()) {
-            DBObject doc = cursor.next();
-            doc.removeField(ID);
-            return doc.toMap();
-        } else {
-            throw ArtifactNotFoundException.from(artifact);
-        }
-    }
-
-
-    /** Saves info concerning installed artifact by user. */
-    public void saveInstalledInfo(String userId, String artifact, String version) throws MongoException {
-        DBCollection collection = db.getCollection(INSTALLED_ARTIFACTS);
-
-        DBObject doc = new BasicDBObject();
-        doc.put(USER_ID, userId);
-        doc.put(ARTIFACT, artifact);
-        doc.put(VERSION, version);
-        doc.put(DATE, new Date());
-
-        collection.save(doc);
     }
 
     /** Saves info concerning downloaded artifact by user. */
@@ -289,10 +253,7 @@ public class MongoStorage {
     }
 
     private void initCollections() {
-        DBCollection collection = db.getCollection(INSTALLED_ARTIFACTS);
-        collection.ensureIndex(new BasicDBObject(USER_ID, 1).append(ARTIFACT, 1).append(DATE, -1), "userId");
-
-        collection = db.getCollection(DOWNLOAD_STATISTICS);
+        DBCollection collection = db.getCollection(DOWNLOAD_STATISTICS);
         collection.ensureIndex(new BasicDBObject(USER_ID, 1).append(ARTIFACT, 1), "userId-artifact");
         collection.ensureIndex(new BasicDBObject(ARTIFACT, 1), "artifact");
     }

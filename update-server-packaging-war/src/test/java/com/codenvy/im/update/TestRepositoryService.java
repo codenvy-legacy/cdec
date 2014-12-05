@@ -110,10 +110,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     private void initStorage() {
-        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.INSTALLED_ARTIFACTS);
-        collection.remove(new BasicDBObject());
-
-        collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
+        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
         collection.remove(new BasicDBObject());
 
         mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", true);
@@ -126,53 +123,6 @@ public class TestRepositoryService extends BaseTest {
         mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.2", true);
         mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.3", true);
         mongoStorage.updateDownloadStatistics("uid2", "artifact3", "1.0.1", false);
-    }
-
-    @Test
-    public void testSaveInstalledInfoErrorIfInvalidUserAgent() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
-    }
-
-    @Test
-    public void testSaveInstalledInfoErrorIfVersionInvalid() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT)
-                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
-
-    @Test
-    public void testSaveInstalledInfo() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT)
-                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-    }
-
-    @Test
-    public void testGetInstalledInfo() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT)
-                .post(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .header("user-agent", RepositoryService.VALID_USER_AGENT).get(JettyHttpServer.SECURE_PATH + "/repository/installationinfo/cdec");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        Map m = response.as(Map.class);
-        assertEquals(m.size(), 4);
-        assertEquals(m.get("artifact"), "cdec");
-        assertEquals(m.get("version"), "1.0.1");
-        assertEquals(m.get("userId"), "id");
-        assertNotNull(m.get("date"));
     }
 
     @Test
