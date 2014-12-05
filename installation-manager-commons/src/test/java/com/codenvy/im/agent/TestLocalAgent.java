@@ -32,12 +32,6 @@ public class TestLocalAgent {
         assertNotNull(agent.execute("sleep 1; ls;"));
     }
 
-    @Test
-    public void testAsyncResult() throws Exception {
-        Agent agent = new LocalAgent(true);
-        assertNull(agent.execute("sleep 1; ls;"));
-    }
-
     @Test(expectedExceptions = AgentException.class,
             expectedExceptionsMessageRegExp = "Can't execute command 'ls unExisted_file'. " +
                                               "Error: ls: cannot access unExisted_file: No such file or directory\n")

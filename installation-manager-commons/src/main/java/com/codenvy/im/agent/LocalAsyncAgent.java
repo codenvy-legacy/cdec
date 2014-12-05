@@ -17,11 +17,12 @@
  */
 package com.codenvy.im.agent;
 
-import java.io.InputStream;
-
-/** @author Anatoliy Bazko */
-public class LocalAgent extends AbstractAgent {
-    public LocalAgent() {
+/**
+ * Execute local command in asynchronous mode.
+ * @author Dmytro Nochevnov
+ */
+public class LocalAsyncAgent extends AbstractAgent {
+    public LocalAsyncAgent() {
     }
 
     /** {@inheritDoc} */
@@ -30,13 +31,12 @@ public class LocalAgent extends AbstractAgent {
         ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
 
         try {
-            Process process = pb.start();
+            pb.redirectErrorStream(true);
+            pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
+            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            pb.start();
 
-            int exitStatus = process.waitFor();
-            InputStream in = process.getInputStream();
-            InputStream err = process.getErrorStream();
-
-            return processExistCode(exitStatus, in, err);
+            return null;
         } catch (Exception e) {
             String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);

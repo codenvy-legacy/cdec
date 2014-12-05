@@ -19,6 +19,7 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.agent.LocalAsyncAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
@@ -99,7 +100,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
             final Path dirToUnpack = pathToBinaries.getParent().resolve("unpack");
             final Agent syncAgent = new LocalAgent();
-            final Agent asyncAgent = new LocalAgent(true);
+            final Agent asyncAgent = new LocalAsyncAgent();
 
             final Path pathToNewVersionOfDaemon = dirToUnpack.resolve("daemon");
             final Path pathToNewVersionOfCliClient = dirToUnpack.resolve("cli");
@@ -144,16 +145,14 @@ public class InstallManagerArtifact extends AbstractArtifact {
                     final Command updateDaemonCommand =
                         new SimpleCommand(format("sleep 6 ; " +   // time to send response to CLI client before updating daemon
                                                  "%1$s/installation-manager stop ; " +     // stop daemon
-                                                 "rm -rf %1$s ; " +                         // remove directory with daemon
-                                                 "mkdir %1$s ; " +                          // create directory with daemon
-                                                 "cp -r %2$s/* %1$s ; " +                   // copy update into the directory with daemon
-                                                 "chmod +x %1$s/installation-manager ; " +  // set permission to execute daemon script
+                                                 "rm -rf %1$s/* ; " +                      // remove directory with daemon
+                                                 "cp -r %2$s/* %1$s ; " +                  // copy update into the directory with daemon
+                                                 "chmod +x %1$s/installation-manager ; " + // set permission to execute daemon script
                                                  "%1$s/installation-manager start ; " +    // start daemon
                                                  "",
                                                  getInstalledPath().toAbsolutePath(),
                                                  pathToNewVersionOfDaemon.toAbsolutePath()),
                                           asyncAgent, "Update installation manager daemon");
-
                     return new MacroCommand(new ArrayList<Command>() {{
                         add(updateCliClientCommand);
                         add(updateDaemonCommand);
