@@ -35,15 +35,19 @@ public class TestLocalAsyncAgent {
     public final static Path TEST_FILE_PATH = Paths.get(TestLocalAsyncAgent.class.getClassLoader().getResource("../test-classes/").getPath()).resolve("test.txt");
 
     @AfterClass
-    public void deleteFile() throws IOException {
-        Files.delete(TEST_FILE_PATH);
+    public void deleteFile() {
+        try {
+            Files.delete(TEST_FILE_PATH);
+        } catch (IOException e) {
+            // ignore exceptions
+        }
     }
 
     @Test
     public void testAsyncResult() throws Exception {
         Agent agent = new LocalAsyncAgent();
-        assertNull(agent.execute("sleep 1; echo 'test' >> " + TEST_FILE_PATH.toAbsolutePath()));
-        Thread.sleep(1500);  // waiting for creating test file
+        assertNull(agent.execute("echo 'test' >> " + TEST_FILE_PATH.toAbsolutePath()));
+        Thread.sleep(1000);  // waiting for creating test file
         assertTrue(Files.exists(TEST_FILE_PATH));
     }
 
