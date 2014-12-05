@@ -15,21 +15,21 @@ RESOURCE_DIR=/home/codenvy-shared
 addUserOnDebian() {
     sudo adduser --quiet --shell /bin/bash --uid $2 --gid $2 --disabled-password --gecos "" $1
     sudo passwd -q -d -l $1 > /dev/null
-    sudo su -c 'echo "$1   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
+    sudo su -c "echo '${CODENVY_GROUP}   ALL=(ALL)   NOPASSWD: ALL' >> /etc/sudoers"
 }
 
 # $1 - username; $2 - uid/gid
 addUserOnRedhat() {
     sudo useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
     sudo passwd -l $1 > /dev/null
-    sudo su -c 'echo "$1   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
+    sudo su -c "echo '${CODENVY_GROUP}   ALL=(ALL)   NOPASSWD: ALL' >> /etc/sudoers"
 }
 
 # $1 - username; $2 - uid/gid
 addUserOnOpensuse() {
     sudo -s useradd --create-home --shell /bin/bash --uid $2 --gid $2 $1
     sudo -s passwd -q -l $1 > /dev/null
-    sudo su -c 'echo "$1   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers'
+    sudo su -c "echo '${CODENVY_GROUP}   ALL=(ALL)   NOPASSWD: ALL' >> /etc/sudoers"
 }
 
 # $1 - groupname; $2 - gid (optional)
