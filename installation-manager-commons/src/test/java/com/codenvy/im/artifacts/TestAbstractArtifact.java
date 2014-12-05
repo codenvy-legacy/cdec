@@ -154,7 +154,7 @@ public class TestAbstractArtifact {
     }
 
     @Test(expectedExceptions = IOException.class,
-            expectedExceptionsMessageRegExp = "Can't get artifact property: build-time")
+            expectedExceptionsMessageRegExp = "Can't get artifact property: artifact")
     public void testValidatePropertiesFail() throws Exception {
         doReturn("{\"version\":\"" + TEST_VERSION_STR + "\"}")
                 .when(mockTransport)

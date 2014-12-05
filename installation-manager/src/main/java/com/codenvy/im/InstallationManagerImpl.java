@@ -29,9 +29,9 @@ import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,6 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -387,9 +386,7 @@ public class InstallationManagerImpl implements InstallationManager {
                     return Collections.emptyMap();
                 }
 
-                return new HashMap<Artifact, Version>() {{
-                    put(artifact, version);
-                }};
+                return ImmutableMap.of(artifact, version);
             }
 
             final Version versionToUpdate = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
@@ -402,9 +399,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 return Collections.emptyMap();
             }
 
-            return new HashMap<Artifact, Version>() {{
-                put(artifact, versionToUpdate);
-            }};
+            return ImmutableMap.of(artifact, versionToUpdate);
         }
     }
 

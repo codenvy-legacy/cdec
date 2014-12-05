@@ -27,9 +27,9 @@ import com.codenvy.im.command.UnpackCommand;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,12 +110,12 @@ public class InstallManagerArtifact extends AbstractArtifact {
                     final String imDaemonPackName = Commons.getBinaryFileName(this, version, null);
                     final String cliClientPackName = Commons.getBinaryFileName(this, version, "cli");
 
-                    return new MacroCommand(new ArrayList<Command>() {{
-                        add(new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack, if exist."));
-                        add(new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager"));
-                        add(new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon, "Unpack installation manager daemon"));
-                        add(new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient, "Unpack installation manager cli client"));
-                    }}, "Unpack downloaded installation manager");
+                    return new MacroCommand(ImmutableList.of(
+                        new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack, if exist."),
+                        new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager"),
+                        new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon, "Unpack installation manager daemon"),
+                        new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient, "Unpack installation manager cli client")),
+                    "Unpack downloaded installation manager");
 
                 case 1:
                     final Path cliClientDir = Paths.get(format("%s/%s", installOptions.getCliUserHomeDir(), CODENVY_CLI_DIR_NAME));
@@ -134,13 +134,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                                    PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath(),
                                                                    CODENVY_SHARE_GROUP);
 
-                    final Command updateCliClientCommand = new MacroCommand(new ArrayList<Command>() {{
-                        add(new SimpleCommand(format("echo '%s' > %s ; ", contentOfUpdateCliScript, PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
-                                              syncAgent, "Create script to update cli client"));
+                    final Command updateCliClientCommand = new MacroCommand(ImmutableList.<Command>of(
+                        new SimpleCommand(format("echo '%s' > %s ; ", contentOfUpdateCliScript, PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
+                                              syncAgent, "Create script to update cli client"),
 
-                        add(new SimpleCommand(format("chmod 775 %s ; ", PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
-                                              syncAgent, "Set permissions to execute update script"));
-                    }}, "Update installation manager CLI client");
+                        new SimpleCommand(format("chmod 775 %s ; ", PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
+                                              syncAgent, "Set permissions to execute update script")),
+                    "Update installation manager CLI client");
 
                     final Command updateDaemonCommand =
                         new SimpleCommand(format("sleep 6 ; " +   // time to send response to CLI client before updating daemon
@@ -153,10 +153,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                  getInstalledPath().toAbsolutePath(),
                                                  pathToNewVersionOfDaemon.toAbsolutePath()),
                                           asyncAgent, "Update installation manager daemon");
-                    return new MacroCommand(new ArrayList<Command>() {{
-                        add(updateCliClientCommand);
-                        add(updateDaemonCommand);
-                    }}, "Update installation manager");
+                    return new MacroCommand(ImmutableList.of(updateCliClientCommand, updateDaemonCommand), "Update installation manager");
 
                 default:
                     throw new IllegalArgumentException(format("Step number %d is out of range", step));

@@ -35,7 +35,7 @@ import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-
+import com.google.common.collect.ImmutableSortedMap;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
@@ -49,7 +49,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.DownloadDescriptor.createDescriptor;
@@ -342,9 +341,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                         if ((versionName != null) && downloadedVersions.containsKey(Version.valueOf(versionName))) {
                             final Version version = Version.valueOf(versionName);
                             final Path path = downloadedVersions.get(version);
-                            downloadedVersions = new TreeMap<Version, Path>() {{
-                                put(version, path);
-                            }};
+                            downloadedVersions = ImmutableSortedMap.of(version, path);
                         }
 
                         info = getDownloadedArtifactsInfo(token, artifact, downloadedVersions);

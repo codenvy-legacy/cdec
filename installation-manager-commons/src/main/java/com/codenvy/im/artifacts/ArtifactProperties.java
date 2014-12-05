@@ -17,7 +17,8 @@
  */
 package com.codenvy.im.artifacts;
 
-import java.util.HashSet;
+import com.google.common.collect.ImmutableSet;
+
 import java.util.Set;
 
 /** @author Dmytro Nochevnov */
@@ -31,13 +32,13 @@ public class ArtifactProperties {
     public static final String MD5_PROPERTY                     = "md5";
     public static final String SIZE_PROPERTY                    = "size";
 
-    public static final Set<String> PUBLIC_PROPERTIES = new HashSet<String>() {{
-        add(VERSION_PROPERTY);
-        add(ARTIFACT_PROPERTY);
-        add(BUILD_TIME_PROPERTY);
-        add(AUTHENTICATION_REQUIRED_PROPERTY);
-        add(FILE_NAME_PROPERTY);
-        add(MD5_PROPERTY);
-        add(SIZE_PROPERTY);
-    }};
+    public static final Set<String> PUBLIC_PROPERTIES = ImmutableSet.of(
+        VERSION_PROPERTY,
+        ARTIFACT_PROPERTY,
+        BUILD_TIME_PROPERTY,
+        AUTHENTICATION_REQUIRED_PROPERTY,
+        FILE_NAME_PROPERTY,
+        MD5_PROPERTY,
+        SIZE_PROPERTY
+    );
 }
