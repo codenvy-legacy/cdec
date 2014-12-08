@@ -23,7 +23,6 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -69,9 +68,10 @@ public class TestUnpackCommand {
         assertNull(result);
 
         Collection<File> unpackedFiles = listFiles(DIR_TO_UNPACK.toFile(), null, true);
-        assertEquals(unpackedFiles.size(), 2);
+        assertEquals(unpackedFiles.size(), 3);
         assertTrue(unpackedFiles.toString().contains("installation-manager-1.0.0-binary.tar.gz"));
         assertTrue(unpackedFiles.toString().contains("installation-manager-cli-1.0.0-binary.tar.gz"));
+        assertTrue(unpackedFiles.toString().contains("testDir/test.txt"));
     }
 
     @Test(expectedExceptions = CommandException.class,

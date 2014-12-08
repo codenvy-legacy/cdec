@@ -21,6 +21,8 @@ import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -90,5 +92,11 @@ public class TestConfig {
 
         Config config = new CodenvySingleServerConfig(properties);
         assertFalse(config.isValid());
+    }
+
+    @Test(expectedExceptions = FileNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Configuration file 'non-existed' not found")
+    public void testLoadNonexistedConfigFile() throws IOException {
+        configFactory.loadConfigProperties("non-existed");
     }
 }
