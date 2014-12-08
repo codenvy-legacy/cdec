@@ -143,8 +143,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
                     "Update installation manager CLI client");
 
                     final Command updateDaemonCommand =
-                        new SimpleCommand(format("sleep 6 ; " +   // time to send response to CLI client before updating daemon
-                                                 "%1$s/installation-manager stop ; " +     // stop daemon
+                        new SimpleCommand(format("%1$s/installation-manager stop ; " +     // stop daemon
                                                  "rm -rf %1$s/* ; " +                      // remove directory with daemon
                                                  "cp -r %2$s/* %1$s ; " +                  // copy update into the directory with daemon
                                                  "chmod +x %1$s/installation-manager ; " + // set permission to execute daemon script

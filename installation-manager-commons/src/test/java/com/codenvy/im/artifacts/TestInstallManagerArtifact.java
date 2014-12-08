@@ -73,7 +73,8 @@ public class TestInstallManagerArtifact {
 
         options.setStep(1);
         command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
-        assertEquals(command.toString(), "[[echo '#!/bin/bash \n"
+        assertEquals(command.toString(), "[[echo '"
+                                         + "#!/bin/bash \n"
                                          + "rm -rf /home/dummy-user/codenvy-cli/* \n"
                                          + "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli \n"
                                          + "chmod +x /home/dummy-user/codenvy-cli/bin/* \n"
@@ -83,7 +84,6 @@ public class TestInstallManagerArtifact {
                                          + "' > /home/codenvy-shared/codenvy-cli-update-script.sh ; , "
                                          + "chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh ; "
                                          + "], "
-                                         + "sleep 6 ; "
                                          + testExecutionPath + "/installation-manager stop ; "
                                          + "rm -rf " + testExecutionPath + "/* ; "
                                          + "cp -r /parent/unpack/daemon/* " + testExecutionPath + " ; "

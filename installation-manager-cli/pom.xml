@@ -116,13 +116,12 @@
     cd ~
     bash -c "$(cat /home/codenvy-shared/codenvy-cli-update-script.sh)"
     cd ${CURRENT_DIR}
-    ${SCRIPT_DIR}/codenvy-cli
-else
-    if [ -f ~/.bashrc ]; then
-        source ~/.bashrc
-    fi
-        main "$@"
-fi</replacevalue>
+fi
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
+main "$@"
+</replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
                                     <replacetoken>main "$@"</replacetoken>
@@ -133,12 +132,11 @@ fi</replacevalue>
     cd ~
     bash -c "$(cat /home/codenvy-shared/codenvy-cli-update-script.sh)"
     cd ${CURRENT_DIR}
-    ${SCRIPT_DIR}/codenvy-cli
-else
-    if [ -f ~/.bashrc ]; then
-        source ~/.bashrc
-    fi
-        main "$@"
+fi
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
+main "$@"
 fi</replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
