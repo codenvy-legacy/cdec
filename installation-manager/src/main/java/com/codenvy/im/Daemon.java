@@ -41,9 +41,9 @@ public class Daemon {
 
     private static final Logger LOG = LoggerFactory.getLogger(Daemon.class);
 
-    private static final UpdateManager updateManager;
+    protected static UpdateManager updateManager;
     private static final Injector      injector;
-    private static final RestletServer restletServer;
+    protected static RestletServer restletServer;
 
     static {
         injector = createInjector();
@@ -63,12 +63,7 @@ public class Daemon {
             LOG.error("Startup failed. " + e.getMessage());
         }
 
-        try {
-            start();
-        } catch (Exception e) {
-            LOG.error("Can't start daemon. " + e.getMessage());
-            stop();
-        }
+        start();
     }
 
     private static void daemonize() throws IOException {
@@ -99,12 +94,14 @@ public class Daemon {
             updateManager.init();
         } catch (SchedulerException e) {
             LOG.error("Can't initialize Update Manager. ", e);
+            stop();
         }
 
         try {
             restletServer.start();
         } catch (Exception e) {
             LOG.error("Can't start Restlet server. ", e);
+            stop();
         }
     }
 
