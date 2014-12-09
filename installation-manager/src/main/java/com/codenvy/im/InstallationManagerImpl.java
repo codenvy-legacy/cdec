@@ -216,7 +216,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Map<String, String> getConfig() {
+    public LinkedHashMap<String, String> getConfig() {
         return new LinkedHashMap<String, String>() {{
             put("download directory", downloadDir.toString());
             put("base url", extractServerUrl(updateEndpoint));

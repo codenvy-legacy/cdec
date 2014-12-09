@@ -15,23 +15,20 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.response;
+package com.codenvy.im.restlet;
 
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
+import java.util.Arrays;
 
-/**
- * @author Anatoliy Bazko
- */
-public class TestDownloadStatusInfo {
+import static org.testng.Assert.*;
 
+/** @author Dmytro Nochevnov */
+public class TestServerDescription {
     @Test
-    public void testValueOf() throws Exception {
-        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, new Response().setMessage("result"));
-        String json = new Response().setStatus(ResponseCode.OK).setDownloadInfo(expectedInfo).toJson();
-
-        Response response = Response.fromJson(json);
-        assertEquals(response.getDownloadInfo(), expectedInfo);
+    public void testConstants() {
+        assertEquals(ServerDescription.SERVER_URL, "http://localhost:8182");
+        assertEquals(ServerDescription.LOGIN, "im");
+        assertEquals(Arrays.toString(ServerDescription.PASSWORD), "[C, o, d, e, n, v, y, A, d, m, i, n]");
     }
 }

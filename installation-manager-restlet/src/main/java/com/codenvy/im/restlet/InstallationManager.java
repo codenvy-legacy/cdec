@@ -25,6 +25,7 @@ import com.codenvy.im.utils.Version;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -108,7 +109,7 @@ public interface InstallationManager {
     void checkIfConnectionIsAvailable() throws IOException;
 
     /** @return the configuration */
-    Map<String, String> getConfig();
+    LinkedHashMap<String, String> getConfig();
 
     /** Sets new configuration */
     void setConfig(InstallationManagerConfig config) throws IOException;

@@ -18,16 +18,15 @@
 package com.codenvy.im.response;
 
 import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,21 +36,22 @@ import java.util.Set;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "message", "status"})
+@JsonIgnoreProperties({"CLI client version"})
 public class Response {
-    private List<ArtifactInfo>        artifacts;
-    private String                    message;
-    private ResponseCode              status;
-    private DownloadStatusInfo        downloadInfo;
-    private JsonStringMapImpl<String> config;
-    private List<String> infos;
-    private String                    subscription;
+    private List<ArtifactInfo>            artifacts;
+    private String                        message;
+    private ResponseCode                  status;
+    private DownloadStatusInfo            downloadInfo;
+    private LinkedHashMap<String, String> config;
+    private List<String>                  infos;
+    private String                        subscription;
 
     public Response() {
     }
 
     public static Response valueOf(Exception e) {
-        Builder builder = new Builder();
-        return builder.withStatus(ResponseCode.ERROR).withMessage(e.getMessage()).build();
+        return new Response().setStatus(ResponseCode.ERROR)
+                             .setMessage(e.getMessage());
     }
 
     public String toJson() {
@@ -66,72 +66,6 @@ public class Response {
         return Commons.fromJson(json, Response.class);
     }
 
-    /** Response builder. */
-    public static class Builder {
-        private Response response;
-
-        public Builder() {
-            response = new Response();
-        }
-
-        public Response build() {
-            return response;
-        }
-
-        public Builder withArtifacts(Map<Artifact, Version> m) {
-            Set<Map.Entry<Artifact, Version>> entries = m.entrySet();
-            List<ArtifactInfo> infos = new ArrayList<>(entries.size());
-
-            for (Map.Entry<Artifact, Version> e : entries) {
-                Artifact artifactName = e.getKey();
-                Version version = e.getValue();
-
-                infos.add(new ArtifactInfo(artifactName, version));
-            }
-
-            return withArtifacts(infos);
-        }
-
-        public Builder withArtifacts(@Nullable List<ArtifactInfo> l) {
-            response.setArtifacts(l);
-            return this;
-        }
-
-        public Builder withArtifact(ArtifactInfo info) {
-            return withArtifacts(Arrays.asList(info));
-        }
-
-        public Builder withStatus(ResponseCode value) {
-            response.setStatus(value);
-            return this;
-        }
-
-        public Builder withMessage(String value) {
-            response.setMessage(value);
-            return this;
-        }
-
-        public Builder withDownloadInfo(DownloadStatusInfo info) {
-            response.setDownloadInfo(info);
-            return this;
-        }
-
-        public Builder withConfig(JsonStringMapImpl<String> config) {
-            response.setConfig(config);
-            return this;
-        }
-
-        public Builder withInfos(List<String> infos) {
-            response.setInfos(infos);
-            return this;
-        }
-
-        public Builder withSubscription(String subscription) {
-            response.setSubscription(subscription);
-            return this;
-        }
-    }
-
     public ResponseCode getStatus() {
         return status;
     }
@@ -144,47 +78,82 @@ public class Response {
         return artifacts;
     }
 
-    public void setArtifacts(List<ArtifactInfo> artifacts) {
+    public Response setArtifacts(List<ArtifactInfo> artifacts) {
         this.artifacts = artifacts;
+        return this;
     }
 
-    public void setMessage(String message) {
+    public Response addArtifacts(Map<Artifact, Version> m) {
+        Set<Map.Entry<Artifact, Version>> entries = m.entrySet();
+        List<ArtifactInfo> infos = new ArrayList<>(entries.size());
+
+        for (Map.Entry<Artifact, Version> e : entries) {
+            Artifact artifactName = e.getKey();
+            Version version = e.getValue();
+
+            infos.add(new ArtifactInfo(artifactName, version));
+        }
+
+        ensureArtifactsIsNotNull();
+        this.artifacts.addAll(infos);
+        return this;
+    }
+
+    public Response addArtifact(ArtifactInfo info) {
+        ensureArtifactsIsNotNull();
+        artifacts.add(info);
+        return this;
+    }
+
+    public Response setMessage(String message) {
         this.message = message;
+        return this;
     }
 
-    public void setStatus(ResponseCode status) {
+    public Response setStatus(ResponseCode status) {
         this.status = status;
+        return this;
     }
 
     public DownloadStatusInfo getDownloadInfo() {
         return downloadInfo;
     }
 
-    public void setDownloadInfo(DownloadStatusInfo downloadInfo) {
+    public Response setDownloadInfo(DownloadStatusInfo downloadInfo) {
         this.downloadInfo = downloadInfo;
+        return this;
     }
 
-    public JsonStringMapImpl<String> getConfig() {
+    public LinkedHashMap<String, String> getConfig() {
         return config;
     }
 
-    public void setConfig(JsonStringMapImpl<String> config) {
+    public Response setConfig(LinkedHashMap<String, String> config) {
         this.config = config;
+        return this;
     }
 
     public String getSubscription() {
         return subscription;
     }
 
-    public void setSubscription(String subscription) {
+    public Response setSubscription(String subscription) {
         this.subscription = subscription;
+        return this;
     }
 
     public List<String> getInfos() {
         return infos;
     }
 
-    public void setInfos(List<String> infos) {
+    public Response setInfos(List<String> infos) {
         this.infos = infos;
+        return this;
+    }
+
+    private void ensureArtifactsIsNotNull() {
+        if (this.artifacts == null) {
+            this.artifacts = new ArrayList<>();
+        }
     }
 }

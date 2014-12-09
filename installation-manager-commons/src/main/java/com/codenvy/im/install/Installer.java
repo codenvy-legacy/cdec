@@ -48,7 +48,7 @@ public class Installer {
     public void update(Artifact artifact, Version version, InstallOptions options) throws IOException {
     }
 
-    protected void executeCommand(Command command) throws CommandException {
-        command.execute();
+    protected String executeCommand(Command command) throws CommandException {
+        return command.execute();
     }
 }

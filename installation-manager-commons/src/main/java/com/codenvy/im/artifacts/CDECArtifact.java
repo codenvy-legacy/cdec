@@ -72,15 +72,11 @@ public class CDECArtifact extends AbstractArtifact {
             return null;
         }
 
-        try {
-            ApiInfo apiInfo = Commons.fromJson(response, ApiInfo.class);
-            if (apiInfo.getIdeVersion() == null) {
-                return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
-            } else {
-                return Version.valueOf(apiInfo.getIdeVersion());
-            }
-        } catch (JsonParseException e) {
-            throw new IOException(e);
+        ApiInfo apiInfo = Commons.createDtoFromJson(response, ApiInfo.class);
+        if (apiInfo.getIdeVersion() == null) {
+            return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
+        } else {
+            return Version.valueOf(apiInfo.getIdeVersion());
         }
     }
 

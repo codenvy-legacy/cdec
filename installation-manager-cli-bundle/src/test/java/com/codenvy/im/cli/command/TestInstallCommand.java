@@ -69,9 +69,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void initMocks() throws Exception {
         mockInstallationManagerProxy = mock(InstallationManagerService.class);
         configFactory = mock(ConfigFactory.class);
-        doReturn(new Response.Builder()
-                     .withInfos(ImmutableList.of("step 1", "step 2"))
-                     .build().toJson()).when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+        doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
+            .when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new TestedInstallCommand(configFactory));
@@ -262,7 +261,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand).readLine();
 
         // no installation info provided
-        doReturn("{\"infos\":{}}").when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+        doReturn("{\"infos\":[]}").when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
 
         // first reply [n], then reply [y]
         doAnswer(new Answer() {
@@ -451,7 +450,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"zabbix_time_zone\"                        : \"some value\"\n"
                              + "}\n"
                              + "Continue installation [y/N]\n"
-                             + "{\"infos\":{}}\n");
+                             + "{\"infos\":[]}\n");
     }
 
     private class TestedInstallCommand extends InstallCommand {

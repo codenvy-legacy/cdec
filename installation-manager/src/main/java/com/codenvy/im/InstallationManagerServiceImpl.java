@@ -18,7 +18,6 @@
 package com.codenvy.im;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
-import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.install.InstallOptions;
@@ -113,21 +112,22 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             boolean subscriptionValidated = isValidSubscription(transport, apiEndpoint, subscription, userCredentials);
 
             if (subscriptionValidated) {
-                return new Response.Builder().withStatus(ResponseCode.OK)
-                                             .withSubscription(subscription)
-                                             .withMessage("Subscription is valid")
-                                             .build().toJson();
+                return new Response().setStatus(ResponseCode.OK)
+                                     .setSubscription(subscription)
+                                     .setMessage("Subscription is valid")
+                                     .toJson();
             } else {
-                return new Response.Builder().withStatus(ERROR)
-                                             .withSubscription(subscription)
-                                             .withMessage("Subscription not found or outdated").build().toJson();
+                return new Response().setStatus(ERROR)
+                                     .setSubscription(subscription)
+                                     .setMessage("Subscription not found or outdated")
+                                     .toJson();
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return new Response.Builder().withStatus(ERROR)
-                                         .withSubscription(subscription)
-                                         .withMessage(e.getMessage())
-                                         .build().toJson();
+            return new Response().setStatus(ERROR)
+                                 .setSubscription(subscription)
+                                 .setMessage(e.getMessage())
+                                 .toJson();
         }
     }
 
@@ -172,7 +172,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             latcher.await();
 
-            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
+            return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
@@ -213,17 +213,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
-                    downloadDescriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
-                                                                               .withMessage(exp.getMessage())
-                                                                               .withArtifacts(infos)
-                                                                               .build());
+                    downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
+                                                                       .setMessage(exp.getMessage())
+                                                                       .setArtifacts(infos));
                     return;
                 }
             }
 
-            downloadDescriptor.setDownloadResult(new Response.Builder().withStatus(ResponseCode.OK)
-                                                                       .withArtifacts(infos)
-                                                                       .build());
+            downloadDescriptor.setDownloadResult(new Response().setStatus(ResponseCode.OK).setArtifacts(infos));
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
@@ -233,10 +230,9 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 descriptor.setDownloadResult(Response.valueOf(e));
                 downloadDescriptorHolder.put(downloadDescriptorId, descriptor);
             } else {
-                descriptor.setDownloadResult(new Response.Builder().withStatus(ERROR)
-                                                                   .withMessage(e.getMessage())
-                                                                   .withArtifacts(infos)
-                                                                   .build());
+                descriptor.setDownloadResult(new Response().setStatus(ERROR)
+                                                           .setMessage(e.getMessage())
+                                                           .setArtifacts(infos));
             }
 
             if (latcher.getCount() == 1) {
@@ -258,14 +254,13 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
 
             if (descriptor == null) {
-                return new Response.Builder().withStatus(ERROR)
-                                             .withMessage("Can't get downloading descriptor ID").build().toJson();
+                return new Response().setStatus(ERROR).setMessage("Can't get downloading descriptor ID").toJson();
             }
 
             Response downloadResult = descriptor.getDownloadResult();
             if ((downloadResult != null) && (downloadResult.getStatus() == ResponseCode.ERROR)) {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, downloadResult);
-                return new Response.Builder().withStatus(ResponseCode.ERROR).withDownloadInfo(info).build().toJson();
+                return new Response().setStatus(ResponseCode.ERROR).setDownloadInfo(info).toJson();
             }
 
             long downloadedSize = getDownloadedSize(descriptor);
@@ -273,10 +268,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
 
             if (descriptor.isDownloadingFinished()) {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, downloadResult);
-                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
+                return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
             } else {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
-                return new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(info).build().toJson();
+                return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -302,12 +297,11 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         try {
             DownloadDescriptor descriptor = downloadDescriptorHolder.get(downloadDescriptorId);
             if (descriptor == null) {
-                return new Response.Builder().withStatus(ERROR)
-                                             .withMessage("Can't get downloading descriptor ID").build().toJson();
+                return new Response().setStatus(ERROR).setMessage("Can't get downloading descriptor ID").toJson();
             }
 
             descriptor.getDownloadThread().interrupt();
-            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
+            return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
@@ -325,14 +319,14 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String token = userCredentials.getToken();
 
             try {
-                List<ArtifactInfo> info = new ArrayList<>();
+                List<ArtifactInfo> infos = new ArrayList<>();
 
                 String artifactName = request.getArtifactName();
                 if (artifactName == null || artifactName.isEmpty()) {
                     Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
                     for (Map.Entry<Artifact, SortedMap<Version, Path>> artifactEntry : downloadedArtifacts.entrySet()) {
-                        info.addAll(getDownloadedArtifactsInfo(token, artifactEntry.getKey(), artifactEntry.getValue()));
+                        infos.addAll(getDownloadedArtifactsInfo(token, artifactEntry.getKey(), artifactEntry.getValue()));
                     }
                 } else {
                     Artifact artifact = ArtifactFactory.createArtifact(artifactName);
@@ -346,18 +340,18 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                             downloadedVersions = ImmutableSortedMap.of(version, path);
                         }
 
-                        info = getDownloadedArtifactsInfo(token, artifact, downloadedVersions);
+                        infos = getDownloadedArtifactsInfo(token, artifact, downloadedVersions);
                     }
                 }
 
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(info).build().toJson();
+                return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 return Response.valueOf(e).toJson();
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
+            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
 
@@ -398,7 +392,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
                 }
             }
 
-            return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(infos).build().toJson();
+            return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
@@ -410,7 +404,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String getVersions(JacksonRepresentation<UserCredentials> userCredentialsRep) throws IOException {
         UserCredentials userCredentials = userCredentialsRep.getObject();
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(userCredentials.getToken());
-        return new Response.Builder().withStatus(ResponseCode.OK).withArtifacts(installedArtifacts).build().toJson();
+        return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts).toJson();
     }
 
     /** {@inheritDoc} */
@@ -423,10 +417,10 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             Artifact artifact = createArtifact(request.getArtifactName());
 
             List<String> infos = manager.getInstallInfo(artifact, null, request.getInstallOptions());
-            return new Response.Builder().withStatus(ResponseCode.OK).withInfos(infos).build().toJson();
+            return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
+            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
 
@@ -448,15 +442,15 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             try {
                 manager.install(token, artifact, version, installOption);
                 ArtifactInfo info = new ArtifactInfo(artifact, version, Status.SUCCESS);
-                return new Response.Builder().withStatus(ResponseCode.OK).withArtifact(info).build().toJson();
+                return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 ArtifactInfo info = new ArtifactInfo(artifact, version, Status.FAILURE);
-                return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).withArtifact(info).build().toJson();
+                return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
+            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
 
@@ -508,8 +502,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     /** {@inheritDoc} */
     @Override
     public String getConfig() {
-        JsonStringMapImpl<String> config = new JsonStringMapImpl<>(manager.getConfig());
-        return new Response.Builder().withStatus(ResponseCode.OK).withConfig(config).build().toJson();
+        return new Response().setStatus(ResponseCode.OK).setConfig(manager.getConfig()).toJson();
     }
 
     /** {@inheritDoc} */
@@ -517,7 +510,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
     public String setConfig(JacksonRepresentation<InstallationManagerConfig> configRep) {
         try {
             manager.setConfig(configRep.getObject());
-            return new Response.Builder().withStatus(ResponseCode.OK).build().toJson();
+            return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();

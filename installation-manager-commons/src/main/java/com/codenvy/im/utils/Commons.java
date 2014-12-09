@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.commons.json.JsonHelper;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.artifacts.Artifact;
@@ -30,13 +29,11 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.inject.TypeLiteral;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -114,17 +111,12 @@ public class Commons {
 
     /** Translates JSON to object. */
     public static <T> T fromJson(String json, Class<T> clazz) throws JsonParseException {
-        return JsonUtils.fromJson(json, clazz, null);
+        return JsonUtils.fromJson(json, clazz);
     }
 
     /** Translates JSON to object. */
     public static Map asMap(String json) throws JsonParseException {
         return JsonUtils.asMap(json);
-    }
-
-    /** Translates JSON to object. */
-    public static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
-        return JsonUtils.fromJson(json, clazz, type);
     }
 
     /** Translates object to JSON without null fields and with order defined by @JsonPropertyOrder annotation above the class. */
@@ -293,13 +285,16 @@ public class Commons {
 
         /** Translates JSON to object. */
         public static Map asMap(String json) throws JsonParseException {
-            return JsonHelper.fromJson(json, Map.class, new TypeLiteral<Map<String, String>>() {
-            }.getType());
+            return fromJson(json, Map.class);
         }
 
         /** Translates JSON to object. */
-        private static <T> T fromJson(String json, Class<T> clazz, Type type) throws JsonParseException {
-            return JsonHelper.fromJson(json, clazz, type);
+        private static <T> T fromJson(String json, Class<T> clazz) throws JsonParseException {
+            try {
+                return new ObjectMapper().readValue(json, clazz);
+            } catch (IOException e) {
+                throw new JsonParseException(e);
+            }
         }
 
         /** Translates map to JSON with entries sorted alphabetically and aligned by colons. */

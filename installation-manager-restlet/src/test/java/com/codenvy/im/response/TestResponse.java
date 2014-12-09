@@ -21,15 +21,18 @@ package com.codenvy.im.response;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-
+import com.google.common.collect.ImmutableList;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,7 +49,7 @@ public class TestResponse {
     public void testToJsonArtifactInfoList() throws Exception {
         ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
         ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
-        Response response = new Response.Builder().withArtifacts(Arrays.asList(info1, info2)).withStatus(ResponseCode.OK).build();
+        Response response = new Response().setArtifacts(Arrays.asList(info1, info2)).setStatus(ResponseCode.OK);
 
         assertEquals(response.toJson(), "{\n" +
                                         "  \"artifacts\" : [ {\n" +
@@ -67,7 +70,7 @@ public class TestResponse {
             put(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
         }};
 
-        Response response = new Response.Builder().withArtifacts(m).withStatus(ResponseCode.OK).build();
+        Response response = new Response().addArtifacts(m).setStatus(ResponseCode.OK);
 
         assertEquals(response.toJson(), "{\n" +
                                         "  \"artifacts\" : [ {\n" +
@@ -80,40 +83,63 @@ public class TestResponse {
 
     @Test
     public void testResponseJsonParsing() throws IOException, JsonParseException {
-        ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
-        ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
-        Response response = new Response.Builder().withArtifacts(Arrays.asList(info1, info2)).withStatus(ResponseCode.OK).build();
+        final ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
+        final ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
+        ArtifactInfo info3 = new ArtifactInfo(createArtifact(InstallManagerArtifact.NAME), Version.valueOf("1.0.2"), Paths.get("test"), Status.SUCCESS);
+        Response response = new Response().setArtifacts(new ArrayList<ArtifactInfo>(){{
+                                             add(info1);
+                                             add(info2);
+                                          }})
+                                          .addArtifact(info3)
+                                          .setSubscription("subscription")
+                                          .setDownloadInfo(new DownloadStatusInfo(Status.DOWNLOADING, 30))
+                                          .setInfos(ImmutableList.of("info1", "info2"))
+                                          .setConfig(new LinkedHashMap<String, String>() {{
+                                              put("prop1", "value1");
+                                              put("prop2", "value2");
+                                          }})
+                                          .setMessage("message")
+                                          .setStatus(ResponseCode.OK);
         String json = response.toJson();
+        String expectedJson = "{\n"
+                          + "  \"downloadInfo\" : {\n"
+                          + "    \"status\" : \"DOWNLOADING\",\n"
+                          + "    \"percents\" : 30\n"
+                          + "  },\n"
+                          + "  \"config\" : {\n"
+                          + "    \"prop1\" : \"value1\",\n"
+                          + "    \"prop2\" : \"value2\"\n"
+                          + "  },\n"
+                          + "  \"artifacts\" : [ {\n"
+                          + "    \"artifact\" : \"cdec\",\n"
+                          + "    \"version\" : \"1.0.1\"\n"
+                          + "  }, {\n"
+                          + "    \"artifact\" : \"cdec\",\n"
+                          + "    \"version\" : \"1.0.2\",\n"
+                          + "    \"status\" : \"SUCCESS\"\n"
+                          + "  }, {\n"
+                          + "    \"artifact\" : \"installation-manager\",\n"
+                          + "    \"version\" : \"1.0.2\",\n"
+                          + "    \"file\" : \"test\",\n"
+                          + "    \"status\" : \"SUCCESS\"\n"
+                          + "  } ],\n"
+                          + "  \"subscription\" : \"subscription\",\n"
+                          + "  \"message\" : \"message\",\n"
+                          + "  \"status\" : \"OK\",\n"
+                          + "  \"infos\" : [ \"info1\", \"info2\" ]\n"
+                          + "}";
+        assertEquals(json, expectedJson);
 
         // check real-life scenario of parsing JSON using Commons.fromJson()
         Response restoredResponse = Commons.fromJson(json, Response.class);
+
         assertNotNull(restoredResponse);
-        assertEquals(Commons.toJson(restoredResponse), "{\n"
-                                                       + "  \"artifacts\" : [ {\n"
-                                                       + "    \"artifact\" : \"cdec\",\n"
-                                                       + "    \"version\" : \"1.0.1\"\n"
-                                                       + "  }, {\n"
-                                                       + "    \"artifact\" : \"cdec\",\n"
-                                                       + "    \"version\" : \"1.0.2\",\n"
-                                                       + "    \"status\" : \"SUCCESS\"\n"
-                                                       + "  } ],\n"
-                                                       + "  \"status\" : \"OK\"\n"
-                                                       + "}");
+        assertEquals(Commons.toJson(restoredResponse), expectedJson);
 
         // check real-life scenario of parsing JSON using JacksonRepresentation.getObject() to recognize errors like "Unrecognized field"
         Representation rep = new JsonRepresentation(json);
         restoredResponse = new JacksonRepresentation<>(rep, Response.class).getObject();
         assertNotNull(restoredResponse);
-        assertEquals(Commons.toJson(restoredResponse), "{\n"
-                                                       + "  \"artifacts\" : [ {\n"
-                                                       + "    \"artifact\" : \"cdec\",\n"
-                                                       + "    \"version\" : \"1.0.1\"\n"
-                                                       + "  }, {\n"
-                                                       + "    \"artifact\" : \"cdec\",\n"
-                                                       + "    \"version\" : \"1.0.2\",\n"
-                                                       + "    \"status\" : \"SUCCESS\"\n"
-                                                       + "  } ],\n"
-                                                       + "  \"status\" : \"OK\"\n"
-                                                       + "}");
+        assertEquals(Commons.toJson(restoredResponse), expectedJson);
     }
 }

@@ -24,7 +24,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.google.inject.TypeLiteral;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;
@@ -116,8 +115,7 @@ public class TestCommons {
 
     @Test
     public void testMapFromJson() throws Exception {
-        Map<String, String> m = Commons.fromJson("{\"a\":\"b\",\"c\":\"d\"}", Map.class, new TypeLiteral<Map<String, String>>() {
-        }.getType());
+        Map<String, String> m = Commons.fromJson("{\"a\":\"b\",\"c\":\"d\"}", Map.class);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "b");
         assertEquals(m.get("c"), "d");

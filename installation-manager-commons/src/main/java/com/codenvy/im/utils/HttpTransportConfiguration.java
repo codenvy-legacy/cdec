@@ -61,6 +61,6 @@ public class HttpTransportConfiguration {
     }
 
     public boolean isProxyConfValid() {
-        return !proxyUrl.isEmpty() && proxyPort > 0;
+        return (proxyUrl != null) && (!proxyUrl.isEmpty()) && (proxyPort > 0);
     }
 }
