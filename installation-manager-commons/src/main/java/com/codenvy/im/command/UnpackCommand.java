@@ -71,10 +71,6 @@ public class UnpackCommand implements Command {
                         createDirectories(destPath);
                     }
                 } else {
-                    if (!Files.exists(destPath.getParent())) {
-                        createDirectories(destPath.getParent());
-                    }
-
                     try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
                         copy(in, out);
                         setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));

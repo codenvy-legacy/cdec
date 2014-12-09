@@ -22,13 +22,14 @@ import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.utils.Commons;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.net.ConnectException;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -210,6 +211,20 @@ public class TestLoginCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
+    }
+
+    @Test
+    public void testLoginWhenServiceThrowsConnectionExceptionError() throws Exception {
+        String expectedOutput = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
+                                + "please retry a bit later.";
+        doThrow(new ResourceException(new ConnectException()))
+            .when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, expectedOutput + "\n");
     }
 
     class TestedLoginCommand extends LoginCommand {
