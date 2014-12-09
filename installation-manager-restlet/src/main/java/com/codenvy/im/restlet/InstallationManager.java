@@ -81,11 +81,11 @@ public interface InstallationManager {
     /**
      * @param authToken
      *         the authentication token
-     * @return version of artifact to update.
+     * @return the latest version of the artifact
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Version getLatestVersionToDownload(String authToken, Artifact artifact) throws IOException;
+    Version getLatestInstallableVersion(String authToken, Artifact artifact) throws IOException;
 
 
     /**

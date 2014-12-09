@@ -98,11 +98,9 @@ public class TestLoginCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Your Codenvy account '%s' has been obtained and will be used to verify subscription.\n" +
-                                           "Login success on remote '%s' [%s] which is used by installation manager commands.\n",
-                                           TEST_USER_ACCOUNT_NAME,
-                                           UPDATE_SERVER_REMOTE_NAME,
-                                           UPDATE_SERVER_URL));
+        assertEquals(output, String.format("Your Codenvy account '%s' will be used to verify on-premises subscription.\n" +
+                                           "Login success.\n",
+                                           TEST_USER_ACCOUNT_NAME));
         assertTrue(output.contains(TEST_USER_ACCOUNT_NAME));
     }
 
@@ -148,9 +146,7 @@ public class TestLoginCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Login success on remote '%s' [%s] which is used by installation manager commands.\n",
-                                           UPDATE_SERVER_REMOTE_NAME,
-                                           UPDATE_SERVER_URL));
+        assertEquals(output, "Login success.\n");
         assertFalse(output.contains(TEST_USER_ACCOUNT_NAME));
     }
 

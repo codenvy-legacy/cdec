@@ -268,10 +268,10 @@ public class TestInstallationManager {
         final Version version200 = Version.valueOf("2.0.0");
 
         doReturn(version100).when(cdecArtifact)
-                            .getLatestInstallableVersionToDownload(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+                            .getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
 
         doReturn(version200).when(installManagerArtifact)
-                            .getLatestInstallableVersionToDownload(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+                            .getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
 
         Map<Artifact, Version> updates = manager.getUpdates(testCredentials.getToken());
         assertEquals(updates.size(), 2);

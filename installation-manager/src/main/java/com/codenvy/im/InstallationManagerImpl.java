@@ -32,6 +32,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -315,7 +316,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Version newVersion;
         for (Artifact artifact : artifacts) {
             try {
-                newVersion = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+                newVersion = artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
             } catch (HttpException e) {
                 // ignore update server error when there is no version of certain artifact there
                 if (e.getStatus() == javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode()) {
@@ -333,8 +334,8 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     @Override
-    public Version getLatestVersionToDownload(String authToken, Artifact artifact) throws IOException {
-        return artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+    public Version getLatestInstallableVersion(String authToken, Artifact artifact) throws IOException {
+        return artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
     }
 
     private Path getDownloadDirectory(Artifact artifact, Version version) {
@@ -389,7 +390,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 return ImmutableMap.of(artifact, version);
             }
 
-            final Version versionToUpdate = artifact.getLatestInstallableVersionToDownload(authToken, updateEndpoint, transport);
+            final Version versionToUpdate = artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
             if (versionToUpdate == null) {
                 return Collections.emptyMap();
             }

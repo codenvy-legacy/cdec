@@ -32,7 +32,6 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -93,13 +92,13 @@ public class TestAbstractArtifact {
     }
 
     @Test
-    public void testGetLatestVersionToDownload() throws IOException {
+    public void testGetLatestVersion() throws IOException {
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"version\":\"" + TEST_VERSION_STR + "\"}")
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
-        Version version = spyTestArtifact.getLatestVersionToDownload(UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestVersion(UPDATE_ENDPOINT, mockTransport);
         assertEquals(version.toString(), TEST_VERSION_STR);
     }
 
@@ -112,7 +111,7 @@ public class TestAbstractArtifact {
     }
 
     @Test
-    public void testGetLatestInstallableVersionToDownload() throws Exception {
+    public void testGetLatestInstallableVersion() throws Exception {
         String newVersion = "1.0.1";
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion(TEST_TOKEN);
 
@@ -121,14 +120,14 @@ public class TestAbstractArtifact {
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
-        Version version = spyTestArtifact.getLatestInstallableVersionToDownload(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
 
         assertNotNull(version);
         assertEquals(version.toString(), newVersion);
     }
 
     @Test
-    public void testGetNullLatestInstallableVersionToDownload() throws Exception {
+    public void testGetNullLatestInstallableVersion() throws Exception {
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion(TEST_TOKEN);
 
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
@@ -136,7 +135,7 @@ public class TestAbstractArtifact {
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
-        Version version = spyTestArtifact.getLatestInstallableVersionToDownload(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
         assertNull(version);
     }
 
@@ -149,7 +148,7 @@ public class TestAbstractArtifact {
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
-        Version version = spyTestArtifact.getLatestInstallableVersionToDownload(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
         assertNull(version);
     }
 
@@ -204,11 +203,6 @@ public class TestAbstractArtifact {
     private static class TestedAbstractArtifact extends AbstractArtifact {
         public TestedAbstractArtifact(String name) {
             super(name);
-        }
-
-        @Override
-        protected Path getInstalledPath() throws URISyntaxException {
-            throw new UnsupportedOperationException();
         }
 
         @Nullable

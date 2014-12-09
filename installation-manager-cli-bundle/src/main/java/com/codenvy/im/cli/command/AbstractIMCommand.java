@@ -128,8 +128,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
         print(ansi().fg(RED).a(message).newline().reset(), false);
     }
 
-    protected void printError(String message, boolean supressCodenvyPrompt) {
-        print(ansi().fg(RED).a(message).newline().reset(), supressCodenvyPrompt);
+    protected void printError(String message, boolean suppressCodenvyPrompt) {
+        print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
     protected void printProgress(int percents) {
@@ -175,7 +175,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected void print(String message, boolean suppressCodenvyPrompt) {
         if (!isInteractive() && !suppressCodenvyPrompt) {
-            System.out.print("[CODENVY] ");
+            printCodenvyPrompt();
         }
         System.out.print(message);
         System.out.flush();
@@ -183,7 +183,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected void print(String message) {
         if (!isInteractive()) {
-            System.out.print("[CODENVY] ");
+            printCodenvyPrompt();
         }
         System.out.print(message);
         System.out.flush();
@@ -191,10 +191,15 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     private void print(Ansi ansi, boolean suppressCodenvyPrompt) {
         if (!isInteractive() && !suppressCodenvyPrompt) {
-            System.out.print("[CODENVY] ");
+            printCodenvyPrompt();
         }
         System.out.print(ansi);
         System.out.flush();
+    }
+
+    protected void printCodenvyPrompt() {
+        final String lightBlue = '\u001b' + "[94m";
+        System.out.print(ansi().a(lightBlue + "[CODENVY] ").reset()); // light blue
     }
 
     protected void printResponse(Object response) throws JsonParseException {

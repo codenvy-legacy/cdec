@@ -35,7 +35,6 @@ import com.google.inject.Singleton;
 import javax.inject.Named;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,12 +96,13 @@ public class CDECArtifact extends AbstractArtifact {
         return ImmutableList.of(
             "Disable SELinux",
             "Install puppet server",
-            "Unzip CDEC binaries",
+            "Unzip Codenvy binaries",
             "Configure puppet master",
             "Launch puppet master",
             "Install puppet agent",
             "Configure puppet agent",
             "Launch puppet agent",
+            "Install Codenvy (~25 min)",
             "Boot Codenvy"
         );
     }
@@ -224,26 +224,29 @@ public class CDECArtifact extends AbstractArtifact {
                  "Launch puppet agent");
 
             case 8:
-//                TODO [AB] improve
                 return new MacroCommand(ImmutableList.<Command>of(
-                    createLocalCommand("doneState='Starting'; testFile=/home/codenvy/codenvy-tomcat/logs/catalina.out; " +
-                                           "while [ \"${doneState}\" != \"Started\" ]; do " +
-                                           "    if grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; fi; " +
-                                           "    if grep -Fq \"Server startup\" ${testFile}; then doneState=Started; fi; " +
-                                           "    sleep 60; " +
+                        createLocalCommand("doneState=\"Installing\"; " +
+                                           "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                           "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                           "    sleep 30; " +
+                                           "    if [ -f ${testFile} ]; then doneState=\"Installed\"; fi; " +
                                            "done")),
-                 "Boot Codenvy");
+                                        "Install Codenvy");
 
+            case 9:
+                return new MacroCommand(ImmutableList.<Command>of(
+                        createLocalCommand("doneState=\"Booting\"; " +
+                                           "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                           "while [ \"${doneState}\" != \"Booted\" ]; do " +
+                                           "    sleep 30; " +
+                                           "    if grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; fi; " +
+                                           "    if grep -Fq \"Server startup\" ${testFile}; then doneState=\"Booted\"; fi; " +
+                                           "done")),
+                                        "Boot Codenvy");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of range", step));
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected Path getInstalledPath() throws URISyntaxException {
-        throw new UnsupportedOperationException();
     }
 
     private Command createLocalReplaceCommand(String property, String value) throws ConfigException {

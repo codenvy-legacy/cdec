@@ -88,13 +88,11 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (accountName == null) {
-                printSuccess("Your Codenvy account '" + accountReference.getName() + "' has been obtained and will be used to verify subscription.");
+                printSuccess("Your Codenvy account '" + accountReference.getName() + "' will be used to verify on-premises subscription.");
             }
 
             preferencesStorage.setAccountId(accountReference.getId());
-            printSuccess(String.format("Login success on remote '%s' [%s] which is used by installation manager commands.",
-                                       remoteName,
-                                       getRemoteUrlByName(remoteName)));
+            printSuccess("Login success.");
 
         } catch (Exception e) {
             if (preferencesStorage != null) {

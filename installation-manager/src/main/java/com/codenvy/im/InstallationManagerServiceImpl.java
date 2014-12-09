@@ -36,6 +36,7 @@ import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
+
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
@@ -442,12 +443,7 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
             String token = userCredentials.getToken();
             Artifact artifact = createArtifact(request.getArtifactName());
 
-            String versionName = request.getVersion();
-            Version version = versionName != null ? Version.valueOf(versionName) : manager.getLatestVersionToDownload(token, artifact);
-            if (version == null) {
-                return Response.valueOf(new IllegalStateException(
-                        format("There is no newer version to install '%s'.", artifact))).toJson();
-            }
+            Version version = getVersionToInstall(request);
 
             try {
                 manager.install(token, artifact, version, installOption);
@@ -461,6 +457,30 @@ public class InstallationManagerServiceImpl extends ServerResource implements In
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return new Response.Builder().withStatus(ERROR).withMessage(e.getMessage()).build().toJson();
+        }
+    }
+
+    protected Version getVersionToInstall(Request request) throws IOException {
+        Artifact artifact = createArtifact(request.getArtifactName());
+
+        if (request.getVersion() != null) {
+            return Version.valueOf(request.getVersion());
+
+        } else if (request.getInstallOptions().getStep() == 0) {
+            Version version = manager.getLatestInstallableVersion(request.getUserCredentials().getToken(), createArtifact(request.getArtifactName()));
+
+            if (version == null) {
+                throw new IllegalStateException(format("There is no newer version to install '%s'.", artifact));
+            }
+
+            return version;
+
+        } else {
+            SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(artifact);
+            if (downloadedVersions.isEmpty()) {
+                throw new IllegalStateException(format("Installation in progress but binaries for '%s' not found.", artifact));
+            }
+            return downloadedVersions.keySet().iterator().next();
         }
     }
 

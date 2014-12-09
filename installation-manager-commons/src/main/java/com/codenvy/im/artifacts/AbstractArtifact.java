@@ -18,8 +18,6 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.im.agent.Agent;
-import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.InjectorBootstrap;
@@ -30,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -102,7 +99,6 @@ public abstract class AbstractArtifact implements Artifact {
     public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
         Version installedVersion = getInstalledVersion(accessToken);
         return installedVersion == null || installedVersion.compareTo(versionToInstall) < 0;
-
     }
 
     /** Initialize SSH agent */
@@ -116,24 +112,17 @@ public abstract class AbstractArtifact implements Artifact {
 //        );
 //    }
 
-    /** Initialize local agent */
-    protected Agent initLocalAgent() throws IOException {
-        return new LocalAgent();
-    }
-
-    /** @return path where artifact located */
-    protected abstract Path getInstalledPath() throws URISyntaxException;
-
+    /** {@inheritDoc} */
     @Override
     @Nullable
-    public Version getLatestInstallableVersionToDownload(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {
-        Version latestVersionToDownload = getLatestVersionToDownload(updateEndpoint, transport);
+    public Version getLatestInstallableVersion(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {
+        Version version = getLatestVersion(updateEndpoint, transport);
 
-        if (latestVersionToDownload == null || isInstallable(latestVersionToDownload, authToken)) {
-            return latestVersionToDownload;
+        if (version != null && isInstallable(version, authToken)) {
+            return version;
+        } else {
+            return null;
         }
-
-        return null;
     }
 
     /** @return the list of downloaded list */
@@ -210,7 +199,7 @@ public abstract class AbstractArtifact implements Artifact {
         }
     }
 
-    protected Version getLatestVersionToDownload(String updateEndpoint, HttpTransport transport) throws IOException {
+    protected Version getLatestVersion(String updateEndpoint, HttpTransport transport) throws IOException {
         Map m = getLatestVersionProperties(updateEndpoint, transport);
         return valueOf(m.get(VERSION_PROPERTY).toString());
     }

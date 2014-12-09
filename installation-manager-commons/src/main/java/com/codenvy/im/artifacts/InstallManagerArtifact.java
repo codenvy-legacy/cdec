@@ -30,6 +30,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,7 +164,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
         }
     }
 
-    @Override
+    /** @return path where artifact located */
     protected Path getInstalledPath() throws URISyntaxException {
         URL location = getClass().getProtectionDomain().getCodeSource().getLocation();
         return Paths.get(location.toURI()).getParent();

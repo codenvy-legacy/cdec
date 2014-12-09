@@ -78,6 +78,9 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--config", aliases = "-c", description = "Path to configuration file", required = false)
     private String configFilePath;
 
+    @Option(name = "--step", aliases = "-s", description = "Installation step to perform", required = false)
+    private String installStep;
+
     public InstallCommand() {
         this.configFactory = INJECTOR.getInstance(ConfigFactory.class);
     }
@@ -128,13 +131,16 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         List<String> infos = responseObj.getInfos();
+        final int finalStep = infos.size() - 1;
+        final int firstStep = getFirstInstallStep();
+        final int lastStep = getLastInstallationStep(finalStep);
 
         int maxInfoLen = 0;
         for (String i : infos) {
             maxInfoLen = max(maxInfoLen, i.length());
         }
 
-        for (int step = 0; step < infos.size(); step++) {
+        for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
             print(info);
             print(StringUtils.repeat(" ", maxInfoLen - info.length()), true);
@@ -144,6 +150,7 @@ public class InstallCommand extends AbstractIMCommand {
 
             try {
                 installOptions.setStep(step);
+
                 response = installationManagerProxy.install(prepareRequest(installOptions));
                 responseObj = Response.fromJson(response);
 
@@ -209,7 +216,6 @@ public class InstallCommand extends AbstractIMCommand {
             }
         }
     }
-
 
     private JacksonRepresentation<Request> prepareRequest(InstallOptions installOptions) {
         return new Request().setArtifactName(artifactName)
@@ -332,6 +338,32 @@ public class InstallCommand extends AbstractIMCommand {
                     step = 0;
                 }
             }
+        }
+    }
+
+    private int getFirstInstallStep() {
+        if (installStep == null) {
+            return 0;
+        } else {
+            try {
+                return Integer.parseInt(installStep.split("-")[0]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
+            }
+        }
+    }
+
+    private int getLastInstallationStep(int maxStep) {
+        try {
+            if (installStep == null) {
+                return maxStep;
+            } else if (!installStep.contains("-")) {
+                return Integer.parseInt(installStep.split("-")[0]);
+            } else {
+                return Integer.parseInt(installStep.split("-")[1]);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
         }
     }
 }

@@ -1,8 +1,9 @@
+# TODO same user
 #!/bin/bash
 
 # bash <(curl -s https://codenvy.com/update/repository/public/download/install-script) codenvy-single-server.properties
 
-INSTALL_CONFIG=$1
+CONFIG="codenvy-single-server.properties"
 CODENVY_USER=codenvy
 CODENVY_GROUP=codenvy
 CODENVY_HOME=/home/${CODENVY_USER}
@@ -60,13 +61,16 @@ addGroupOnOpensuse() {
 }
 
 createCodenvyUserAndGroup() {
+    sudo cp /etc/sudoers /etc/sudoers.back
+
     if [ `grep -c "^${CODENVY_USER}" /etc/group` == 0 ]; then
-        echo "[CODENVY] Creating group ${CODENVY_GROUP}"
+        printPrompt; echo "Creating group ${CODENVY_GROUP}"
+        printPrompt; echo "Creating group ${CODENVY_GROUP}"
         addGroupOn${os} ${CODENVY_GROUP} 5001
     fi
 
     if [ `grep -c "^${CODENVY_USER}:" /etc/passwd` == 0 ]; then
-        echo "[CODENVY] Creating user ${CODENVY_USER}"
+        printPrompt; echo "Creating user ${CODENVY_USER}"
         addUserOn${os} ${CODENVY_USER} 5001
     fi
 
@@ -79,7 +83,7 @@ installJava() {
 
     # check if requered program had already installed earlier for current user
     hash java 2>/dev/null || {
-        echo "[CODENVY] Installing java"
+        printPrompt; echo "Installing java"
 
         wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jre-7u17-linux-x64.tar.gz' --output-document=jre.tar.gz
 
@@ -97,20 +101,20 @@ installJava() {
 
 registerImServiceOnDebian() {
     # http://askubuntu.com/questions/99232/how-to-make-a-jar-file-run-on-startup-and-when-you-log-out
-    echo "[CODENVY] Register Codenvy Installation Manage Service"
+    printPrompt; echo "Register Codenvy Installation Service"
     sudo update-rc.d ${SERVICE_NAME} defaults &>/dev/null
 }
 
 registerImServiceOnRedhat() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
-    echo "[CODENVY] Registering Codenvy Installation Manage Service"
+    printPrompt; echo "Registering Codenvy Installation Service"
     sudo chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo chkconfig ${SERVICE_NAME} on &>/dev/null
 }
 
 registerImServiceOnOpensuse() {
     # http://www.abhigupta.com/2010/06/how-to-auto-start-services-on-boot-in-redhat-redhat/
-    echo "[CODENVY] Registering Codenvy Installation Manage Service"
+    printPrompt; echo "Registering Codenvy Installation Service"
     sudo -s chkconfig --add ${SERVICE_NAME} &>/dev/null
     sudo -s chkconfig ${SERVICE_NAME} on &>/dev/null
 }
@@ -133,13 +137,13 @@ installOnOpensuse() {
 # $1 - command name
 installPackageIfNeed() {
     command -v $1 >/dev/null 2>&1 || { # check if requered command had already installed earlier
-        echo "[CODENVY] Installing $1 "
+        printPrompt; echo "Installing $1 "
         installOn${os} $1
     }
 }
 
 installImCli() {
-    echo "[CODENVY] Downloading Installation Manager"
+    printPrompt; echo "Downloading Installation Manager"
 
     DOWNLOAD_URL="https://codenvy.com/update/repository/public/download/installation-manager"
 
@@ -202,7 +206,7 @@ installImCli() {
 }
 
 launchingImService() {
-    echo "[CODENVY] Launching Codenvy Installation Manage Service"
+    printPrompt; echo "Launching Codenvy Installation Service"
     if sudo service codenvy-installation-manager status | grep -Fq "running"; then
         sudo /etc/init.d/${SERVICE_NAME} restart > /dev/null
     else
@@ -213,131 +217,170 @@ launchingImService() {
 detectOS() {
     if [ -f /etc/debian_version ]; then
         os="Debian"
+        osPrintableValue="Debian"
     elif [ -f /etc/redhat-release ]; then
         os="Redhat"
+        osPrintableValue="Red Hat"
     elif [ -f /etc/os-release ]; then
         os="Opensuse"
+        osPrintableValue="Open Suse"
     else
-        echo "[CODENVY] Operation system isn't supported."
+        printPrompt; echo "Operation system isn't supported."
         exit
     fi
 
     cd ~
 }
 
-checkInstallConfig() {
-    if [ -z "$INSTALL_CONFIG" ]; then
-        echo "[CODENVY] Script has been run with no existing config. Install script will download default config for you and run default editor or vim to edit."
-        echo "[CODENVY] Please fill in MANDATORY properties and then installation will be continued."
-        read -p "[CODENVY] Press any key to continue" -n1 -s
-        echo ""
+askProperty() {
+    prompt=$1
+    property=$2
 
+    if grep -Fq "${property}=MANDATORY" ${CONFIG}; then
+        printPrompt; echo -n "${prompt}: "
+        read value
+        insertProperty ${property} ${value}
+    fi
+}
+
+printPrompt() {
+    echo -en "\e[94m[CODENVY]\e[0m "
+}
+
+insertProperty() {
+    sed -i s/$1=.*/$1=$2/g ${CONFIG}
+}
+
+prepareConfig() {
+    if [ ! -f ${CONFIG} ]; then
         curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
-        sed -i s/aio_host_url=.*/aio_host_url=`hostname`/g codenvy-single-server.properties
-        ${EDITOR:-vi} codenvy-single-server.properties
+    fi
 
-        read -p "[CODENVY] Continue installation [y/N]" answer
-        echo "[CODENVY]"
-        if [ ! "${answer}" == "y" ]; then exit; fi;
+    insertProperty "aio_host_url" `hostname`
 
-        INSTALL_CONFIG=codenvy-single-server.properties
+    if grep -Fq "=MANDATORY" ${CONFIG}; then
+        printPrompt; echo "Please enter your Codenvy credentials"
+        askProperty "Codenvy user name" "codenvy_user_name"
+        askProperty "Codenvy password" "codenvy_password"
+
+        printPrompt; echo -n "Continue installation [y/N]: "
+        read answer
+        if [ ! "${answer}" == "y" ]; then exit 1; fi
     fi
 }
 
 execuetCliCommand() {
-    echo "[CODENVY] "
-    echo "[CODENVY] $1"
-    ~/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6
+    if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
+    ~/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
 
     RETVAL=$?
     [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
 printPreInstallInfo() {
+    detectOS
+
     availableRAM=`sudo cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableRAM=$((availableRAM / 1024 / 1024))
+    availableRAM=$(perl -E "say sprintf('%.1f',${availableRAM}/1024/1024)")
 
     availableDiskSpace=`sudo df -h /home/${USER} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    echo "[CODENVY] Wellcome to Codenvy. This programm will install Codenvy onto this node."
-    echo "[CODENVY] When the installation is complete, the Codenvy URL will be displayed."
-    echo "[CODENVY]"
-    echo "[CODENVY] The installer will:"
-    echo "[CODENVY] 1. Configure system"
-    echo "[CODENVY] 2. Install Java and others required packages"
-    echo "[CODENVY] 3. Install the Codenvy Installation Manager, which runs as a CLI and daemon"
-    echo "[CODENVY] 4. Download Codenvy"
-    echo "[CODENVY] 5. Install Codenvy by installing Puppet and configuring system parameters"
-    echo "[CODENVY]"
-    echo "[CODENVY] We have detected that this node is a ${os} distribution."
-    echo "[CODENVY]"
-    echo "[CODENVY] Configuration :  Minimum    : Available"
-    echo "[CODENVY] RAM           :   8GB       : ${availableRAM}GB"
-    echo "[CODENVY] CPU           :   4 cores   : ${availableCores} cores"
-    echo "[CODENVY] Disk Space    :   300GB     : ${availableDiskSpace}"
-    echo "[CODENVY]"
-    echo "[CODENVY] See Sizing Guide for details: http://docs.codenvy.com/onpremises/installation/#sizing-single-node"
-    echo "[CODENVY]"
-    read -p "[CODENVY] Press any key to continue" -n1 -s
-    echo ""
-    echo "[CODENVY]"
+    printPrompt; echo "Welcome to Codenvy. This program will install Codenvy onto this node."
+    printPrompt; echo "When the installation is complete, the Codenvy URL will be displayed."
+    printPrompt; echo
+    printPrompt; echo "This program will:"
+    printPrompt; echo "1. Configure system"
+    printPrompt; echo "2. Install Java and other required packages"
+    printPrompt; echo "3. Install the Codenvy Installation Service"
+    printPrompt; echo "4. Download Codenvy"
+    printPrompt; echo "5. Install Codenvy by installing Puppet and configuring system parameters"
+    printPrompt; echo "6. Boot Codenvy"
+    printPrompt; echo
+    printPrompt; echo "We have detected that this node is a ${osPrintableValue} distribution."
+    printPrompt; echo
+    printPrompt; echo "Configuration : Minimum : Available"
+    printPrompt; echo "RAM           : 8GB     : ${availableRAM}GB"
+    printPrompt; echo "CPU           : 4 cores : ${availableCores} cores"
+    printPrompt; echo "Disk Space    : 300GB   : ${availableDiskSpace}B"
+    printPrompt; echo
+    printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises/installation/#sizing-single-node"
+    printPrompt; echo
+    printPrompt; echo "Codenvy will be configured based upon properties in ${CONFIG} file."
+    printPrompt; echo "We will download this file if it does not exist."
+    printPrompt; echo "We will interactively ask you to enter any MANDATORY parameters."
+    printPrompt; echo
+    printPrompt; echo "You will need to know your Codenvy user name and password."
+    printPrompt; echo
+    printPrompt; echo "Create account or retrieve password: "
+    printPrompt; echo "Codenvy customer agreement & TOS: https://codenvy.com/legal"
+    printPrompt; echo
+    printPrompt; echo "Press any key to continue"
+    read -n1 -s
 }
 
 printPostInstallInfo() {
-    echo "[CODENVY]"
-    echo "[CODENVY] Codenvy is installed and booted, and you can access the system at http://"`hostname`"/"
+    printPrompt; echo
+    printPrompt; echo "Codenvy is ready at http://"`hostname`"/"
+    printPrompt; echo
+    printPrompt; echo "Troubleshoot Installation Problems:"
+    printPrompt; echo "Upgrade & Configuration Docs:"
 }
 
 doInstallStep1() {
-    echo "[CODENVY]"
-    echo "[CODENVY] BEGINNING STEP 1: CONFIGURE SYSTEM"
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 1: CONFIGURE SYSTEM"
+    installPackageIfNeed curl
+    prepareConfig
     createCodenvyUserAndGroup
-    echo "[CODENVY] COMPLETED STEP 1: CONFIGURE SYSTEM"
+    printPrompt; echo "COMPLETED STEP 1: CONFIGURE SYSTEM"
 }
 
 doInstallStep2() {
-    echo "[CODENVY]"
-    echo "[CODENVY] BEGINNING STEP 2: INSTALL JAVA AND OTHERS REQUIRED PACKAGES"
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
     installPackageIfNeed tar
-    installPackageIfNeed curl
     installPackageIfNeed wget
     installPackageIfNeed unzip
     installJava
-    echo "[CODENVY] COMPLETED STEP 2: INSTALL JAVA AND OTHERS REQUIRED PACKAGES"
+    printPrompt; echo "COMPLETED STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
 }
 
 doInstallStep3() {
-    echo "[CODENVY]"
-    echo "[CODENVY] BEGINNING STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER, WHICH RUNS AS A CLI AND DAEMON"
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 3: INSTALL THE CODENVY INSTALLATION SERVICE"
     installImCli
     registerImServiceOn${os}
     launchingImService
-    echo "[CODENVY] COMPLETED STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER, WHICH RUNS AS A CLI AND DAEMON"
+    printPrompt; echo "COMPLETED STEP 3: INSTALL THE CODENVY INSTALLATION SERVICE"
 }
 
 doInstallStep4() {
-    echo "[CODENVY]"
-    echo "[CODENVY] BEGINNING STEP 4: DOWNLOAD CODENVY"
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 4: DOWNLOAD CODENVY"
 
-    codenvyUser=`grep codenvy_user_name= ${INSTALL_CONFIG} | cut -d '=' -f2`
-    codenvyPwd=`grep codenvy_password ${INSTALL_CONFIG} | cut -d '=' -f2`
+    codenvyUser=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
+    codenvyPwd=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
-    execuetCliCommand "Logging to Codenvy" login --remote update-server ${codenvyUser} ${codenvyPwd}
+    execuetCliCommand "Login to Codenvy Updater Service" login --remote update-server ${codenvyUser} ${codenvyPwd}
     execuetCliCommand "Downloading Codenvy binaries" im-download cdec
     execuetCliCommand "Checking the list of downloaded binaries" im-download --list-local
-    echo "[CODENVY] COMPLETED STEP 4: DOWNLOAD CODENVY"
+    printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 
 doInstallStep5() {
-    echo "[CODENVY]"
-    echo "[CODENVY] BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    execuetCliCommand "Installing the latest Codenvy version. It maight take about 30min, watch progress in /var/log/message" im-install --config ${INSTALL_CONFIG} cdec
-    echo "[CODENVY] COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
+    execuetCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 0-8 --config ${CONFIG} cdec
+    printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
-checkInstallConfig
-detectOS
+doInstallStep6() {
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
+    execuetCliCommand "" im-install --step 9 --config ${CONFIG} cdec
+    printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
+}
 
 printPreInstallInfo
 
@@ -346,5 +389,6 @@ doInstallStep2
 doInstallStep3
 doInstallStep4
 doInstallStep5
+doInstallStep6
 
 printPostInstallInfo

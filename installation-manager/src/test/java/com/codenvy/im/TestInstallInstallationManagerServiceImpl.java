@@ -22,16 +22,17 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManager;
-import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableSortedMap;
 
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Mockito.doNothing;
@@ -44,7 +45,7 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class TestInstallInstallationManagerServiceImpl {
-    private InstallationManagerService installationManagerService;
+    private InstallationManagerServiceImpl installationManagerService;
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       mockTransport;
@@ -52,7 +53,7 @@ public class TestInstallInstallationManagerServiceImpl {
     private UserCredentials     testCredentials;
 
     @BeforeMethod
-    public void init() throws Exception {
+    public void setUp() throws Exception {
         mockInstallationManager = mock(InstallationManager.class);
         mockTransport = mock(HttpTransport.class);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
@@ -65,7 +66,7 @@ public class TestInstallInstallationManagerServiceImpl {
         InstallOptions installOptions = new InstallOptions();
         Version version = Version.valueOf("2.10.5");
 
-        doReturn(version).when(mockInstallationManager).getLatestVersionToDownload(testCredentials.getToken(), cdecArtifact);
+        doReturn(version).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doNothing().when(mockInstallationManager).install(testCredentials.getToken(), cdecArtifact, version, installOptions);
 
         Request request = new Request()
@@ -120,5 +121,88 @@ public class TestInstallInstallationManagerServiceImpl {
                                "  \"message\" : \"Request is incomplete. Artifact name is missed.\",\n" +
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
+    }
+
+    @Test
+    public void testGetVersionToInstallVersionSetExplicitly() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setStep(0);
+        Request request = new Request()
+                .setUserCredentials(testCredentials)
+                .setArtifactName(CDECArtifact.NAME)
+                .setVersion("1.0.1")
+                .setInstallOptions(installOptions);
+
+        doReturn(Version.valueOf("1.0.2")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
+        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
+                                                                                         .getDownloadedVersions(cdecArtifact);
+
+        Version version = installationManagerService.getVersionToInstall(request);
+        assertEquals(Version.valueOf("1.0.1"), version);
+    }
+
+    @Test
+    public void testGetVersionToInstallFirstInstallStep() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setStep(0);
+        Request request = new Request()
+                .setUserCredentials(testCredentials)
+                .setArtifactName(CDECArtifact.NAME)
+                .setInstallOptions(installOptions);
+
+        doReturn(Version.valueOf("1.0.2")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
+        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
+                                                                                         .getDownloadedVersions(cdecArtifact);
+
+        Version version = installationManagerService.getVersionToInstall(request);
+        assertEquals(Version.valueOf("1.0.2"), version);
+    }
+
+    @Test
+    public void testGetVersionToInstallInstallInProgress() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setStep(1);
+        Request request = new Request()
+                .setUserCredentials(testCredentials)
+                .setArtifactName(CDECArtifact.NAME)
+                .setInstallOptions(installOptions);
+
+        doReturn(Version.valueOf("1.0.4")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
+        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
+                                                                                         .getDownloadedVersions(cdecArtifact);
+
+        Version version = installationManagerService.getVersionToInstall(request);
+        assertEquals(Version.valueOf("1.0.3"), version);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testGetVersionToInstallErrorFirstInstallStep() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setStep(0);
+        Request request = new Request()
+                .setUserCredentials(testCredentials)
+                .setArtifactName(CDECArtifact.NAME)
+                .setInstallOptions(installOptions);
+
+        doReturn(null).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
+        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
+                                                                                         .getDownloadedVersions(cdecArtifact);
+
+        installationManagerService.getVersionToInstall(request);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testGetVersionToInstallErrorInstallInProgress() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setStep(1);
+        Request request = new Request()
+                .setUserCredentials(testCredentials)
+                .setArtifactName(CDECArtifact.NAME)
+                .setInstallOptions(installOptions);
+
+        doReturn(Version.valueOf("1.0.4")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
+        doReturn(ImmutableSortedMap.of()).when(mockInstallationManager).getDownloadedVersions(cdecArtifact);
+
+        installationManagerService.getVersionToInstall(request);
     }
 }
