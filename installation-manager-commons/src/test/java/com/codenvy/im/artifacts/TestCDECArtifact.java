@@ -24,13 +24,12 @@ import com.codenvy.im.config.ConfigProperty;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-
+import com.google.gson.JsonSyntaxException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -117,7 +116,8 @@ public class TestCDECArtifact {
         assertNull(version);
     }
 
-    @Test(expectedExceptions = IOException.class)
+    @Test(expectedExceptions = JsonSyntaxException.class,
+          expectedExceptionsMessageRegExp = "(.*)Expected ':' at line 1 column 14")
     public void testGetInstalledVersionError() throws Exception {
         when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion("authToken");

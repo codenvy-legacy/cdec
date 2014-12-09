@@ -28,8 +28,8 @@ public class TestDownloadStatusInfo {
 
     @Test
     public void testValueOf() throws Exception {
-        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, new Response.Builder().withMessage("result").build());
-        String json = new Response.Builder().withStatus(ResponseCode.OK).withDownloadInfo(expectedInfo).build().toJson();
+        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, new Response().setMessage("result"));
+        String json = new Response().setStatus(ResponseCode.OK).setDownloadInfo(expectedInfo).toJson();
 
         Response response = Response.fromJson(json);
         assertEquals(response.getDownloadInfo(), expectedInfo);
