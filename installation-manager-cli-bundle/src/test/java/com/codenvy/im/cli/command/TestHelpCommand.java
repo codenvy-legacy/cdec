@@ -19,7 +19,6 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.restlet.InstallationManagerService;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

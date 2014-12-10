@@ -30,7 +30,6 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -102,7 +101,7 @@ public class InstallCommand extends AbstractIMCommand {
                 return doExecuteInstall();
             }
         } catch (Exception e) {
-            printErrorAndExitIfNotInteractive(e);
+            console.printErrorAndExitIfNotInteractive(e);
         }
 
         return null;
@@ -110,7 +109,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
-            printErrorAndExitIfNotInteractive("Argument 'artifact' is required.");
+            console.printErrorAndExitIfNotInteractive("Argument 'artifact' is required.");
             return null;
         }
 
@@ -126,7 +125,7 @@ public class InstallCommand extends AbstractIMCommand {
         Response responseObj = Response.fromJson(response);
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
-            printErrorAndExitIfNotInteractive(response);
+            console.printErrorAndExitIfNotInteractive(response);
             return null;
         }
 
@@ -142,8 +141,8 @@ public class InstallCommand extends AbstractIMCommand {
 
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
-            print(info);
-            print(StringUtils.repeat(" ", maxInfoLen - info.length()), true);
+            console.print(info);
+            console.print(StringUtils.repeat(" ", maxInfoLen - info.length()), true);
 
             ShowProgress showProgress = new ShowProgress();
             showProgress.start();
@@ -155,11 +154,11 @@ public class InstallCommand extends AbstractIMCommand {
                 responseObj = Response.fromJson(response);
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
-                    printError(" [FAIL]", true);
-                    printErrorAndExitIfNotInteractive(response);
+                    console.printError(" [FAIL]", true);
+                    console.printErrorAndExitIfNotInteractive(response);
                     return null;
                 } else {
-                    printSuccess(" [OK]", true);
+                    console.printSuccess(" [OK]", true);
                 }
             } finally {
                 showProgress.interrupt();
@@ -167,11 +166,11 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         // only OK response can be here
-        printLn(response);
+        console.printLn(response);
         responseObj = Response.fromJson(response);
 
         if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
-            pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
+            console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
             System.exit(0);
         }
 
@@ -180,7 +179,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
-        printResponse(insertClientVersionInfo(response));
+        console.printResponse(insertClientVersionInfo(response));
         return null;
     }
 
@@ -228,7 +227,7 @@ public class InstallCommand extends AbstractIMCommand {
     protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {
         switch (artifactName) {
             case CDECArtifact.NAME:
-                printLn("Please, enter CDEC required parameters:");
+                console.printLn("Please, enter CDEC required parameters:");
 
                 Map<String, String> m = new HashMap<>();
 
@@ -238,14 +237,14 @@ public class InstallCommand extends AbstractIMCommand {
                         String currentValue = options.getConfigProperties().get(propName);
 
                         if (isEmpty(currentValue) || !askMissedOptionsOnly) {
-                            print(getPropertyName(property));
+                            console.print(getPropertyName(property));
 
                             if (!isEmpty(currentValue)) {
-                                print(format(" (%s)", currentValue));
+                                console.print(format(" (%s)", currentValue));
                             }
 
-                            print(": ", true);
-                            String newValue = readLine();
+                            console.print(": ", true);
+                            String newValue = console.readLine();
 
                             if (!isEmpty(newValue)) {
                                 m.put(propName, newValue);
@@ -309,8 +308,8 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         for (; ; ) {
-            printLn(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
-            if (askUser("Continue installation")) {
+            console.printLn(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
+            if (console.askUser("Continue installation")) {
                 break;
             }
 
@@ -326,7 +325,7 @@ public class InstallCommand extends AbstractIMCommand {
         public void run() {
             int step = 0;
             while (!isInterrupted()) {
-                printProgress(progressChars[step]);
+                console.printProgress(progressChars[step]);
                 try {
                     sleep(250);
                 } catch (InterruptedException e) {

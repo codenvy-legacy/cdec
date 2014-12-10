@@ -17,42 +17,28 @@
  */
 package com.codenvy.im.cli.command;
 
-import jline.console.ConsoleReader;
-
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 import com.codenvy.im.user.UserCredentials;
-
-import org.fusesource.jansi.Ansi;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
 import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.ConnectException;
-import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
-import static org.fusesource.jansi.Ansi.Color.GREEN;
-import static org.fusesource.jansi.Ansi.Color.RED;
-import static org.fusesource.jansi.Ansi.ansi;
 
 /**
  * @author Anatoliy Bazko
@@ -60,6 +46,7 @@ import static org.fusesource.jansi.Ansi.ansi;
 public abstract class AbstractIMCommand extends AbsCommand {
     protected InstallationManagerService installationManagerProxy;
     protected PreferencesStorage         preferencesStorage;
+    protected Console console;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
 
@@ -69,6 +56,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
         } catch (MissingAnnotationException | IllegalPathException e) {
             throw new IllegalStateException("Can't initialize proxy service", e);
         }
+
+        console = new Console(isInteractive());
     }
 
     @Override
@@ -108,151 +97,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
             || preferencesStorage.getAccountId().isEmpty()) {
             throw new IllegalStateException("To use installation manager commands you have to login into '" + remoteName + "' remote.");
         }
-    }
-
-    protected void printError(Exception ex) {
-        if (isConnectionException(ex)) {
-            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                       "please retry a bit later.");
-        } else {
-            printError(Response.valueOf(ex).toJson());
-        }
-    }
-
-    protected boolean isConnectionException(Exception e) {
-        Throwable cause = e.getCause();
-        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
-    }
-
-    protected void printError(String message) {
-        print(ansi().fg(RED).a(message).newline().reset(), false);
-    }
-
-    protected void printError(String message, boolean suppressCodenvyPrompt) {
-        print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
-    }
-
-    protected void printProgress(int percents) {
-        printProgress(createProgressBar(percents));
-    }
-
-    protected void printProgress(String message) {
-        System.out.print(ansi().saveCursorPosition().a(message).restorCursorPosition());
-        System.out.flush();
-    }
-
-    private String createProgressBar(int percent) {
-        StringBuilder bar = new StringBuilder("[");
-
-        for (int i = 0; i < 50; i++) {
-            if (i < (percent / 2)) {
-                bar.append("=");
-            } else if (i == (percent / 2)) {
-                bar.append(">");
-            } else {
-                bar.append(" ");
-            }
-        }
-
-        bar.append("]   ").append(percent).append("%     ");
-        return bar.toString();
-    }
-
-    protected void cleanCurrentLine() {
-        System.out.print(ansi().eraseLine(Ansi.Erase.ALL));
-        System.out.flush();
-    }
-
-    protected void cleanLineAbove() {
-        System.out.print(ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL)));
-        System.out.flush();
-    }
-
-    protected void printLn(String message) {
-        print(message);
-        System.out.println();
-    }
-
-    protected void print(String message, boolean suppressCodenvyPrompt) {
-        if (!isInteractive() && !suppressCodenvyPrompt) {
-            printCodenvyPrompt();
-        }
-        System.out.print(message);
-        System.out.flush();
-    }
-
-    protected void print(String message) {
-        if (!isInteractive()) {
-            printCodenvyPrompt();
-        }
-        System.out.print(message);
-        System.out.flush();
-    }
-
-    private void print(Ansi ansi, boolean suppressCodenvyPrompt) {
-        if (!isInteractive() && !suppressCodenvyPrompt) {
-            printCodenvyPrompt();
-        }
-        System.out.print(ansi);
-        System.out.flush();
-    }
-
-    protected void printCodenvyPrompt() {
-        final String lightBlue = '\u001b' + "[94m";
-        System.out.print(ansi().a(lightBlue + "[CODENVY] ").reset()); // light blue
-    }
-
-    protected void printResponse(Object response) throws JsonParseException {
-        if (response instanceof Exception) {
-            printError((Exception)response);
-            return;
-        }
-
-        Response responseObj = Response.fromJson(response.toString());
-        if (responseObj.getStatus() != ResponseCode.OK) {
-            printErrorAndExitIfNotInteractive(response);
-        } else {
-            printLn(response.toString());
-        }
-    }
-
-    protected void printSuccess(String message, boolean suppressCodenvyPrompt) {
-        print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
-    }
-
-    protected void printSuccess(String message) {
-        print(ansi().fg(GREEN).a(message).newline().reset(), false);
-    }
-
-    /** @return "true" only if only user typed line equals "y". */
-    protected boolean askUser(String prompt) throws IOException {
-        print(prompt + " [y/N] ");
-        String userAnswer = readLine();
-        return userAnswer != null && userAnswer.equalsIgnoreCase("y");
-    }
-
-    /** @return line typed by user */
-    protected String readLine() throws IOException {
-        return doReadLine(null);
-    }
-
-    protected String readPassword() throws IOException {
-        return doReadLine('*');
-    }
-
-    private String doReadLine(@Nullable Character mask) throws IOException {
-        if (isInteractive()) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(session.getKeyboard(), Charset.defaultCharset()))) {
-                return reader.readLine();
-            }
-        } else {
-            return new ConsoleReader().readLine(mask);
-        }
-    }
-
-    protected void pressAnyKey(String prompt) throws IOException {
-        print(prompt);
-        session.getKeyboard().read();
     }
 
     /**
@@ -335,18 +179,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
 
         return remote.getUrl();
-    }
-
-    protected void printErrorAndExitIfNotInteractive(Object error) {
-        if (error instanceof Exception) {
-            printError((Exception)error);
-        } else {
-            printError(error.toString());
-        }
-
-        if (!isInteractive()) {
-            System.exit(1);
-        }
     }
 
     protected MultiRemoteCodenvy getMultiRemoteCodenvy() {

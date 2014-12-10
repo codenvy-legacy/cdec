@@ -23,7 +23,6 @@ import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -68,7 +67,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 doDownload();
             }
         } catch (Exception e) {
-            printErrorAndExitIfNotInteractive(e);
+            console.printErrorAndExitIfNotInteractive(e);
         }
 
         return null;
@@ -77,7 +76,7 @@ public class DownloadCommand extends AbstractIMCommand {
     // TODO [AB] test interrupt
 
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {
-        printLn("Downloading might take several minutes depending on your internet connection. Please wait.");
+        console.printLn("Downloading might take several minutes depending on your internet connection. Please wait.");
 
         final String downloadDescriptorId = generateDownloadDescriptorId();
 
@@ -92,7 +91,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
         Response responseObj = Response.fromJson(startResponse);
         if (responseObj.getStatus() != ResponseCode.OK) {
-            printErrorAndExitIfNotInteractive(startResponse);
+            console.printErrorAndExitIfNotInteractive(startResponse);
             return;
         }
 
@@ -101,32 +100,32 @@ public class DownloadCommand extends AbstractIMCommand {
         for (; ; ) {
             String response = installationManagerProxy.downloadStatus(downloadDescriptorId);
             if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
-                cleanCurrentLine();
-                printErrorAndExitIfNotInteractive(response);
+                console.cleanCurrentLine();
+                console.printErrorAndExitIfNotInteractive(response);
                 break;
             }
 
             DownloadStatusInfo downloadStatusInfo = Response.fromJson(response).getDownloadInfo();
 
             if (!isCanceled) {
-                printProgress(downloadStatusInfo.getPercents());
+                console.printProgress(downloadStatusInfo.getPercents());
             }
 
             try {
                 sleep(1000);
             } catch (InterruptedException ie) {
                 installationManagerProxy.stopDownload(downloadDescriptorId);
-                cleanLineAbove();
+                console.cleanLineAbove();
                 isCanceled = true;
             }
 
             if (downloadStatusInfo.getStatus() == Status.DOWNLOADED || downloadStatusInfo.getStatus() == Status.FAILURE) {
-                cleanCurrentLine();
+                console.cleanCurrentLine();
                 String downloadResult = downloadStatusInfo.getDownloadResult().toJson();
                 if (downloadStatusInfo.getStatus() == Status.FAILURE) {
-                    printErrorAndExitIfNotInteractive(downloadResult);
+                    console.printErrorAndExitIfNotInteractive(downloadResult);
                 } else {
-                    printLn(downloadResult);
+                    console.printLn(downloadResult);
                 }
                 break;
             }
@@ -134,7 +133,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+        console.printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
     }
 
     private void doList() throws JsonParseException {
@@ -144,7 +143,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 .setUserCredentials(getCredentials())
                 .toRepresentation();
 
-        printResponse(installationManagerProxy.getDownloads(requestRep));
+        console.printResponse(installationManagerProxy.getDownloads(requestRep));
     }
 
     protected String generateDownloadDescriptorId() {

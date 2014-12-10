@@ -18,7 +18,6 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.restlet.InstallationManagerConfig;
-
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -53,13 +52,13 @@ public class ConfigCommand extends AbstractIMCommand {
             }
 
             if (!config.checkEmptyConfig()) {
-                printResponse(installationManagerProxy.setConfig(new JacksonRepresentation<>(config)));
+                console.printResponse(installationManagerProxy.setConfig(new JacksonRepresentation<>(config)));
             } else {
-                printResponse(installationManagerProxy.getConfig());
+                console.printResponse(installationManagerProxy.getConfig());
             }
 
         } catch (Exception e) {
-            printErrorAndExitIfNotInteractive(e);
+            console.printErrorAndExitIfNotInteractive(e);
         }
 
         return null;

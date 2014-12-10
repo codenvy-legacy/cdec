@@ -19,7 +19,6 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,14 +29,13 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /** @author Anatoliy Bazko */
-public class TestSubscriptionCommand {
+public class TestSubscriptionCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
@@ -55,8 +53,7 @@ public class TestSubscriptionCommand {
         spyCommand = spy(new SubscriptionCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
-        doNothing().when(spyCommand).init();
-        doReturn(true).when(spyCommand).isInteractive();
+        performBaseMocks(spyCommand);
 
         credentials = new UserCredentials("token", "accountId");
         userCredentialsRep = new JacksonRepresentation<>(credentials);

@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -102,9 +101,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
-                             ok100DownloadCommandResponse + "\n");
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n"
+                             + "\u001B[2K"
+                             + ok100DownloadCommandResponse + "\n");
     }
 
     @Test
@@ -119,7 +118,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
+                             "\u001B[2K" +
                              ok100DownloadCommandResponse + "\n");
     }
 
@@ -136,7 +135,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
+                             "\u001B[2K" +
                              ok100DownloadCommandResponse + "\n");
     }
 
@@ -177,7 +176,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[>                                                 ]   0%     \u001B[u\u001B[2K" +
+                             "\u001B[2K" +
                              serviceErrorResponse + "\n");
     }
 

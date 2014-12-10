@@ -19,63 +19,46 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.response.Response;
 
-import org.mockito.Matchers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 /**
  * @author Anatoliy Bazko
  */
-public class AbstractTestCommand {
-    protected void performBaseMocks(AbstractIMCommand spyCommand) {
+public abstract class AbstractTestCommand {
+    void performBaseMocks(AbstractIMCommand spyCommand) {
         doNothing().when(spyCommand).init();
         doReturn(true).when(spyCommand).isInteractive();
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(spyCommand).printError(anyString());
+        spyCommand.console = getSpyConsole(true);
+    }
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
+    private Console getSpyConsole(boolean isInstallable) {
+        return spy(new Console(isInstallable) {
+            @Override void printError(String message) {
+                System.out.println(message);
             }
-        }).when(spyCommand).printError(anyString(), anyBoolean());
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Exception ex = (Exception)invocationOnMock.getArguments()[0];
+            @Override void printError(String message, boolean suppressCodenvyPrompt) {
+                System.out.println(message);
+            }
+
+            @Override void printError(Exception ex) {
                 System.out.println(Response.valueOf(ex).toJson());
-                return null;
             }
-        }).when(spyCommand).printError(Matchers.any(Exception.class));
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
+            @Override void printSuccess(String message) {
+                System.out.println(message);
             }
-        }).when(spyCommand).printSuccess(anyString());
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
+            @Override void printSuccess(String message, boolean suppressCodenvyPrompt) {
+                System.out.println(message);
             }
-        }).when(spyCommand).printSuccess(anyString(), anyBoolean());
+
+            @Override protected void printProgress(String message) {
+                // disable progressor
+            }
+        });
     }
 }

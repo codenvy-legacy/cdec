@@ -18,7 +18,6 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -55,22 +54,22 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (username == null) {
-                print(String.format("Codenvy user name for remote '%s': ", remoteName));
-                username = readLine();
+                console.print(String.format("Codenvy user name for remote '%s': ", remoteName));
+                username = console.readLine();
             }
 
             if (password == null) {
-                print(String.format("Password for %s: ", username));
-                password = readPassword();
+                console.print(String.format("Password for %s: ", username));
+                password = console.readPassword();
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                printErrorAndExitIfNotInteractive(String.format("Login failed on remote '%s'.", remoteName));
+                console.printErrorAndExitIfNotInteractive(String.format("Login failed on remote '%s'.", remoteName));
                 return null;
             }
 
             if (!isRemoteForUpdateServer(remoteName)) {
-                printSuccess(String.format("Login success on remote '%s' [%s].",
+                console.printSuccess(String.format("Login success on remote '%s' [%s].",
                                            remoteName,
                                            getRemoteUrlByName(remoteName)));
                 return null;
@@ -80,25 +79,25 @@ public class LoginCommand extends AbstractIMCommand {
             if (accountReference == null) {
                 preferencesStorage.invalidate();
                 if (accountName == null) {
-                    printErrorAndExitIfNotInteractive(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                    console.printErrorAndExitIfNotInteractive(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
                 } else {
-                    printErrorAndExitIfNotInteractive("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
+                    console.printErrorAndExitIfNotInteractive("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
                 return null;
             }
 
             if (accountName == null) {
-                printSuccess("Your Codenvy account '" + accountReference.getName() + "' will be used to verify on-premises subscription.");
+                console.printSuccess("Your Codenvy account '" + accountReference.getName() + "' will be used to verify on-premises subscription.");
             }
 
             preferencesStorage.setAccountId(accountReference.getId());
-            printSuccess("Login success.");
+            console.printSuccess("Login success.");
 
         } catch (Exception e) {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
             }
-            printResponse(e);
+            console.printResponse(e);
         }
 
         return null;

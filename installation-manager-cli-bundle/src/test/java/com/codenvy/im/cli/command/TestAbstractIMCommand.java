@@ -27,18 +27,15 @@ import com.codenvy.client.dummy.DummyCodenvyClient;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.user.UserCredentials;
 import com.google.common.io.Files;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ConnectException;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -153,12 +150,6 @@ public class TestAbstractIMCommand {
         assertNotNull(spyCommand.preferencesStorage);
         assertEquals(spyCommand.preferencesStorage.getAuthToken(), TEST_TOKEN);
         assertEquals(spyCommand.preferencesStorage.getAccountId(), TEST_ACCOUNT_ID);
-    }
-
-    @Test
-    public void testCheckConnectionException() {
-        assertTrue(spyCommand.isConnectionException(new ResourceException(new ConnectException())));
-        assertFalse(spyCommand.isConnectionException(new RuntimeException()));
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
