@@ -49,7 +49,7 @@ public class TestHelpCommand extends AbstractTestCommand {
         doReturn(multiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
         doReturn("").when(multiRemoteCodenvy).listRemotes();
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
     }
 
     @Test

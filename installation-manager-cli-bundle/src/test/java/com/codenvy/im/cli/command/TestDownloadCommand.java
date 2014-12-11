@@ -84,7 +84,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         spyCommand = spy(new DownloadCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
 
         userCredentialsRep = new JacksonRepresentation<>(testCredentials);
         doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();

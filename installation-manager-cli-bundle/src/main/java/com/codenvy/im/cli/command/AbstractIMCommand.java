@@ -23,8 +23,11 @@ import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 import com.codenvy.im.user.UserCredentials;
@@ -187,5 +190,38 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected boolean isInteractive() {
         return super.isInteractive();
+    }
+
+    protected void printResponse(Object response) throws JsonParseException {
+        if (response instanceof Exception) {
+            console.printError((Exception)response);
+            return;
+        }
+
+        Response responseObj = Response.fromJson(response.toString());
+        if (responseObj.getStatus() != ResponseCode.OK) {
+            printError(response);
+        } else {
+            console.printLn(response.toString());
+        }
+    }
+
+    /**
+     * Print error message and exit with status = 1 if the command is executing in interactive mode.
+     */
+    protected void printError(Object error) {
+        if (error instanceof Exception) {
+            console.printError((Exception)error);
+        } else {
+            console.printError(error.toString());
+        }
+
+        if (!isInteractive()) {
+            exit(1);
+        }
+    }
+
+    protected void exit(int status) {
+        System.exit(status);
     }
 }

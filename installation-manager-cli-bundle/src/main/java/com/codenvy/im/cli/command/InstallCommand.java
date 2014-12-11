@@ -101,7 +101,7 @@ public class InstallCommand extends AbstractIMCommand {
                 return doExecuteInstall();
             }
         } catch (Exception e) {
-            console.printErrorAndExitIfNotInteractive(e);
+            printError(e);
         }
 
         return null;
@@ -109,7 +109,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
-            console.printErrorAndExitIfNotInteractive("Argument 'artifact' is required.");
+            printError("Argument 'artifact' is required.");
             return null;
         }
 
@@ -125,7 +125,7 @@ public class InstallCommand extends AbstractIMCommand {
         Response responseObj = Response.fromJson(response);
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
-            console.printErrorAndExitIfNotInteractive(response);
+            printError(response);
             return null;
         }
 
@@ -155,7 +155,7 @@ public class InstallCommand extends AbstractIMCommand {
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
                     console.printError(" [FAIL]", true);
-                    console.printErrorAndExitIfNotInteractive(response);
+                    printError(response);
                     return null;
                 } else {
                     console.printSuccess(" [OK]", true);
@@ -171,7 +171,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
             console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
-            System.exit(0);
+            exit(0);
         }
 
         return null;
@@ -179,7 +179,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
-        console.printResponse(insertClientVersionInfo(response));
+        printResponse(insertClientVersionInfo(response));
         return null;
     }
 

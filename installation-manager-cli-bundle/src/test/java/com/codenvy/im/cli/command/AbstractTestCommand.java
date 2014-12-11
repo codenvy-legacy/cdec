@@ -19,19 +19,23 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.response.Response;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 public abstract class AbstractTestCommand {
-    void performBaseMocks(AbstractIMCommand spyCommand) {
+    void performBaseMocks(AbstractIMCommand spyCommand, boolean interactive) {
         doNothing().when(spyCommand).init();
-        doReturn(true).when(spyCommand).isInteractive();
+        doReturn(interactive).when(spyCommand).isInteractive();
+        doNothing().when(spyCommand).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
 
-        spyCommand.console = getSpyConsole(true);
+        spyCommand.console = getSpyConsole(interactive);
     }
 
     private Console getSpyConsole(boolean isInstallable) {

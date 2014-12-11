@@ -53,7 +53,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
         spyCommand = spy(new SubscriptionCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
 
         credentials = new UserCredentials("token", "accountId");
         userCredentialsRep = new JacksonRepresentation<>(credentials);

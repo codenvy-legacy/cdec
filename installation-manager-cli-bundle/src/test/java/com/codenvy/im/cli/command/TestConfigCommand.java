@@ -47,7 +47,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         spyCommand = spy(new ConfigCommand());
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
     }
 
     @Test

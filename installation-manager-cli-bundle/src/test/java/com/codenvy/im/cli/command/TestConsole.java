@@ -21,7 +21,9 @@ package com.codenvy.im.cli.command;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -59,6 +61,12 @@ public class TestConsole {
         spyConsole = new Console(true);
     }
 
+    @AfterMethod
+    public void cleanup() throws IOException {
+        outputStream.reset();
+        errorStream.reset();
+    }
+
     @AfterClass
     public void restoreSystemStreams() {
         System.setIn(originIn);
@@ -68,15 +76,16 @@ public class TestConsole {
 
     @Test
     public void testPrintError() throws Exception {
-
+        spyConsole.printError("error");
+        assertEquals(removeAnsi(getOutputContent()), "error\n");
     }
 
     @Test
-    public void testPrintErrorAndExitIfNotInteractive() throws Exception {
+    public void testPrintException() throws Exception {
         Exception exceptionWithConnectException = new ResourceException(new ConnectException());
-        spyConsole.printErrorAndExitIfNotInteractive(exceptionWithConnectException);
+        spyConsole.printError(exceptionWithConnectException);
 
-        assertEquals(getOutputContent(), "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
+        assertEquals(removeAnsi(getOutputContent()), "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
                                          + "please retry a bit later.\n");
     }
 
@@ -147,7 +156,7 @@ public class TestConsole {
     }
 
     private String getOutputContent() {
-        return removeAnsi(outputStream.toString());
+        return outputStream.toString();
     }
 
     public void setSystemIn(String lines) {

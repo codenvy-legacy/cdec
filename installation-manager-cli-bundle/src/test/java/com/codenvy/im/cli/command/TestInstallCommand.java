@@ -77,7 +77,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         spyCommand = spy(new InstallCommand(configFactory));
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
         spyConsole = spyCommand.console;
 
         userCredentials = new UserCredentials("token", "accountId");

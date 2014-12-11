@@ -25,7 +25,7 @@ import org.apache.karaf.shell.commands.Option;
 /**
  * Installation manager Login command.
  */
-@Command(scope = "codenvy", name = "login", description = "Login to remote Codenvy cloud")
+@Command(scope = "codenvy", name = "im-login", description = "Login to remote Codenvy cloud")
 public class LoginCommand extends AbstractIMCommand {
 
     public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
@@ -64,7 +64,7 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                console.printErrorAndExitIfNotInteractive(String.format("Login failed on remote '%s'.", remoteName));
+                printError(String.format("Login failed on remote '%s'.", remoteName));
                 return null;
             }
 
@@ -79,9 +79,9 @@ public class LoginCommand extends AbstractIMCommand {
             if (accountReference == null) {
                 preferencesStorage.invalidate();
                 if (accountName == null) {
-                    console.printErrorAndExitIfNotInteractive(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                    printError(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
                 } else {
-                    console.printErrorAndExitIfNotInteractive("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
+                    printError("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
                 return null;
             }
@@ -97,7 +97,7 @@ public class LoginCommand extends AbstractIMCommand {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
             }
-            console.printResponse(e);
+            printResponse(e);
         }
 
         return null;

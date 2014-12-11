@@ -17,18 +17,13 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import jline.console.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 
 import javax.annotation.Nullable;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ConnectException;
-import java.nio.charset.Charset;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
@@ -56,18 +51,6 @@ public class Console {
                        "please retry a bit later.");
         } else {
             printError(Response.valueOf(ex).toJson());
-        }
-    }
-
-    void printErrorAndExitIfNotInteractive(Object error) {
-        if (error instanceof Exception) {
-            printError((Exception)error);
-        } else {
-            printError(error.toString());
-        }
-
-        if (!interactive) {
-            System.exit(1);
         }
     }
 
@@ -146,20 +129,6 @@ public class Console {
         System.out.print(ansi().a(lightBlue + "[CODENVY] ").reset()); // light blue
     }
 
-    void printResponse(Object response) throws JsonParseException {
-        if (response instanceof Exception) {
-            printError((Exception)response);
-            return;
-        }
-
-        Response responseObj = Response.fromJson(response.toString());
-        if (responseObj.getStatus() != ResponseCode.OK) {
-            printErrorAndExitIfNotInteractive(response);
-        } else {
-            printLn(response.toString());
-        }
-    }
-
     void printSuccess(String message, boolean suppressCodenvyPrompt) {
         print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
     }
@@ -185,17 +154,11 @@ public class Console {
     }
 
     private String doReadLine(@Nullable Character mask) throws IOException {
-        if (interactive) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()))) {
-                return reader.readLine();
-            }
-        } else {
-            return new ConsoleReader().readLine(mask);
-        }
+        return new ConsoleReader().readLine(mask);
     }
 
     void pressAnyKey(String prompt) throws IOException {
         print(prompt);
-        System.in.read();
+        new ConsoleReader().readCharacter();
     }
 }

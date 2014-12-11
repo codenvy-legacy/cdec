@@ -75,7 +75,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         spyCommand.installationManagerProxy = mockInstallationManagerProxy;
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
 
         doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(UPDATE_SERVER_URL);
         doReturn(true).when(spyCommand).isRemoteForUpdateServer(UPDATE_SERVER_REMOTE_NAME);
