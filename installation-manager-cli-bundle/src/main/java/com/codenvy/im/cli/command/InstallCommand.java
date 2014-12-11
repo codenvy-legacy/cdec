@@ -122,13 +122,12 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
-        Response responseObj = Response.fromJson(response);
-
-        if (responseObj.getStatus() == ResponseCode.ERROR) {
+        if (isError(response)) {
             printError(response);
             return null;
         }
 
+        Response responseObj = Response.fromJson(response);
         List<String> infos = responseObj.getInfos();
         final int finalStep = infos.size() - 1;
         final int firstStep = getFirstInstallStep();

@@ -81,21 +81,6 @@ public class TestConsole {
     }
 
     @Test
-    public void testPrintException() throws Exception {
-        Exception exceptionWithConnectException = new ResourceException(new ConnectException());
-        spyConsole.printError(exceptionWithConnectException);
-
-        assertEquals(removeAnsi(getOutputContent()), "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
-                                         + "please retry a bit later.\n");
-    }
-
-    @Test
-    public void testCheckConnectionException() {
-        assertTrue(spyConsole.isConnectionException(new ResourceException(new ConnectException())));
-        assertFalse(spyConsole.isConnectionException(new RuntimeException()));
-    }
-
-    @Test
     public void testPrintProgress() throws Exception {
 
     }

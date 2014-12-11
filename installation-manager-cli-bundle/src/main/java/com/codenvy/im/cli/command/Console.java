@@ -17,13 +17,11 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.response.Response;
 import jline.console.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.ConnectException;
 
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
@@ -43,20 +41,6 @@ public class Console {
 
     void printError(String message, boolean suppressCodenvyPrompt) {
         print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
-    }
-
-    void printError(Exception ex) {
-        if (isConnectionException(ex)) {
-            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                       "please retry a bit later.");
-        } else {
-            printError(Response.valueOf(ex).toJson());
-        }
-    }
-
-    boolean isConnectionException(Exception e) {
-        Throwable cause = e.getCause();
-        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
     }
 
     void printProgress(int percents) {

@@ -40,26 +40,6 @@ public abstract class AbstractTestCommand {
 
     private Console getSpyConsole(boolean isInstallable) {
         return spy(new Console(isInstallable) {
-            @Override void printError(String message) {
-                System.out.println(message);
-            }
-
-            @Override void printError(String message, boolean suppressCodenvyPrompt) {
-                System.out.println(message);
-            }
-
-            @Override void printError(Exception ex) {
-                System.out.println(Response.valueOf(ex).toJson());
-            }
-
-            @Override void printSuccess(String message) {
-                System.out.println(message);
-            }
-
-            @Override void printSuccess(String message, boolean suppressCodenvyPrompt) {
-                System.out.println(message);
-            }
-
             @Override protected void printProgress(String message) {
                 // disable progressor
             }

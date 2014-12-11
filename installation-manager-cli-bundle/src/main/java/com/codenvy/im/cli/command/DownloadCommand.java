@@ -89,8 +89,7 @@ public class DownloadCommand extends AbstractIMCommand {
             startResponse = installationManagerProxy.startDownload(downloadDescriptorId, getCredentialsRep());
         }
 
-        Response responseObj = Response.fromJson(startResponse);
-        if (responseObj.getStatus() != ResponseCode.OK) {
+        if (isError(startResponse)) {
             printError(startResponse);
             return;
         }
@@ -99,7 +98,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
         for (; ; ) {
             String response = installationManagerProxy.downloadStatus(downloadDescriptorId);
-            if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
+            if (isError(response)) {
                 console.cleanCurrentLine();
                 printError(response);
                 break;

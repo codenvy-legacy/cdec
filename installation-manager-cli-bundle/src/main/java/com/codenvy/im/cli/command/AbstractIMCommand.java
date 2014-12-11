@@ -38,6 +38,7 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -192,29 +193,41 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return super.isInteractive();
     }
 
-    protected void printResponse(Object response) throws JsonParseException {
-        if (response instanceof Exception) {
-            console.printError((Exception)response);
-            return;
-        }
-
-        Response responseObj = Response.fromJson(response.toString());
-        if (responseObj.getStatus() != ResponseCode.OK) {
+    protected void printResponse(String response) throws JsonParseException {
+        if (isError(response)) {
             printError(response);
         } else {
-            console.printLn(response.toString());
+            console.printLn(response);
         }
+    }
+
+    void printError(Exception ex) {
+        if (isConnectionException(ex)) {
+            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
+                       "please retry a bit later.");
+        } else {
+            printError(Response.valueOf(ex).toJson());
+        }
+    }
+
+    private boolean isConnectionException(Exception e) {
+        Throwable cause = e.getCause();
+        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
+    }
+
+    /**
+     * Return true if only parameter 'response' is valid json with property "status": "ERROR".
+     */
+    protected boolean isError(String response) throws JsonParseException {
+        Response responseObj = Response.fromJson(response);
+        return responseObj.getStatus() == ResponseCode.ERROR;
     }
 
     /**
      * Print error message and exit with status = 1 if the command is executing in interactive mode.
      */
-    protected void printError(Object error) {
-        if (error instanceof Exception) {
-            console.printError((Exception)error);
-        } else {
-            console.printError(error.toString());
-        }
+    protected void printError(String message) {
+        console.printError(message);
 
         if (!isInteractive()) {
             exit(1);

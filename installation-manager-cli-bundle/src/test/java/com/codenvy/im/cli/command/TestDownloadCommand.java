@@ -100,9 +100,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n"
-                             + "\u001B[2K"
                              + ok100DownloadCommandResponse + "\n");
     }
 
@@ -116,9 +115,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[2K" +
                              ok100DownloadCommandResponse + "\n");
     }
 
@@ -133,9 +131,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         commandInvoker.argument("version", "3.0.0");
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[2K" +
                              ok100DownloadCommandResponse + "\n");
     }
 
@@ -174,9 +171,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[2K" +
                              serviceErrorResponse + "\n");
     }
 
@@ -221,7 +217,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         commandInvoker.option("--check-remote", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, serviceErrorResponse + "\n");
     }
 
