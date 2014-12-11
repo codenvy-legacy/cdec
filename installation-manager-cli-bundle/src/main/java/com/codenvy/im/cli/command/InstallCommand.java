@@ -142,7 +142,7 @@ public class InstallCommand extends AbstractIMCommand {
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
             console.print(info);
-            console.print(StringUtils.repeat(" ", maxInfoLen - info.length()), true);
+            console.print(StringUtils.repeat(" ", maxInfoLen - info.length()));
 
             ShowProgress showProgress = new ShowProgress();
             showProgress.start();
@@ -154,11 +154,11 @@ public class InstallCommand extends AbstractIMCommand {
                 responseObj = Response.fromJson(response);
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
-                    console.printError(" [FAIL]", true);
+                    console.printError(" [FAIL]");
                     console.printErrorAndExit(response);
                     return null;
                 } else {
-                    console.printSuccess(" [OK]", true);
+                    console.printSuccess(" [OK]");
                 }
             } finally {
                 showProgress.interrupt();
@@ -166,7 +166,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         // only OK response can be here
-        console.printLn(response);
+        console.println(response);
         responseObj = Response.fromJson(response);
 
         if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
@@ -226,7 +226,7 @@ public class InstallCommand extends AbstractIMCommand {
     protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {
         switch (artifactName) {
             case CDECArtifact.NAME:
-                console.printLn("Please, enter CDEC required parameters:");
+                console.println("Please, enter CDEC required parameters:");
 
                 Map<String, String> m = new HashMap<>();
 
@@ -242,7 +242,7 @@ public class InstallCommand extends AbstractIMCommand {
                                 console.print(format(" (%s)", currentValue));
                             }
 
-                            console.print(": ", true);
+                            console.print(": ");
                             String newValue = console.readLine();
 
                             if (!isEmpty(newValue)) {
@@ -307,7 +307,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         for (; ; ) {
-            console.printLn(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
+            console.println(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
             if (console.askUser("Continue installation")) {
                 break;
             }

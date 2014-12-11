@@ -57,7 +57,11 @@ public abstract class AbstractIMCommand extends AbsCommand {
             throw new IllegalStateException("Can't initialize proxy service", e);
         }
 
-        console = new Console(isInteractive());
+        try {
+            console = new Console(isInteractive());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override

@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
+import java.io.IOException;
+
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -27,7 +29,7 @@ import static org.mockito.Mockito.spy;
  * @author Dmytro Nochevnov
  */
 public abstract class AbstractTestCommand {
-    void performBaseMocks(AbstractIMCommand spyCommand, boolean interactive) {
+    void performBaseMocks(AbstractIMCommand spyCommand, boolean interactive) throws IOException {
         doNothing().when(spyCommand).init();
         doReturn(interactive).when(spyCommand).isInteractive();
 
@@ -35,7 +37,7 @@ public abstract class AbstractTestCommand {
         doNothing().when(spyCommand.console).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
     }
 
-    private Console getSpyConsole(boolean isInstallable) {
+    private Console getSpyConsole(boolean isInstallable) throws IOException {
         return spy(new Console(isInstallable) {
             @Override protected void printProgress(String message) {
                 // disable progressor

@@ -18,154 +18,323 @@
 
 package com.codenvy.im.cli.command;
 
+import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
+import jline.console.ConsoleReader;
+import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
+import org.mockito.Mock;
 import org.restlet.resource.ResourceException;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.ConnectException;
 
+import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestConsole {
-    Console spyConsole;
+    public static final String CODENVY_PREFIX = "[CODENVY] ";
+    public static final String CODENVY_PREFIX_WITH_ANSI = "\u001B[94m" + CODENVY_PREFIX + "\u001B[m";
 
-    private InputStream inputStream;
     private ByteArrayOutputStream outputStream;
     private ByteArrayOutputStream errorStream;
 
-    InputStream originIn  = System.in;
     PrintStream originOut = System.out;
     PrintStream originErr = System.out;
 
+    @Mock
+    ConsoleReader mockConsoleReader;
+
     @BeforeMethod
-    public void setUp() throws Exception {
+    public void setUp() {
+        initMocks(this);
+
         this.outputStream = new ByteArrayOutputStream();
         this.errorStream = new ByteArrayOutputStream();
 
-        System.setIn(this.inputStream);
         System.setOut(new PrintStream(this.outputStream));
         System.setErr(new PrintStream(this.errorStream));
-
-        spyConsole = spy(new Console(true));
     }
 
-    @AfterClass
+    @AfterMethod
     public void restoreSystemStreams() {
-        System.setIn(originIn);
         System.setOut(originOut);
         System.setErr(originErr);
     }
 
     @Test
-    public void testPrintErrorAndExit() throws Exception {
-        spyConsole = spy(new Console(false));
-        doNothing().when(spyConsole).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
+    public void testPrintError() throws IOException {
+        Console spyConsole = createInteractiveConsole();
+        String testErrorMessage = "error";
 
-        spyConsole.printErrorAndExit("error");
-        assertEquals(removeAnsi(getOutputContent(true)), "[CODENVY] error\n");
+        spyConsole.printError(testErrorMessage);
+        assertEquals(getOutputContent(), "\u001B[31m" + testErrorMessage + "\n\u001B[m");
+        verify(spyConsole, never()).exit(1);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printError(testErrorMessage);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + testErrorMessage + "\n\u001B[m");
+        verify(spyConsole, never()).exit(1);
+    }
+
+    @Test
+    public void testPrintProgressPercent() throws IOException {
+        String expectedResult = "[=====>                                            ]   10%     ";
+        int testPercents = 10;
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printProgress(testPercents);
+        assertEquals(removeAnsi(getOutputContent()), expectedResult);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printProgress(testPercents);
+        assertEquals(removeAnsi(getOutputContent()), expectedResult);
+    }
+
+    @Test
+    public void testPrintProgressMessage() throws IOException {
+        String testProgressMessage = "-\\|//";
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printProgress(testProgressMessage);
+        assertEquals(removeAnsi(getOutputContent()), testProgressMessage);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printProgress(testProgressMessage);
+        assertEquals(removeAnsi(getOutputContent()), testProgressMessage);
+    }
+
+    @Test
+    public void testCleanCurrentLine() throws IOException {
+        Ansi expectedAnsi = ansi().eraseLine(Ansi.Erase.ALL);
+        String initialContent = "string\n";
+
+        Console spyConsole = createInteractiveConsole();
+        outputStream.write(initialContent.getBytes());
+        spyConsole.cleanCurrentLine();
+        assertEquals(getOutputContent(), initialContent + expectedAnsi.toString());
+
+        spyConsole = createNonInteractiveConsole();
+        outputStream.write(initialContent.getBytes());
+        spyConsole.cleanCurrentLine();
+        assertEquals(getOutputContent(), initialContent + expectedAnsi.toString());
+    }
+
+    @Test
+    public void testCleanLineAbove() throws IOException {
+        Ansi expectedAnsi = ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL);
+        String initialContent = "string\n";
+
+        Console spyConsole = createInteractiveConsole();
+        outputStream.write(initialContent.getBytes());
+        spyConsole.cleanLineAbove();
+        assertEquals(getOutputContent(), initialContent + expectedAnsi.toString());
+
+        spyConsole = createNonInteractiveConsole();
+        outputStream.write(initialContent.getBytes());
+        spyConsole.cleanLineAbove();
+        assertEquals(getOutputContent(), initialContent + expectedAnsi.toString());
+    }
+
+    @Test
+    public void testPrint() throws IOException {
+        String testMessage = "message";
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.print(testMessage);
+        assertEquals(getOutputContent(), testMessage);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.print(testMessage);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testMessage);
+    }
+
+    @Test
+    public void testPrintLn() throws IOException {
+        String testMessage = "message";
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.println(testMessage);
+        assertEquals(getOutputContent(), testMessage + "\n");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.println(testMessage);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testMessage + "\n");
+    }
+
+    @Test
+    public void testPrintSuccess() throws IOException {
+        String testMessage = "message";
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printSuccess(testMessage);
+        assertEquals(getOutputContent(), "\u001B[32m" + testMessage + "\n\u001B[m");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printSuccess(testMessage);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[32m" + testMessage + "\n\u001B[m");
+    }
+
+    @Test
+    public void testPrintOkResponse() throws JsonParseException, IOException {
+        String testResponse = new Response().setStatus(ResponseCode.OK).setMessage("test").toJson();
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printResponse(testResponse);
+        assertEquals(getOutputContent(), testResponse + "\n");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printResponse(testResponse);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testResponse + "\n");
+    }
+
+    @Test
+    public void testPrintErrorResponse() throws JsonParseException, IOException {
+        String testErrorResponse = new Response().setStatus(ResponseCode.ERROR).setMessage("error").toJson();
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printResponse(testErrorResponse);
+        assertEquals(getOutputContent(), "\u001B[31m" + testErrorResponse + "\n\u001B[m");
+        verify(spyConsole, never()).exit(1);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printResponse(testErrorResponse);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + testErrorResponse + "\n\u001B[m");
         verify(spyConsole).exit(1);
     }
 
     @Test
-    public void testPrintErrorAndExitIfNotInteractive() throws Exception {
-        Exception exceptionWithConnectException = new ResourceException(new ConnectException());
-        spyConsole.printErrorAndExit(exceptionWithConnectException);
+    public void testAskUserAgree() throws IOException {
+        String testMessage = "ask";
+        String userResponse = "y";
 
-        assertEquals(getOutputContent(true), "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
-                                         + "please retry a bit later.\n");
+        Console spyConsole = createInteractiveConsole();
+        doReturn(userResponse).when(mockConsoleReader).readLine(any(Character.class));
+
+        assertTrue(spyConsole.askUser(testMessage));
+        assertEquals(getOutputContent(), testMessage + " [y/N] ");
     }
 
     @Test
-    public void testCheckConnectionException() {
-        assertTrue(spyConsole.isConnectionException(new ResourceException(new ConnectException())));
-        assertFalse(spyConsole.isConnectionException(new RuntimeException()));
+    public void testAskUserDisagree() throws IOException {
+        String testMessage = "ask";
+        String userResponse = "N";
+
+        Console spyConsole = createInteractiveConsole();
+        doReturn(userResponse).when(mockConsoleReader).readLine(any(Character.class));
+
+        assertFalse(spyConsole.askUser(testMessage));
+        assertEquals(getOutputContent(), testMessage + " [y/N] ");
+    }
+
+
+    @Test
+    public void testReadLine() throws IOException {
+        String testLine = "line";
+
+        Console spyConsole = createInteractiveConsole();
+        doReturn(testLine).when(mockConsoleReader).readLine(any(Character.class));
+
+        assertEquals(spyConsole.readLine(), testLine);
+        assertEquals(getOutputContent(), "");
     }
 
     @Test
-    public void testPrintProgress() throws Exception {
+    public void testReadPassword() throws IOException {
+        String testPassword = "123";
 
+        Console spyConsole = createInteractiveConsole();
+        doReturn(testPassword).when(mockConsoleReader).readLine(any(Character.class));
+
+        assertEquals(spyConsole.readPassword(), testPassword);
+        assertEquals(getOutputContent(), "");
     }
 
     @Test
-    public void testPrintProgress1() throws Exception {
+    public void testPrintErrorAndExit() throws IOException {
+        String testErrorMessage = "error";
 
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printErrorAndExit(testErrorMessage);
+        assertEquals(getOutputContent(), "\u001B[31m" + testErrorMessage + "\n\u001B[m");
+        verify(spyConsole, never()).exit(1);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printErrorAndExit(testErrorMessage);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + testErrorMessage + "\n\u001B[m");
+        verify(spyConsole).exit(1);
     }
 
     @Test
-    public void testCleanCurrentLine() throws Exception {
+    public void testPrintException() throws IOException {
+        Exception exception = new RuntimeException("runtime error");
+        String expectedResult = "{\n"
+                                + "  \"message\" : \"runtime error\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
+                                + "}\n";
 
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printErrorAndExit(exception);
+        assertEquals(getOutputContent(), "\u001B[31m" + expectedResult + "\u001B[m");
+        verify(spyConsole, never()).exit(1);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printErrorAndExit(exception);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + expectedResult + "\u001B[m");
+        verify(spyConsole).exit(1);
     }
 
     @Test
-    public void testCleanLineAbove() throws Exception {
+    public void testPrintConnectionException() throws IOException {
+        Exception exceptionCausedConnectException = new ResourceException(new ConnectException());
+        String expectedResult = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
+                                + "please retry a bit later.\n";
 
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.printErrorAndExit(exceptionCausedConnectException);
+        assertEquals(getOutputContent(), "\u001B[31m" + expectedResult + "\u001B[m");
+        verify(spyConsole, never()).exit(1);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printErrorAndExit(exceptionCausedConnectException);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + expectedResult + "\u001B[m");
+        verify(spyConsole).exit(1);
+    }
+    
+    private Console createInteractiveConsole() throws IOException {
+        setUp();
+        Console spyConsole = spy(new Console(true));
+        spyConsole.consoleReader = mockConsoleReader;
+        return spyConsole;
     }
 
-    @Test
-    public void testPrintLn() throws Exception {
-
+    private Console createNonInteractiveConsole() throws IOException {
+        setUp();
+        Console spyConsole = spy(new Console(false));
+        spyConsole.consoleReader = mockConsoleReader;
+        doNothing().when(spyConsole).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
+        return spyConsole;
     }
 
-    @Test
-    public void testPrint() throws Exception {
-
-    }
-
-    @Test
-    public void testPrintResponse() throws Exception {
-
-    }
-
-    @Test
-    public void testPrintSuccess() throws Exception {
-
-    }
-
-    @Test
-    public void testAskUser() throws Exception {
-
-    }
-
-    @Test
-    public void testReadLine() throws Exception {
-
-    }
-
-    @Test
-    public void testReadPassword() throws Exception {
-
-    }
-
-    @Test
-    public void testPressAnyKey() throws Exception {
-
-    }
-
-    private String getOutputContent(boolean removeAnsi) {
-        if (removeAnsi) {
-            return removeAnsi(outputStream.toString());
-        } else {
-            return outputStream.toString();
-        }
-    }
-
-    public void setSystemIn(String lines) {
-        this.inputStream = new ByteArrayInputStream(lines.getBytes());
+    private String getOutputContent() {
+        return outputStream.toString();
     }
 
     private String removeAnsi(final String content) {

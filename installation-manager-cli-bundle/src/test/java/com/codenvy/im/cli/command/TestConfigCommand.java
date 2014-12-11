@@ -25,6 +25,8 @@ import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -41,7 +43,7 @@ public class TestConfigCommand extends AbstractTestCommand {
     private CommandSession             commandSession;
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new ConfigCommand());

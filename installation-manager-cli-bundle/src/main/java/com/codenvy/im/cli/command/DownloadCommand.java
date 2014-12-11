@@ -76,7 +76,7 @@ public class DownloadCommand extends AbstractIMCommand {
     // TODO [AB] test interrupt
 
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {
-        console.printLn("Downloading might take several minutes depending on your internet connection. Please wait.");
+        console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
         final String downloadDescriptorId = generateDownloadDescriptorId();
 
@@ -124,7 +124,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 if (downloadStatusInfo.getStatus() == Status.FAILURE) {
                     console.printErrorAndExit(downloadResult);
                 } else {
-                    console.printLn(downloadResult);
+                    console.println(downloadResult);
                 }
                 break;
             }

@@ -27,6 +27,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -47,7 +49,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
     private JacksonRepresentation<UserCredentials> userCredentialsRep;
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new SubscriptionCommand());

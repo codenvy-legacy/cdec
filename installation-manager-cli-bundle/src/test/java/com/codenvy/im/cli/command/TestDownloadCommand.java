@@ -29,6 +29,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -78,7 +80,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                                   "}";
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new DownloadCommand());

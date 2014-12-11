@@ -39,7 +39,9 @@ import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -141,5 +143,21 @@ public class TestResponse {
         restoredResponse = new JacksonRepresentation<>(rep, Response.class).getObject();
         assertNotNull(restoredResponse);
         assertEquals(Commons.toJson(restoredResponse), expectedJson);
+    }
+
+    @Test
+    public void testIsError() throws JsonParseException {
+        String errorResponse = new Response().setStatus(ResponseCode.ERROR).toJson();
+        assertTrue(Response.isError(errorResponse));
+
+        String okResponse = new Response().setStatus(ResponseCode.OK).toJson();
+        assertFalse(Response.isError(okResponse));
+
+        assertFalse(Response.isError("{}"));
+    }
+
+    @Test(expectedExceptions = JsonParseException.class)
+    public void testIsErrorException() throws JsonParseException {
+        Response.isError("");
     }
 }

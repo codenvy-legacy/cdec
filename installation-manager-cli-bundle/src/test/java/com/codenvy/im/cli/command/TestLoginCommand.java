@@ -29,6 +29,8 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -64,7 +66,7 @@ public class TestLoginCommand extends AbstractTestCommand {
     private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();

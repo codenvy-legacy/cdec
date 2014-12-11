@@ -32,19 +32,21 @@ import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
 /** @author Dmytro Nochevnov */
-public class Console {
+class Console {
+    public static final Ansi ERASE_LINE_ABOVE = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
+    public static final Ansi ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
+    public static final String CODENVY_PREFIX = "[CODENVY] ";
+
     private final boolean interactive;
+    protected ConsoleReader consoleReader;
 
-    public Console(boolean interactive) {
+    Console(boolean interactive) throws IOException {
         this.interactive = interactive;
+        this.consoleReader = new ConsoleReader();
     }
 
-    private void printError(String message) {
-        print(ansi().fg(RED).a(message).newline().reset(), false);
-    }
-
-    void printError(String message, boolean suppressCodenvyPrompt) {
-        print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
+    void printError(String message) {
+        print(ansi().fg(RED).a(message).newline().reset());
     }
 
     void printProgress(int percents) {
@@ -54,6 +56,86 @@ public class Console {
     void printProgress(String message) {
         System.out.print(ansi().saveCursorPosition().a(message).restorCursorPosition());
         System.out.flush();
+    }
+
+    void cleanCurrentLine() {
+        System.out.print(ERASE_CURRENT_LINE);
+        System.out.flush();
+    }
+
+    void cleanLineAbove() {
+        System.out.print(ERASE_LINE_ABOVE);
+        System.out.flush();
+    }
+
+    void println(String message) {
+        print(message);
+        System.out.println();
+    }
+
+    void print(String message) {
+        print((Object)message);
+    }
+
+    void printSuccess(String message) {
+        print(ansi().fg(GREEN).a(message).newline().reset());
+    }
+
+    /** @return "true" only if only user typed line equals "y". */
+    boolean askUser(String prompt) throws IOException {
+        print(prompt + " [y/N] ");
+        String userAnswer = readLine();
+        return userAnswer != null && userAnswer.equalsIgnoreCase("y");
+    }
+
+    /** @return line typed by user */
+    String readLine() throws IOException {
+        return doReadLine(null);
+    }
+
+    String readPassword() throws IOException {
+        return doReadLine('*');
+    }
+
+    void pressAnyKey(String prompt) throws IOException {
+        print(prompt);
+        consoleReader.readCharacter();
+    }
+
+    void printErrorAndExit(Exception ex) {
+        String errorMessage;
+
+        if (isConnectionException(ex)) {
+            errorMessage = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
+                       "please retry a bit later.";
+        } else {
+            errorMessage = Response.valueOf(ex).toJson();
+        }
+
+        printErrorAndExit(errorMessage);
+    }
+
+    void printResponse(String response) throws JsonParseException {
+        if (isError(response)) {
+            printErrorAndExit(response);
+        } else {
+            println(response);
+        }
+    }
+
+    /**
+     * Print error message and exit with status = 1 if the command is not executing in interactive mode.
+     */
+    void printErrorAndExit(String message) {
+        printError(message);
+
+        if (!interactive) {
+            exit(1);
+        }
+    }
+
+    protected void exit(int status) {
+        System.exit(status);
     }
 
     private String createProgressBar(int percent) {
@@ -73,121 +155,26 @@ public class Console {
         return bar.toString();
     }
 
-    void cleanCurrentLine() {
-        System.out.print(ansi().eraseLine(Ansi.Erase.ALL));
-        System.out.flush();
-    }
-
-    void cleanLineAbove() {
-        System.out.print(ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL)));
-        System.out.flush();
-    }
-
-    void printLn(String message) {
-        print(message);
-        System.out.println();
-    }
-
-    void print(String message, boolean suppressCodenvyPrompt) {
-        if (!interactive && !suppressCodenvyPrompt) {
-            printCodenvyPrompt();
-        }
-        System.out.print(message);
-        System.out.flush();
-    }
-
-    void print(String message) {
+    private void print(Object o) {
         if (!interactive) {
             printCodenvyPrompt();
         }
-        System.out.print(message);
-        System.out.flush();
-    }
 
-    private void print(Ansi ansi, boolean suppressCodenvyPrompt) {
-        if (!interactive && !suppressCodenvyPrompt) {
-            printCodenvyPrompt();
-        }
-        System.out.print(ansi);
+        System.out.print(o);
         System.out.flush();
     }
 
     private void printCodenvyPrompt() {
         final String lightBlue = '\u001b' + "[94m";
-        System.out.print(ansi().a(lightBlue + "[CODENVY] ").reset()); // light blue
+        System.out.print(ansi().a(lightBlue + CODENVY_PREFIX).reset()); // light blue
     }
 
-    void printSuccess(String message, boolean suppressCodenvyPrompt) {
-        print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
-    }
-
-    void printSuccess(String message) {
-        print(ansi().fg(GREEN).a(message).newline().reset(), false);
-    }
-
-    /** @return "true" only if only user typed line equals "y". */
-    boolean askUser(String prompt) throws IOException {
-        print(prompt + " [y/N] ");
-        String userAnswer = readLine();
-        return userAnswer != null && userAnswer.equalsIgnoreCase("y");
-    }
-
-    /** @return line typed by user */
-    String readLine() throws IOException {
-        return doReadLine(null);
-    }
-
-    String readPassword() throws IOException {
-        return doReadLine('*');
-    }
-
-    private String doReadLine(@Nullable Character mask) throws IOException {
-        return new ConsoleReader().readLine(mask);
-    }
-
-    void pressAnyKey(String prompt) throws IOException {
-        print(prompt);
-        new ConsoleReader().readCharacter();
-    }
-
-    void printErrorAndExit(Exception ex) {
-        String errorMessage;
-
-        if (isConnectionException(ex)) {
-            errorMessage = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                       "please retry a bit later.";
-        } else {
-            errorMessage = Response.valueOf(ex).toJson();
-        }
-
-        printErrorAndExit(errorMessage);
-    }
-
-    boolean isConnectionException(Exception e) {
+    private boolean isConnectionException(Exception e) {
         Throwable cause = e.getCause();
         return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
     }
 
-    void printResponse(String response) throws JsonParseException {
-        if (isError(response)) {
-            printErrorAndExit(response);
-        } else {
-            printLn(response);
-        }
-    }
-
-    /**
-     * Print error message and exit with status = 1 if the command is not executing in interactive mode.
-     */
-    void printErrorAndExit(String message) {
-        printError(message);
-
-        if (!interactive) {
-            exit(1);
-        }
-    }
-
-    protected void exit(int status) {
-        System.exit(status);
+    private String doReadLine(@Nullable Character mask) throws IOException {
+        return consoleReader.readLine(mask);
     }
 }
