@@ -102,7 +102,7 @@ public class InstallCommand extends AbstractIMCommand {
                 return doExecuteInstall();
             }
         } catch (Exception e) {
-            console.printError(e);
+            console.printErrorAndExit(e);
         }
 
         return null;
@@ -110,7 +110,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
-            console.printErrorEndExit("Argument 'artifact' is required.", InstallCommand.this);
+            console.printErrorAndExit("Argument 'artifact' is required.");
             return null;
         }
 
@@ -124,7 +124,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
         if (isError(response)) {
-            console.printErrorEndExit(response, InstallCommand.this);
+            console.printErrorAndExit(response);
             return null;
         }
 
@@ -155,7 +155,7 @@ public class InstallCommand extends AbstractIMCommand {
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
                     console.printError(" [FAIL]", true);
-                    console.printErrorEndExit(response, InstallCommand.this);
+                    console.printErrorAndExit(response);
                     return null;
                 } else {
                     console.printSuccess(" [OK]", true);
@@ -178,7 +178,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
-        console.printResponse(insertClientVersionInfo(response), InstallCommand.this);
+        console.printResponse(insertClientVersionInfo(response));
         return null;
     }
 

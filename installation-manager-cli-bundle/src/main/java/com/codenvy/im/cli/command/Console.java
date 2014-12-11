@@ -39,7 +39,7 @@ public class Console {
         this.interactive = interactive;
     }
 
-    void printError(String message) {
+    private void printError(String message) {
         print(ansi().fg(RED).a(message).newline().reset(), false);
     }
 
@@ -150,35 +150,39 @@ public class Console {
         new ConsoleReader().readCharacter();
     }
 
-    void printError(Exception ex) {
+    void printErrorAndExit(Exception ex) {
+        String errorMessage;
+
         if (isConnectionException(ex)) {
-            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                       "please retry a bit later.");
+            errorMessage = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
+                       "please retry a bit later.";
         } else {
-            printError(Response.valueOf(ex).toJson());
+            errorMessage = Response.valueOf(ex).toJson();
         }
+
+        printErrorAndExit(errorMessage);
     }
 
-    protected boolean isConnectionException(Exception e) {
+    boolean isConnectionException(Exception e) {
         Throwable cause = e.getCause();
         return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
     }
 
-    protected void printResponse(String response, AbstractIMCommand abstractIMCommand) throws JsonParseException {
+    void printResponse(String response) throws JsonParseException {
         if (isError(response)) {
-            printErrorEndExit(response, abstractIMCommand);
+            printErrorAndExit(response);
         } else {
             printLn(response);
         }
     }
 
     /**
-     * Print error message and exit with status = 1 if the command is executing in interactive mode.
+     * Print error message and exit with status = 1 if the command is not executing in interactive mode.
      */
-    protected void printErrorEndExit(String message, AbstractIMCommand abstractIMCommand) {
+    void printErrorAndExit(String message) {
         printError(message);
 
-        if (!abstractIMCommand.isInteractive()) {
+        if (!interactive) {
             exit(1);
         }
     }

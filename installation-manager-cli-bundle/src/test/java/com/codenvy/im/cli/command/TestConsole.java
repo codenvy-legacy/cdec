@@ -21,8 +21,6 @@ package com.codenvy.im.cli.command;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -33,6 +31,11 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.ConnectException;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -49,7 +52,7 @@ public class TestConsole {
     PrintStream originOut = System.out;
     PrintStream originErr = System.out;
 
-    @BeforeClass
+    @BeforeMethod
     public void setUp() throws Exception {
         this.outputStream = new ByteArrayOutputStream();
         this.errorStream = new ByteArrayOutputStream();
@@ -58,13 +61,7 @@ public class TestConsole {
         System.setOut(new PrintStream(this.outputStream));
         System.setErr(new PrintStream(this.errorStream));
 
-        spyConsole = new Console(true);
-    }
-
-    @AfterMethod
-    public void cleanup() throws IOException {
-        outputStream.reset();
-        errorStream.reset();
+        spyConsole = spy(new Console(true));
     }
 
     @AfterClass
@@ -75,15 +72,19 @@ public class TestConsole {
     }
 
     @Test
-    public void testPrintError() throws Exception {
-        spyConsole.printError("error");
-        assertEquals(removeAnsi(getOutputContent(true)), "error\n");
+    public void testPrintErrorAndExit() throws Exception {
+        spyConsole = spy(new Console(false));
+        doNothing().when(spyConsole).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
+
+        spyConsole.printErrorAndExit("error");
+        assertEquals(removeAnsi(getOutputContent(true)), "[CODENVY] error\n");
+        verify(spyConsole).exit(1);
     }
 
     @Test
     public void testPrintErrorAndExitIfNotInteractive() throws Exception {
         Exception exceptionWithConnectException = new ResourceException(new ConnectException());
-        spyConsole.printError(exceptionWithConnectException);
+        spyConsole.printErrorAndExit(exceptionWithConnectException);
 
         assertEquals(getOutputContent(true), "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
                                          + "please retry a bit later.\n");

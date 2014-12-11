@@ -39,9 +39,9 @@ public class SubscriptionCommand extends AbstractIMCommand {
             init();
 
             console.printResponse(installationManagerProxy.checkSubscription(subscription != null ? subscription : DEFAULT_SUBSCRIPTION,
-                                                                             getCredentialsRep()), SubscriptionCommand.this);
+                                                                             getCredentialsRep()));
         } catch (Exception e) {
-            console.printError(e);
+            console.printErrorAndExit(e);
         }
 
         return null;

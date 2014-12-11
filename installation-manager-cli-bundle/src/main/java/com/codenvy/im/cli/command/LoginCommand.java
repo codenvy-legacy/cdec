@@ -64,7 +64,7 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                console.printErrorEndExit(String.format("Login failed on remote '%s'.", remoteName), LoginCommand.this);
+                console.printErrorAndExit(String.format("Login failed on remote '%s'.", remoteName));
                 return null;
             }
 
@@ -79,9 +79,9 @@ public class LoginCommand extends AbstractIMCommand {
             if (accountReference == null) {
                 preferencesStorage.invalidate();
                 if (accountName == null) {
-                    console.printErrorEndExit(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG, LoginCommand.this);
+                    console.printErrorAndExit(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
                 } else {
-                    console.printErrorEndExit("Account '" + accountName + "' is not yours or may be you aren't owner of this account.", LoginCommand.this);
+                    console.printErrorAndExit("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
                 return null;
             }
@@ -97,7 +97,7 @@ public class LoginCommand extends AbstractIMCommand {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
             }
-            console.printError(e);
+            console.printErrorAndExit(e);
         }
 
         return null;

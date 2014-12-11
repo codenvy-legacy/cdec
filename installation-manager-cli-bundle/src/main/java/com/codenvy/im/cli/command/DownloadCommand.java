@@ -67,7 +67,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 doDownload();
             }
         } catch (Exception e) {
-            console.printError(e);
+            console.printErrorAndExit(e);
         }
 
         return null;
@@ -90,7 +90,7 @@ public class DownloadCommand extends AbstractIMCommand {
         }
 
         if (isError(startResponse)) {
-            console.printErrorEndExit(startResponse, DownloadCommand.this);
+            console.printErrorAndExit(startResponse);
             return;
         }
 
@@ -100,7 +100,7 @@ public class DownloadCommand extends AbstractIMCommand {
             String response = installationManagerProxy.downloadStatus(downloadDescriptorId);
             if (isError(response)) {
                 console.cleanCurrentLine();
-                console.printErrorEndExit(response, DownloadCommand.this);
+                console.printErrorAndExit(response);
                 break;
             }
 
@@ -122,7 +122,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 console.cleanCurrentLine();
                 String downloadResult = downloadStatusInfo.getDownloadResult().toJson();
                 if (downloadStatusInfo.getStatus() == Status.FAILURE) {
-                    console.printErrorEndExit(downloadResult, DownloadCommand.this);
+                    console.printErrorAndExit(downloadResult);
                 } else {
                     console.printLn(downloadResult);
                 }
@@ -132,7 +132,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        console.printResponse(installationManagerProxy.getUpdates(getCredentialsRep()), DownloadCommand.this);
+        console.printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
     }
 
     private void doList() throws JsonParseException {
@@ -142,7 +142,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 .setUserCredentials(getCredentials())
                 .toRepresentation();
 
-        console.printResponse(installationManagerProxy.getDownloads(requestRep), DownloadCommand.this);
+        console.printResponse(installationManagerProxy.getDownloads(requestRep));
     }
 
     protected String generateDownloadDescriptorId() {
