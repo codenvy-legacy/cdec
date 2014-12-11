@@ -156,4 +156,12 @@ public class Response {
             this.artifacts = new ArrayList<>();
         }
     }
+
+    /**
+     * Return true if only parameter 'response' is valid json with property "status": "ERROR".
+     */
+    public static boolean isError(String response) throws JsonParseException {
+        Response responseObj = Response.fromJson(response);
+        return responseObj.getStatus() == ResponseCode.ERROR;
+    }
 }

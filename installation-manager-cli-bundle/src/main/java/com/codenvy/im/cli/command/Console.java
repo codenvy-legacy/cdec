@@ -17,12 +17,16 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.response.Response;
 import jline.console.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.ConnectException;
 
+import static com.codenvy.im.response.Response.isError;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -144,5 +148,42 @@ public class Console {
     void pressAnyKey(String prompt) throws IOException {
         print(prompt);
         new ConsoleReader().readCharacter();
+    }
+
+    void printError(Exception ex) {
+        if (isConnectionException(ex)) {
+            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
+                       "please retry a bit later.");
+        } else {
+            printError(Response.valueOf(ex).toJson());
+        }
+    }
+
+    protected boolean isConnectionException(Exception e) {
+        Throwable cause = e.getCause();
+        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
+    }
+
+    protected void printResponse(String response, AbstractIMCommand abstractIMCommand) throws JsonParseException {
+        if (isError(response)) {
+            printErrorEndExit(response, abstractIMCommand);
+        } else {
+            printLn(response);
+        }
+    }
+
+    /**
+     * Print error message and exit with status = 1 if the command is executing in interactive mode.
+     */
+    protected void printErrorEndExit(String message, AbstractIMCommand abstractIMCommand) {
+        printError(message);
+
+        if (!abstractIMCommand.isInteractive()) {
+            exit(1);
+        }
+    }
+
+    protected void exit(int status) {
+        System.exit(status);
     }
 }

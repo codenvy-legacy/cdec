@@ -52,13 +52,13 @@ public class ConfigCommand extends AbstractIMCommand {
             }
 
             if (!config.checkEmptyConfig()) {
-                printResponse(installationManagerProxy.setConfig(new JacksonRepresentation<>(config)));
+                console.printResponse(installationManagerProxy.setConfig(new JacksonRepresentation<>(config)), ConfigCommand.this);
             } else {
-                printResponse(installationManagerProxy.getConfig());
+                console.printResponse(installationManagerProxy.getConfig(), ConfigCommand.this);
             }
 
         } catch (Exception e) {
-            printError(e);
+            console.printError(e);
         }
 
         return null;

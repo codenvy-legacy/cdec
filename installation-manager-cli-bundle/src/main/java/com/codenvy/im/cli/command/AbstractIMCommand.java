@@ -23,11 +23,8 @@ import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.restlet.InstallationManagerService;
 import com.codenvy.im.restlet.RestletClientFactory;
 import com.codenvy.im.user.UserCredentials;
@@ -38,7 +35,6 @@ import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -193,48 +189,4 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return super.isInteractive();
     }
 
-    protected void printResponse(String response) throws JsonParseException {
-        if (isError(response)) {
-            printError(response);
-        } else {
-            console.printLn(response);
-        }
-    }
-
-    void printError(Exception ex) {
-        if (isConnectionException(ex)) {
-            printError("It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                       "please retry a bit later.");
-        } else {
-            printError(Response.valueOf(ex).toJson());
-        }
-    }
-
-    private boolean isConnectionException(Exception e) {
-        Throwable cause = e.getCause();
-        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
-    }
-
-    /**
-     * Return true if only parameter 'response' is valid json with property "status": "ERROR".
-     */
-    protected boolean isError(String response) throws JsonParseException {
-        Response responseObj = Response.fromJson(response);
-        return responseObj.getStatus() == ResponseCode.ERROR;
-    }
-
-    /**
-     * Print error message and exit with status = 1 if the command is executing in interactive mode.
-     */
-    protected void printError(String message) {
-        console.printError(message);
-
-        if (!isInteractive()) {
-            exit(1);
-        }
-    }
-
-    protected void exit(int status) {
-        System.exit(status);
-    }
 }

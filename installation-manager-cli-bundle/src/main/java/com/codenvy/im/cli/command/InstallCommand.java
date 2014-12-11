@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
 
 import static com.codenvy.im.config.Config.getPropertyName;
 import static com.codenvy.im.config.Config.isEmpty;
+import static com.codenvy.im.response.Response.isError;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -101,7 +102,7 @@ public class InstallCommand extends AbstractIMCommand {
                 return doExecuteInstall();
             }
         } catch (Exception e) {
-            printError(e);
+            console.printError(e);
         }
 
         return null;
@@ -109,7 +110,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
-            printError("Argument 'artifact' is required.");
+            console.printErrorEndExit("Argument 'artifact' is required.", InstallCommand.this);
             return null;
         }
 
@@ -123,7 +124,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
         if (isError(response)) {
-            printError(response);
+            console.printErrorEndExit(response, InstallCommand.this);
             return null;
         }
 
@@ -154,7 +155,7 @@ public class InstallCommand extends AbstractIMCommand {
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
                     console.printError(" [FAIL]", true);
-                    printError(response);
+                    console.printErrorEndExit(response, InstallCommand.this);
                     return null;
                 } else {
                     console.printSuccess(" [OK]", true);
@@ -170,7 +171,6 @@ public class InstallCommand extends AbstractIMCommand {
 
         if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
             console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
-            exit(0);
         }
 
         return null;
@@ -178,7 +178,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = installationManagerProxy.getVersions(getCredentialsRep());
-        printResponse(insertClientVersionInfo(response));
+        console.printResponse(insertClientVersionInfo(response), InstallCommand.this);
         return null;
     }
 

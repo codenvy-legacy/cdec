@@ -21,7 +21,6 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -31,6 +30,7 @@ import org.restlet.ext.jackson.JacksonRepresentation;
 
 import java.util.UUID;
 
+import static com.codenvy.im.response.Response.isError;
 import static java.lang.Thread.sleep;
 
 /**
@@ -67,7 +67,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 doDownload();
             }
         } catch (Exception e) {
-            printError(e);
+            console.printError(e);
         }
 
         return null;
@@ -90,7 +90,7 @@ public class DownloadCommand extends AbstractIMCommand {
         }
 
         if (isError(startResponse)) {
-            printError(startResponse);
+            console.printErrorEndExit(startResponse, DownloadCommand.this);
             return;
         }
 
@@ -100,7 +100,7 @@ public class DownloadCommand extends AbstractIMCommand {
             String response = installationManagerProxy.downloadStatus(downloadDescriptorId);
             if (isError(response)) {
                 console.cleanCurrentLine();
-                printError(response);
+                console.printErrorEndExit(response, DownloadCommand.this);
                 break;
             }
 
@@ -122,7 +122,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 console.cleanCurrentLine();
                 String downloadResult = downloadStatusInfo.getDownloadResult().toJson();
                 if (downloadStatusInfo.getStatus() == Status.FAILURE) {
-                    printError(downloadResult);
+                    console.printErrorEndExit(downloadResult, DownloadCommand.this);
                 } else {
                     console.printLn(downloadResult);
                 }
@@ -132,7 +132,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+        console.printResponse(installationManagerProxy.getUpdates(getCredentialsRep()), DownloadCommand.this);
     }
 
     private void doList() throws JsonParseException {
@@ -142,7 +142,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 .setUserCredentials(getCredentials())
                 .toRepresentation();
 
-        printResponse(installationManagerProxy.getDownloads(requestRep));
+        console.printResponse(installationManagerProxy.getDownloads(requestRep), DownloadCommand.this);
     }
 
     protected String generateDownloadDescriptorId() {

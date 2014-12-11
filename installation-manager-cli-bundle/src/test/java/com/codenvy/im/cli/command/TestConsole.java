@@ -77,7 +77,22 @@ public class TestConsole {
     @Test
     public void testPrintError() throws Exception {
         spyConsole.printError("error");
-        assertEquals(removeAnsi(getOutputContent()), "error\n");
+        assertEquals(removeAnsi(getOutputContent(true)), "error\n");
+    }
+
+    @Test
+    public void testPrintErrorAndExitIfNotInteractive() throws Exception {
+        Exception exceptionWithConnectException = new ResourceException(new ConnectException());
+        spyConsole.printError(exceptionWithConnectException);
+
+        assertEquals(getOutputContent(true), "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
+                                         + "please retry a bit later.\n");
+    }
+
+    @Test
+    public void testCheckConnectionException() {
+        assertTrue(spyConsole.isConnectionException(new ResourceException(new ConnectException())));
+        assertFalse(spyConsole.isConnectionException(new RuntimeException()));
     }
 
     @Test
@@ -140,8 +155,12 @@ public class TestConsole {
 
     }
 
-    private String getOutputContent() {
-        return outputStream.toString();
+    private String getOutputContent(boolean removeAnsi) {
+        if (removeAnsi) {
+            return removeAnsi(outputStream.toString());
+        } else {
+            return outputStream.toString();
+        }
     }
 
     public void setSystemIn(String lines) {
