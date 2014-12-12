@@ -75,7 +75,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                 .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
-        spyCommand = spy(new TestedInstallCommand(configFactory));
+        spyCommand = spy(new InstallCommand(configFactory));
         spyCommand.service = service;
 
         performBaseMocks(spyCommand, true);
@@ -452,5 +452,4 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "Continue installation [y/N]\n"
                              + "{\"infos\":[]}\n");
     }
-
 }

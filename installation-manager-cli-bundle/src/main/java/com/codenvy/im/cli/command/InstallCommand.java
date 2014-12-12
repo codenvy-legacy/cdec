@@ -124,7 +124,7 @@ public class InstallCommand extends AbstractIMCommand {
         String response = service.getInstallInfo(installOptions, request);
         Response responseObj = Response.fromJson(response);
 
-        if (isError(response)) {
+        if (responseObj.getStatus() == ResponseCode.ERROR) {
             console.printErrorAndExit(response);
             return null;
         }

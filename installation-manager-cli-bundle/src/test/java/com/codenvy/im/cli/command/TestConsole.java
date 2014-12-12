@@ -18,10 +18,12 @@
 
 package com.codenvy.im.cli.command;
 
+import jline.console.ConsoleReader;
+
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-import jline.console.ConsoleReader;
+
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.mockito.Mock;
@@ -317,7 +319,7 @@ public class TestConsole {
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + expectedResult + "\u001B[m");
         verify(spyConsole).exit(1);
     }
-    
+
     private Console createInteractiveConsole() throws IOException {
         setUp();
         Console spyConsole = spy(new Console(true));
@@ -329,7 +331,8 @@ public class TestConsole {
         setUp();
         Console spyConsole = spy(new Console(false));
         spyConsole.consoleReader = mockConsoleReader;
-        doNothing().when(spyConsole).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
+        doNothing().when(spyConsole)
+                   .exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
         return spyConsole;
     }
 

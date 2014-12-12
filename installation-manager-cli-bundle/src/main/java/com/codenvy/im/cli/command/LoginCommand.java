@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -70,8 +71,8 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (!isRemoteForUpdateServer(remoteName)) {
                 console.printSuccess(String.format("Login success on remote '%s' [%s].",
-                                           remoteName,
-                                           getRemoteUrlByName(remoteName)));
+                                                   remoteName,
+                                                   getRemoteUrlByName(remoteName)));
                 return null;
             }
 

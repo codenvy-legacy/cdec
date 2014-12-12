@@ -17,9 +17,11 @@
  */
 package com.codenvy.im.cli.command;
 
+import jline.console.ConsoleReader;
+
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
-import jline.console.ConsoleReader;
+
 import org.fusesource.jansi.Ansi;
 
 import javax.annotation.Nullable;
@@ -33,12 +35,12 @@ import static org.fusesource.jansi.Ansi.ansi;
 
 /** @author Dmytro Nochevnov */
 class Console {
-    public static final Ansi ERASE_LINE_ABOVE = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
-    public static final Ansi ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
-    public static final String CODENVY_PREFIX = "[CODENVY] ";
+    public static final Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
+    public static final Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
+    public static final String CODENVY_PREFIX     = "[CODENVY] ";
 
-    private final boolean interactive;
-    protected ConsoleReader consoleReader;
+    private final boolean       interactive;
+    protected     ConsoleReader consoleReader;
 
     Console(boolean interactive) throws IOException {
         this.interactive = interactive;
@@ -107,7 +109,7 @@ class Console {
 
         if (isConnectionException(ex)) {
             errorMessage = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                       "please retry a bit later.";
+                           "please retry a bit later.";
         } else {
             errorMessage = Response.valueOf(ex).toJson();
         }

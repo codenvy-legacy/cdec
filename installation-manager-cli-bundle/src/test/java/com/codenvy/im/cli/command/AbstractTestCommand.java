@@ -34,12 +34,14 @@ public abstract class AbstractTestCommand {
         doReturn(interactive).when(spyCommand).isInteractive();
 
         spyCommand.console = getSpyConsole(interactive);
-        doNothing().when(spyCommand.console).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
+        doNothing().when(spyCommand.console)
+                   .exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
     }
 
     private Console getSpyConsole(boolean isInstallable) throws IOException {
         return spy(new Console(isInstallable) {
-            @Override protected void printProgress(String message) {
+            @Override
+            protected void printProgress(String message) {
                 // disable progressor
             }
         });

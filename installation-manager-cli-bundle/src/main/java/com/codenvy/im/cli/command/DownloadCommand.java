@@ -124,20 +124,12 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+        Request request = initRequest(artifactName, version);
+        console.printResponse(service.getUpdates(request));
     }
 
     private void doList() throws JsonParseException {
-        JacksonRepresentation<Request> requestRep = new Request()
-                .setArtifactName(artifactName)
-                .setVersion(version)
-                .setUserCredentials(getCredentials())
-                .toRepresentation();
-
-        printResponse(installationManagerProxy.getDownloads(requestRep));
-    }
-
-    protected String generateDownloadDescriptorId() {
-        return UUID.randomUUID().toString();
+        Request request = initRequest(artifactName, version);
+        console.printResponse(service.getDownloads(request));
     }
 }
