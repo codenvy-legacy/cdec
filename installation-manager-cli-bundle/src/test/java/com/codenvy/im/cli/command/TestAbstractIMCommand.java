@@ -24,14 +24,14 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
-import com.codenvy.im.restlet.InstallationManagerService;
-import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.request.Request;
+import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.service.UserCredentials;
 import com.google.common.io.Files;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -54,7 +54,7 @@ public class TestAbstractIMCommand {
     private Preferences             globalPreferences;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerService service;
     @Mock
     private CommandSession             session;
     @Mock
@@ -87,18 +87,18 @@ public class TestAbstractIMCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new TestedAbstractIMCommand());
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = service;
         doReturn(true).when(spyCommand).isInteractive();
 
         updateServerRemote = new Remote();
         updateServerRemote.setUrl(UPDATE_SERVER_URL);
 
-        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+        doReturn(UPDATE_SERVER_URL).when(service).getUpdateServerEndpoint();
     }
 
     @Test
     public void testGetUpdateServerUrl() {
-        assertEquals(spyCommand.getUpdateServerUrl(), UPDATE_SERVER_URL);
+        assertEquals(spyCommand.getUpdateServerEndpoint(), UPDATE_SERVER_URL);
     }
 
     @Test
@@ -107,8 +107,8 @@ public class TestAbstractIMCommand {
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
-        JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
-        doReturn(TEST_ACCOUNT_REFERENCE).when(mockInstallationManagerProxy).getAccountReferenceWhereUserIsOwner("accountName", testCredentialsRep);
+        Request request = new Request().setUserCredentials(spyCommand.getCredentials());
+        doReturn(TEST_ACCOUNT_REFERENCE).when(service).getAccountReferenceWhereUserIsOwner("accountName", request);
 
         AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner("accountName");
         assertNotNull(accountReference);
@@ -193,11 +193,10 @@ public class TestAbstractIMCommand {
 
         spyCommand.preferencesStorage.setAccountId("testAccountId");
 
-        JacksonRepresentation<UserCredentials> testCredentialsRep = spyCommand.getCredentialsRep();
-        UserCredentials testCreadentials = testCredentialsRep.getObject();
+        UserCredentials credentials = spyCommand.getCredentials();
 
-        assertEquals(testCreadentials.getToken(), TEST_TOKEN);
-        assertEquals(testCreadentials.getAccountId(), "testAccountId");
+        assertEquals(credentials.getToken(), TEST_TOKEN);
+        assertEquals(credentials.getAccountId(), "testAccountId");
     }
 
     @Test

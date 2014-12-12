@@ -21,7 +21,6 @@ package com.codenvy.im.update;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.user.UserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
@@ -230,8 +229,12 @@ public class RepositoryService {
                              @PathParam("accountId") final String accountId) {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
-            UserCredentials userCredentials = new UserCredentials(userManager.getCurrentUser().getToken(), accountId);
-            if (requiredSubscription != null && !isValidSubscription(transport, apiEndpoint, requiredSubscription, userCredentials)) {
+            String accessToken = userManager.getCurrentUser().getToken();
+            if (requiredSubscription != null && !isValidSubscription(transport,
+                                                                     apiEndpoint,
+                                                                     requiredSubscription,
+                                                                     accessToken,
+                                                                     accountId)) {
 
                 return Response.status(Response.Status.FORBIDDEN)
                                .entity("You do not have a valid subscription. You are not permitted to download '" + artifact +

@@ -21,13 +21,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>im-parent</artifactId>
+        <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>update-server-packaging-war</artifactId>
     <packaging>war</packaging>
-    <name>Codenvy :: IM :: Update Server</name>
+    <name>Codenvy :: IM :: Update Server War Assembly</name>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.commons</groupId>
@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>com.codenvy.im</groupId>
-            <artifactId>installation-manager-commons</artifactId>
+            <artifactId>installation-manager-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -148,7 +148,7 @@
                                 </goals>
                                 <configuration>
                                     <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                                    <includeArtifactIds>installation-manager-commons</includeArtifactIds>
+                                    <includeArtifactIds>installation-manager-core</includeArtifactIds>
                                     <includeGroupIds>${project.groupId}</includeGroupIds>
                                     <excludeTransitive>true</excludeTransitive>
                                 </configuration>

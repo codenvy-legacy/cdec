@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    CODENVY CONFIDENTIAL
+    __________________
+
+     [2012] - [2014] Codenvy, S.A.
+     All Rights Reserved.
+
+    NOTICE:  All information contained herein is, and remains
+    the property of Codenvy S.A. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to Codenvy S.A.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+    Dissemination of this information or reproduction of this material
+    is strictly forbidden unless prior written permission is obtained
+    from Codenvy S.A..
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>codenvy-im</artifactId>
+        <groupId>com.codenvy.im</groupId>
+        <version>3.2.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>installation-manager-cli-assembly</artifactId>
+    <name>Codenvy :: IM :: Installation Manager Assembly</name>
+    <dependencies>
+        <dependency>
+            <groupId>com.codenvy.cli</groupId>
+            <artifactId>cli-assembly</artifactId>
+            <version>${codenvy.cli.version}</version>
+            <type>zip</type>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.im</groupId>
+            <artifactId>installation-manager-cli-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.im</groupId>
+            <artifactId>installation-manager-cli-features</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+    </dependencies>
+    <build>
+        <finalName>installation-manager-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies-jar</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>jar</includeTypes>
+                            <outputDirectory>${project.build.directory}/packager-conf/jar</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-dependencies-xml</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>xml</includeTypes>
+                            <outputDirectory>${project.build.directory}/packager-conf/xml</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-dependencies-zip</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>zip</includeTypes>
+                            <outputDirectory>${project.build.directory}/packager-conf/zip</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>bundle</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <unzip dest="${project.build.directory}/" src="${project.build.directory}/packager-conf/zip/cli-assembly-${codenvy.cli.version}.zip" />
+                                <replace dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin">
+                                    <include name="*" />
+                                    <exclude name="*.bat" />
+                                    <replacetoken>#!/bin/sh</replacetoken>
+                                    <replacevalue>#!/bin/bash</replacevalue>
+                                </replace>
+                                <replace dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin">
+                                    <include name="*" />
+                                    <replacetoken>#!/bin/bash</replacetoken>
+                                    <replacevalue>#!/bin/bash
+JAVA_HOME=$HOME/codenvy-im/jre</replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
+                                    <replacetoken>main "$@"</replacetoken>
+                                    <replacevalue>if [ -f "/home/codenvy-shared/codenvy-cli-update-script.sh" ]; then
+    echo "Installation Manager CLI is being updated ..."
+    SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
+    CURRENT_DIR=$(pwd)
+    cd ~
+    bash -c "$(cat /home/codenvy-shared/codenvy-cli-update-script.sh)"
+    cd ${CURRENT_DIR}
+fi
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
+main "$@"
+</replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
+                                    <replacetoken>main "$@"</replacetoken>
+                                    <replacevalue>if [ -f "/home/codenvy-shared/codenvy-cli-update-script.sh" ]; then
+    echo "Installation Manager CLI is being updated ..."
+    SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
+    CURRENT_DIR=$(pwd)
+    cd ~
+    bash -c "$(cat /home/codenvy-shared/codenvy-cli-update-script.sh)"
+    cd ${CURRENT_DIR}
+fi
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
+main "$@"
+fi</replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
+                                    <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
+                                    <replacevalue><![CDATA[featuresBoot=installation-manager-cli-features,]]></replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
+                                    <replacetoken><![CDATA[featuresRepositories=]]></replacetoken>
+                                    <replacevalue>
+                                        <![CDATA[featuresRepositories=mvn:com.com.codenvy.im.service.codenvy.im/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.repos.cfg">
+                                    <replacetoken><![CDATA[cellar       =]]></replacetoken>
+                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.com.codenvy.im.service.codenvy.im:installation-manager-cli-feature:xml:features(0,]
+cellar       =]]></replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/config.properties">
+                                    <replacetoken>karaf.delay.console=false</replacetoken>
+                                    <replacevalue>karaf.delay.console=true</replacevalue>
+                                </replace>
+                                <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-bundle/${project.version}/installation-manager-cli-bundle-${project.version}.jar" />
+                                <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptor>src/main/assemblies/assembly.xml</descriptor>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

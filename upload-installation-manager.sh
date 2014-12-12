@@ -20,48 +20,24 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
     SSH_AS_USER_NAME=codenvy
     AS_IP=update.codenvycorp.com
-    echo "Uploading on production"
+    echo "=========> Uploading on production"
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
     SSH_KEY_NAME=git_nopass.key # TODO [AB]
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
-    echo "Uploading on staging"
+    echo "=========> Uploading on staging"
 else
     echo "Unknown server destination"
     exit 1
 fi
 
-makeBundle() {
-    IM=installation-manager
-    IM_CLI=installation-manager-cli
+uploadArtifactInstallationManager() {
+    ARTIFACT=installation-manager
 
-    IM_FILENAME=`ls ${IM}/target | grep -G ${IM}-.*-binary[.]tar.gz`
-    IM_SOURCE=${IM}/target/${IM_FILENAME}
-
-    IM_CLI_FILENAME=`ls ${IM_CLI}/target | grep -G ${IM_CLI}-.*-binary[.]tar.gz`
-    IM_CLI_SOURCE=${IM_CLI}/target/${IM_CLI_FILENAME}
-
-    BUNDLE_DIR=${IM}/target/im_and_im_cli
-    rm -rf ${BUNDLE_DIR}
-    mkdir ${BUNDLE_DIR}
-
-    cp ${IM_SOURCE} ${BUNDLE_DIR}
-    cp ${IM_CLI_SOURCE} ${BUNDLE_DIR}
-
-    pushd ${BUNDLE_DIR}
-    tar -zcf ../${IM_FILENAME} *
-    popd
-
-    rm -rf ${BUNDLE_DIR}
-}
-
-uploadArtifact() {
-    ARTIFACT=$1
-
-    FILENAME=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*-binary[.]tar.gz`
-    VERSION=`ls ${ARTIFACT}/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
-    SOURCE=${ARTIFACT}/target/${FILENAME}
+    FILENAME=`ls ${ARTIFACT}-cli-assembly/target | grep -G ${ARTIFACT}-.*-binary[.]tar.gz`
+    VERSION=`ls ${ARTIFACT}-cli-assembly/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
+    SOURCE=${ARTIFACT}-cli-assembly/target/${FILENAME}
     MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
     SIZE=`du -b ${SOURCE} | cut -f1`
 
@@ -108,11 +84,7 @@ doUpload() {
     rm .properties
 }
 
-makeBundle
-
-uploadArtifact installation-manager
-uploadArtifact installation-manager-cli
-
+uploadArtifactInstallationManager
 uploadCodenvySingleServerInstallScript 3.1.0
 uploadCodenvySingleServerInstallProperties 3.1.0
 

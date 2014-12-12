@@ -20,8 +20,9 @@ package com.codenvy.im.cli.command;
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
-import com.codenvy.im.restlet.InstallationManagerService;
+import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.utils.Commons;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -47,7 +48,7 @@ public class TestLoginCommand {
             "{\"name\":\"" + TEST_USER_ACCOUNT_NAME + "\",\"id\":\"" + TEST_USER_ACCOUNT_ID + "\",\"links\":[]}";
     private static final String TEST_USER_PASSWORD          = "testUserPassword";
     private static final String TEST_USER                   = "testUser";
-    private final static String UPDATE_SERVER_URL           = "http://codenvy-stg.com/update";
+    private final static String UPDATE_SERVER_URL           = "http://codenvy-stg.com";
     private final static String UPDATE_SERVER_REMOTE_NAME   = "update-server";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
@@ -57,7 +58,7 @@ public class TestLoginCommand {
     private TestedLoginCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerService service;
     @Mock
     private PreferencesStorage         mockPreferencesStorage;
     @Mock
@@ -69,12 +70,12 @@ public class TestLoginCommand {
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
-        doReturn(UPDATE_SERVER_URL).when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+        doReturn(UPDATE_SERVER_URL).when(service).getUpdateServerEndpoint();
 
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
 
         spyCommand = spy(new TestedLoginCommand());
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = service;
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
         doNothing().when(spyCommand).init();
@@ -173,7 +174,7 @@ public class TestLoginCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+            .when(service).getUpdateServerEndpoint();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -218,7 +219,7 @@ public class TestLoginCommand {
         String expectedOutput = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
                                 + "please retry a bit later.";
         doThrow(new ResourceException(new ConnectException()))
-            .when(mockInstallationManagerProxy).getUpdateServerEndpoint();
+            .when(service).getUpdateServerEndpoint();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

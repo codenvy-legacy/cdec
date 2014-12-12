@@ -23,22 +23,20 @@
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>com.codenvy</groupId>
-        <version>1.8.20-SNAPSHOT</version>
+        <version>1.9.0</version>
         <relativePath />
     </parent>
     <groupId>com.codenvy.im</groupId>
-    <artifactId>im-parent</artifactId>
+    <artifactId>codenvy-im</artifactId>
     <version>3.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Codenvy :: IM :: Parent</name>
+    <name>Codenvy :: IM</name>
     <modules>
         <module>update-server-packaging-tomcat</module>
         <module>update-server-packaging-war</module>
-        <module>installation-manager-commons</module>
-        <module>installation-manager</module>
+        <module>installation-manager-core</module>
         <module>installation-manager-resources</module>
-        <module>installation-manager-restlet</module>
-        <module>installation-manager-cli</module>
+        <module>installation-manager-cli-assembly</module>
         <module>installation-manager-cli-bundle</module>
         <module>installation-manager-cli-features</module>
     </modules>

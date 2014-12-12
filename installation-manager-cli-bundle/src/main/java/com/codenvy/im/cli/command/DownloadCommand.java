@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
@@ -28,9 +29,6 @@ import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
-import org.restlet.ext.jackson.JacksonRepresentation;
-
-import java.util.UUID;
 
 import static java.lang.Thread.sleep;
 
@@ -79,16 +77,8 @@ public class DownloadCommand extends AbstractIMCommand {
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {
         printLn("Downloading might take several minutes depending on your internet connection. Please wait.");
 
-        final String downloadDescriptorId = generateDownloadDescriptorId();
-
-        String startResponse;
-        if (artifactName != null && version != null) {
-            startResponse = installationManagerProxy.startDownload(artifactName, version, downloadDescriptorId, getCredentialsRep());
-        } else if (artifactName != null) {
-            startResponse = installationManagerProxy.startDownload(artifactName, downloadDescriptorId, getCredentialsRep());
-        } else {
-            startResponse = installationManagerProxy.startDownload(downloadDescriptorId, getCredentialsRep());
-        }
+        Request request = initRequest(artifactName, version);
+        String startResponse = service.startDownload(request);
 
         Response responseObj = Response.fromJson(startResponse);
         if (responseObj.getStatus() != ResponseCode.OK) {
@@ -99,7 +89,7 @@ public class DownloadCommand extends AbstractIMCommand {
         boolean isCanceled = false;
 
         for (; ; ) {
-            String response = installationManagerProxy.downloadStatus(downloadDescriptorId);
+            String response = service.getDownloadStatus();
             if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
                 cleanCurrentLine();
                 printErrorAndExitIfNotInteractive(response);
@@ -115,7 +105,7 @@ public class DownloadCommand extends AbstractIMCommand {
             try {
                 sleep(1000);
             } catch (InterruptedException ie) {
-                installationManagerProxy.stopDownload(downloadDescriptorId);
+                service.stopDownload();
                 cleanLineAbove();
                 isCanceled = true;
             }
@@ -134,20 +124,13 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
+        Request request = initRequest(artifactName, version);
+        printResponse(service.getUpdates(request));
     }
 
     private void doList() throws JsonParseException {
-        JacksonRepresentation<Request> requestRep = new Request()
-                .setArtifactName(artifactName)
-                .setVersion(version)
-                .setUserCredentials(getCredentials())
-                .toRepresentation();
-
-        printResponse(installationManagerProxy.getDownloads(requestRep));
+        Request request = initRequest(artifactName, version);
+        printResponse(service.getDownloads(request));
     }
 
-    protected String generateDownloadDescriptorId() {
-        return UUID.randomUUID().toString();
-    }
 }

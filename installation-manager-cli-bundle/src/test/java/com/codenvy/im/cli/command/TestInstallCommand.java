@@ -20,15 +20,16 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.config.ConfigFactory;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.restlet.InstallationManagerService;
-import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -51,8 +52,8 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
-    private InstallationManagerService mockInstallationManagerProxy;
-    private ConfigFactory configFactory;
+    private InstallationManagerService service;
+    private ConfigFactory              configFactory;
     private CommandSession             commandSession;
 
     private UserCredentials userCredentials;
@@ -67,14 +68,14 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws Exception {
-        mockInstallationManagerProxy = mock(InstallationManagerService.class);
+        service = mock(InstallationManagerService.class);
         configFactory = mock(ConfigFactory.class);
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-            .when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+                .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new TestedInstallCommand(configFactory));
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = service;
 
         performBaseMocks(spyCommand);
 
@@ -97,7 +98,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "  \"status\" : \"OK\"\n" +
                                       "}\n";
 
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
+        doReturn(okServiceResponse).when(service).install(any(InstallOptions.class), any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -123,7 +124,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "  \"status\" : \"OK\"\n" +
                                       "}\n";
 
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
+        doReturn(okServiceResponse).when(service).install(any(InstallOptions.class), any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -139,11 +140,11 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
         doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
         final String serviceErrorResponse = "{\n"
-                                      + "  \"message\" : \"Artifact 'any' not found\",\n"
-                                      + "  \"status\" : \"ERROR\"\n"
-                                      + "}";
+                                            + "  \"message\" : \"Artifact 'any' not found\",\n"
+                                            + "  \"status\" : \"ERROR\"\n"
+                                            + "}";
 
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+        doReturn(serviceErrorResponse).when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", "any");
@@ -168,14 +169,14 @@ public class TestInstallCommand extends AbstractTestCommand {
         doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
         doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
         final String expectedOutput = "step 1 [FAIL]\n" +
-                                "{\n"
-                                + "  \"message\" : \"step failed\",\n"
-                                + "  \"status\" : \"ERROR\"\n"
-                                + "}";
+                                      "{\n"
+                                      + "  \"message\" : \"step failed\",\n"
+                                      + "  \"status\" : \"ERROR\"\n"
+                                      + "}";
         doReturn("{\n"
                  + "  \"message\" : \"step failed\",\n"
                  + "  \"status\" : \"ERROR\"\n"
-                 + "}").when(mockInstallationManagerProxy).install(any(JacksonRepresentation.class));
+                 + "}").when(service).install(any(InstallOptions.class), any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -190,10 +191,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
         doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
         final String expectedOutput = "{\n"
-                                + "  \"message\" : \"Property is missed\",\n"
-                                + "  \"status\" : \"ERROR\"\n"
-                                + "}";
-        doReturn(expectedOutput).when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+                                      + "  \"message\" : \"Property is missed\",\n"
+                                      + "  \"status\" : \"ERROR\"\n"
+                                      + "}";
+        doReturn(expectedOutput).when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -206,7 +207,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListOption() throws Exception {
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).getVersions(new JacksonRepresentation<>(userCredentials));
+        doReturn(okServiceResponse).when(service).getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -227,8 +228,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testListOptionWhenServiceError() throws Exception {
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(mockInstallationManagerProxy)
-                .getVersions(new JacksonRepresentation<>(userCredentials));
+                .when(service)
+                .getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -245,10 +246,10 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testEnterInstallOptions() throws Exception {
         // some basic loaded configuration
         doReturn(ImmutableMap.of(
-            "mongo_admin_password", "mongoPassword",
-            "mongo_user_password", "mongoUserPassword",
-            "mongo_orgservice_user_password", "mongoOrgServiceUserPassword"
-        )).when(configFactory).loadConfigProperties(anyString());
+                "mongo_admin_password", "mongoPassword",
+                "mongo_user_password", "mongoUserPassword",
+                "mongo_orgservice_user_password", "mongoOrgServiceUserPassword"
+                                )).when(configFactory).loadConfigProperties(anyString());
 
         // user always enter "some value" as property value
         doAnswer(new Answer() {
@@ -261,7 +262,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand).readLine();
 
         // no installation info provided
-        doReturn("{\"infos\":[]}").when(mockInstallationManagerProxy).getInstallInfo(any(JacksonRepresentation.class));
+        doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
 
         // first reply [n], then reply [y]
         doAnswer(new Answer() {
@@ -458,7 +459,8 @@ public class TestInstallCommand extends AbstractTestCommand {
             super(configFactory);
         }
 
-        @Override protected void printProgress(String message) {
+        @Override
+        protected void printProgress(String message) {
             // disable progressor
         }
     }

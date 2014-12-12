@@ -17,12 +17,13 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.restlet.InstallationManagerService;
+
+import com.codenvy.im.service.InstallationManagerConfig;
+import com.codenvy.im.service.InstallationManagerService;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.ext.jackson.JacksonRepresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -38,7 +39,7 @@ public class TestConfigCommand {
     private String okStatus = "{\"status\": \"OK\"}";
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerService service;
     @Mock
     private CommandSession             commandSession;
 
@@ -47,7 +48,7 @@ public class TestConfigCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new ConfigCommand());
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = service;
 
         doNothing().when(spyCommand).init();
         doReturn(true).when(spyCommand).isInteractive();
@@ -55,7 +56,7 @@ public class TestConfigCommand {
 
     @Test
     public void testSetConfig() throws Exception {
-        doReturn(okStatus).when(mockInstallationManagerProxy).setConfig(any(JacksonRepresentation.class));
+        doReturn(okStatus).when(service).setConfig(any(InstallationManagerConfig.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--download-dir", "test");
@@ -67,7 +68,7 @@ public class TestConfigCommand {
 
     @Test
     public void testGetConfig() throws Exception {
-        doReturn(okStatus).when(mockInstallationManagerProxy).getConfig();
+        doReturn(okStatus).when(service).getConfig();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

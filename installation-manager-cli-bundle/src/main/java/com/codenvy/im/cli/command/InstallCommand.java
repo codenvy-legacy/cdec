@@ -31,12 +31,10 @@ import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
-import org.restlet.ext.jackson.JacksonRepresentation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -113,8 +111,9 @@ public class InstallCommand extends AbstractIMCommand {
             printErrorAndExitIfNotInteractive("Argument 'artifact' is required.");
             return null;
         }
+        final Request request = initRequest(artifactName, version);
 
-        InstallOptions installOptions = new InstallOptions();
+        final InstallOptions installOptions = new InstallOptions();
         setOptionsFromConfig(installOptions);
 
         if (!installOptions.checkValid()) {
@@ -122,7 +121,7 @@ public class InstallCommand extends AbstractIMCommand {
             confirmOrReenterInstallOptions(installOptions);
         }
 
-        String response = installationManagerProxy.getInstallInfo(prepareRequest(installOptions));
+        String response = service.getInstallInfo(installOptions, request);
         Response responseObj = Response.fromJson(response);
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
@@ -143,7 +142,7 @@ public class InstallCommand extends AbstractIMCommand {
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
             print(info);
-            print(StringUtils.repeat(" ", maxInfoLen - info.length()), true);
+            print(new String(new char[maxInfoLen - info.length()]).replace("\0", " "), true);
 
             ShowProgress showProgress = new ShowProgress();
             showProgress.start();
@@ -151,7 +150,7 @@ public class InstallCommand extends AbstractIMCommand {
             try {
                 installOptions.setStep(step);
 
-                response = installationManagerProxy.install(prepareRequest(installOptions));
+                response = service.install(installOptions, request);
                 responseObj = Response.fromJson(response);
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
@@ -179,7 +178,7 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
-        String response = installationManagerProxy.getVersions(getCredentialsRep());
+        String response = service.getInstalledVersions(initRequest(artifactName, version));
         printResponse(insertClientVersionInfo(response));
         return null;
     }
@@ -215,14 +214,6 @@ public class InstallCommand extends AbstractIMCommand {
                 throw new IOException(this.getClass().getSimpleName());
             }
         }
-    }
-
-    private JacksonRepresentation<Request> prepareRequest(InstallOptions installOptions) {
-        return new Request().setArtifactName(artifactName)
-                            .setVersion(version)
-                            .setUserCredentials(getCredentials())
-                            .setInstallOptions(installOptions)
-                            .toRepresentation();
     }
 
     protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {

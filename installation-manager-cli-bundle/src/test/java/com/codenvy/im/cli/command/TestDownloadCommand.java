@@ -19,21 +19,20 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.restlet.InstallationManagerService;
-import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.service.UserCredentials;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
@@ -41,32 +40,31 @@ public class TestDownloadCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerService service;
     @Mock
     private CommandSession             commandSession;
 
     private UserCredentials testCredentials = new UserCredentials("token", "accountId");
-    private JacksonRepresentation<UserCredentials> userCredentialsRep;
-    private String okResponse                   = "{\n" +
-                                                  "  \"status\" : \"OK\"\n" +
-                                                  "}";
+    private String          okResponse      = "{\n" +
+                                              "  \"status\" : \"OK\"\n" +
+                                              "}";
 
-    private String ok100DownloadStatusResponse  = "{\n" +
-                                                  "  \"downloadInfo\" : {\n" +
-                                                  "     \"downloadResult\" : {\n" +
-                                                  "       \"artifacts\" :[ {\n" +
-                                                  "         \"artifact\" :\"cdec\",\n" +
-                                                  "         \"version\" : \"3.0.0\",\n" +
-                                                  "         \"file\" :\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
-                                                  "         \"status\" :\"SUCCESS\"\n" +
-                                                  "       } ],\n" +
-                                                  "       \"status\" :\"OK\"\n" +
-                                                  "    },\n" +
-                                                  "    \"percents\" : 100,\n" +
-                                                  "    \"status\" : \"DOWNLOADED\"\n" +
-                                                  "  },\n" +
-                                                  "  \"status\" : \"OK\"\n" +
-                                                  "}";
+    private String ok100DownloadStatusResponse = "{\n" +
+                                                 "  \"downloadInfo\" : {\n" +
+                                                 "     \"downloadResult\" : {\n" +
+                                                 "       \"artifacts\" :[ {\n" +
+                                                 "         \"artifact\" :\"cdec\",\n" +
+                                                 "         \"version\" : \"3.0.0\",\n" +
+                                                 "         \"file\" :\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
+                                                 "         \"status\" :\"SUCCESS\"\n" +
+                                                 "       } ],\n" +
+                                                 "       \"status\" :\"OK\"\n" +
+                                                 "    },\n" +
+                                                 "    \"percents\" : 100,\n" +
+                                                 "    \"status\" : \"DOWNLOADED\"\n" +
+                                                 "  },\n" +
+                                                 "  \"status\" : \"OK\"\n" +
+                                                 "}";
 
     private String ok100DownloadCommandResponse = "{\n" +
                                                   "  \"artifacts\" : [ {\n" +
@@ -83,20 +81,18 @@ public class TestDownloadCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new DownloadCommand());
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = service;
 
         performBaseMocks(spyCommand);
 
-        userCredentialsRep = new JacksonRepresentation<>(testCredentials);
-        doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
         doReturn(testCredentials).when(spyCommand).getCredentials();
     }
 
     @Test
     public void testDownload() throws Exception {
-        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id1");
-        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload("id1", userCredentialsRep);
-        doReturn(ok100DownloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id1");
+        Request request = new Request().setUserCredentials(testCredentials);
+        doReturn(okResponse).when(service).startDownload(request);
+        doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -109,9 +105,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testDownloadArtifact() throws Exception {
-        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id2");
-        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload(CDECArtifact.NAME, "id2", userCredentialsRep);
-        doReturn(ok100DownloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id2");
+        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
+        doReturn(okResponse).when(service).startDownload(request);
+        doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -125,9 +121,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testDownloadArtifactVersion() throws Exception {
-        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id3");
-        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload(CDECArtifact.NAME, "3.0.0", "id3", userCredentialsRep);
-        doReturn(ok100DownloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id3");
+        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("3.0.0");
+        doReturn(okResponse).when(service).startDownload(request);
+        doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -168,9 +164,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                       "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
                                       "  \"status\" : \"ERROR\"\n" +
                                       "}";
-        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id4");
-        doReturn(okResponse).when(mockInstallationManagerProxy).startDownload("id4", userCredentialsRep);
-        doReturn(downloadStatusResponse).when(mockInstallationManagerProxy).downloadStatus("id4");
+        Request request = new Request().setUserCredentials(testCredentials);
+        doReturn(okResponse).when(service).startDownload(request);
+        doReturn(downloadStatusResponse).when(service).getDownloadStatus();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -187,9 +183,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        when(((DownloadCommand)spyCommand).generateDownloadDescriptorId()).thenReturn("id5");
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(mockInstallationManagerProxy).startDownload("id5", userCredentialsRep);
+                .when(service).startDownload(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -200,7 +195,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdates() throws Exception {
-        doReturn(okResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+        Request request = new Request().setUserCredentials(testCredentials);
+        doReturn(okResponse).when(service).getUpdates(request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
@@ -216,7 +212,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                       + "\"message\": \"Some error\","
                                       + "\"status\": \"ERROR\""
                                       + "}";
-        doReturn(serviceErrorResponse).when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+        Request request = new Request().setUserCredentials(testCredentials);
+        doReturn(serviceErrorResponse).when(service).getUpdates(request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
@@ -233,7 +230,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(mockInstallationManagerProxy).getUpdates(userCredentialsRep);
+                .when(service).getUpdates(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
@@ -249,11 +246,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
                           + "  \"status\": \"OK\"\n"
                           + "}";
 
-        JacksonRepresentation<Request> requestRep = new Request()
-            .setUserCredentials(testCredentials)
-            .toRepresentation();
-
-        doReturn(ok).when(mockInstallationManagerProxy).getDownloads(requestRep);
+        Request request = new Request().setUserCredentials(testCredentials);
+        doReturn(ok).when(service).getDownloads(request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);

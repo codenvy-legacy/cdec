@@ -28,16 +28,13 @@ import com.codenvy.client.Codenvy;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.restlet.InstallationManagerService;
-import com.codenvy.im.restlet.RestletClientFactory;
-import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.service.UserCredentials;
 
 import org.fusesource.jansi.Ansi;
-import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.ext.jaxrs.internal.exceptions.IllegalPathException;
-import org.restlet.ext.jaxrs.internal.exceptions.MissingAnnotationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,11 +42,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
+import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -58,17 +58,13 @@ import static org.fusesource.jansi.Ansi.ansi;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    protected InstallationManagerService installationManagerProxy;
+    protected InstallationManagerService service;
     protected PreferencesStorage         preferencesStorage;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
 
     public AbstractIMCommand() {
-        try {
-            installationManagerProxy = RestletClientFactory.createServiceProxy(InstallationManagerService.class);
-        } catch (MissingAnnotationException | IllegalPathException e) {
-            throw new IllegalStateException("Can't initialize proxy service", e);
-        }
+        service = INJECTOR.getInstance(InstallationManagerService.class);
     }
 
     @Override
@@ -255,13 +251,22 @@ public abstract class AbstractIMCommand extends AbsCommand {
         session.getKeyboard().read();
     }
 
+//    protected String extractUrl(String )
+
     /**
      * Find out remote for update server.
      * Creates new one with default name if there is no such remote stored in preferences.
      */
     @Nonnull
     protected String getOrCreateRemoteNameForUpdateServer() {
-        String updateServerUrl = getUpdateServerUrl();
+        URL url;
+        try {
+            url = new URL(getUpdateServerEndpoint());
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
+        String updateServerUrl = url.getProtocol() + "://" + url.getHost();
+
         String remoteName = getRemoteNameByUrl(updateServerUrl);
 
         if (remoteName == null) {
@@ -272,24 +277,17 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return remoteName;
     }
 
-    protected String getUpdateServerUrl() {
-        return installationManagerProxy.getUpdateServerEndpoint();
+    protected String getUpdateServerEndpoint() {
+        return service.getUpdateServerEndpoint();
     }
 
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
-        String json;
-        if (accountName == null) {
-            json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(getCredentialsRep());
-        } else {
-            json = installationManagerProxy.getAccountReferenceWhereUserIsOwner(accountName, getCredentialsRep());
-        }
+        Request request = new Request().setUserCredentials(getCredentials());
+        String json = service.getAccountReferenceWhereUserIsOwner(accountName, request);
         return json == null ? null : createDtoFromJson(json, AccountReference.class);
     }
 
-    protected JacksonRepresentation<UserCredentials> getCredentialsRep() {
-        return new JacksonRepresentation<>(getCredentials());
-    }
 
     protected UserCredentials getCredentials() {
         return new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
@@ -355,5 +353,16 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected boolean isInteractive() {
         return super.isInteractive();
+    }
+
+    protected Request initRequest(String artifactName, String version) {
+        return new Request()
+                .setArtifactName(artifactName)
+                .setVersion(version)
+                .setUserCredentials(getCredentials());
+    }
+
+    protected Request initRequest() {
+        return new Request().setUserCredentials(getCredentials());
     }
 }

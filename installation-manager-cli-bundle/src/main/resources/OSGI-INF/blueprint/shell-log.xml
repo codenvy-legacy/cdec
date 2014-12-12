@@ -21,22 +21,22 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.1.0">
         <command>
-            <action class="com.codenvy.im.cli.command.InstallCommand"/>
+            <action class="com.com.codenvy.im.service.codenvy.im.cli.command.InstallCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.DownloadCommand"/>
+            <action class="com.com.codenvy.im.service.codenvy.im.cli.command.DownloadCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.LoginCommand"/>
+            <action class="com.com.codenvy.im.service.codenvy.im.cli.command.LoginCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.SubscriptionCommand"/>
+            <action class="com.com.codenvy.im.service.codenvy.im.cli.command.SubscriptionCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.ConfigCommand"/>
+            <action class="com.com.codenvy.im.service.codenvy.im.cli.command.ConfigCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.HelpCommand"/>
+            <action class="com.com.codenvy.im.service.codenvy.im.cli.command.HelpCommand"/>
         </command>
     </command-bundle>
 </blueprint>

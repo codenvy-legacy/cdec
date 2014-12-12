@@ -17,13 +17,13 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.restlet.InstallationManagerService;
-import com.codenvy.im.user.UserCredentials;
+import com.codenvy.im.request.Request;
+import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.service.UserCredentials;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -45,22 +45,22 @@ public class TestSubscriptionCommand {
     @Mock
     private CommandSession             commandSession;
 
-    private UserCredentials                        credentials;
-    private JacksonRepresentation<UserCredentials> userCredentialsRep;
+    private UserCredentials credentials;
+    private Request         request;
 
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new SubscriptionCommand());
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = mockInstallationManagerProxy;
 
         doNothing().when(spyCommand).init();
         doReturn(true).when(spyCommand).isInteractive();
 
         credentials = new UserCredentials("token", "accountId");
-        userCredentialsRep = new JacksonRepresentation<>(credentials);
-        doReturn(userCredentialsRep).when(spyCommand).getCredentialsRep();
+        request = new Request().setUserCredentials(credentials);
+        doReturn(credentials).when(spyCommand).getCredentials();
     }
 
     @Test
@@ -70,8 +70,7 @@ public class TestSubscriptionCommand {
                                    + "  \"status\" : \"OK\",\n"
                                    + "  \"subscription\" : \"OnPremises\"\n"
                                    + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SubscriptionCommand.DEFAULT_SUBSCRIPTION,
-                                                                                         userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SubscriptionCommand.DEFAULT_SUBSCRIPTION, request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -87,7 +86,7 @@ public class TestSubscriptionCommand {
                                    + "  \"status\" : \"OK\",\n"
                                    + "  \"subscription\": \"AnotherSubscription\"\n"
                                    + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription("AnotherSubscription", userCredentialsRep);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription("AnotherSubscription", request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check", "AnotherSubscription");
@@ -104,7 +103,7 @@ public class TestSubscriptionCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(userCredentialsRep));
+                .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(request));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

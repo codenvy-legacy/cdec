@@ -18,7 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-import com.codenvy.im.restlet.InstallationManagerService;
+import com.codenvy.im.service.InstallationManagerService;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -35,7 +35,7 @@ public class TestHelpCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerService service;
     @Mock
     private CommandSession             commandSession;
     @Mock
@@ -46,7 +46,7 @@ public class TestHelpCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new HelpCommand());
-        spyCommand.installationManagerProxy = mockInstallationManagerProxy;
+        spyCommand.service = service;
         doReturn(multiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
         doReturn("").when(multiRemoteCodenvy).listRemotes();
 
