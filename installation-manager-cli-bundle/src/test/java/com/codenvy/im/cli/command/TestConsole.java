@@ -94,6 +94,11 @@ public class TestConsole {
         spyConsole.printError(testErrorMessage);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + testErrorMessage + "\n\u001B[m");
         verify(spyConsole, never()).exit(1);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printError(testErrorMessage, true);
+        assertEquals(getOutputContent(), "\u001B[31m" + testErrorMessage + "\n\u001B[m");
+        verify(spyConsole, never()).exit(1);
     }
 
     @Test
@@ -166,6 +171,10 @@ public class TestConsole {
         spyConsole = createNonInteractiveConsole();
         spyConsole.print(testMessage);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testMessage);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.print(testMessage, true);
+        assertEquals(getOutputContent(), testMessage);
     }
 
     @Test
@@ -192,6 +201,10 @@ public class TestConsole {
         spyConsole = createNonInteractiveConsole();
         spyConsole.printSuccess(testMessage);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[32m" + testMessage + "\n\u001B[m");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.printSuccess(testMessage, true);
+        assertEquals(getOutputContent(), "\u001B[32m" + testMessage + "\n\u001B[m");
     }
 
     @Test

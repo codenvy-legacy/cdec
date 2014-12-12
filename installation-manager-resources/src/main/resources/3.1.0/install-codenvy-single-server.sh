@@ -68,6 +68,8 @@ installIm() {
 
     mkdir ${DIR}/codenvy-cli
     tar -xf ${IM_FILE} -C ${DIR}/codenvy-cli
+
+    sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/codenvy
 }
 
 askProperty() {
@@ -115,9 +117,10 @@ executeCliCommand() {
     [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
+# TODO
 executeWithSudoCliCommand() {
     if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
-    sudo ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
+    ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
 
     RETVAL=$?
     [ ${RETVAL} -ne 0 ] && exit ${RETVAL}

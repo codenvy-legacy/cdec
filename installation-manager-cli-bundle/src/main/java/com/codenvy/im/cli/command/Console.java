@@ -34,7 +34,8 @@ import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
 /** @author Dmytro Nochevnov */
-class Console {
+// TODO test new methods
+public class Console {
     public static final Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
     public static final Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
     public static final String CODENVY_PREFIX     = "[CODENVY] ";
@@ -48,7 +49,11 @@ class Console {
     }
 
     void printError(String message) {
-        print(ansi().fg(RED).a(message).newline().reset());
+        printError(message, false);
+    }
+
+    void printError(String message, boolean suppressCodenvyPrompt) {
+        print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
     void printProgress(int percents) {
@@ -76,11 +81,19 @@ class Console {
     }
 
     void print(String message) {
-        print((Object)message);
+        print((Object)message, false);
+    }
+
+    void print(String message, boolean suppressCodenvyPrompt) {
+        print((Object)message, suppressCodenvyPrompt);
     }
 
     void printSuccess(String message) {
-        print(ansi().fg(GREEN).a(message).newline().reset());
+        printSuccess(message, false);
+    }
+
+    void printSuccess(String message, boolean suppressCodenvyPrompt) {
+        print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
     /** @return "true" only if only user typed line equals "y". */
@@ -157,8 +170,8 @@ class Console {
         return bar.toString();
     }
 
-    private void print(Object o) {
-        if (!interactive) {
+    private void print(Object o, boolean suppressCodenvyPrompt) {
+        if (!interactive && !suppressCodenvyPrompt) {
             printCodenvyPrompt();
         }
 

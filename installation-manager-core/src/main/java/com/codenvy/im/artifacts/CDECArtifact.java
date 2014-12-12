@@ -224,7 +224,7 @@ public class CDECArtifact extends AbstractArtifact {
                                            "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                            "while [ \"${doneState}\" != \"Installed\" ]; do " +
                                            "    sleep 30; " +
-                                           "    if [ -f ${testFile} ]; then doneState=\"Installed\"; fi; " +
+                                           "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
                                            "done")),
                                         "Install Codenvy");
 
@@ -234,8 +234,9 @@ public class CDECArtifact extends AbstractArtifact {
                                            "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                            "while [ \"${doneState}\" != \"Booted\" ]; do " +
                                            "    sleep 30; " +
-                                           "    if grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; fi; " +
-                                           "    if grep -Fq \"Server startup\" ${testFile}; then doneState=\"Booted\"; fi; " +
+                                           "    if sudo grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; " +
+                                           "fi; " +
+                                           "    if sudo grep -Fq \"Server startup\" ${testFile}; then doneState=\"Booted\"; fi; " +
                                            "done")),
                                         "Boot Codenvy");
 

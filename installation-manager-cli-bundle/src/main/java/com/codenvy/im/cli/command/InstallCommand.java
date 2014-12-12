@@ -142,7 +142,7 @@ public class InstallCommand extends AbstractIMCommand {
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
             console.print(info);
-            console.print(new String(new char[maxInfoLen - info.length()]).replace("\0", " "));
+            console.print(new String(new char[maxInfoLen - info.length()]).replace("\0", " "), true);
 
             ShowProgress showProgress = new ShowProgress();
             showProgress.start();
@@ -154,11 +154,11 @@ public class InstallCommand extends AbstractIMCommand {
                 responseObj = Response.fromJson(response);
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
-                    console.printError(" [FAIL]");
+                    console.printError(" [FAIL]", true);
                     console.printErrorAndExit(response);
                     return null;
                 } else {
-                    console.printSuccess(" [OK]");
+                    console.printSuccess(" [OK]", true);
                 }
             } finally {
                 showProgress.interrupt();

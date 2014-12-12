@@ -108,12 +108,6 @@
                                     <replacetoken>#!/bin/sh</replacetoken>
                                     <replacevalue>#!/bin/bash</replacevalue>
                                 </replace>
-                                <replace dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin">
-                                    <include name="*" />
-                                    <replacetoken>#!/bin/bash</replacetoken>
-                                    <replacevalue>#!/bin/bash
-JAVA_HOME=$HOME/codenvy-im/jre</replacevalue>
-                                </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>if [ -f "/home/codenvy-shared/codenvy-cli-update-script.sh" ]; then
@@ -127,8 +121,8 @@ fi
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
-main "$@"
-</replacevalue>
+                                        main "$@"
+                                    </replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
                                     <replacetoken>main "$@"</replacetoken>
