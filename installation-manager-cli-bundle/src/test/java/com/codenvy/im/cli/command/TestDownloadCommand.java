@@ -30,6 +30,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
+import java.io.IOException;
+
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -77,13 +79,13 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                                   "}";
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new DownloadCommand());
         spyCommand.service = service;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
 
         doReturn(testCredentials).when(spyCommand).getCredentials();
     }
@@ -97,10 +99,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
-                             ok100DownloadCommandResponse + "\n");
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n"
+                             + ok100DownloadCommandResponse + "\n");
     }
 
     @Test
@@ -113,9 +114,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
                              ok100DownloadCommandResponse + "\n");
     }
 
@@ -130,9 +130,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         commandInvoker.argument("version", "3.0.0");
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[==================================================]   100%     \u001B[u\u001B[2K" +
                              ok100DownloadCommandResponse + "\n");
     }
 
@@ -171,9 +170,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             "\u001B[s[>                                                 ]   0%     \u001B[u\u001B[2K" +
                              serviceErrorResponse + "\n");
     }
 
@@ -219,7 +217,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         commandInvoker.option("--check-remote", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, serviceErrorResponse + "\n");
     }
 

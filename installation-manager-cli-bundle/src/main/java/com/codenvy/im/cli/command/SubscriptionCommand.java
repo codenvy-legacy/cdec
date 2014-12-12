@@ -39,9 +39,9 @@ public class SubscriptionCommand extends AbstractIMCommand {
             init();
 
             String subscription2check = subscription != null ? subscription : DEFAULT_SUBSCRIPTION;
-            printResponse(service.checkSubscription(subscription2check, initRequest()));
+            console.printResponse(service.checkSubscription(subscription2check, initRequest()));
         } catch (Exception e) {
-            printErrorAndExitIfNotInteractive(e);
+            console.printErrorAndExit(e);
         }
 
         return null;

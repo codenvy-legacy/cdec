@@ -66,7 +66,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 doDownload();
             }
         } catch (Exception e) {
-            printErrorAndExitIfNotInteractive(e);
+            console.printErrorAndExit(e);
         }
 
         return null;
@@ -75,14 +75,14 @@ public class DownloadCommand extends AbstractIMCommand {
     // TODO [AB] test interrupt
 
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {
-        printLn("Downloading might take several minutes depending on your internet connection. Please wait.");
+        console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
         Request request = initRequest(artifactName, version);
         String startResponse = service.startDownload(request);
 
         Response responseObj = Response.fromJson(startResponse);
         if (responseObj.getStatus() != ResponseCode.OK) {
-            printErrorAndExitIfNotInteractive(startResponse);
+            console.printErrorAndExit(startResponse);
             return;
         }
 
@@ -91,32 +91,32 @@ public class DownloadCommand extends AbstractIMCommand {
         for (; ; ) {
             String response = service.getDownloadStatus();
             if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
-                cleanCurrentLine();
-                printErrorAndExitIfNotInteractive(response);
+                console.cleanCurrentLine();
+                console.printErrorAndExit(response);
                 break;
             }
 
             DownloadStatusInfo downloadStatusInfo = Response.fromJson(response).getDownloadInfo();
 
             if (!isCanceled) {
-                printProgress(downloadStatusInfo.getPercents());
+                console.printProgress(downloadStatusInfo.getPercents());
             }
 
             try {
                 sleep(1000);
             } catch (InterruptedException ie) {
                 service.stopDownload();
-                cleanLineAbove();
+                console.cleanLineAbove();
                 isCanceled = true;
             }
 
             if (downloadStatusInfo.getStatus() == Status.DOWNLOADED || downloadStatusInfo.getStatus() == Status.FAILURE) {
-                cleanCurrentLine();
+                console.cleanCurrentLine();
                 String downloadResult = downloadStatusInfo.getDownloadResult().toJson();
                 if (downloadStatusInfo.getStatus() == Status.FAILURE) {
-                    printErrorAndExitIfNotInteractive(downloadResult);
+                    console.printErrorAndExit(downloadResult);
                 } else {
-                    printLn(downloadResult);
+                    console.println(downloadResult);
                 }
                 break;
             }
@@ -124,13 +124,20 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        Request request = initRequest(artifactName, version);
-        printResponse(service.getUpdates(request));
+        printResponse(installationManagerProxy.getUpdates(getCredentialsRep()));
     }
 
     private void doList() throws JsonParseException {
-        Request request = initRequest(artifactName, version);
-        printResponse(service.getDownloads(request));
+        JacksonRepresentation<Request> requestRep = new Request()
+                .setArtifactName(artifactName)
+                .setVersion(version)
+                .setUserCredentials(getCredentials())
+                .toRepresentation();
+
+        printResponse(installationManagerProxy.getDownloads(requestRep));
     }
 
+    protected String generateDownloadDescriptorId() {
+        return UUID.randomUUID().toString();
+    }
 }

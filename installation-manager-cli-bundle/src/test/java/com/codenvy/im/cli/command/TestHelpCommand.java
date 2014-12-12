@@ -26,6 +26,8 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertTrue;
@@ -42,7 +44,7 @@ public class TestHelpCommand extends AbstractTestCommand {
     private MultiRemoteCodenvy         multiRemoteCodenvy;
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new HelpCommand());
@@ -50,7 +52,7 @@ public class TestHelpCommand extends AbstractTestCommand {
         doReturn(multiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
         doReturn("").when(multiRemoteCodenvy).listRemotes();
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
     }
 
     @Test

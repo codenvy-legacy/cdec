@@ -55,6 +55,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallationManagerService service;
     private ConfigFactory              configFactory;
     private CommandSession             commandSession;
+    private Console spyConsole;
 
     private UserCredentials userCredentials;
     private String okServiceResponse = "{\n"
@@ -77,7 +78,8 @@ public class TestInstallCommand extends AbstractTestCommand {
         spyCommand = spy(new TestedInstallCommand(configFactory));
         spyCommand.service = service;
 
-        performBaseMocks(spyCommand);
+        performBaseMocks(spyCommand, true);
+        spyConsole = spyCommand.console;
 
         userCredentials = new UserCredentials("token", "accountId");
         doReturn(userCredentials).when(spyCommand).getCredentials();
@@ -255,11 +257,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                InstallCommand installCommand = (InstallCommand)invocationOnMock.getMock();
-                installCommand.print("some value\n");
+                spyCommand.console.print("some value\n");
                 return "some value";
             }
-        }).when(spyCommand).readLine();
+        }).when(spyCommand.console).readLine();
 
         // no installation info provided
         doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
@@ -268,18 +269,16 @@ public class TestInstallCommand extends AbstractTestCommand {
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                InstallCommand installCommand = (InstallCommand)invocationOnMock.getMock();
-                installCommand.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+                spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
                 return false;
             }
         }).doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                InstallCommand installCommand = (InstallCommand)invocationOnMock.getMock();
-                installCommand.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+                spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
                 return true;
             }
-        }).when(spyCommand).askUser(anyString());
+        }).when(spyCommand.console).askUser(anyString());
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -454,14 +453,4 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "{\"infos\":[]}\n");
     }
 
-    private class TestedInstallCommand extends InstallCommand {
-        private TestedInstallCommand(ConfigFactory configFactory) {
-            super(configFactory);
-        }
-
-        @Override
-        protected void printProgress(String message) {
-            // disable progressor
-        }
-    }
 }

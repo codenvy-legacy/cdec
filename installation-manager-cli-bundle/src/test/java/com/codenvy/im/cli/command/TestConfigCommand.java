@@ -27,6 +27,8 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -34,7 +36,7 @@ import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /** @author Anatoliy Bazko */
-public class TestConfigCommand {
+public class TestConfigCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
     private String okStatus = "{\"status\": \"OK\"}";
 
@@ -50,8 +52,7 @@ public class TestConfigCommand {
         spyCommand = spy(new ConfigCommand());
         spyCommand.service = service;
 
-        doNothing().when(spyCommand).init();
-        doReturn(true).when(spyCommand).isInteractive();
+        performBaseMocks(spyCommand, true);
     }
 
     @Test

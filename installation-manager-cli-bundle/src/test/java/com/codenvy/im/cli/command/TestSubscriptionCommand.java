@@ -28,16 +28,17 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /** @author Anatoliy Bazko */
-public class TestSubscriptionCommand {
+public class TestSubscriptionCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
@@ -49,14 +50,13 @@ public class TestSubscriptionCommand {
     private Request         request;
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new SubscriptionCommand());
         spyCommand.service = mockInstallationManagerProxy;
 
-        doNothing().when(spyCommand).init();
-        doReturn(true).when(spyCommand).isInteractive();
+        performBaseMocks(spyCommand, true);
 
         credentials = new UserCredentials("token", "accountId");
         request = new Request().setUserCredentials(credentials);

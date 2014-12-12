@@ -17,65 +17,31 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.response.Response;
+import java.io.IOException;
 
-import org.mockito.Matchers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-public class AbstractTestCommand {
-    protected void performBaseMocks(AbstractIMCommand spyCommand) {
+public abstract class AbstractTestCommand {
+    void performBaseMocks(AbstractIMCommand spyCommand, boolean interactive) throws IOException {
         doNothing().when(spyCommand).init();
-        doReturn(true).when(spyCommand).isInteractive();
+        doReturn(interactive).when(spyCommand).isInteractive();
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(spyCommand).printError(anyString());
+        spyCommand.console = getSpyConsole(interactive);
+        doNothing().when(spyCommand.console).exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
+    }
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
+    private Console getSpyConsole(boolean isInstallable) throws IOException {
+        return spy(new Console(isInstallable) {
+            @Override protected void printProgress(String message) {
+                // disable progressor
             }
-        }).when(spyCommand).printError(anyString(), anyBoolean());
-
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Exception ex = (Exception)invocationOnMock.getArguments()[0];
-                System.out.println(Response.valueOf(ex).toJson());
-                return null;
-            }
-        }).when(spyCommand).printError(Matchers.any(Exception.class));
-
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(spyCommand).printSuccess(anyString());
-
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                System.out.println(invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(spyCommand).printSuccess(anyString(), anyBoolean());
+        });
     }
 }

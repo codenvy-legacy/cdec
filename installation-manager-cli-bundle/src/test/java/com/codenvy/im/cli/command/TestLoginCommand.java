@@ -30,7 +30,7 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.net.ConnectException;
+import java.io.IOException;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -41,7 +41,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
-public class TestLoginCommand {
+public class TestLoginCommand extends AbstractTestCommand {
     private static final String TEST_USER_ACCOUNT_ID        = "testUserAccountId";
     private static final String TEST_USER_ACCOUNT_NAME      = "testUserAccountName";
     private static final String TEST_USER_ACCOUNT_REFERENCE =
@@ -67,7 +67,7 @@ public class TestLoginCommand {
     private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         doReturn(UPDATE_SERVER_URL).when(service).getUpdateServerEndpoint();
@@ -78,8 +78,8 @@ public class TestLoginCommand {
         spyCommand.service = service;
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
-        doNothing().when(spyCommand).init();
-        doReturn(true).when(spyCommand).isInteractive();
+        performBaseMocks(spyCommand, true);
+
         doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(UPDATE_SERVER_URL);
         doReturn(true).when(spyCommand).isRemoteForUpdateServer(UPDATE_SERVER_REMOTE_NAME);
         doReturn(false).when(spyCommand).isRemoteForUpdateServer(ANOTHER_REMOTE_NAME);

@@ -53,13 +53,13 @@ public class ConfigCommand extends AbstractIMCommand {
             }
 
             if (!config.checkEmptyConfig()) {
-                printResponse(service.setConfig(config));
+                console.printResponse(service.setConfig(config));
             } else {
-                printResponse(service.getConfig());
+                console.printResponse(service.getConfig());
             }
 
         } catch (Exception e) {
-            printErrorAndExitIfNotInteractive(e);
+            console.printErrorAndExit(e);
         }
 
         return null;
