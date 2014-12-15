@@ -85,8 +85,8 @@ public class TestInstallationManager {
         installManagerArtifact = spy(new InstallManagerArtifact());
         cdecArtifact = spy(new CDECArtifact(UPDATE_ENDPOINT, transport));
 
-        manager = spy(new InstallationManagerImpl("api/endpoint",
-                                                  UPDATE_ENDPOINT,
+        manager = spy(new InstallationManagerImpl(
+                UPDATE_ENDPOINT,
                                                   DOWNLOAD_DIR,
                                                   new HttpTransportConfiguration("", "0"),
                                                   transport,
@@ -176,9 +176,25 @@ public class TestInstallationManager {
         manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
-    public void testUpdateCdecErrorIfInstalledCdecHasGreaterVersion() throws Exception {
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
+    public void testInstallZeroInstallationStep() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setStep(0);
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version100, Paths.get("some path"));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+
+        doReturn(false).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+        doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
+
+        manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
+    }
+
+    @Test
+    public void testInstallNonZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
@@ -192,6 +208,8 @@ public class TestInstallationManager {
         doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
+
+        verify(installer).install(cdecArtifact, version100, Paths.get("some path"), options);
     }
 
     @Test

@@ -30,9 +30,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -70,8 +67,6 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
  */
 @Singleton
 public class InstallationManagerImpl implements InstallationManager {
-    private static final Logger LOG = LoggerFactory.getLogger(InstallationManager.class);
-
     private Path downloadDir; // not final, possibly to be configured
 
     private final HttpTransportConfiguration transportConf;
@@ -82,8 +77,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Set<Artifact> artifacts;
 
     @Inject
-    public InstallationManagerImpl(@Named("api.endpoint") String apiEndpoint,
-                                   @Named("installation-manager.update_server_endpoint") String updateEndpoint,
+    public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                                    @Named("installation-manager.download_dir") String downloadDir,
                                    HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
@@ -134,7 +128,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
             }
 
-            if (artifact.isInstallable(version, authToken)) {
+            if (options.getStep() != 0 || artifact.isInstallable(version, authToken)) {
                 installer.install(artifact, version, pathToBinaries, options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
@@ -180,10 +174,7 @@ public class InstallationManagerImpl implements InstallationManager {
             Path artifactDownloadDir = getDownloadDirectory(artifact, version);
             deleteDirectory(artifactDownloadDir.toFile());
 
-            Path file = transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
-            LOG.info("Downloaded '" + artifact + "' version " + version);
-
-            return file;
+            return transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
         } catch (IOException e) {
             throw getProperException(e, artifact);
         } catch (JsonParseException e) {

@@ -139,6 +139,38 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <?SORTPOM IGNORE?>
+                                <echo append="false"
+                                      file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor">
+                                    com.codenvy.api.account.server.dto.DtoServerImpls
+                                    com.codenvy.api.core.server.dto.DtoServerImpls
+                                </echo>
+                                <?SORTPOM RESUME?>
+                                <tstamp>
+                                    <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute"/>
+                                </tstamp>
+                                <touch datetime="${touch.time}">
+                                    <fileset file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor"/>
+                                </touch>
+                                <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
+                                    <zipfileset dir="${project.build.directory}/classes/META-INF/services/" prefix="META-INF/services"/>
+                                </jar>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>

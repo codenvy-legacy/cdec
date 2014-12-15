@@ -6,16 +6,13 @@ CONFIG="codenvy-single-server.properties"
 DIR="${HOME}/codenvy-im"
 
 installJava() {
-    # check if requered program had already installed earlier for current user
-    hash java 2>/dev/null || {
-        printPrompt; echo "Installing java"
-        wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jre-7u17-linux-x64.tar.gz' --output-document=jre.tar.gz
+    printPrompt; echo "Installing java"
+    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jre-7u17-linux-x64.tar.gz' --output-document=jre.tar.gz
 
-        tar -xf jre.tar.gz -C ${DIR}
-        mv ${DIR}/jre1.7.0_17 ${DIR}/jre
+    tar -xf jre.tar.gz -C ${DIR}
+    mv ${DIR}/jre1.7.0_17 ${DIR}/jre
 
-        rm jre.tar.gz
-    }
+    rm jre.tar.gz
 }
 
 # $1 - command name
