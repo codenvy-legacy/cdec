@@ -199,4 +199,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return new Request().setUserCredentials(getCredentials());
     }
 
+    protected void exit(int status) {
+        System.exit(status);
+    }
 }

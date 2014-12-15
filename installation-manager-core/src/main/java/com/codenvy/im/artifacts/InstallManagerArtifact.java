@@ -53,9 +53,10 @@ public class InstallManagerArtifact extends AbstractArtifact {
     private static final Logger LOG = LoggerFactory.getLogger(InstallManagerArtifact.class);
     public static final String NAME = "installation-manager";
 
-    private static final String CODENVY_CLI_DIR_NAME = "codenvy-cli";
+    private static final String CODENVY_CLI_DIR_NAME   = "codenvy-cli";
     private static final String UPDATE_CLI_SCRIPT_NAME = "codenvy-cli-update-script.sh";
     private static final String IM_ROOT_DIRECTORY_NAME = "codenvy-im";
+    private static final String PATH_TO_JAVA           = IM_ROOT_DIRECTORY_NAME + "/jre";
 
     @Inject
     public InstallManagerArtifact() {
@@ -112,12 +113,14 @@ public class InstallManagerArtifact extends AbstractArtifact {
                 final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
                                                                "rm -rf %1$s/* \n" +          // remove content of cli client dir
                                                                "tar -xzf %2$s -C %1$s \n" +  // unpack update into the cli client dir
-                                                               "chmod +x %3$s \n" +          // set permissions to execute CLI client scripts
-                                                               "rm -f %4$s ; \n" +           // remove update script
+                                                               "chmod +x %1$s/bin/* \n" +    // set permissions to execute CLI client scripts
+                                                               "sed -i \"2iJAVA_HOME=${HOME}/%3$s\" %1$s/bin/codenvy \n" +          // setup java home path
+                                                               "sed -i \"2iJAVA_HOME=${HOME}/%3$s\" %1$s/bin/interactive-mode \n" + // setup java home path
+                                                               "rm -f %4$s \n" +             // remove update script
                                                                "",
                                                                cliClientDir.toAbsolutePath(),
                                                                pathToBinaries.toAbsolutePath(),
-                                                               cliClientDir.resolve("bin/*").toAbsolutePath(),
+                                                               PATH_TO_JAVA,
                                                                updateCliScript.toAbsolutePath());
 
                 return new MacroCommand(ImmutableList.<Command>of(

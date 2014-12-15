@@ -110,14 +110,16 @@
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
-                                    <replacevalue>if [ -f "../../codenvy-cli-update-script.sh" ]; then
+                                    <replacevalue>CURRENT_DIR=$(pwd)
+cd ~/codenvy-im
+
+if [ -f "codenvy-cli-update-script.sh" ]; then
     echo "Installation Manager CLI is being updated ..."
-    SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
-    CURRENT_DIR=$(pwd)
-    cd ../../
     bash -c "$(cat codenvy-cli-update-script.sh)"
-    cd ${CURRENT_DIR}
 fi
+
+cd ${CURRENT_DIR}
+
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
@@ -126,14 +128,16 @@ fi
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
                                     <replacetoken>main "$@"</replacetoken>
-                                    <replacevalue>if [ -f "../../codenvy-im/codenvy-cli-update-script.sh" ]; then
+                                    <replacevalue>CURRENT_DIR=$(pwd)
+cd ~/codenvy-im
+
+if [ -f "codenvy-cli-update-script.sh" ]; then
     echo "Installation Manager CLI is being updated ..."
-    SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
-    CURRENT_DIR=$(pwd)
-    cd ../../
     bash -c "$(cat codenvy-cli-update-script.sh)"
-    cd ${CURRENT_DIR}
 fi
+
+cd ${CURRENT_DIR}
+
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
