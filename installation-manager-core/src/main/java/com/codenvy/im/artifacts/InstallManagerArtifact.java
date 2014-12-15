@@ -19,7 +19,6 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.LocalAgent;
-import com.codenvy.im.agent.LocalAsyncAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
@@ -55,8 +54,8 @@ public class InstallManagerArtifact extends AbstractArtifact {
     public static final String NAME = "installation-manager";
 
     private static final String CODENVY_CLI_DIR_NAME = "codenvy-cli";
-    private static final Path PATH_TO_UPDATE_CLI_SCRIPT = Paths.get("/home/codenvy-shared/codenvy-cli-update-script.sh");
-    private static final String CODENVY_SHARE_GROUP = "codenvyshare";
+    private static final String UPDATE_CLI_SCRIPT_NAME = "codenvy-cli-update-script.sh";
+    private static final String IM_ROOT_DIRECTORY_NAME = "codenvy-im";
 
     @Inject
     public InstallManagerArtifact() {
@@ -88,79 +87,48 @@ public class InstallManagerArtifact extends AbstractArtifact {
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return new ArrayList<String>() {{
-            add("Unzip Installation Manager binaries");
-            add("Update installation manager");
+            add("Initialize updating installation manager");
         }};
     }
 
     /** {@inheritDoc} */
     @Override
     public Command getInstallCommand(Version version, final Path pathToBinaries, InstallOptions installOptions) {
-        try {
-            int step = installOptions.getStep();
+        int step = installOptions.getStep();
 
-            final Path dirToUnpack = pathToBinaries.getParent().resolve("unpack");
-            final Agent syncAgent = new LocalAgent();
-            final Agent asyncAgent = new LocalAsyncAgent();
+        final Path dirToUnpack = pathToBinaries.getParent().resolve("unpack");
+        final Agent syncAgent = new LocalAgent();
 
-            final Path pathToNewVersionOfDaemon = dirToUnpack.resolve("daemon");
-            final Path pathToNewVersionOfCliClient = dirToUnpack.resolve("cli");
+        switch (step) {
+            case 0:
+                final Path cliClientDir = Paths.get(installOptions.getCliUserHomeDir())
+                                                .resolve(IM_ROOT_DIRECTORY_NAME)
+                                                .resolve(CODENVY_CLI_DIR_NAME);
 
-            switch (step) {
-                case 0:
-                    final String imDaemonPackName = Commons.getBinaryFileName(this, version, null);
-                    final String cliClientPackName = Commons.getBinaryFileName(this, version, "cli");
+                final Path updateCliScript = Paths.get(installOptions.getCliUserHomeDir())
+                                                              .resolve(IM_ROOT_DIRECTORY_NAME)
+                                                              .resolve(UPDATE_CLI_SCRIPT_NAME);
 
-                    return new MacroCommand(ImmutableList.of(
-                        new SimpleCommand(format("rm -rf %s", dirToUnpack.toAbsolutePath()), syncAgent, "Delete directory to unpack, if exist."),
-                        new UnpackCommand(pathToBinaries, dirToUnpack, "Unpack downloaded installation manager"),
-                        new UnpackCommand(dirToUnpack.resolve(imDaemonPackName), pathToNewVersionOfDaemon, "Unpack installation manager daemon"),
-                        new UnpackCommand(dirToUnpack.resolve(cliClientPackName), pathToNewVersionOfCliClient, "Unpack installation manager cli client")),
-                    "Unpack downloaded installation manager");
+                final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
+                                                               "rm -rf %1$s/* \n" +          // remove content of cli client dir
+                                                               "tar -xzf %2$s -C %1$s \n" +  // unpack update into the cli client dir
+                                                               "chmod +x %3$s \n" +          // set permissions to execute CLI client scripts
+                                                               "rm -f %4$s ; \n" +           // remove update script
+                                                               "",
+                                                               cliClientDir.toAbsolutePath(),
+                                                               pathToBinaries.toAbsolutePath(),
+                                                               cliClientDir.resolve("bin/*").toAbsolutePath(),
+                                                               updateCliScript.toAbsolutePath());
 
-                case 1:
-                    final Path cliClientDir = Paths.get(format("%s/%s", installOptions.getCliUserHomeDir(), CODENVY_CLI_DIR_NAME));
+                return new MacroCommand(ImmutableList.<Command>of(
+                    new SimpleCommand(format("echo '%s' > %s ; ", contentOfUpdateCliScript, updateCliScript.toAbsolutePath()),
+                                          syncAgent, "Create script to update cli client"),
 
-                    final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
-                                                                   "rm -rf %1$s/* \n" +      // remove content of cli client dir
-                                                                   "cp -r %2$s/* %1$s \n" +  // copy update into the user's home dir
-                                                                   "chmod +x %3$s \n" +      // set permissions to execute CLI client scripts
-                                                                   "newgrp %5$s << END\n" + // open block END of execution as user of CODENVY_SHARE_GROUP group
-                                                                   "  rm -f %4$s ; \n" +     // remove update script
-                                                                   "END\n" +                // close block END
-                                                                   "",
-                                                                   cliClientDir.toAbsolutePath(),
-                                                                   pathToNewVersionOfCliClient.toAbsolutePath(),
-                                                                   cliClientDir.resolve("bin/*").toAbsolutePath(),
-                                                                   PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath(),
-                                                                   CODENVY_SHARE_GROUP);
-
-                    final Command updateCliClientCommand = new MacroCommand(ImmutableList.<Command>of(
-                        new SimpleCommand(format("echo '%s' > %s ; ", contentOfUpdateCliScript, PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
-                                              syncAgent, "Create script to update cli client"),
-
-                        new SimpleCommand(format("chmod 775 %s ; ", PATH_TO_UPDATE_CLI_SCRIPT.toAbsolutePath()),
-                                              syncAgent, "Set permissions to execute update script")),
-                    "Update installation manager CLI client");
-
-                    final Command updateDaemonCommand =
-                        new SimpleCommand(format("%1$s/installation-manager stop ; " +     // stop daemon
-                                                 "rm -rf %1$s/* ; " +                      // remove directory with daemon
-                                                 "cp -r %2$s/* %1$s ; " +                  // copy update into the directory with daemon
-                                                 "chmod +x %1$s/installation-manager ; " + // set permission to execute daemon script
-                                                 "%1$s/installation-manager start ; " +    // start daemon
-                                                 "",
-                                                 getInstalledPath().toAbsolutePath(),
-                                                 pathToNewVersionOfDaemon.toAbsolutePath()),
-                                          asyncAgent, "Update installation manager daemon");
-                    return new MacroCommand(ImmutableList.of(updateCliClientCommand, updateDaemonCommand), "Update installation manager");
-
-                default:
-                    throw new IllegalArgumentException(format("Step number %d is out of range", step));
-            }
-        } catch (URISyntaxException e) {
-            LOG.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+                    new SimpleCommand(format("chmod 775 %s ; ", updateCliScript.toAbsolutePath()),
+                                          syncAgent, "Set permissions to execute update script")),
+                "Update installation manager CLI client");
+            default:
+                throw new IllegalArgumentException(format("Step number %d is out of range", step));
         }
     }
 

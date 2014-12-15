@@ -57,7 +57,7 @@ public class TestInstallManagerArtifact {
 
         List<String> info = imArtifact.getInstallInfo(options);
         assertNotNull(info);
-        assertEquals(info.toString(), "[Unzip Installation Manager binaries, Update installation manager]");
+        assertEquals(info.toString(), "[Initialize updating installation manager]");
     }
 
     @Test
@@ -67,29 +67,14 @@ public class TestInstallManagerArtifact {
 
         options.setStep(0);
         Command command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
-        assertEquals(command.toString(), "[rm -rf /parent/unpack, " +
-                                         "Unpack '/parent/child' into '/parent/unpack', " +
-                                         "Unpack '/parent/unpack/installation-manager-1.0.0-binary.tar.gz' into '/parent/unpack/daemon', " +
-                                         "Unpack '/parent/unpack/installation-manager-cli-1.0.0-binary.tar.gz' into '/parent/unpack/cli']");
-
-        options.setStep(1);
-        command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
-        assertEquals(command.toString(), "[[echo '"
+        assertEquals(command.toString(), "[echo '"
                                          + "#!/bin/bash \n"
-                                         + "rm -rf /home/dummy-user/codenvy-cli/* \n"
-                                         + "cp -r /parent/unpack/cli/* /home/dummy-user/codenvy-cli \n"
-                                         + "chmod +x /home/dummy-user/codenvy-cli/bin/* \n"
-                                         + "newgrp codenvyshare << END\n"
-                                         + "  rm -f /home/codenvy-shared/codenvy-cli-update-script.sh ; \n"
-                                         + "END\n"
-                                         + "' > /home/codenvy-shared/codenvy-cli-update-script.sh ; , "
-                                         + "chmod 775 /home/codenvy-shared/codenvy-cli-update-script.sh ; "
-                                         + "], "
-                                         + testExecutionPath + "/installation-manager stop ; "
-                                         + "rm -rf " + testExecutionPath + "/* ; "
-                                         + "cp -r /parent/unpack/daemon/* " + testExecutionPath + " ; "
-                                         + "chmod +x " + testExecutionPath + "/installation-manager ; "
-                                         + testExecutionPath + "/installation-manager start ; "
+                                         + "rm -rf /home/dummy-user/codenvy-im/codenvy-cli/* \n"
+                                         + "tar -xzf /parent/child -C /home/dummy-user/codenvy-im/codenvy-cli \n"
+                                         + "chmod +x /home/dummy-user/codenvy-im/codenvy-cli/bin/* \n"
+                                         + "rm -f /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; \n"
+                                         + "' > /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; , "
+                                         + "chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; "
                                          + "]");
     }
 
