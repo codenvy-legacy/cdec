@@ -100,10 +100,6 @@ public class InstallationManagerImpl implements InstallationManager {
         } catch (IOException e) {
             createAndSetDownloadDir(Paths.get(System.getenv("HOME"), "codenvy-updates"));
         }
-
-        LOG.info("Download directory: " + this.downloadDir.toString());
-        LOG.info("Codenvy API endpoint: " + apiEndpoint);
-        LOG.info("Codenvy Update Server API endpoint: " + updateEndpoint);
     }
 
     private void createAndSetDownloadDir(Path downloadDir) throws IOException {

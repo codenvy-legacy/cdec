@@ -117,7 +117,6 @@ executeCliCommand() {
     [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
-# TODO
 executeWithSudoCliCommand() {
     if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
     ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
@@ -161,7 +160,7 @@ printPreInstallInfo() {
     printPrompt; echo
     printPrompt; echo "You will need to know your Codenvy user name and password."
     printPrompt; echo
-    printPrompt; echo "Create account or retrieve password: "
+    #printPrompt; echo "Create account or retrieve password: "
     printPrompt; echo "Codenvy customer agreement & TOS: https://codenvy.com/legal"
     printPrompt; echo
     printPrompt; echo "Press any key to continue"

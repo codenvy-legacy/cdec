@@ -34,7 +34,6 @@ import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
 /** @author Dmytro Nochevnov */
-// TODO test new methods
 public class Console {
     public static final Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
     public static final Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
