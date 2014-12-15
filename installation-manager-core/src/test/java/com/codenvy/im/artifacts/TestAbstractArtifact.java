@@ -104,7 +104,7 @@ public class TestAbstractArtifact {
 
     @Test
     public void testIsInstallable() throws IOException {
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion(TEST_TOKEN);
+        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
         assertFalse(spyTestArtifact.isInstallable(TEST_VERSION, TEST_TOKEN));
         assertTrue(spyTestArtifact.isInstallable(Version.valueOf("2.0.0"), TEST_TOKEN));
@@ -113,7 +113,7 @@ public class TestAbstractArtifact {
     @Test
     public void testGetLatestInstallableVersion() throws Exception {
         String newVersion = "1.0.1";
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion(TEST_TOKEN);
+        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"version\":\"" + newVersion + "\"}")
@@ -128,7 +128,7 @@ public class TestAbstractArtifact {
 
     @Test
     public void testGetNullLatestInstallableVersion() throws Exception {
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion(TEST_TOKEN);
+        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"version\":\"" + TEST_VERSION_STR + "\"}")
@@ -141,7 +141,7 @@ public class TestAbstractArtifact {
 
     @Test
     public void testValidateProperties() throws Exception {
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion(TEST_TOKEN);
+        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
         doReturn("{\"version\":\"1.0.0\", \"file\":\"file1\", \"md5\":\"a\", \"build-time\":\"01.01.01\", \"artifact\":\"" + TEST_ARTIFACT_NAME +
                  "\", \"size\":456, \"authentication-required\":false}")
@@ -207,7 +207,7 @@ public class TestAbstractArtifact {
 
         @Nullable
         @Override
-        public Version getInstalledVersion(String authToken) throws IOException {
+        public Version getInstalledVersion() throws IOException {
             throw new UnsupportedOperationException();
         }
 
@@ -222,8 +222,18 @@ public class TestAbstractArtifact {
         }
 
         @Override
+        public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
+            return null;
+        }
+
+        @Override
         public Command getInstallCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+            return null;
         }
     }
 }

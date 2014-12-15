@@ -89,7 +89,7 @@ public class TestInstallManagerArtifact {
 
     @Test
     public void testGetInstalledVersion() throws Exception {
-        assertNotNull(imArtifact.getInstalledVersion("authToken"));
+        assertNotNull(imArtifact.getInstalledVersion());
     }
 
     @Test

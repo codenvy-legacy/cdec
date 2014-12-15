@@ -36,8 +36,10 @@ public class TestVersion {
 
     @DataProvider(name = "getValidVersions")
     public static Object[][] getValidVersions() {
-        return new Object[][]{{"1.0.1"},
+        return new Object[][]{{"0.0.1"},
+                              {"1.0.1"},
                               {"10.3.0"},
+                              {"0.9.0"},
                               {"1.0.0"},
                               {"1.0.10"},
                               {"1.0.1-SNAPSHOT"},
@@ -53,8 +55,8 @@ public class TestVersion {
 
     @DataProvider(name = "getInvalidVersions")
     public static Object[][] getInvalidVersions() {
-        return new Object[][]{{"0.0.1"},
-                              {"1"},
+        return new Object[][]{{"1"},
+                              {"00.1.1"},
                               {"1.1"},
                               {"1.1."},
                               {"1.01.1"},
@@ -80,7 +82,7 @@ public class TestVersion {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testParseInvalidVersion() throws Exception {
-        Version.valueOf("0.1.1");
+        Version.valueOf("01.1.1");
     }
 
     @Test

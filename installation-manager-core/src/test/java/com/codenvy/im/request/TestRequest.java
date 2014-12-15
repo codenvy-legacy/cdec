@@ -59,7 +59,7 @@ public class TestRequest {
     public void testRequestErrorIfVersionInvalid() throws Exception {
         Request testRequest = new Request()
                 .setArtifactName("cdec")
-                .setVersion("0.1.1");
+                .setVersion("00.1.1");
 
         testRequest.getVersion();
     }

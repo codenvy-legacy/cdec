@@ -64,7 +64,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Version getInstalledVersion(String authToken) throws IOException {
+    public Version getInstalledVersion() throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);
@@ -89,6 +89,12 @@ public class InstallManagerArtifact extends AbstractArtifact {
         return new ArrayList<String>() {{
             add("Initialize updating installation manager");
         }};
+    }
+
+    @Override
+    public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
+        return null;
+        // TODO
     }
 
     /** {@inheritDoc} */
@@ -130,6 +136,12 @@ public class InstallManagerArtifact extends AbstractArtifact {
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of range", step));
         }
+    }
+
+    @Override
+    public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+        return null;
+        // TODO
     }
 
     /** @return path where artifact located */

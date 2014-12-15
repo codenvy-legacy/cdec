@@ -88,7 +88,7 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
-        Version installedVersion = getInstalledVersion(accessToken);
+        Version installedVersion = getInstalledVersion();
         return installedVersion == null || installedVersion.compareTo(versionToInstall) < 0;
     }
 
