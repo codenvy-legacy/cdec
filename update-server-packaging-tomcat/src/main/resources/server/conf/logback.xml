@@ -42,7 +42,7 @@
     </appender>
 
     <logger name="org.apache.catalina.loader.WebappClassLoader" level="OFF"/>
-    <include file="${com.codenvy.im.service.codenvy.logback.smtp.appender}"/>
+    <include file="${codenvy.logback.smtp.appender}"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
