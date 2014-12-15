@@ -147,11 +147,11 @@ fi</replacevalue>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresRepositories=]]></replacetoken>
                                     <replacevalue>
-                                        <![CDATA[featuresRepositories=mvn:com.com.codenvy.im.service.codenvy.im/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
+                                        <![CDATA[featuresRepositories=mvn:com.codenvy.im.service.codenvy.im/installation-manager-cli-features/${project.version}/xml/features,]]></replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.repos.cfg">
                                     <replacetoken><![CDATA[cellar       =]]></replacetoken>
-                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.com.codenvy.im.service.codenvy.im:installation-manager-cli-feature:xml:features(0,]
+                                    <replacevalue><![CDATA[installation-manager-codenvy-cli  = com.codenvy.im.service.codenvy.im:installation-manager-cli-feature:xml:features(0,]
 cellar       =]]></replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/config.properties">
