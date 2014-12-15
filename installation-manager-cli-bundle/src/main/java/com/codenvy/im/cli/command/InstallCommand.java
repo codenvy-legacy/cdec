@@ -166,12 +166,14 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         // only OK response can be here
-        console.println(response);
-        responseObj = Response.fromJson(response);
+        if (lastStep == finalStep) {
+            console.println(response);
+            responseObj = Response.fromJson(response);
 
-        if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
-            console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
-            exit(0);
+            if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
+                console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
+                exit(0);
+            }
         }
 
         return null;

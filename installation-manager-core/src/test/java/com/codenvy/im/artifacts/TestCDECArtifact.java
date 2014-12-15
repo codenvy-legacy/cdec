@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Matchers.endsWith;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -104,23 +104,23 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstalledVersion() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+        when(mockTransport.doOption(endsWith("api/"), (String)isNull())).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
-        Version version = spyCdecArtifact.getInstalledVersion("authToken");
+        Version version = spyCdecArtifact.getInstalledVersion();
         assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
     }
 
     @Test
     public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
-        doThrow(new ConnectException()).when(mockTransport).doOption(endsWith("api/"), eq("authToken"));
-        Version version = spyCdecArtifact.getInstalledVersion("authToken");
+        doThrow(new ConnectException()).when(mockTransport).doOption(endsWith("api/"), (String)isNull());
+        Version version = spyCdecArtifact.getInstalledVersion();
         assertNull(version);
     }
 
     @Test(expectedExceptions = JsonSyntaxException.class,
           expectedExceptionsMessageRegExp = "(.*)Expected ':' at line 1 column 14")
     public void testGetInstalledVersionError() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), eq("authToken"))).thenReturn("{\"some text\"}");
-        spyCdecArtifact.getInstalledVersion("authToken");
+        when(mockTransport.doOption(endsWith("api/"), (String)isNull())).thenReturn("{\"some text\"}");
+        spyCdecArtifact.getInstalledVersion();
     }
 }

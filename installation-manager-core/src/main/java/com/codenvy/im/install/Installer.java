@@ -40,20 +40,52 @@ public class Installer {
 
     /** Installs specific artifact. */
     public void install(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
+        if (isInstall(artifact, version)) {
+            doInstall(artifact, version, pathToBinaries, options);
+        } else {
+            doUpdate(artifact, version, pathToBinaries, options);
+        }
+    }
+
+    /** Install specific artifact. */
+    protected void doInstall(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
         Command command = artifact.getInstallCommand(version, pathToBinaries, options);
         executeCommand(command);
     }
 
-    /** @return installation information. */
-    public List<String> getInstallInfo(Artifact artifact, InstallOptions options) throws IOException {
-        return artifact.getInstallInfo(options);
+    /** Updates specific artifact. */
+    protected void doUpdate(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
+        Command command = artifact.getUpdateCommand(version, pathToBinaries, options);
+        executeCommand(command);
     }
 
-    /** Updates specific artifact. */
-    public void update(Artifact artifact, Version version, InstallOptions options) throws IOException {
+    /** @return the list with descriptions of installation steps */
+    public List<String> getInstallInfo(Artifact artifact, Version version, InstallOptions options) throws IOException {
+        if (isInstall(artifact, version)) {
+            return doGetInstallInfo(artifact, options);
+        } else {
+            return doGetUpdateInfo(artifact, options);
+        }
+    }
+
+    protected List<String> doGetUpdateInfo(Artifact artifact, InstallOptions options) throws IOException {
+        return artifact.getUpdateInfo(options);
+    }
+
+    protected List<String> doGetInstallInfo(Artifact artifact, InstallOptions options) throws IOException {
+        return artifact.getInstallInfo(options);
     }
 
     protected String executeCommand(Command command) throws CommandException {
         return command.execute();
+    }
+
+    /**
+     * Indicates if we deal with installation or upgrading. It is installation process if there is no any installed version of the given artifact or
+     * installed version is the same as the version has been proposed to install. Otherwise it is upgrading process.
+     */
+    protected boolean isInstall(Artifact artifact, Version version) throws IOException {
+        Version installedVersion = artifact.getInstalledVersion();
+        return installedVersion == null || installedVersion.equals(version);
     }
 }

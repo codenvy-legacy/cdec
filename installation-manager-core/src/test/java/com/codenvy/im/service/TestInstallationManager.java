@@ -111,7 +111,7 @@ public class TestInstallationManager {
                 put(version2101, Paths.get("target/download/installation-manager/2.10.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
         manager.install(testCredentials.getToken(), installManagerArtifact, version2101, new InstallOptions());
     }
 
@@ -155,7 +155,7 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallArtifactErrorIfBinariesNotFound() throws Exception {
-        doReturn(null).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(null).when(cdecArtifact).getInstalledVersion();
         manager.install("auth token", cdecArtifact, Version.valueOf("2.10.1"), new InstallOptions());
     }
 
@@ -171,7 +171,7 @@ public class TestInstallationManager {
                 put(version2100, Paths.get("target/download/installation-manager/2.10.0/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
-        doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
 
         manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
@@ -254,7 +254,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
-        doReturn(version2101).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
         doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install("auth token", installManagerArtifact, version2102, new InstallOptions());
@@ -299,8 +299,8 @@ public class TestInstallationManager {
         Version version100 = Version.valueOf("1.0.0");
         Version version200 = Version.valueOf("2.0.0");
 
-        doReturn(version100).when(cdecArtifact).getInstalledVersion(testCredentials.getToken());
-        doReturn(version200).when(installManagerArtifact).getInstalledVersion(testCredentials.getToken());
+        doReturn(version100).when(cdecArtifact).getInstalledVersion();
+        doReturn(version200).when(installManagerArtifact).getInstalledVersion();
 
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(testCredentials.getToken());
 

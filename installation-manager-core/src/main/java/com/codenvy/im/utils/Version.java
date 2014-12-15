@@ -30,7 +30,8 @@ public class Version implements Comparable<Version> {
 
     private static final String  MILESTONE_VERSION_PREFIX = "-M";
     private static final Pattern VERSION                  =
-            compile("^([1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)(-SNAPSHOT|)$");
+            compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)" +
+                    "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)(-SNAPSHOT|)$");
 
     private final int     major;
     private final int     minor;

@@ -28,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestRequest {
@@ -59,8 +60,24 @@ public class TestRequest {
     public void testRequestErrorIfVersionInvalid() throws Exception {
         Request testRequest = new Request()
                 .setArtifactName("cdec")
-                .setVersion("0.1.1");
+                .setVersion("00.1.1");
 
         testRequest.getVersion();
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        Request request1 = new Request()
+                .setArtifactName("cdec")
+                .setVersion("1.0.1")
+                .setUserCredentials(new UserCredentials("test token", "test account id"));
+
+        Request request2 = new Request()
+                .setArtifactName("cdec")
+                .setVersion("1.0.1")
+                .setUserCredentials(new UserCredentials("test token", "test account id"));
+
+        assertTrue(request1.equals(request2));
+        assertEquals(request1.hashCode(), request2.hashCode());
     }
 }

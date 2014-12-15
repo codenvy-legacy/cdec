@@ -152,7 +152,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                           CountDownLatch latcher,
                           Thread currentThread) {
 
-        downloadDescriptor = null; // TODO invalidate
+        downloadDescriptor = null;
         List<ArtifactInfo> infos = null;
         try {
             Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.getArtifact(),

@@ -114,7 +114,7 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public List<String> getInstallInfo(Artifact artifact, Version version, InstallOptions options) throws IOException {
-        return installer.getInstallInfo(artifact, options);
+        return installer.getInstallInfo(artifact, version, options);
     }
 
     /** {@inheritDoc} */
@@ -144,7 +144,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Map<Artifact, Version> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                Version installedVersion = artifact.getInstalledVersion(authToken);
+                Version installedVersion = artifact.getInstalledVersion();
                 if (installedVersion != null) {
                     installed.put(artifact, installedVersion);
                 }

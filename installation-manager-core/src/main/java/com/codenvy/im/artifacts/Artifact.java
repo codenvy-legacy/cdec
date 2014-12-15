@@ -39,7 +39,7 @@ public interface Artifact extends Comparable<Artifact> {
 
     /** @return current installed version of the artifact or null if artifact is not installed. */
     @Nullable
-    Version getInstalledVersion(String authToken) throws IOException;
+    Version getInstalledVersion() throws IOException;
 
     /** @return the priority of the artifact to install, update etc. */
     int getPriority();
@@ -47,8 +47,14 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return the some information about future installation process */
     List<String> getInstallInfo(InstallOptions installOptions) throws IOException;
 
+    /** @return the some information about future installation process */
+    List<String> getUpdateInfo(InstallOptions installOptions) throws IOException;
+
     /** @return list of commands to perform installation. */
     Command getInstallCommand(@Nullable Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException;
+
+    /** @return list of commands to perform installation. */
+    Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     /**
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed
