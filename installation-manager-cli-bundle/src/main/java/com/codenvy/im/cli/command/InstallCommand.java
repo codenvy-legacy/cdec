@@ -29,6 +29,7 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -46,7 +47,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.config.Config.isEmpty;
-import static com.codenvy.im.utils.Commons.isInstall;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -112,7 +112,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         if (version == null) {
-            version = service.getVersionToInstall(initRequest(artifactName, version));
+            version = service.getVersionToInstall(initRequest(artifactName, null));
         }
 
         final Request request = initRequest(artifactName, version);
@@ -277,8 +277,7 @@ public class InstallCommand extends AbstractIMCommand {
                 if (configFilePath != null) {
                     properties = configUtil.loadConfigProperties(configFilePath);
                 } else {
-                    boolean install = isInstall(ArtifactFactory.createArtifact(CDECArtifact.NAME), Version.valueOf(version));
-                    if (install) {
+                    if (isInstall()) {
                         properties = configUtil.loadCdecDefaultProperties(version);
                     } else {
                         properties = configUtil.merge(configUtil.loadInstalledCssProperties(),
@@ -304,6 +303,10 @@ public class InstallCommand extends AbstractIMCommand {
             default:
                 throw ArtifactNotFoundException.from(artifactName);
         }
+    }
+
+    protected boolean isInstall() throws IOException {
+        return Commons.isInstall(ArtifactFactory.createArtifact(CDECArtifact.NAME), Version.valueOf(version));
     }
 
     protected void confirmOrReenterInstallOptions(InstallOptions installOptions) throws IOException {

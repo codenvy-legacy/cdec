@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
@@ -108,6 +109,63 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput);
+    }
+
+    @Test
+    public void testEnterInstallOptionsForUpdate() throws Exception {
+        doReturn("1.0.2").when(service).getVersionToInstall(any(Request.class));
+        doReturn(false).when(spyCommand).isInstall();
+        doReturn(ImmutableMap.of("a", "2", "b", "MANDATORY")).when(configUtil).merge(anyMap(), anyMap());
+
+        // user always enter "some value" as property value
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                spyCommand.console.print("some value\n");
+                return "some value";
+            }
+        }).when(spyCommand.console).readLine();
+
+        // no installation info provided
+        doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+
+        // first reply [n], then reply [y]
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+                return false;
+            }
+        }).doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+                return true;
+            }
+        }).when(spyCommand.console).askUser(anyString());
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+
+        assertEquals(output, "Please, enter CDEC required parameters:\n" +
+                             "b: some value\n" +
+                             "{\n" +
+                             "  \"a\" : \"2\",\n" +
+                             "  \"b\" : \"some value\"\n" +
+                             "}\n" +
+                             "Continue installation [y/N]\n" +
+                             "Please, enter CDEC required parameters:\n" +
+                             "b (some value): some value\n" +
+                             "a (2): some value\n" +
+                             "{\n" +
+                             "  \"a\" : \"some value\",\n" +
+                             "  \"b\" : \"some value\"\n" +
+                             "}\n" +
+                             "Continue installation [y/N]\n" +
+                             "{\"infos\":[]}\n");
     }
 
     @Test
@@ -245,7 +303,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testEnterInstallOptions() throws Exception {
+    public void testEnterInstallOptionsForInstall() throws Exception {
         // user always enter "some value" as property value
         doAnswer(new Answer() {
             @Override
