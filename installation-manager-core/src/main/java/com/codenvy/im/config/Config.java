@@ -20,8 +20,10 @@ package com.codenvy.im.config;
 import java.util.Collections;
 import java.util.Map;
 
+import static java.util.Collections.unmodifiableMap;
+
 /** @author Dmytro Nochevnov */
-public abstract class Config {
+public class Config {
     private Map<String, String> properties;
 
     public Config(Map<String, String> properties) {
@@ -34,23 +36,19 @@ public abstract class Config {
     }
 
     /** @return the property value */
-    public final String getValue(ConfigProperty property) {
-        return properties.get(property.toString().toLowerCase());
+    public final String getValue(String property) {
+        return properties.get(property.toLowerCase());
     }
 
-    /** @return property name, for instance, if property name is "MONGO_ADMIN_PASSWORD" then "mongo admin password" will be returned */
-    public static String getPropertyName(ConfigProperty property) {
-        return property.toString().toLowerCase();
+    /** Getter for #properties. Unmodifiable map will be returned */
+    public Map<String, String> getProperties() {
+        return unmodifiableMap(properties);
     }
 
     /** Checks if all properties are set and have correct values. */
-    public abstract boolean isValid();
-
-    /** Checks if all properties are set and have correct values. */
-    public boolean isValid(ConfigProperty[] properties) {
-        for (ConfigProperty property : properties) {
-            String value = getValue(property);
-            if (isEmpty(value)) {
+    public boolean isValid() {
+        for (String v : properties.values()) {
+            if (isEmpty(v)) {
                 return false;
             }
         }

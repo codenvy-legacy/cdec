@@ -265,6 +265,15 @@ public class Commons {
 
     }
 
+    /**
+     * Indicates if we deal with installation or upgrading. It is installation process if there is no any installed version of the given artifact or
+     * installed version is the same as the version has been proposed to install. Otherwise it is upgrading process.
+     */
+    public static boolean isInstall(Artifact artifact, Version version) throws IOException {
+        Version installedVersion = artifact.getInstalledVersion();
+        return installedVersion == null || installedVersion.equals(version);
+    }
+
     private static class JsonUtils {
         private JsonUtils() {
         }

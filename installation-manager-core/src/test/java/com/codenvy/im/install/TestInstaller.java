@@ -22,7 +22,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
-import com.codenvy.im.config.ConfigFactory;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.utils.Version;
 
 import org.mockito.Mock;
@@ -51,8 +51,8 @@ import static org.testng.Assert.assertTrue;
 public class TestInstaller {
 
     @Mock
-    private ConfigFactory configFactory;
-    private Installer     installer;
+    private ConfigUtil configUtil;
+    private Installer  installer;
 
     @BeforeMethod
     public void setUp() throws IOException {

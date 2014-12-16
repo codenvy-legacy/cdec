@@ -58,6 +58,9 @@ public interface InstallationManagerService {
     /** Check user's subscription. */
     String checkSubscription(String subscription, Request request) throws IOException;
 
+    /** @return the version of the artifact that can be installed */
+    String getVersionToInstall(Request request) throws IOException;
+
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
     String getAccountReferenceWhereUserIsOwner(@Nullable String accountName, Request request) throws IOException;

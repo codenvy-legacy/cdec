@@ -18,11 +18,10 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.config.CodenvySingleServerConfig;
-import com.codenvy.im.config.ConfigFactory;
-import com.codenvy.im.config.ConfigProperty;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
@@ -30,6 +29,7 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
+import com.codenvy.im.utils.Version;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -38,7 +38,6 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +45,8 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.config.Config.getPropertyName;
 import static com.codenvy.im.config.Config.isEmpty;
+import static com.codenvy.im.utils.Commons.isInstall;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -62,7 +61,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
-    private final ConfigFactory configFactory;
+    private final ConfigUtil configUtil;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     private String artifactName;
@@ -73,20 +72,20 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
 
-    @Option(name = "--config", aliases = "-c", description = "Path to configuration file", required = false)
+    @Option(name = "--config", aliases = "-c", description = "Path to the configuration file", required = false)
     private String configFilePath;
 
-    @Option(name = "--step", aliases = "-s", description = "Installation step to perform", required = false)
+    @Option(name = "--step", aliases = "-s", description = "Particular installation step to perform", required = false)
     private String installStep;
 
     public InstallCommand() {
-        this.configFactory = INJECTOR.getInstance(ConfigFactory.class);
+        this.configUtil = INJECTOR.getInstance(ConfigUtil.class);
     }
 
     /** For testing purpose only */
     @Deprecated
-    InstallCommand(ConfigFactory configFactory) {
-        this.configFactory = configFactory;
+    InstallCommand(ConfigUtil configUtil) {
+        this.configUtil = configUtil;
     }
 
     @Override
@@ -111,6 +110,11 @@ public class InstallCommand extends AbstractIMCommand {
             console.printErrorAndExit("Argument 'artifact' is required.");
             return null;
         }
+
+        if (version == null) {
+            version = service.getVersionToInstall(initRequest(artifactName, version));
+        }
+
         final Request request = initRequest(artifactName, version);
 
         final InstallOptions installOptions = new InstallOptions();
@@ -225,13 +229,13 @@ public class InstallCommand extends AbstractIMCommand {
 
                 Map<String, String> m = new HashMap<>();
 
-                for (ConfigProperty property : CodenvySingleServerConfig.Property.values()) {
+                for (Map.Entry<String, String> e : options.getConfigProperties().entrySet()) {
                     for (; ; ) {
-                        String propName = property.toString().toLowerCase();
-                        String currentValue = options.getConfigProperties().get(propName);
+                        String propName = e.getKey().toLowerCase();
+                        String currentValue = e.getValue();
 
                         if (isEmpty(currentValue) || !askMissedOptionsOnly) {
-                            console.print(getPropertyName(property));
+                            console.print(propName);
 
                             if (!isEmpty(currentValue)) {
                                 console.print(format(" (%s)", currentValue));
@@ -271,9 +275,15 @@ public class InstallCommand extends AbstractIMCommand {
 
                 Map<String, String> properties;
                 if (configFilePath != null) {
-                    properties = configFactory.loadConfigProperties(configFilePath);
+                    properties = configUtil.loadConfigProperties(configFilePath);
                 } else {
-                    properties = Collections.emptyMap();
+                    boolean install = isInstall(ArtifactFactory.createArtifact(CDECArtifact.NAME), Version.valueOf(version));
+                    if (install) {
+                        properties = configUtil.loadCdecDefaultProperties(version);
+                    } else {
+                        properties = configUtil.merge(configUtil.loadInstalledCssProperties(),
+                                                      configUtil.loadCdecDefaultProperties(version));
+                    }
                 }
                 options.setConfigProperties(properties);
 

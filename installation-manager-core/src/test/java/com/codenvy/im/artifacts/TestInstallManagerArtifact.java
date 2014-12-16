@@ -50,23 +50,40 @@ public class TestInstallManagerArtifact {
         imArtifact = (InstallManagerArtifact)ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
     }
 
-    @Test
+    @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testGetInstallInfo() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setStep(1);
 
-        List<String> info = imArtifact.getInstallInfo(options);
+        imArtifact.getInstallInfo(options);
+    }
+
+    @Test
+    public void testGetUpdateInfo() throws Exception {
+        InstallOptions options = new InstallOptions();
+        options.setStep(1);
+
+        List<String> info = imArtifact.getUpdateInfo(options);
         assertNotNull(info);
         assertEquals(info.toString(), "[Initialize updating installation manager]");
     }
 
-    @Test
-    public void testGetInstallCommand() throws Exception {
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testGeInstallCommand() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setCliUserHomeDir("/home/dummy-user");
 
         options.setStep(0);
-        Command command = imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
+        imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
+    }
+
+    @Test
+    public void testGetUpdateCommand() throws Exception {
+        InstallOptions options = new InstallOptions();
+        options.setCliUserHomeDir("/home/dummy-user");
+
+        options.setStep(0);
+        Command command = imArtifact.getUpdateCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
         assertEquals(command.toString(), "[echo '"
                                          + "#!/bin/bash \n"
                                          + "rm -rf /home/dummy-user/codenvy-im/codenvy-cli/* \n"
@@ -82,11 +99,11 @@ public class TestInstallManagerArtifact {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Step number 1000 is out of range")
-    public void testGetInstallCommandError() throws Exception {
+    public void testGetUpdateCommandError() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setStep(1000);
 
-        imArtifact.getInstallCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
+        imArtifact.getUpdateCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
     }
 
     @Test

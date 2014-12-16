@@ -18,7 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.config.ConfigFactory;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
@@ -53,10 +53,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
     private InstallationManagerService service;
-    private ConfigFactory              configFactory;
+    private ConfigUtil configUtil;
     private CommandSession             commandSession;
-    private Console spyConsole;
-
     private UserCredentials userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
@@ -69,17 +67,19 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws Exception {
+        configUtil = mock(ConfigUtil.class);
+        doReturn(ImmutableMap.of("a", "MANDATORY")).when(configUtil).loadCdecDefaultProperties("1.0.1");
+
         service = mock(InstallationManagerService.class);
-        configFactory = mock(ConfigFactory.class);
+        doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class));
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
                 .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
-        spyCommand = spy(new InstallCommand(configFactory));
+        spyCommand = spy(new InstallCommand(configUtil));
         spyCommand.service = service;
 
         performBaseMocks(spyCommand, true);
-        spyConsole = spyCommand.console;
 
         userCredentials = new UserCredentials("token", "accountId");
         doReturn(userCredentials).when(spyCommand).getCredentials();
@@ -246,13 +246,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptions() throws Exception {
-        // some basic loaded configuration
-        doReturn(ImmutableMap.of(
-                "mongo_admin_password", "mongoPassword",
-                "mongo_user_password", "mongoUserPassword",
-                "mongo_orgservice_user_password", "mongoOrgServiceUserPassword"
-                                )).when(configFactory).loadConfigProperties(anyString());
-
         // user always enter "some value" as property value
         doAnswer(new Answer() {
             @Override
@@ -286,170 +279,18 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter CDEC required parameters:\n"
-                             + "aio_host_url: some value\n"
-                             + "mongo_admin_pass: some value\n"
-                             + "mongo_user_pass: some value\n"
-                             + "mongo_orgservice_user_pwd: some value\n"
-                             + "user_ldap_password: some value\n"
-                             + "admin_ldap_user_name: some value\n"
-                             + "admin_ldap_password: some value\n"
-                             + "mysql_root_password: some value\n"
-                             + "zabbix_db_pass: some value\n"
-                             + "zabbix_time_zone: some value\n"
-                             + "zabbix_admin_email: some value\n"
-                             + "zabbix_admin_password: some value\n"
-                             + "haproxy_statistic_pass: some value\n"
-                             + "jmx_username: some value\n"
-                             + "jmx_password: some value\n"
-                             + "builder_max_execution_time: some value\n"
-                             + "builder_waiting_time: some value\n"
-                             + "builder_keep_result_time: some value\n"
-                             + "builder_queue_size: some value\n"
-                             + "runner_default_app_mem_size: some value\n"
-                             + "runner_workspace_max_memsize: some value\n"
-                             + "runner_app_lifetime: some value\n"
-                             + "runner_waiting_time: some value\n"
-                             + "workspace_inactive_temporary_stop_time: some value\n"
-                             + "workspace_inactive_persistent_stop_time: some value\n"
-                             + "codenvy_server_xmx: some value\n"
-                             + "google_client_id: some value\n"
-                             + "google_secret: some value\n"
-                             + "github_client_id: some value\n"
-                             + "github_secret: some value\n"
-                             + "bitbucket_client_id: some value\n"
-                             + "bitbucket_secret: some value\n"
-                             + "wso2_client_id: some value\n"
-                             + "wso2_secret: some value\n"
-                             + "projectlocker_client_id: some value\n"
-                             + "projectlocker_secret: some value\n"
-                             + "puppet_agent_version: some value\n"
-                             + "puppet_server_version: some value\n"
-                             + "puppet_resource_url: some value\n"
-                             + "{\n"
-                             + "  \"admin_ldap_password\"                     : \"some value\",\n"
-                             + "  \"admin_ldap_user_name\"                    : \"some value\",\n"
-                             + "  \"aio_host_url\"                            : \"some value\",\n"
-                             + "  \"bitbucket_client_id\"                     : \"some value\",\n"
-                             + "  \"bitbucket_secret\"                        : \"some value\",\n"
-                             + "  \"builder_keep_result_time\"                : \"some value\",\n"
-                             + "  \"builder_max_execution_time\"              : \"some value\",\n"
-                             + "  \"builder_queue_size\"                      : \"some value\",\n"
-                             + "  \"builder_waiting_time\"                    : \"some value\",\n"
-                             + "  \"codenvy_server_xmx\"                      : \"some value\",\n"
-                             + "  \"github_client_id\"                        : \"some value\",\n"
-                             + "  \"github_secret\"                           : \"some value\",\n"
-                             + "  \"google_client_id\"                        : \"some value\",\n"
-                             + "  \"google_secret\"                           : \"some value\",\n"
-                             + "  \"haproxy_statistic_pass\"                  : \"some value\",\n"
-                             + "  \"jmx_password\"                            : \"some value\",\n"
-                             + "  \"jmx_username\"                            : \"some value\",\n"
-                             + "  \"mongo_admin_pass\"                        : \"some value\",\n"
-                             + "  \"mongo_orgservice_user_pwd\"               : \"some value\",\n"
-                             + "  \"mongo_user_pass\"                         : \"some value\",\n"
-                             + "  \"mysql_root_password\"                     : \"some value\",\n"
-                             + "  \"projectlocker_client_id\"                 : \"some value\",\n"
-                             + "  \"projectlocker_secret\"                    : \"some value\",\n"
-                             + "  \"puppet_agent_version\"                    : \"some value\",\n"
-                             + "  \"puppet_resource_url\"                     : \"some value\",\n"
-                             + "  \"puppet_server_version\"                   : \"some value\",\n"
-                             + "  \"runner_app_lifetime\"                     : \"some value\",\n"
-                             + "  \"runner_default_app_mem_size\"             : \"some value\",\n"
-                             + "  \"runner_waiting_time\"                     : \"some value\",\n"
-                             + "  \"runner_workspace_max_memsize\"            : \"some value\",\n"
-                             + "  \"user_ldap_password\"                      : \"some value\",\n"
-                             + "  \"workspace_inactive_persistent_stop_time\" : \"some value\",\n"
-                             + "  \"workspace_inactive_temporary_stop_time\"  : \"some value\",\n"
-                             + "  \"wso2_client_id\"                          : \"some value\",\n"
-                             + "  \"wso2_secret\"                             : \"some value\",\n"
-                             + "  \"zabbix_admin_email\"                      : \"some value\",\n"
-                             + "  \"zabbix_admin_password\"                   : \"some value\",\n"
-                             + "  \"zabbix_db_pass\"                          : \"some value\",\n"
-                             + "  \"zabbix_time_zone\"                        : \"some value\"\n"
-                             + "}\n"
-                             + "Continue installation [y/N]\n"
-                             + "Please, enter CDEC required parameters:\n"
-                             + "aio_host_url (some value): some value\n"
-                             + "mongo_admin_pass (some value): some value\n"
-                             + "mongo_user_pass (some value): some value\n"
-                             + "mongo_orgservice_user_pwd (some value): some value\n"
-                             + "user_ldap_password (some value): some value\n"
-                             + "admin_ldap_user_name (some value): some value\n"
-                             + "admin_ldap_password (some value): some value\n"
-                             + "mysql_root_password (some value): some value\n"
-                             + "zabbix_db_pass (some value): some value\n"
-                             + "zabbix_time_zone (some value): some value\n"
-                             + "zabbix_admin_email (some value): some value\n"
-                             + "zabbix_admin_password (some value): some value\n"
-                             + "haproxy_statistic_pass (some value): some value\n"
-                             + "jmx_username (some value): some value\n"
-                             + "jmx_password (some value): some value\n"
-                             + "builder_max_execution_time (some value): some value\n"
-                             + "builder_waiting_time (some value): some value\n"
-                             + "builder_keep_result_time (some value): some value\n"
-                             + "builder_queue_size (some value): some value\n"
-                             + "runner_default_app_mem_size (some value): some value\n"
-                             + "runner_workspace_max_memsize (some value): some value\n"
-                             + "runner_app_lifetime (some value): some value\n"
-                             + "runner_waiting_time (some value): some value\n"
-                             + "workspace_inactive_temporary_stop_time (some value): some value\n"
-                             + "workspace_inactive_persistent_stop_time (some value): some value\n"
-                             + "codenvy_server_xmx (some value): some value\n"
-                             + "google_client_id (some value): some value\n"
-                             + "google_secret (some value): some value\n"
-                             + "github_client_id (some value): some value\n"
-                             + "github_secret (some value): some value\n"
-                             + "bitbucket_client_id (some value): some value\n"
-                             + "bitbucket_secret (some value): some value\n"
-                             + "wso2_client_id (some value): some value\n"
-                             + "wso2_secret (some value): some value\n"
-                             + "projectlocker_client_id (some value): some value\n"
-                             + "projectlocker_secret (some value): some value\n"
-                             + "puppet_agent_version (some value): some value\n"
-                             + "puppet_server_version (some value): some value\n"
-                             + "puppet_resource_url (some value): some value\n"
-                             + "{\n"
-                             + "  \"admin_ldap_password\"                     : \"some value\",\n"
-                             + "  \"admin_ldap_user_name\"                    : \"some value\",\n"
-                             + "  \"aio_host_url\"                            : \"some value\",\n"
-                             + "  \"bitbucket_client_id\"                     : \"some value\",\n"
-                             + "  \"bitbucket_secret\"                        : \"some value\",\n"
-                             + "  \"builder_keep_result_time\"                : \"some value\",\n"
-                             + "  \"builder_max_execution_time\"              : \"some value\",\n"
-                             + "  \"builder_queue_size\"                      : \"some value\",\n"
-                             + "  \"builder_waiting_time\"                    : \"some value\",\n"
-                             + "  \"codenvy_server_xmx\"                      : \"some value\",\n"
-                             + "  \"github_client_id\"                        : \"some value\",\n"
-                             + "  \"github_secret\"                           : \"some value\",\n"
-                             + "  \"google_client_id\"                        : \"some value\",\n"
-                             + "  \"google_secret\"                           : \"some value\",\n"
-                             + "  \"haproxy_statistic_pass\"                  : \"some value\",\n"
-                             + "  \"jmx_password\"                            : \"some value\",\n"
-                             + "  \"jmx_username\"                            : \"some value\",\n"
-                             + "  \"mongo_admin_pass\"                        : \"some value\",\n"
-                             + "  \"mongo_orgservice_user_pwd\"               : \"some value\",\n"
-                             + "  \"mongo_user_pass\"                         : \"some value\",\n"
-                             + "  \"mysql_root_password\"                     : \"some value\",\n"
-                             + "  \"projectlocker_client_id\"                 : \"some value\",\n"
-                             + "  \"projectlocker_secret\"                    : \"some value\",\n"
-                             + "  \"puppet_agent_version\"                    : \"some value\",\n"
-                             + "  \"puppet_resource_url\"                     : \"some value\",\n"
-                             + "  \"puppet_server_version\"                   : \"some value\",\n"
-                             + "  \"runner_app_lifetime\"                     : \"some value\",\n"
-                             + "  \"runner_default_app_mem_size\"             : \"some value\",\n"
-                             + "  \"runner_waiting_time\"                     : \"some value\",\n"
-                             + "  \"runner_workspace_max_memsize\"            : \"some value\",\n"
-                             + "  \"user_ldap_password\"                      : \"some value\",\n"
-                             + "  \"workspace_inactive_persistent_stop_time\" : \"some value\",\n"
-                             + "  \"workspace_inactive_temporary_stop_time\"  : \"some value\",\n"
-                             + "  \"wso2_client_id\"                          : \"some value\",\n"
-                             + "  \"wso2_secret\"                             : \"some value\",\n"
-                             + "  \"zabbix_admin_email\"                      : \"some value\",\n"
-                             + "  \"zabbix_admin_password\"                   : \"some value\",\n"
-                             + "  \"zabbix_db_pass\"                          : \"some value\",\n"
-                             + "  \"zabbix_time_zone\"                        : \"some value\"\n"
-                             + "}\n"
-                             + "Continue installation [y/N]\n"
-                             + "{\"infos\":[]}\n");
+        assertEquals(output, "Please, enter CDEC required parameters:\n" +
+                             "a: some value\n" +
+                             "{\n" +
+                             "  \"a\" : \"some value\"\n" +
+                             "}\n" +
+                             "Continue installation [y/N]\n" +
+                             "Please, enter CDEC required parameters:\n" +
+                             "a (some value): some value\n" +
+                             "{\n" +
+                             "  \"a\" : \"some value\"\n" +
+                             "}\n" +
+                             "Continue installation [y/N]\n" +
+                             "{\"infos\":[]}\n");
     }
 }

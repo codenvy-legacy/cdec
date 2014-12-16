@@ -17,13 +17,10 @@
  */
 package com.codenvy.im.install;
 
-import com.codenvy.im.config.CodenvySingleServerConfig;
-import com.codenvy.im.config.Config;
+import com.google.common.collect.ImmutableMap;
 
 import org.testng.annotations.Test;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.testng.AssertJUnit.assertFalse;
@@ -49,20 +46,9 @@ public class TestInstallOptions {
     }
 
     @Test
-    public void testIsValidCSSInstallationShouldReturnFalseIfEmptyProperties() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-        options.setConfigProperties(Collections.<String, String>emptyMap());
-
-        assertFalse(options.checkValid());
-    }
-
-    @Test
     public void testIsValidCSSInstallation() throws Exception {
-        Map<String, String> properties = new HashMap<>();
-        for (CodenvySingleServerConfig.Property property : CodenvySingleServerConfig.Property.values()) {
-            properties.put(Config.getPropertyName(property), "some value");
-        }
+        Map<String, String> properties = ImmutableMap.of("some property", "some value");
+
 
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);

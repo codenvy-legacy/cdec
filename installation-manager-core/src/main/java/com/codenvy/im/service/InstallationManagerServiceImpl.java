@@ -132,12 +132,14 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             final CountDownLatch latcher = new CountDownLatch(1);
 
-            new Thread() {
+            Thread downloadThread = new Thread("download thread") {
                 @Override
                 public void run() {
                     download(request, latcher, this);
                 }
-            }.start();
+            };
+            downloadThread.setDaemon(true);
+            downloadThread.start();
 
             latcher.await();
 
@@ -354,8 +356,10 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     /** {@inheritDoc} */
     @Override
     public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
+        Version version = getVersionToInstall(request, installOptions.getStep());
+
         try {
-            List<String> infos = manager.getInstallInfo(request.getArtifact(), null, installOptions);
+            List<String> infos = manager.getInstallInfo(request.getArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -382,6 +386,12 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             LOG.error(e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getVersionToInstall(Request request) throws IOException {
+        return getVersionToInstall(request, 0).toString();
     }
 
     protected Version getVersionToInstall(Request request, int installStep) throws IOException {

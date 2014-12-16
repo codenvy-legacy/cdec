@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.install;
 
-import com.codenvy.im.config.CodenvySingleServerConfig;
 import com.codenvy.im.config.Config;
 
 import java.util.Map;
@@ -85,7 +84,7 @@ public class InstallOptions {
                 return false;
             }
 
-            Config config = new CodenvySingleServerConfig(configProperties);
+            Config config = new Config(configProperties);
             return config.isValid();
         }
 
