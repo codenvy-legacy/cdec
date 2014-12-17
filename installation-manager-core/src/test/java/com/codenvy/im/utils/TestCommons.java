@@ -20,9 +20,6 @@ package com.codenvy.im.utils;
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.dto.server.DtoFactory;
-import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
-import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
 import org.apache.commons.io.FileUtils;
@@ -130,8 +127,8 @@ public class TestCommons {
 
         String json = Commons.toJson(ar);
         assertEquals(json, "{\n"
-                           + "  \"id\" : \"id\",\n"
-                           + "  \"links\" : [ ]\n"
+                           + "  \"links\" : [ ],\n"
+                           + "  \"id\" : \"id\"\n"
                            + "}");
     }
 
@@ -200,15 +197,6 @@ public class TestCommons {
 
         assertNotNull(exception.get());
         throw exception.get();
-    }
-
-    @Test
-    public void testGetBinaryFileName() throws ArtifactNotFoundException {
-        Artifact installManager = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
-        Version version100 = Version.valueOf("1.0.0");
-
-        assertEquals(Commons.getBinaryFileName(installManager, version100, null), "installation-manager-1.0.0-binary.tar.gz");
-        assertEquals(Commons.getBinaryFileName(installManager, version100, "cli"), "installation-manager-cli-1.0.0-binary.tar.gz");
     }
 
     @Test

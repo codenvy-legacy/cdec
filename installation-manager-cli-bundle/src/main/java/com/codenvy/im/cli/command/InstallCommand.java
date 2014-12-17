@@ -21,6 +21,7 @@ import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
@@ -112,7 +113,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         if (version == null) {
-            version = service.getVersionToInstall(initRequest(artifactName, null));
+            version = service.getVersionToInstall(initRequest(artifactName, null), getFirstInstallStep());
         }
 
         final Request request = initRequest(artifactName, version);
@@ -238,10 +239,10 @@ public class InstallCommand extends AbstractIMCommand {
                             console.print(propName);
 
                             if (!isEmpty(currentValue)) {
-                                console.print(format(" (%s)", currentValue));
+                                console.print(format(" (%s)", currentValue), true);
                             }
 
-                            console.print(": ");
+                            console.print(": ", true);
                             String newValue = console.readLine();
 
                             if (!isEmpty(newValue)) {
@@ -282,8 +283,10 @@ public class InstallCommand extends AbstractIMCommand {
                     } else {
                         properties = configUtil.merge(configUtil.loadInstalledCssProperties(),
                                                       configUtil.loadCdecDefaultProperties(version));
+
                     }
                 }
+
                 options.setConfigProperties(properties);
 
                 // it's allowed to use ${} templates to set properties values
@@ -297,6 +300,9 @@ public class InstallCommand extends AbstractIMCommand {
                         properties.put(key, newValue);
                     }
                 }
+
+                properties.remove(Config.CODENVY_USER_NAME);
+                properties.remove(Config.CODENVY_PASSWORD);
 
                 break;
 

@@ -72,8 +72,6 @@ public class DownloadCommand extends AbstractIMCommand {
         return null;
     }
 
-    // TODO [AB] test interrupt
-
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {
         console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 

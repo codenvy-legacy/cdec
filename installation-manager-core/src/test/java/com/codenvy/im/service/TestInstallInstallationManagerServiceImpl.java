@@ -108,7 +108,7 @@ public class TestInstallInstallationManagerServiceImpl {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.getVersionToInstall(request, 0);
+        Version version = installationManagerService.doGetVersionToInstall(request, 0);
         assertEquals(Version.valueOf("1.0.1"), version);
     }
 
@@ -120,7 +120,7 @@ public class TestInstallInstallationManagerServiceImpl {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.getVersionToInstall(request, 0);
+        Version version = installationManagerService.doGetVersionToInstall(request, 0);
         assertEquals(Version.valueOf("1.0.2"), version);
     }
 
@@ -132,7 +132,7 @@ public class TestInstallInstallationManagerServiceImpl {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.getVersionToInstall(request, 1);
+        Version version = installationManagerService.doGetVersionToInstall(request, 1);
         assertEquals(Version.valueOf("1.0.3"), version);
     }
 
@@ -144,7 +144,7 @@ public class TestInstallInstallationManagerServiceImpl {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        installationManagerService.getVersionToInstall(request, 0);
+        installationManagerService.doGetVersionToInstall(request, 0);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -154,6 +154,6 @@ public class TestInstallInstallationManagerServiceImpl {
         doReturn(Version.valueOf("1.0.4")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of()).when(mockInstallationManager).getDownloadedVersions(cdecArtifact);
 
-        installationManagerService.getVersionToInstall(request, 1);
+        installationManagerService.doGetVersionToInstall(request, 1);
     }
 }

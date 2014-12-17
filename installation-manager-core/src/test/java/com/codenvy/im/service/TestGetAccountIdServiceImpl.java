@@ -68,9 +68,9 @@ public class TestGetAccountIdServiceImpl {
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
         assertEquals(response, "{\n"
+                               + "  \"links\" : [ ],\n"
                                + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
-                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\",\n"
-                               + "  \"links\" : [ ]\n"
+                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
                                + "}");
     }
 
@@ -85,9 +85,9 @@ public class TestGetAccountIdServiceImpl {
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
         assertEquals(response, "{\n"
+                               + "  \"links\" : [ ],\n"
                                + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
-                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\",\n"
-                               + "  \"links\" : [ ]\n"
+                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
                                + "}");
     }
 
@@ -118,9 +118,9 @@ public class TestGetAccountIdServiceImpl {
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(ACCOUNT_NAME, request);
         assertEquals(response, "{\n"
+                               + "  \"links\" : [ ],\n"
                                + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
-                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\",\n"
-                               + "  \"links\" : [ ]\n"
+                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
                                + "}");
     }
 

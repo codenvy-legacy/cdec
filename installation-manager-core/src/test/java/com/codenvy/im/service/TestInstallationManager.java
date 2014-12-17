@@ -102,13 +102,13 @@ public class TestInstallationManager {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.1'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         final Version version2101 = Version.valueOf("2.10.1");
 
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(version2101, Paths.get("target/download/installation-manager/2.10.1/file1"));
+                put(version2101, Paths.get("target/download/" + InstallManagerArtifact.NAME + "/2.10.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
@@ -138,7 +138,7 @@ public class TestInstallationManager {
     }
 
     @Test(expectedExceptions = FileNotFoundException.class,
-            expectedExceptionsMessageRegExp = "Binaries to install artifact 'installation-manager' version '2.10.1' not found")
+            expectedExceptionsMessageRegExp = "Binaries to install artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1' not found")
     public void testNotInstallableUpdate() throws Exception {
         final Version version200 = Version.valueOf("2.0.0");
 
@@ -160,7 +160,7 @@ public class TestInstallationManager {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Can not install the artifact 'installation-manager' version '2.10.0'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.0'.")
     public void testUpdateIMErrorIfInstalledIMHasGreaterVersion() throws Exception {
         final Version version2100 = Version.valueOf("2.10.0");
         Version version2101 = Version.valueOf("2.10.1");
@@ -168,7 +168,7 @@ public class TestInstallationManager {
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"1.0.0\"}");
         doReturn(new HashMap<Artifact, SortedMap<Version, Path>>() {{
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
-                put(version2100, Paths.get("target/download/installation-manager/2.10.0/file1"));
+                put(version2100, Paths.get("target/download/" + InstallManagerArtifact.NAME + "/2.10.0/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
@@ -291,7 +291,7 @@ public class TestInstallationManager {
 
         Map<Artifact, Version> updates = manager.getUpdates(testCredentials.getToken());
         assertEquals(updates.size(), 2);
-        assertEquals(updates.toString(), "{cdec=1.0.0, installation-manager=2.0.0}");
+        assertEquals(updates.toString(), "{cdec=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
     }
 
     @Test
@@ -305,7 +305,7 @@ public class TestInstallationManager {
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(testCredentials.getToken());
 
         assertEquals(installedArtifacts.size(), 2);
-        assertEquals(installedArtifacts.toString(), "{cdec=1.0.0, installation-manager=2.0.0}");
+        assertEquals(installedArtifacts.toString(), "{cdec=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
     }
 
     @Test
@@ -320,7 +320,7 @@ public class TestInstallationManager {
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
         assertEquals(artifactsToDownload.size(), 2);
-        assertEquals(artifactsToDownload.toString(), "{installation-manager=2.0.0, cdec=1.0.0}");
+        assertEquals(artifactsToDownload.toString(), "{" + InstallManagerArtifact.NAME + "=2.0.0, cdec=1.0.0}");
     }
 
     @Test
@@ -349,7 +349,8 @@ public class TestInstallationManager {
     public void testGetDownloadedArtifacts() throws Exception {
         doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.1"));
         doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.2"));
-        doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("installation-manager/2.0.1"));
+        doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport)
+                                                                                      .doGet(endsWith(InstallManagerArtifact.NAME + "/2.0.1"));
 
         Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
@@ -378,7 +379,7 @@ public class TestInstallationManager {
                                            "1.0.0=file1, " +
                                            "1.0.1=file2" +
                                            "}, " +
-                                           "installation-manager={" +
+                                           InstallManagerArtifact.NAME + "={" +
                                            "2.0.0=file3" +
                                            "}}");
     }

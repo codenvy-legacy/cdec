@@ -41,26 +41,26 @@ public class TestArtifactPropertiesUtils {
     
     @Test
     public void testAuthenticationRequiredProperty() throws IOException, JsonParseException {
-        when(mockTransport.doGet("/repository/properties/installation-manager/1.0.1"))
+        when(mockTransport.doGet("/repository/properties/" + InstallManagerArtifact.NAME + "/1.0.1"))
         .thenReturn("{"
-            + "\"artifact\":\"installation-manager\","
-            + "\"version\":\"2.0.4\","
-            + "\"authentication-required\":\"true\","
-            + "\"subscription\":\"OnPremises\""
-            + "}");
+                    + "\"artifact\":\"" + InstallManagerArtifact.NAME + "\","
+                    + "\"version\":\"2.0.4\","
+                    + "\"authentication-required\":\"true\","
+                    + "\"subscription\":\"OnPremises\""
+                    + "}");
     
         assertEquals(ArtifactPropertiesUtils.isAuthenticationRequired(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), true);
     }
     
     @Test
     public void testSubsctiptionProperty() throws IOException, JsonParseException {
-        when(mockTransport.doGet("/repository/properties/installation-manager/1.0.1"))
+        when(mockTransport.doGet("/repository/properties/" + InstallManagerArtifact.NAME + "/1.0.1"))
         .thenReturn("{"
-            + "\"artifact\":\"installation-manager\","
-            + "\"version\":\"2.0.4\","
-            + "\"authentication-required\":\"true\","
-            + "\"subscription\":\"OnPremises\""
-            + "}");
+                    + "\"artifact\":\"" + InstallManagerArtifact.NAME + "\","
+                    + "\"version\":\"2.0.4\","
+                    + "\"authentication-required\":\"true\","
+                    + "\"subscription\":\"OnPremises\""
+                    + "}");
 
         assertEquals(ArtifactPropertiesUtils.getSubscription(InstallManagerArtifact.NAME, "1.0.1", mockTransport, ""), "OnPremises");
     }    

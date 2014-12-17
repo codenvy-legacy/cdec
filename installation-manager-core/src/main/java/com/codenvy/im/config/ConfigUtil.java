@@ -18,6 +18,7 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.utils.HttpTransport;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,8 +41,6 @@ import static java.nio.file.Files.newInputStream;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigUtil {
-    private final String CSS_PROPERTIES = "/etc/puppet/manifests/nodes/single_server/single_server.pp";
-
     private final HttpTransport transport;
     private final String        updateEndpoint;
 
@@ -88,14 +88,19 @@ public class ConfigUtil {
         }
     }
 
-    /** Merges two bunches of the properties */
-    public Map<String, String> merge(Map<String, String> properties1, Map<String, String> properties2) {
-        Map<String, String> m = new HashMap<>(properties1);
-        for (Map.Entry<String, String> e : properties2.entrySet()) {
+    /**
+     * Merges two bunches of the properties from old and new configurations. As a rule method keeps the values of old configuration
+     * except the {@link com.codenvy.im.config.Config#VERSION} property
+     */
+    public Map<String, String> merge(Map<String, String> oldProps, Map<String, String> newProps) {
+        Map<String, String> m = new HashMap<>(oldProps);
+        for (Map.Entry<String, String> e : newProps.entrySet()) {
             if (!m.containsKey(e.getKey())) {
                 m.put(e.getKey(), e.getValue());
             }
         }
+
+        m.put(Config.VERSION, newProps.get(Config.VERSION));
 
         return m;
     }
@@ -110,28 +115,35 @@ public class ConfigUtil {
      * Finally method removes leading '$' for key name and quota characters for its value.
      */
     public Map<String, String> loadInstalledCssProperties() throws IOException {
-        try (InputStream in = newInputStream(getCssPropertiesFile())) {
-            Map<String, String> m = doLoad(in);
+        Map<String, String> properties = new HashMap<>();
 
-            Map<String, String> result = new HashMap<>(m.size());
-            for (Map.Entry<String, String> e : m.entrySet()) {
-                String key = e.getKey().trim();
-                if (key.startsWith("$")) {
-                    key = key.substring(1); // remotes '$'
-                    String value = e.getValue().substring(1, e.getValue().length() - 1); // removes "
+        Iterator<Path> files = getCssPropertiesFiles();
+        while (files.hasNext()) {
+            Path propertiesFile = files.next();
 
-                    result.put(key, value);
+            try (InputStream in = newInputStream(propertiesFile)) {
+                Map<String, String> m = doLoad(in);
+
+                for (Map.Entry<String, String> e : m.entrySet()) {
+                    String key = e.getKey().trim();
+                    if (key.startsWith("$")) {
+                        key = key.substring(1); // remotes '$'
+                        String value = e.getValue().substring(1, e.getValue().length() - 1); // removes "
+
+                        properties.put(key, value);
+                    }
                 }
-            }
 
-            return result;
-        } catch (IOException e) {
-            throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
+            } catch (IOException e) {
+                throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
+            }
         }
+
+        return properties;
     }
 
-    protected Path getCssPropertiesFile() {
-        return Paths.get(CSS_PROPERTIES);
+    protected Iterator<Path> getCssPropertiesFiles() {
+        return ImmutableList.of(Paths.get(Config.SINGLE_SERVER_PROPERTIES), Paths.get(Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
     }
 
     private Map<String, String> doLoad(InputStream in) throws IOException {

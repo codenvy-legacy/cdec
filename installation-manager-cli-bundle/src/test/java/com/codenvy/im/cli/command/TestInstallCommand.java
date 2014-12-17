@@ -34,7 +34,10 @@ import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
+
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
@@ -69,10 +72,10 @@ public class TestInstallCommand extends AbstractTestCommand {
     @BeforeMethod
     public void initMocks() throws Exception {
         configUtil = mock(ConfigUtil.class);
-        doReturn(ImmutableMap.of("a", "MANDATORY")).when(configUtil).loadCdecDefaultProperties("1.0.1");
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configUtil).loadCdecDefaultProperties("1.0.1");
 
         service = mock(InstallationManagerService.class);
-        doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class));
+        doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
                 .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
@@ -113,9 +116,9 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
-        doReturn("1.0.2").when(service).getVersionToInstall(any(Request.class));
+        doReturn("1.0.2").when(service).getVersionToInstall(any(Request.class), anyInt());
         doReturn(false).when(spyCommand).isInstall();
-        doReturn(ImmutableMap.of("a", "2", "b", "MANDATORY")).when(configUtil).merge(anyMap(), anyMap());
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configUtil).merge(anyMap(), anyMap());
 
         // user always enter "some value" as property value
         doAnswer(new Answer() {

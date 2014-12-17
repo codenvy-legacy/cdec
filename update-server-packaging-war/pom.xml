@@ -35,14 +35,14 @@
             <version>${codenvy.commons.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.codenvy.hosted-infrastructure</groupId>
+            <artifactId>codenvy-hosted-sso-client</artifactId>
+            <version>${codenvy.hosted-infrastructure.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-core</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.security</groupId>
-            <artifactId>codenvy-security-sso-client</artifactId>
-            <version>${codenvy.security.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-fileupload</groupId>
@@ -123,7 +123,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <profiles>
         <profile>
             <id>default</id>

@@ -86,7 +86,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         String response = installationManagerService.getUpdates(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
                                "    \"version\" : \"1.0.0\",\n" +
                                "    \"status\" : \"DOWNLOADED\"\n" +
                                "  }, {\n" +

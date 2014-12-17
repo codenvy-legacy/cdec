@@ -23,7 +23,7 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     echo "=========> Uploading on production"
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
-    SSH_KEY_NAME=git_nopass.key # TODO [AB]
+    SSH_KEY_NAME=git_nopass.key # TODO [AB] remove
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "=========> Uploading on staging"
@@ -32,12 +32,13 @@ else
     exit 1
 fi
 
-uploadArtifactInstallationManager() {
-    ARTIFACT=installation-manager
+uploadInstallationManagerCli() {
+    FILE="installation-manager"
+    ARTIFACT=${FILE}"-cli"
 
-    FILENAME=`ls ${ARTIFACT}-cli-assembly/target | grep -G ${ARTIFACT}-.*-binary[.]tar.gz`
-    VERSION=`ls ${ARTIFACT}-cli-assembly/target | grep -G ${ARTIFACT}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${ARTIFACT}'-//' | sed 's/.jar//'`
-    SOURCE=${ARTIFACT}-cli-assembly/target/${FILENAME}
+    FILENAME=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*-binary[.]tar.gz`
+    VERSION=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${FILE}'-//' | sed 's/.jar//'`
+    SOURCE=${ARTIFACT}-assembly/target/${FILENAME}
     MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
     SIZE=`du -b ${SOURCE} | cut -f1`
 
@@ -84,7 +85,13 @@ doUpload() {
     rm .properties
 }
 
-uploadArtifactInstallationManager
-uploadCodenvySingleServerInstallScript 3.1.0
-uploadCodenvySingleServerInstallProperties 3.1.0
+uploadInstallationManagerCli
+
+for VERSION in 3.1.0; do
+    uploadCodenvySingleServerInstallScript ${VERSION}
+done
+
+for VERSION in 3.1.0 3.3.0; do
+    uploadCodenvySingleServerInstallProperties ${VERSION}
+done
 

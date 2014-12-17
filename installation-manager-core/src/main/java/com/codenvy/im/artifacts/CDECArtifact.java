@@ -50,11 +50,6 @@ import static java.lang.String.format;
 public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
 
-    public static final String PUPPET_RESOURCE_URL   = "puppet_resource_url";
-    public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
-    public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
-    public static final String AIO_HOST_URL          = "aio_host_url";
-
     private final HttpTransport transport;
     private final String apiNodeUrl;
 
@@ -90,6 +85,81 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
+
+
+    /** {@inheritDoc} */
+    @Override
+    public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
+        return ImmutableList.of("Unzip Codenvy binaries to /tmp/cdec",
+                                "Configure Codenvy",
+                                "Patch resources",
+                                "Move Codenvy binaries to /etc/puppet",
+                                "Restart Codenvy",
+                                "Patch resources");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+        final Config config = new Config(installOptions.getConfigProperties());
+        final int step = installOptions.getStep();
+
+        switch (step) {
+            case 0:
+                return createLocalCommand(format("rm -rf /tmp/cdec; " +
+                                                 "mkdir /tmp/cdec/; " +
+                                                 "unzip -o %s -d /tmp/cdec", pathToBinaries.toString()));
+
+            case 1:
+                List<Command> commands = new ArrayList<>();
+                commands.add(createLocalCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
+                                                       "YOUR_DNS_NAME", config.getHostUrl())));
+                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                    String property = e.getKey();
+                    String value = e.getValue();
+
+                    commands.add(createLocalReplaceCommand(Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalReplaceCommand(Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                }
+
+            case 2:
+                String patchFile = "/tmp/cdec/patches/" + version.toString() + "/before-" + getInstalledVersion() + ".sh";
+                return createLocalCommand(format("if [ -f %1$s ]; then bash %1$s; fi", patchFile));
+
+            case 3:
+                return createLocalCommand("rm -rf /etc/puppet/files; " +
+                                          "rm -rf /etc/puppet/modules; " +
+                                          "rm -rf /etc/puppet/manifests; " +
+                                          "sudo mv /tmp/cdec/* /etc/puppet");
+
+            case 4:
+                return new MacroCommand(ImmutableList.<Command>of(
+                        createLocalCommand("doneState=\"Stopping\"; " +
+                                           "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                           "while [ \"${doneState}\" != \"Stopped\" ]; do " +
+                                           "    sleep 5; " +
+                                           "    if ! sudo test -f ${testFile}; then doneState=\"Stopped\"; fi; " +
+                                           "    if ! sudo grep -Fq \"Server startup\" ${testFile}; then doneState=\"Stopped\"; fi; " +
+                                           "done"),
+                        createLocalCommand("doneState=\"Starting\"; " +
+                                           "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                           "while [ \"${doneState}\" != \"Started\" ]; do " +
+                                           "    sleep 5; " +
+                                           "    if sudo grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; " +
+                                           "fi; " +
+                                           "    if sudo grep -Fq \"Server startup\" ${testFile}; then doneState=\"Started\"; fi; " +
+                                           "done")),
+                                        "Restart Codenvy");
+
+            case 5:
+                patchFile = "/tmp/cdec/patches/" + version.toString() + "/after-" + getInstalledVersion() + ".sh";
+                return createLocalCommand(format("if [ -f %1$s ]; then bash %1$s; fi", patchFile));
+
+            default:
+                throw new IllegalArgumentException(format("Step number %d is out of update range", step));
+        }
+    }
+
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return ImmutableList.of("Disable SELinux",
@@ -106,20 +176,13 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
-        return ImmutableList.of("Unzip Codenvy binaries",
-                                "Patching resources");
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public Command getInstallCommand(final Version version,
                                      final Path pathToBinaries,
                                      final InstallOptions installOptions) throws IOException {
 
         final Config config = new Config(installOptions.getConfigProperties());
+        final int step = installOptions.getStep();
 
-        int step = installOptions.getStep();
         switch (step) {
             case 0:
                 return new MacroCommand(ImmutableList.of(
@@ -135,10 +198,10 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createLocalCommand(
                             "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum install %s -y", config.getValue(PUPPET_RESOURCE_URL))
+                            + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
                             + "; fi"));
                     add(createLocalCommand(
-                            format("sudo yum install %s -y", config.getValue(PUPPET_SERVER_VERSION))));
+                            format("sudo yum install %s -y", config.getValue(Config.PUPPET_SERVER_VERSION))));
                 }}, "Install puppet server");
 
             case 2:
@@ -152,14 +215,16 @@ public class CDECArtifact extends AbstractArtifact {
                 commands.add(createLocalCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
                 commands.add(createLocalCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
                 commands.add(createLocalCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
-                commands.add(createLocalCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
-                                                       "YOUR_DNS_NAME", config.getValue(AIO_HOST_URL))));
 
+
+                commands.add(createLocalCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
+                                                       "YOUR_DNS_NAME", config.getHostUrl())));
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createLocalReplaceCommand("$" + property, value));
+                    commands.add(createLocalReplaceCommand(Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalReplaceCommand(Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
 
                 return new MacroCommand(commands, "Configure puppet master");
@@ -172,7 +237,7 @@ public class CDECArtifact extends AbstractArtifact {
                                         "Launch puppet master");
 
             case 5:
-                return createLocalCommand(format("sudo yum install %s -y", config.getValue(PUPPET_AGENT_VERSION)));
+                return createLocalCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION)));
 
             case 6:
                 return new MacroCommand(ImmutableList.of(
@@ -180,13 +245,13 @@ public class CDECArtifact extends AbstractArtifact {
                         createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                                   "  server = %s\\n" +
                                                   "  runinterval = 300\\n" +
-                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getValue(AIO_HOST_URL))),
+                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
                         createLocalCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
                                                   "  show_diff = true\\n" +
                                                   "  pluginsync = true\\n" +
                                                   "  report = true\\n" +
                                                   "  default_schedules = false\\n" +
-                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", config.getValue(AIO_HOST_URL)))),
+                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
                                         "Configure puppet agent");
 
 
@@ -199,54 +264,34 @@ public class CDECArtifact extends AbstractArtifact {
                                         "Launch puppet agent");
 
             case 8:
-                return new MacroCommand(ImmutableList.<Command>of(
-                        createLocalCommand("doneState=\"Installing\"; " +
+                return createLocalCommand("doneState=\"Installing\"; " +
                                            "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                            "while [ \"${doneState}\" != \"Installed\" ]; do " +
                                            "    sleep 30; " +
                                            "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                           "done")),
-                                        "Install Codenvy");
+                                           "done");
 
             case 9:
-                return new MacroCommand(ImmutableList.<Command>of(
-                        createLocalCommand("doneState=\"Booting\"; " +
+                return createLocalCommand("doneState=\"Booting\"; " +
                                            "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                            "while [ \"${doneState}\" != \"Booted\" ]; do " +
-                                           "    sleep 30; " +
+                                           "    sleep 5; " +
                                            "    if sudo grep -Fq \"Exception\" ${testFile}; then >&2 echo \"Tomcat starting up failed\"; exit 1; " +
                                            "fi; " +
                                            "    if sudo grep -Fq \"Server startup\" ${testFile}; then doneState=\"Booted\"; fi; " +
-                                           "done")),
-                                        "Boot Codenvy");
+                                           "done");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
-        int step = installOptions.getStep();
-        switch (step) {
-            case 0:
-                return createLocalCommand(format("sudo unzip -o %s -d /etc/puppet", pathToBinaries.toString()));
-
-            case 1:
-                String patchFile = "/etc/puppet/patches/" + version.toString() + "/" + getInstalledVersion() + ".sh";
-                return createLocalCommand(format("if [ -f %1$s ]; then bash %1$s; fi", patchFile));
-
-            default:
-                throw new IllegalArgumentException(format("Step number %d is out of update range", step));
-        }
-    }
-
-    private Command createLocalReplaceCommand(String property, String value) throws ConfigException {
+    private Command createLocalReplaceCommand(String file, String property, String value) throws ConfigException {
         return createLocalCommand(
-                format("sudo sed -i 's/%1$s = .*/%1$s = \"%2$s\"/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
+                format("sudo sed -i 's/%1$s = .*/%1$s = \"%2$s\"/g' %3$s",
                        property,
-                       value.replace("/", "\\/")));
+                       value.replace("/", "\\/"),
+                       file));
     }
 
     private Command createLocalRestoreOrBackupCommand(final String file) throws ConfigException {

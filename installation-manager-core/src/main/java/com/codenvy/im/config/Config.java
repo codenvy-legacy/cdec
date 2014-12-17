@@ -24,6 +24,18 @@ import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
 public class Config {
+    public static final String SINGLE_SERVER_PROPERTIES      = "/etc/puppet/manifests/nodes/single_server/single_server.pp";
+    public static final String SINGLE_SERVER_BASE_PROPERTIES = "/etc/puppet/manifests/nodes/single_server/base_config.pp";
+
+    public static final String VERSION               = "version";
+    public static final String CODENVY_USER_NAME     = "codenvy_user_name";
+    public static final String CODENVY_PASSWORD      = "codenvy_password";
+    public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
+    public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
+    public static final String PUPPET_RESOURCE_URL   = "puppet_resource_url";
+    public static final String AIO_HOST_URL          = "aio_host_url"; // 3.1.0
+    public static final String HOST_URL              = "host_url";
+
     private Map<String, String> properties;
 
     public Config(Map<String, String> properties) {
@@ -38,6 +50,11 @@ public class Config {
     /** @return the property value */
     public final String getValue(String property) {
         return properties.get(property.toLowerCase());
+    }
+
+    /** @return the either #HOST_URL or #AIO_HOST_URL property value */
+    public final String getHostUrl() {
+        return properties.containsKey(HOST_URL) ? properties.get(HOST_URL) : properties.get(AIO_HOST_URL);
     }
 
     /** Getter for #properties. Unmodifiable map will be returned */

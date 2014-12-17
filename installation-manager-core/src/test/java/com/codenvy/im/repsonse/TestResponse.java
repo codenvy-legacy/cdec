@@ -126,7 +126,7 @@ public class TestResponse {
                           + "    \"version\" : \"1.0.2\",\n"
                           + "    \"status\" : \"SUCCESS\"\n"
                           + "  }, {\n"
-                          + "    \"artifact\" : \"installation-manager\",\n"
+                          + "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n"
                           + "    \"version\" : \"1.0.2\",\n"
                           + "    \"file\" : \"test\",\n"
                           + "    \"status\" : \"SUCCESS\"\n"

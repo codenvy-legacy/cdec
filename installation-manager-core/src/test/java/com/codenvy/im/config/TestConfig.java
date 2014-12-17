@@ -18,6 +18,7 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.utils.HttpTransport;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
@@ -117,14 +118,15 @@ public class TestConfig {
 
     @Test
     public void testMerge() throws Exception {
-        Map<String, String> properties1 = ImmutableMap.of("a", "1", "b", "2");
-        Map<String, String> properties2 = ImmutableMap.of("a", "2", "c", "3");
+        Map<String, String> properties1 = ImmutableMap.of("a", "1", "b", "2", "version", "1");
+        Map<String, String> properties2 = ImmutableMap.of("a", "2", "c", "3", "version", "2");
         Map<String, String> m = configUtil.merge(properties1, properties2);
 
-        assertEquals(m.size(), 3);
+        assertEquals(m.size(), 4);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
         assertEquals(m.get("c"), "3");
+        assertEquals(m.get("version"), "2");
     }
 
     @Test
@@ -149,10 +151,22 @@ public class TestConfig {
                                              "  $builder_max_execution_time = \"600\"\n" +
                                              "\n");
 
-        doReturn(properties).when(configUtil).getCssPropertiesFile();
+        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles();
         Map<String, String> m = configUtil.loadInstalledCssProperties();
         assertEquals(m.size(), 2);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
+    }
+
+    @Test
+    public void testGetHostUrl() throws Exception {
+        Config config = new Config(ImmutableMap.of(Config.HOST_URL, "host"));
+        assertEquals(config.getHostUrl(), "host");
+
+        config = new Config(ImmutableMap.of(Config.AIO_HOST_URL, "host"));
+        assertEquals(config.getHostUrl(), "host");
+
+        config = new Config(ImmutableMap.of(Config.HOST_URL, "host1", Config.AIO_HOST_URL, "host2"));
+        assertEquals(config.getHostUrl(), "host1");
     }
 }

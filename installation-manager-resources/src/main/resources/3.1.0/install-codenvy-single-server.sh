@@ -2,6 +2,7 @@
 
 # bash <(curl -s https://codenvy.com/update/repository/public/download/install-codenvy-single-server)
 
+VERSION=$1
 CONFIG="codenvy-single-server.properties"
 DIR="${HOME}/codenvy-im"
 
@@ -58,7 +59,7 @@ installPackageIfNeed() {
 installIm() {
     printPrompt; echo "Downloading Installation Manager"
 
-    IM_URL="https://codenvy.com/update/repository/public/download/installation-manager"
+    IM_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
     IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
 
     curl -s -o ${IM_FILE} -L ${IM_URL}
@@ -91,10 +92,11 @@ insertProperty() {
 
 prepareConfig() {
     if [ ! -f ${CONFIG} ]; then
-        curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties
+        curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
     fi
 
     insertProperty "aio_host_url" `hostname`
+    insertProperty "host_url" `hostname`
 
     if grep -Fq "=MANDATORY" ${CONFIG}; then
         printPrompt; echo "Please enter your Codenvy credentials"
@@ -158,7 +160,7 @@ printPreInstallInfo() {
     printPrompt; echo
     printPrompt; echo "You will need to know your Codenvy user name and password."
     printPrompt; echo
-    #printPrompt; echo "Create account or retrieve password: "
+    printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
     printPrompt; echo "Codenvy customer agreement & TOS: https://codenvy.com/legal"
     printPrompt; echo
     printPrompt; echo "Press any key to continue"
@@ -219,14 +221,14 @@ doInstallStep4() {
 doInstallStep5() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 0-8 --config ${CONFIG} cdec
+    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 0-8 --config ${CONFIG} cdec ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeWithSudoCliCommand "" im-install --step 9 --config ${CONFIG} cdec
+    executeWithSudoCliCommand "" im-install --step 9 --config ${CONFIG} cdec ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 

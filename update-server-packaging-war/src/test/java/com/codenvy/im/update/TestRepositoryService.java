@@ -130,7 +130,7 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
 
-        Response response = given().when().get("repository/properties/installation-manager");
+        Response response = given().when().get("repository/properties/" + InstallManagerArtifact.NAME);
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.asMap(response.body().asString());
@@ -154,7 +154,7 @@ public class TestRepositoryService extends BaseTest {
 
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", testPropertiesContainer);
 
-        Response response = given().when().get("repository/properties/installation-manager/1.0.1");
+        Response response = given().when().get("repository/properties/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map value = Commons.asMap(response.body().asString());

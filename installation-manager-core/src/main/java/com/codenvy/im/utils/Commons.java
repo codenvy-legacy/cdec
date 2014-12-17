@@ -30,7 +30,6 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,7 +52,6 @@ import java.util.TreeSet;
 
 import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
-import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
@@ -251,18 +249,6 @@ public class Commons {
 
             addAll(s);
         }
-    }
-
-    /**
-     * @return "[artifact]-[delimeter]-[version]-binary.tar.gz"
-     */
-    public static String getBinaryFileName(Artifact artifact, Version version, @Nullable String artifactAndVersionDelimeter) {
-        if (artifactAndVersionDelimeter == null) {
-            return format("%s-%s-binary.tar.gz", artifact.getName(), version.toString());
-        } else {
-            return format("%s-%s-%s-binary.tar.gz", artifact.getName(), artifactAndVersionDelimeter, version.toString());
-        }
-
     }
 
     /**

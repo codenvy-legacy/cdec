@@ -356,7 +356,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     /** {@inheritDoc} */
     @Override
     public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
-        Version version = getVersionToInstall(request, installOptions.getStep());
+        Version version = doGetVersionToInstall(request, installOptions.getStep());
 
         try {
             List<String> infos = manager.getInstallInfo(request.getArtifact(), version, installOptions);
@@ -371,7 +371,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String install(InstallOptions installOptions, Request request) throws IOException {
         try {
-            Version version = getVersionToInstall(request, installOptions.getStep());
+            Version version = doGetVersionToInstall(request, installOptions.getStep());
 
             try {
                 manager.install(request.getAccessToken(), request.getArtifact(), version, installOptions);
@@ -390,11 +390,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
     /** {@inheritDoc} */
     @Override
-    public String getVersionToInstall(Request request) throws IOException {
-        return getVersionToInstall(request, 0).toString();
+    public String getVersionToInstall(Request request, int installStep) throws IOException {
+        return doGetVersionToInstall(request, installStep).toString();
     }
 
-    protected Version getVersionToInstall(Request request, int installStep) throws IOException {
+    protected Version doGetVersionToInstall(Request request, int installStep) throws IOException {
         if (request.getVersion() != null) {
             return request.getVersion();
 

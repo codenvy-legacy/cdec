@@ -144,7 +144,7 @@ public class TestDownloadInstallationManagerServiceImpl {
                                                         "    \"file\" : \"./target/cdec.zip\",\n" +
                                                         "    \"status\" : \"SUCCESS\"\n" +
                                                         "  }, {\n" +
-                                                        "    \"artifact\" : \"installation-manager\",\n" +
+                                                        "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
                                                         "    \"version\" : \"1.0.0\",\n" +
                                                         "    \"file\" : \"./target/im.zip\",\n" +
                                                         "    \"status\" : \"SUCCESS\"\n" +
@@ -441,7 +441,7 @@ public class TestDownloadInstallationManagerServiceImpl {
                                "    \"file\" : \"target/file2\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
                                "  }, {\n" +
-                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
                                "    \"version\" : \"2.0.0\",\n" +
                                "    \"file\" : \"target/file3\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
@@ -467,12 +467,12 @@ public class TestDownloadInstallationManagerServiceImpl {
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
                                "    \"version\" : \"2.0.0\",\n" +
                                "    \"file\" : \"target/file1\",\n" +
                                "    \"status\" : \"DOWNLOADED\"\n" +
                                "  }, {\n" +
-                               "    \"artifact\" : \"installation-manager\",\n" +
+                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
                                "    \"version\" : \"2.0.1\",\n" +
                                "    \"file\" : \"target/file2\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
