@@ -127,9 +127,9 @@ public class CDECArtifact extends AbstractArtifact {
                 return createLocalCommand(format("if [ -f %1$s ]; then bash %1$s; fi", patchFile));
 
             case 3:
-                return createLocalCommand("rm -rf /etc/puppet/files; " +
-                                          "rm -rf /etc/puppet/modules; " +
-                                          "rm -rf /etc/puppet/manifests; " +
+                return createLocalCommand("sudo rm -rf /etc/puppet/files; " +
+                                          "sudo rm -rf /etc/puppet/modules; " +
+                                          "sudo rm -rf /etc/puppet/manifests; " +
                                           "sudo mv /tmp/cdec/* /etc/puppet");
 
             case 4:
@@ -139,7 +139,7 @@ public class CDECArtifact extends AbstractArtifact {
                                            "while [ \"${doneState}\" != \"Stopped\" ]; do " +
                                            "    sleep 5; " +
                                            "    if ! sudo test -f ${testFile}; then doneState=\"Stopped\"; fi; " +
-                                           "    if ! sudo grep -Fq \"Server startup\" ${testFile}; then doneState=\"Stopped\"; fi; " +
+                                           "    if ! sudo grep -Fq \"Stopping service\" ${testFile}; then doneState=\"Stopped\"; fi; " +
                                            "done"),
                         createLocalCommand("doneState=\"Starting\"; " +
                                            "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
