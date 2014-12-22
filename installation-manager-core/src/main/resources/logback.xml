@@ -20,7 +20,7 @@
 -->
 <configuration>
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>../data/console.txt</file>
+        <file>console.txt</file>
         <encoder>
             <pattern>%-41(%date[%.15thread]) %-45([%-5level] [%.30logger{30} %L]) - %msg%n</pattern>
         </encoder>

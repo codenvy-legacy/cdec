@@ -116,7 +116,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                                      .toJson();
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return new Response().setStatus(ERROR)
                                  .setSubscription(subscription)
                                  .setMessage(e.getMessage())
@@ -145,7 +145,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -176,7 +176,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                     Path pathToBinaries = doDownload(request.getUserCredentials(), artToDownload, verToDownload);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
                 } catch (Exception exp) {
-                    LOG.error(exp.getMessage(), exp);
+                    // LOG.error(exp.getMessage(), exp);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
                     downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
                                                                        .setMessage(exp.getMessage())
@@ -187,7 +187,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             downloadDescriptor.setDownloadResult(new Response().setStatus(ResponseCode.OK).setArtifacts(infos));
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
 
             if (downloadDescriptor == null) {
                 downloadDescriptor = new DownloadDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
@@ -235,7 +235,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                 return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -263,7 +263,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             downloadDescriptor.getDownloadThread().interrupt();
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -297,11 +297,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
                 return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
             } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
+                // LOG.error(e.getMessage(), e);
                 return Response.valueOf(e).toJson();
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
@@ -341,7 +341,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -362,7 +362,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             List<String> infos = manager.getInstallInfo(request.getArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
@@ -370,6 +370,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     /** {@inheritDoc} */
     @Override
     public String install(InstallOptions installOptions, Request request) throws IOException {
+        // LOG.debug("install");
         try {
             Version version = doGetVersionToInstall(request, installOptions.getStep());
 
@@ -378,12 +379,12 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                 ArtifactInfo info = new ArtifactInfo(request.getArtifact(), version, Status.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
+                // LOG.error(e.getMessage(), e);
                 ArtifactInfo info = new ArtifactInfo(request.getArtifact(), version, Status.FAILURE);
                 return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
@@ -442,7 +443,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             manager.setConfig(config);
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            // LOG.error(e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
