@@ -67,11 +67,22 @@ public class TestGetAccountIdServiceImpl {
                             + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
-        assertEquals(response, "{\n"
-                               + "  \"links\" : [ ],\n"
-                               + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
-                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
-                               + "}");
+
+        String okResult = "{\n"
+                          + "  \"links\" : [ ],\n"
+                          + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                          + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
+                          + "}";
+
+        String okResultWithReverseOrder = "{\n"
+                                          + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                                          + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\",\n"
+                                          + "  \"links\" : [ ]\n"
+                                          + "}";
+
+        if (!response.equals(okResult)) {
+            assertEquals(response, okResultWithReverseOrder);
+        }
     }
 
     @Test
@@ -84,11 +95,23 @@ public class TestGetAccountIdServiceImpl {
                             + "accountReference:{id:\"another-account-id\"}"
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
-        assertEquals(response, "{\n"
-                               + "  \"links\" : [ ],\n"
-                               + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
-                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
-                               + "}");
+
+
+        String okResult = "{\n"
+                          + "  \"links\" : [ ],\n"
+                          + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                          + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
+                          + "}";
+
+        String okResultWithReverseOrder = "{\n"
+                                          + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                                          + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\",\n"
+                                          + "  \"links\" : [ ]\n"
+                                          + "}";
+
+        if (!response.equals(okResult)) {
+            assertEquals(response, okResultWithReverseOrder);
+        }
     }
 
     @Test
@@ -117,11 +140,22 @@ public class TestGetAccountIdServiceImpl {
                             + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(ACCOUNT_NAME, request);
-        assertEquals(response, "{\n"
-                               + "  \"links\" : [ ],\n"
-                               + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
-                               + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
-                               + "}");
+
+        String okResult = "{\n"
+                          + "  \"links\" : [ ],\n"
+                          + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                          + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\"\n"
+                          + "}";
+
+        String okResultWithReverseOrder = "{\n"
+                                          + "  \"name\" : \"" + ACCOUNT_NAME + "\",\n"
+                                          + "  \"id\" : \"" + TEST_ACCOUNT_ID + "\",\n"
+                                          + "  \"links\" : [ ]\n"
+                                          + "}";
+
+        if (!response.equals(okResult)) {
+            assertEquals(response, okResultWithReverseOrder);
+        }
     }
 
     @Test

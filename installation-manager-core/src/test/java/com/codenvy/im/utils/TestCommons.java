@@ -126,10 +126,20 @@ public class TestCommons {
         ar.setName(null);
 
         String json = Commons.toJson(ar);
-        assertEquals(json, "{\n"
-                           + "  \"links\" : [ ],\n"
-                           + "  \"id\" : \"id\"\n"
-                           + "}");
+
+        String okResult = "{\n"
+                          + "  \"links\" : [ ],\n"
+                          + "  \"id\" : \"id\"\n"
+                          + "}";
+
+        String okResultWithReverseOrder = "{\n"
+                                          + "  \"id\" : \"id\",\n"
+                                          + "  \"links\" : [ ]\n"
+                                          + "}";
+
+        if (!json.equals(okResult)) {
+            assertEquals(json, okResultWithReverseOrder);
+        }
     }
 
     @Test
