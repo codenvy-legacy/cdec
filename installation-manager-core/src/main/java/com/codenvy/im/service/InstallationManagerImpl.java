@@ -99,9 +99,9 @@ public class InstallationManagerImpl implements InstallationManager {
     private void createAndSetDownloadDir(Path downloadDir) throws IOException {
         if (!exists(downloadDir)) {
             createDirectories(downloadDir);
-            checkRWPermissions(downloadDir);
         }
 
+        checkRWPermissions(downloadDir);
         this.downloadDir = downloadDir;
     }
 
@@ -326,7 +326,7 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     protected void storeProperty(String property, String value) throws IOException {
-        Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
+        Path conf = getConfFile();
 
         Properties props = new Properties();
         if (exists(conf)) {
@@ -343,6 +343,10 @@ public class InstallationManagerImpl implements InstallationManager {
         try (OutputStream out = newOutputStream(conf)) {
             props.store(out, null);
         }
+    }
+
+    protected Path getConfFile() {
+        return Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
     }
 
     /** Filters what need to download, either all updates or a specific one. */

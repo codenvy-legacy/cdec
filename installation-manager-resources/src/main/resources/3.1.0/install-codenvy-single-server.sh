@@ -213,7 +213,7 @@ doInstallStep4() {
     CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
     executeCliCommand "Login to Codenvy Updater manager" login --remote update-server ${CODENVY_USER} ${CODENVY_PWD}
-    executeCliCommand "Downloading Codenvy binaries" im-download cdec
+    executeCliCommand "Downloading Codenvy binaries" im-download cdec ${VERSION}
     executeCliCommand "Checking the list of downloaded binaries" im-download --list-local
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }

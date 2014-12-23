@@ -156,16 +156,19 @@ public class TestInstallCommand extends AbstractTestCommand {
         assertEquals(output, "Please, enter CDEC required parameters:\n" +
                              "b: some value\n" +
                              "{\n" +
-                             "  \"a\" : \"2\",\n" +
-                             "  \"b\" : \"some value\"\n" +
+                             "  \"a\"       : \"2\",\n" +
+                             "  \"b\"       : \"some value\",\n" +
+                             "  \"version\" : \"1.0.2\"\n" +
                              "}\n" +
                              "Continue installation [y/N]\n" +
                              "Please, enter CDEC required parameters:\n" +
                              "b (some value): some value\n" +
                              "a (2): some value\n" +
+                             "version (1.0.2): some value\n" +
                              "{\n" +
-                             "  \"a\" : \"some value\",\n" +
-                             "  \"b\" : \"some value\"\n" +
+                             "  \"a\"       : \"some value\",\n" +
+                             "  \"b\"       : \"some value\",\n" +
+                             "  \"version\" : \"some value\"\n" +
                              "}\n" +
                              "Continue installation [y/N]\n" +
                              "{\"infos\":[]}\n");

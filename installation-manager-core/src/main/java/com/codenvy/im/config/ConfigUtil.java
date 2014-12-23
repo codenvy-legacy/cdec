@@ -100,7 +100,16 @@ public class ConfigUtil {
             }
         }
 
-        m.put(Config.VERSION, newProps.get(Config.VERSION));
+        if (oldProps.containsKey(Config.AIO_HOST_URL) && newProps.containsKey(Config.HOST_URL)) {
+            m.put(Config.HOST_URL, oldProps.get(Config.AIO_HOST_URL));
+        } else if (newProps.containsKey(Config.AIO_HOST_URL) && oldProps.containsKey(Config.HOST_URL)) {
+            m.put(Config.AIO_HOST_URL, oldProps.get(Config.HOST_URL));
+        }
+
+        m.remove(Config.VERSION);
+        if (newProps.containsKey(Config.VERSION)) {
+            m.put(Config.VERSION, newProps.get(Config.VERSION));
+        }
 
         return m;
     }
@@ -143,7 +152,8 @@ public class ConfigUtil {
     }
 
     protected Iterator<Path> getCssPropertiesFiles() {
-        return ImmutableList.of(Paths.get(Config.SINGLE_SERVER_PROPERTIES), Paths.get(Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
+        return ImmutableList.of(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES),
+                                Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
     }
 
     private Map<String, String> doLoad(InputStream in) throws IOException {

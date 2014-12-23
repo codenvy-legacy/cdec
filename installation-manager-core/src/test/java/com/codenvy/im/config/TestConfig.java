@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
@@ -118,15 +119,47 @@ public class TestConfig {
 
     @Test
     public void testMerge() throws Exception {
-        Map<String, String> properties1 = ImmutableMap.of("a", "1", "b", "2", "version", "1");
-        Map<String, String> properties2 = ImmutableMap.of("a", "2", "c", "3", "version", "2");
+        Map<String, String> properties1 = ImmutableMap.of("a", "1", "b", "2");
+        Map<String, String> properties2 = ImmutableMap.of("a", "2", "c", "3");
         Map<String, String> m = configUtil.merge(properties1, properties2);
 
-        assertEquals(m.size(), 4);
+        assertEquals(m.size(), 3);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
         assertEquals(m.get("c"), "3");
-        assertEquals(m.get("version"), "2");
+    }
+
+    @Test(dataProvider = "Versions")
+    public void testMergeVersion(Map<String, String> properties1, Map<String, String> properties2, String expectedVersion) throws Exception {
+        Map<String, String> m = configUtil.merge(properties1, properties2);
+        assertEquals(m.get("version"), expectedVersion);
+    }
+
+    @DataProvider(name = "Versions")
+    public static Object[][] Versions() {
+        return new Object[][]{{ImmutableMap.of(Config.VERSION, "1"), ImmutableMap.of(Config.VERSION, "2"), "2"},
+                              {ImmutableMap.of(), ImmutableMap.of(Config.VERSION, "2"), "2"},
+                              {ImmutableMap.of(Config.VERSION, "1"), ImmutableMap.of(), null},
+                              {ImmutableMap.of(), ImmutableMap.of(), null}};
+    }
+
+    @Test(dataProvider = "HostUrls")
+    public void testMergeHostUrl(Map<String, String> properties1,
+                                 Map<String, String> properties2,
+                                 Map<String, String> expectedProperties) throws Exception {
+        Map<String, String> m = configUtil.merge(properties1, properties2);
+        assertEquals(m, expectedProperties);
+    }
+
+    @DataProvider(name = "HostUrls")
+    public static Object[][] HostUrls() {
+        return new Object[][]{
+                {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"),
+                 ImmutableMap.of(Config.AIO_HOST_URL, "a", Config.HOST_URL, "a")},
+                {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), ImmutableMap.of(Config.HOST_URL, "a")},
+                {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"), ImmutableMap.of(Config.AIO_HOST_URL, "a")},
+                {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"),
+                 ImmutableMap.of(Config.HOST_URL, "a", Config.AIO_HOST_URL, "a")}};
     }
 
     @Test
@@ -156,6 +189,13 @@ public class TestConfig {
         assertEquals(m.size(), 2);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
+    }
+
+    @Test(expectedExceptions = ConfigException.class)
+    public void testLoadInstalledCssPropertiesErrorIfFileAbsent() throws Exception {
+        Path properties = Paths.get("target/unexisted");
+        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles();
+        configUtil.loadInstalledCssProperties();
     }
 
     @Test

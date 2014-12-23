@@ -283,7 +283,7 @@ public class InstallCommand extends AbstractIMCommand {
                     } else {
                         properties = configUtil.merge(configUtil.loadInstalledCssProperties(),
                                                       configUtil.loadCdecDefaultProperties(version));
-
+                        properties.put(Config.VERSION, version);
                     }
                 }
 
@@ -305,7 +305,6 @@ public class InstallCommand extends AbstractIMCommand {
                 properties.remove(Config.CODENVY_PASSWORD);
 
                 break;
-
             default:
                 throw ArtifactNotFoundException.from(artifactName);
         }

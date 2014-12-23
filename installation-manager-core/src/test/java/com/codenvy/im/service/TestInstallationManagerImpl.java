@@ -18,6 +18,7 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.install.InstallOptions;
@@ -26,6 +27,7 @@ import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -47,6 +49,7 @@ import java.util.TreeMap;
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.any;
@@ -64,7 +67,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Anatoliy Bazko
  */
-public class TestInstallationManager {
+public class TestInstallationManagerImpl {
 
     public static final String UPDATE_ENDPOINT = "http://update.com/endpoint";
     public static final String DOWNLOAD_DIR    = "target/download";
@@ -87,11 +90,11 @@ public class TestInstallationManager {
 
         manager = spy(new InstallationManagerImpl(
                 UPDATE_ENDPOINT,
-                                                  DOWNLOAD_DIR,
-                                                  new HttpTransportConfiguration("", "0"),
-                                                  transport,
-                                                  installer,
-                                                  new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
+                DOWNLOAD_DIR,
+                new HttpTransportConfiguration("", "0"),
+                transport,
+                installer,
+                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -99,6 +102,16 @@ public class TestInstallationManager {
     @AfterMethod
     public void tearDown() throws Exception {
         deleteDirectory(Paths.get("target", "download").toFile());
+    }
+
+    @Test
+    public void testInitializationIfDownloadDirectoryNotExist() throws Exception {
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet());
+    }
+
+    @Test
+    public void testInitializationIfWrongPermission() throws Exception {
+        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -309,7 +322,7 @@ public class TestInstallationManager {
     }
 
     @Test
-    public void testUpdatesToDownload() throws Exception {
+    public void testGetUpdatesToDownload() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         final Version version200 = Version.valueOf("2.0.0");
 
@@ -321,6 +334,18 @@ public class TestInstallationManager {
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
         assertEquals(artifactsToDownload.size(), 2);
         assertEquals(artifactsToDownload.toString(), "{" + InstallManagerArtifact.NAME + "=2.0.0, cdec=1.0.0}");
+    }
+
+    @Test
+    public void testGetUpdatesToDownloadForSpecificArtifact() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
+        final Version version200 = Version.valueOf("2.0.0");
+
+        doReturn(version100).when(cdecArtifact).getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+
+        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(cdecArtifact, null, testCredentials.getToken());
+        assertEquals(artifactsToDownload.size(), 1);
+        assertEquals(artifactsToDownload.toString(), "{cdec=1.0.0}");
     }
 
     @Test
@@ -463,5 +488,34 @@ public class TestInstallationManager {
 
         doReturn(false).when(installManagerArtifact).isInstallable(version201, testCredentials.getToken());
         assertFalse(manager.isInstallable(installManagerArtifact, version201, testCredentials.getToken()));
+    }
+
+    @Test
+    public void testGetPathToBinaries() throws Exception {
+        Version version = Version.valueOf("1.0.1");
+        doReturn(ImmutableMap.of(ArtifactProperties.FILE_NAME_PROPERTY, "binaries")).when(cdecArtifact)
+                                                                                    .getProperties(version, UPDATE_ENDPOINT, transport);
+
+        Path path = manager.getPathToBinaries(cdecArtifact, version);
+        assertEquals(path, Paths.get(DOWNLOAD_DIR + "/cdec/1.0.1/binaries"));
+    }
+
+    @Test
+    public void testGetBinariesSize() throws Exception {
+        Version version = Version.valueOf("1.0.1");
+        doReturn(ImmutableMap.of(ArtifactProperties.SIZE_PROPERTY, "100")).when(cdecArtifact).getProperties(version, UPDATE_ENDPOINT, transport);
+
+        Long binariesSize = manager.getBinariesSize(cdecArtifact, version);
+        assertEquals(binariesSize.intValue(), 100);
+    }
+
+    @Test
+    public void testStoreProperty() throws Exception {
+        Path confFile = Paths.get("target/properties");
+        doReturn(confFile).when(manager).getConfFile();
+
+        manager.storeProperty("hello", "value");
+
+        assertTrue(readFileToString(confFile.toFile()).contains("hello=value"));
     }
 }

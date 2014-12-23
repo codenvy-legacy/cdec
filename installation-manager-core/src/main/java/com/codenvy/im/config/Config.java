@@ -24,8 +24,8 @@ import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
 public class Config {
-    public static final String SINGLE_SERVER_PROPERTIES      = "/etc/puppet/manifests/nodes/single_server/single_server.pp";
-    public static final String SINGLE_SERVER_BASE_PROPERTIES = "/etc/puppet/manifests/nodes/single_server/base_config.pp";
+    public static final String SINGLE_SERVER_PROPERTIES      = "manifests/nodes/single_server/single_server.pp";
+    public static final String SINGLE_SERVER_BASE_PROPERTIES = "manifests/nodes/single_server/base_config.pp";
 
     public static final String VERSION               = "version";
     public static final String CODENVY_USER_NAME     = "codenvy_user_name";
