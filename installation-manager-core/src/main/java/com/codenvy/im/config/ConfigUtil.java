@@ -94,16 +94,16 @@ public class ConfigUtil {
      */
     public Map<String, String> merge(Map<String, String> oldProps, Map<String, String> newProps) {
         Map<String, String> m = new HashMap<>(oldProps);
+
         for (Map.Entry<String, String> e : newProps.entrySet()) {
-            if (!m.containsKey(e.getKey())) {
+            String aioOldKey = "aio_" + e.getKey();
+
+            if (m.containsKey(aioOldKey)) {
+                m.put(e.getKey(), m.get(aioOldKey));
+                m.remove(aioOldKey);
+            } else if (!m.containsKey(e.getKey())) {
                 m.put(e.getKey(), e.getValue());
             }
-        }
-
-        if (oldProps.containsKey(Config.AIO_HOST_URL) && newProps.containsKey(Config.HOST_URL)) {
-            m.put(Config.HOST_URL, oldProps.get(Config.AIO_HOST_URL));
-        } else if (newProps.containsKey(Config.AIO_HOST_URL) && oldProps.containsKey(Config.HOST_URL)) {
-            m.put(Config.AIO_HOST_URL, oldProps.get(Config.HOST_URL));
         }
 
         m.remove(Config.VERSION);
