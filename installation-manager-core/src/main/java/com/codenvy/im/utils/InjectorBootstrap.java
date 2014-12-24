@@ -41,6 +41,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 
@@ -77,7 +78,7 @@ public class InjectorBootstrap {
                     throw new IllegalStateException("Can't load properties", e);
                 }
 
-                Path conf = Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
+                Path conf = getConfFile();
                 if (exists(conf)) {
                     try (InputStream in = newInputStream(conf)) {
                         doBindProperties(in);
@@ -118,5 +119,19 @@ public class InjectorBootstrap {
                 }
             }
         });
+    }
+
+    /** @return configuration file path */
+    public static Path getConfFile() {
+        Path confFile = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
+        if (!exists(confFile.getParent())) {
+            try {
+                createDirectories(confFile.getParent());
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        return confFile;
     }
 }

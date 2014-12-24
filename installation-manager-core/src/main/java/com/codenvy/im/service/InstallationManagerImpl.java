@@ -25,6 +25,7 @@ import com.codenvy.im.install.Installer;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
+import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -345,8 +346,8 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
-    protected Path getConfFile() {
-        return Paths.get(System.getenv("CODENVY_CONF"), "im.properties");
+    protected Path getConfFile() throws IOException {
+        return InjectorBootstrap.getConfFile();
     }
 
     /** Filters what need to download, either all updates or a specific one. */
