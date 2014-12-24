@@ -2,6 +2,7 @@
 
 # bash <(curl -s https://codenvy.com/update/repository/public/download/install-codenvy-single-server)
 
+ARTIFACT="cdec"
 VERSION=$1
 CONFIG="codenvy-single-server.properties"
 DIR="${HOME}/codenvy-im"
@@ -213,7 +214,7 @@ doInstallStep4() {
     CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
     executeCliCommand "Login to Codenvy Updater manager" login --remote update-server ${CODENVY_USER} ${CODENVY_PWD}
-    executeCliCommand "Downloading Codenvy binaries" im-download cdec ${VERSION}
+    executeCliCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
     executeCliCommand "Checking the list of downloaded binaries" im-download --list-local
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
@@ -221,14 +222,14 @@ doInstallStep4() {
 doInstallStep5() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 0-8 --config ${CONFIG} cdec ${VERSION}
+    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 0-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeWithSudoCliCommand "" im-install --step 9 --config ${CONFIG} cdec ${VERSION}
+    executeWithSudoCliCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
