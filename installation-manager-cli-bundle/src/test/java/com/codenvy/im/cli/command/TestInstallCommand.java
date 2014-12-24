@@ -221,16 +221,6 @@ public class TestInstallCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testInstallWhenArtifactNameIsAbsent() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "Argument 'artifact' is required.\n");
-    }
-
-    @Test
     public void testInstallErrorStepFailed() throws Exception {
         doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
         doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
@@ -281,7 +271,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "{\n"
-                             + "  \"CLI client version\" : \"1.1.0-SNAPSHOT\",\n"
                              + "  \"artifacts\" : [ {\n"
                              + "    \"artifact\" : \"cdec\",\n"
                              + "    \"version\" : \"1.0.1\",\n"

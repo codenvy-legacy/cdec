@@ -39,11 +39,9 @@ import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,8 +106,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
         if (artifactName == null) {
-            console.printErrorAndExit("Argument 'artifact' is required.");
-            return null;
+            artifactName = CDECArtifact.NAME;
         }
 
         if (version == null) {
@@ -186,15 +183,8 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
         String response = service.getInstalledVersions(initRequest(artifactName, version));
-        console.printResponse(insertClientVersionInfo(response));
+        console.printResponse(response);
         return null;
-    }
-
-    protected String insertClientVersionInfo(String response) throws IOException {
-        StringBuilder newResponse = new StringBuilder(response);
-        String clientVersionInfo = format("  \"CLI client version\" : \"%s\",\n", getClientBuildVersion());
-        newResponse.insert(2, clientVersionInfo);
-        return newResponse.toString();
     }
 
     protected boolean isIMSuccessfullyUpdated(Response response) {
@@ -208,19 +198,6 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         return false;
-    }
-
-    private String getClientBuildVersion() throws IOException {
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream("codenvy/ClientBuildInfo.properties")) {
-            Properties props = new Properties();
-            props.load(in);
-
-            if (props.containsKey("version")) {
-                return (String)props.get("version");
-            } else {
-                throw new IOException(this.getClass().getSimpleName());
-            }
-        }
     }
 
     protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {
