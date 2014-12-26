@@ -24,11 +24,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -46,6 +49,31 @@ public class TestMongoStorage {
     public void setUp() throws Exception {
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
         collection.remove(new BasicDBObject());
+
+        collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
+        collection.remove(new BasicDBObject());
+    }
+
+    @Test
+    public void testSubscriptions() throws Exception {
+        Calendar calendar = Calendar.getInstance();
+
+        mongoStorage.addSubscriptionInfo("account1", "OnPremises", "id1", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("account2", "OnPremises", "id2", calendar.getTime(), calendar.getTime());
+
+        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
+        assertEquals(collection.count(), 2);
+
+        Set<String> ids = mongoStorage.getActiveSubscriptions("OnPremises");
+        assertEquals(ids.size(), 2);
+        assertTrue(ids.contains("id1"));
+        assertTrue(ids.contains("id2"));
+
+        mongoStorage.invalidateSubscription("id1");
+        mongoStorage.invalidateSubscription("id2");
+
+        ids = mongoStorage.getActiveSubscriptions("OnPremises");
+        assertTrue(ids.isEmpty());
     }
 
     @Test

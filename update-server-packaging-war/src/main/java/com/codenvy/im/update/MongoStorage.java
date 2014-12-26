@@ -33,6 +33,7 @@ import com.mongodb.AggregationOutput;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -55,30 +56,41 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Anatoliy Bazko
  */
 @Singleton
 public class MongoStorage {
+    public static final String SUBSCRIPTIONS       = "subscriptions";
     public static final String DOWNLOAD_STATISTICS = "download_statistics";
 
     private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
 
     // mongoDB fields
-    public static final String ID        = "_id";
+    public static final String ID = "_id";
+
     public static final String USER_ID   = "userId";
     public static final String ARTIFACT  = "artifact";
     public static final String ARTIFACTS = "artifacts";
     public static final String VERSION   = "version";
     public static final String VERSIONS  = "versions";
     public static final String DATE      = "date";
-    public static final String SUCCESS   = "success";
     public static final String FAIL      = "fail";
     public static final String TOTAL     = "total";
+    public static final String SUCCESS   = "success";
+
+    public static final String ACCOUNT_ID      = "accountId";
+    public static final String SUBSCRIPTION    = "subscription";
+    public static final String SUBSCRIPTION_ID = "subscriptionId";
+    public static final String START_DATE      = "startDate";
+    public static final String END_DATE        = "endDate";
+    public static final String VALID           = "valid";
 
     private final DB             db;
     private final String         dir;
@@ -102,6 +114,50 @@ public class MongoStorage {
 
         db = connectToDB();
         initCollections();
+    }
+
+
+    /** Adds info that subscription was added to user account */
+    public void addSubscriptionInfo(String accountId, String subscription, String subscriptionId, Date startDate, Date endDate) {
+        DBCollection collection = db.getCollection(SUBSCRIPTIONS);
+
+        DBObject doc = new BasicDBObject();
+        doc.put(ACCOUNT_ID, accountId);
+        doc.put(SUBSCRIPTION, subscription);
+        doc.put(SUBSCRIPTION_ID, subscriptionId);
+        doc.put(START_DATE, startDate);
+        doc.put(END_DATE, endDate);
+        doc.put(VALID, true);
+
+        collection.save(doc);
+    }
+
+    /** @return all active subscriptions */
+    public Set<String> getActiveSubscriptions(String subscription) {
+        DBObject doc = new BasicDBObject();
+        doc.put(VALID, true);
+        doc.put(SUBSCRIPTION, subscription);
+
+        DBCursor cursor = db.getCollection(SUBSCRIPTIONS).find(doc);
+        Set<String> subscriptionIds = new HashSet<>(cursor.size());
+        while (cursor.hasNext()) {
+            subscriptionIds.add(cursor.next().get(SUBSCRIPTION_ID).toString());
+        }
+
+        return subscriptionIds;
+    }
+
+    /** Sets the flag that subscription is not valid anymore */
+    public void invalidateSubscription(String subscriptionId) {
+        DBCollection collection = db.getCollection(SUBSCRIPTIONS);
+
+        DBObject query = new BasicDBObject();
+        query.put(SUBSCRIPTION_ID, subscriptionId);
+
+        DBObject doc = new BasicDBObject();
+        doc.put("$set", new BasicDBObject(VALID, false));
+
+        collection.update(query, doc, false, true);
     }
 
     /** Saves info concerning downloaded artifact by user. */
@@ -254,8 +310,26 @@ public class MongoStorage {
 
     private void initCollections() {
         DBCollection collection = db.getCollection(DOWNLOAD_STATISTICS);
-        collection.ensureIndex(new BasicDBObject(USER_ID, 1).append(ARTIFACT, 1), "userId-artifact");
-        collection.ensureIndex(new BasicDBObject(ARTIFACT, 1), "artifact");
+        addIndex(collection, USER_ID, ARTIFACT);
+        addIndex(collection, ARTIFACT);
+
+        collection = db.getCollection(SUBSCRIPTIONS);
+        addIndex(collection, ACCOUNT_ID);
+        addIndex(collection, SUBSCRIPTION_ID);
+        addIndex(collection, VALID, SUBSCRIPTION);
+    }
+
+    // TODO test
+    protected void addIndex(DBCollection collection, String... fields) {
+        String indName = fields[0];
+        BasicDBObject keys = new BasicDBObject(fields[0], 1);
+
+        for (int i = 1; i < fields.length; i++) {
+            indName += "-" + fields[i];
+            keys.append(fields[i], 1);
+        }
+
+        collection.ensureIndex(keys, indName);
     }
 
     private DB connectToDB() throws IOException {
@@ -345,4 +419,6 @@ public class MongoStorage {
 
         return true;
     }
+
+
 }
