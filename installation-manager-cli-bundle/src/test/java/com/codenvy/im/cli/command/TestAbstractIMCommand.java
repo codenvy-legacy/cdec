@@ -87,6 +87,7 @@ public class TestAbstractIMCommand {
         spyCommand = spy(new TestedAbstractIMCommand());
         spyCommand.service = service;
         doReturn(true).when(spyCommand).isInteractive();
+        doNothing().when(spyCommand).initConsole();
 
         updateServerRemote = new Remote();
         updateServerRemote.setUrl(UPDATE_SERVER_URL);
@@ -242,8 +243,12 @@ public class TestAbstractIMCommand {
 
     class TestedAbstractIMCommand extends AbstractIMCommand {
         @Override
-        protected Object execute() throws Exception {
+        protected Void execute() throws Exception {
             return null;
+        }
+
+        @Override
+        protected void doExecuteCommand() throws Exception {
         }
 
         /** is needed for prepareTestAbstractIMCommand() method */

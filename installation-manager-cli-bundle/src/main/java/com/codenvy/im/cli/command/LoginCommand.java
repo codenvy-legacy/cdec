@@ -46,10 +46,8 @@ public class LoginCommand extends AbstractIMCommand {
     private String remoteName;
 
     @Override
-    protected Void execute() throws Exception {
+    protected void doExecuteCommand() throws Exception {
         try {
-            init();
-
             if (remoteName == null) {
                 remoteName = getOrCreateRemoteNameForUpdateServer();
             }
@@ -66,14 +64,14 @@ public class LoginCommand extends AbstractIMCommand {
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
                 console.printErrorAndExit(String.format("Login failed on remote '%s'.", remoteName));
-                return null;
+                return;
             }
 
             if (!isRemoteForUpdateServer(remoteName)) {
                 console.printSuccess(String.format("Login success on remote '%s' [%s].",
                                                    remoteName,
                                                    getRemoteUrlByName(remoteName)));
-                return null;
+                return;
             }
 
             AccountReference accountReference = getAccountReferenceWhereUserIsOwner(accountName);
@@ -84,7 +82,7 @@ public class LoginCommand extends AbstractIMCommand {
                 } else {
                     console.printErrorAndExit("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
-                return null;
+                return;
             }
 
             if (accountName == null) {
@@ -100,8 +98,6 @@ public class LoginCommand extends AbstractIMCommand {
             }
             console.printErrorAndExit(e);
         }
-
-        return null;
     }
 
     @Override

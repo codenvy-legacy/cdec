@@ -36,9 +36,7 @@ import static org.fusesource.jansi.Ansi.Color.CYAN;
 public class HelpCommand extends AbstractIMCommand {
 
     @Override
-    protected Void execute() {
-        init();
-
+    protected void doExecuteCommand() throws Exception {
         Ansi buffer = Ansi.ansi();
 
         // add the branding banner
@@ -81,7 +79,6 @@ public class HelpCommand extends AbstractIMCommand {
         buffer.a("\n");
         buffer.a("Use '\u001B[1m[command] --help\u001B[0m' for help on a specific command.\r\n");
         System.out.println(buffer.toString());
-        return null;
     }
 
     private String withCyan(String name) {

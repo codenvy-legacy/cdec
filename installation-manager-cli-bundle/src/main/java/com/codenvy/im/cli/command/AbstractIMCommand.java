@@ -52,19 +52,55 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     public AbstractIMCommand() {
         service = INJECTOR.getInstance(InstallationManagerService.class);
-        try {
-            console = new Console(isInteractive());
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
+
+    @Override
+    protected Void execute() throws Exception {
+        try {
+            init();
+            doExecuteCommand();
+
+        } catch (Exception e) {
+            console.printErrorAndExit(e);
+        } finally {
+            resetConsole();
+        }
+
+        return null;
+    }
+
+    protected abstract void doExecuteCommand() throws Exception;
 
     @Override
     public void init() {
         super.init();
+
+        initConsole();
         initDtoFactory();
-        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForUpdateServer());
+        initPreferencesStorage();
         validateIfUserLoggedIn();
+    }
+
+    protected void initPreferencesStorage() {
+        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForUpdateServer());
+    }
+
+    protected void initConsole() {
+        try {
+            console = new Console(isInteractive());
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    protected void resetConsole() {
+        try {
+            if (console != null) {
+                console.consoleReader.getTerminal().restore();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private void initDtoFactory() {

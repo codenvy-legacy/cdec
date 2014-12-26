@@ -88,20 +88,12 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     @Override
-    protected Void execute() {
-        try {
-            init();
-
-            if (list) {
-                return doExecuteListOption();
-            } else {
-                return doExecuteInstall();
-            }
-        } catch (Exception e) {
-            console.printErrorAndExit(e);
+    protected void doExecuteCommand() throws Exception {
+        if (list) {
+            doExecuteListOption();
+        } else {
+            doExecuteInstall();
         }
-
-        return null;
     }
 
     protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
@@ -334,7 +326,7 @@ public class InstallCommand extends AbstractIMCommand {
             return 0;
         } else {
             try {
-                return Integer.parseInt(installStep.split("-")[0]);
+                return Integer.parseInt(installStep.split("-")[0]) - 1;
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
             }
@@ -346,9 +338,9 @@ public class InstallCommand extends AbstractIMCommand {
             if (installStep == null) {
                 return maxStep;
             } else if (!installStep.contains("-")) {
-                return Integer.parseInt(installStep.split("-")[0]);
+                return Integer.parseInt(installStep.split("-")[0]) - 1;
             } else {
-                return Integer.parseInt(installStep.split("-")[1]);
+                return Integer.parseInt(installStep.split("-")[1]) - 1;
             }
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));

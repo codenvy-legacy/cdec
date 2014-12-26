@@ -37,31 +37,22 @@ public class ConfigCommand extends AbstractIMCommand {
     private String proxyPort;
 
     @Override
-    protected Void execute() {
-        try {
-            init();
-
-            InstallationManagerConfig config = new InstallationManagerConfig();
-            if (downloadDir != null) {
-                config.setDownloadDir(downloadDir);
-            }
-            if (proxyUrl != null) {
-                config.setProxyUrl(proxyUrl);
-            }
-            if (proxyPort != null) {
-                config.setProxyPort(proxyPort);
-            }
-
-            if (!config.checkEmptyConfig()) {
-                console.printResponse(service.setConfig(config));
-            } else {
-                console.printResponse(service.getConfig());
-            }
-
-        } catch (Exception e) {
-            console.printErrorAndExit(e);
+    protected void doExecuteCommand() throws Exception {
+        InstallationManagerConfig config = new InstallationManagerConfig();
+        if (downloadDir != null) {
+            config.setDownloadDir(downloadDir);
+        }
+        if (proxyUrl != null) {
+            config.setProxyUrl(proxyUrl);
+        }
+        if (proxyPort != null) {
+            config.setProxyPort(proxyPort);
         }
 
-        return null;
+        if (!config.checkEmptyConfig()) {
+            console.printResponse(service.setConfig(config));
+        } else {
+            console.printResponse(service.getConfig());
+        }
     }
 }

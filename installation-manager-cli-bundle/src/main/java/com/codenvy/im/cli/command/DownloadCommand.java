@@ -52,24 +52,16 @@ public class DownloadCommand extends AbstractIMCommand {
     private boolean checkRemote;
 
     @Override
-    protected Void execute() {
-        try {
-            init();
+    protected void doExecuteCommand() throws Exception {
+        if (listLocal) {
+            doList();
 
-            if (listLocal) {
-                doList();
+        } else if (checkRemote) {
+            doCheck();
 
-            } else if (checkRemote) {
-                doCheck();
-
-            } else {
-                doDownload();
-            }
-        } catch (Exception e) {
-            console.printErrorAndExit(e);
+        } else {
+            doDownload();
         }
-
-        return null;
     }
 
     private void doDownload() throws InterruptedException, JsonParseException, JSONException {

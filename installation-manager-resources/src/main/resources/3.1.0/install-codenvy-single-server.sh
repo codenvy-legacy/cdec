@@ -222,14 +222,14 @@ doInstallStep4() {
 doInstallStep5() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 0-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/message" im-install --step 1-9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeWithSudoCliCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeWithSudoCliCommand "" im-install --step 10 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
