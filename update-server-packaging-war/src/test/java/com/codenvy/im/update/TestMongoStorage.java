@@ -58,8 +58,8 @@ public class TestMongoStorage {
     public void testSubscriptions() throws Exception {
         Calendar calendar = Calendar.getInstance();
 
-        mongoStorage.addSubscriptionInfo("account1", "OnPremises", "id1", calendar.getTime(), calendar.getTime());
-        mongoStorage.addSubscriptionInfo("account2", "OnPremises", "id2", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user1", "OnPremises", "id1", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user2", "OnPremises", "id2", calendar.getTime(), calendar.getTime());
 
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
         assertEquals(collection.count(), 2);

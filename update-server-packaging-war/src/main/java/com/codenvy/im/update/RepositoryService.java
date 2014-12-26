@@ -76,8 +76,6 @@ import static java.lang.String.format;
 @Path("repository")
 public class RepositoryService {
 
-    public static final String VALID_USER_AGENT = "Installation Manager";
-
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
     private final ArtifactStorage artifactStorage;

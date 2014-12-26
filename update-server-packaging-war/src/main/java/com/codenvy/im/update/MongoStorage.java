@@ -85,7 +85,6 @@ public class MongoStorage {
     public static final String TOTAL     = "total";
     public static final String SUCCESS   = "success";
 
-    public static final String ACCOUNT_ID      = "accountId";
     public static final String SUBSCRIPTION    = "subscription";
     public static final String SUBSCRIPTION_ID = "subscriptionId";
     public static final String START_DATE      = "startDate";
@@ -118,11 +117,11 @@ public class MongoStorage {
 
 
     /** Adds info that subscription was added to user account */
-    public void addSubscriptionInfo(String accountId, String subscription, String subscriptionId, Date startDate, Date endDate) {
+    public void addSubscriptionInfo(String userId, String subscription, String subscriptionId, Date startDate, Date endDate) {
         DBCollection collection = db.getCollection(SUBSCRIPTIONS);
 
         DBObject doc = new BasicDBObject();
-        doc.put(ACCOUNT_ID, accountId);
+        doc.put(USER_ID, userId);
         doc.put(SUBSCRIPTION, subscription);
         doc.put(SUBSCRIPTION_ID, subscriptionId);
         doc.put(START_DATE, startDate);
@@ -314,12 +313,11 @@ public class MongoStorage {
         addIndex(collection, ARTIFACT);
 
         collection = db.getCollection(SUBSCRIPTIONS);
-        addIndex(collection, ACCOUNT_ID);
+        addIndex(collection, USER_ID);
         addIndex(collection, SUBSCRIPTION_ID);
         addIndex(collection, VALID, SUBSCRIPTION);
     }
 
-    // TODO test
     protected void addIndex(DBCollection collection, String... fields) {
         String indName = fields[0];
         BasicDBObject keys = new BasicDBObject(fields[0], 1);
