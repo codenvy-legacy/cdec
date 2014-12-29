@@ -92,6 +92,7 @@ public class LoginCommand extends AbstractIMCommand {
             preferencesStorage.setAccountId(accountReference.getId());
             console.printSuccess("Login success.");
 
+            service.addTrialSubscription(initRequest());
         } catch (Exception e) {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();

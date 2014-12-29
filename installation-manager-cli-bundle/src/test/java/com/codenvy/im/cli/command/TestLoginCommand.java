@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.utils.Commons;
 
@@ -33,10 +34,13 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.ConnectException;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -105,6 +109,7 @@ public class TestLoginCommand extends AbstractTestCommand {
                                            "Login success.\n",
                                            TEST_USER_ACCOUNT_NAME));
         assertTrue(output.contains(TEST_USER_ACCOUNT_NAME));
+        verify(service).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -119,6 +124,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", UPDATE_SERVER_REMOTE_NAME));
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -134,6 +140,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, LoginCommand.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG + "\n");
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -151,6 +158,8 @@ public class TestLoginCommand extends AbstractTestCommand {
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Login success.\n");
         assertFalse(output.contains(TEST_USER_ACCOUNT_NAME));
+
+        verify(service).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -166,6 +175,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Account '%s' is not yours or may be you aren't owner of this account.\n", TEST_USER_ACCOUNT_NAME));
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -182,6 +192,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -198,6 +209,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         assertEquals(output, String.format("Login success on remote '%s' [%s].\n",
                                            ANOTHER_REMOTE_NAME,
                                            ANOTHER_REMOTE_URL));
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -213,6 +225,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     @Test
@@ -227,6 +240,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");
+        verify(service, never()).addTrialSubscription(any(Request.class));
     }
 
     class TestedLoginCommand extends LoginCommand {

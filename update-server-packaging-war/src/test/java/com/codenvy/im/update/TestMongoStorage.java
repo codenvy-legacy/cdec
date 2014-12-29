@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -55,16 +56,22 @@ public class TestMongoStorage {
     }
 
     @Test
-    public void testSubscriptions() throws Exception {
+    public void testSubscriptionsInfo() throws Exception {
         Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
 
-        mongoStorage.addSubscriptionInfo("user1", "OnPremises", "id1", calendar.getTime(), calendar.getTime());
-        mongoStorage.addSubscriptionInfo("user2", "OnPremises", "id2", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user1", "account1", "OnPremises", "id1", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user2", "account2", "OnPremises", "id2", calendar.getTime(), calendar.getTime());
+
+        calendar.add(Calendar.DAY_OF_MONTH, 2);
+
+        mongoStorage.addSubscriptionInfo("user3", "account3", "OnPremises", "id3", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user4", "account4", "OnPremises", "id4", calendar.getTime(), calendar.getTime());
 
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
-        assertEquals(collection.count(), 2);
+        assertEquals(collection.count(), 4);
 
-        Set<String> ids = mongoStorage.getActiveSubscriptions("OnPremises");
+        Set<String> ids = mongoStorage.getOutdatedSubscriptions("OnPremises");
         assertEquals(ids.size(), 2);
         assertTrue(ids.contains("id1"));
         assertTrue(ids.contains("id2"));
@@ -72,8 +79,12 @@ public class TestMongoStorage {
         mongoStorage.invalidateSubscription("id1");
         mongoStorage.invalidateSubscription("id2");
 
-        ids = mongoStorage.getActiveSubscriptions("OnPremises");
+        ids = mongoStorage.getOutdatedSubscriptions("OnPremises");
         assertTrue(ids.isEmpty());
+
+        assertTrue(mongoStorage.hasSubscription("user1", "OnPremises"));
+        assertFalse(mongoStorage.hasSubscription("user1", "Subscription"));
+        assertFalse(mongoStorage.hasSubscription("user5", "OnPremises"));
     }
 
     @Test

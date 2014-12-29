@@ -172,7 +172,7 @@ printPostInstallInfo() {
     printPrompt; echo
     printPrompt; echo "Codenvy is ready at http://"`hostname`"/"
     printPrompt; echo
-    printPrompt; echo "Troubleshoot Installation Problems:"
+    printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node-for-teams/"
     printPrompt; echo "Upgrade & Configuration Docs:"
 }
 

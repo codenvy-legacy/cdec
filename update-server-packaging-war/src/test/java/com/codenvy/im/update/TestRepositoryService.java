@@ -91,6 +91,8 @@ public class TestRepositoryService extends BaseTest {
             userManager = mock(UserManager.class);
             artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
             repositoryService = new RepositoryService("",
+                                                      "",
+                                                      "",
                                                       userManager,
                                                       artifactStorage,
                                                       mongoStorage,
@@ -431,6 +433,17 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(m.get(MongoStorage.SUCCESS), 3D);
         assertEquals(m.get(MongoStorage.FAIL), 2D);
         assertEquals(m.get(MongoStorage.TOTAL), 5D);
+    }
+
+    @Test
+    public void testAddSubscription() throws Exception {
+        // TODO
+
+    }
+
+    @Test
+    public void testAddSubscriptionFailedIfUserHasSubscription() throws Exception {
+        // TODO
     }
 }
 

@@ -35,12 +35,14 @@ import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static com.codenvy.im.utils.Commons.createListDtoFromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
+import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
 public class AccountUtils {
+    public final static String ON_PREMISES = "OnPremises";
     public static final String ACCOUNT_OWNER_ROLE       = "account/owner";
     public static final String SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
 
@@ -51,14 +53,14 @@ public class AccountUtils {
     /**
      * Indicates if the current user has a valid subscription.
      *
-     * @throws java.lang.IllegalStateException
+     * @throws java.lang.IllegalArgumentException
      * @throws java.io.IOException
      */
     public static boolean isValidSubscription(HttpTransport transport,
                                               String apiEndpoint,
                                               String requiredSubscription,
                                               String accessToken,
-                                              String accountId) throws IOException, IllegalStateException {
+                                              String accountId) throws IOException, IllegalArgumentException {
         try {
             List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport,
                                                                           apiEndpoint,
@@ -77,38 +79,41 @@ public class AccountUtils {
         }
     }
 
-    private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalStateException {
+    private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalArgumentException {
+        try {
+            Date startDate = getSubscriptionStartDate(subscriptionAttributes);
+            Date endDate = getSubscriptionEndDate(subscriptionAttributes);
+
+            Date currentDate = Calendar.getInstance().getTime();
+
+            return startDate.getTime() <= currentDate.getTime() && currentDate.getTime() <= endDate.getTime();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Can't validate subscription. " + e.getMessage(), e);
+        }
+    }
+
+    /** @return the subscription start date */
+    public static Date getSubscriptionEndDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalArgumentException {
+        return getAttributeAsDate(subscriptionAttributes.getEndDate(), "End date");
+    }
+
+    /** @return the subscription end date */
+    public static Date getSubscriptionStartDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalArgumentException {
+        return getAttributeAsDate(subscriptionAttributes.getStartDate(), "Start date");
+    }
+
+    private static Date getAttributeAsDate(String attributeValue, String attributeName) throws IllegalArgumentException {
         DateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
 
-        Date startDate;
-        Date endDate;
-
-        String startDateStr = subscriptionAttributes.getStartDate();
         try {
-            if (startDateStr == null) {
-                throw new IllegalStateException("Can't validate subscription. Start date attribute is absent");
+            if (attributeValue == null) {
+                throw new IllegalArgumentException(format("%s attribute is absent", attributeName));
             }
 
-            startDate = subscriptionDateFormat.parse(startDateStr);
+            return subscriptionDateFormat.parse(attributeValue);
         } catch (ParseException e) {
-            throw new IllegalStateException("Can't validate subscription. Start date attribute has wrong format: " + startDateStr, e);
+            throw new IllegalArgumentException(format("%s attribute has wrong format: %s", attributeName, attributeValue), e);
         }
-
-        String endDateStr = subscriptionAttributes.getEndDate();
-        try {
-            if (endDateStr == null) {
-                throw new IllegalStateException("Can't validate subscription. End date attribute is absent");
-            }
-
-            endDate = subscriptionDateFormat.parse(endDateStr);
-        } catch (ParseException e) {
-            throw new IllegalStateException(
-                    "Can't validate subscription. End date attribute has wrong format: " + endDateStr, e);
-        }
-
-        Date currentDate = Calendar.getInstance().getTime();
-
-        return startDate.getTime() <= currentDate.getTime() && currentDate.getTime() <= endDate.getTime();
     }
 
     private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
@@ -119,10 +124,11 @@ public class AccountUtils {
         return createListDtoFromJson(transport.doGet(requestUrl, accessToken), SubscriptionDescriptor.class);
     }
 
-    private static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
-                                                                              HttpTransport transport,
-                                                                              String apiEndpoint,
-                                                                              String accessToken) throws IOException {
+    /** @return subscription attributes */
+    public static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
+                                                                             HttpTransport transport,
+                                                                             String apiEndpoint,
+                                                                             String accessToken) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId + "/attributes");
         return createDtoFromJson(transport.doGet(requestUrl, accessToken), SubscriptionAttributesDescriptor.class);
     }
@@ -135,10 +141,10 @@ public class AccountUtils {
     @Nullable
     public static AccountReference getAccountReferenceWhereUserIsOwner(HttpTransport transport,
                                                                        String apiEndpoint,
-                                                                       String userToken,
+                                                                       String accessToken,
                                                                        @Nullable String accountName) throws IOException {
 
-        List<MemberDescriptor> members = createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), userToken),
+        List<MemberDescriptor> members = createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), accessToken),
                                                                MemberDescriptor.class);
 
         for (MemberDescriptor m : members) {
@@ -148,6 +154,27 @@ public class AccountUtils {
         }
 
         return null;
+    }
+
+    /**
+     * @return true if user is owner if the given account, otherwise method returns false
+     * @throws IOException
+     */
+    public static boolean checkIfUserIsOwnerOfAccount(HttpTransport transport,
+                                                      String apiEndpoint,
+                                                      String accessToken,
+                                                      String accountId) throws IOException {
+
+        List<MemberDescriptor> members = createListDtoFromJson(transport.doGet(combinePaths(apiEndpoint, "account"), accessToken),
+                                                               MemberDescriptor.class);
+
+        for (MemberDescriptor m : members) {
+            if (hasRole(m, ACCOUNT_OWNER_ROLE) && m.getAccountReference().getId().equals(accountId)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Checks if user has specific role. */

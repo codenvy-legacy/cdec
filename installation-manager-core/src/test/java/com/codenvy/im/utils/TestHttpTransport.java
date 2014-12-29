@@ -20,6 +20,7 @@ package com.codenvy.im.utils;
 import com.codenvy.api.core.ServerException;
 import com.codenvy.api.core.rest.annotations.OPTIONS;
 import com.codenvy.dto.server.JsonStringMapImpl;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.IOUtils;
 import org.everrest.assured.EverrestJetty;
@@ -29,7 +30,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -40,7 +43,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
@@ -70,6 +72,17 @@ public class TestHttpTransport {
         assertNotNull(value);
         assertEquals(value.size(), 1);
         assertEquals(value.get("key"), "value");
+    }
+
+    @Test
+    public void testDoPost(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
+        Map value = Commons.asMap(httpTransport.doPost("http://0.0.0.0:" + port + "/rest/test/post", body, "token"));
+
+        assertNotNull(value);
+        assertEquals(value.size(), 1);
+        assertEquals(value.get("a"), "b");
     }
 
     @Test
@@ -117,19 +130,23 @@ public class TestHttpTransport {
         @OPTIONS
         @Produces(MediaType.APPLICATION_JSON)
         public Response option() {
-            Map<String, String> value = new HashMap<String, String>() {{
-                put("key", "value");
-            }};
+            Map<String, String> value = ImmutableMap.of("key", "value");
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
+        }
+
+        @POST
+        @Produces(MediaType.APPLICATION_JSON)
+        @Consumes(MediaType.APPLICATION_JSON)
+        @Path("post")
+        public Response post(Map<String, String> body) {
+            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(body)).build();
         }
 
         @GET
         @Produces(MediaType.APPLICATION_JSON)
         @Path("get")
         public Response get() {
-            Map<String, String> value = new HashMap<String, String>() {{
-                put("key", "value");
-            }};
+            Map<String, String> value = ImmutableMap.of("key", "value");
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
         }
 

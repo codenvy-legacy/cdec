@@ -54,6 +54,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,6 +86,7 @@ public class MongoStorage {
     public static final String TOTAL     = "total";
     public static final String SUCCESS   = "success";
 
+    public static final String ACCOUNT_ID = "accountId";
     public static final String SUBSCRIPTION    = "subscription";
     public static final String SUBSCRIPTION_ID = "subscriptionId";
     public static final String START_DATE      = "startDate";
@@ -117,11 +119,12 @@ public class MongoStorage {
 
 
     /** Adds info that subscription was added to user account */
-    public void addSubscriptionInfo(String userId, String subscription, String subscriptionId, Date startDate, Date endDate) {
+    public void addSubscriptionInfo(String userId, String accountId, String subscription, String subscriptionId, Date startDate, Date endDate) {
         DBCollection collection = db.getCollection(SUBSCRIPTIONS);
 
         DBObject doc = new BasicDBObject();
         doc.put(USER_ID, userId);
+        doc.put(ACCOUNT_ID, accountId);
         doc.put(SUBSCRIPTION, subscription);
         doc.put(SUBSCRIPTION_ID, subscriptionId);
         doc.put(START_DATE, startDate);
@@ -132,10 +135,11 @@ public class MongoStorage {
     }
 
     /** @return all active subscriptions */
-    public Set<String> getActiveSubscriptions(String subscription) {
+    public Set<String> getOutdatedSubscriptions(String subscription) {
         DBObject doc = new BasicDBObject();
         doc.put(VALID, true);
         doc.put(SUBSCRIPTION, subscription);
+        doc.put(END_DATE, new BasicDBObject("$lt", Calendar.getInstance().getTime()));
 
         DBCursor cursor = db.getCollection(SUBSCRIPTIONS).find(doc);
         Set<String> subscriptionIds = new HashSet<>(cursor.size());
@@ -157,6 +161,16 @@ public class MongoStorage {
         doc.put("$set", new BasicDBObject(VALID, false));
 
         collection.update(query, doc, false, true);
+    }
+
+    /** Indicates if user already has subscription */
+    public boolean hasSubscription(String userId, String subscription) {
+        DBCollection collection = db.getCollection(SUBSCRIPTIONS);
+        DBObject query = new BasicDBObject();
+        query.put(USER_ID, userId);
+        query.put(SUBSCRIPTION, subscription);
+
+        return collection.findOne(query) != null;
     }
 
     /** Saves info concerning downloaded artifact by user. */
@@ -313,9 +327,9 @@ public class MongoStorage {
         addIndex(collection, ARTIFACT);
 
         collection = db.getCollection(SUBSCRIPTIONS);
-        addIndex(collection, USER_ID);
         addIndex(collection, SUBSCRIPTION_ID);
-        addIndex(collection, VALID, SUBSCRIPTION);
+        addIndex(collection, USER_ID, SUBSCRIPTION);
+        addIndex(collection, VALID, SUBSCRIPTION, END_DATE);
     }
 
     protected void addIndex(DBCollection collection, String... fields) {

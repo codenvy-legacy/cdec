@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.utils.AccountUtils;
+
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 
@@ -27,15 +29,12 @@ import org.apache.karaf.shell.commands.Option;
 @Command(scope = "codenvy", name = "im-subscription", description = "Check Codenvy subscription")
 public class SubscriptionCommand extends AbstractIMCommand {
 
-    /** The default subscription name to check. */
-    protected final static String DEFAULT_SUBSCRIPTION = "OnPremises";
-
     @Option(name = "--check", aliases = "-c", description = "The name of the subscription to check", required = false)
     private String subscription;
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        String subscription2check = subscription != null ? subscription : DEFAULT_SUBSCRIPTION;
+        String subscription2check = subscription != null ? subscription : AccountUtils.ON_PREMISES;
         console.printResponse(service.checkSubscription(subscription2check, initRequest()));
     }
 }

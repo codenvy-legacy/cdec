@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.commons.lang.IoUtil;
+import com.codenvy.dto.server.DtoFactory;
 import com.google.inject.Inject;
 
 import org.json.JSONException;
@@ -41,6 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.commons.lang.IoUtil.deleteRecursive;
+import static com.codenvy.commons.lang.IoUtil.readAndCloseQuietly;
 import static com.codenvy.im.utils.Commons.copyInterruptable;
 import static java.nio.file.Files.newOutputStream;
 
@@ -66,7 +67,7 @@ public class HttpTransport {
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
     public String doOption(String path, String accessToken) throws IOException {
-        return request(path, "OPTIONS", MediaType.APPLICATION_JSON, accessToken);
+        return request(path, "OPTIONS", null, MediaType.APPLICATION_JSON, accessToken);
     }
 
     /**
@@ -82,16 +83,24 @@ public class HttpTransport {
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
     public String doGet(String path, String accessToken) throws IOException {
-        return request(path, "GET", MediaType.APPLICATION_JSON, accessToken);
+        return request(path, "GET", null, MediaType.APPLICATION_JSON, accessToken);
     }
 
-    private String request(String path, String method, String expectedContentType, @Nullable String accessToken) throws IOException {
+    /**
+     * Performs POST request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doPost(String path, Object body, String accessToken) throws IOException {
+        return request(path, "POST", body, MediaType.APPLICATION_JSON, accessToken);
+    }
+
+    private String request(String path, String method, Object body, String expectedContentType, @Nullable String accessToken) throws IOException {
         HttpURLConnection conn = null;
 
         try {
             conn = openConnection(path, accessToken);
-            request(method, expectedContentType, conn);
-            return IoUtil.readAndCloseQuietly(conn.getInputStream());
+            request(method, body, expectedContentType, conn);
+            return readAndCloseQuietly(conn.getInputStream());
         } catch (SocketTimeoutException e) { // catch exception and throw a new one with proper message
             URL url = new URL(path);
             throw new HttpException(-1, String.format("Can't establish connection with %s://%s", url.getProtocol(), url.getHost()));
@@ -126,7 +135,7 @@ public class HttpTransport {
         final HttpURLConnection conn = openConnection(path, accessToken);
 
         try {
-            request(method, expectedContentType, conn);
+            request(method, null, expectedContentType, conn);
 
             String headerField = conn.getHeaderField("Content-Disposition");
             if (headerField == null) {
@@ -159,9 +168,20 @@ public class HttpTransport {
         }
     }
 
-    private void request(String method, String expectedContentType, HttpURLConnection conn) throws IOException {
+    private void request(String method,
+                         @Nullable Object body,
+                         String expectedContentType,
+                         HttpURLConnection conn) throws IOException {
+
         conn.setConnectTimeout(30 * 1000);
         conn.setRequestMethod(method);
+        if (body != null) {
+            conn.addRequestProperty("content-type", "application/json");
+            conn.setDoOutput(true);
+            try (OutputStream output = conn.getOutputStream()) {
+                output.write(DtoFactory.getInstance().toJson(body).getBytes());
+            }
+        }
         final int responseCode = conn.getResponseCode();
 
         if ((responseCode / 100) != 2) {
@@ -170,12 +190,12 @@ public class HttpTransport {
                 in = conn.getInputStream();
             }
 
-            throw new HttpException(responseCode, getErrorMessageIfPossible(IoUtil.readAndCloseQuietly(in)));
+            throw new HttpException(responseCode, getErrorMessageIfPossible(readAndCloseQuietly(in)));
         }
 
         final String contentType = conn.getContentType();
         if (!contentType.startsWith(expectedContentType)) {
-            throw new IOException("Unsupported type of response from remote server. ");
+            throw new IOException("Unsupported type of response from remote server.");
         }
     }
 

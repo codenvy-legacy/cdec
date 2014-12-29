@@ -55,6 +55,9 @@ public interface InstallationManagerService {
     /** @return update server url */
     String getUpdateServerEndpoint();
 
+    /** Adds trial subscription for user being logged in */
+    String addTrialSubscription(Request request) throws IOException;
+
     /** Check user's subscription. */
     String checkSubscription(String subscription, Request request) throws IOException;
 

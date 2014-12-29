@@ -34,9 +34,6 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
@@ -50,7 +47,9 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.service.DownloadDescriptor.createDescriptor;
+import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
+import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -62,8 +61,6 @@ import static java.nio.file.Files.size;
  */
 @Singleton
 public class InstallationManagerServiceImpl implements InstallationManagerService {
-    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerServiceImpl.class);
-
     protected final InstallationManager manager;
     protected final HttpTransport       transport;
 
@@ -92,6 +89,20 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String getUpdateServerEndpoint() {
         return updateServerEndpoint;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String addTrialSubscription(Request request) throws IOException {
+        try {
+            transport.doPost(combinePaths(updateServerEndpoint, "/subscription/" + request.getAccountId()), null, request.getAccessToken());
+            return new Response().setStatus(ResponseCode.OK)
+                                 .setSubscription(ON_PREMISES)
+                                 .setMessage("Subscription has been added")
+                                 .toJson();
+        } catch (Exception e) {
+            return Response.valueOf(e).toJson();
+        }
     }
 
     /** {@inheritDoc} */
@@ -370,7 +381,6 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     /** {@inheritDoc} */
     @Override
     public String install(InstallOptions installOptions, Request request) throws IOException {
-        // LOG.debug("install");
         try {
             Version version = doGetVersionToInstall(request, installOptions.getStep());
 

@@ -18,6 +18,8 @@
 package com.codenvy.im.update;
 
 
+import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
+import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
@@ -34,6 +36,8 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -63,6 +67,11 @@ import java.util.Properties;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
+import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
+import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
+import static com.codenvy.im.utils.AccountUtils.getSubscriptionAttributes;
+import static com.codenvy.im.utils.AccountUtils.getSubscriptionEndDate;
+import static com.codenvy.im.utils.AccountUtils.getSubscriptionStartDate;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static java.lang.String.format;
 
@@ -78,25 +87,46 @@ public class RepositoryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
 
+    private final String apiEndpoint;
+    private final String apiUserName;
+    private final String apiUserPassword;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport   transport;
-    private final String          apiEndpoint;
     private final UserManager userManager;
+    private final Thread subscriptionInvalidator;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
+                             @Named("api.user_name") String apiUserName,
+                             @Named("api.user_password") String apiUserPassword,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport transport) {
+        this.apiUserName = apiUserName;
+        this.apiUserPassword = apiUserPassword;
         this.artifactStorage = artifactStorage;
         this.mongoStorage = mongoStorage;
         this.transport = transport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
 
+        this.subscriptionInvalidator = new SubscriptionInvalidator("Subscription invalidator");
+        this.subscriptionInvalidator.setDaemon(true);
+
+
         LOG.info("Repository Service has been initialized, repository directory: " + artifactStorage.getRepositoryDir());
+    }
+
+    @PostConstruct
+    public void init() {
+        this.subscriptionInvalidator.start();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        this.subscriptionInvalidator.interrupt();
     }
 
     /**
@@ -429,6 +459,74 @@ public class RepositoryService {
             }
         } else {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The request must contain multipart content").build();
+        }
+    }
+
+    @GenerateLink(rel = "add trial subscription")
+    @POST
+    @Path("/subscription/{accountId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"user", "system/admin"})
+    public Response addTrialSubscription(@PathParam("accountId") String accountId,
+                                         @Context HttpServletRequest request,
+                                         @Context UriInfo uriInfo) {
+        final String userId = userManager.getCurrentUser().getId();
+        final String accessToken = userManager.getCurrentUser().getToken();
+
+        try {
+            if (!checkIfUserIsOwnerOfAccount(transport,
+                                             apiEndpoint,
+                                             accessToken,
+                                             accountId)) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                               .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account %s",
+                                              userId, accountId)).build();
+            }
+
+            if (mongoStorage.hasSubscription(userId, ON_PREMISES)) {
+                return Response.status(Response.Status.OK).build();
+            }
+
+            SubscriptionDescriptor subscriptionDescriptor = addSubscription(userId, ON_PREMISES);
+            SubscriptionAttributesDescriptor attributes = getSubscriptionAttributes(subscriptionDescriptor.getId(),
+                                                                                    transport,
+                                                                                    apiEndpoint,
+                                                                                    accessToken);
+
+            mongoStorage.addSubscriptionInfo(userId,
+                                             subscriptionDescriptor.getAccountId(),
+                                             subscriptionDescriptor.getServiceId(),
+                                             subscriptionDescriptor.getId(),
+                                             getSubscriptionStartDate(attributes),
+                                             getSubscriptionEndDate(attributes));
+
+            LOG.info(format("%s subscription added for %s", ON_PREMISES, userId));
+            return Response.status(Response.Status.OK).build();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't add subscription.").build();
+        }
+    }
+
+    protected SubscriptionDescriptor addSubscription(String userId, String subscription) {
+        return null; // TODO
+    }
+
+    private static class SubscriptionInvalidator extends Thread {
+        public SubscriptionInvalidator(String name) {
+            super(name);
+        }
+
+        @Override
+        public void run() {
+            LOG.info("Subscription invalidator has been started");
+
+            while (!isInterrupted()) {
+                // TODO
+            }
+
+            LOG.info("Subscription invalidator has been stopped");
         }
     }
 }

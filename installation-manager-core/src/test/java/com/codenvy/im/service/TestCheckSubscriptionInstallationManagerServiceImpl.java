@@ -26,6 +26,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -33,6 +34,8 @@ import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -184,4 +187,25 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
     }
+
+    @Test
+    public void testAddTrialSubscription() throws Exception {
+        doReturn("").when(transport).doPost(endsWith("subscription/" + request.getAccountId()), isNull(), eq(request.getAccessToken()));
+        String response = installationManagerService.addTrialSubscription(request);
+        assertEquals(response, "{\n" +
+                               "  \"subscription\" : \"OnPremises\",\n" +
+                               "  \"message\" : \"Subscription has been added\",\n" +
+                               "  \"status\" : \"OK\"\n" +
+                               "}");
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedWhenRequestFailed() throws Exception {
+        doThrow(IOException.class).when(transport).doPost(endsWith("subscription/" + request.getAccountId()), isNull(), eq(request.getAccessToken()));
+        String response = installationManagerService.addTrialSubscription(request);
+        assertEquals(response, "{\n" +
+                               "  \"status\" : \"ERROR\"\n" +
+                               "}");
+    }
+
 }

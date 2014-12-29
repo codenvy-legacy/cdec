@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.utils.AccountUtils;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -70,7 +71,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                    + "  \"status\" : \"OK\",\n"
                                    + "  \"subscription\" : \"OnPremises\"\n"
                                    + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SubscriptionCommand.DEFAULT_SUBSCRIPTION, request);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(AccountUtils.ON_PREMISES, request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

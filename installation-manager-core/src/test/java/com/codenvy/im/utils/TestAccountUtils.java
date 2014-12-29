@@ -43,7 +43,6 @@ import static org.testng.Assert.assertTrue;
 public class TestAccountUtils {
 
     private final static String SUBSCRIPTION_ID = "subscription_id1";
-    private final static String VALID_SUBSCRIPTION = "OnPremises";
     private final static String ACCESS_TOKEN    = "accessToken";
     private final static String ACCOUNT_ID      = "accountId";
 
@@ -75,11 +74,11 @@ public class TestAccountUtils {
                                                                        ACCOUNT_ID + "\"}"
                                                                        + "}]");
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -168,11 +167,11 @@ public class TestAccountUtils {
                                                                        + "}]");
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -185,7 +184,7 @@ public class TestAccountUtils {
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
                 .thenReturn("[{serviceId:invalid}]");
 
-        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test(expectedExceptions = AuthenticationException.class,
@@ -195,7 +194,7 @@ public class TestAccountUtils {
                 .when(mockTransport)
                 .doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN);
 
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID);
+        AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test
@@ -209,11 +208,11 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -227,11 +226,11 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -245,14 +244,14 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute is absent")
     public void testValidSubscriptionByDateStartDateIsAbsent() throws IOException {
         Calendar cal = Calendar.getInstance();
@@ -260,14 +259,14 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{endDate:\"" + endDate + "\"}");
 
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID);
+        AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute is absent")
     public void testValidSubscriptionByDateEndDateIsAbsent() throws IOException {
         Calendar cal = Calendar.getInstance();
@@ -275,14 +274,14 @@ public class TestAccountUtils {
         String startDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\"}");
 
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID);
+        AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute has wrong format: .*")
     public void testInvalidSubscriptionStartDateIsWrong() throws IOException {
         SimpleDateFormat subscriptionDateWrongFormat = new SimpleDateFormat("yyyy.MM.dd");
@@ -296,14 +295,14 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID);
+        AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute has wrong format: .*")
     public void testInvalidSubscriptionEndDateIsWrong() throws IOException {
         SimpleDateFormat subscriptionDateWrongFormat = new SimpleDateFormat("yyyy.MM.dd");
@@ -317,10 +316,28 @@ public class TestAccountUtils {
         String endDate = subscriptionDateWrongFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + VALID_SUBSCRIPTION + ",id:" + SUBSCRIPTION_ID + "}]");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
         when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        AccountUtils.isValidSubscription(mockTransport, "", VALID_SUBSCRIPTION, ACCESS_TOKEN, ACCOUNT_ID);
+        AccountUtils.isValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+    }
+
+    @Test
+    public void checkIfUserIsOwnerOfAccountShouldReturnTrue() throws IOException {
+        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "accountReference:{id:\"id1\",name:\"name1\"}"
+                                                                       + "}]");
+        assertTrue(AccountUtils.checkIfUserIsOwnerOfAccount(mockTransport, "", ACCESS_TOKEN, "id1"));
+    }
+
+    @Test
+    public void checkIfUserIsOwnerOfAccountReturnFalse() throws IOException {
+        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+                                                                       + "roles:[\"account/member\"],"
+                                                                       + "accountReference:{id:\"id1\",name:\"name1\"}"
+                                                                       + "}]");
+        assertFalse(AccountUtils.checkIfUserIsOwnerOfAccount(mockTransport, "", ACCESS_TOKEN, "id1"));
     }
 }

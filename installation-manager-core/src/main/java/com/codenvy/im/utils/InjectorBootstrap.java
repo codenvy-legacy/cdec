@@ -65,6 +65,7 @@ public class InjectorBootstrap {
             @Override
             public void configure(Binder binder) {
                 bindProperties(binder);
+
                 binder.bind(InstallationManagerService.class).to(InstallationManagerServiceImpl.class);
                 binder.bind(InstallationManager.class).to(InstallationManagerImpl.class);
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
@@ -72,11 +73,8 @@ public class InjectorBootstrap {
             }
 
             private void bindProperties(Binder binder) {
-                try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream("codenvy/installation-manager.properties")) {
-                    doBindProperties(in);
-                } catch (IOException e) {
-                    throw new IllegalStateException("Can't load properties", e);
-                }
+                bindProperties("codenvy/update-server.properties");
+                bindProperties("codenvy/installation-manager.properties");
 
                 Path conf = getConfFile();
                 if (exists(conf)) {
@@ -89,6 +87,16 @@ public class InjectorBootstrap {
 
                 for (Map.Entry<String, String> e : boundProperties.entrySet()) {
                     binder.bindConstant().annotatedWith(Names.named(e.getKey())).to(e.getValue());
+                }
+            }
+
+            private void bindProperties(String fileProperties) {
+                try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream(fileProperties)) {
+                    if (in != null) {
+                        doBindProperties(in);
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException("Can't load properties", e);
                 }
             }
 
