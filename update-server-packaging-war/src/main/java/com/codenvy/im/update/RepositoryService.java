@@ -18,11 +18,11 @@
 package com.codenvy.im.update;
 
 
-import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
 import com.codenvy.api.core.rest.annotations.GenerateLink;
+import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
@@ -60,6 +60,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,11 +71,11 @@ import java.util.Properties;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
+import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
-import static com.codenvy.im.utils.AccountUtils.getSubscriptionAttributes;
-import static com.codenvy.im.utils.AccountUtils.getSubscriptionEndDate;
-import static com.codenvy.im.utils.AccountUtils.getSubscriptionStartDate;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
+import static com.codenvy.im.utils.Commons.asMap;
+import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 
 
@@ -462,11 +465,18 @@ public class RepositoryService {
         }
     }
 
+    /**
+     * TODO
+     *
+     * @param accountId
+     * @param request
+     * @param uriInfo
+     * @return
+     */
     @GenerateLink(rel = "add trial subscription")
     @POST
     @Path("/subscription/{accountId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed({"user", "system/admin"})
     public Response addTrialSubscription(@PathParam("accountId") String accountId,
                                          @Context HttpServletRequest request,
@@ -480,37 +490,104 @@ public class RepositoryService {
                                              accessToken,
                                              accountId)) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                               .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account %s",
+                               .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account '%s'.",
                                               userId, accountId)).build();
             }
 
-            if (mongoStorage.hasSubscription(userId, ON_PREMISES)) {
-                return Response.status(Response.Status.OK).build();
+            if (mongoStorage.hasStoredSubscription(userId, ON_PREMISES)
+                || isValidSubscription(transport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
+
+                return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-            SubscriptionDescriptor subscriptionDescriptor = addSubscription(userId, ON_PREMISES);
-            SubscriptionAttributesDescriptor attributes = getSubscriptionAttributes(subscriptionDescriptor.getId(),
-                                                                                    transport,
-                                                                                    apiEndpoint,
-                                                                                    accessToken);
-
-            mongoStorage.addSubscriptionInfo(userId,
-                                             subscriptionDescriptor.getAccountId(),
-                                             subscriptionDescriptor.getServiceId(),
-                                             subscriptionDescriptor.getId(),
-                                             getSubscriptionStartDate(attributes),
-                                             getSubscriptionEndDate(attributes));
+            SubscriptionInfo subscriptionInfo = addTrialSubscription(accountId);
+            mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
             LOG.info(format("%s subscription added for %s", ON_PREMISES, userId));
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't add subscription.").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. " + e.getMessage()).build();
         }
     }
 
-    protected SubscriptionDescriptor addSubscription(String userId, String subscription) {
-        return null; // TODO
+    protected SubscriptionInfo addTrialSubscription(String accountId) throws IOException, JsonParseException {
+        String accessToken = login();
+
+        try {
+            final DateFormat df = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+            final int trialDuration = 2; // TODO
+            final Calendar startDate = Calendar.getInstance();
+            final Calendar endDate = Calendar.getInstance();
+            endDate.add(Calendar.DAY_OF_MONTH, trialDuration);
+
+            Map<String, Object> billing = new HashMap<>();
+            billing.put("usePaymentSystem", "false");
+            billing.put("contractTerm", ""); // TODO
+            billing.put("startDate", df.format(startDate.getTime()));
+            billing.put("startDate", df.format(endDate.getTime()));
+            billing.put("cycle", ""); // TODO
+            billing.put("cycleType", "3");
+            billing.put("paymentToken", "trial");
+
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("billing", new JsonStringMapImpl<>(billing));
+            attributes.put("startDate", df.format(startDate.getTime()));
+            attributes.put("endDate", df.format(endDate.getTime()));
+            attributes.put("trialDuration", Integer.toString(2));
+            attributes.put("description", ON_PREMISES);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("accountId", accountId);
+            body.put("planId", ""); // TODO
+            body.put("subscriptionAttributes", new JsonStringMapImpl<>(attributes));
+
+            Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
+            if (!m.containsKey("id")) {
+                if (m.containsKey("message")) {
+                    throw new IOException(String.valueOf(m.get("message")));
+                } else {
+                    throw new IOException("Malformed response. 'id' key is missed.");
+                }
+            }
+            String subscriptionId = String.valueOf(m.get("id"));
+            LOG.info("Trial subscription added. " + body.toString());
+
+            return new SubscriptionInfo(accountId,
+                                        subscriptionId,
+                                        ON_PREMISES,
+                                        startDate,
+                                        endDate);
+        } catch (IOException | JsonParseException e) {
+            throw new IOException("Can't add subscription. " + e.getMessage(), e);
+        } finally {
+            logout(accessToken);
+        }
+    }
+
+    protected String login() throws IOException {
+        Map<String, String> body = new HashMap<>(3);
+        body.put("username", apiUserName);
+        body.put("password", apiUserPassword);
+        body.put("realm", "sysldap");
+
+        String accessToken;
+        try {
+            Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/auth/login"), new JsonStringMapImpl<>(body)));
+            if (!m.containsKey("value")) {
+                throw new IOException("Malformed response. 'value' key is missed");
+            }
+
+            accessToken = String.valueOf(m.get("value"));
+        } catch (IOException | JsonParseException e) {
+            throw new IOException("Login failed. " + e.getMessage(), e);
+        }
+
+        return accessToken;
+    }
+
+    protected void logout(String accessToken) throws IOException {
+        transport.doPost(combinePaths(apiEndpoint, "/auth/logout?token=" + accessToken));
     }
 
     private static class SubscriptionInvalidator extends Thread {

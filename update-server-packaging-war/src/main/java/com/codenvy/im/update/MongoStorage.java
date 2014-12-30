@@ -27,6 +27,7 @@ import de.flapdoodle.embed.mongo.config.Storage;
 import de.flapdoodle.embed.mongo.distribution.Version;
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.utils.AccountUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mongodb.AggregationOutput;
@@ -119,16 +120,16 @@ public class MongoStorage {
 
 
     /** Adds info that subscription was added to user account */
-    public void addSubscriptionInfo(String userId, String accountId, String subscription, String subscriptionId, Date startDate, Date endDate) {
+    public void addSubscriptionInfo(String userId, AccountUtils.SubscriptionInfo subscriptionInfo) {
         DBCollection collection = db.getCollection(SUBSCRIPTIONS);
 
         DBObject doc = new BasicDBObject();
         doc.put(USER_ID, userId);
-        doc.put(ACCOUNT_ID, accountId);
-        doc.put(SUBSCRIPTION, subscription);
-        doc.put(SUBSCRIPTION_ID, subscriptionId);
-        doc.put(START_DATE, startDate);
-        doc.put(END_DATE, endDate);
+        doc.put(ACCOUNT_ID, subscriptionInfo.getAccountId());
+        doc.put(SUBSCRIPTION, subscriptionInfo.getServiceId());
+        doc.put(SUBSCRIPTION_ID, subscriptionInfo.getSubscriptionId());
+        doc.put(START_DATE, subscriptionInfo.getStartDate().getTime());
+        doc.put(END_DATE, subscriptionInfo.getEndDate().getTime());
         doc.put(VALID, true);
 
         collection.save(doc);
@@ -164,7 +165,7 @@ public class MongoStorage {
     }
 
     /** Indicates if user already has subscription */
-    public boolean hasSubscription(String userId, String subscription) {
+    public boolean hasStoredSubscription(String userId, String subscription) {
         DBCollection collection = db.getCollection(SUBSCRIPTIONS);
         DBObject query = new BasicDBObject();
         query.put(USER_ID, userId);

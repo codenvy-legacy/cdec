@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.update;
 
+import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 
@@ -60,13 +61,13 @@ public class TestMongoStorage {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -1);
 
-        mongoStorage.addSubscriptionInfo("user1", "account1", "OnPremises", "id1", calendar.getTime(), calendar.getTime());
-        mongoStorage.addSubscriptionInfo("user2", "account2", "OnPremises", "id2", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user1", new SubscriptionInfo("account1", "OnPremises", "id1", calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user2", new SubscriptionInfo("account2", "OnPremises", "id2", calendar, calendar));
 
         calendar.add(Calendar.DAY_OF_MONTH, 2);
 
-        mongoStorage.addSubscriptionInfo("user3", "account3", "OnPremises", "id3", calendar.getTime(), calendar.getTime());
-        mongoStorage.addSubscriptionInfo("user4", "account4", "OnPremises", "id4", calendar.getTime(), calendar.getTime());
+        mongoStorage.addSubscriptionInfo("user3", new SubscriptionInfo("account3", "OnPremises", "id3", calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user4", new SubscriptionInfo("account4", "OnPremises", "id4", calendar, calendar));
 
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
         assertEquals(collection.count(), 4);
@@ -82,9 +83,9 @@ public class TestMongoStorage {
         ids = mongoStorage.getOutdatedSubscriptions("OnPremises");
         assertTrue(ids.isEmpty());
 
-        assertTrue(mongoStorage.hasSubscription("user1", "OnPremises"));
-        assertFalse(mongoStorage.hasSubscription("user1", "Subscription"));
-        assertFalse(mongoStorage.hasSubscription("user5", "OnPremises"));
+        assertTrue(mongoStorage.hasStoredSubscription("user1", "OnPremises"));
+        assertFalse(mongoStorage.hasStoredSubscription("user1", "Subscription"));
+        assertFalse(mongoStorage.hasStoredSubscription("user5", "OnPremises"));
     }
 
     @Test

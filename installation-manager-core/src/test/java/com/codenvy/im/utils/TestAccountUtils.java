@@ -340,4 +340,24 @@ public class TestAccountUtils {
                                                                        + "}]");
         assertFalse(AccountUtils.checkIfUserIsOwnerOfAccount(mockTransport, "", ACCESS_TOKEN, "id1"));
     }
+
+    @Test
+    public void testSubscriptionDescriptor() throws Exception {
+        Calendar startDate = Calendar.getInstance();
+        Calendar endDate = Calendar.getInstance();
+        endDate.add(Calendar.DAY_OF_MONTH, 1);
+
+        AccountUtils.SubscriptionInfo desc = new AccountUtils.SubscriptionInfo("accountId",
+                                                                               "subscriptionId",
+                                                                               "serviceId",
+                                                                               startDate,
+                                                                               endDate);
+
+        assertEquals(desc.getAccountId(), "accountId");
+        assertEquals(desc.getSubscriptionId(), "subscriptionId");
+        assertEquals(desc.getServiceId(), "serviceId");
+        assertEquals(desc.getStartDate(), startDate);
+        assertEquals(desc.getEndDate(), endDate);
+
+    }
 }

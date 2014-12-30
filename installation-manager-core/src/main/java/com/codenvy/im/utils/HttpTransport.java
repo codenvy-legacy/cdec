@@ -47,7 +47,6 @@ import static java.nio.file.Files.newOutputStream;
 
 /**
  * @author Anatoliy Bazko
- * @author Dimitry Kuleshov
  * @author Alexander Reshetnyak
  */
 @Singleton
@@ -84,6 +83,22 @@ public class HttpTransport {
      */
     public String doGet(String path, String accessToken) throws IOException {
         return request(path, "GET", null, MediaType.APPLICATION_JSON, accessToken);
+    }
+
+    /**
+     * Performs POST request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doPost(String path, Object body) throws IOException {
+        return request(path, "POST", body, MediaType.APPLICATION_JSON, null);
+    }
+
+    /**
+     * Performs POST request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doPost(String path) throws IOException {
+        return request(path, "POST", null, MediaType.APPLICATION_JSON, null);
     }
 
     /**

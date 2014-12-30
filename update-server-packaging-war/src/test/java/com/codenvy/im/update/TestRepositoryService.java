@@ -19,6 +19,8 @@ package com.codenvy.im.update;
 
 import com.codenvy.commons.user.UserImpl;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.jayway.restassured.response.Response;
@@ -58,7 +60,16 @@ import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.endsWith;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -86,7 +97,7 @@ public class TestRepositoryService extends BaseTest {
 
     {
         try {
-            mongoStorage = new MongoStorage("mongodb://localhost:12000/update", true, "target");
+            mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target"));
             transport = mock(HttpTransport.class);
             userManager = mock(UserManager.class);
             artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
@@ -436,14 +447,175 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
+    public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByRepositoryService() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn(Boolean.TRUE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NO_CONTENT.getStatusCode());
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByManager() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]")
+                .when(transport).doGet(endsWith("/account"), eq("token"));
+        doReturn("{startDate:\"01/01/2014\", endDate:\"01/01/2020\"}")
+                .when(transport).doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("token"));
+        doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId}]")
+                .when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NO_CONTENT.getStatusCode());
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfUserIsNotOwnerOfAccount() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"account/member\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.getBody().asString(),
+                     "Unexpected error. Can't add trial subscription. User 'id' is not owner of the account 'accountId'.");
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfWrongAccount() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.getBody().asString(),
+                     "Unexpected error. Can't add trial subscription. User 'id' is not owner of the account 'accountId'.");
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfLoginFailed() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doThrow(new IOException("Unexpected error.")).when(transport).doPost(endsWith("/auth/login"), any(Object.class));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.getBody().asString(), "Unexpected error. Login failed. Unexpected error.");
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfLoginFailedEmptyResponse() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn("{}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.getBody().asString(), "Unexpected error. Login failed. Malformed response. 'value' key is missed");
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase1() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doThrow(new IOException("Unexpected error.")).when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.getBody().asString(), "Unexpected error. Can't add subscription. Unexpected error.");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase2() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn("{\"message\":\"Error.\"}").when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.getBody().asString(), "Unexpected error. Can't add subscription. Error.");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+    @Test
+    public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase3() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
+        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn("{}").when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.getBody().asString(), "Unexpected error. Can't add subscription. Malformed response. 'id' key is missed.");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
+    }
+
+
+    @Test
     public void testAddSubscription() throws Exception {
         // TODO
 
     }
 
-    @Test
-    public void testAddSubscriptionFailedIfUserHasSubscription() throws Exception {
-        // TODO
-    }
 }
 
