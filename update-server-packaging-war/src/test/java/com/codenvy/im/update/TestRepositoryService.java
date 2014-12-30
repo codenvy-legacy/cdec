@@ -57,6 +57,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
+import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
@@ -82,11 +83,11 @@ import static org.testng.Assert.assertTrue;
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class TestRepositoryService extends BaseTest {
 
-    private final ArtifactStorage   artifactStorage;
-    private final RepositoryService repositoryService;
-    private final HttpTransport     transport;
-    private final UserManager       userManager;
-    private final MongoStorage      mongoStorage;
+    private ArtifactStorage   artifactStorage;
+    private RepositoryService repositoryService;
+    private HttpTransport     transport;
+    private UserManager       userManager;
+    private MongoStorage      mongoStorage;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -95,28 +96,21 @@ public class TestRepositoryService extends BaseTest {
         put(SUBSCRIPTION_PROPERTY, "OnPremises");
     }};
 
-    {
-        try {
-            mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target"));
-            transport = mock(HttpTransport.class);
-            userManager = mock(UserManager.class);
-            artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
-            repositoryService = new RepositoryService("",
-                                                      "",
-                                                      "",
-                                                      userManager,
-                                                      artifactStorage,
-                                                      mongoStorage,
-                                                      transport);
-
-        } catch (IOException e) {
-            throw new IllegalArgumentException();
-        }
-    }
-
     @Override
     @BeforeMethod
     public void setUp() throws Exception {
+        mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target"));
+        transport = mock(HttpTransport.class);
+        userManager = mock(UserManager.class);
+        artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
+        repositoryService = new RepositoryService("",
+                                                  "",
+                                                  "",
+                                                  userManager,
+                                                  artifactStorage,
+                                                  mongoStorage,
+                                                  transport);
+
         when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         initStorage();
         super.setUp();
@@ -136,6 +130,9 @@ public class TestRepositoryService extends BaseTest {
         mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.2", true);
         mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.3", true);
         mongoStorage.updateDownloadStatistics("uid2", "artifact3", "1.0.1", false);
+
+        collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
+        collection.remove(new BasicDBObject());
     }
 
     @Test
@@ -613,9 +610,20 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testAddSubscription() throws Exception {
-        // TODO
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+        doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
+        doReturn("{\"id\":\"subscriptionId\"}").when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
 
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        verify(mongoStorage).addSubscriptionInfo(eq("id"), any(SubscriptionInfo.class));
+        assertTrue(mongoStorage.hasStoredSubscription("id", ON_PREMISES));
     }
-
 }
 

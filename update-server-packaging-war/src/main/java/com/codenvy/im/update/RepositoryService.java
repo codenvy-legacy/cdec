@@ -67,6 +67,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
@@ -97,7 +100,7 @@ public class RepositoryService {
     private final MongoStorage    mongoStorage;
     private final HttpTransport   transport;
     private final UserManager userManager;
-    private final Thread subscriptionInvalidator;
+    private final Timer timer;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
@@ -114,22 +117,19 @@ public class RepositoryService {
         this.transport = transport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
-
-        this.subscriptionInvalidator = new SubscriptionInvalidator("Subscription invalidator");
-        this.subscriptionInvalidator.setDaemon(true);
-
+        this.timer = new Timer();
 
         LOG.info("Repository Service has been initialized, repository directory: " + artifactStorage.getRepositoryDir());
     }
 
     @PostConstruct
     public void init() {
-        this.subscriptionInvalidator.start();
+        timer.schedule(new SubscriptionInvalidator(), 86400000); // daily
     }
 
     @PreDestroy
     public void destroy() {
-        this.subscriptionInvalidator.interrupt();
+        timer.cancel();
     }
 
     /**
@@ -465,22 +465,13 @@ public class RepositoryService {
         }
     }
 
-    /**
-     * TODO
-     *
-     * @param accountId
-     * @param request
-     * @param uriInfo
-     * @return
-     */
+    /** Adds trial subscription to user if it hadn't one. */
     @GenerateLink(rel = "add trial subscription")
     @POST
     @Path("/subscription/{accountId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({"user", "system/admin"})
-    public Response addTrialSubscription(@PathParam("accountId") String accountId,
-                                         @Context HttpServletRequest request,
-                                         @Context UriInfo uriInfo) {
+    public Response addTrialSubscription(@PathParam("accountId") String accountId) {
         final String userId = userManager.getCurrentUser().getId();
         final String accessToken = userManager.getCurrentUser().getToken();
 
@@ -500,7 +491,7 @@ public class RepositoryService {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-            SubscriptionInfo subscriptionInfo = addTrialSubscription(accountId);
+            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
             LOG.info(format("%s subscription added for %s", ON_PREMISES, userId));
@@ -511,22 +502,22 @@ public class RepositoryService {
         }
     }
 
-    protected SubscriptionInfo addTrialSubscription(String accountId) throws IOException, JsonParseException {
+    protected SubscriptionInfo doAddTrialSubscription(String accountId) throws IOException, JsonParseException {
         String accessToken = login();
 
         try {
             final DateFormat df = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
-            final int trialDuration = 2; // TODO
+            final int trialDuration = 30;
             final Calendar startDate = Calendar.getInstance();
             final Calendar endDate = Calendar.getInstance();
             endDate.add(Calendar.DAY_OF_MONTH, trialDuration);
 
             Map<String, Object> billing = new HashMap<>();
             billing.put("usePaymentSystem", "false");
-            billing.put("contractTerm", ""); // TODO
+            billing.put("contractTerm", "12");
             billing.put("startDate", df.format(startDate.getTime()));
             billing.put("startDate", df.format(endDate.getTime()));
-            billing.put("cycle", ""); // TODO
+            billing.put("cycle", "1");
             billing.put("cycleType", "3");
             billing.put("paymentToken", "trial");
 
@@ -539,7 +530,7 @@ public class RepositoryService {
 
             Map<String, Object> body = new HashMap<>();
             body.put("accountId", accountId);
-            body.put("planId", ""); // TODO
+            body.put("planId", "opm-com-25u-y");
             body.put("subscriptionAttributes", new JsonStringMapImpl<>(attributes));
 
             Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
@@ -590,20 +581,27 @@ public class RepositoryService {
         transport.doPost(combinePaths(apiEndpoint, "/auth/logout?token=" + accessToken));
     }
 
-    private static class SubscriptionInvalidator extends Thread {
-        public SubscriptionInvalidator(String name) {
-            super(name);
-        }
-
+    private class SubscriptionInvalidator extends TimerTask {
         @Override
         public void run() {
             LOG.info("Subscription invalidator has been started");
 
-            while (!isInterrupted()) {
-                // TODO
-            }
+            try {
+                Set<String> ids = mongoStorage.getOutdatedSubscriptions(ON_PREMISES);
+                if (!ids.isEmpty()) {
+                    String accessToken = login();
+                    try {
+                        for (String subscriptionId : ids) {
 
-            LOG.info("Subscription invalidator has been stopped");
+                            mongoStorage.invalidateSubscription(subscriptionId);
+                        }
+                    } finally {
+                        logout(accessToken);
+                    }
+                }
+            } catch (Exception e) {
+// TODO
+            }
         }
     }
 }

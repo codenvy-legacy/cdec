@@ -102,6 +102,14 @@ public class HttpTransport {
     }
 
     /**
+     * Performs DELETE request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public void doDelete(String path) throws IOException {
+        request(path, "DELETE", null, null, null);
+    }
+
+    /**
      * Performs POST request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
@@ -109,7 +117,11 @@ public class HttpTransport {
         return request(path, "POST", body, MediaType.APPLICATION_JSON, accessToken);
     }
 
-    private String request(String path, String method, Object body, String expectedContentType, @Nullable String accessToken) throws IOException {
+    private String request(String path,
+                           String method,
+                           @Nullable Object body,
+                           @Nullable String expectedContentType,
+                           @Nullable String accessToken) throws IOException {
         HttpURLConnection conn = null;
 
         try {
@@ -185,7 +197,7 @@ public class HttpTransport {
 
     private void request(String method,
                          @Nullable Object body,
-                         String expectedContentType,
+                         @Nullable String expectedContentType,
                          HttpURLConnection conn) throws IOException {
 
         conn.setConnectTimeout(30 * 1000);
@@ -209,7 +221,7 @@ public class HttpTransport {
         }
 
         final String contentType = conn.getContentType();
-        if (!contentType.startsWith(expectedContentType)) {
+        if (expectedContentType != null && !contentType.startsWith(expectedContentType)) {
             throw new IOException("Unsupported type of response from remote server.");
         }
     }

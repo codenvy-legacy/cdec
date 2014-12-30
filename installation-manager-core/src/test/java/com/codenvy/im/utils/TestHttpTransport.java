@@ -31,6 +31,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -117,15 +118,33 @@ public class TestHttpTransport {
         assertEquals(value.get("key"), "value");
     }
 
+    @Test
+    public void testDoDelete(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        httpTransport.doDelete("http://0.0.0.0:" + port + "/rest/test/delete");
+    }
+
 
     @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "Can't establish connection with http://1.1.1.1")
-    public void testDoRequestToUnknownHost(ITestContext context) throws Exception {
+    public void testRequestFailedUnknownHost(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         httpTransport.doOption("http://1.1.1.1:" + port + "/rest/test", null);
     }
 
+    @Test(expectedExceptions = HttpException.class)
+    public void testRequestFailedWrongPath(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        httpTransport.doGet("http://0.0.0.0:" + port + "/rest/test/unknown");
+    }
+
     @Path("test")
     public class TestService {
+
+        @DELETE
+        @Path("delete")
+        public Response delete() {
+            return Response.status(Response.Status.NO_CONTENT).build();
+        }
 
         @OPTIONS
         @Produces(MediaType.APPLICATION_JSON)

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -61,13 +62,13 @@ public class TestMongoStorage {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -1);
 
-        mongoStorage.addSubscriptionInfo("user1", new SubscriptionInfo("account1", "OnPremises", "id1", calendar, calendar));
-        mongoStorage.addSubscriptionInfo("user2", new SubscriptionInfo("account2", "OnPremises", "id2", calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user1", new SubscriptionInfo("account1", "id1", ON_PREMISES, calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user2", new SubscriptionInfo("account2", "id2", ON_PREMISES, calendar, calendar));
 
         calendar.add(Calendar.DAY_OF_MONTH, 2);
 
-        mongoStorage.addSubscriptionInfo("user3", new SubscriptionInfo("account3", "OnPremises", "id3", calendar, calendar));
-        mongoStorage.addSubscriptionInfo("user4", new SubscriptionInfo("account4", "OnPremises", "id4", calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user3", new SubscriptionInfo("account3", "id3", ON_PREMISES, calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user4", new SubscriptionInfo("account4", "id4", ON_PREMISES, calendar, calendar));
 
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
         assertEquals(collection.count(), 4);
