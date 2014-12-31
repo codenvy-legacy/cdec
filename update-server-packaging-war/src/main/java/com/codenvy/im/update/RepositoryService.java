@@ -27,6 +27,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
 
+import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -371,6 +372,8 @@ public class RepositoryService {
                             LOG.error(errMsg, ex);
                         }
                     }
+                } catch (ClientAbortException e) {
+                    // do nothing
                 } catch (Exception e) {
                     if (userId != null) {
                         try {
@@ -493,7 +496,6 @@ public class RepositoryService {
             SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
-            LOG.info(format("%s subscription added for %s", ON_PREMISES, userId));
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -543,6 +545,16 @@ public class RepositoryService {
             String subscriptionId = String.valueOf(m.get("id"));
             LOG.info("Trial subscription added. " + body.toString());
 
+            try {
+                Thread.sleep(60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            deleteSubscriptionV(subscriptionId);
+            LOG.info("Removed.");
+
+
             return new SubscriptionInfo(accountId,
                                         subscriptionId,
                                         ON_PREMISES,
@@ -578,6 +590,16 @@ public class RepositoryService {
 
     protected void logout(String accessToken) throws IOException {
         transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), null, accessToken);
+    }
+
+    protected void deleteSubscriptionV(String subscriptionId) throws IOException {
+        String accessToken = login();
+        try {
+            deleteSubscription(transport, apiEndpoint, accessToken, subscriptionId);
+            mongoStorage.invalidateSubscription(subscriptionId);
+        } finally {
+            logout(accessToken);
+        }
     }
 
     private class SubscriptionInvalidator extends TimerTask {
