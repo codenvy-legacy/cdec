@@ -97,6 +97,7 @@ public class RepositoryService {
     private final String apiEndpoint;
     private final String apiUserName;
     private final String apiUserPassword;
+    private final int   invalidationDelay;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport   transport;
@@ -107,10 +108,12 @@ public class RepositoryService {
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
                              @Named("api.user_name") String apiUserName,
                              @Named("api.user_password") String apiUserPassword,
+                             @Named("update-server.subscription.invalidation_delay") int invalidationDelay,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport transport) {
+        this.invalidationDelay = invalidationDelay;
         this.apiUserName = apiUserName;
         this.apiUserPassword = apiUserPassword;
         this.artifactStorage = artifactStorage;
@@ -123,7 +126,7 @@ public class RepositoryService {
 
     @PostConstruct
     public void init() {
-        timer.schedule(new SubscriptionInvalidator(), 86400000); // daily
+        timer.schedule(new SubscriptionInvalidator(), invalidationDelay);
     }
 
     @PreDestroy
@@ -525,7 +528,7 @@ public class RepositoryService {
             attributes.put("billing", new JsonStringMapImpl<>(billing));
             attributes.put("startDate", df.format(startDate.getTime()));
             attributes.put("endDate", df.format(endDate.getTime()));
-            attributes.put("trialDuration", Integer.toString(2));
+            attributes.put("trialDuration", Integer.toString(trialDuration));
             attributes.put("description", ON_PREMISES);
 
             Map<String, Object> body = new HashMap<>();
@@ -543,16 +546,6 @@ public class RepositoryService {
             }
             String subscriptionId = String.valueOf(m.get("id"));
             LOG.info("Trial subscription added. " + body.toString());
-
-            try {
-                Thread.sleep(60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            deleteSubscriptionV(subscriptionId);
-            LOG.info("Removed.");
-
 
             return new SubscriptionInfo(accountId,
                                         subscriptionId,
@@ -591,17 +584,7 @@ public class RepositoryService {
         transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), null, accessToken);
     }
 
-    protected void deleteSubscriptionV(String subscriptionId) throws IOException {
-        String accessToken = login();
-        try {
-            deleteSubscription(transport, apiEndpoint, accessToken, subscriptionId);
-            mongoStorage.invalidateSubscription(subscriptionId);
-        } finally {
-            logout(accessToken);
-        }
-    }
-
-    private class SubscriptionInvalidator extends TimerTask {
+    protected class SubscriptionInvalidator extends TimerTask {
         @Override
         public void run() {
             LOG.info("Subscription invalidator has been started");
@@ -612,7 +595,6 @@ public class RepositoryService {
                     String accessToken = login();
                     try {
                         for (String subscriptionId : ids) {
-                            // TODO catch ?
                             deleteSubscription(transport, apiEndpoint, accessToken, subscriptionId);
                             mongoStorage.invalidateSubscription(subscriptionId);
                         }

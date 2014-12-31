@@ -106,6 +106,7 @@ public class TestRepositoryService extends BaseTest {
         repositoryService = new RepositoryService("",
                                                   "",
                                                   "",
+                                                  2000,
                                                   userManager,
                                                   artifactStorage,
                                                   mongoStorage,
