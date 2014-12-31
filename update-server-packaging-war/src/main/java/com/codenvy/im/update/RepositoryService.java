@@ -119,8 +119,6 @@ public class RepositoryService {
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
         this.timer = new Timer();
-
-        LOG.info("Repository Service has been initialized, repository directory: " + artifactStorage.getRepositoryDir());
     }
 
     @PostConstruct
@@ -517,7 +515,7 @@ public class RepositoryService {
             billing.put("usePaymentSystem", "false");
             billing.put("contractTerm", "12");
             billing.put("startDate", df.format(startDate.getTime()));
-            billing.put("startDate", df.format(endDate.getTime()));
+            billing.put("endDate", df.format(endDate.getTime()));
             billing.put("cycle", "1");
             billing.put("cycleType", "3");
             billing.put("paymentToken", "trial");
