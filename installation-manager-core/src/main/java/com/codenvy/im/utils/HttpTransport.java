@@ -105,8 +105,8 @@ public class HttpTransport {
      * Performs DELETE request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
-    public void doDelete(String path) throws IOException {
-        request(path, "DELETE", null, null, null);
+    public void doDelete(String path, String accessToken) throws IOException {
+        request(path, "DELETE", null, null, accessToken);
     }
 
     /**

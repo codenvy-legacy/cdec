@@ -76,6 +76,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
+import static com.codenvy.im.utils.AccountUtils.deleteSubscription;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -592,7 +593,8 @@ public class RepositoryService {
                     String accessToken = login();
                     try {
                         for (String subscriptionId : ids) {
-
+                            // TODO catch ?
+                            deleteSubscription(transport, apiEndpoint, accessToken, subscriptionId);
                             mongoStorage.invalidateSubscription(subscriptionId);
                         }
                     } finally {

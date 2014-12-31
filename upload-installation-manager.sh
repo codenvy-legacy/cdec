@@ -22,7 +22,11 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
     AS_IP=update.codenvycorp.com
     echo "=========> Uploading on production"
 elif [ "$1" == "stg" ]; then
-    SSH_KEY_NAME=as1-cldide_cl-server.skey
+    if [ -z "$2" ]; then
+        SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
+    else
+        SSH_KEY_NAME=$2
+    fi
     SSH_AS_USER_NAME=codenvy
     AS_IP=syslog.codenvy-stg.com
     echo "=========> Uploading on staging"
@@ -52,7 +56,7 @@ uploadCodenvySingleServerInstallScript() {
     doUpload
 
     if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+        ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
     fi
 }
 
@@ -77,9 +81,9 @@ doUpload() {
     echo "build-time="${buildTime} >> .properties
     echo "md5=${MD5}" >> .properties
     echo "size=${SIZE}" >> .properties
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
-    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
-    scp -o StrictHostKeyChecking=no -i ~/.ssh/${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
+    ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
+    scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
+    scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
 
     rm .properties
 }

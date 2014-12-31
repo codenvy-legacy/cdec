@@ -121,7 +121,7 @@ public class TestHttpTransport {
     @Test
     public void testDoDelete(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        httpTransport.doDelete("http://0.0.0.0:" + port + "/rest/test/delete");
+        httpTransport.doDelete("http://0.0.0.0:" + port + "/rest/test/delete", null);
     }
 
 

@@ -95,7 +95,8 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String addTrialSubscription(Request request) throws IOException {
         try {
-            transport.doPost(combinePaths(updateServerEndpoint, "/subscription/" + request.getAccountId()), null, request.getAccessToken());
+            transport
+                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")

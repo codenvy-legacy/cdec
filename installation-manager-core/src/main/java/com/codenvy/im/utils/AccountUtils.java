@@ -116,6 +116,17 @@ public class AccountUtils {
         }
     }
 
+    // TODO
+
+    /** Deletes subscription */
+    public static void deleteSubscription(HttpTransport transport,
+                                          String apiEndpoint,
+                                          String accessToken,
+                                          String subscriptionId) throws IOException {
+        String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId);
+        transport.doDelete(requestUrl, accessToken);
+    }
+
     private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
                                                                  String apiEndpoint,
                                                                  String accessToken,
