@@ -27,7 +27,6 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
 
-import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -372,8 +371,8 @@ public class RepositoryService {
                             LOG.error(errMsg, ex);
                         }
                     }
-                } catch (ClientAbortException e) {
-                    // do nothing
+//                } catch (ClientAbortException e) {
+//                    // do nothing
                 } catch (Exception e) {
                     if (userId != null) {
                         try {
