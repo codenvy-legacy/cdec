@@ -577,7 +577,7 @@ public class RepositoryService {
     }
 
     protected void logout(String accessToken) throws IOException {
-        transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), accessToken);
+        transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), null, accessToken);
     }
 
     private class SubscriptionInvalidator extends TimerTask {
