@@ -87,6 +87,14 @@ public class TestHttpTransport {
     }
 
     @Test
+    public void testDoPostEmptyResponse(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
+        String response = httpTransport.doPost("http://0.0.0.0:" + port + "/rest/test/post-no-content", body, "token");
+        assertTrue(response.isEmpty());
+    }
+
+    @Test
     public void testDownload(ITestContext context) throws Exception {
         java.nio.file.Path destDir = Paths.get("target", "download");
         java.nio.file.Path destFile = destDir.resolve("tmp");
@@ -159,6 +167,14 @@ public class TestHttpTransport {
         @Path("post")
         public Response post(Map<String, String> body) {
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(body)).build();
+        }
+
+        @POST
+        @Produces(MediaType.APPLICATION_JSON)
+        @Consumes(MediaType.APPLICATION_JSON)
+        @Path("post-no-content")
+        public Response postNoContent(Map<String, String> body) {
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
 
         @GET

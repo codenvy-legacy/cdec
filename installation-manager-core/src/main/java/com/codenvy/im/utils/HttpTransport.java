@@ -94,14 +94,6 @@ public class HttpTransport {
     }
 
     /**
-     * Performs POST request.
-     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
-     */
-    public String doPost(String path) throws IOException {
-        return request(path, "POST", null, MediaType.APPLICATION_JSON, null);
-    }
-
-    /**
      * Performs DELETE request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
@@ -221,7 +213,7 @@ public class HttpTransport {
         }
 
         final String contentType = conn.getContentType();
-        if (expectedContentType != null && !contentType.startsWith(expectedContentType)) {
+        if (contentType != null && !contentType.equalsIgnoreCase(expectedContentType)) {
             throw new IOException("Unsupported type of response from remote server.");
         }
     }
