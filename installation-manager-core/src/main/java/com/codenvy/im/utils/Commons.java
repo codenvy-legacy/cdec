@@ -35,7 +35,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,10 +49,11 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import static com.codenvy.im.utils.Version.compare;
 import static com.codenvy.im.utils.Version.valueOf;
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.exists;
+import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.newDirectoryStream;
 import static java.nio.file.Files.newInputStream;
 
 /**
@@ -138,39 +138,33 @@ public class Commons {
     }
 
     /**
-     * @return the last version of the artifact in the directory
-     * @throws com.codenvy.im.exceptions.ArtifactNotFoundException
-     *         if artifact is absent in the repository
+     * Iterates over the given directory and treat every subdirectory name as a version number.
+     * Returns all fetched versions numbers.
+     *
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
-    public static String getLatestVersion(String artifact, Path dir) throws IOException {
-        Version latestVersion = null;
+    public static TreeSet<Version> getVersionsList(Path dir) throws IOException {
+        TreeSet<Version> versions = new TreeSet<>();
 
         if (!exists(dir)) {
-            throw ArtifactNotFoundException.from(artifact);
+            return versions;
         }
 
-        Iterator<Path> pathIterator = Files.newDirectoryStream(dir).iterator();
+        Iterator<Path> pathIterator = newDirectoryStream(dir).iterator();
         while (pathIterator.hasNext()) {
             try {
-                Path next = pathIterator.next();
-                if (Files.isDirectory(next)) {
-                    Version version = valueOf(next.getFileName().toString());
-                    if (latestVersion == null || compare(version, latestVersion) > 0) {
-                        latestVersion = version;
-                    }
+                Path item = pathIterator.next();
+                if (isDirectory(item)) {
+                    Version v = valueOf(item.getFileName().toString());
+                    versions.add(v);
                 }
             } catch (IllegalArgumentException e) {
                 // maybe it isn't a version directory
             }
         }
 
-        if (latestVersion == null) {
-            throw ArtifactNotFoundException.from(artifact);
-        }
-
-        return latestVersion.toString();
+        return versions;
     }
 
     /** Extract server url from url with path */

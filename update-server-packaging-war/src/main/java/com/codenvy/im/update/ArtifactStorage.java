@@ -18,19 +18,29 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.Version;
 import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import javax.inject.Named;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.TreeSet;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.*;
+import static com.codenvy.im.artifacts.ArtifactProperties.ARTIFACT_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
+import static com.codenvy.im.utils.Commons.getVersionsList;
 import static com.google.common.io.Files.copy;
 
 /**
@@ -58,7 +68,12 @@ public class ArtifactStorage {
      */
     public String getLatestVersion(String artifact) throws IOException {
         Path dir = getArtifactDir(artifact);
-        return Commons.getLatestVersion(artifact, dir);
+        TreeSet<Version> versions = getVersionsList(dir);
+        if (versions.isEmpty()) {
+            throw ArtifactNotFoundException.from(artifact);
+        }
+
+        return versions.last().toString();
     }
 
     /**

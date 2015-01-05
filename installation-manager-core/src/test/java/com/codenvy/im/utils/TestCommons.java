@@ -20,7 +20,6 @@ package com.codenvy.im.utils;
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.api.account.shared.dto.MemberDescriptor;
 import com.codenvy.dto.server.DtoFactory;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -32,15 +31,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -48,21 +51,6 @@ import static org.testng.Assert.assertNotNull;
 public class TestCommons {
 
     public static final Path DOWNLOAD_DIR = Paths.get("target", "download");
-
-    @Test(expectedExceptions = ArtifactNotFoundException.class)
-    public void testGetLatestVersionThrowExceptionIfArtifactDirectoryAbsent() throws Exception {
-        Commons.getLatestVersion("installation-manager", DOWNLOAD_DIR);
-    }
-
-    @Test
-    public void testGetLatestVersion() throws Exception {
-        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("1.0.1"));
-        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("1.0.2"));
-        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("3.1.1"));
-        Files.createDirectories(DOWNLOAD_DIR.resolve("installation-manager").resolve("4.4.1"));
-
-        assertEquals(Commons.getLatestVersion("installation-manager", DOWNLOAD_DIR.resolve("installation-manager")), "4.4.1");
-    }
 
     @Test
     public void testExtractVersion() throws Exception {
@@ -244,5 +232,41 @@ public class TestCommons {
         assertEquals(json, "{\n"
                            + "  \"prop\" : \"value\"\n"
                            + "}");
+    }
+
+    @Test
+    public void testGetVersionsList() throws Exception {
+        Path baseDir = Paths.get("target", "versions");
+
+        Files.createDirectories(baseDir.resolve("1.0.2"));
+        Files.createDirectories(baseDir.resolve("1.0.1"));
+        Files.createDirectories(baseDir.resolve("1.0.4"));
+        Files.createDirectories(baseDir.resolve("1.0.3"));
+
+        TreeSet<Version> versions = Commons.getVersionsList(baseDir);
+        Iterator<Version> iterator = versions.iterator();
+
+        assertEquals(iterator.next(), Version.valueOf("1.0.1"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.2"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.3"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.4"));
+
+        assertEquals(versions.first(), Version.valueOf("1.0.1"));
+        assertEquals(versions.last(), Version.valueOf("1.0.4"));
+
+        NavigableSet<Version> s = versions.subSet(Version.valueOf("1.0.1"), false, Version.valueOf("1.0.4"), true);
+
+        iterator = s.iterator();
+        assertEquals(iterator.next(), Version.valueOf("1.0.2"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.3"));
+        assertEquals(iterator.next(), Version.valueOf("1.0.4"));
+    }
+
+    @Test
+    public void testGetVersionsListReturnsEmptyList() throws Exception {
+        Path baseDir = Paths.get("target", "versions");
+
+        TreeSet<Version> versions = Commons.getVersionsList(baseDir.resolve("fake"));
+        assertTrue(versions.isEmpty());
     }
 }
