@@ -116,8 +116,6 @@ public class AccountUtils {
         }
     }
 
-    // TODO
-
     /** Deletes subscription */
     public static void deleteSubscription(HttpTransport transport,
                                           String apiEndpoint,

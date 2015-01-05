@@ -28,8 +28,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
+import static org.mockito.Matchers.endsWith;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -358,6 +362,13 @@ public class TestAccountUtils {
         assertEquals(desc.getServiceId(), "serviceId");
         assertEquals(desc.getStartDate(), startDate);
         assertEquals(desc.getEndDate(), endDate);
+    }
 
+    @Test
+    public void testDeleteSubscription() throws Exception {
+        doNothing().when(mockTransport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
+        AccountUtils.deleteSubscription(mockTransport, "", ACCESS_TOKEN, "subscriptionId");
+
+        verify(mockTransport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
     }
 }
