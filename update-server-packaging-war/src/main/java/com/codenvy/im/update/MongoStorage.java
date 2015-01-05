@@ -136,7 +136,7 @@ public class MongoStorage {
     }
 
     /** @return all active subscriptions */
-    public Set<String> getOutdatedSubscriptions(String subscription) {
+    public Set<String> getExpiredSubscriptions(String subscription) {
         DBObject doc = new BasicDBObject();
         doc.put(VALID, true);
         doc.put(SUBSCRIPTION, subscription);

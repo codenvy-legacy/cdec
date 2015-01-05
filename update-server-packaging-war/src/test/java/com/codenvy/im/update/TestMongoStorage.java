@@ -73,7 +73,7 @@ public class TestMongoStorage {
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
         assertEquals(collection.count(), 4);
 
-        Set<String> ids = mongoStorage.getOutdatedSubscriptions("OnPremises");
+        Set<String> ids = mongoStorage.getExpiredSubscriptions("OnPremises");
         assertEquals(ids.size(), 2);
         assertTrue(ids.contains("id1"));
         assertTrue(ids.contains("id2"));
@@ -81,7 +81,7 @@ public class TestMongoStorage {
         mongoStorage.invalidateSubscription("id1");
         mongoStorage.invalidateSubscription("id2");
 
-        ids = mongoStorage.getOutdatedSubscriptions("OnPremises");
+        ids = mongoStorage.getExpiredSubscriptions("OnPremises");
         assertTrue(ids.isEmpty());
 
         assertTrue(mongoStorage.hasStoredSubscription("user1", "OnPremises"));

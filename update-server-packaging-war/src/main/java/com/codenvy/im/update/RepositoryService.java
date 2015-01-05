@@ -77,7 +77,6 @@ import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
-import static com.codenvy.im.utils.AccountUtils.deleteSubscription;
 import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -541,7 +540,7 @@ public class RepositoryService {
             Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
             if (!m.containsKey("id")) {
                 if (m.containsKey("message")) {
-                    throw new IOException(String.valueOf(m.get("message")));
+                    throw new IOException("Can't add subscription. Probably you already have expired one: " + String.valueOf(m.get("message")));
                 } else {
                     throw new IOException("Malformed response. 'id' key is missed.");
                 }
@@ -586,26 +585,28 @@ public class RepositoryService {
         transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), null, accessToken);
     }
 
+    protected void invalidateExpiredSubscriptions() throws IOException {
+        Set<String> ids = mongoStorage.getExpiredSubscriptions(ON_PREMISES);
+        if (!ids.isEmpty()) {
+            for (String subscriptionId : ids) {
+                try {
+                    mongoStorage.invalidateSubscription(subscriptionId);
+                } catch (Exception e) {
+                    LOG.error("Can't invalidate subscriptions.", e);
+                }
+            }
+        }
+    }
+
     protected class SubscriptionInvalidator extends TimerTask {
         @Override
         public void run() {
             LOG.info("Subscription invalidator has been started");
 
             try {
-                Set<String> ids = mongoStorage.getOutdatedSubscriptions(ON_PREMISES);
-                if (!ids.isEmpty()) {
-                    String accessToken = login();
-                    try {
-                        for (String subscriptionId : ids) {
-                            deleteSubscription(transport, apiEndpoint, accessToken, subscriptionId);
-                            mongoStorage.invalidateSubscription(subscriptionId);
-                        }
-                    } finally {
-                        logout(accessToken);
-                    }
-                }
+                invalidateExpiredSubscriptions();
             } catch (Exception e) {
-// TODO
+                LOG.error("Can't invalidate subscriptions.", e);
             }
         }
     }
