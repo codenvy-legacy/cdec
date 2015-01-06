@@ -165,7 +165,7 @@ public class MongoStorage {
     }
 
     /** Indicates if user already has subscription */
-    public boolean hasStoredSubscription(String userId, String subscription) {
+    public boolean hasSubscription(String userId, String subscription) {
         DBCollection collection = db.getCollection(SUBSCRIPTIONS);
         DBObject query = new BasicDBObject();
         query.put(USER_ID, userId);

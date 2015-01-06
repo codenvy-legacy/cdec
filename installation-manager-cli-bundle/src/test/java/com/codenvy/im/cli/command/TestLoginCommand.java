@@ -99,6 +99,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
+        doReturn("{\"status\":\"OK\"}").when(service).addTrialSubscription(any(Request.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
                 .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
@@ -107,6 +108,27 @@ public class TestLoginCommand extends AbstractTestCommand {
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Your Codenvy account '%s' will be used to verify on-premises subscription.\n" +
                                            "Login success.\n",
+                                           TEST_USER_ACCOUNT_NAME));
+        assertTrue(output.contains(TEST_USER_ACCOUNT_NAME));
+        verify(service).addTrialSubscription(any(Request.class));
+    }
+
+    @Test
+    public void testLoginSuccessIfAddTrialSubscriptionFailed() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("username", TEST_USER);
+        commandInvoker.argument("password", TEST_USER_PASSWORD);
+
+        doReturn("{\"status\":\"ERROR\"}").when(service).addTrialSubscription(any(Request.class));
+        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
+                .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, String.format("Your Codenvy account '%s' will be used to verify on-premises subscription.\n" +
+                                           "Login success.\n" +
+                                           "{\"status\":\"ERROR\"}\n",
                                            TEST_USER_ACCOUNT_NAME));
         assertTrue(output.contains(TEST_USER_ACCOUNT_NAME));
         verify(service).addTrialSubscription(any(Request.class));
@@ -150,6 +172,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
         commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
 
+        doReturn("{\"status\":\"OK\"}").when(service).addTrialSubscription(any(Request.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
                 .when(spyCommand).getAccountReferenceWhereUserIsOwner(TEST_USER_ACCOUNT_NAME);

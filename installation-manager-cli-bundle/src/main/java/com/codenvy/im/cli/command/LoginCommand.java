@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
+import com.codenvy.im.response.Response;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -92,7 +93,10 @@ public class LoginCommand extends AbstractIMCommand {
             preferencesStorage.setAccountId(accountReference.getId());
             console.printSuccess("Login success.");
 
-            service.addTrialSubscription(initRequest());
+            String response = service.addTrialSubscription(initRequest());
+            if (Response.isError(response)) {
+                console.printErrorAndExit(response);
+            }
         } catch (Exception e) {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();

@@ -56,11 +56,11 @@ public class AccountUtils {
      * @throws java.lang.IllegalArgumentException
      * @throws java.io.IOException
      */
-    public static boolean isValidSubscription(HttpTransport transport,
-                                              String apiEndpoint,
-                                              String requiredSubscription,
-                                              String accessToken,
-                                              String accountId) throws IOException, IllegalArgumentException {
+    public static boolean hasValidSubscription(HttpTransport transport,
+                                               String apiEndpoint,
+                                               String requiredSubscription,
+                                               String accessToken,
+                                               String accountId) throws IOException, IllegalArgumentException {
         try {
             List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport,
                                                                           apiEndpoint,

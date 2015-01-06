@@ -28,7 +28,6 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
@@ -48,7 +47,7 @@ import java.util.concurrent.CountDownLatch;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.service.DownloadDescriptor.createDescriptor;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
-import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
+import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.String.format;
@@ -68,11 +67,6 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     private final String apiEndpoint;
 
     private DownloadDescriptor downloadDescriptor;
-
-    static {
-        InjectorBootstrap.INJECTOR.injectMembers(InstallationManagerService.class);
-        InjectorBootstrap.INJECTOR.injectMembers(InstallationManagerServiceImpl.class);
-    }
 
     @Inject
     public InstallationManagerServiceImpl(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
@@ -110,11 +104,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String checkSubscription(String subscription, Request request) throws IOException {
         try {
-            boolean subscriptionValidated = isValidSubscription(transport,
-                                                                apiEndpoint,
-                                                                subscription,
-                                                                request.getAccessToken(),
-                                                                request.getAccountId());
+            boolean subscriptionValidated = hasValidSubscription(transport,
+                                                                 apiEndpoint,
+                                                                 subscription,
+                                                                 request.getAccessToken(),
+                                                                 request.getAccountId());
 
             if (subscriptionValidated) {
                 return new Response().setStatus(ResponseCode.OK)

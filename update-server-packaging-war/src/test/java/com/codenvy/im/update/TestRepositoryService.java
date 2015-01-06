@@ -450,7 +450,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(transport).doGet("/account", "token");
-        doReturn(Boolean.TRUE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.TRUE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -470,7 +470,7 @@ public class TestRepositoryService extends BaseTest {
                 .when(transport).doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("token"));
         doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId}]")
                 .when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -486,7 +486,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -504,7 +504,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -523,7 +523,7 @@ public class TestRepositoryService extends BaseTest {
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doThrow(new IOException("Unexpected error.")).when(transport).doPost(endsWith("/auth/login"), any(Object.class));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -541,7 +541,7 @@ public class TestRepositoryService extends BaseTest {
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doReturn("{}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -559,7 +559,7 @@ public class TestRepositoryService extends BaseTest {
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
         doThrow(new IOException("Unexpected error.")).when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
 
         Response response = given()
@@ -578,7 +578,7 @@ public class TestRepositoryService extends BaseTest {
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
         doReturn("{\"message\":\"Error.\"}").when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
 
         Response response = given()
@@ -597,7 +597,7 @@ public class TestRepositoryService extends BaseTest {
                  + "}]").when(transport).doGet("/account", "token");
         doReturn("[]").when(transport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doReturn("{\"value\":\"userToken\"}").when(transport).doPost(endsWith("/auth/login"), any(Object.class));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasStoredSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
         doReturn("{}").when(transport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("userToken"));
 
         Response response = given()
@@ -624,7 +624,7 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         verify(mongoStorage).addSubscriptionInfo(eq("id"), any(SubscriptionInfo.class));
-        assertTrue(mongoStorage.hasStoredSubscription("id", ON_PREMISES));
+        assertTrue(mongoStorage.hasSubscription("id", ON_PREMISES));
     }
 
     @Test

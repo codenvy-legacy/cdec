@@ -77,7 +77,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
-import static com.codenvy.im.utils.AccountUtils.isValidSubscription;
+import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
@@ -263,11 +263,11 @@ public class RepositoryService {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
             String accessToken = userManager.getCurrentUser().getToken();
-            if (requiredSubscription != null && !isValidSubscription(transport,
-                                                                     apiEndpoint,
-                                                                     requiredSubscription,
-                                                                     accessToken,
-                                                                     accountId)) {
+            if (requiredSubscription != null && !hasValidSubscription(transport,
+                                                                      apiEndpoint,
+                                                                      requiredSubscription,
+                                                                      accessToken,
+                                                                      accountId)) {
 
                 return Response.status(Response.Status.FORBIDDEN)
                                .entity("You do not have a valid subscription. You are not permitted to download '" + artifact +
@@ -489,12 +489,14 @@ public class RepositoryService {
                                .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account '%s'.",
                                               userId, accountId)).build();
             }
-
-            if (mongoStorage.hasStoredSubscription(userId, ON_PREMISES)
-                || isValidSubscription(transport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
-
+            if (mongoStorage.hasSubscription(userId, ON_PREMISES)) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
+
+            if (hasValidSubscription(transport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
+
 
             SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
