@@ -227,12 +227,12 @@ public class TestAbstractArtifact {
         }
 
         @Override
-        public Command getInstallCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+        public Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+        public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
             return null;
         }
     }

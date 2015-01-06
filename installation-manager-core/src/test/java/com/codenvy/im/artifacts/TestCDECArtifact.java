@@ -24,18 +24,22 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
 
+import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.net.ConnectException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static java.nio.file.Files.createDirectories;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -115,5 +119,23 @@ public class TestCDECArtifact {
     public void testGetInstalledVersionError() throws Exception {
         when(mockTransport.doOption(endsWith("api/"), (String)isNull())).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion();
+    }
+
+    @Test
+    public void testGetPatchCommand() throws Exception {
+        Path patchDir = Paths.get("target/patches");
+        createDirectories(patchDir);
+        createDirectories(patchDir.resolve("1.0.1"));
+        createDirectories(patchDir.resolve("1.0.2"));
+
+        FileUtils.write(patchDir.resolve("1.0.1").resolve("patch.sh").toFile(), "echo -n \"1.0.1\"");
+        FileUtils.write(patchDir.resolve("1.0.2").resolve("patch.sh").toFile(), "echo -n \"1.0.2\"");
+
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+        Command command = spyCdecArtifact.getPatchCommand(patchDir, Version.valueOf("1.0.2"));
+
+        String output = command.execute();
+        assertEquals(output, "1.0.1\n" +
+                             "1.0.2\n");
     }
 }

@@ -32,10 +32,10 @@ public class MacroCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
-        StringBuffer results = new StringBuffer();
+        StringBuilder results = new StringBuilder();
         for (Command command : commands) {
             String result = command.execute();
-            results.append(result + "/n");
+            results.append(result).append("\n");
         }
         return results.toString();
     }

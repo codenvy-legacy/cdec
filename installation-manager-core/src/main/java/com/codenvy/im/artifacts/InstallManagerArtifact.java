@@ -93,12 +93,12 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(Version version, final Path pathToBinaries, InstallOptions installOptions) {
+    public Command getInstallCommand(Version versionToInstall, final Path pathToBinaries, InstallOptions installOptions) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
         int step = installOptions.getStep();
 
         final Agent syncAgent = new LocalAgent();

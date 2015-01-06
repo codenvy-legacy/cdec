@@ -59,7 +59,7 @@ public class TestMacroCommand {
         MacroCommand testCommand = new MacroCommand(commands, "macro");
 
         String result = testCommand.execute();
-        assertEquals(result, "command1/ncommand2/n");
+        assertEquals(result, "command1\ncommand2\n");
     }
 
     @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = "exception")

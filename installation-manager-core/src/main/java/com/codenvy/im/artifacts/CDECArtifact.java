@@ -34,13 +34,18 @@ import com.google.inject.Singleton;
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 
 import static com.codenvy.im.command.SimpleCommand.createLocalCommand;
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
+import static java.nio.file.Files.exists;
 
 /**
  * @author Anatoliy Bazko
@@ -91,13 +96,12 @@ public class CDECArtifact extends AbstractArtifact {
                                 "Configure Codenvy",
                                 "Patch resources",
                                 "Move Codenvy binaries to /etc/puppet",
-                                "Update Codenvy",
-                                "Patch resources");
+                                "Update Codenvy");
     }
 
     /** {@inheritDoc} */
     @Override
-    public Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 
@@ -121,8 +125,7 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                String patchFile = "/tmp/cdec/patches/" + version.toString() + "/before-" + getInstalledVersion() + ".sh";
-                return createLocalCommand(format("if [ -f %1$s ]; then bash %1$s; fi", patchFile));
+                return getPatchCommand(Paths.get("/tmp/cdec/patches/"), versionToUpdate);
 
             case 3:
                 return createLocalCommand("sudo rm -rf /etc/puppet/files; " +
@@ -131,11 +134,7 @@ public class CDECArtifact extends AbstractArtifact {
                                           "sudo mv /tmp/cdec/* /etc/puppet");
 
             case 4:
-                return new CheckInstalledVersionCommand(this, version);
-
-            case 5:
-                patchFile = "/tmp/cdec/patches/" + version.toString() + "/after-" + getInstalledVersion() + ".sh";
-                return createLocalCommand(format("if [ -f %1$s ]; then bash %1$s; fi", patchFile));
+                return new CheckInstalledVersionCommand(this, versionToUpdate);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of update range", step));
@@ -158,7 +157,7 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getInstallCommand(final Version version,
+    public Command getInstallCommand(final Version versionToInstall,
                                      final Path pathToBinaries,
                                      final InstallOptions installOptions) throws IOException {
 
@@ -257,14 +256,31 @@ public class CDECArtifact extends AbstractArtifact {
                                            "done");
 
             case 9:
-                return new CheckInstalledVersionCommand(this, version);
+                return new CheckInstalledVersionCommand(this, versionToInstall);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
         }
     }
 
-    private Command createLocalReplaceCommand(String file, String property, String value) {
+    protected Command getPatchCommand(Path patchDir, Version versionToUpdate) throws IOException {
+        List<Command> commands;
+        commands = new ArrayList<>();
+
+        NavigableSet<Version> versions = getVersionsList(patchDir).subSet(getInstalledVersion(), false, versionToUpdate, true);
+        Iterator<Version> iter = versions.iterator();
+        while (iter.hasNext()) {
+            Version v = iter.next();
+            Path patchFile = patchDir.resolve(v.toString()).resolve("patch.sh");
+            if (exists(patchFile)) {
+                commands.add(createLocalCommand(format("bash %s", patchFile)));
+            }
+        }
+
+        return new MacroCommand(commands, "Patch resources");
+    }
+
+    protected Command createLocalReplaceCommand(String file, String property, String value) {
         return createLocalCommand(
                 format("sudo sed -i 's/%1$s = .*/%1$s = \"%2$s\"/g' %3$s",
                        property,
@@ -272,7 +288,7 @@ public class CDECArtifact extends AbstractArtifact {
                        file));
     }
 
-    private Command createLocalRestoreOrBackupCommand(final String file) {
+    protected Command createLocalRestoreOrBackupCommand(final String file) {
         final String backupFile = file + ".back";
         return createLocalCommand(
                 format("if sudo test -f %2$s; then " +

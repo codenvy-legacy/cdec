@@ -51,10 +51,10 @@ public interface Artifact extends Comparable<Artifact> {
     List<String> getUpdateInfo(InstallOptions installOptions) throws IOException;
 
     /** @return list of commands to perform installation. */
-    Command getInstallCommand(@Nullable Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException;
+    Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     /** @return list of commands to perform installation. */
-    Command getUpdateCommand(Version version, Path pathToBinaries, InstallOptions installOptions) throws IOException;
+    Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     /**
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed
