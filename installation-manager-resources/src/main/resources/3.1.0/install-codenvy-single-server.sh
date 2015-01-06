@@ -96,8 +96,8 @@ prepareConfig() {
         curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
     fi
 
-    insertProperty "aio_host_url" `hostname`
-    insertProperty "host_url" `hostname`
+    insertProperty "aio_host_url" `hostname -f`
+    insertProperty "host_url" `hostname -f`
 
     if grep -Fq "=MANDATORY" ${CONFIG}; then
         printPrompt; echo "Please enter your Codenvy credentials"
@@ -170,7 +170,7 @@ printPreInstallInfo() {
 
 printPostInstallInfo() {
     printPrompt; echo
-    printPrompt; echo "Codenvy is ready at http://"`hostname`"/"
+    printPrompt; echo "Codenvy is ready at http://"`hostname -f`"/"
     printPrompt; echo
     printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node-for-teams/"
 #    printPrompt; echo "Upgrade & Configuration Docs:"
