@@ -584,7 +584,9 @@ public class TestRepositoryService extends BaseTest {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
-        assertTrue(response.getBody().asString().endsWith(" Error."));
+        assertTrue(response.getBody().asString().endsWith(
+                "Unexpected error. Can't add subscription. You do not have a valid subscription to install Codenvy. You previously had a 30 day " +
+                "trial subscription, but it has also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase."));
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }

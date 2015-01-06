@@ -542,7 +542,9 @@ public class RepositoryService {
             Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
             if (!m.containsKey("id")) {
                 if (m.containsKey("message")) {
-                    throw new IOException("Can't add subscription. Probably you already have expired one: " + String.valueOf(m.get("message")));
+                    throw new IOException(
+                            "You do not have a valid subscription to install Codenvy. You previously had a 30 day trial subscription, but it has " +
+                            "also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase.");
                 } else {
                     throw new IOException("Malformed response. 'id' key is missed.");
                 }
