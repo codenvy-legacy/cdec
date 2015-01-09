@@ -144,12 +144,11 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return ImmutableList.of("Disable SELinux",
-                                "Install puppet server",
+                                "Install puppet binaries",
                                 "Unzip Codenvy binaries",
                                 "Configure puppet master",
-                                "Launch puppet master",
-                                "Install puppet agent",
                                 "Configure puppet agent",
+                                "Launch puppet master",
                                 "Launch puppet agent",
                                 "Install Codenvy (~25 min)",
                                 "Boot Codenvy");
@@ -183,13 +182,17 @@ public class CDECArtifact extends AbstractArtifact {
                             "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
                             + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
                             + "; fi"));
-                    add(createLocalCommand(
-                            format("sudo yum install %s -y", config.getValue(Config.PUPPET_SERVER_VERSION))));
-                }}, "Install puppet server");
+                    add(createLocalCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_SERVER_VERSION))));
+                    add(createLocalCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION))));
+                    add(createLocalCommand("sudo chkconfig --add puppetmaster"));
+                    add(createLocalCommand("sudo chkconfig puppetmaster on"));
+                    add(createLocalCommand("sudo chkconfig --add puppet"));
+                    add(createLocalCommand("sudo chkconfig puppet on"));
+
+                }}, "Install puppet binaries");
 
             case 2:
                 return createLocalCommand(format("sudo unzip -o %s -d /etc/puppet", pathToBinaries.toString()));
-
 
             case 3:
                 List<Command> commands = new ArrayList<>();
@@ -214,40 +217,31 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(commands, "Configure puppet master");
 
             case 4:
-                return new MacroCommand(ImmutableList.<Command>of(
-                        createLocalCommand("sudo chkconfig --add puppetmaster"),
-                        createLocalCommand("sudo chkconfig puppetmaster on"),
-                        createLocalCommand("sudo service puppetmaster start")),
-                                        "Launch puppet master");
-
-            case 5:
-                return createLocalCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION)));
-
-            case 6:
                 return new MacroCommand(ImmutableList.of(
                         createLocalRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
-                        createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                                  "  server = %s\\n" +
-                                                  "  runinterval = 300\\n" +
-                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
+                        createLocalCommand(format("sudo sed -i '1i[master]' /etc/puppet/puppet.conf")),
+                        createLocalCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
                         createLocalCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
                                                   "  show_diff = true\\n" +
                                                   "  pluginsync = true\\n" +
                                                   "  report = true\\n" +
                                                   "  default_schedules = false\\n" +
-                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
+                                                  "  certname = %s\\n" +
+                                                  "  runinterval = 300\\n" +
+                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
                                         "Configure puppet agent");
 
 
-            case 7:
+            case 5:
+                return createLocalCommand("sudo service puppetmaster start");
+
+            case 6:
                 return new MacroCommand(ImmutableList.<Command>of(
                         createLocalCommand("sleep 30"),
-                        createLocalCommand("sudo chkconfig --add puppet"),
-                        createLocalCommand("sudo chkconfig puppet on"),
                         createLocalCommand("sudo service puppet start")),
                                         "Launch puppet agent");
 
-            case 8:
+            case 7:
                 return createLocalCommand("doneState=\"Installing\"; " +
                                            "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                            "while [ \"${doneState}\" != \"Installed\" ]; do " +
@@ -255,7 +249,7 @@ public class CDECArtifact extends AbstractArtifact {
                                            "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
                                            "done");
 
-            case 9:
+            case 8:
                 return new CheckInstalledVersionCommand(this, versionToInstall);
 
             default:

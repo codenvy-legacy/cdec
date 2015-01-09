@@ -91,16 +91,29 @@ insertProperty() {
     sed -i s/$1=.*/$1=$2/g ${CONFIG}
 }
 
+configureDNS() {
+    printPrompt; echo -n "Please enter your DNS: "
+    read DNS
+    insertProperty "aio_host_url" ${DNS}
+    insertProperty "host_url" ${DNS}
+    if ! sudo grep -Fq "127.0.0.1 puppet" /etc/hosts; then
+        echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null
+    fi
+    if ! sudo grep -Fq "${DNS}" /etc/hosts; then
+        echo "127.0.0.1 ${DNS}" | sudo tee --append /etc/hosts > /dev/null
+    fi
+
+}
+
 prepareConfig() {
     if [ ! -f ${CONFIG} ]; then
         curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
     fi
 
-    insertProperty "aio_host_url" `hostname -f`
-    insertProperty "host_url" `hostname -f`
 
     if grep -Fq "=MANDATORY" ${CONFIG}; then
-        printPrompt; echo "Please enter your Codenvy credentials"
+        configureDNS
+
         askProperty "Codenvy user name" "codenvy_user_name"
         askProperty "Codenvy password" "codenvy_password"
 
@@ -159,7 +172,7 @@ printPreInstallInfo() {
     printPrompt; echo "We will download this file if it does not exist."
     printPrompt; echo "We will interactively ask you to enter any MANDATORY parameters."
     printPrompt; echo
-    printPrompt; echo "You will need to know your Codenvy user name and password."
+    printPrompt; echo "You will need to know your DNS, Codenvy user name and password."
     printPrompt; echo
     printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
     printPrompt; echo "Codenvy customer agreement & TOS: https://codenvy.com/legal"
@@ -170,7 +183,8 @@ printPreInstallInfo() {
 
 printPostInstallInfo() {
     printPrompt; echo
-    printPrompt; echo "Codenvy is ready at http://"`hostname -f`"/"
+    HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
     printPrompt; echo
     printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node-for-teams/"
 #    printPrompt; echo "Upgrade & Configuration Docs:"
@@ -214,7 +228,7 @@ doInstallStep4() {
     CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
     executeCliCommand "Login to Codenvy Updater service" login --remote update-server ${CODENVY_USER} ${CODENVY_PWD}
-    executeCliCommand "Downloading Coden vy binaries" im-download ${ARTIFACT} ${VERSION}
+    executeCliCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
     executeCliCommand "Checking the list of downloaded binaries" im-download --list-local
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
@@ -222,14 +236,14 @@ doInstallStep4() {
 doInstallStep5() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeWithSudoCliCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeWithSudoCliCommand "" im-install --step 10 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeWithSudoCliCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
