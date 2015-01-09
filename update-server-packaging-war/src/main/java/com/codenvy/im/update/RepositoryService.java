@@ -185,12 +185,12 @@ public class RepositoryService {
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(properties)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                           .entity(format("Unexpected error. Can't retrieve the info of the artifact '%s', version '%s'. %s",
+                           .entity(format("Unexpected error. Can't retrieve the info of the artifact '%s':'%s'. %s",
                                           artifact, version, e.getMessage())).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(format("Unexpected error. Can't retrieve the info of the artifact '%s', version '%s'. %s",
+                           .entity(format("Unexpected error. Can't retrieve the info of the artifact '%s':'%s'. %s",
                                           artifact, version, e.getMessage())).build();
         }
     }
@@ -280,12 +280,11 @@ public class RepositoryService {
             return doDownloadArtifact(artifact, version, false);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
-                    "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
+                    "Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("Unexpected error. Can't download the artifact '" + artifact + "' version " + version +
-                                   ". " + e.getMessage()).build();
+                           .entity("Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
         }
     }
 
@@ -308,12 +307,11 @@ public class RepositoryService {
             return doDownloadArtifact(artifact, version, true);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
-                    "Unexpected error. Can 't download the artifact ' " + artifact + "' version " + version + ". " + e.getMessage()).build();
+                    "Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("Unexpected error. Can't download the artifact '" + artifact + "' version " + version +
-                                   ". " + e.getMessage()).build();
+                           .entity("Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
         }
     }
 

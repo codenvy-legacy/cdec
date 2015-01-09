@@ -31,7 +31,7 @@ public class ArtifactNotFoundException extends FileNotFoundException {
     }
 
     public ArtifactNotFoundException(String artifact, String version) {
-        super(String.format("Artifact '%s' version '%s' not found", artifact, version));
+        super(String.format("Artifact %s:%s not found", artifact, version));
     }
 
     public ArtifactNotFoundException(Artifact artifact) {
