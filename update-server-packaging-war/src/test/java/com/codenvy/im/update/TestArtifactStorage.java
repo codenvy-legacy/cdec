@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.update;
 
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.google.common.io.InputSupplier;
 
 import org.testng.annotations.BeforeTest;
@@ -32,9 +33,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.*;
+import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.google.common.io.Files.copy;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -62,7 +70,7 @@ public class TestArtifactStorage extends BaseTest {
                      "target/download/installation-manager/1.0.1/" + ArtifactStorage.PROPERTIES_FILE);
     }
 
-    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testLoadPropertiesThrowExceptionIfPropertyFileAbsent() throws Exception {
         Files.createDirectories(artifactStorage.getArtifactDir("installation-manager", "1.0.1"));
         assertFalse(Files.exists(artifactStorage.getPropertiesFile("installation-manager", "1.0.1")));
@@ -98,7 +106,7 @@ public class TestArtifactStorage extends BaseTest {
         assertEquals(artifactStorage.getFileName("installation-manager", "1.0.1"), "installation-manager-1.0.1.zip");
     }
 
-    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testIsAuthenticationRequiredThrowExceptionIfPropertiesAbsent() throws Exception {
         assertTrue(artifactStorage.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
@@ -137,7 +145,7 @@ public class TestArtifactStorage extends BaseTest {
         assertFalse(artifactStorage.isAuthenticationRequired("installation-manager", "1.0.1"));
     }
 
-    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testGetFileNameThrowExceptionIfPropertiesAbsent() throws Exception {
         artifactStorage.getFileName("installation-manager", "1.0.1");
     }
@@ -152,7 +160,7 @@ public class TestArtifactStorage extends BaseTest {
                      "target/download/installation-manager/1.0.1/file");
     }
 
-    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testGetArtifactThrowExceptionIfPropertiesAbsent() throws Exception {
         artifactStorage.getArtifact("installation-manager", "1.0.1");
     }
@@ -204,7 +212,7 @@ public class TestArtifactStorage extends BaseTest {
         }
     }
 
-    @Test(expectedExceptions = PropertiesNotFoundException.class)
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testDownloadThrowExceptionIfPropertiesAbsent() throws Exception {
         artifactStorage.download("installation-manager", "1.0.1");
     }

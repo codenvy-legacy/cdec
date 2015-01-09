@@ -99,8 +99,6 @@ public class ArtifactStorage {
     /**
      * Downloads artifact from the repository.
      *
-     * @throws com.codenvy.im.update.PropertiesNotFoundException
-     *         if property file is absent in the repository
      * @throws com.codenvy.im.exceptions.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
@@ -118,8 +116,6 @@ public class ArtifactStorage {
     /**
      * Loads the properties of the artifact.
      *
-     * @throws com.codenvy.im.update.PropertiesNotFoundException
-     *         if property file is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
@@ -127,7 +123,7 @@ public class ArtifactStorage {
         Properties props = new Properties();
         Path propertiesFile = getPropertiesFile(artifact, version);
         if (!Files.exists(propertiesFile)) {
-            throw new PropertiesNotFoundException(artifact, version);
+            throw new ArtifactNotFoundException(artifact, version);
         }
 
         try (InputStream in = new BufferedInputStream(Files.newInputStream(propertiesFile))) {
@@ -159,8 +155,6 @@ public class ArtifactStorage {
     /**
      * Indicates if to download artifact user has to be authenticated.
      *
-     * @throws com.codenvy.im.update.PropertiesNotFoundException
-     *         if property file is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
@@ -170,8 +164,6 @@ public class ArtifactStorage {
 
     /**
      * @return the subscription name which is required to download artifact
-     * @throws com.codenvy.im.update.PropertiesNotFoundException
-     *         if property file is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
@@ -182,8 +174,6 @@ public class ArtifactStorage {
 
     /**
      * @return the file name under which artifact is stored in the repository, method doesn't check if artifact exists
-     * @throws com.codenvy.im.update.PropertiesNotFoundException
-     *         if property file is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
@@ -193,8 +183,6 @@ public class ArtifactStorage {
 
     /**
      * @return the path to the artifact
-     * @throws com.codenvy.im.update.PropertiesNotFoundException
-     *         if property file is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */

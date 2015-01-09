@@ -18,7 +18,7 @@ checkOS() {
 
 # $1 - command name
 installPackageIfNeed() {
-    command -v $1 >/dev/null 2>&1 || { # check if requered command had already installed earlier
+    command -v $1 >/dev/null 2>&1 || { # check if requered command had been already installed earlier
         printPrompt; echo "Installing $1 "
         sudo yum install $1 -y -q
     }
@@ -73,7 +73,7 @@ configureDNS() {
     read DNS
     insertProperty "aio_host_url" ${DNS}
     insertProperty "host_url" ${DNS}
-    if ! sudo grep -Fq "127.0.0.1 puppet" /etc/hosts; then
+    if ! sudo grep -Eq "127.0.0.1.*puppet" /etc/hosts; then
         echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null
     fi
     if ! sudo grep -Fq "${DNS}" /etc/hosts; then
@@ -84,7 +84,7 @@ configureDNS() {
 
 prepareConfig() {
     if [ ! -f ${CONFIG} ]; then
-        curl -s -o codenvy-single-server.properties https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
+        curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
     fi
 
 
@@ -93,7 +93,7 @@ prepareConfig() {
 
         askProperty "Codenvy user name" "codenvy_user_name"
         askProperty "Codenvy password" "codenvy_password"
-
+        printPrompt; echo
         printPrompt; echo -n "Continue installation [y/N]: "
         read ANSWER
         if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
@@ -108,7 +108,7 @@ executeCliCommand() {
     [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
-executeWithIMCommand() {
+executeIMCommand() {
     if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
     ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
 
@@ -164,8 +164,7 @@ printPostInstallInfo() {
     printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
     printPrompt; echo
     printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node-for-teams/"
-    printPrompt; echo "Upgrade & Configuration Docs:"
-    # TODO
+    printPrompt; echo "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-single-node/#upgrades"
 }
 
 doInstallStep1() {
@@ -214,14 +213,14 @@ doInstallStep4() {
 doInstallStep5() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    executeWithIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeWithIMCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
