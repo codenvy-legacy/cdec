@@ -324,7 +324,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         } while (info.getDownloadResult() == null);
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
-                                                        "  \"message\" : \"Artifact 'cdec' version '2.0.0' not found\",\n" +
+                                                        "  \"message\" : \"Artifact cdec:2.0.0 not found\",\n" +
                                                         "  \"status\" : \"ERROR\"\n" +
                                                         "}");
     }
