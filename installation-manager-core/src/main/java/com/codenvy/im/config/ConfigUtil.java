@@ -78,7 +78,7 @@ public class ConfigUtil {
         try {
             properties = transport.download(requestUrl, tmpDir);
         } catch (IOException e) {
-            throw new IOException("Can't download default properties", e);
+            throw new IOException("Can't download installation properties. " + e.getMessage(), e);
         }
 
         try (InputStream in = newInputStream(properties)) {

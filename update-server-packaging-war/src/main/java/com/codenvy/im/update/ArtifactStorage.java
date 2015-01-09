@@ -153,7 +153,7 @@ public class ArtifactStorage {
     }
 
     /**
-     * Indicates if to download artifact user has to be authenticated.
+     * Indicates if user has to be authenticated to download artifact.
      *
      * @throws java.io.IOException
      *         if an I/O error occurs
