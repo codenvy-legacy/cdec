@@ -27,6 +27,8 @@ import org.fusesource.jansi.Ansi;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.codenvy.im.response.Response.isError;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
@@ -38,9 +40,10 @@ public class Console {
     public static final Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
     public static final Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
     public static final String CODENVY_PREFIX     = "[CODENVY] ";
+    private static final Logger LOG               = Logger.getLogger(Console.class.getName());
 
     private final boolean       interactive;
-    protected     ConsoleReader consoleReader;
+    protected ConsoleReader consoleReader;
 
     Console(boolean interactive) throws IOException {
         this.interactive = interactive;
@@ -126,7 +129,13 @@ public class Console {
             errorMessage = Response.valueOf(ex).toJson();
         }
 
-        printErrorAndExit(errorMessage);
+        LOG.log(Level.SEVERE, ex.getMessage(), ex);
+
+        printError(errorMessage);
+
+        if (!interactive) {
+            exit(1);
+        }
     }
 
     void printResponse(String response) throws JsonParseException {
@@ -141,6 +150,8 @@ public class Console {
      * Print error message and exit with status = 1 if the command is not executing in interactive mode.
      */
     void printErrorAndExit(String message) {
+        LOG.log(Level.SEVERE, message);
+
         printError(message);
 
         if (!interactive) {

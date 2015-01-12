@@ -101,7 +101,8 @@ public class LoginCommand extends AbstractIMCommand {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
             }
-            console.printErrorAndExit(e);
+
+            throw e;
         }
     }
 

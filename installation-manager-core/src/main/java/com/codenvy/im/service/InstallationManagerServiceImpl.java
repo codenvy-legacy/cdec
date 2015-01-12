@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.service.DownloadDescriptor.createDescriptor;
@@ -60,6 +62,8 @@ import static java.nio.file.Files.size;
  */
 @Singleton
 public class InstallationManagerServiceImpl implements InstallationManagerService {
+    private static final Logger LOG = Logger.getLogger(InstallationManagerServiceImpl.class.getSimpleName());
+
     protected final InstallationManager manager;
     protected final HttpTransport       transport;
 
@@ -90,12 +94,13 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     public String addTrialSubscription(Request request) throws IOException {
         try {
             transport
-                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
+                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
                                  .toJson();
         } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -122,7 +127,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                                      .toJson();
             }
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR)
                                  .setSubscription(subscription)
                                  .setMessage(e.getMessage())
@@ -151,7 +156,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -182,7 +187,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                     Path pathToBinaries = doDownload(request.getUserCredentials(), artToDownload, verToDownload);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
                 } catch (Exception exp) {
-                    // LOG.error(exp.getMessage(), exp);
+                    LOG.log(Level.SEVERE, exp.getMessage(), exp);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
                     downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
                                                                        .setMessage(exp.getMessage())
@@ -193,7 +198,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             downloadDescriptor.setDownloadResult(new Response().setStatus(ResponseCode.OK).setArtifacts(infos));
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
 
             if (downloadDescriptor == null) {
                 downloadDescriptor = new DownloadDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
@@ -241,7 +246,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                 return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
             }
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -269,7 +274,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             downloadDescriptor.getDownloadThread().interrupt();
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -303,11 +308,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
                 return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
             } catch (Exception e) {
-                // LOG.error(e.getMessage(), e);
+                LOG.log(Level.SEVERE, e.getMessage(), e);
                 return Response.valueOf(e).toJson();
             }
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
@@ -347,7 +352,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }
@@ -363,12 +368,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
         Version version = doGetVersionToInstall(request, installOptions.getStep());
-
         try {
             List<String> infos = manager.getInstallInfo(request.getArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
@@ -384,12 +388,12 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                 ArtifactInfo info = new ArtifactInfo(request.getArtifact(), version, Status.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
-                // LOG.error(e.getMessage(), e);
+                LOG.log(Level.SEVERE, e.getMessage(), e);
                 ArtifactInfo info = new ArtifactInfo(request.getArtifact(), version, Status.FAILURE);
                 return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
             }
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
     }
@@ -448,7 +452,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             manager.setConfig(config);
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
-            // LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
     }

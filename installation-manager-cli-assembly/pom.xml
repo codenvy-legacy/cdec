@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.5.0-SNAPSHOT</version>
+        <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-cli-assembly</artifactId>
     <name>Codenvy :: IM :: Installation Manager Assembly</name>
@@ -111,38 +111,38 @@
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>CURRENT_DIR=$(pwd)
-cd ~/codenvy-im
+                                        cd ~/codenvy-im
 
-if [ -f "codenvy-cli-update-script.sh" ]; then
-    echo "Installation Manager CLI is being updated ..."
-    bash -c "$(cat codenvy-cli-update-script.sh)"
-fi
+                                        if [ -f "codenvy-cli-update-script.sh" ]; then
+                                        echo "Installation Manager CLI is being updated ..."
+                                        bash -c "$(cat codenvy-cli-update-script.sh)"
+                                        fi
 
-cd ${CURRENT_DIR}
+                                        cd ${CURRENT_DIR}
 
-if [ -f ~/.bashrc ]; then
-    source ~/.bashrc
-fi
+                                        if [ -f ~/.bashrc ]; then
+                                        source ~/.bashrc
+                                        fi
                                         main "$@"
                                     </replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>CURRENT_DIR=$(pwd)
-cd ~/codenvy-im
+                                        cd ~/codenvy-im
 
-if [ -f "codenvy-cli-update-script.sh" ]; then
-    echo "Installation Manager CLI is being updated ..."
-    bash -c "$(cat codenvy-cli-update-script.sh)"
-fi
+                                        if [ -f "codenvy-cli-update-script.sh" ]; then
+                                        echo "Installation Manager CLI is being updated ..."
+                                        bash -c "$(cat codenvy-cli-update-script.sh)"
+                                        fi
 
-cd ${CURRENT_DIR}
+                                        cd ${CURRENT_DIR}
 
-if [ -f ~/.bashrc ]; then
-    source ~/.bashrc
-fi
-main "$@"
-fi</replacevalue>
+                                        if [ -f ~/.bashrc ]; then
+                                        source ~/.bashrc
+                                        fi
+                                        main "$@"
+                                        fi</replacevalue>
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
@@ -164,6 +164,8 @@ cellar       =]]></replacevalue>
                                 </replace>
                                 <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-bundle/${project.version}/installation-manager-cli-bundle-${project.version}.jar" />
                                 <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
+                                <copy file="${project.build.directory}/classes/codenvy-cli/etc/org.ops4j.pax.logging.cfg.template" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.ops4j.pax.logging.cfg" />
+                                <copy file="${project.build.directory}/classes/codenvy-cli/etc/java.util.logging.properties.template" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/java.util.logging.properties" />
                             </target>
                         </configuration>
                     </execution>
