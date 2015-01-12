@@ -181,8 +181,8 @@ public class TestAbstractArtifact {
         SortedMap<Version, Path> versions = spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT,
                                                                                   mockTransport);
         assertEquals(versions.size(), 2);
-        assertEquals(versions.toString(), "{1.0.1=target/download/" + TEST_ARTIFACT_NAME + "/1.0.1/file1, " +
-                                          "1.0.2=target/download/" + TEST_ARTIFACT_NAME + "/1.0.2/file2" +
+        assertEquals(versions.toString(), "{1.0.2=target/download/" + TEST_ARTIFACT_NAME + "/1.0.2/file2, " +
+                                          "1.0.1=target/download/" + TEST_ARTIFACT_NAME + "/1.0.1/file1" +
                                           "}");
     }
 

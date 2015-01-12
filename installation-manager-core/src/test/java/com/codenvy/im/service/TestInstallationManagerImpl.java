@@ -372,22 +372,7 @@ public class TestInstallationManagerImpl {
 
     @Test
     public void testGetDownloadedArtifacts() throws Exception {
-        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.1"));
-        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport).doGet(endsWith("cdec/1.0.2"));
-        doReturn("{\"file\":\"file3\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport)
-                                                                                      .doGet(endsWith(InstallManagerArtifact.NAME + "/2.0.1"));
-
-        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
-        Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
-        Path file3 = Paths.get("target", "download", installManagerArtifact.getName(), "2.0.1", "file3");
-        Files.createDirectories(file1.getParent());
-        Files.createDirectories(file2.getParent());
-        Files.createDirectories(file3.getParent());
-        Files.createFile(file1);
-        Files.createFile(file2);
-        Files.createFile(file3);
-
-        doReturn(new TreeMap<Version, Path>() {{
+        doReturn(new TreeMap<Version, Path>(new Version.ReverseOrder()) {{
             put(Version.valueOf("1.0.0"), Paths.get("file1"));
             put(Version.valueOf("1.0.1"), Paths.get("file2"));
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
@@ -401,8 +386,8 @@ public class TestInstallationManagerImpl {
 
         // check order
         assertEquals(artifacts.toString(), "{cdec={" +
-                                           "1.0.0=file1, " +
-                                           "1.0.1=file2" +
+                                           "1.0.1=file2, " +
+                                           "1.0.0=file1" +
                                            "}, " +
                                            InstallManagerArtifact.NAME + "={" +
                                            "2.0.0=file3" +

@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.utils;
 
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ public class Version implements Comparable<Version> {
     /**
      * Compares two versions.
      *
+     *
      * @see java.lang.Comparable#compareTo(Object)
      */
     public static int compare(String version1, String version2) {
@@ -58,6 +60,7 @@ public class Version implements Comparable<Version> {
 
     /**
      * Compares two versions.
+     *
      *
      * @see java.lang.Comparable#compareTo(Object)
      */
@@ -140,5 +143,12 @@ public class Version implements Comparable<Version> {
     @Override
     public String toString() {
         return major + "." + minor + "." + bugFix + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "") + (snapshot ? "-SNAPSHOT" : "");
+
+    }
+
+    static public class ReverseOrder implements Comparator<Version> {
+        @Override public int compare(Version v1, Version v2) {
+            return v2.compareTo(v1);
+        }
     }
 }

@@ -119,7 +119,7 @@ public abstract class AbstractArtifact implements Artifact {
     /** @return the list of downloaded list */
     @Override
     public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException {
-        SortedMap<Version, Path> versions = new TreeMap<>();
+        SortedMap<Version, Path> versions = new TreeMap<>(new Version.ReverseOrder());
 
         Path artifactDir = downloadDir.resolve(getName());
 

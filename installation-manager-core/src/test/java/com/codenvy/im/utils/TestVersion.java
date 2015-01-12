@@ -20,6 +20,8 @@ package com.codenvy.im.utils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Comparator;
+
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -28,12 +30,6 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Anatoliy Bazko
  */
 public class TestVersion {
-
-    @Test(dataProvider = "getValidVersions")
-    public void testValidVersion(String version) throws Exception {
-        assertTrue("Version is invalid: " + version, Version.isValidVersion(version));
-    }
-
     @DataProvider(name = "getValidVersions")
     public static Object[][] getValidVersions() {
         return new Object[][]{{"0.0.1"},
@@ -47,11 +43,11 @@ public class TestVersion {
                               {"1.0.1-M1-SNAPSHOT"}};
     }
 
-
-    @Test(dataProvider = "getInvalidVersions")
-    public void testInvalidVersion(String version) throws Exception {
-        assertFalse("Version is valid: " + version, Version.isValidVersion(version));
+    @Test(dataProvider = "getValidVersions")
+    public void testValidVersion(String version) throws Exception {
+        assertTrue("Version is invalid: " + version, Version.isValidVersion(version));
     }
+
 
     @DataProvider(name = "getInvalidVersions")
     public static Object[][] getInvalidVersions() {
@@ -71,48 +67,83 @@ public class TestVersion {
                               {"1.0.1-beta"}};
     }
 
-    @Test
-    public void testParseValidVersion() throws Exception {
-        assertEquals(Version.valueOf("1.0.1"), new Version(1, 0, 1, 0, false));
-        assertEquals(Version.valueOf("10.150.200"), new Version(10, 150, 200, 0, false));
-        assertEquals(Version.valueOf("10.150.200-SNAPSHOT"), new Version(10, 150, 200, 0, true));
-        assertEquals(Version.valueOf("10.150.200-M20"), new Version(10, 150, 200, 20, false));
-        assertEquals(Version.valueOf("10.150.200-M20-SNAPSHOT"), new Version(10, 150, 200, 20, true));
+    @Test(dataProvider = "getInvalidVersions")
+    public void testInvalidVersion(String version) throws Exception {
+        assertFalse("Version is valid: " + version, Version.isValidVersion(version));
     }
+
+
+    @DataProvider(name = "testParseValidVersionProvider")
+    public Object[][] createDataForTestParseValidVersion() {
+        return new Object[][]{
+            {"1.0.1", 1, 0, 1, 0, false},
+            {"10.150.200", 10, 150, 200, 0, false},
+            {"10.150.200-SNAPSHOT", 10, 150, 200, 0, true},
+            {"10.150.200-M20", 10, 150, 200, 20, false},
+            {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 20, true},
+        };
+    }
+
+    @Test(dataProvider = "testParseValidVersionProvider")
+    public void testParseValidVersion(String str, int major, int minor, int bugFix, int milestone, boolean snapshot) throws Exception {
+        assertEquals(Version.valueOf(str), new Version(major, minor, bugFix, milestone, snapshot));
+    }
+
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testParseInvalidVersion() throws Exception {
         Version.valueOf("01.1.1");
     }
 
-    @Test
-    public void testToString() throws Exception {
-        assertEquals(Version.valueOf("10.150.200").toString(), "10.150.200");
-        assertEquals(Version.valueOf("10.150.200-M20-SNAPSHOT").toString(), "10.150.200-M20-SNAPSHOT");
-        assertEquals(Version.valueOf("10.150.200-M20").toString(), "10.150.200-M20");
-        assertEquals(Version.valueOf("10.150.200-SNAPSHOT").toString(), "10.150.200-SNAPSHOT");
+
+    @DataProvider(name = "testToStringProvider")
+    public Object[][] createDataForTestToString() {
+        return new Object[][]{
+            {"10.150.200", "10.150.200"},
+            {"10.150.200-M20-SNAPSHOT", "10.150.200-M20-SNAPSHOT"},
+            {"10.150.200-M20", "10.150.200-M20"},
+            {"10.150.200-SNAPSHOT", "10.150.200-SNAPSHOT"},
+        };
     }
 
-    @Test
-    public void testCompare() throws Exception {
-        assertEquals(Version.compare("1.0.1", "1.0.1"), 0);
-        assertEquals(Version.compare("1.0.2-M20", "1.0.2-M20"), 0);
-        assertEquals(Version.compare("1.0.2-M20-SNAPSHOT", "1.0.2-M20-SNAPSHOT"), 0);
-        assertEquals(Version.compare("1.0.2-SNAPSHOT", "1.0.2-SNAPSHOT"), 0);
-
-        assertEquals(Version.compare("2.0.1", "1.0.1"), 1);
-        assertEquals(Version.compare("1.1.1", "1.0.1"), 1);
-        assertEquals(Version.compare("1.0.2", "1.0.1"), 1);
-        assertEquals(Version.compare("1.0.2", "1.0.1-M20"), 1);
-        assertEquals(Version.compare("1.0.2", "1.0.2-SNAPSHOT"), 1);
-        assertEquals(Version.compare("1.0.2-M20", "1.0.2"), 1);
-        assertEquals(Version.compare("1.0.2-M20", "1.0.2-M19"), 1);
-        assertEquals(Version.compare("1.0.2-M20", "1.0.2-M20-SNAPSHOT"), 1);
-
-        assertEquals(Version.compare("1.0.1", "2.0.1"), -1);
-        assertEquals(Version.compare("1.0.1", "1.1.1"), -1);
-        assertEquals(Version.compare("1.0.1", "1.0.2"), -1);
-        assertEquals(Version.compare("1.0.1-SNAPSHOT", "1.0.1"), -1);
+    @Test(dataProvider = "testToStringProvider")
+    public void testToString(String str, String result) throws Exception {
+        assertEquals(Version.valueOf(str).toString(), result);
     }
 
+
+    @DataProvider(name = "testCompareToProvider")
+    public Object[][] createDataForTestCompareTo() {
+        return new Object[][]{
+            {"1.0.1", "1.0.1", 0},
+            {"1.0.2-M20", "1.0.2-M20", 0},
+            {"1.0.2-M20-SNAPSHOT", "1.0.2-M20-SNAPSHOT", 0},
+            {"1.0.2-SNAPSHOT", "1.0.2-SNAPSHOT", 0},
+
+            {"2.0.1", "1.0.1", 1},
+            {"1.1.1", "1.0.1", 1},
+            {"1.0.2", "1.0.1", 1},
+            {"1.0.2", "1.0.1-M20", 1},
+            {"1.0.2", "1.0.2-SNAPSHOT", 1},
+            {"1.0.2-M20", "1.0.2", 1},
+            {"1.0.2-M20", "1.0.2-M19", 1},
+            {"1.0.2-M20", "1.0.2-M20-SNAPSHOT", 1},
+
+            {"1.0.1", "2.0.1", -1},
+            {"1.0.1", "1.1.1", -1},
+            {"1.0.1", "1.0.2", -1},
+            {"1.0.1-SNAPSHOT", "1.0.1", -1},
+        };
+    }
+
+    @Test(dataProvider = "testCompareToProvider")
+    public void testCompareTo(String version1, String version2, int result) throws Exception {
+        assertEquals(Version.valueOf(version1).compareTo(Version.valueOf(version2)), result);
+    }
+
+    @Test(dataProvider = "testCompareToProvider")
+    public void testReverseOrder(String version1, String version2, int result) throws Exception {
+        Comparator<Version> reverseOrder = new Version.ReverseOrder();
+        assertEquals(reverseOrder.compare(Version.valueOf(version2), Version.valueOf(version1)), result);
+    }
 }
