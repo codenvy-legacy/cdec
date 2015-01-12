@@ -138,7 +138,6 @@ printPreInstallInfo() {
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
     printPrompt; echo "Welcome. This program installs Codenvy."
-#    printPrompt; echo "When the installation is complete, the Codenvy URL will be displayed."
     printPrompt; echo
     printPrompt; echo "This program will:"
     printPrompt; echo "1. Configure the system"
