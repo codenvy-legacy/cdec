@@ -266,6 +266,18 @@ public class RepositoryService {
         try {
             String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
             String accessToken = userManager.getCurrentUser().getToken();
+            String userId = userManager.getCurrentUser().getId();
+
+            if (!checkIfUserIsOwnerOfAccount(transport,
+                                             apiEndpoint,
+                                             accessToken,
+                                             accountId)) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                               .entity(format("Unexpected error. Can't download artifact. User '%s' is not owner of the account '%s'.",
+                                              userId, accountId)).build();
+            }
+
+
             if (requiredSubscription != null && !hasValidSubscription(transport,
                                                                       apiEndpoint,
                                                                       requiredSubscription,
@@ -490,6 +502,7 @@ public class RepositoryService {
                                .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account '%s'.",
                                               userId, accountId)).build();
             }
+
             if (mongoStorage.hasSubscription(userId, ON_PREMISES)) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }

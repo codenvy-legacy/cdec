@@ -241,7 +241,8 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateArtifactWithoutSubscription() throws Exception {
-        when(transport.doGet("/account")).thenReturn("[{accountReference:{id:accountId}}]");
+        when(transport.doGet("/account", userManager.getCurrentUser().getToken()))
+                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet("/account/accountId/subscriptions")).thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
 
@@ -261,7 +262,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testDownloadPrivateWhenUserWithoutSubscriptionError() throws Exception {
+    public void testDownloadPrivateErrorWhenUserWithoutSubscription() throws Exception {
         when(transport.doGet("/account", userManager.getCurrentUser().getToken()))
                  .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
@@ -277,6 +278,49 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateErrorIfNoRolesAllowed() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
+        Response response = given().when().get("repository/download/cdec/1.0.1/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
+    }
+
+    @Test
+    public void testDownloadPrivateArtifactWithSubscription() throws Exception {
+        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+        Calendar cal = getInstance();
+        cal.add(Calendar.DATE, -1);
+        String startDate = subscriptionDateFormat.format(cal.getTime());
+
+        cal = getInstance();
+        cal.add(Calendar.DATE, 1);
+        String endDate = subscriptionDateFormat.format(cal.getTime());
+
+        when(transport.doGet("/account", userManager.getCurrentUser().getToken()))
+                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+
+        when(transport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
+                .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
+
+        when(transport.doGet("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
+                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+    }
+
+    @Test
+    public void testDownloadPrivateArtifactWithSubscriptionErrorIfAccountWrong() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"unknownAccountId\",name:\"name1\"}"
+                 + "}]").when(transport).doGet("/account", "token");
         Response response = given().when().get("repository/download/cdec/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }

@@ -49,26 +49,43 @@ installIm() {
     sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/interactive-mode
 }
 
+printPrompt() {
+    echo -en "\e[94m[CODENVY]\e[0m "
+}
+
 askProperty() {
     PROMPT=$1
     PROPERTY=$2
 
-    if grep -Fq "${PROPERTY}=MANDATORY" ${CONFIG}; then
-        printPrompt; echo -n "${PROMPT}: "
-        read VALUE
-        insertProperty ${PROPERTY} ${VALUE}
-    fi
-}
-
-printPrompt() {
-    echo -en "\e[94m[CODENVY]\e[0m "
+    printPrompt; echo -n "${PROMPT}: "
+    read VALUE
+    insertProperty ${PROPERTY} ${VALUE}
 }
 
 insertProperty() {
     sed -i s/$1=.*/$1=$2/g ${CONFIG}
 }
 
-configureDNS() {
+askPassword() {
+    printPrompt
+    PROMPT="Codenvy password: "
+
+    unset PASSWORD
+    while IFS= read -p "$PROMPT" -r -s -n 1 CHAR
+    do
+        if [[ ${CHAR} == $'\0' ]]
+        then
+            break
+        fi
+        PROMPT='*'
+        PASSWORD+="${CHAR}"
+    done
+    echo
+
+    insertProperty "codenvy_password" ${PASSWORD}
+}
+
+askDNS() {
     printPrompt; echo -n "Please enter your DNS: "
     read DNS
     insertProperty "aio_host_url" ${DNS}
@@ -79,7 +96,6 @@ configureDNS() {
     if ! sudo grep -Fq "${DNS}" /etc/hosts; then
         echo "127.0.0.1 ${DNS}" | sudo tee --append /etc/hosts > /dev/null
     fi
-
 }
 
 prepareConfig() {
@@ -87,17 +103,9 @@ prepareConfig() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
     fi
 
-
-    if grep -Fq "=MANDATORY" ${CONFIG}; then
-        configureDNS
-
-        askProperty "Codenvy user name" "codenvy_user_name"
-        askProperty "Codenvy password" "codenvy_password"
-        printPrompt; echo
-        printPrompt; echo -n "Continue installation [y/N]: "
-        read ANSWER
-        if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
-    fi
+    askProperty "Codenvy user name" "codenvy_user_name"
+    askPassword
+    askDNS
 }
 
 executeCliCommand() {
@@ -116,6 +124,10 @@ executeIMCommand() {
     [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
+preconfigureSystem() {
+    installPackageIfNeed curl
+}
+
 printPreInstallInfo() {
     checkOS
 
@@ -125,7 +137,7 @@ printPreInstallInfo() {
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    printPrompt; echo "Welcome to Codenvy. This program will install Codenvy onto this node."
+    printPrompt; echo "Welcome. This program installs Codenvy."
     printPrompt; echo "When the installation is complete, the Codenvy URL will be displayed."
     printPrompt; echo
     printPrompt; echo "This program will:"
@@ -136,6 +148,14 @@ printPreInstallInfo() {
     printPrompt; echo "5. Install Codenvy by installing Puppet and configuring system parameters"
     printPrompt; echo "6. Boot Codenvy"
     printPrompt; echo
+    printPrompt; echo
+    printPrompt; echo "By continuing, you accept the Codenvy Agreement @ http://codenvy.com/legal"
+    printPrompt; echo
+    printPrompt; echo "Press any key to continue"
+    read -n1 -s
+    clear
+
+    printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
     printPrompt; echo
     printPrompt; echo "Configuration : Minimum : Available"
@@ -143,19 +163,33 @@ printPreInstallInfo() {
     printPrompt; echo "CPU           : 4 cores : ${availableCores} cores"
     printPrompt; echo "Disk Space    : 300GB   : ${availableDiskSpace}B"
     printPrompt; echo
-    printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises/installation/#sizing-single-node"
-    printPrompt; echo
-    printPrompt; echo "Codenvy will be configured based upon properties in ${CONFIG} file."
-    printPrompt; echo "We will download this file if it does not exist."
-    printPrompt; echo "We will interactively ask you to enter any MANDATORY parameters."
-    printPrompt; echo
-    printPrompt; echo "You will need to know your DNS, Codenvy user name and password."
-    printPrompt; echo
-    printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
-    printPrompt; echo "Codenvy customer agreement & TOS: https://codenvy.com/legal"
+    printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
     printPrompt; echo
     printPrompt; echo "Press any key to continue"
     read -n1 -s
+    clear
+
+    if [ ! -f ${CONFIG} ]; then
+        printPrompt; echo "Configuration file: not detected - will download template."
+        printPrompt; echo
+        prepareConfig
+    else
+        HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+        CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
+        CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
+
+        printPrompt; echo "Configuration file: "${CONFIG}
+        printPrompt; echo "Codenvy user name: "${CODENVY_USER}
+        printPrompt; echo "Codenvy password: ******"
+        printPrompt; echo "Codenvy DNS: "${HOSTNAME}
+    fi
+
+    printPrompt; echo
+    printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
+    printPrompt; echo
+    printPrompt; echo -n "Continue installation [y/N]: "
+    read ANSWER
+    if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
 }
 
 printPostInstallInfo() {
@@ -163,7 +197,7 @@ printPostInstallInfo() {
     HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
     printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
     printPrompt; echo
-    printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node-for-teams/"
+    printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node/#install-troubleshooting"
     printPrompt; echo "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-single-node/#upgrades"
 }
 
@@ -174,8 +208,6 @@ doInstallStep1() {
     if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
     mkdir ${DIR}
 
-    installPackageIfNeed curl
-    prepareConfig
     printPrompt; echo "COMPLETED STEP 1: CONFIGURE SYSTEM"
 }
 
@@ -223,6 +255,9 @@ doInstallStep6() {
     executeIMCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
+
+clear
+preconfigureSystem
 
 printPreInstallInfo
 
