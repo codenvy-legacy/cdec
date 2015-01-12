@@ -45,7 +45,7 @@ public class TestMongoStorage {
 
     @BeforeTest
     public void prepare() throws Exception {
-        mongoStorage = new MongoStorage("mongodb://localhost:12000/update", true, "target");
+        mongoStorage = new MongoStorage("mongodb://localhost:12000/update", true, "target", 2000);
     }
 
     @BeforeMethod
@@ -154,5 +154,22 @@ public class TestMongoStorage {
         assertEquals(m.get(MongoStorage.SUCCESS), 2);
         assertEquals(m.get(MongoStorage.FAIL), 1);
         assertEquals(m.get(MongoStorage.TOTAL), 3);
+    }
+
+    @Test
+    public void testInvalidateExpiredSubscriptions() throws Exception {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+
+        assertTrue(mongoStorage.getExpiredSubscriptions(ON_PREMISES).isEmpty());
+
+        mongoStorage.addSubscriptionInfo("user1", new SubscriptionInfo("account1", "id1", ON_PREMISES, calendar, calendar));
+        mongoStorage.addSubscriptionInfo("user2", new SubscriptionInfo("account2", "id2", ON_PREMISES, calendar, calendar));
+
+        assertEquals(mongoStorage.getExpiredSubscriptions(ON_PREMISES).size(), 2);
+
+        mongoStorage.invalidateExpiredSubscriptions();
+
+        assertTrue(mongoStorage.getExpiredSubscriptions(ON_PREMISES).isEmpty());
     }
 }

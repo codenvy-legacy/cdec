@@ -37,8 +37,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -68,9 +66,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
@@ -100,23 +95,19 @@ public class RepositoryService {
     private final String apiEndpoint;
     private final String apiUserName;
     private final String apiUserPassword;
-    private final int   invalidationDelay;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport   transport;
     private final UserManager userManager;
-    private final Timer timer;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
                              @Named("api.user_name") String apiUserName,
                              @Named("api.user_password") String apiUserPassword,
-                             @Named("update-server.subscription.invalidation_delay") int invalidationDelay,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport transport) {
-        this.invalidationDelay = invalidationDelay;
         this.apiUserName = apiUserName;
         this.apiUserPassword = apiUserPassword;
         this.artifactStorage = artifactStorage;
@@ -124,17 +115,6 @@ public class RepositoryService {
         this.transport = transport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
-        this.timer = new Timer();
-    }
-
-    @PostConstruct
-    public void init() {
-        timer.schedule(new SubscriptionInvalidator(), invalidationDelay);
-    }
-
-    @PreDestroy
-    public void destroy() {
-        timer.cancel();
     }
 
     /**
@@ -601,29 +581,5 @@ public class RepositoryService {
         transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), null, accessToken);
     }
 
-    protected void invalidateExpiredSubscriptions() throws IOException {
-        Set<String> ids = mongoStorage.getExpiredSubscriptions(ON_PREMISES);
-        if (!ids.isEmpty()) {
-            for (String subscriptionId : ids) {
-                try {
-                    mongoStorage.invalidateSubscription(subscriptionId);
-                } catch (Exception e) {
-                    LOG.error("Can't invalidate subscriptions.", e);
-                }
-            }
-        }
-    }
 
-    protected class SubscriptionInvalidator extends TimerTask {
-        @Override
-        public void run() {
-            LOG.info("Subscription invalidator has been started");
-
-            try {
-                invalidateExpiredSubscriptions();
-            } catch (Exception e) {
-                LOG.error("Can't invalidate subscriptions.", e);
-            }
-        }
-    }
 }

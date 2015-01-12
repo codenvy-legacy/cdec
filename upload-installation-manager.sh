@@ -28,7 +28,7 @@ elif [ "$1" == "stg" ]; then
         SSH_KEY_NAME=$2
     fi
     SSH_AS_USER_NAME=codenvy
-    AS_IP=syslog.codenvy-stg.com
+    AS_IP=updater.codenvy-stg.com
     echo "=========> Uploading on staging"
 else
     echo "Unknown server destination"
@@ -49,13 +49,13 @@ uploadInstallationManagerCli() {
 }
 
 uploadCodenvySingleServerInstallScript() {
-    ARTIFACT=install-codenvy-single-server
-    FILENAME=install-codenvy-single-server.sh
+    ARTIFACT=install-codenvy
+    FILENAME=install-codenvy.sh
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/${VERSION}/${FILENAME}
     doUpload
 
-    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
+    if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
         ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
     fi
 }

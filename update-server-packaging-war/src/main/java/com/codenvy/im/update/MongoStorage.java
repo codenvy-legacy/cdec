@@ -45,6 +45,8 @@ import com.mongodb.WriteConcern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -63,6 +65,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 
 /**
  * @author Anatoliy Bazko
@@ -73,6 +79,8 @@ public class MongoStorage {
     public static final String DOWNLOAD_STATISTICS = "download_statistics";
 
     private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
+
+    private final Timer timer;
 
     // mongoDB fields
     public static final String ID = "_id";
@@ -97,11 +105,15 @@ public class MongoStorage {
     private final DB             db;
     private final String         dir;
     private final MongoClientURI uri;
+    private final int invalidationDelay;
 
     @Inject
     public MongoStorage(@Named("update-server.mongodb.url") String url,
                         @Named("update-server.mongodb.embedded") boolean embedded,
-                        @Named("update-server.mongodb.embedded_dir") String dir) throws IOException {
+                        @Named("update-server.mongodb.embedded_dir") String dir,
+                        @Named("update-server.subscription.invalidation_delay") int invalidationDelay) throws IOException {
+        this.timer = new Timer();
+        this.invalidationDelay = invalidationDelay;
         this.uri = new MongoClientURI(url);
         this.dir = dir;
 
@@ -118,6 +130,15 @@ public class MongoStorage {
         initCollections();
     }
 
+    @PostConstruct
+    public void init() {
+        timer.schedule(new SubscriptionInvalidator(), invalidationDelay);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        timer.cancel();
+    }
 
     /** Adds info that subscription was added to user account */
     public void addSubscriptionInfo(String userId, AccountUtils.SubscriptionInfo subscriptionInfo) {
@@ -433,5 +454,29 @@ public class MongoStorage {
         return true;
     }
 
+    protected void invalidateExpiredSubscriptions() throws IOException {
+        Set<String> ids = getExpiredSubscriptions(ON_PREMISES);
+        if (!ids.isEmpty()) {
+            for (String subscriptionId : ids) {
+                try {
+                    invalidateSubscription(subscriptionId);
+                } catch (Exception e) {
+                    LOG.error("Can't invalidate subscriptions.", e);
+                }
+            }
+        }
+    }
 
+    protected class SubscriptionInvalidator extends TimerTask {
+        @Override
+        public void run() {
+            LOG.info("Subscription invalidator has been started");
+
+            try {
+                invalidateExpiredSubscriptions();
+            } catch (Exception e) {
+                LOG.error("Can't invalidate subscriptions.", e);
+            }
+        }
+    }
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -s https://codenvy.com/update/repository/public/download/install-codenvy-single-server)
+    # bash <(curl -s https://codenvy.com/update/repository/public/download/install-codenvy)
 
 ARTIFACT="cdec"
 VERSION=$1
@@ -86,7 +86,7 @@ askPassword() {
 }
 
 askDNS() {
-    printPrompt; echo -n "Please enter your DNS: "
+    printPrompt; echo -n "Please set the DNS hostname to be used by Codenvy: "
     read DNS
     insertProperty "aio_host_url" ${DNS}
     insertProperty "host_url" ${DNS}
@@ -138,10 +138,10 @@ printPreInstallInfo() {
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
     printPrompt; echo "Welcome. This program installs Codenvy."
-    printPrompt; echo "When the installation is complete, the Codenvy URL will be displayed."
+#    printPrompt; echo "When the installation is complete, the Codenvy URL will be displayed."
     printPrompt; echo
     printPrompt; echo "This program will:"
-    printPrompt; echo "1. Configure system"
+    printPrompt; echo "1. Configure the system"
     printPrompt; echo "2. Install Java and other required packages"
     printPrompt; echo "3. Install the Codenvy Installation Manager"
     printPrompt; echo "4. Download Codenvy"
@@ -158,7 +158,7 @@ printPreInstallInfo() {
     printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
     printPrompt; echo
-    printPrompt; echo "Configuration : Minimum : Available"
+    printPrompt; echo "RESOURCE      : MINIMUM : AVAILABLE"
     printPrompt; echo "RAM           : 8GB     : ${availableRAM}GB"
     printPrompt; echo "CPU           : 4 cores : ${availableCores} cores"
     printPrompt; echo "Disk Space    : 300GB   : ${availableDiskSpace}B"
@@ -170,23 +170,34 @@ printPreInstallInfo() {
     clear
 
     if [ ! -f ${CONFIG} ]; then
-        printPrompt; echo "Configuration file: not detected - will download template."
+        printPrompt; echo "Configuration file : not detected - will download template"
         printPrompt; echo
+        printPrompt; echo "Codenvy user name    : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy password     : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy DNS hostname : not set - will prompt for entry"
+        printPrompt; echo
+        printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
+        printPrompt; echo
+        printPrompt; echo "Press any key to continue"
+        printPrompt; echo
+        read -n1 -s
         prepareConfig
+        printPrompt; echo
     else
         HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
         CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
         CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
-        printPrompt; echo "Configuration file: "${CONFIG}
-        printPrompt; echo "Codenvy user name: "${CODENVY_USER}
-        printPrompt; echo "Codenvy password: ******"
-        printPrompt; echo "Codenvy DNS: "${HOSTNAME}
+        printPrompt; echo "Configuration file : "${CONFIG}
+        printPrompt; echo
+        printPrompt; echo "Codenvy user name    : "${CODENVY_USER}
+        printPrompt; echo "Codenvy password     : ******"
+        printPrompt; echo "Codenvy DNS hostname : "${HOSTNAME}
+        printPrompt; echo
+        printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
+        printPrompt; echo
     fi
 
-    printPrompt; echo
-    printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
-    printPrompt; echo
     printPrompt; echo -n "Continue installation [y/N]: "
     read ANSWER
     if [ ! "${ANSWER}" == "y" ]; then exit 1; fi

@@ -99,14 +99,13 @@ public class TestRepositoryService extends BaseTest {
     @Override
     @BeforeMethod
     public void setUp() throws Exception {
-        mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target"));
+        mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target", 2000));
         transport = mock(HttpTransport.class);
         userManager = mock(UserManager.class);
         artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
         repositoryService = new RepositoryService("",
                                                   "",
                                                   "",
-                                                  2000,
                                                   userManager,
                                                   artifactStorage,
                                                   mongoStorage,
@@ -669,23 +668,6 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         verify(mongoStorage).addSubscriptionInfo(eq("id"), any(SubscriptionInfo.class));
         assertTrue(mongoStorage.hasSubscription("id", ON_PREMISES));
-    }
-
-    @Test
-    public void testInvalidateExpiredSubscriptions() throws Exception {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, -1);
-
-        assertTrue(mongoStorage.getExpiredSubscriptions(ON_PREMISES).isEmpty());
-
-        mongoStorage.addSubscriptionInfo("user1", new SubscriptionInfo("account1", "id1", ON_PREMISES, calendar, calendar));
-        mongoStorage.addSubscriptionInfo("user2", new SubscriptionInfo("account2", "id2", ON_PREMISES, calendar, calendar));
-
-        assertEquals(mongoStorage.getExpiredSubscriptions(ON_PREMISES).size(), 2);
-
-        repositoryService.invalidateExpiredSubscriptions();
-
-        assertTrue(mongoStorage.getExpiredSubscriptions(ON_PREMISES).isEmpty());
     }
 }
 
