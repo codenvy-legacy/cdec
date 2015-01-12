@@ -1,6 +1,6 @@
 #!/bin/bash
 
-    # bash <(curl -s https://codenvy.com/update/repository/public/download/install-codenvy)
+# bash <(curl -s https://start.codenvy.com/install-single)
 
 ARTIFACT="cdec"
 VERSION=$1
