@@ -492,7 +492,7 @@ public class RepositoryService {
             }
 
 
-            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId);
+            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId, accessToken);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
             return Response.status(Response.Status.OK).build();
@@ -502,9 +502,9 @@ public class RepositoryService {
         }
     }
 
-    protected SubscriptionInfo doAddTrialSubscription(String accountId) throws IOException, JsonParseException {
-        String accessToken = login();
-
+    protected SubscriptionInfo doAddTrialSubscription(String accountId, String accessToken) throws IOException, JsonParseException {
+//        String accessToken = login();
+//
         try {
             final DateFormat df = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
             final int trialDuration = 30;
@@ -551,8 +551,8 @@ public class RepositoryService {
                                         endDate);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
-        } finally {
-            logout(accessToken);
+//        } finally {
+//            logout(accessToken);
         }
     }
 
