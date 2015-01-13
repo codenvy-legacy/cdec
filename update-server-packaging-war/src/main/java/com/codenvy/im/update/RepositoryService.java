@@ -93,8 +93,6 @@ public class RepositoryService {
             "also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase.";
 
     private final String apiEndpoint;
-    private final String apiUserName;
-    private final String apiUserPassword;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport   transport;
@@ -102,14 +100,10 @@ public class RepositoryService {
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
-                             @Named("api.user_name") String apiUserName,
-                             @Named("api.user_password") String apiUserPassword,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport transport) {
-        this.apiUserName = apiUserName;
-        this.apiUserPassword = apiUserPassword;
         this.artifactStorage = artifactStorage;
         this.mongoStorage = mongoStorage;
         this.transport = transport;
@@ -492,7 +486,7 @@ public class RepositoryService {
             }
 
 
-            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId);
+            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId, accessToken);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
             return Response.status(Response.Status.OK).build();
@@ -502,9 +496,7 @@ public class RepositoryService {
         }
     }
 
-    protected SubscriptionInfo doAddTrialSubscription(String accountId) throws IOException, JsonParseException {
-        String accessToken = login();
-
+    protected SubscriptionInfo doAddTrialSubscription(String accountId, String accessToken) throws IOException, JsonParseException {
         try {
             final DateFormat df = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
             final int trialDuration = 30;
@@ -551,35 +543,6 @@ public class RepositoryService {
                                         endDate);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
-        } finally {
-            logout(accessToken);
         }
     }
-
-    protected String login() throws IOException {
-        Map<String, String> body = new HashMap<>(3);
-        body.put("username", apiUserName);
-        body.put("password", apiUserPassword);
-        body.put("realm", "sysldap");
-
-        String accessToken;
-        try {
-            Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/auth/login"), new JsonStringMapImpl<>(body)));
-            if (!m.containsKey("value")) {
-                throw new IOException("Malformed response. 'value' key is missed");
-            }
-
-            accessToken = String.valueOf(m.get("value"));
-        } catch (IOException | JsonParseException e) {
-            throw new IOException("Login failed. " + e.getMessage(), e);
-        }
-
-        return accessToken;
-    }
-
-    protected void logout(String accessToken) throws IOException {
-        transport.doPost(combinePaths(apiEndpoint, "/auth/logout"), null, accessToken);
-    }
-
-
 }
