@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.5.0-SNAPSHOT</version>
+        <version>3.5.0</version>
     </parent>
     <artifactId>installation-manager-cli-bundle</artifactId>
     <packaging>bundle</packaging>
@@ -146,20 +146,19 @@
                         <configuration>
                             <target>
                                 <?SORTPOM IGNORE?>
-                                <echo append="false"
-                                      file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor">
+                                <echo append="false" file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor">
                                     com.codenvy.api.account.server.dto.DtoServerImpls
                                     com.codenvy.api.core.server.dto.DtoServerImpls
                                 </echo>
                                 <?SORTPOM RESUME?>
                                 <tstamp>
-                                    <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute"/>
+                                    <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                 </tstamp>
                                 <touch datetime="${touch.time}">
-                                    <fileset file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor"/>
+                                    <fileset file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor" />
                                 </touch>
                                 <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
-                                    <zipfileset dir="${project.build.directory}/classes/META-INF/services/" prefix="META-INF/services"/>
+                                    <zipfileset dir="${project.build.directory}/classes/META-INF/services/" prefix="META-INF/services" />
                                 </jar>
                             </target>
                         </configuration>
