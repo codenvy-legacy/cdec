@@ -17,22 +17,22 @@
 
 #!/bin/bash
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
-    SSH_KEY_NAME=cl-server-prod-20130219
+    SSH_KEY_NAME=$2
     SSH_AS_USER_NAME=codenvy
     AS_IP=update.codenvycorp.com
     echo "=========> Uploading on production"
 elif [ "$1" == "stg" ]; then
-    if [ -z "$2" ]; then
-        SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
-    else
-        SSH_KEY_NAME=$2
-    fi
+    SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater.codenvy-stg.com
     echo "=========> Uploading on staging"
 else
     echo "Unknown server destination"
     exit 1
+fi
+
+if [ ! -z "$2" ]; then
+    SSH_KEY_NAME=$2
 fi
 
 uploadInstallationManagerCli() {

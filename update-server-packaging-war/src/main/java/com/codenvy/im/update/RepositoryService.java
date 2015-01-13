@@ -513,7 +513,7 @@ public class RepositoryService {
             endDate.add(Calendar.DAY_OF_MONTH, trialDuration);
 
             Map<String, Object> billing = new HashMap<>();
-            billing.put("usePaymentSystem", "false");
+            billing.put("usePaymentSystem", "true");
             billing.put("contractTerm", "12");
             billing.put("startDate", df.format(startDate.getTime()));
             billing.put("endDate", df.format(endDate.getTime()));

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -s https://start.codenvy.com/install-single)
+# bash <(curl -L -s https://start.codenvy.com/install-single)
 
 ARTIFACT="cdec"
 VERSION=$1
@@ -246,7 +246,7 @@ doInstallStep4() {
     CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
     CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
-    executeCliCommand "Login to Codenvy Updater service" login --remote update-server ${CODENVY_USER} ${CODENVY_PWD}
+    executeCliCommand "Login to Codenvy Updater service" login ${CODENVY_USER} ${CODENVY_PWD}
     executeCliCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
     executeCliCommand "Checking the list of downloaded binaries" im-download --list-local
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"

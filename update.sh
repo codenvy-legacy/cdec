@@ -25,7 +25,7 @@ if [ -z "$1" ] || [ "$1" == "prod" ]; then
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
-    AS_IP=syslog.codenvy-stg.com
+    AS_IP=updater.codenvy-stg.com
     echo "============[ Staging will be updated ]=============="
 else
     echo "Unknown server destination"
@@ -45,9 +45,6 @@ deleteFileIfExists() {
 
     echo "==== Step [2/7] =======================> [Stoping Tomcat]"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin;if [ -f catalina.sh ]; then ./catalina.sh stop -force; fi"
-#    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
-#        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "rm /home/codenvy/update-server.pid"
-#    fi
 
     echo "==== Step [3/7] =======================> [Server is stopped]"
     echo "==== Step [4/7] =======================> [Cleaning up]"
@@ -56,15 +53,7 @@ deleteFileIfExists() {
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir ${home}"
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "tar -xvf ${filename} -C update-server-tomcat"
 
-    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32001/33001/g' ${home}/conf/server.xml"
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/32101/33101/g' ${home}/conf/server.xml"
-    fi
-
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
-    if [ "${AS_IP}" == "syslog.codenvy-stg.com" ]; then
-        ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i '1i\CATALINA_PID=/home/codenvy/update-server.pid' /home/codenvy/update-server-tomcat/bin/catalina.sh"
-    fi
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin; ./catalina.sh start"
 
     AS_STATE='Starting'
