@@ -38,16 +38,6 @@
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-core</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>*</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>*</artifactId>
-                    <groupId>ch.qos.logback</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.codenvy.cli</groupId>
@@ -66,18 +56,6 @@
             <artifactId>org.apache.karaf.shell.console</artifactId>
             <version>${org.apache.karaf.version}</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${ch.qos.logback.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${ch.qos.logback.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.codenvy.cli</groupId>
@@ -114,6 +92,28 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>build-number</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <?SORTPOM IGNORE?>
+                                <echo append="false" file="${project.build.directory}/classes/codenvy/ClientBuildInfo.properties">
+                                    version = ${project.version}
+                                </echo>
+                                <?SORTPOM RESUME?>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
                     <execution>
@@ -126,6 +126,12 @@
                 <configuration>
                     <finalName>${project.artifactId}-${project.version}</finalName>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>codenvy/ClientBuildInfo.properties</resource>
+                            <file>${project.build.directory}/classes/codenvy/ClientBuildInfo.properties</file>
+                        </transformer>
+                    </transformers>
                 </configuration>
             </plugin>
             <plugin>
