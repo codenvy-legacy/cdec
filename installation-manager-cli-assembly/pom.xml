@@ -132,6 +132,11 @@ CLASSPATH="$CLASSPATH:$KARAF_HOME/lib/codenvy-main.jar"
                                         fi
                                         main "$@"</replacevalue>
                                 </replace>
+                                <!-- make it possible to pass empty command-line argument "" or argument with spaces only " " to java -->
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
+                                    <replacetoken>codenvy:$COMMAND "$*"</replacetoken>
+                                    <replacevalue>codenvy:$COMMAND $(for arg in "$@"; do echo "\"$arg\""; done)</replacevalue>
+                                </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>CURRENT_DIR=$(pwd)

@@ -67,6 +67,18 @@ public class TestConfigCommand extends AbstractTestCommand {
     }
 
     @Test
+    public void testSetEmptyPort() throws Exception {
+        doReturn(okStatus).when(service).setConfig(any(InstallationManagerConfig.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--proxy-port", " ");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, okStatus + "\n");
+    }
+
+    @Test
     public void testGetConfig() throws Exception {
         doReturn(okStatus).when(service).getConfig();
 
