@@ -212,6 +212,10 @@ public class RepositoryService {
     }
 
     private boolean isArtifactName(String entity) {
+        if (entity.equalsIgnoreCase("install-codenvy")) {
+            return true;
+        }
+
         try {
             createArtifact(entity);
             return true;

@@ -486,6 +486,38 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
+    public void testGetDownloadStatisticByArtifactInstallCodenvy() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/install-codenvy");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Map m = response.as(Map.class);
+        assertEquals(m.size(), 5);
+        assertEquals(m.get(MongoStorage.ARTIFACT), "install-codenvy");
+        assertEquals(m.get(MongoStorage.SUCCESS), 0D);
+        assertEquals(m.get(MongoStorage.FAIL), 0D);
+        assertEquals(m.get(MongoStorage.TOTAL), 0D);
+        assertNotNull(m.get(MongoStorage.VERSIONS));
+    }
+
+    @Test
+    public void testGetDownloadStatisticErrorUnknownArtifact() throws Exception {
+        Response response = given()
+                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/unknown_artifact");
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        Map m = response.as(Map.class);
+        assertEquals(m.size(), 5);
+        assertEquals(m.get(MongoStorage.USER_ID), "unknown_artifact");
+        assertEquals(m.get(MongoStorage.SUCCESS), 0D);
+        assertEquals(m.get(MongoStorage.FAIL), 0D);
+        assertEquals(m.get(MongoStorage.TOTAL), 0D);
+        assertNotNull(m.get(MongoStorage.ARTIFACTS));
+    }
+
+    @Test
     public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByRepositoryService() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
