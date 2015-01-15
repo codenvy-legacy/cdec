@@ -70,7 +70,11 @@
         -->
         <Connector port="8080" protocol="HTTP/1.1"
                    connectionTimeout="20000"
-                   redirectPort="8443"/>
+                   redirectPort="8443"
+                   compression="on"
+                   compressionMinSize="2048"
+                   compressableMimeType="text/html,text/xml,text/plain,text/css,text/javascript,text/json,application/x-javascript,
+                                         application/javascript,application/json"/>
         <!-- A "Connector" using the shared thread pool-->
         <!--
         <Connector executor="tomcatThreadPool"
