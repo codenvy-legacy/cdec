@@ -17,10 +17,14 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.command.MacroCommand;
+import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
 
@@ -133,6 +137,19 @@ public class TestCDECArtifact {
 
         doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
         Command command = spyCdecArtifact.getPatchCommand(patchDir, Version.valueOf("1.0.2"));
+        assertTrue(command instanceof MacroCommand);
+
+        String batch = command.toString();
+        batch = batch.substring(1, batch.length() - 1);
+        String[] s = batch.split(", ");
+
+        assertEquals(s.length, 2);
+        assertTrue(s[0].startsWith("sudo "));
+        assertTrue(s[1].startsWith("sudo "));
+
+        command = new MacroCommand(ImmutableList.<Command>of(new SimpleCommand(s[0].substring(5), new LocalAgent(), null),
+                                                             new SimpleCommand(s[1].substring(5), new LocalAgent(), null)),
+                                   null);
 
         String output = command.execute();
         assertEquals(output, "1.0.1\n" +
