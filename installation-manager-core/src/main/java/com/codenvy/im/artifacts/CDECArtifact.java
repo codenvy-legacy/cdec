@@ -113,7 +113,7 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 1:
                 List<Command> commands = new ArrayList<>();
-                commands.add(createLocalCommand(format("sudo sed -i 's/%s/%s/g' /tmp/cdec/manifests/nodes/single_server/single_server.pp",
+                commands.add(createLocalCommand(format("sed -i 's/%s/%s/g' /tmp/cdec/manifests/nodes/single_server/single_server.pp",
                                                        "YOUR_DNS_NAME", config.getHostUrl())));
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
@@ -267,7 +267,7 @@ public class CDECArtifact extends AbstractArtifact {
             Version v = iter.next();
             Path patchFile = patchDir.resolve(v.toString()).resolve("patch.sh");
             if (exists(patchFile)) {
-                commands.add(createLocalCommand(format("bash %s", patchFile)));
+                commands.add(createLocalCommand(format("sudo bash %s", patchFile)));
             }
         }
 
