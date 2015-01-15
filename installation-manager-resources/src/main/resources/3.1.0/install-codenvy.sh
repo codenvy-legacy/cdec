@@ -68,17 +68,22 @@ insertProperty() {
 
 askPassword() {
     printPrompt
-    PROMPT="Codenvy password: "
+    echo -n "Codenvy password: "
 
     unset PASSWORD
-    while IFS= read -p "$PROMPT" -r -s -n 1 CHAR
+    unset PROMPT
+    while IFS= read -p "${PROMPT}" -r -s -n 1 CHAR
     do
-        if [[ ${CHAR} == $'\0' ]];     then
+        if [[ ${CHAR} == $'\0' ]]; then
             break
         fi
         if [[ ${CHAR} == $'\177' ]];  then
-            PROMPT=$'\b \b'
-            PASSWORD="${PASSWORD%?}"
+            if [[ -n "${PASSWORD}" ]]; then
+                PROMPT=$'\b \b'
+                PASSWORD="${PASSWORD%?}"
+            else
+                unset PROMPT
+            fi
         else
             PROMPT='*'
             PASSWORD+="${CHAR}"
