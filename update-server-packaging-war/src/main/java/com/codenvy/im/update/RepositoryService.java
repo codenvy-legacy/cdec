@@ -192,7 +192,7 @@ public class RepositoryService {
     @GET
     @Path("/download/statistic/{entity}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"system/admin"})
+    @RolesAllowed({"system/admin", "system/manager"})
     public Response getDownloadStatistic(@PathParam("entity") final String entity) {
         try {
             Map<String, Object> response;
