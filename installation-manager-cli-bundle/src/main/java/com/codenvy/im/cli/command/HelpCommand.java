@@ -32,7 +32,7 @@ import static org.fusesource.jansi.Ansi.Color.CYAN;
  * @author Florent Benoit
  * @author Anatoliy Bazko
  */
-@Command(scope = "codenvy", name = "help", description = "Help")
+@Command(scope = "codenvy", name = "", description = "Help")
 public class HelpCommand extends AbstractIMCommand {
 
     @Override
