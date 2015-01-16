@@ -194,7 +194,6 @@ printPreInstallInfo() {
     else
         HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
         CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
-        CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
         printPrompt; echo "Configuration file : "${CONFIG}
         printPrompt; echo
