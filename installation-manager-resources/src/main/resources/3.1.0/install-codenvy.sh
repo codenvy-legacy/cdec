@@ -192,7 +192,7 @@ printPreInstallInfo() {
         prepareConfig
         printPrompt; echo
     else
-        HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+        HOSTNAME=`grep [aio_]*host_url=.* ${CONFIG} | cut -f2 -d '='`
         CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
 
         printPrompt; echo "Configuration file : "${CONFIG}
