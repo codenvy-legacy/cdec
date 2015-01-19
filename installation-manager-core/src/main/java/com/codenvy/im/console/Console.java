@@ -15,8 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.cli.command;
+package com.codenvy.im.console;
 
+import com.google.inject.Singleton;
 import jline.console.ConsoleReader;
 
 import com.codenvy.commons.json.JsonParseException;
@@ -36,6 +37,7 @@ import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
 /** @author Dmytro Nochevnov */
+@Singleton
 public class Console {
     public static final Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
     public static final Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
@@ -45,81 +47,99 @@ public class Console {
     private final boolean       interactive;
     protected ConsoleReader consoleReader;
 
-    Console(boolean interactive) throws IOException {
+    private Progressor progressor;
+
+    private static Console consoleInstance;
+
+    protected Console(boolean interactive) throws IOException {
         this.interactive = interactive;
         this.consoleReader = new ConsoleReader();
+        this.progressor = new Progressor();
+    }
+
+    public static Console getInstance() throws IllegalStateException {
+        if (consoleInstance == null) {
+            throw new IllegalStateException("There is no console.");
+        }
+
+        return consoleInstance;
+    }
+
+    public static Console create(boolean interactive) throws IOException {
+        consoleInstance = new Console(interactive);
+        return consoleInstance;
+    }
+
+    public void println(String message) {
+        print(message);
+        System.out.println();
+    }
+
+    public void print(String message) {
+        print((Object)message, false);
     }
 
     void printError(String message) {
         printError(message, false);
     }
 
-    void printError(String message, boolean suppressCodenvyPrompt) {
+    public void printError(String message, boolean suppressCodenvyPrompt) {
         print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
-    void printProgress(int percents) {
+    public void printProgress(int percents) {
         printProgress(createProgressBar(percents));
     }
 
-    void printProgress(String message) {
+    public void printProgress(String message) {
         System.out.print(ansi().saveCursorPosition().a(message).restorCursorPosition());
         System.out.flush();
     }
 
-    void cleanCurrentLine() {
+    public void cleanCurrentLine() {
         System.out.print(ERASE_CURRENT_LINE);
         System.out.flush();
     }
 
-    void cleanLineAbove() {
+    public void cleanLineAbove() {
         System.out.print(ERASE_LINE_ABOVE);
         System.out.flush();
     }
 
-    void println(String message) {
-        print(message);
-        System.out.println();
-    }
-
-    void print(String message) {
-        print((Object)message, false);
-    }
-
-    void print(String message, boolean suppressCodenvyPrompt) {
+    public void print(String message, boolean suppressCodenvyPrompt) {
         print((Object)message, suppressCodenvyPrompt);
     }
 
-    void printSuccess(String message) {
+    public void printSuccess(String message) {
         printSuccess(message, false);
     }
 
-    void printSuccess(String message, boolean suppressCodenvyPrompt) {
+    public void printSuccess(String message, boolean suppressCodenvyPrompt) {
         print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
     /** @return "true" only if only user typed line equals "y". */
-    boolean askUser(String prompt) throws IOException {
+    public boolean askUser(String prompt) throws IOException {
         print(prompt + " [y/N] ");
         String userAnswer = readLine();
         return userAnswer != null && userAnswer.equalsIgnoreCase("y");
     }
 
     /** @return line typed by user */
-    String readLine() throws IOException {
+    public String readLine() throws IOException {
         return doReadLine(null);
     }
 
-    String readPassword() throws IOException {
+    public String readPassword() throws IOException {
         return doReadLine('*');
     }
 
-    void pressAnyKey(String prompt) throws IOException {
+    public void pressAnyKey(String prompt) throws IOException {
         print(prompt);
         consoleReader.readCharacter();
     }
 
-    void printErrorAndExit(Exception ex) {
+    public void printErrorAndExit(Exception ex) {
         String errorMessage;
 
         if (isConnectionException(ex)) {
@@ -138,7 +158,16 @@ public class Console {
         }
     }
 
-    void printResponse(String response) throws JsonParseException {
+
+    public void reset() throws IllegalStateException {
+        try {
+            consoleReader.getTerminal().restore();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public void printResponse(String response) throws JsonParseException {
         if (isError(response)) {
             printErrorAndExit(response);
         } else {
@@ -149,7 +178,7 @@ public class Console {
     /**
      * Print error message and exit with status = 1 if the command is not executing in interactive mode.
      */
-    void printErrorAndExit(String message) {
+    public void printErrorAndExit(String message) {
         LOG.log(Level.SEVERE, message);
 
         printError(message);
@@ -159,8 +188,21 @@ public class Console {
         }
     }
 
-    protected void exit(int status) {
+    public void exit(int status) {
         System.exit(status);
+    }
+
+    public void showProgressor() {
+        hideProgressor();
+
+        progressor = new Progressor();
+        progressor.start();
+    }
+
+    public void hideProgressor() {
+        if (progressor.isAlive()) {
+            progressor.interrupt();
+        }
     }
 
     private String createProgressBar(int percent) {
@@ -201,5 +243,28 @@ public class Console {
 
     private String doReadLine(@Nullable Character mask) throws IOException {
         return consoleReader.readLine(mask);
+    }
+
+    /** Printing progressor thread */
+    private class Progressor extends Thread {
+        private final String[] progressChars = {"-", "\\", "|", "/", "-", "\\", "|", "/"};
+
+        @Override
+        public void run() {
+            int step = 0;
+            while (!isInterrupted()) {
+                printProgress(progressChars[step]);
+                try {
+                    sleep(250);
+                } catch (InterruptedException e) {
+                    break;
+                }
+
+                step++;
+                if (step == progressChars.length) {
+                    step = 0;
+                }
+            }
+        }
     }
 }

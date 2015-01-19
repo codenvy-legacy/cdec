@@ -78,6 +78,12 @@
             <version>${org.slf4j.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+            <version>${org.apache.karaf.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
             <version>${org.apache.sshd.version}</version>

@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.console.Console;
+
 import java.io.IOException;
 
 import static org.mockito.Matchers.anyInt;
@@ -39,11 +41,17 @@ public abstract class AbstractTestCommand {
     }
 
     private Console getSpyConsole(boolean isInstallable) throws IOException {
-        return spy(new Console(isInstallable) {
-            @Override
-            protected void printProgress(String message) {
-                // disable progressor
-            }
-        });
+        return spy(new ConsoleTested(isInstallable));
+    }
+    
+    static class ConsoleTested extends Console {
+        private ConsoleTested(boolean interactive) throws IOException {
+            super(interactive);
+        }
+
+        @Override
+        public void printProgress(String message) {
+            // disable progressor
+        }        
     }
 }

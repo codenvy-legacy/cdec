@@ -17,16 +17,62 @@
  */
 package com.codenvy.im.agent;
 
-import java.io.InputStream;
+import com.codenvy.im.console.Console;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.StringBuilderWriter;
 
-/** @author Anatoliy Bazko */
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/** @author Anatoliy Bazko
+ *  @author Dmytro Nochevnov */
 public class LocalAgent extends AbstractAgent {
+    private static final Logger LOG                  = Logger.getLogger(LocalAgent.class.getSimpleName());
+    private final static String READ_PASSWORD_PROMPT = String.format("[sudo] password for %s: ", System.getProperty("user.name"));
+
+    private static char[] pswdCache = null;
+
     public LocalAgent() {
     }
 
     /** {@inheritDoc} */
     @Override
     public String execute(String command) throws AgentException {
+        if (isPasswordRequired(command)) {
+            return executeWithPassword(command);
+        } else {
+            return executeWithoutPassword(command);
+        }
+    }
+
+    private String executeWithPassword(String command) throws AgentException {
+        if (pswdCache == null) {
+            pswdCache = obtainPassword();
+        }
+
+        String commandWhichIsReadPasswordFromInput = command.replace("sudo ", "sudo -S ");  // make sudo be able to read password from input stream
+        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", commandWhichIsReadPasswordFromInput);
+
+        try {
+            Process process = pb.start();
+            passPasswordToProcess(process, pswdCache);
+            int exitStatus = process.waitFor();
+
+            InputStream in = process.getInputStream();
+            InputStream err = process.getErrorStream();
+
+            return processExistCode(exitStatus, in, err);
+        } catch (Exception e) {
+            String errMessage = String.format("Can't execute command '%s'.", command);
+            throw makeAgentException(errMessage, e);
+        }
+    }
+
+    private String executeWithoutPassword(String command) throws AgentException {
         ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
 
         try {
@@ -40,6 +86,98 @@ public class LocalAgent extends AbstractAgent {
         } catch (Exception e) {
             String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);
+        }
+    }
+
+    private void passPasswordToProcess(Process process, char[] pswd) {
+        final PrintWriter stdin = new PrintWriter(process.getOutputStream());
+
+        for (char ch : pswd) {
+            stdin.append(ch);
+        }
+
+        stdin.append('\n');
+        stdin.flush();
+    }
+
+    private boolean isPasswordRequired(String command) {
+        if (! command.contains("sudo ")) {
+            return false;
+        }
+
+        final String NEED_PASSWORD_STATUS = "need_password_status";
+        String checkCommand = String.format("if ! sudo -n true 2>/dev/null; then echo \"%s\"; fi", NEED_PASSWORD_STATUS);
+
+        try {
+            String result = executeWithoutPassword(checkCommand);
+            if ((result != null) && result.contains(NEED_PASSWORD_STATUS)) {
+                return true;
+            }
+
+            return false;
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Can't verify requirement of sudo password", e);
+            return false;
+        }
+    }
+
+    private char[] obtainPassword() throws AgentException, IllegalStateException {
+        Console console;
+        try {
+            console = Console.getInstance();
+        } catch (Exception e) {
+            throw new AgentException("Can't obtain correct password", e);
+        }
+
+        try {
+            console.hideProgressor();
+            console.println("");
+
+            for (int i = 0; i < 3; i++) {
+                console.print(READ_PASSWORD_PROMPT);
+                Object answer = console.readPassword();
+                if (answer == null) {
+                    console.println("Sorry, try again.");
+                    continue;
+                }
+
+                char[] answerChar = ((String)answer).toCharArray();
+                if (isPasswordCorrect(answerChar)) {
+                    return answerChar;
+                }
+
+                console.println("Sorry, try again.");
+            }
+
+            console.println("sudo: 3 incorrect password attempts");
+            throw new RuntimeException();
+        } catch (Exception e) {
+            throw new AgentException("Can't obtain correct password", e);
+        } finally {
+            console.showProgressor();
+        }
+    }
+
+    private boolean isPasswordCorrect(char[] checkingPswd) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", "sudo -S true");
+        Process process = pb.start();
+        passPasswordToProcess(process, checkingPswd);
+        InputStream errorStream = process.getErrorStream();
+
+        // Don't use process.waitFor() because the process is hang up in case of incorrect password.
+        // Read error stream using errorStream.read(), because IOUtils.toString(bufferedReader) hang up in case of incorrect password.
+        String errorMessage = "";
+        for (;;) {
+            int c = errorStream.read();
+            if (c == -1) {    // check end of stream and exit here if there is no login error
+                return true;
+            }
+
+            errorMessage += (char) c;
+            if (errorMessage.contains("Sorry, try again")) {
+                process.destroy();
+                return false;
+            }
         }
     }
 }

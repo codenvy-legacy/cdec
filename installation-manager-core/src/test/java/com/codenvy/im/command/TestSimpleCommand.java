@@ -63,7 +63,7 @@ public class TestSimpleCommand {
         assertEquals(command.getDescription(), "test description");
     }
 
-    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = "Remote command execution fail. Error: agent error")
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = "Command execution fail. Error: agent error")
     public void testCommandException() throws Exception {
         doThrow(new AgentException("agent error")).when(mockAgent).execute("ls");
 

@@ -16,7 +16,7 @@
  * from Codenvy S.A..
  */
 
-package com.codenvy.im.cli.command;
+package com.codenvy.im.console;
 
 import jline.console.ConsoleReader;
 
@@ -335,14 +335,14 @@ public class TestConsole {
 
     private Console createInteractiveConsole() throws IOException {
         setUp();
-        Console spyConsole = spy(new Console(true));
+        Console spyConsole = spy(Console.create(true));
         spyConsole.consoleReader = mockConsoleReader;
         return spyConsole;
     }
 
     private Console createNonInteractiveConsole() throws IOException {
         setUp();
-        Console spyConsole = spy(new Console(false));
+        Console spyConsole = spy(Console.create(false));
         spyConsole.consoleReader = mockConsoleReader;
         doNothing().when(spyConsole)
                    .exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
