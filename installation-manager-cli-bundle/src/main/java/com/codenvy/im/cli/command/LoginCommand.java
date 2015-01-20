@@ -27,7 +27,7 @@ import org.apache.karaf.shell.commands.Option;
 /**
  * Installation manager Login command.
  */
-@Command(scope = "codenvy", name = "im-login", description = "Login to remote Codenvy cloud")
+@Command(scope = "codenvy", name = "login", description = "Login to remote Codenvy cloud")
 public class LoginCommand extends AbstractIMCommand {
 
     public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
