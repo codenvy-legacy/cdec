@@ -42,8 +42,6 @@ uploadInstallationManagerCli() {
     FILENAME=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*-binary[.]tar.gz`
     VERSION=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${FILE}'-//' | sed 's/.jar//'`
     SOURCE=${ARTIFACT}-assembly/target/${FILENAME}
-    MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
-    SIZE=`du -b ${SOURCE} | cut -f1`
 
     doUpload
 }
@@ -71,16 +69,19 @@ uploadCodenvySingleServerInstallProperties() {
 doUpload() {
     DESTINATION=update-server-repository/${ARTIFACT}/${VERSION}
 
+    MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
+    SIZE=`du -b ${SOURCE} | cut -f1`
+    BUILD_TIME=`stat -c %y ${SOURCE}`
+    BUILD_TIME=${BUILD_TIME:0:19}
+
     echo "file=${FILENAME}" > .properties
     echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
     echo "authentication-required=false" >> .properties
-    buildTime=`stat -c %y ${SOURCE}`
-    buildTime=${buildTime:0:19}
-
-    echo "build-time="${buildTime} >> .properties
+    echo "build-time="${BUILD_TIME} >> .properties
     echo "md5=${MD5}" >> .properties
     echo "size=${SIZE}" >> .properties
+
     ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
     scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
     scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
