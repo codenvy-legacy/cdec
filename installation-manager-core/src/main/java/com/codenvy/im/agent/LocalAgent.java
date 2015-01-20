@@ -18,15 +18,13 @@
 package com.codenvy.im.agent;
 
 import com.codenvy.im.console.Console;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.StringBuilderWriter;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.fusesource.jansi.Ansi.ansi;
 
 /** @author Anatoliy Bazko
  *  @author Dmytro Nochevnov */
@@ -131,7 +129,7 @@ public class LocalAgent extends AbstractAgent {
 
         try {
             console.hideProgressor();
-            console.println("");
+            console.println();
 
             for (int i = 0; i < 3; i++) {
                 console.print(READ_PASSWORD_PROMPT);
@@ -143,6 +141,7 @@ public class LocalAgent extends AbstractAgent {
 
                 char[] answerChar = ((String)answer).toCharArray();
                 if (isPasswordCorrect(answerChar)) {
+                    console.restoreProgressor();
                     return answerChar;
                 }
 

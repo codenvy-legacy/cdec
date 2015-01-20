@@ -39,22 +39,22 @@ import static org.fusesource.jansi.Ansi.ansi;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class Console {
-    public static final Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
-    public static final Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
-    public static final String CODENVY_PREFIX     = "[CODENVY] ";
-    private static final Logger LOG               = Logger.getLogger(Console.class.getName());
+    public static final  Ansi   ERASE_LINE_ABOVE   = ansi().a(ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL));
+    public static final  Ansi   ERASE_CURRENT_LINE = ansi().eraseLine(Ansi.Erase.ALL);
+    public static final  String CODENVY_PREFIX     = "[CODENVY] ";
+    private static final Logger LOG                = Logger.getLogger(Console.class.getName());
 
     private final boolean       interactive;
-    protected ConsoleReader consoleReader;
-
-    private Progressor progressor;
+    protected     ConsoleReader consoleReader;
+    private final LoadingBar    loaderBar;
+    private       int           rowCounter;
 
     private static Console consoleInstance;
 
     protected Console(boolean interactive) throws IOException {
         this.interactive = interactive;
         this.consoleReader = new ConsoleReader();
-        this.progressor = new Progressor();
+        this.loaderBar = new LoadingBar();
     }
 
     public static Console getInstance() throws IllegalStateException {
@@ -72,7 +72,12 @@ public class Console {
 
     public void println(String message) {
         print(message);
-        System.out.println();
+        println();
+    }
+
+    public void println() {
+        print(ansi().newline());
+        rowCounter++;
     }
 
     public void print(String message) {
@@ -92,29 +97,32 @@ public class Console {
     }
 
     public void printProgress(String message) {
-        System.out.print(ansi().saveCursorPosition().a(message).restorCursorPosition());
-        System.out.flush();
+        saveCursorPosition();
+        printWithoutCodenvyPrompt(message);
+        restoreCursorPosition();
     }
 
     public void cleanCurrentLine() {
-        System.out.print(ERASE_CURRENT_LINE);
-        System.out.flush();
+        print(ERASE_CURRENT_LINE);
     }
 
     public void cleanLineAbove() {
-        System.out.print(ERASE_LINE_ABOVE);
-        System.out.flush();
+        print(ERASE_LINE_ABOVE);
     }
 
-    public void print(String message, boolean suppressCodenvyPrompt) {
-        print((Object)message, suppressCodenvyPrompt);
+    public void printWithoutCodenvyPrompt(String message) {
+        print((Object)message, true);
     }
 
     public void printSuccess(String message) {
         printSuccess(message, false);
     }
 
-    public void printSuccess(String message, boolean suppressCodenvyPrompt) {
+    public void printSuccessWithoutCodenvyPrompt(String message) {
+        printSuccess(message, true);
+    }
+
+    private void printSuccess(String message, boolean suppressCodenvyPrompt) {
         print(ansi().fg(GREEN).a(message).newline().reset(), suppressCodenvyPrompt);
     }
 
@@ -193,15 +201,28 @@ public class Console {
     }
 
     public void showProgressor() {
-        hideProgressor();
+        loaderBar.show();
+    }
 
-        progressor = new Progressor();
-        progressor.start();
+    public void restoreProgressor() {
+        loaderBar.restore();
     }
 
     public void hideProgressor() {
-        if (progressor.isAlive()) {
-            progressor.interrupt();
+        loaderBar.hide();
+    }
+
+    private void saveCursorPosition() {
+        print(ansi().saveCursorPosition());
+        rowCounter = 0;
+    }
+
+    private void restoreCursorPosition() {
+        print(ansi().restorCursorPosition());
+
+        for(; rowCounter > 0; rowCounter--) {
+            cleanCurrentLine();
+            print(ansi().cursorUp(1));
         }
     }
 
@@ -222,18 +243,22 @@ public class Console {
         return bar.toString();
     }
 
+    private void print(Object o) {
+        System.out.print(o);
+        System.out.flush();
+    }
+
     private void print(Object o, boolean suppressCodenvyPrompt) {
         if (!interactive && !suppressCodenvyPrompt) {
             printCodenvyPrompt();
         }
 
-        System.out.print(o);
-        System.out.flush();
+        print(o);
     }
 
     private void printCodenvyPrompt() {
         final String lightBlue = '\u001b' + "[94m";
-        System.out.print(ansi().a(lightBlue + CODENVY_PREFIX).reset()); // light blue
+        print(ansi().a(lightBlue + CODENVY_PREFIX).reset()); // light blue
     }
 
     private boolean isConnectionException(Exception e) {
@@ -242,27 +267,56 @@ public class Console {
     }
 
     private String doReadLine(@Nullable Character mask) throws IOException {
+        rowCounter++;
         return consoleReader.readLine(mask);
     }
 
-    /** Printing progressor thread */
-    private class Progressor extends Thread {
-        private final String[] progressChars = {"-", "\\", "|", "/", "-", "\\", "|", "/"};
+    private class LoadingBar {
+        private Visualizer visualizer;
 
-        @Override
-        public void run() {
-            int step = 0;
-            while (!isInterrupted()) {
-                printProgress(progressChars[step]);
-                try {
-                    sleep(250);
-                } catch (InterruptedException e) {
-                    break;
-                }
+        public void show() {
+            if (visualizer != null && visualizer.isAlive()) {
+                return;
+            }
 
-                step++;
-                if (step == progressChars.length) {
-                    step = 0;
+            visualizer = new Visualizer();
+            visualizer.start();
+        }
+
+        public void hide() {
+            if (visualizer != null && visualizer.isAlive()) {
+                visualizer.interrupt();
+            }
+
+            visualizer = null;
+            printProgress(" ");  // remove last loader symbol
+            saveCursorPosition();
+        }
+
+        public void restore() {
+            restoreCursorPosition();
+            show();
+        }
+
+        /** Printing progress thread */
+        private class Visualizer extends Thread {
+            private final String[] loaderChars = {"-", "\\", "|", "/", "-", "\\", "|", "/"};
+
+            @Override
+            public void run() throws IllegalStateException {
+                int step = 0;
+                while (!isInterrupted()) {
+                    printProgress(loaderChars[step]);
+                    try {
+                        sleep(250);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+
+                    step++;
+                    if (step == loaderChars.length) {
+                        step = 0;
+                    }
                 }
             }
         }

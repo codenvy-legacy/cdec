@@ -173,7 +173,7 @@ public class TestConsole {
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testMessage);
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.print(testMessage, true);
+        spyConsole.printWithoutCodenvyPrompt(testMessage);
         assertEquals(getOutputContent(), testMessage);
     }
 
@@ -203,7 +203,7 @@ public class TestConsole {
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[32m" + testMessage + "\n\u001B[m");
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.printSuccess(testMessage, true);
+        spyConsole.printSuccessWithoutCodenvyPrompt(testMessage);
         assertEquals(getOutputContent(), "\u001B[32m" + testMessage + "\n\u001B[m");
     }
 
