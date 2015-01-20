@@ -271,7 +271,7 @@ public class Console {
         return consoleReader.readLine(mask);
     }
 
-    private class LoadingBar {
+    protected class LoadingBar {
         private Visualizer visualizer;
 
         public void show() {
@@ -299,22 +299,23 @@ public class Console {
         }
 
         /** Printing progress thread */
-        private class Visualizer extends Thread {
-            private final String[] loaderChars = {"-", "\\", "|", "/", "-", "\\", "|", "/"};
+        protected class Visualizer extends Thread {
+            protected final int    CHAR_CHANGE_TIMEOUT_MILLIS = 250;
+            protected final char[] LOADER_CHARS               = {'-', '\\', '|', '/'};
 
             @Override
             public void run() throws IllegalStateException {
                 int step = 0;
                 while (!isInterrupted()) {
-                    printProgress(loaderChars[step]);
+                    printProgress(String.valueOf(LOADER_CHARS[step]));
                     try {
-                        sleep(250);
+                        sleep(CHAR_CHANGE_TIMEOUT_MILLIS);
                     } catch (InterruptedException e) {
                         break;
                     }
 
                     step++;
-                    if (step == loaderChars.length) {
+                    if (step == LOADER_CHARS.length) {
                         step = 0;
                     }
                 }

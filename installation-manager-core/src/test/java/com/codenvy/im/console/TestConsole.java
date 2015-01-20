@@ -18,12 +18,10 @@
 
 package com.codenvy.im.console;
 
-import jline.console.ConsoleReader;
-
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-
+import jline.console.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.mockito.Mock;
@@ -37,6 +35,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ConnectException;
 
+import static java.lang.Thread.sleep;
 import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -142,6 +141,53 @@ public class TestConsole {
         outputStream.write(initialContent.getBytes());
         spyConsole.cleanCurrentLine();
         assertEquals(getOutputContent(), initialContent + expectedAnsi.toString());
+    }
+
+    @Test
+    public void testShowHideLoaderBar() throws IOException, InterruptedException {
+        String expectedOutput = new String(new Console(false).new LoadingBar().new Visualizer().LOADER_CHARS);
+        long changeLoaderBarCharTimeoutMillis = new Console(false).new LoadingBar().new Visualizer().CHAR_CHANGE_TIMEOUT_MILLIS;
+        long timeout = changeLoaderBarCharTimeoutMillis * expectedOutput.length();
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " ");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " ");
+    }
+
+    @Test
+    public void testShowHideRestoreHideLoaderBar() throws IOException, InterruptedException {
+        String expectedOutput = new String(new Console(false).new LoadingBar().new Visualizer().LOADER_CHARS);
+        long changeLoaderBarCharTimeoutMillis = new Console(false).new LoadingBar().new Visualizer().CHAR_CHANGE_TIMEOUT_MILLIS;
+        long timeout = changeLoaderBarCharTimeoutMillis * expectedOutput.length();
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        sleep(timeout);
+        spyConsole.restoreProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+
+        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " " + expectedOutput + " ");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        sleep(timeout);
+        spyConsole.restoreProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " " + expectedOutput + " ");
     }
 
     @Test
