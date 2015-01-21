@@ -47,7 +47,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
 public class TestConsole {
@@ -145,49 +147,87 @@ public class TestConsole {
 
     @Test
     public void testShowHideLoaderBar() throws IOException, InterruptedException {
-        String expectedOutput = new String(new Console(false).new LoadingBar().new Visualizer().LOADER_CHARS);
-        long changeLoaderBarCharTimeoutMillis = new Console(false).new LoadingBar().new Visualizer().CHAR_CHANGE_TIMEOUT_MILLIS;
-        long timeout = changeLoaderBarCharTimeoutMillis * expectedOutput.length();
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " ");
+
+        String actualOutput = getOutputContent();
+        assertEquals(actualOutput, expectedOutput);
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " ");
+        assertEquals(getOutputContent(), expectedOutput);
     }
 
     @Test
     public void testShowHideRestoreHideLoaderBar() throws IOException, InterruptedException {
-        String expectedOutput = new String(new Console(false).new LoadingBar().new Visualizer().LOADER_CHARS);
-        long changeLoaderBarCharTimeoutMillis = new Console(false).new LoadingBar().new Visualizer().CHAR_CHANGE_TIMEOUT_MILLIS;
-        long timeout = changeLoaderBarCharTimeoutMillis * expectedOutput.length();
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[stest\n"
+                                + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
+        spyConsole.println("test");
         sleep(timeout);
         spyConsole.restoreProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
 
-        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " " + expectedOutput + " ");
+        String actualOutput = getOutputContent();
+        assertEquals(actualOutput, expectedOutput);
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
+        spyConsole.println("test");
         sleep(timeout);
         spyConsole.restoreProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertEquals(removeAnsi(getOutputContent()), expectedOutput + " " + expectedOutput + " ");
+    }
+
+    @Test
+    public void testShowLoaderBarAfterShow() throws IOException, InterruptedException {
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.showProgressor();
+        spyConsole.hideProgressor();
+
+        String actualOutput = getOutputContent();
+        assertEquals(actualOutput, expectedOutput);
+    }
+
+    @Test
+    public void testHideLoaderBarAfterHide() throws IOException, InterruptedException {
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        spyConsole.hideProgressor();
+
+        String actualOutput = getOutputContent();
+        assertEquals(actualOutput, expectedOutput);
     }
 
     @Test
@@ -377,6 +417,25 @@ public class TestConsole {
         spyConsole.printErrorAndExit(exceptionCausedConnectException);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + expectedResult + "\u001B[m");
         verify(spyConsole).exit(1);
+    }
+
+    private void testGetInstance() throws IOException {
+        class ConsoleTested extends Console {
+            protected ConsoleTested(boolean interactive) throws IOException {
+                super(interactive);
+            }
+        }
+
+        try {
+            ConsoleTested.getInstance();
+        } catch(IllegalStateException e) {
+            assertEquals(e.getMessage(), "There is no console.");
+
+            ConsoleTested.create(true);
+            assertNotNull(Console.getInstance());
+        }
+
+        fail("There should be IllegalStateException");
     }
 
     private Console createInteractiveConsole() throws IOException {

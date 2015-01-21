@@ -286,11 +286,11 @@ public class Console {
         public void hide() {
             if (visualizer != null && visualizer.isAlive()) {
                 visualizer.interrupt();
-            }
 
-            visualizer = null;
-            printProgress(" ");  // remove last loader symbol
-            saveCursorPosition();
+                visualizer = null;
+                printProgress(" ");  // remove last loader symbol
+                saveCursorPosition();
+            }
         }
 
         public void restore() {
