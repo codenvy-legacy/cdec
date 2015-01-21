@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ConnectException;
 
+import static java.lang.Thread.MAX_PRIORITY;
 import static java.lang.Thread.sleep;
 import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Matchers.any;
@@ -155,9 +156,7 @@ public class TestConsole {
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-
-        String actualOutput = getOutputContent();
-        assertEquals(actualOutput, expectedOutput);
+        assertEquals(getOutputContent(), expectedOutput);
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.showProgressor();
@@ -168,8 +167,6 @@ public class TestConsole {
 
     @Test
     public void testShowHideRestoreHideLoaderBar() throws IOException, InterruptedException {
-        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[stest\n"
-                                + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
         long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
 
@@ -182,9 +179,8 @@ public class TestConsole {
         spyConsole.restoreProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-
-        String actualOutput = getOutputContent();
-        assertEquals(actualOutput, expectedOutput);
+        assertEquals(getOutputContent(), "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[stest\n"
+                                         + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s");
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.showProgressor();
@@ -195,6 +191,8 @@ public class TestConsole {
         spyConsole.restoreProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
+        assertEquals(getOutputContent(), "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s\u001B[94m[CODENVY] \u001B[mtest\n"
+                                   + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s");
     }
 
     @Test
@@ -419,23 +417,18 @@ public class TestConsole {
         verify(spyConsole).exit(1);
     }
 
+    @Test
     private void testGetInstance() throws IOException {
-        class ConsoleTested extends Console {
-            protected ConsoleTested(boolean interactive) throws IOException {
-                super(interactive);
-            }
-        }
+        Console console = ConsoleTested.create(true);
+        assertEquals(Console.getInstance(), console);
+        return;
+    }
 
-        try {
-            ConsoleTested.getInstance();
-        } catch(IllegalStateException e) {
-            assertEquals(e.getMessage(), "There is no console.");
-
-            ConsoleTested.create(true);
-            assertNotNull(Console.getInstance());
-        }
-
-        fail("There should be IllegalStateException");
+    @Test
+    private void testGetInstanceError() throws IOException {
+        Console console = ConsoleTested.create(true);
+        assertEquals(Console.getInstance(), console);
+        return;
     }
 
     private Console createInteractiveConsole() throws IOException {
@@ -470,6 +463,12 @@ public class TestConsole {
             return baos.toString();
         } catch (IOException e) {
             return content;
+        }
+    }
+
+    public static class ConsoleTested extends Console {
+        protected ConsoleTested(boolean interactive) throws IOException {
+            super(interactive);
         }
     }
 }
