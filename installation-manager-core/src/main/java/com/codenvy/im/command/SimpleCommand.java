@@ -63,7 +63,7 @@ public class SimpleCommand implements Command {
     }
 
     protected CommandException makeCommandException(Exception e) {
-        String errorMessage = "Remote command execution fail.";
+        String errorMessage = "Command execution fail.";
         if (e.getMessage() != null && !e.getMessage().isEmpty()) {
             errorMessage += format(" Error: %s", e.getMessage());
         }

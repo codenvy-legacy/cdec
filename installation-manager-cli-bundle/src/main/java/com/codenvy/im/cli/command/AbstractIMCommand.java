@@ -25,6 +25,7 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
 import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
+import com.codenvy.im.console.Console;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
@@ -63,7 +64,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         } catch (Exception e) {
             console.printErrorAndExit(e);
         } finally {
-            resetConsole();
+            console.reset();
         }
 
         return null;
@@ -87,17 +88,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected void initConsole() {
         try {
-            console = new Console(isInteractive());
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    protected void resetConsole() {
-        try {
-            if (console != null) {
-                console.consoleReader.getTerminal().restore();
-            }
+            console = Console.create(isInteractive());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

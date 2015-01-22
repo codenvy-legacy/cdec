@@ -16,14 +16,12 @@
  * from Codenvy S.A..
  */
 
-package com.codenvy.im.cli.command;
-
-import jline.console.ConsoleReader;
+package com.codenvy.im.console;
 
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-
+import jline.console.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.mockito.Mock;
@@ -37,6 +35,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ConnectException;
 
+import static java.lang.Thread.MAX_PRIORITY;
+import static java.lang.Thread.sleep;
 import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -48,7 +48,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
 public class TestConsole {
@@ -145,6 +147,88 @@ public class TestConsole {
     }
 
     @Test
+    public void testShowHideLoaderBar() throws IOException, InterruptedException {
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(getOutputContent(), expectedOutput);
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(getOutputContent(), expectedOutput);
+    }
+
+    @Test
+    public void testShowHideRestoreHideLoaderBar() throws IOException, InterruptedException {
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        spyConsole.println("test");
+        sleep(timeout);
+        spyConsole.restoreProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(getOutputContent(), "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[stest\n"
+                                         + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s");
+
+        spyConsole = createNonInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        spyConsole.println("test");
+        sleep(timeout);
+        spyConsole.restoreProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        assertEquals(getOutputContent(), "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s\u001B[94m[CODENVY] \u001B[mtest\n"
+                                   + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s");
+    }
+
+    @Test
+    public void testShowLoaderBarAfterShow() throws IOException, InterruptedException {
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.showProgressor();
+        spyConsole.hideProgressor();
+
+        String actualOutput = getOutputContent();
+        assertEquals(actualOutput, expectedOutput);
+    }
+
+    @Test
+    public void testHideLoaderBarAfterHide() throws IOException, InterruptedException {
+        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+
+        Console spyConsole = createInteractiveConsole();
+        spyConsole.showProgressor();
+        sleep(timeout);
+        spyConsole.hideProgressor();
+        spyConsole.hideProgressor();
+
+        String actualOutput = getOutputContent();
+        assertEquals(actualOutput, expectedOutput);
+    }
+
+    @Test
     public void testCleanLineAbove() throws IOException {
         Ansi expectedAnsi = ansi().cursorUp(1).eraseLine(Ansi.Erase.ALL);
         String initialContent = "string\n";
@@ -173,7 +257,7 @@ public class TestConsole {
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testMessage);
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.print(testMessage, true);
+        spyConsole.printWithoutCodenvyPrompt(testMessage);
         assertEquals(getOutputContent(), testMessage);
     }
 
@@ -203,7 +287,7 @@ public class TestConsole {
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[32m" + testMessage + "\n\u001B[m");
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.printSuccess(testMessage, true);
+        spyConsole.printSuccessWithoutCodenvyPrompt(testMessage);
         assertEquals(getOutputContent(), "\u001B[32m" + testMessage + "\n\u001B[m");
     }
 
@@ -333,16 +417,30 @@ public class TestConsole {
         verify(spyConsole).exit(1);
     }
 
+    @Test
+    private void testGetInstance() throws IOException {
+        Console console = ConsoleTested.create(true);
+        assertEquals(Console.getInstance(), console);
+        return;
+    }
+
+    @Test
+    private void testGetInstanceError() throws IOException {
+        Console console = ConsoleTested.create(true);
+        assertEquals(Console.getInstance(), console);
+        return;
+    }
+
     private Console createInteractiveConsole() throws IOException {
         setUp();
-        Console spyConsole = spy(new Console(true));
+        Console spyConsole = spy(Console.create(true));
         spyConsole.consoleReader = mockConsoleReader;
         return spyConsole;
     }
 
     private Console createNonInteractiveConsole() throws IOException {
         setUp();
-        Console spyConsole = spy(new Console(false));
+        Console spyConsole = spy(Console.create(false));
         spyConsole.consoleReader = mockConsoleReader;
         doNothing().when(spyConsole)
                    .exit(anyInt());  // avoid error "The forked VM terminated without properly saying goodbye. VM crash or System.exit called?"
@@ -365,6 +463,12 @@ public class TestConsole {
             return baos.toString();
         } catch (IOException e) {
             return content;
+        }
+    }
+
+    public static class ConsoleTested extends Console {
+        protected ConsoleTested(boolean interactive) throws IOException {
+            super(interactive);
         }
     }
 }

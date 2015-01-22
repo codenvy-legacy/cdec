@@ -136,10 +136,9 @@ public class InstallCommand extends AbstractIMCommand {
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
             console.print(info);
-            console.print(new String(new char[maxInfoLen - info.length()]).replace("\0", " "), true);
+            console.printWithoutCodenvyPrompt(new String(new char[maxInfoLen - info.length()]).replace("\0", " "));
 
-            ShowProgress showProgress = new ShowProgress();
-            showProgress.start();
+            console.showProgressor();
 
             try {
                 installOptions.setStep(step);
@@ -152,10 +151,10 @@ public class InstallCommand extends AbstractIMCommand {
                     console.printErrorAndExit(response);
                     return null;
                 } else {
-                    console.printSuccess(" [OK]", true);
+                    console.printSuccessWithoutCodenvyPrompt(" [OK]");
                 }
             } finally {
-                showProgress.interrupt();
+                console.hideProgressor();
             }
         }
 
@@ -208,10 +207,10 @@ public class InstallCommand extends AbstractIMCommand {
                             console.print(propName);
 
                             if (!isEmpty(currentValue)) {
-                                console.print(format(" (%s)", currentValue), true);
+                                console.printWithoutCodenvyPrompt(format(" (%s)", currentValue));
                             }
 
-                            console.print(": ", true);
+                            console.printWithoutCodenvyPrompt(": ");
                             String newValue = console.readLine();
 
                             if (!isEmpty(newValue)) {
@@ -295,29 +294,6 @@ public class InstallCommand extends AbstractIMCommand {
             }
 
             enterInstallOptions(installOptions, false);
-        }
-    }
-
-    /** Printing progress thread */
-    private class ShowProgress extends Thread {
-        final String[] progressChars = {"-", "\\", "|", "/", "-", "\\", "|", "/"};
-
-        @Override
-        public void run() {
-            int step = 0;
-            while (!isInterrupted()) {
-                console.printProgress(progressChars[step]);
-                try {
-                    sleep(250);
-                } catch (InterruptedException e) {
-                    break;
-                }
-
-                step++;
-                if (step == progressChars.length) {
-                    step = 0;
-                }
-            }
         }
     }
 
