@@ -134,7 +134,7 @@ executeIMCommand() {
 }
 
 preconfigureSystem() {
-    sudo yum clean all > /dev/null
+    sudo yum clean all &> /dev/null
     installPackageIfNeed curl
 }
 

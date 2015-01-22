@@ -18,13 +18,13 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.command.Command;
-import com.codenvy.im.command.CommandException;
 import com.codenvy.im.command.DetectRedHatVersionCommand;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -50,7 +50,7 @@ public class Config {
             put("7", "puppet-3.5.1-1.el7.noarch");
         }});
         put(PUPPET_SERVER_VERSION, new HashMap<String, String>() {{
-            put("6", "puppet-server-3.4.3-1.el6.noarch");
+            put("6", "puppet-server-3.4.3-1.el6");
             put("7", "puppet-server-3.5.1-1.el7.noarch");
         }});
         put(PUPPET_RESOURCE_URL, new HashMap<String, String>() {{
@@ -109,17 +109,25 @@ public class Config {
         return true;
     }
 
-    private static String detectOSVersion() {
+    protected static String detectOSVersion() {
         String version;
 
         Command command = new DetectRedHatVersionCommand();
         try {
             version = command.execute();
-        } catch (CommandException e) {
+        } catch (Exception e) {
             return DEFAULT_OS_VERSION;
         }
 
-        String[] str = version.split(".");
+        return fetchVersion(version);
+    }
+
+    protected static String fetchVersion(String version) {
+        if (version == null || version.trim().isEmpty()) {
+            throw new IllegalArgumentException("OS version is unknown");
+        }
+
+        String[] str = version.split(Pattern.quote("."));
         if (str.length == 0) {
             throw new IllegalArgumentException("OS version is unknown");
         }
