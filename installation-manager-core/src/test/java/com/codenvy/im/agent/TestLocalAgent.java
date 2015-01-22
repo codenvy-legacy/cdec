@@ -141,6 +141,17 @@ public class TestLocalAgent {
         assertEquals(outputOfMockConsole, expectedConsoleOutput);
     }
 
+    @Test(expectedExceptions = AgentException.class,
+          expectedExceptionsMessageRegExp = "Can't execute command '" + COMMAND_WITH_SUDO + "'. Output: mock output; Error: mock error.")
+    public void testSudoCommandWithPassingPasswordError() throws Exception {
+        doReturn(TEST_PASSWORD.toCharArray()).when(spyTestAgent).obtainPassword();
+        doReturn(true).when(spyTestAgent).isPasswordRequired(COMMAND_WITH_SUDO);
+        doReturn(-1).when(spyProcess).waitFor();
+        inputStreamOfSpyProcess = new ByteArrayInputStream("mock output".getBytes());
+        errorStreamOfSpyProcess = new ByteArrayInputStream("mock error".getBytes());
+        spyTestAgent.execute(COMMAND_WITH_SUDO);
+    }
+
     @Test
     public void testIsPasswordRequiredOnCommandWithoutSudo() {
         assertFalse(spyTestAgent.isPasswordRequired(COMMAND_WITHOUT_SUDO));
