@@ -25,20 +25,21 @@ import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
-/** @author Anatoliy Bazko
- *  @author Dmytro Nochevnov */
+/**
+ * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
+ */
 public class LocalAgent extends AbstractAgent {
     private static final Logger LOG = Logger.getLogger(LocalAgent.class.getSimpleName());
 
     protected final static String READ_PASSWORD_PROMPT              = String.format("[sudo] password for %s: ", System.getProperty("user.name"));
     protected final static String NEED_PASSWORD_STATUS              = "need_password_status";
-    protected static final String CHECK_PASSWORD_NECESSITY_COMMAND  = String.format("if ! sudo -n true 2>/dev/null; then echo \"%s\"; fi", NEED_PASSWORD_STATUS);
+    protected static final String CHECK_PASSWORD_NECESSITY_COMMAND =
+            String.format("if ! sudo -n true 2>/dev/null; then echo \"%s\"; fi", NEED_PASSWORD_STATUS);
     protected static final String CHECK_IS_PASSWORD_CORRECT_COMMAND = "sudo -S true";
     protected static final String PASSWORD_INCORRECT_STATUS         = "Sorry, try again";
 
-    private static char[] pswdCache = null;
+    private static char[] pwdCache = null;
 
     public LocalAgent() {
     }
@@ -54,20 +55,21 @@ public class LocalAgent extends AbstractAgent {
     }
 
     private String executeWithPassword(String command) throws AgentException {
-        if (pswdCache == null) {
-            pswdCache = obtainPassword();
+        if (pwdCache == null) {
+            pwdCache = obtainPassword();
         }
 
         try {
-            String commandWhichIsReadPasswordFromInput = command.replace("sudo ", "sudo -S ");  // make sudo be able to read password from input stream
+            String commandWhichIsReadPasswordFromInput =
+                    command.replace("sudo ", "sudo -S ");  // make sudo be able to read password from input stream
             Process process = getProcess(commandWhichIsReadPasswordFromInput);
-            passPasswordToProcess(process, pswdCache);
+            passPasswordToProcess(process, pwdCache);
             int exitStatus = process.waitFor();
 
             InputStream in = process.getInputStream();
             InputStream err = process.getErrorStream();
 
-            return processExistCode(exitStatus, in, err);
+            return processOutput(exitStatus, in, err);
         } catch (Exception e) {
             String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);
@@ -89,29 +91,26 @@ public class LocalAgent extends AbstractAgent {
         }
     }
 
-    protected void passPasswordToProcess(Process process, char[] pswd) {
-        final PrintWriter stdin = new PrintWriter(process.getOutputStream());
+    protected void passPasswordToProcess(Process process, char[] pwd) {
+        final PrintWriter stdIn = new PrintWriter(process.getOutputStream());
 
-        for (char ch : pswd) {
-            stdin.append(ch);
+        for (char ch : pwd) {
+            stdIn.append(ch);
         }
 
-        stdin.append('\n');
-        stdin.flush();
+        stdIn.append('\n');
+        stdIn.flush();
     }
 
     protected boolean isPasswordRequired(String command) {
-        if (! command.contains("sudo ")) {
+        if (!command.contains("sudo ")) {
             return false;
         }
 
         try {
             String result = executeWithoutPassword(CHECK_PASSWORD_NECESSITY_COMMAND);
-            if ((result != null) && result.contains(NEED_PASSWORD_STATUS)) {
-                return true;
-            }
+            return (result != null) && result.contains(NEED_PASSWORD_STATUS);
 
-            return false;
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Can't verify requirement of sudo password", e);
             return false;
@@ -166,21 +165,21 @@ public class LocalAgent extends AbstractAgent {
         return console;
     }
 
-    protected boolean isPasswordCorrect(char[] checkingPswd) throws Exception {
+    protected boolean isPasswordCorrect(char[] checkingPwd) throws Exception {
         Process process = getProcess(CHECK_IS_PASSWORD_CORRECT_COMMAND);
-        passPasswordToProcess(process, checkingPswd);
+        passPasswordToProcess(process, checkingPwd);
         InputStream errorStream = process.getErrorStream();
 
         // Don't use process.waitFor() because the process is hang up in case of incorrect password.
         // Read error stream using errorStream.read(), because IOUtils.toString(bufferedReader) hang up in case of incorrect password.
         String errorMessage = "";
-        for (;;) {
+        for (; ; ) {
             int c = errorStream.read();
             if (c == -1) {    // check end of stream and exit here if there is no login error
                 return true;
             }
 
-            errorMessage += (char) c;
+            errorMessage += (char)c;
             if (errorMessage.contains(PASSWORD_INCORRECT_STATUS)) {
                 process.destroy();
                 return false;
