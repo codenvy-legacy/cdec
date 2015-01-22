@@ -140,9 +140,7 @@ preconfigureSystem() {
 printPreInstallInfo() {
     checkOS
 
-    availableRAM=`sudo cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableRAM=$(perl -E "say sprintf('%.1f',${availableRAM}/1024/1024)")
-
+    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f ",tmp}'`
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
