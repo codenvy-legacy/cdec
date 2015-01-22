@@ -20,6 +20,7 @@ package com.codenvy.im.agent;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -30,20 +31,31 @@ import static java.lang.String.format;
  */
 public abstract class AbstractAgent implements Agent {
 
-    protected String processExistCode(int exitStatus, InputStream in, InputStream error) throws Exception {
-        if (exitStatus != 0) {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(error));
-            throw new Exception(IOUtils.toString(bufferedReader));
+    protected String processOutput(int exitStatus, InputStream in, InputStream error) throws Exception {
+        String output = readOutput(in);
+        String errorOutput = readOutput(error);
+
+        if (exitStatus != 0 || !errorOutput.isEmpty()) {
+            throw new Exception(format("Output: %s; Error: %s.", output, errorOutput));
         } else {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
-            return IOUtils.toString(bufferedReader);
+            return output;
         }
     }
 
     protected AgentException makeAgentException(String errorMessage, Exception e) {
-        if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-            errorMessage += format(" Error: %s", e.getMessage());
+        if (e.getMessage() != null) {
+            errorMessage += " " + e.getMessage();
         }
         return new AgentException(errorMessage, e);
+    }
+
+    private String readOutput(InputStream in) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+            String output = IOUtils.toString(reader);
+            if (output.endsWith("\n")) {
+                output = output.substring(0, output.length() - 1);
+            }
+            return output;
+        }
     }
 }

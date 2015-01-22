@@ -40,6 +40,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -207,5 +208,13 @@ public class TestConfig {
 
         config = new Config(ImmutableMap.of(Config.HOST_URL, "host1", Config.AIO_HOST_URL, "host2"));
         assertEquals(config.getHostUrl(), "host1");
+    }
+
+    @Test
+    public void testGetPropertyByVersion() throws Exception {
+        Config config = new Config(Collections.<String, String>emptyMap());
+        assertNotNull(config.getProperty(Config.PUPPET_AGENT_VERSION));
+        assertNotNull(config.getProperty(Config.PUPPET_SERVER_VERSION));
+        assertNotNull(config.getProperty(Config.PUPPET_RESOURCE_URL));
     }
 }

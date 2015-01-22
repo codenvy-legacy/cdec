@@ -18,6 +18,7 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
 
 import org.mockito.Mock;
@@ -69,5 +70,29 @@ public class TestSimpleCommand {
 
         Command command = new SimpleCommand("ls", mockAgent, "test description");
         command.execute();
+    }
+
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: ; Error: some error.")
+    public void testCommandPrintToErrorStreamWithExitCode() throws Exception {
+        Command command = new SimpleCommand("echo \"some error\" 1>&2; exit 1", new LocalAgent(), null);
+        command.execute();
+    }
+
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: some error; Error: .")
+    public void testCommandPrintToOutputStreamWithExitCode() throws Exception {
+        Command command = new SimpleCommand("echo \"some error\"; exit 1", new LocalAgent(), null);
+        command.execute();
+    }
+
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: ; Error: some error.")
+    public void testCommandPrintToErrorStream() throws Exception {
+        Command command = new SimpleCommand("echo \"some error\" 1>&2", new LocalAgent(), null);
+        command.execute();
+    }
+
+    @Test
+    public void testCommandPrintToOutputStream() throws Exception {
+        Command command = new SimpleCommand("echo -n \"some error\"", new LocalAgent(), null);
+        assertEquals(command.execute(), "some error");
     }
 }

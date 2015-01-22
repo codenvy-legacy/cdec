@@ -15,26 +15,26 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.agent;
+package com.codenvy.im.command;
 
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Anatoliy Bazko
  */
-public class TestLocalAgent {
-    @Test
-    public void testSuccessResult() throws Exception {
-        Agent agent = new LocalAgent();
-        assertNotNull(agent.execute("sleep 1; ls;"));
-    }
+public class TestDetectRedHatVersionCommand {
 
-    @Test(expectedExceptions = AgentException.class,
-            expectedExceptionsMessageRegExp = ".*Output: ; Error: ls: cannot access unExisted_file: No such file or directory.")
-    public void testError() throws Exception {
-        Agent agent = new LocalAgent();
-        agent.execute("ls unExisted_file");
+    @Test
+    public void testCommand() throws Exception {
+        DetectRedHatVersionCommand command = new DetectRedHatVersionCommand();
+        try {
+            String output = command.execute();
+            assertFalse(output.isEmpty());
+        } catch (CommandException e) { // won't be failed if test is run under RedHat Linux
+            assertTrue(e.getMessage().contains("Output: ; Error: This isn't RedHat Linux."));
+        }
     }
 }

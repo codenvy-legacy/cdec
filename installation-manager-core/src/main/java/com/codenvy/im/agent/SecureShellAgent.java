@@ -91,7 +91,7 @@ public class SecureShellAgent extends AbstractAgent {
 
             waitForChannelClosed(channel);
 
-            return processExistCode(channel.getExitStatus(), in, error);
+            return processOutput(channel.getExitStatus(), in, error);
         } catch (Exception e) {
             String errorMessage = format("Can't execute command '%s'.", command);
             throw makeAgentException(errorMessage, e);

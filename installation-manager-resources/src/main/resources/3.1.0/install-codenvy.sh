@@ -112,7 +112,7 @@ prepareConfig() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
     fi
 
-    askProperty "Codenvy user name" "codenvy_user_name"
+    askProperty "Codenvy user name (your email address)" "codenvy_user_name"
     askPassword
     askDNS
 }
@@ -134,6 +134,7 @@ executeIMCommand() {
 }
 
 preconfigureSystem() {
+    sudo yum clean all > /dev/null
     installPackageIfNeed curl
 }
 

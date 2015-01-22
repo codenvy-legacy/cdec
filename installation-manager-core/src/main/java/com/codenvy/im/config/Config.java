@@ -17,8 +17,14 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.command.Command;
+import com.codenvy.im.command.CommandException;
+import com.codenvy.im.command.DetectRedHatVersionCommand;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -27,14 +33,40 @@ public class Config {
     public static final String SINGLE_SERVER_PROPERTIES      = "manifests/nodes/single_server/single_server.pp";
     public static final String SINGLE_SERVER_BASE_PROPERTIES = "manifests/nodes/single_server/base_config.pp";
 
-    public static final String VERSION               = "version";
-    public static final String CODENVY_USER_NAME     = "codenvy_user_name";
-    public static final String CODENVY_PASSWORD      = "codenvy_password";
+    public static final String VERSION           = "version";
+    public static final String CODENVY_USER_NAME = "codenvy_user_name";
+    public static final String CODENVY_PASSWORD  = "codenvy_password";
+
     public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
     public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
     public static final String PUPPET_RESOURCE_URL   = "puppet_resource_url";
-    public static final String AIO_HOST_URL          = "aio_host_url"; // 3.1.0
-    public static final String HOST_URL              = "host_url";
+
+    public static final String AIO_HOST_URL = "aio_host_url"; // 3.1.0
+    public static final String HOST_URL     = "host_url";
+
+    public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
+        put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
+            put("6", "puppet-3.4.3-1.el6.noarch");
+            put("7", "puppet-3.5.1-1.el7.noarch");
+        }});
+        put(PUPPET_SERVER_VERSION, new HashMap<String, String>() {{
+            put("6", "puppet-server-3.4.3-1.el6.noarch");
+            put("7", "puppet-server-3.5.1-1.el7.noarch");
+        }});
+        put(PUPPET_RESOURCE_URL, new HashMap<String, String>() {{
+            put("6", "http://yum.puppetlabs.com/el/6/products/x86_64/puppetlabs-release-6-7.noarch.rpm");
+            put("7", "https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm");
+        }});
+    }};
+
+    public static final String      DEFAULT_OS_VERSION           = "6";
+    public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
+
+    public static final String OS_VERSION;
+
+    static {
+        OS_VERSION = detectOSVersion();
+    }
 
     private Map<String, String> properties;
 
@@ -48,8 +80,12 @@ public class Config {
     }
 
     /** @return the property value */
-    public final String getValue(String property) {
-        return properties.get(property.toLowerCase());
+    public final String getProperty(String property) {
+        property = property.toLowerCase();
+        if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
+            return PROPERTIES_BY_VERSION.get(property).get(OS_VERSION);
+        }
+        return properties.get(property);
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */
@@ -71,5 +107,23 @@ public class Config {
         }
 
         return true;
+    }
+
+    private static String detectOSVersion() {
+        String version;
+
+        Command command = new DetectRedHatVersionCommand();
+        try {
+            version = command.execute();
+        } catch (CommandException e) {
+            return DEFAULT_OS_VERSION;
+        }
+
+        String[] str = version.split(".");
+        if (str.length == 0) {
+            throw new IllegalArgumentException("OS version is unknown");
+        }
+
+        return str[0];
     }
 }

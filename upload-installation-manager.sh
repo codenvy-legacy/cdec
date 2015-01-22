@@ -95,7 +95,7 @@ for VERSION in 3.1.0; do
     uploadCodenvySingleServerInstallScript ${VERSION}
 done
 
-for VERSION in 3.1.0 3.3.0; do
+for VERSION in 3.1.0 3.3.0 3.5.0; do
     uploadCodenvySingleServerInstallProperties ${VERSION}
 done
 

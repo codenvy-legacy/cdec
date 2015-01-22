@@ -180,10 +180,10 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createLocalCommand(
                             "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
+                            + format("then sudo yum install %s -y", config.getProperty(Config.PUPPET_RESOURCE_URL))
                             + "; fi"));
-                    add(createLocalCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_SERVER_VERSION))));
-                    add(createLocalCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION))));
+                    add(createLocalCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_SERVER_VERSION))));
+                    add(createLocalCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_AGENT_VERSION))));
                     add(createLocalCommand("sudo chkconfig --add puppetmaster"));
                     add(createLocalCommand("sudo chkconfig puppetmaster on"));
                     add(createLocalCommand("sudo chkconfig --add puppet"));

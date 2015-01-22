@@ -15,26 +15,21 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.agent;
+package com.codenvy.im.command;
 
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertNotNull;
+import com.codenvy.im.agent.LocalAgent;
 
 /**
+ * This command retrieves the version of RedHat distribution Linux.
+ *
  * @author Anatoliy Bazko
  */
-public class TestLocalAgent {
-    @Test
-    public void testSuccessResult() throws Exception {
-        Agent agent = new LocalAgent();
-        assertNotNull(agent.execute("sleep 1; ls;"));
-    }
-
-    @Test(expectedExceptions = AgentException.class,
-            expectedExceptionsMessageRegExp = ".*Output: ; Error: ls: cannot access unExisted_file: No such file or directory.")
-    public void testError() throws Exception {
-        Agent agent = new LocalAgent();
-        agent.execute("ls unExisted_file");
+public class DetectRedHatVersionCommand extends SimpleCommand {
+    public DetectRedHatVersionCommand() {
+        super("if [ ! -f /etc/redhat-release ]; then" +
+              "     echo \"This isn't RedHat Linux\" 1>&2;" +
+              " else" +
+              "     cat /etc/redhat-release | sed 's/.* \\([0-9.]*\\) .*/\\1/';" +
+              " fi", new LocalAgent(), "Gets CentOS version");
     }
 }

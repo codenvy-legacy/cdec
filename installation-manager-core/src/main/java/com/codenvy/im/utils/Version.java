@@ -30,7 +30,7 @@ import static java.util.regex.Pattern.compile;
 public class Version implements Comparable<Version> {
 
     private static final String  MILESTONE_VERSION_PREFIX = "-M";
-    private static final Pattern VERSION                  =
+    private static final Pattern VERSION =
             compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)" +
                     "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)(-SNAPSHOT|)$");
 
@@ -46,26 +46,6 @@ public class Version implements Comparable<Version> {
         this.bugFix = bugFix;
         this.milestone = milestone;
         this.snapshot = snapshot;
-    }
-
-    /**
-     * Compares two versions.
-     *
-     *
-     * @see java.lang.Comparable#compareTo(Object)
-     */
-    public static int compare(String version1, String version2) {
-        return valueOf(version1).compareTo(valueOf(version2));
-    }
-
-    /**
-     * Compares two versions.
-     *
-     *
-     * @see java.lang.Comparable#compareTo(Object)
-     */
-    public static int compare(Version version1, Version version2) {
-        return version1.compareTo(version2);
     }
 
     /**

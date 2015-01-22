@@ -36,7 +36,7 @@ public class LocalAgent extends AbstractAgent {
             InputStream in = process.getInputStream();
             InputStream err = process.getErrorStream();
 
-            return processExistCode(exitStatus, in, err);
+            return processOutput(exitStatus, in, err);
         } catch (Exception e) {
             String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);
