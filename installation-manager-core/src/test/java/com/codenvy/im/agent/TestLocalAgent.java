@@ -18,6 +18,7 @@
 package com.codenvy.im.agent;
 
 import com.codenvy.im.console.Console;
+
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -117,8 +118,7 @@ public class TestLocalAgent {
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Can't execute command 'ls unExisted_file'. " +
-                                            "Error: ls: cannot access unExisted_file: No such file or directory\n")
+            expectedExceptionsMessageRegExp = ".*Output: ; Error: ls: cannot access unExisted_file: No such file or directory.")
     public void testSimpleCommandError() throws Exception {
         Agent agent = new LocalAgent();
         agent.execute("ls unExisted_file");
