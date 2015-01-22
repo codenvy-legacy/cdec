@@ -17,15 +17,12 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.command.Command;
-import com.codenvy.im.command.DetectRedHatVersionCommand;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
+import static com.codenvy.im.utils.OSUtils.getVersion;
 import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
@@ -59,14 +56,8 @@ public class Config {
         }});
     }};
 
-    public static final String      DEFAULT_OS_VERSION           = "6";
+
     public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
-
-    public static final String OS_VERSION;
-
-    static {
-        OS_VERSION = detectOSVersion();
-    }
 
     private Map<String, String> properties;
 
@@ -83,7 +74,7 @@ public class Config {
     public final String getProperty(String property) {
         property = property.toLowerCase();
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
-            return PROPERTIES_BY_VERSION.get(property).get(OS_VERSION);
+            return PROPERTIES_BY_VERSION.get(property).get(getVersion());
         }
         return properties.get(property);
     }
@@ -107,31 +98,5 @@ public class Config {
         }
 
         return true;
-    }
-
-    protected static String detectOSVersion() {
-        String version;
-
-        Command command = new DetectRedHatVersionCommand();
-        try {
-            version = command.execute();
-        } catch (Exception e) {
-            return DEFAULT_OS_VERSION;
-        }
-
-        return fetchVersion(version);
-    }
-
-    protected static String fetchVersion(String version) {
-        if (version == null || version.trim().isEmpty()) {
-            throw new IllegalArgumentException("OS version is unknown");
-        }
-
-        String[] str = version.split(Pattern.quote("."));
-        if (str.length == 0) {
-            throw new IllegalArgumentException("OS version is unknown");
-        }
-
-        return str[0];
     }
 }
