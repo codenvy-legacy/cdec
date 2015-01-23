@@ -26,6 +26,7 @@ import com.codenvy.im.config.Config;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -184,10 +185,24 @@ public class CDECArtifact extends AbstractArtifact {
                             + "; fi"));
                     add(createLocalCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_SERVER_VERSION))));
                     add(createLocalCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_AGENT_VERSION))));
-                    add(createLocalCommand("sudo chkconfig --add puppetmaster"));
-                    add(createLocalCommand("sudo chkconfig puppetmaster on"));
-                    add(createLocalCommand("sudo chkconfig --add puppet"));
-                    add(createLocalCommand("sudo chkconfig puppet on"));
+
+                    if (OSUtils.getVersion().equals("6")) {
+                        add(createLocalCommand("sudo chkconfig --add puppetmaster"));
+                        add(createLocalCommand("sudo chkconfig puppetmaster on"));
+                        add(createLocalCommand("sudo chkconfig --add puppet"));
+                        add(createLocalCommand("sudo chkconfig puppet on"));
+                    } else {
+                        add(createLocalCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
+                                               " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
+                                               ".wants/puppetmaster.service'" +
+                                               "; fi"));
+                        add(createLocalCommand("sudo systemctl enable puppetmaster"));
+                        add(createLocalCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                               " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                               ".wants/puppet.service'" +
+                                               "; fi"));
+                        add(createLocalCommand("sudo systemctl enable puppet"));
+                    }
 
                 }}, "Install puppet binaries");
 
@@ -233,13 +248,24 @@ public class CDECArtifact extends AbstractArtifact {
 
 
             case 5:
-                return createLocalCommand("sudo service puppetmaster start");
+                if (OSUtils.getVersion().equals("6")) {
+                    return createLocalCommand("sudo service puppetmaster start");
+                } else {
+                    return createLocalCommand("sudo systemctl start puppetmaster");
+                }
 
             case 6:
-                return new MacroCommand(ImmutableList.<Command>of(
-                        createLocalCommand("sleep 30"),
-                        createLocalCommand("sudo service puppet start")),
-                                        "Launch puppet agent");
+                if (OSUtils.getVersion().equals("6")) {
+                    return new MacroCommand(ImmutableList.<Command>of(
+                            createLocalCommand("sleep 30"),
+                            createLocalCommand("sudo service puppet start")),
+                                            "Launch puppet agent");
+                } else {
+                    return new MacroCommand(ImmutableList.<Command>of(
+                            createLocalCommand("sleep 30"),
+                            createLocalCommand("sudo systemctl start puppet")),
+                                            "Launch puppet agent");
+                }
 
             case 7:
                 return createLocalCommand("doneState=\"Installing\"; " +
