@@ -32,7 +32,6 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -42,6 +41,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,7 +66,7 @@ public class InstallCommand extends AbstractIMCommand {
     private final ConfigUtil configUtil;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
-    private String artifactName;
+    protected String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
     private String version;
@@ -199,7 +199,7 @@ public class InstallCommand extends AbstractIMCommand {
             return options;
         }
 
-        Map<String, String> m = new HashMap<>(options.getConfigProperties());
+        Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
         switch (artifactName) {
             case CDECArtifact.NAME:
                 console.println("Please, enter mandatory CDEC parameters (values cannot be left bank):");
@@ -231,7 +231,7 @@ public class InstallCommand extends AbstractIMCommand {
             return options;
         }
 
-        Map<String, String> m = new HashMap<>(options.getConfigProperties());
+        Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
         switch (artifactName) {
             case CDECArtifact.NAME:
                 console.println("Please, enter CDEC parameters (just press 'Enter' key to keep value as is):");

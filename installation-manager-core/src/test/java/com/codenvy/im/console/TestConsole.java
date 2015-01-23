@@ -61,7 +61,7 @@ public class TestConsole {
     private ByteArrayOutputStream errorStream;
 
     PrintStream originOut = System.out;
-    PrintStream originErr = System.out;
+    PrintStream originErr = System.err;
 
     @Mock
     ConsoleReader mockConsoleReader;

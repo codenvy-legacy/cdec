@@ -26,15 +26,20 @@ import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
+import com.google.common.collect.ImmutableSortedMap;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.restlet.resource.ResourceException;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
@@ -68,6 +73,12 @@ public class TestInstallCommand extends AbstractTestCommand {
                                        + "  \"status\" : \"OK\"\n"
                                        + "}";
 
+    private ByteArrayOutputStream outputStream;
+    private ByteArrayOutputStream errorStream;
+
+    PrintStream originOut = System.out;
+    PrintStream originErr = System.err;
+
     @BeforeMethod
     public void initMocks() throws Exception {
         configUtil = mock(ConfigUtil.class);
@@ -86,6 +97,21 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         userCredentials = new UserCredentials("token", "accountId");
         doReturn(userCredentials).when(spyCommand).getCredentials();
+    }
+
+    @BeforeMethod
+    public void initStreams() {
+        this.outputStream = new ByteArrayOutputStream();
+        this.errorStream = new ByteArrayOutputStream();
+
+        System.setOut(new PrintStream(this.outputStream));
+        System.setErr(new PrintStream(this.errorStream));
+    }
+
+    @AfterMethod
+    public void restoreSystemStreams() {
+        System.setOut(originOut);
+        System.setErr(originErr);
     }
 
     @Test
@@ -163,8 +189,8 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "}\n"
                              + "Do you confirm parameters above? [y/N]\n"
                              + "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
-                             + "b (value='some value'): some value\n"
                              + "a (value='2'): some value\n"
+                             + "b (value='some value'): some value\n"
                              + "version (value='1.0.2'): some value\n"
                              + "\n"
                              + "CDEC parameters list:\n"
@@ -357,5 +383,107 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "Do you confirm parameters above? [y/N]\n"
                              + "{\"infos\":[]}\n"
                              + "");
+    }
+
+    @Test
+    public void testEnterEmptyMandatoryOptions() throws IOException {
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+        Map<String, String> properties = ImmutableMap.of();
+        options.setConfigProperties(properties);
+
+        assertEquals(spyCommand.enterMandatoryOptions(options), options);
+    }
+
+    @Test
+    public void testEnterValidValuesOfMandatoryOptions() throws IOException {
+        spyCommand.artifactName = CDECArtifact.NAME;
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+        Map<String, String> properties = ImmutableSortedMap.of("some property", "test");
+        options.setConfigProperties(properties);
+        Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
+        assertEquals(result.toString(), "{some property=test}");
+        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left bank):\n");
+    }
+
+    @Test
+    public void testEnterInvalidValuesOfMandatoryOptions() throws IOException {
+        spyCommand.artifactName = CDECArtifact.NAME;
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+        // firstly readLine() returns invalid "", then invalid "MANDATORY", then valid "new value"
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return "";
+            }
+        }).doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return "MANDATORY";
+            }
+        }).doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return "new value";
+            }
+        }).when(spyCommand.console).readLine();
+
+        Map<String, String> properties = ImmutableMap.of("property 1", "value 1", "property 2", "MANDATORY", "property 3", "");
+        options.setConfigProperties(properties);
+        Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
+        assertEquals(result.toString(), "{property 1=value 1, property 2=new value, property 3=}");
+        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left bank):\n"
+                                              + "property 2: property 2: property 2: ");
+    }
+
+    @Test
+    public void testEnterEmptyAllOptions() throws IOException {
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+        Map<String, String> properties = ImmutableMap.of();
+        options.setConfigProperties(properties);
+
+        assertEquals(spyCommand.enterAllOptions(options), options);
+    }
+
+    @Test
+    public void testEnterAllOptions() throws IOException {
+        spyCommand.artifactName = CDECArtifact.NAME;
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+        // firstly readLine() returns invalid "", then invalid "MANDATORY", then valid "new value"
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return "";
+            }
+        }).doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return "MANDATORY";
+            }
+        }).doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return "new value";
+            }
+        }).when(spyCommand.console).readLine();
+
+        Map<String, String> properties = ImmutableMap.of("property 1", "value 1", "property 2", "value 2", "property 3", "");
+        options.setConfigProperties(properties);
+        Map<String, String> result = spyCommand.enterAllOptions(options).getConfigProperties();
+        assertEquals(result.toString(), "{property 1=value 1, property 2=value 2, property 3=new value}");
+        assertEquals(outputStream.toString(), "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
+                                              + "property 1 (value='value 1'): property 2 (value='value 2'): property 3 (value=''): ");
     }
 }
