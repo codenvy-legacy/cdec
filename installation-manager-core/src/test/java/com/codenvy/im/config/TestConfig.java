@@ -240,15 +240,4 @@ public class TestConfig {
         assertNotNull(config.getProperty(Config.PUPPET_SERVER_VERSION));
         assertNotNull(config.getProperty(Config.PUPPET_RESOURCE_URL));
     }
-
-    @Test
-    public void testFetchVersion() throws Exception {
-        assertEquals(Config.fetchVersion("7"), "7");
-        assertEquals(Config.fetchVersion("6.6"), "6");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testFetchVersionError() throws Exception {
-        Config.fetchVersion("");
-    }
 }
