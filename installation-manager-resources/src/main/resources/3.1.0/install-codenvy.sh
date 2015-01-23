@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # bash <(curl -L -s https://start.codenvy.com/install-single)
-set -e
+#set -e
 
 ARTIFACT="cdec"
 VERSION=$1
