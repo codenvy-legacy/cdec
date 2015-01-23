@@ -68,15 +68,32 @@ public class Config {
         OS_VERSION = detectOSVersion();
     }
 
+    public static final String MANDATORY = "MANDATORY";
+
     private Map<String, String> properties;
 
     public Config(Map<String, String> properties) {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
-    /** Indicates if property is set or isn't. */
+    /** Indicates is value valid for configuration. */
+    public static boolean isValid(String value) {
+        return value != null && !isMandatory(value);
+    }
+
+    /** Indicates is value empty. */
     public static boolean isEmpty(String value) {
-        return value == null || value.equalsIgnoreCase("MANDATORY");
+        return value == null || value.isEmpty();
+    }
+
+    /** Indicates does value indicate mandatory config property. */
+    public static boolean isMandatory(String value) {
+        return value != null && value.equalsIgnoreCase(MANDATORY);
+    }
+
+    /** Indicates is value valid for mandatory config property. */
+    public static boolean isValidForMandatoryProperty(String value) {
+        return isValid(value) && !isEmpty(value);
     }
 
     /** @return the property value */
@@ -101,7 +118,7 @@ public class Config {
     /** Checks if all properties are set and have correct values. */
     public boolean isValid() {
         for (String v : properties.values()) {
-            if (isEmpty(v)) {
+            if (!isValid(v)) {
                 return false;
             }
         }

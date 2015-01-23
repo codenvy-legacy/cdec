@@ -36,7 +36,6 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -77,7 +76,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         service = mock(InstallationManagerService.class);
         doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-                .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+            .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand(configUtil));
@@ -91,8 +90,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallArtifact() throws Exception {
-        doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
-        doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         final String expectedOutput = "step 1 [OK]\n" +
                                       "step 2 [OK]\n" +
                                       "{\n" +
@@ -132,7 +131,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         // no installation info provided
         doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
 
-        // first reply [n], then reply [y]
+        // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -153,31 +152,36 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter CDEC required parameters:\n" +
-                             "b: some value\n" +
-                             "{\n" +
-                             "  \"a\"       : \"2\",\n" +
-                             "  \"b\"       : \"some value\",\n" +
-                             "  \"version\" : \"1.0.2\"\n" +
-                             "}\n" +
-                             "Continue installation [y/N]\n" +
-                             "Please, enter CDEC required parameters:\n" +
-                             "b (some value): some value\n" +
-                             "a (2): some value\n" +
-                             "version (1.0.2): some value\n" +
-                             "{\n" +
-                             "  \"a\"       : \"some value\",\n" +
-                             "  \"b\"       : \"some value\",\n" +
-                             "  \"version\" : \"some value\"\n" +
-                             "}\n" +
-                             "Continue installation [y/N]\n" +
-                             "{\"infos\":[]}\n");
+        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left bank):\n"
+                             + "b: some value\n"
+                             + "\n"
+                             + "CDEC parameters list:\n"
+                             + "{\n"
+                             + "  \"a\"       : \"2\",\n"
+                             + "  \"b\"       : \"some value\",\n"
+                             + "  \"version\" : \"1.0.2\"\n"
+                             + "}\n"
+                             + "Do you confirm parameters above? [y/N]\n"
+                             + "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
+                             + "b (value='some value'): some value\n"
+                             + "a (value='2'): some value\n"
+                             + "version (value='1.0.2'): some value\n"
+                             + "\n"
+                             + "CDEC parameters list:\n"
+                             + "{\n"
+                             + "  \"a\"       : \"some value\",\n"
+                             + "  \"b\"       : \"some value\",\n"
+                             + "  \"version\" : \"some value\"\n"
+                             + "}\n"
+                             + "Do you confirm parameters above? [y/N]\n"
+                             + "{\"infos\":[]}\n"
+                             + "");
     }
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
-        doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
-        doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
 
         final String expectedOutput = "step 1 [OK]\n" +
                                       "step 2 [OK]\n" +
@@ -203,8 +207,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallWhenUnknownArtifact() throws Exception {
-        doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
-        doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         final String serviceErrorResponse = "{\n"
                                             + "  \"message\" : \"Artifact 'any' not found\",\n"
                                             + "  \"status\" : \"ERROR\"\n"
@@ -222,8 +226,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallErrorStepFailed() throws Exception {
-        doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
-        doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         final String expectedOutput = "step 1 [FAIL]\n" +
                                       "{\n"
                                       + "  \"message\" : \"step failed\",\n"
@@ -244,8 +248,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallWhenServiceThrowsError2() throws Exception {
-        doNothing().when(spyCommand).confirmOrReenterInstallOptions(any(InstallOptions.class));
-        doReturn(new InstallOptions()).when(spyCommand).enterInstallOptions(any(InstallOptions.class), anyBoolean());
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         final String expectedOutput = "{\n"
                                       + "  \"message\" : \"Property is missed\",\n"
                                       + "  \"status\" : \"ERROR\"\n"
@@ -262,7 +266,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testListOption() throws Exception {
+    public void testListInstalledArtifacts() throws Exception {
         doReturn(okServiceResponse).when(service).getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -281,10 +285,12 @@ public class TestInstallCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testListOptionWhenServiceError() throws Exception {
+    public void testListInstalledArtifactsWhenServiceError() throws Exception {
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configUtil).merge(anyMap(), anyMap());
+
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(service)
-                .getInstalledVersions(any(Request.class));
+            .when(service)
+            .getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -299,6 +305,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForInstall() throws Exception {
+        doReturn(true).when(spyCommand).isInstall();
         // user always enter "some value" as property value
         doAnswer(new Answer() {
             @Override
@@ -311,7 +318,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         // no installation info provided
         doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
 
-        // first reply [n], then reply [y]
+        // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -332,18 +339,23 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter CDEC required parameters:\n" +
-                             "a: some value\n" +
-                             "{\n" +
-                             "  \"a\" : \"some value\"\n" +
-                             "}\n" +
-                             "Continue installation [y/N]\n" +
-                             "Please, enter CDEC required parameters:\n" +
-                             "a (some value): some value\n" +
-                             "{\n" +
-                             "  \"a\" : \"some value\"\n" +
-                             "}\n" +
-                             "Continue installation [y/N]\n" +
-                             "{\"infos\":[]}\n");
+        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left bank):\n"
+                             + "a: some value\n"
+                             + "\n"
+                             + "CDEC parameters list:\n"
+                             + "{\n"
+                             + "  \"a\" : \"some value\"\n"
+                             + "}\n"
+                             + "Do you confirm parameters above? [y/N]\n"
+                             + "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
+                             + "a (value='some value'): some value\n"
+                             + "\n"
+                             + "CDEC parameters list:\n"
+                             + "{\n"
+                             + "  \"a\" : \"some value\"\n"
+                             + "}\n"
+                             + "Do you confirm parameters above? [y/N]\n"
+                             + "{\"infos\":[]}\n"
+                             + "");
     }
 }

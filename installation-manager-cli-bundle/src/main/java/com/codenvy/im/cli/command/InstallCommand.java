@@ -46,10 +46,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.config.Config.isEmpty;
+import static com.codenvy.im.config.Config.isMandatory;
+import static com.codenvy.im.config.Config.isValidForMandatoryProperty;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
 import static java.lang.String.format;
+import static java.lang.Thread.sleep;
 
 /**
  * @author Alexander Reshetnyak
@@ -90,13 +93,13 @@ public class InstallCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         if (list) {
-            doExecuteListOption();
+            doExecuteListInstalledArtifacts();
         } else {
             doExecuteInstall();
         }
     }
 
-    protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException {
+    protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException, InterruptedException {
         if (artifactName == null) {
             artifactName = CDECArtifact.NAME;
         }
@@ -111,8 +114,8 @@ public class InstallCommand extends AbstractIMCommand {
         setOptionsFromConfig(installOptions);
 
         if (!installOptions.checkValid()) {
-            enterInstallOptions(installOptions, true);
-            confirmOrReenterInstallOptions(installOptions);
+            enterMandatoryOptions(installOptions);
+            confirmOrReenterOptions(installOptions);
         }
 
         String response = service.getInstallInfo(installOptions, request);
@@ -172,7 +175,7 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    protected Void doExecuteListOption() throws IOException, JSONException, JsonParseException {
+    protected Void doExecuteListInstalledArtifacts() throws IOException, JSONException, JsonParseException {
         String response = service.getInstalledVersions(initRequest(artifactName, version));
         console.printResponse(response);
         return null;
@@ -191,39 +194,60 @@ public class InstallCommand extends AbstractIMCommand {
         return false;
     }
 
-    protected InstallOptions enterInstallOptions(InstallOptions options, boolean askMissedOptionsOnly) throws IOException {
+    protected InstallOptions enterMandatoryOptions(InstallOptions options) throws IOException {
+        if (options.getConfigProperties().isEmpty()) {
+            return options;
+        }
+
+        Map<String, String> m = new HashMap<>(options.getConfigProperties());
         switch (artifactName) {
             case CDECArtifact.NAME:
-                console.println("Please, enter CDEC required parameters:");
+                console.println("Please, enter mandatory CDEC parameters (values cannot be left bank):");
+                for (Map.Entry<String, String> e : m.entrySet()) {
+                    String propName = e.getKey().toLowerCase();
+                    String currentValue = e.getValue();
 
-                Map<String, String> m = new HashMap<>();
-
-                for (Map.Entry<String, String> e : options.getConfigProperties().entrySet()) {
-                    for (; ; ) {
-                        String propName = e.getKey().toLowerCase();
-                        String currentValue = e.getValue();
-
-                        if (isEmpty(currentValue) || !askMissedOptionsOnly) {
+                    if (isMandatory(currentValue)) {
+                        String newValue = "";
+                        while (!isValidForMandatoryProperty(newValue)) {
                             console.print(propName);
-
-                            if (!isEmpty(currentValue)) {
-                                console.printWithoutCodenvyPrompt(format(" (%s)", currentValue));
-                            }
-
                             console.printWithoutCodenvyPrompt(": ");
-                            String newValue = console.readLine();
-
-                            if (!isEmpty(newValue)) {
-                                m.put(propName, newValue);
-                                break;
-                            } else if (!isEmpty(currentValue)) {
-                                m.put(propName, currentValue);
-                                break;
-                            }
-                        } else {
-                            m.put(propName, currentValue);
-                            break;
+                            newValue = console.readLine();
                         }
+                        m.put(propName, newValue);
+                    } else {
+                        m.put(propName, currentValue);
+                    }
+                }
+
+                options.setConfigProperties(m);
+        }
+
+        return options;
+    }
+
+    protected InstallOptions enterAllOptions(InstallOptions options) throws IOException {
+        if (options.getConfigProperties().isEmpty()) {
+            return options;
+        }
+
+        Map<String, String> m = new HashMap<>(options.getConfigProperties());
+        switch (artifactName) {
+            case CDECArtifact.NAME:
+                console.println("Please, enter CDEC parameters (just press 'Enter' key to keep value as is):");
+
+                for (Map.Entry<String, String> e : m.entrySet()) {
+                    String propName = e.getKey().toLowerCase();
+                    String currentValue = e.getValue();
+
+                    console.print(propName);
+                    console.printWithoutCodenvyPrompt(format(" (value='%s'): ", currentValue));
+
+                    String newValue = console.readLine();
+                    if (!isEmpty(newValue) && !isMandatory(newValue)) {
+                        m.put(propName, newValue);
+                    } else {
+                        m.put(propName, currentValue);
                     }
                 }
 
@@ -282,18 +306,22 @@ public class InstallCommand extends AbstractIMCommand {
         return Commons.isInstall(ArtifactFactory.createArtifact(CDECArtifact.NAME), Version.valueOf(version));
     }
 
-    protected void confirmOrReenterInstallOptions(InstallOptions installOptions) throws IOException {
+    public void confirmOrReenterOptions(InstallOptions installOptions) throws IOException, InterruptedException {
         if (installOptions.getConfigProperties() == null) {
             return;
         }
 
         for (; ; ) {
+            console.println();
+            console.println("CDEC parameters list:");
             console.println(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
-            if (console.askUser("Continue installation")) {
+            sleep(1500);   // pause reading keyboard 1,5 sec to allow user to stop before confirming parameters list
+            console.reset();
+            if (console.askUser("Do you confirm parameters above?")) {
                 break;
             }
 
-            enterInstallOptions(installOptions, false);
+            enterAllOptions(installOptions);
         }
     }
 

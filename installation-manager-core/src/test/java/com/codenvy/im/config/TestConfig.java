@@ -70,15 +70,38 @@ public class TestConfig {
     }
 
     @Test
-    public void testIsEmpty() throws Exception {
-        assertTrue(Config.isEmpty(null));
-        assertTrue(Config.isEmpty("MANDATORY"));
-
-        assertFalse(Config.isEmpty(""));
-        assertFalse(Config.isEmpty("value"));
+    public void testIsValid() throws Exception {
+        assertFalse(Config.isValid(null));
+        assertTrue(Config.isValid(""));
+        assertFalse(Config.isValid(Config.MANDATORY));
+        assertTrue(Config.isValid("test"));
     }
 
     @Test
+    public void testIsMandatory() throws Exception {
+        assertFalse(Config.isMandatory(null));
+        assertFalse(Config.isMandatory(""));
+        assertTrue(Config.isMandatory(Config.MANDATORY));
+        assertFalse(Config.isMandatory("test"));
+    }
+
+    @Test
+    public void testIsValidForMandatoryProperty() throws Exception {
+        assertFalse(Config.isValidForMandatoryProperty(null));
+        assertFalse(Config.isValidForMandatoryProperty(""));
+        assertFalse(Config.isValidForMandatoryProperty(Config.MANDATORY));
+        assertTrue(Config.isValidForMandatoryProperty("test"));
+    }
+
+    @Test
+    public void testIsEmpty() throws Exception {
+        assertTrue(Config.isEmpty(null));
+        assertTrue(Config.isEmpty(""));
+        assertFalse(Config.isEmpty(Config.MANDATORY));
+        assertFalse(Config.isEmpty("test"));
+    }
+
+        @Test
     public void testIsValidDefaultConfig() throws Exception {
         Config config = new Config(Collections.<String, String>emptyMap());
         assertTrue(config.isValid());
