@@ -21,7 +21,10 @@ checkOS() {
     fi
     OS_VERSION=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
 
-    if [ "${VERSION}" == "3.1.0" ] && [ ! "${OS_VERSION}" == "6" ]; then
+    echo "OS:  ${OS_VERSION}"
+    echo "ART: ${VERSION}"
+
+    if [ "${VERSION}" == "3.1.0" ] && [ "${OS_VERSION}" -eq "6" ]; then
         echo "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
         exit 1
     fi
