@@ -236,8 +236,8 @@ public class CDECArtifact extends AbstractArtifact {
                         createLocalRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
                         createLocalCommand(format("sudo sed -i '1i[master]' /etc/puppet/puppet.conf")),
                         createLocalCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
-                        createLocalCommand("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                           "  dns_alt_names = puppet,puppet.example.com,puppet.site-a.example.com\\n/g' /etc/puppet/puppet.conf"),
+                        createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                  "  dns_alt_names = puppet,%s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
                         createLocalCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
                                                   "  show_diff = true\\n" +
                                                   "  pluginsync = true\\n" +
@@ -247,7 +247,6 @@ public class CDECArtifact extends AbstractArtifact {
                                                   "  runinterval = 300\\n" +
                                                   "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
                                         "Configure puppet agent");
-
 
             case 5:
                 if (OSUtils.getVersion().equals("6")) {

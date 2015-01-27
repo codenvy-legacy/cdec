@@ -4,7 +4,11 @@
 #set -e
 
 ARTIFACT="cdec"
-VERSION=$1
+if [ -z $1 ]; then
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+else
+    VERSION=$1
+fi
 CONFIG="codenvy-single-server.properties"
 DIR="${HOME}/codenvy-im"
 
@@ -14,6 +18,12 @@ checkOS() {
     else
         printPrompt; echo "Operation system isn't supported."
         exit
+    fi
+    OS_VERSION = `cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+
+    if [ "${VERSION}" == "3.1.0" && ! "${OS_VERSION}" == "6" ]; then
+        echo "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
+        exit 1
     fi
 }
 

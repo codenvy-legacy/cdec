@@ -27,6 +27,7 @@ import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -178,7 +179,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left bank):\n"
+        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left blank):\n"
                              + "b: some value\n"
                              + "\n"
                              + "CDEC parameters list:\n"
@@ -365,7 +366,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left bank):\n"
+        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left blank):\n"
                              + "a: some value\n"
                              + "\n"
                              + "CDEC parameters list:\n"
@@ -407,7 +408,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         options.setConfigProperties(properties);
         Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
         assertEquals(result.toString(), "{some property=test}");
-        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left bank):\n");
+        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left blank):\n");
     }
 
     @Test
@@ -439,7 +440,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         options.setConfigProperties(properties);
         Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
         assertEquals(result.toString(), "{property 1=value 1, property 2=new value, property 3=}");
-        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left bank):\n"
+        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left blank):\n"
                                               + "property 2: property 2: property 2: ");
     }
 

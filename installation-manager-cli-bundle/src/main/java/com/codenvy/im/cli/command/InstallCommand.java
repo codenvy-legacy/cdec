@@ -32,13 +32,13 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -202,7 +202,7 @@ public class InstallCommand extends AbstractIMCommand {
         Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
         switch (artifactName) {
             case CDECArtifact.NAME:
-                console.println("Please, enter mandatory CDEC parameters (values cannot be left bank):");
+                console.println("Please, enter mandatory CDEC parameters (values cannot be left blank):");
                 for (Map.Entry<String, String> e : m.entrySet()) {
                     String propName = e.getKey().toLowerCase();
                     String currentValue = e.getValue();
