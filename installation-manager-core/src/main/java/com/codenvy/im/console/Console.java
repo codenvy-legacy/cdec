@@ -17,11 +17,11 @@
  */
 package com.codenvy.im.console;
 
-import com.google.inject.Singleton;
 import jline.console.ConsoleReader;
 
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
+import com.google.inject.Singleton;
 
 import org.fusesource.jansi.Ansi;
 

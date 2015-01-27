@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # bash <(curl -L -s https://start.codenvy.com/install-single)
-#set -e
+set -e
 
 ARTIFACT="cdec"
 if [ -z $1 ]; then
@@ -131,9 +131,6 @@ prepareConfig() {
 executeIMCommand() {
     if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
     ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
-
-    RETVAL=$?
-    [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
 preconfigureSystem() {
