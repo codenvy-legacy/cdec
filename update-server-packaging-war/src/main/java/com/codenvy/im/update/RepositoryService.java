@@ -24,6 +24,8 @@ import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.MailTransport;
+import com.codenvy.im.utils.UserUtils;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
 
@@ -40,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -95,20 +98,23 @@ public class RepositoryService {
     private final String apiEndpoint;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
-    private final HttpTransport   transport;
-    private final UserManager userManager;
+    private final HttpTransport httpTransport;
+    private final UserManager   userManager;
+    private final MailTransport mailTransport;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
-                             HttpTransport transport) {
+                             HttpTransport httpTransport,
+                             MailTransport mailTransport) {
         this.artifactStorage = artifactStorage;
         this.mongoStorage = mongoStorage;
-        this.transport = transport;
+        this.httpTransport = httpTransport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
+        this.mailTransport = mailTransport;
     }
 
     /**
@@ -246,7 +252,7 @@ public class RepositoryService {
             String accessToken = userManager.getCurrentUser().getToken();
             String userId = userManager.getCurrentUser().getId();
 
-            if (!checkIfUserIsOwnerOfAccount(transport,
+            if (!checkIfUserIsOwnerOfAccount(httpTransport,
                                              apiEndpoint,
                                              accessToken,
                                              accountId)) {
@@ -256,7 +262,7 @@ public class RepositoryService {
             }
 
 
-            if (requiredSubscription != null && !hasValidSubscription(transport,
+            if (requiredSubscription != null && !hasValidSubscription(httpTransport,
                                                                       apiEndpoint,
                                                                       requiredSubscription,
                                                                       accessToken,
@@ -472,7 +478,7 @@ public class RepositoryService {
         final String accessToken = userManager.getCurrentUser().getToken();
 
         try {
-            if (!checkIfUserIsOwnerOfAccount(transport,
+            if (!checkIfUserIsOwnerOfAccount(httpTransport,
                                              apiEndpoint,
                                              accessToken,
                                              accountId)) {
@@ -485,7 +491,7 @@ public class RepositoryService {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-            if (hasValidSubscription(transport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
+            if (hasValidSubscription(httpTransport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
@@ -529,7 +535,7 @@ public class RepositoryService {
             body.put("planId", "opm-com-25u-y");
             body.put("subscriptionAttributes", new JsonStringMapImpl<>(attributes));
 
-            Map m = asMap(transport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
+            Map m = asMap(httpTransport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
             if (!m.containsKey("id")) {
                 if (m.containsKey("message")) {
                     throw new IOException(CAN_NOT_ADD_TRIAL_SUBSCRIPTION);
@@ -540,6 +546,8 @@ public class RepositoryService {
             String subscriptionId = String.valueOf(m.get("id"));
             LOG.info("Trial subscription added. " + body.toString());
 
+            sendOnPremSubscriptionInfo(accountId, accessToken);
+
             return new SubscriptionInfo(accountId,
                                         subscriptionId,
                                         ON_PREMISES,
@@ -547,6 +555,15 @@ public class RepositoryService {
                                         endDate);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
+        }
+    }
+
+    private void sendOnPremSubscriptionInfo(String accountId, String accessToken) {
+        try {
+            String userEmail = UserUtils.getUserEmail(httpTransport, apiEndpoint, accessToken);
+            mailTransport.sendOnPremSubscriptionInfo(accountId, userEmail);
+        } catch (IOException | MessagingException e) {
+            LOG.error("Error of sending email with subscription info to sales.", e);
         }
     }
 }
