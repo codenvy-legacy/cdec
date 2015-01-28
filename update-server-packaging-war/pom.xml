@@ -220,11 +220,11 @@
                                 <configuration>
                                     <target>
                                         <replace file="${project.build.directory}/classes/codenvy/update-server.properties">
-                                            <replacetoken>Sales@codenvy.com</replacetoken>
+                                            <replacetoken>sales@codenvy.com</replacetoken>
                                             <replacevalue>cdec.im.test@gmail.com</replacevalue>
                                         </replace>
                                         <replace file="${project.build.directory}/classes/codenvy/update-server.properties">
-                                            <replacetoken>CEO@codenvy.com</replacetoken>
+                                            <replacetoken>ceo@codenvy.com</replacetoken>
                                             <replacevalue>cdec.im.test1@gmail.com</replacevalue>
                                         </replace>
                                         <tstamp>

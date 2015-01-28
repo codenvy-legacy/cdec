@@ -23,7 +23,7 @@ import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.MailTransport;
+import com.codenvy.im.utils.MailService;
 import com.jayway.restassured.response.Response;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -90,7 +90,7 @@ public class TestRepositoryService extends BaseTest {
     private HttpTransport     httpTransport;
     private UserManager       userManager;
     private MongoStorage      mongoStorage;
-    private MailTransport     mailTransport;
+    private MailService mailService;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -105,14 +105,14 @@ public class TestRepositoryService extends BaseTest {
         mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target", 2000));
         httpTransport = mock(HttpTransport.class);
         userManager = mock(UserManager.class);
-        mailTransport = mock(MailTransport.class);
+        mailService = mock(MailService.class);
         artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
         repositoryService = new RepositoryService("",
                                                   userManager,
                                                   artifactStorage,
                                                   mongoStorage,
                                                   httpTransport,
-                                                  mailTransport);
+                                                  mailService);
 
         when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         initStorage();
@@ -528,7 +528,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn(Boolean.TRUE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.TRUE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -548,7 +548,7 @@ public class TestRepositoryService extends BaseTest {
                 .when(httpTransport).doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("token"));
         doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId}]")
                 .when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -564,7 +564,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -582,7 +582,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("anotherAccountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -600,7 +600,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
         doThrow(new IOException("Unexpected error.")).when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -618,7 +618,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
         doReturn("{\"message\":\"Error.\"}").when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -636,7 +636,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("id", AccountUtils.ON_PREMISES);
+        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
         doReturn("{}").when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -656,7 +656,7 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
         doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
-        doThrow(MessagingException.class).when(mailTransport).sendOnPremSubscriptionInfo("accountId", "userEmail");
+        doThrow(MessagingException.class).when(mailService).sendNotificationLetter("accountId", "userEmail");
 
         Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
             .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
@@ -679,8 +679,23 @@ public class TestRepositoryService extends BaseTest {
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         verify(mongoStorage).addSubscriptionInfo(eq("id"), any(SubscriptionInfo.class));
-        assertTrue(mongoStorage.hasSubscription("id", ON_PREMISES));
-        verify(mailTransport).sendOnPremSubscriptionInfo("accountId", "userEmail");
+        assertTrue(mongoStorage.hasSubscription("accountId", ON_PREMISES));
+        verify(mailService).sendNotificationLetter("accountId", "userEmail");
+    }
+
+    @Test
+    public void testSendNotificationLetterGetEmailFromName() throws Exception {
+        repositoryService
+                .sendNotificationLetter("accountId", new UserImpl("name@codenvy.com", "id", "token", Collections.<String>emptyList(), false));
+        verify(mailService).sendNotificationLetter("accountId", "name@codenvy.com");
+    }
+
+    @Test
+    public void testSendNotificationLetterGetEmailFromRequest() throws Exception {
+        doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
+        repositoryService
+                .sendNotificationLetter("accountId", new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
+        verify(mailService).sendNotificationLetter("accountId", "userEmail");
     }
 }
 

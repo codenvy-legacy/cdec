@@ -186,10 +186,10 @@ public class MongoStorage {
     }
 
     /** Indicates if user already has subscription */
-    public boolean hasSubscription(String userId, String subscription) {
+    public boolean hasSubscription(String accountId, String subscription) {
         DBCollection collection = db.getCollection(SUBSCRIPTIONS);
         DBObject query = new BasicDBObject();
-        query.put(USER_ID, userId);
+        query.put(ACCOUNT_ID, accountId);
         query.put(SUBSCRIPTION, subscription);
 
         return collection.findOne(query) != null;
@@ -350,7 +350,7 @@ public class MongoStorage {
 
         collection = db.getCollection(SUBSCRIPTIONS);
         addIndex(collection, SUBSCRIPTION_ID);
-        addIndex(collection, USER_ID, SUBSCRIPTION);
+        addIndex(collection, ACCOUNT_ID, SUBSCRIPTION);
         addIndex(collection, VALID, SUBSCRIPTION, END_DATE);
     }
 

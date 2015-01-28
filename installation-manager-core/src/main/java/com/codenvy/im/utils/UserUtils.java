@@ -33,6 +33,7 @@ public class UserUtils {
     private UserUtils() {
     }
 
+    /** @return the current user's email */
     public static String getUserEmail(HttpTransport transport,
                                       String apiEndpoint,
                                       String accessToken) throws IOException {

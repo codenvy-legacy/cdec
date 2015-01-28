@@ -20,12 +20,12 @@ package com.codenvy.im.update;
 
 import com.codenvy.api.core.rest.annotations.GenerateLink;
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.commons.user.User;
 import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.MailTransport;
-import com.codenvy.im.utils.UserUtils;
+import com.codenvy.im.utils.MailService;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
 
@@ -69,6 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
@@ -78,6 +79,7 @@ import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
 import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.UserUtils.getUserEmail;
 import static java.lang.String.format;
 
 
@@ -90,17 +92,19 @@ import static java.lang.String.format;
 @Path("repository")
 public class RepositoryService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RepositoryService.class);
-    public static final String CAN_NOT_ADD_TRIAL_SUBSCRIPTION =
+    private static final Logger  LOG                            = LoggerFactory.getLogger(RepositoryService.class);
+    public static final  Pattern VALID_EMAIL_ADDRESS_RFC822     =
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+    public static final  String  CAN_NOT_ADD_TRIAL_SUBSCRIPTION =
             "You do not have a valid subscription to install Codenvy. You previously had a 30 day trial subscription, but it has " +
             "also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase.";
 
-    private final String apiEndpoint;
+    private final String      apiEndpoint;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport httpTransport;
     private final UserManager   userManager;
-    private final MailTransport mailTransport;
+    private final MailService mailService;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
@@ -108,13 +112,13 @@ public class RepositoryService {
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport httpTransport,
-                             MailTransport mailTransport) {
+                             MailService mailService) {
         this.artifactStorage = artifactStorage;
         this.mongoStorage = mongoStorage;
         this.httpTransport = httpTransport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
-        this.mailTransport = mailTransport;
+        this.mailService = mailService;
     }
 
     /**
@@ -487,7 +491,7 @@ public class RepositoryService {
                                               userId, accountId)).build();
             }
 
-            if (mongoStorage.hasSubscription(userId, ON_PREMISES)) {
+            if (mongoStorage.hasSubscription(accountId, ON_PREMISES)) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
@@ -499,7 +503,7 @@ public class RepositoryService {
             SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId, accessToken);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
-            sendOnPremSubscriptionInfo(accountId, accessToken);
+            sendNotificationLetter(accountId, userManager.getCurrentUser());
 
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
@@ -558,10 +562,14 @@ public class RepositoryService {
         }
     }
 
-    private void sendOnPremSubscriptionInfo(String accountId, String accessToken) {
+    protected void sendNotificationLetter(String accountId, User user) {
         try {
-            String userEmail = UserUtils.getUserEmail(httpTransport, apiEndpoint, accessToken);
-            mailTransport.sendOnPremSubscriptionInfo(accountId, userEmail);
+            String userEmail = VALID_EMAIL_ADDRESS_RFC822.matcher(user.getName()).matches()
+                               ? user.getName()
+                               : getUserEmail(httpTransport, apiEndpoint, user.getToken());
+
+            mailService.sendNotificationLetter(accountId, userEmail);
+            LOG.info(format("Subscription for %s was provisioned and notification mail was sent", userEmail));
         } catch (IOException | MessagingException e) {
             LOG.error("Error of sending email with subscription info to sales.", e);
         }

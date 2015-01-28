@@ -18,6 +18,7 @@
 package com.codenvy.im.utils;
 
 import com.google.inject.Singleton;
+
 import org.codenvy.mail.MailSenderClient;
 
 import javax.inject.Inject;
@@ -26,22 +27,19 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Date;
 
-/**
- * @author Dmytro Nochevnov
- */
+/** @author Dmytro Nochevnov */
 @Singleton
-public class MailTransport {
-    private MailSenderClient mailService;
-
-    private final MailTransportConfiguration config;
+public class MailService {
+    private final MailSenderClient         mailClient;
+    private final MailServiceConfiguration config;
 
     @Inject
-    public MailTransport(MailSenderClient mailService, MailTransportConfiguration config) {
-        this.mailService = mailService;
+    public MailService(MailSenderClient mailClient, MailServiceConfiguration config) {
+        this.mailClient = mailClient;
         this.config = config;
     }
 
-    public void sendOnPremSubscriptionInfo(String accountId, String userEmail) throws IOException, MessagingException {
+    public void sendNotificationLetter(String accountId, String userEmail) throws IOException, MessagingException {
         final String mailSubject = "New On-Prem Trial (IM)";
         final String currentDateTime = new Date().toString();
 
@@ -52,11 +50,11 @@ public class MailTransport {
                                            accountId,
                                            currentDateTime);
 
-        mailService.sendMail(config.getMailSender(),
-                             config.getTrialSubscriptionInfoReceiverEmails(),
-                             null,
-                             mailSubject,
-                             MediaType.TEXT_PLAIN,
-                             mailContent);
+        mailClient.sendMail(config.getNotificationSender(),
+                            config.getNotificationRecipients(),
+                            null,
+                            mailSubject,
+                            MediaType.TEXT_PLAIN,
+                            mailContent);
     }
 }

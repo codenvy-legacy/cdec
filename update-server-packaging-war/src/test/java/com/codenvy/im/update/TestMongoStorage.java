@@ -84,9 +84,9 @@ public class TestMongoStorage {
         ids = mongoStorage.getExpiredSubscriptions("OnPremises");
         assertTrue(ids.isEmpty());
 
-        assertTrue(mongoStorage.hasSubscription("user1", "OnPremises"));
-        assertFalse(mongoStorage.hasSubscription("user1", "Subscription"));
-        assertFalse(mongoStorage.hasSubscription("user5", "OnPremises"));
+        assertTrue(mongoStorage.hasSubscription("account1", "OnPremises"));
+        assertFalse(mongoStorage.hasSubscription("account1", "Subscription"));
+        assertFalse(mongoStorage.hasSubscription("account5", "OnPremises"));
     }
 
     @Test

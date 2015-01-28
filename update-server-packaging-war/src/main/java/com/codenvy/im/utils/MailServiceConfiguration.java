@@ -24,24 +24,23 @@ import javax.inject.Singleton;
 
 /** @author Dmytro Nochevnov */
 @Singleton
-public class MailTransportConfiguration {
+public class MailServiceConfiguration {
 
-    private final String trialSubscriptionInfoReceiverEmails;
-
-    private final String mailSender;
+    private final String notificationRecipients;
+    private final String notificationSender;
 
     @Inject
-    public MailTransportConfiguration(@Named("mail-transport.trial-subscription-info-receiver-emails") String trialSubscriptionInfoReceiverEmails,
-                                      @Named("mail-transport.sender") String mailSender) {
-        this.trialSubscriptionInfoReceiverEmails = trialSubscriptionInfoReceiverEmails;
-        this.mailSender = mailSender;
+    public MailServiceConfiguration(@Named("mail.notification.recipients") String notificationRecipients,
+                                    @Named("mail.notification.sender") String notificationSender) {
+        this.notificationRecipients = notificationRecipients;
+        this.notificationSender = notificationSender;
     }
 
-    public String getTrialSubscriptionInfoReceiverEmails() {
-        return trialSubscriptionInfoReceiverEmails;
+    public String getNotificationRecipients() {
+        return notificationRecipients;
     }
 
-    public String getMailSender() {
-        return mailSender;
+    public String getNotificationSender() {
+        return notificationSender;
     }
 }
