@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -94,5 +95,11 @@ public class TestSimpleCommand {
     public void testCommandPrintToOutputStream() throws Exception {
         Command command = new SimpleCommand("echo -n \"some error\"", new LocalAgent(), null);
         assertEquals(command.execute(), "some error");
+    }
+
+    @Test
+    public void testCommandPrintWarningToErrorStream() throws Exception {
+        Command command = new SimpleCommand("echo \"warning: some error\" 1>&2", new LocalAgent(), null);
+        assertTrue(command.execute().isEmpty());
     }
 }

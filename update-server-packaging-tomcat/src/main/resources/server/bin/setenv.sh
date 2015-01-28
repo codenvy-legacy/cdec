@@ -28,10 +28,10 @@ GENERAL_OPTS="-Dcodenvy.local.conf.dir=${CODENVY_LOCAL_CONF_DIR} \
               -Dcodenvy.logback.smtp.appender=${CODENVY_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
               -Dcodenvy.logs.dir=${CATALINA_HOME}/logs"
 
-JMX_OPTS="-Dcom.sun.management.jmxremote.authenticate=true \
-          -Dcom.sun.management.jmxremote.password.file=${CATALINA_HOME}/conf/jmxremote.password \
-          -Dcom.sun.management.jmxremote.access.file=${CATALINA_HOME}/conf/jmxremote.access \
-          -Dcom.sun.management.jmxremote.ssl=false"
+#JMX_OPTS="-Dcom.sun.management.jmxremote.authenticate=true \
+#          -Dcom.sun.management.jmxremote.password.file=${CATALINA_HOME}/conf/jmxremote.password \
+#          -Dcom.sun.management.jmxremote.access.file=${CATALINA_HOME}/conf/jmxremote.access \
+#          -Dcom.sun.management.jmxremote.ssl=false"
 
 #REMOTE_DEBUG="-Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n"
 REMOTE_DEBUG=

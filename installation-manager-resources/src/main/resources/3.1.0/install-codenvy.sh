@@ -1,10 +1,14 @@
 #!/bin/bash
 
 # bash <(curl -L -s https://start.codenvy.com/install-single)
-#set -e
+set -e
 
 ARTIFACT="cdec"
-VERSION=$1
+if [ -z $1 ]; then
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+else
+    VERSION=$1
+fi
 CONFIG="codenvy-single-server.properties"
 DIR="${HOME}/codenvy-im"
 
@@ -14,6 +18,12 @@ checkOS() {
     else
         printPrompt; echo "Operation system isn't supported."
         exit
+    fi
+    OS_VERSION=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+
+    if [ "${VERSION}" == "3.1.0" ] && [ "${OS_VERSION}" != "6" ]; then
+        echo "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
+        exit 1
     fi
 }
 
@@ -118,20 +128,9 @@ prepareConfig() {
     askDNS
 }
 
-executeCliCommand() {
-    if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
-    ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
-
-    RETVAL=$?
-    [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
-}
-
 executeIMCommand() {
     if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
     ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
-
-    RETVAL=$?
-    [ ${RETVAL} -ne 0 ] && exit ${RETVAL}
 }
 
 preconfigureSystem() {
@@ -254,9 +253,9 @@ doInstallStep4() {
     CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
     CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
 
-    executeCliCommand "Login to Codenvy Updater service" login ${CODENVY_USER} ${CODENVY_PWD}
-    executeCliCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
-    executeCliCommand "Checking the list of downloaded binaries" im-download --list-local
+    executeIMCommand "Login to Codenvy Updater service" login ${CODENVY_USER} ${CODENVY_PWD}
+    executeIMCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
+    executeIMCommand "Checking the list of downloaded binaries" im-download --list-local
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 

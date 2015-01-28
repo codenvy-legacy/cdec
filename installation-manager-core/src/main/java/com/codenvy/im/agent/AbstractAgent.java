@@ -35,7 +35,7 @@ public abstract class AbstractAgent implements Agent {
         String output = readOutput(in);
         String errorOutput = readOutput(error);
 
-        if (exitStatus != 0 || !errorOutput.isEmpty()) {
+        if (exitStatus != 0 || (!errorOutput.isEmpty() && !errorOutput.toUpperCase().startsWith("WARNING"))) {
             throw new Exception(format("Output: %s; Error: %s.", output, errorOutput));
         } else {
             return output;

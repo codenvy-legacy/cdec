@@ -198,7 +198,7 @@ public class TestLocalAgent {
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_IS_PASSWORD_CORRECT_COMMAND);
     }
 
-    @Test
+    @Test(enabled = false) // TODO [AB rework initialization]
     public void testGetConsole() throws IOException {
         LocalAgent agent = new LocalAgent();
         try {

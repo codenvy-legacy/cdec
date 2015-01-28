@@ -47,7 +47,7 @@ public class Config {
             put("7", "puppet-3.5.1-1.el7.noarch");
         }});
         put(PUPPET_SERVER_VERSION, new HashMap<String, String>() {{
-            put("6", "puppet-server-3.4.3-1.el6");
+            put("6", "puppet-server-3.4.3-1.el6.noarch");
             put("7", "puppet-server-3.5.1-1.el7.noarch");
         }});
         put(PUPPET_RESOURCE_URL, new HashMap<String, String>() {{
