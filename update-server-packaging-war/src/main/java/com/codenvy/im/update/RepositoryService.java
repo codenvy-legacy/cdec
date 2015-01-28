@@ -499,6 +499,8 @@ public class RepositoryService {
             SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId, accessToken);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
+            sendOnPremSubscriptionInfo(accountId, accessToken);
+
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -545,8 +547,6 @@ public class RepositoryService {
             }
             String subscriptionId = String.valueOf(m.get("id"));
             LOG.info("Trial subscription added. " + body.toString());
-
-            sendOnPremSubscriptionInfo(accountId, accessToken);
 
             return new SubscriptionInfo(accountId,
                                         subscriptionId,

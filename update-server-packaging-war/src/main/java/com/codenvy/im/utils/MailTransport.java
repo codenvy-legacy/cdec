@@ -35,7 +35,8 @@ public class MailTransport {
 
     private final MailTransportConfiguration config;
 
-    @Inject MailTransport(MailSenderClient mailService, MailTransportConfiguration config) {
+    @Inject
+    public MailTransport(MailSenderClient mailService, MailTransportConfiguration config) {
         this.mailService = mailService;
         this.config = config;
     }
