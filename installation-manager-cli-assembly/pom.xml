@@ -149,6 +149,42 @@
                                         main "$@"
                                         fi</replacevalue>
                                 </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
+                                    <replacetoken>run() {</replacetoken>
+                                    <replacevalue>run() {
+                                        # Converting the http_proxy environment variable to Java http proxy settings (http://www.xenoveritas.org/node/470)
+                                        if [ -n "$http_proxy" ]; then
+                                            host="${http_proxy#http://}"
+                                            port="${host#*:}"
+                                            JAVA_OPTS="$JAVA_OPTS -Dhttp.proxyHost=${host%:*} -Dhttp.proxyPort=${port%/*}"
+                                        fi
+
+                                        # Converting the https_proxy environment variable to Java https proxy settings (http://www.xenoveritas.org/node/470)
+                                        if [ -n "$https_proxy" ]; then
+                                            host="${https_proxy#https://}"
+                                            port="${host#*:}"
+                                            JAVA_OPTS="$JAVA_OPTS -Dhttps.proxyHost=${host%:*} -Dhttps.proxyPort=${port%/*}"
+                                        fi
+                                    </replacevalue>
+                                </replace>
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
+                                    <replacetoken>run() {</replacetoken>
+                                    <replacevalue>run() {
+                                        # Converting the http_proxy environment variable to Java http proxy settings (http://www.xenoveritas.org/node/470)
+                                        if [ -n "$http_proxy" ]; then
+                                            host="${http_proxy#http://}"
+                                            port="${host#*:}"
+                                            JAVA_OPTS="$JAVA_OPTS -Dhttp.proxyHost=${host%:*} -Dhttp.proxyPort=${port%/*}"
+                                        fi
+
+                                        # Converting the https_proxy environment variable to Java https proxy settings (http://www.xenoveritas.org/node/470)
+                                        if [ -n "$https_proxy" ]; then
+                                            host="${https_proxy#https://}"
+                                            port="${host#*:}"
+                                            JAVA_OPTS="$JAVA_OPTS -Dhttps.proxyHost=${host%:*} -Dhttps.proxyPort=${port%/*}"
+                                        fi
+                                    </replacevalue>
+                                </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
                                     <replacevalue><![CDATA[featuresBoot=installation-manager-cli-features,]]></replacevalue>
