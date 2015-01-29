@@ -18,6 +18,7 @@
 package com.codenvy.im.utils;
 
 import org.codenvy.mail.MailSenderClient;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -26,8 +27,12 @@ import org.testng.annotations.Test;
 import javax.mail.MessagingException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.Date;
 
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -52,17 +57,18 @@ public class TestMailUtil {
 
     @Test
     public void testSendOnPremSubscriptionInfo() throws IOException, MessagingException {
+        String currentDateStringWithHoursOnly = new Date().toString().substring(0, 14);  // "Thu Jan 29 12:"
         String expectedSubscriptionInfo = "Email address of user: userEmail\n"
                                           + "AccountID of user: accountId\n"
-                                          + "Date and time of request: " + new Date().toString();
+                                          + "Date and time of request: " + currentDateStringWithHoursOnly;
 
         spyMailUtil.sendNotificationLetter("accountId", "userEmail");
 
-        verify(mockMailService).sendMail(SENDER_EMAIL,
-                                         RECEIVER_EMAILS,
-                                         null,
-                                         "New On-Prem Trial (IM)",
-                                         MediaType.TEXT_PLAIN,
-                                         expectedSubscriptionInfo);
+        verify(mockMailService).sendMail(eq(SENDER_EMAIL),
+                                         eq(RECEIVER_EMAILS),
+                                         (String) Matchers.isNull(),
+                                         eq("New On-Prem Trial (IM)"),
+                                         eq(MediaType.TEXT_PLAIN),
+                                         startsWith(expectedSubscriptionInfo));
     }
 }
