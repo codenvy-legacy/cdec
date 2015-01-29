@@ -34,11 +34,11 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestMailService {
+public class TestMailUtil {
     public static final String SENDER_EMAIL = "from@com";
     public static final String RECEIVER_EMAILS = "to@com";
-    private MailService spyMailService;
-    private MailServiceConfiguration mailTransportConfig = new MailServiceConfiguration(RECEIVER_EMAILS, SENDER_EMAIL);
+    private MailUtil spyMailUtil;
+    private MailUtilConfiguration mailTransportConfig = new MailUtilConfiguration(RECEIVER_EMAILS, SENDER_EMAIL);
 
     @Mock
     private MailSenderClient mockMailService;
@@ -46,8 +46,8 @@ public class TestMailService {
     @BeforeMethod
     public void init() {
         MockitoAnnotations.initMocks(this);
-        new MailServiceConfiguration("", "0");
-        spyMailService = spy(new MailService(mockMailService, mailTransportConfig));
+        new MailUtilConfiguration("", "0");
+        spyMailUtil = spy(new MailUtil(mockMailService, mailTransportConfig));
     }
 
     @Test
@@ -56,7 +56,7 @@ public class TestMailService {
                                           + "AccountID of user: accountId\n"
                                           + "Date and time of request: " + new Date().toString();
 
-        spyMailService.sendNotificationLetter("accountId", "userEmail");
+        spyMailUtil.sendNotificationLetter("accountId", "userEmail");
 
         verify(mockMailService).sendMail(SENDER_EMAIL,
                                          RECEIVER_EMAILS,

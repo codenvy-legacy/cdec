@@ -29,12 +29,12 @@ import java.util.Date;
 
 /** @author Dmytro Nochevnov */
 @Singleton
-public class MailService {
-    private final MailSenderClient         mailClient;
-    private final MailServiceConfiguration config;
+public class MailUtil {
+    private final MailSenderClient      mailClient;
+    private final MailUtilConfiguration config;
 
     @Inject
-    public MailService(MailSenderClient mailClient, MailServiceConfiguration config) {
+    public MailUtil(MailSenderClient mailClient, MailUtilConfiguration config) {
         this.mailClient = mailClient;
         this.config = config;
     }

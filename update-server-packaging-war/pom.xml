@@ -219,14 +219,10 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <replace file="${project.build.directory}/classes/codenvy/update-server.properties">
-                                            <replacetoken>sales@codenvy.com</replacetoken>
-                                            <replacevalue>cdec.im.test@gmail.com</replacevalue>
-                                        </replace>
-                                        <replace file="${project.build.directory}/classes/codenvy/update-server.properties">
-                                            <replacetoken>ceo@codenvy.com</replacetoken>
-                                            <replacevalue>cdec.im.test1@gmail.com</replacevalue>
-                                        </replace>
+                                        <replaceregexp file="${project.build.directory}/classes/codenvy/update-server.properties"
+                                                       match="mail.notification.recipients=.*"
+                                                       replace="mail.notification.recipients=cdec.im.test@gmail.com,cdec.im.test1@gmail.com"
+                                                       byline="true"/>
                                         <tstamp>
                                             <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                         </tstamp>

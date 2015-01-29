@@ -24,14 +24,14 @@ import javax.inject.Singleton;
 
 /** @author Dmytro Nochevnov */
 @Singleton
-public class MailServiceConfiguration {
+public class MailUtilConfiguration {
 
     private final String notificationRecipients;
     private final String notificationSender;
 
     @Inject
-    public MailServiceConfiguration(@Named("mail.notification.recipients") String notificationRecipients,
-                                    @Named("mail.notification.sender") String notificationSender) {
+    public MailUtilConfiguration(@Named("mail.notification.recipients") String notificationRecipients,
+                                 @Named("mail.notification.sender") String notificationSender) {
         this.notificationRecipients = notificationRecipients;
         this.notificationSender = notificationSender;
     }

@@ -24,11 +24,11 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestMailServiceConfiguration {
+public class TestMailUtilConfiguration {
 
     @Test
     public void testMailTransportConfiguration() {
-        MailServiceConfiguration config = new MailServiceConfiguration("emails", "sender");
+        MailUtilConfiguration config = new MailUtilConfiguration("emails", "sender");
         assertEquals(config.getNotificationRecipients(), "emails");
         assertEquals(config.getNotificationSender(), "sender");
     }

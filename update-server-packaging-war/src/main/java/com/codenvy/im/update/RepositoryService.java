@@ -25,7 +25,7 @@ import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.MailService;
+import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
 import com.mongodb.MongoException;
 
@@ -99,12 +99,12 @@ public class RepositoryService {
             "You do not have a valid subscription to install Codenvy. You previously had a 30 day trial subscription, but it has " +
             "also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase.";
 
-    private final String      apiEndpoint;
+    private final String        apiEndpoint;
     private final ArtifactStorage artifactStorage;
     private final MongoStorage    mongoStorage;
     private final HttpTransport httpTransport;
     private final UserManager   userManager;
-    private final MailService mailService;
+    private final MailUtil      mailUtil;
 
     @Inject
     public RepositoryService(@Named("api.endpoint") String apiEndpoint,
@@ -112,13 +112,13 @@ public class RepositoryService {
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,
                              HttpTransport httpTransport,
-                             MailService mailService) {
+                             MailUtil mailUtil) {
         this.artifactStorage = artifactStorage;
         this.mongoStorage = mongoStorage;
         this.httpTransport = httpTransport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
-        this.mailService = mailService;
+        this.mailUtil = mailUtil;
     }
 
     /**
@@ -568,7 +568,7 @@ public class RepositoryService {
                                ? user.getName()
                                : getUserEmail(httpTransport, apiEndpoint, user.getToken());
 
-            mailService.sendNotificationLetter(accountId, userEmail);
+            mailUtil.sendNotificationLetter(accountId, userEmail);
             LOG.info(format("Subscription for %s was provisioned and notification mail was sent", userEmail));
         } catch (IOException | MessagingException e) {
             LOG.error("Error of sending email with subscription info to sales.", e);
