@@ -20,6 +20,8 @@ package com.codenvy.im.config;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
+
 /** @author Dmytro Nochevnov */
 public class NodeConfig {
     public enum NodeType {
@@ -35,7 +37,7 @@ public class NodeConfig {
     private String host;
     private int port = 22;
     private String user;
-    private String privateKeyFileAbsolutePath = "~/.ssh/id_rsa";
+    private String privateKeyFile = "~/.ssh/id_rsa";  // there should be absolute path to file
     private NodeType type;
 
     public NodeConfig(NodeType type, String host) {
@@ -72,12 +74,12 @@ public class NodeConfig {
         return this;
     }
 
-    public String getPrivateKeyFileAbsolutePath() {
-        return privateKeyFileAbsolutePath;
+    public String getPrivateKeyFile() {
+        return privateKeyFile;
     }
 
-    public NodeConfig setPrivateKeyFileAbsolutePath(String privateKeyFileAbsolutePath) {
-        this.privateKeyFileAbsolutePath = privateKeyFileAbsolutePath;
+    public NodeConfig setPrivateKeyFile(String privateKeyFile) {
+        this.privateKeyFile = privateKeyFile;
         return this;
     }
 
@@ -90,19 +92,24 @@ public class NodeConfig {
      */
     public static List<NodeConfig> extractConfigsFrom(Config config) {
         List<NodeConfig> nodeConfigs = new ArrayList<>();
-        String rootServerDns = config.getHostUrl();
-        if (rootServerDns == null) {
-            return nodeConfigs;
-        }
-
         for (NodeType type: NodeType.values()) {
             String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
             String nodeHost = config.getProperty(nodeHostPropertyName);
-            if (nodeHost != null) {
+            if ((nodeHost != null) && (!nodeHost.isEmpty())) {
                 nodeConfigs.add(new NodeConfig(type, nodeHost));
             }
         }
 
         return nodeConfigs;
+    }
+
+    @Override
+    public String toString() {
+        return format("{'host':'%1$s', 'port':'%2$s', 'user':'%3$s', 'privateKeyFile':'%4$s', 'type':'%5$s'}",
+                      host,
+                      port,
+                      user,
+                      privateKeyFile,
+                      type);
     }
 }

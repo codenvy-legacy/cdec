@@ -398,14 +398,14 @@ printPostInstallInfo_single() {
 doInstallStep5_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTI NODES"
-    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTI NODES"
-    executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+#    executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 

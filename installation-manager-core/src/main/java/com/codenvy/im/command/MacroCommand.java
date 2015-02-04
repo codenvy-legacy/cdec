@@ -42,7 +42,7 @@ public class MacroCommand implements Command {
                 node.getHost(),
                 node.getPort(),
                 node.getUser(),
-                node.getPrivateKeyFileAbsolutePath()
+                node.getPrivateKeyFile()
             ));
         }
 

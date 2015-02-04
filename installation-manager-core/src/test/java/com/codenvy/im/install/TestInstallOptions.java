@@ -18,12 +18,13 @@
 package com.codenvy.im.install;
 
 import com.google.common.collect.ImmutableMap;
-
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -32,65 +33,42 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Dmytro Nochevnov
  */
 public class TestInstallOptions {
-    @Test
-    public void testCheckValidDefaultOptions() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setConfigProperties(null);
-        assertTrue(options.checkValid());
-
-        options.setConfigProperties(new HashMap<String, String>() {{
-            put("some property", null);
-        }});
-        assertTrue(options.checkValid());
-    }
-
-    @Test
-    public void testCheckValidCodenvySingleServerOptions() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-
-        options.setConfigProperties(null);
-        assertFalse(options.checkValid());
-
-        options.setConfigProperties(new HashMap<String, String>(){{put("some property", null);}});
-        assertFalse(options.checkValid());
-
-        options.setConfigProperties(ImmutableMap.of("some property", ""));
-        assertTrue(options.checkValid());
-
-        options.setConfigProperties(ImmutableMap.of("some property", "MANDATORY"));
-        assertFalse(options.checkValid());
-
-        options.setConfigProperties(ImmutableMap.of("some property", "test", "property2", "MANDATORY"));
-        assertFalse(options.checkValid());
-
-        options.setConfigProperties(ImmutableMap.of("some property", "test"));
-        assertTrue(options.checkValid());
-    }
-
-
-    @Test
-    public void testIsValidEmptyOptions() throws Exception {
+    @Test(dataProvider = "test data")
+    public void testCheckValidSingleServerOptions(Map<String, String> properties, boolean expectedResult) throws Exception {
         InstallOptions options = new InstallOptions();
         assertTrue(options.checkValid());
-    }
 
-    @Test
-    public void testIsValidCSSInstallationShouldReturnFalseIfNullProperties() throws Exception {
-        InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
 
         assertFalse(options.checkValid());
-    }
 
-    @Test
-    public void testIsValidCSSInstallation() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-
-        Map<String, String> properties = ImmutableMap.of("some property", "some value","property 2", "");
         options.setConfigProperties(properties);
+        assertEquals(options.checkValid(), expectedResult);
+    }
 
+    @Test(dataProvider = "test data")
+    public void testCheckValidMultiServerOptions(Map<String, String> properties, boolean expectedResult) throws Exception {
+        InstallOptions options = new InstallOptions();
         assertTrue(options.checkValid());
+
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+
+        assertFalse(options.checkValid());
+
+        options.setConfigProperties(properties);
+        assertEquals(options.checkValid(), expectedResult);
+    }
+
+    @DataProvider(name = "test data")
+    public static Object[][] HostUrls() {
+        return new Object[][]{
+            {null, false},
+            {new HashMap<String, String>(){{put("some property", null);}}, false},
+            {ImmutableMap.of("some property", ""), true},
+            {ImmutableMap.of("some property", "MANDATORY"), false},
+            {ImmutableMap.of("some property", "test", "property2", "MANDATORY"), false},
+            {ImmutableMap.of("some property", "some value", "property 2", ""), true},
+            {ImmutableMap.of("some property", "test"), true}
+        };
     }
 }
