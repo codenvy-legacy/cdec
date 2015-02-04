@@ -27,7 +27,7 @@ import com.codenvy.im.agent.LocalAgent;
 public class DetectRedHatVersionCommand extends SimpleCommand {
     public DetectRedHatVersionCommand() {
         super("if [ ! -f /etc/redhat-release ]; then" +
-              "     echo \"This isn't RedHat Linux\" 1>&2;" +
+              "     echo \"This isn't RedHat Linux\" 1>&2; exit 1;" +
               " else" +
               "     cat /etc/redhat-release | sed 's/.* \\([0-9.]*\\) .*/\\1/';" +
               " fi", new LocalAgent(), "Gets CentOS version");

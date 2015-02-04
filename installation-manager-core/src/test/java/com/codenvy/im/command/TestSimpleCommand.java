@@ -73,33 +73,27 @@ public class TestSimpleCommand {
         command.execute();
     }
 
-    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: ; Error: some error.")
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: some output; Error: some error.")
     public void testCommandPrintToErrorStreamWithExitCode() throws Exception {
-        Command command = new SimpleCommand("echo \"some error\" 1>&2; exit 1", new LocalAgent(), null);
+        Command command = new SimpleCommand("echo \"some output\"; echo \"some error\" 1>&2; exit 1", new LocalAgent(), null);
         command.execute();
     }
 
-    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: some error; Error: .")
-    public void testCommandPrintToOutputStreamWithExitCode() throws Exception {
-        Command command = new SimpleCommand("echo \"some error\"; exit 1", new LocalAgent(), null);
+    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: some output; Error: .")
+    public void testCommandPrintToOutputStreamWithErrorExitCode() throws Exception {
+        Command command = new SimpleCommand("echo \"some output\"; exit 1", new LocalAgent(), null);
         command.execute();
     }
 
-    @Test(expectedExceptions = CommandException.class, expectedExceptionsMessageRegExp = ".* Output: ; Error: some error.")
-    public void testCommandPrintToErrorStream() throws Exception {
+    @Test
+    public void testCommandPrintToErrorStreamWithNormalExitCode() throws Exception {
         Command command = new SimpleCommand("echo \"some error\" 1>&2", new LocalAgent(), null);
         command.execute();
     }
 
     @Test
     public void testCommandPrintToOutputStream() throws Exception {
-        Command command = new SimpleCommand("echo -n \"some error\"", new LocalAgent(), null);
-        assertEquals(command.execute(), "some error");
-    }
-
-    @Test
-    public void testCommandPrintWarningToErrorStream() throws Exception {
-        Command command = new SimpleCommand("echo \"warning: some error\" 1>&2", new LocalAgent(), null);
-        assertTrue(command.execute().isEmpty());
+        Command command = new SimpleCommand("echo -n \"some output\"", new LocalAgent(), null);
+        assertEquals(command.execute(), "some output");
     }
 }

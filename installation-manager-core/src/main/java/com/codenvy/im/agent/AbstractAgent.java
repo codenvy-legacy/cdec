@@ -35,11 +35,11 @@ public abstract class AbstractAgent implements Agent {
         String output = readOutput(in);
         String errorOutput = readOutput(error);
 
-        if (exitStatus != 0 || (!errorOutput.isEmpty() && !errorOutput.toUpperCase().startsWith("WARNING"))) {
-            throw new Exception(format("Output: %s; Error: %s.", output, errorOutput));
-        } else {
+        if (exitStatus == 0) {
             return output;
         }
+
+        throw new Exception(format("Output: %s; Error: %s.", output, errorOutput));
     }
 
     protected AgentException makeAgentException(String errorMessage, Exception e) {
