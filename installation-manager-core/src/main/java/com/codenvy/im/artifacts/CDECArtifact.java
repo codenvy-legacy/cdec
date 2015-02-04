@@ -19,10 +19,12 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.api.core.rest.shared.dto.ApiInfo;
+import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.config.Config;
+import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -43,6 +45,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 
 import static com.codenvy.im.command.SimpleCommand.createLocalCommand;
+import static com.codenvy.im.config.NodeConfig.extractConfigsFrom;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
@@ -144,6 +147,17 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
+        switch (installOptions.getInstallType()) {
+            case CODENVY_MULTI_SERVER:
+                return getInstallInfoForMultiServer();
+
+            case CODENVY_SINGLE_SERVER:
+            default:
+                return getInstallInfoForSingleServer();
+        }
+    }
+
+    private List<String> getInstallInfoForSingleServer() {
         return ImmutableList.of("Disable SELinux",
                                 "Install puppet binaries",
                                 "Unzip Codenvy binaries",
@@ -155,6 +169,21 @@ public class CDECArtifact extends AbstractArtifact {
                                 "Boot Codenvy");
     }
 
+    private List<String> getInstallInfoForMultiServer() {
+        return ImmutableList.of(
+            "Disable SELinux on nodes"
+//            "Install puppet master",  // TODO [ndp]
+//            "Install puppet agents",
+//            "Unzip Codenvy binaries",
+//            "Configure puppet master",
+//            "Configure puppet agents",
+//            "Launch puppet master",
+//            "Launch puppet agents",
+//            "Install Codenvy",
+//            "Boot Codenvy"
+        );
+    }
+
     /** {@inheritDoc} */
     @Override
     public Command getInstallCommand(final Version versionToInstall,
@@ -164,18 +193,29 @@ public class CDECArtifact extends AbstractArtifact {
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 
+        switch (installOptions.getInstallType()) {
+            case CODENVY_MULTI_SERVER:
+                return getInstallCommandsForMultiServer(versionToInstall, pathToBinaries, config, step);
+
+            case CODENVY_SINGLE_SERVER:
+            default:
+                return getInstallCommandsForSingleServer(versionToInstall, pathToBinaries, config, step);
+        }
+    }
+
+    private Command getInstallCommandsForSingleServer(Version versionToInstall, Path pathToBinaries, final Config config, int step) {
         switch (step) {
             case 0:
                 return new MacroCommand(ImmutableList.of(
-                        createLocalRestoreOrBackupCommand("/etc/selinux/config"),
-                        createLocalCommand("if sudo test -f /etc/selinux/config; then " +
-                                           "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
-                                           "        sudo setenforce 0; " +
-                                           "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
-                                           "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
-                                           "    fi " +
-                                           "fi ")),
-                                        "Disable SELinux");
+                    createLocalRestoreOrBackupCommand("/etc/selinux/config"),
+                    createLocalCommand("if sudo test -f /etc/selinux/config; then " +
+                                       "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                       "        sudo setenforce 0; " +
+                                       "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                       "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                       "    fi " +
+                                       "fi ")),
+                    "Disable SELinux");
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
@@ -284,6 +324,29 @@ public class CDECArtifact extends AbstractArtifact {
         }
     }
 
+
+    private Command getInstallCommandsForMultiServer(Version versionToInstall, Path pathToBinaries, Config config, int step) throws AgentException {
+        List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
+        switch (step) {
+            case 0:
+                return new MacroCommand(ImmutableList.of(
+                    createShellRestoreOrBackupCommand("/etc/selinux/config", nodeConfigs),
+                    createShellCommand("if sudo test -f /etc/selinux/config; then " +
+                                       "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                       "        sudo setenforce 0; " +
+                                       "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                       "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                       "    fi " +
+                                       "fi ", "Disable SELinux", nodeConfigs)
+                    ),
+                    "Disable SELinux");
+
+            // TODO [dnochevnov]
+            default:
+                throw new IllegalArgumentException(format("Step number %d is out of install range", step));
+        }
+    }
+
     protected Command getPatchCommand(Path patchDir, Version versionToUpdate) throws IOException {
         List<Command> commands;
         commands = new ArrayList<>();
@@ -310,16 +373,28 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     protected Command createLocalRestoreOrBackupCommand(final String file) {
-        final String backupFile = file + ".back";
-        return createLocalCommand(
-                format("if sudo test -f %2$s; then " +
-                       "    if ! sudo test -f %1$s; then " +
-                       "        sudo cp %2$s %1$s; " +
-                       "    else " +
-                       "        sudo cp %1$s %2$s; " +
-                       "    fi " +
-                       "fi",
-                       backupFile,
-                       file));
+        return createLocalCommand(getRestoreOrBackupCommand(file));
     }
+
+    protected Command createShellRestoreOrBackupCommand(final String file, List<NodeConfig> nodes) throws AgentException {
+        return MacroCommand.createShellCommandsForEachNode(getRestoreOrBackupCommand(file), null, nodes);
+    }
+
+    protected String getRestoreOrBackupCommand(final String file) {
+        final String backupFile = file + ".back";
+        return format("if sudo test -f %2$s; then " +
+                   "    if ! sudo test -f %1$s; then " +
+                   "        sudo cp %2$s %1$s; " +
+                   "    else " +
+                   "        sudo cp %1$s %2$s; " +
+                   "    fi " +
+                   "fi",
+                   backupFile,
+                   file);
+    }
+
+    private Command createShellCommand(String command, String description, List<NodeConfig> nodes) throws AgentException {
+        return MacroCommand.createShellCommandsForEachNode(command, description, nodes);
+    }
+
 }

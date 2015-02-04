@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -135,7 +136,7 @@ public class TestConfig {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configUtil.loadCdecDefaultProperties("3.1.0");
+        Map<String, String> m = configUtil.loadCdecDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -207,8 +208,8 @@ public class TestConfig {
                                              "  $builder_max_execution_time = \"600\"\n" +
                                              "\n");
 
-        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles();
-        Map<String, String> m = configUtil.loadInstalledCssProperties();
+        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        Map<String, String> m = configUtil.loadInstalledCssProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
@@ -217,8 +218,8 @@ public class TestConfig {
     @Test(expectedExceptions = ConfigException.class)
     public void testLoadInstalledCssPropertiesErrorIfFileAbsent() throws Exception {
         Path properties = Paths.get("target/unexisted");
-        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles();
-        configUtil.loadInstalledCssProperties();
+        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        configUtil.loadInstalledCssProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
     }
 
     @Test

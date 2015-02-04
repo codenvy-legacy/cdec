@@ -33,7 +33,8 @@ public class InstallOptions {
 
     /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
     public static enum InstallType {
-        CODENVY_SINGLE_SERVER
+        CODENVY_SINGLE_SERVER,
+        CODENVY_MULTI_SERVER
     }
 
     /** Getter for {@link #installType} */
@@ -79,7 +80,8 @@ public class InstallOptions {
 
     /** Indicates if all necessary options are set. */
     public boolean checkValid() {
-        if (getInstallType() == InstallType.CODENVY_SINGLE_SERVER) {
+        if (getInstallType() == InstallType.CODENVY_SINGLE_SERVER
+            || getInstallType() == InstallType.CODENVY_MULTI_SERVER) {
             if (configProperties == null) {
                 return false;
             }

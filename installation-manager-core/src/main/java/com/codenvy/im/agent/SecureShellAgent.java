@@ -45,7 +45,7 @@ public class SecureShellAgent extends AbstractAgent {
         try {
             session = getSession(host, port, user);
             session.setPassword(password);
-        } catch (JSchException e) {
+        } catch (Exception e) {
             String errorMessage = format("Can't connect to host '%s@%s:%s'.", user, host, port);
             throw makeAgentException(errorMessage, e);
         }
@@ -60,7 +60,7 @@ public class SecureShellAgent extends AbstractAgent {
         try {
             session = getSession(host, port, user);
             jsch.addIdentity(privateKeyFileAbsolutePath, passPhrase);
-        } catch (JSchException e) {
+        } catch (Exception e) {
             String errorMessage = format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
             throw makeAgentException(errorMessage, e);
         }

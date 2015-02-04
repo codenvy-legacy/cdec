@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -70,9 +71,19 @@ public class ConfigUtil {
     }
 
     /** Loads default properties. */
-    public Map<String, String> loadCdecDefaultProperties(String version) throws IOException {
+    public Map<String, String> loadCdecDefaultProperties(String version, InstallOptions.InstallType installType) throws IOException {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        String requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-single-server-properties/" + version);
+
+        String requestUrl = "";
+        switch (installType) {
+            case CODENVY_MULTI_SERVER:
+                requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-multi-server-properties/" + version);
+                break;
+
+            case CODENVY_SINGLE_SERVER:
+            default:
+                requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-single-server-properties/" + version);
+        }
 
         Path properties;
         try {
@@ -123,10 +134,10 @@ public class ConfigUtil {
      * <p/>
      * Finally method removes leading '$' for key name and quota characters for its value.
      */
-    public Map<String, String> loadInstalledCssProperties() throws IOException {
+    public Map<String, String> loadInstalledCssProperties(InstallOptions.InstallType installType) throws IOException {
         Map<String, String> properties = new HashMap<>();
 
-        Iterator<Path> files = getCssPropertiesFiles();
+        Iterator<Path> files = getCssPropertiesFiles(installType);
         while (files.hasNext()) {
             Path propertiesFile = files.next();
 
@@ -151,9 +162,17 @@ public class ConfigUtil {
         return properties;
     }
 
-    protected Iterator<Path> getCssPropertiesFiles() {
-        return ImmutableList.of(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES),
-                                Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
+    protected Iterator<Path> getCssPropertiesFiles(InstallOptions.InstallType installType) {
+        switch (installType) {
+            case CODENVY_MULTI_SERVER:
+                return ImmutableList.of(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES),
+                                        Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).iterator();
+
+            case CODENVY_SINGLE_SERVER:
+            default:
+                return ImmutableList.of(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES),
+                                        Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
+        }
     }
 
     private Map<String, String> doLoad(InputStream in) throws IOException {

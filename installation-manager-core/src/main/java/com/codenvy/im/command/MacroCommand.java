@@ -17,6 +17,10 @@
  */
 package com.codenvy.im.command;
 
+import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.config.NodeConfig;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /** @author Dmytro Nochevnov */
@@ -27,6 +31,22 @@ public class MacroCommand implements Command {
     public MacroCommand(List<Command> commands, String description) {
         this.commands = commands;
         this.description = description;
+    }
+
+    /* Factory */
+    public static Command createShellCommandsForEachNode(String command, String description, List<NodeConfig> nodes) throws AgentException {
+        final List<Command> commands = new ArrayList<>();
+        for (NodeConfig node : nodes) {
+            commands.add(SimpleCommand.createShellCommand(
+                command,
+                node.getHost(),
+                node.getPort(),
+                node.getUser(),
+                node.getPrivateKeyFileAbsolutePath()
+            ));
+        }
+
+        return new MacroCommand(commands, description);
     }
 
     /** {@inheritDoc} */

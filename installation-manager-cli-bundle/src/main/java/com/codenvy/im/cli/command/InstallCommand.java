@@ -64,6 +64,7 @@ public class InstallCommand extends AbstractIMCommand {
     private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
     private final ConfigUtil configUtil;
+    private InstallOptions.InstallType installType;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     protected String artifactName;
@@ -73,6 +74,9 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
+
+    @Option(name = "--multi", aliases = "-m", description = "To install artifact on multi nodes (default is single node)", required = false)
+    private boolean multi;
 
     @Option(name = "--config", aliases = "-c", description = "Path to the configuration file", required = false)
     private String configFilePath;
@@ -106,6 +110,12 @@ public class InstallCommand extends AbstractIMCommand {
 
         if (version == null) {
             version = service.getVersionToInstall(initRequest(artifactName, null), getFirstInstallStep());
+        }
+
+        if (multi) {
+            installType = InstallOptions.InstallType.CODENVY_MULTI_SERVER;
+        } else {
+            installType = InstallOptions.InstallType.CODENVY_SINGLE_SERVER;
         }
 
         final Request request = initRequest(artifactName, version);
@@ -264,17 +274,17 @@ public class InstallCommand extends AbstractIMCommand {
                 break;
 
             case CDECArtifact.NAME:
-                options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+                options.setInstallType(installType);
 
                 Map<String, String> properties;
                 if (configFilePath != null) {
                     properties = configUtil.loadConfigProperties(configFilePath);
                 } else {
                     if (isInstall()) {
-                        properties = configUtil.loadCdecDefaultProperties(version);
+                        properties = configUtil.loadCdecDefaultProperties(version, installType);
                     } else {
-                        properties = configUtil.merge(configUtil.loadInstalledCssProperties(),
-                                                      configUtil.loadCdecDefaultProperties(version));
+                        properties = configUtil.merge(configUtil.loadInstalledCssProperties(installType),
+                                                      configUtil.loadCdecDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
                     }
                 }

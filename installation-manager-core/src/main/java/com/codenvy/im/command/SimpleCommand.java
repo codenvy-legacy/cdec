@@ -20,6 +20,7 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.agent.SecureShellAgent;
 
 import static java.lang.String.format;
 
@@ -38,6 +39,17 @@ public class SimpleCommand implements Command {
     /** Factory method */
     public static SimpleCommand createLocalCommand(String command) {
         return new SimpleCommand(command, new LocalAgent(), null);
+    }
+
+    /** Factory method */
+    public static SimpleCommand createShellCommand(String command,
+                                                   final String host,
+                                                   final int port,
+                                                   final String user,
+                                                   final String privateKeyFileAbsolutePath) throws AgentException {
+        return new SimpleCommand(command,
+                                 new SecureShellAgent(host, port, user, privateKeyFileAbsolutePath, null),
+                                 null);
     }
 
     /** {@inheritDoc} */

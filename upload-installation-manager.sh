@@ -46,7 +46,7 @@ uploadInstallationManagerCli() {
     doUpload
 }
 
-uploadCodenvySingleServerInstallScript() {
+uploadCodenvyServerInstallScript() {
     ARTIFACT=install-codenvy
     FILENAME=install-codenvy.sh
     VERSION=$1
@@ -61,6 +61,14 @@ uploadCodenvySingleServerInstallScript() {
 uploadCodenvySingleServerInstallProperties() {
     ARTIFACT=codenvy-single-server-properties
     FILENAME=codenvy-single-server.properties
+    VERSION=$1
+    SOURCE=installation-manager-resources/src/main/resources/${VERSION}/${FILENAME}
+    doUpload
+}
+
+uploadCodenvyMultiServerInstallProperties() {
+    ARTIFACT=codenvy-multi-server-properties
+    FILENAME=codenvy-multi-server.properties
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/${VERSION}/${FILENAME}
     doUpload
@@ -92,10 +100,13 @@ doUpload() {
 uploadInstallationManagerCli
 
 for VERSION in 3.1.0; do
-    uploadCodenvySingleServerInstallScript ${VERSION}
+    uploadCodenvyServerInstallScript ${VERSION}
 done
 
 for VERSION in 3.1.0 3.3.0 3.5.0; do
     uploadCodenvySingleServerInstallProperties ${VERSION}
 done
 
+for VERSION in 3.5.0; do
+    uploadCodenvyMultiServerInstallProperties ${VERSION}
+done

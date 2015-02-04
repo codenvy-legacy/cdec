@@ -4,12 +4,18 @@
 set -e
 
 ARTIFACT="cdec"
+CODENVY_TYPE='single'
+
 if [ -z $1 ]; then
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+    VERSION=`curl -s https://codenvy-stg.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+elif [ "$1" == "-multi" ]; then
+    VERSION=`curl -s https://codenvy-stg.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+    CODENVY_TYPE='multi'
 else
     VERSION=$1
 fi
-CONFIG="codenvy-single-server.properties"
+
+CONFIG="codenvy-${CODENVY_TYPE}-server.properties"
 DIR="${HOME}/codenvy-im"
 
 checkOS() {
@@ -105,7 +111,7 @@ askPassword() {
     insertProperty "codenvy_password" ${PASSWORD}
 }
 
-askDNS() {
+askDNS_single() {
     printPrompt; echo -n "Please set the DNS hostname to be used by Codenvy: "
     read DNS
     insertProperty "aio_host_url" ${DNS}
@@ -118,14 +124,44 @@ askDNS() {
     fi
 }
 
-prepareConfig() {
+askDNS_multi() {
+    PROMPT=$1
+    VARIABLE=$2
+    
+    printPrompt; echo -n "${PROMPT}: "
+    read DNS
+    insertProperty "$2" ${DNS}
+
+#    if ! sudo grep -Fq "${DNS}" /etc/hosts; then
+#        echo "127.0.0.1 ${DNS}" | sudo tee --append /etc/hosts > /dev/null   # TODO [ndp] review
+#    fi    
+}
+
+prepareConfig_single() {
     if [ ! -f ${CONFIG} ]; then
-        curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-single-server-properties/${VERSION}
+        curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
     askProperty "Codenvy user name (your email address)" "codenvy_user_name"
     askPassword
-    askDNS
+    askDNS_single
+}
+
+prepareConfig_multi() {
+    if [ ! -f ${CONFIG} ]; then
+        curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
+    fi
+
+    askProperty "Codenvy user name (your email address)" "codenvy_user_name"
+    askPassword
+    askDNS_multi "Please set the DNS hostname to be used as Puppet Master node" "host_url"
+    askDNS_multi "Please set the DNS hostname to be used as Data node" "data_host_name"
+    askDNS_multi "Please set the DNS hostname to be used as API node" "api_host_name"
+    askDNS_multi "Please set the DNS hostname to be used as Builder node" "builder_host_name"
+    askDNS_multi "Please set the DNS hostname to be used as Runner node" "runner_host_name"
+    askDNS_multi "Please set the DNS hostname to be used as Datasource node" "datasource_host_name"
+    askDNS_multi "Please set the DNS hostname to be used as Analytics node" "analytics_host_name"
+    askDNS_multi "Please set the DNS hostname to be used as Site node" "site_host_name"
 }
 
 executeIMCommand() {
@@ -138,7 +174,7 @@ preconfigureSystem() {
     installPackageIfNeed curl
 }
 
-printPreInstallInfo() {
+printPreInstallInfo_single() {
     checkOS
 
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f ",tmp}'`
@@ -188,7 +224,7 @@ printPreInstallInfo() {
         printPrompt; echo "Press any key to continue"
         printPrompt; echo
         read -n1 -s
-        prepareConfig
+        prepareConfig_single
         printPrompt; echo
     else
         HOSTNAME=`grep [aio_]*host_url=.* ${CONFIG} | cut -f2 -d '='`
@@ -209,13 +245,90 @@ printPreInstallInfo() {
     if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
 }
 
-printPostInstallInfo() {
+printPreInstallInfo_multi() {
+    checkOS
+
+    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f ",tmp}'`
+    availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
+    availableCores=`grep -c ^processor /proc/cpuinfo`
+
+    printPrompt; echo "Welcome. This program installs Codenvy on multi nodes."
     printPrompt; echo
-    HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
-    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
+    printPrompt; echo "This program will:"
+    printPrompt; echo "1. Configure the system"
+    printPrompt; echo "2. Install Java and other required packages"
+    printPrompt; echo "3. Install the Codenvy Installation Manager"
+    printPrompt; echo "4. Download Codenvy"
+    printPrompt; echo "5. Install Codenvy by installing Puppet and configuring system parameters"
+    printPrompt; echo "6. Boot Codenvy"
     printPrompt; echo
-    printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node/#install-troubleshooting"
-    printPrompt; echo "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-single-node/#upgrades"
+    printPrompt; echo
+    printPrompt; echo "By continuing, you accept the Codenvy Agreement @ http://codenvy.com/legal"
+    printPrompt; echo
+    printPrompt; echo "Press any key to continue"
+    read -n1 -s
+    clear
+
+    printPrompt; echo "Checking for system pre-requisites..."  # TODO [dnochevnov] update this section to comply with multi node type
+    printPrompt; echo "We have detected that this node is a ${OS} distribution."
+    printPrompt; echo
+    printPrompt; echo "RESOURCE      : MINIMUM : AVAILABLE"
+    printPrompt; echo "RAM           : 8GB     : ${availableRAM}GB"
+    printPrompt; echo "CPU           : 4 cores : ${availableCores} cores"
+    printPrompt; echo "Disk Space    : 300GB   : ${availableDiskSpace}B"
+    printPrompt; echo
+    printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
+    printPrompt; echo
+    printPrompt; echo "Press any key to continue"
+    read -n1 -s
+    clear
+
+    if [ ! -f ${CONFIG} ]; then
+        printPrompt; echo "Configuration file : not detected - will download template"
+        printPrompt; echo
+        printPrompt; echo "Codenvy user name            : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy password             : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy nodes' DNS hostnames : not set - will prompt for entry"
+        printPrompt; echo
+        printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
+        printPrompt; echo
+        printPrompt; echo "Press any key to continue"
+        printPrompt; echo
+        read -n1 -s
+        prepareConfig_multi
+        printPrompt; echo
+    else
+        CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
+        HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
+        DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        RUNNER_HOST_NAME=`grep runner_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        DATASOURCE_HOST_NAME=`grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
+
+        printPrompt; echo "Configuration file : "${CONFIG}
+        printPrompt; echo
+        printPrompt; echo "Codenvy user name    : "${CODENVY_USER}
+        printPrompt; echo "Codenvy password     : ******"
+        printPrompt; echo
+        printPrompt; echo "Codenvy DNS hostname : "${HOST_NAME}
+        printPrompt; echo "Codenvy Data node DNS hostname : "${DATA_HOST_NAME}
+        printPrompt; echo "Codenvy API node DNS hostname : "${API_HOST_NAME}
+        printPrompt; echo "Codenvy Builder node DNS hostname : "${BUILDER_HOST_NAME}
+        printPrompt; echo "Codenvy Runner node DNS hostname : "${RUNNER_HOST_NAME}
+        printPrompt; echo "Codenvy Datasource node DNS hostname : "${RUNNER_HOST_NAME}
+        printPrompt; echo "Codenvy Analytics node DNS hostname : "${ANALYTICS_HOST_NAME}
+        printPrompt; echo "Codenvy Site node DNS hostname : "${SITE_HOST_NAME}
+        printPrompt; echo
+        printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
+        printPrompt; echo
+    fi
+
+    printPrompt; echo -n "Continue installation [y/N]: "
+    read ANSWER
+    if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
 }
 
 doInstallStep1() {
@@ -259,30 +372,59 @@ doInstallStep4() {
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 
-doInstallStep5() {
+doInstallStep5_single() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
     executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
-doInstallStep6() {
+doInstallStep6_single() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
     executeIMCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
+printPostInstallInfo_single() {
+    printPrompt; echo
+    HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
+    printPrompt; echo
+    printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node/#install-troubleshooting"
+    printPrompt; echo "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-single-node/#upgrades"
+}
+
+doInstallStep5_multi() {
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTI NODES"
+    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
+}
+
+doInstallStep6_multi() {
+    printPrompt; echo
+    printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTI NODES"
+    executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
+}
+
+printPostInstallInfo_multi() {
+    printPrompt; echo
+    HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
+}
+
 clear
 preconfigureSystem
 
-printPreInstallInfo
+printPreInstallInfo_${CODENVY_TYPE}
 
 doInstallStep1
 doInstallStep2
 doInstallStep3
 doInstallStep4
-doInstallStep5
-doInstallStep6
+doInstallStep5_${CODENVY_TYPE}
+doInstallStep6_${CODENVY_TYPE}
 
-printPostInstallInfo
+printPostInstallInfo_${CODENVY_TYPE}
