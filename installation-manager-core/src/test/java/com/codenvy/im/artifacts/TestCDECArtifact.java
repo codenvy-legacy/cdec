@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import java.net.ConnectException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -143,12 +144,16 @@ public class TestCDECArtifact {
         batch = batch.substring(1, batch.length() - 1);
         String[] s = batch.split(", ");
 
-        assertEquals(s.length, 2);
-        assertTrue(s[0].startsWith("sudo "));
-        assertTrue(s[1].startsWith("sudo "));
+        assertEquals(Arrays.toString(s), "[" +
+                                         "{'command'='sudo bash target/patches/1.0.1/patch.sh', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo bash target/patches/1.0.2/patch.sh', 'agent'='LocalAgent'}" +
+                                         "]");
 
-        command = new MacroCommand(ImmutableList.<Command>of(new SimpleCommand(s[0].substring(5), new LocalAgent(), null),
-                                                             new SimpleCommand(s[1].substring(5), new LocalAgent(), null)),
+        String patchCommandWithoutSudo1 = s[0].substring(17, 51);
+        String patchCommandWithoutSudo2 = s[2].substring(17, 51);
+
+        command = new MacroCommand(ImmutableList.<Command>of(new SimpleCommand(patchCommandWithoutSudo1, new LocalAgent(), null),
+                                                             new SimpleCommand(patchCommandWithoutSudo2, new LocalAgent(), null)),
                                    null);
 
         String output = command.execute();

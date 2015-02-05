@@ -17,6 +17,9 @@
  */
 package com.codenvy.im.command;
 
+import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.config.NodeConfig;
+import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -24,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static java.lang.String.format;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -72,6 +76,25 @@ public class TestMacroCommand {
         }}, "macro");
 
         testCommand.execute();
+    }
+
+    @Test
+    public void testCreateShellCommandsForEachNode() throws AgentException {
+        String command = "command";
+        String description = "description";
+        List<NodeConfig> nodes = ImmutableList.of(
+            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+        );
+
+        String user = System.getProperty("user.name");
+        String expectedCommand = format("[" +
+                                        "{'command'='command', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                        "{'command'='command', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                        "]", user);
+
+        Command testMacroCommand = MacroCommand.createShellCommandsForEachNode(command, description, nodes);
+        assertEquals(testMacroCommand.toString(), expectedCommand);
     }
 
     class DummyCommand implements Command {

@@ -20,7 +20,6 @@ package com.codenvy.im.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.utils.Version;
-
 import org.junit.Before;
 import org.junit.Test;
 

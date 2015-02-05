@@ -20,16 +20,15 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import static java.lang.String.format;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -55,8 +54,8 @@ public class TestSimpleCommand {
 
     @Test
     public void testCommandToString() {
-        Command command = new SimpleCommand("ls", null, "test description");
-        assertEquals(command.toString(), "ls");
+        Command command = new SimpleCommand("ls", new LocalAgent(), "test description");
+        assertEquals(command.toString(), "{'command'='ls', 'agent'='LocalAgent'}");
     }
 
     @Test
@@ -95,5 +94,19 @@ public class TestSimpleCommand {
     public void testCommandPrintToOutputStream() throws Exception {
         Command command = new SimpleCommand("echo -n \"some output\"", new LocalAgent(), null);
         assertEquals(command.execute(), "some output");
+    }
+
+    @Test
+    public void testCreateShellCommand() throws AgentException {
+        String command = "command";
+        String host = "localhost";
+        int port = 22;
+        String user = System.getProperty("user.name");
+        String privateKeyFile = format("/home/%s/.ssh/id_rsa", System.getProperty("user.name"));
+
+        String expectedResult = format("{'command'='command', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", host, user, privateKeyFile);
+
+        Command testCommand = SimpleCommand.createShellCommand(command, host, port, user, privateKeyFile);
+        assertEquals(testCommand.toString(), expectedResult);
     }
 }

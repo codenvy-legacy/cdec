@@ -33,22 +33,6 @@ public class MacroCommand implements Command {
         this.description = description;
     }
 
-    /* Factory */
-    public static Command createShellCommandsForEachNode(String command, String description, List<NodeConfig> nodes) throws AgentException {
-        final List<Command> commands = new ArrayList<>();
-        for (NodeConfig node : nodes) {
-            commands.add(SimpleCommand.createShellCommand(
-                command,
-                node.getHost(),
-                node.getPort(),
-                node.getUser(),
-                node.getPrivateKeyFile()
-            ));
-        }
-
-        return new MacroCommand(commands, description);
-    }
-
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
@@ -70,5 +54,21 @@ public class MacroCommand implements Command {
     @Override
     public String toString() {
         return commands.toString();
+    }
+
+    /* Factory */
+    public static Command createShellCommandsForEachNode(String command, String description, List<NodeConfig> nodes) throws AgentException {
+        final List<Command> commands = new ArrayList<>();
+        for (NodeConfig node : nodes) {
+            commands.add(SimpleCommand.createShellCommand(
+                command,
+                node.getHost(),
+                node.getPort(),
+                node.getUser(),
+                node.getPrivateKeyFile()
+            ));
+        }
+
+        return new MacroCommand(commands, description);
     }
 }

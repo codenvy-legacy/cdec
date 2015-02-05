@@ -186,4 +186,9 @@ public class LocalAgent extends AbstractAgent {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
 }

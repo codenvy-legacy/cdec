@@ -46,9 +46,9 @@ public class SimpleCommand implements Command {
                                                    final String host,
                                                    final int port,
                                                    final String user,
-                                                   final String privateKeyFileAbsolutePath) throws AgentException {
+                                                   final String privateKeyFilePath) throws AgentException {
         return new SimpleCommand(command,
-                                 new SecureShellAgent(host, port, user, privateKeyFileAbsolutePath, null),
+                                 new SecureShellAgent(host, port, user, privateKeyFilePath, null),
                                  null);
     }
 
@@ -71,7 +71,7 @@ public class SimpleCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return command;
+        return format("{'command'='%s', 'agent'='%s'}", command, agent);
     }
 
     protected CommandException makeCommandException(Exception e) {

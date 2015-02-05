@@ -120,4 +120,16 @@ public class SecureShellAgent extends AbstractAgent {
             Thread.sleep(100);
         }
     }
+
+    @Override
+    public String toString() {
+        try {
+            return format("{'host'='%s', 'user'='%s', 'identity'='%s'}",
+                          session.getHost(),
+                          session.getUserName(),
+                          jsch.getIdentityNames().toString());
+        } catch (JSchException e) {
+            return format("{'host'='%s'}", session.getHost());
+        }
+    }
 }
