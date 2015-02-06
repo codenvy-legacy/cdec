@@ -150,7 +150,7 @@ public class TestConsole {
     public void testShowHideLoaderBar() throws IOException, InterruptedException {
         String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
-        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);  // TODO [ndp] make more stable
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
@@ -168,7 +168,7 @@ public class TestConsole {
     @Test
     public void testShowHideRestoreHideLoaderBar() throws IOException, InterruptedException {
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
-        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);  // TODO [ndp] make more stable
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
@@ -197,9 +197,10 @@ public class TestConsole {
 
     @Test
     public void testShowLoaderBarAfterShow() throws IOException, InterruptedException {
-        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        String expectedOutputEnd = " \u001B[u\u001B[s";
+        String expectedOutputStart = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s";
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
-        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 2);
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
@@ -209,14 +210,16 @@ public class TestConsole {
         spyConsole.hideProgressor();
 
         String actualOutput = getOutputContent();
-        assertTrue(actualOutput.startsWith(expectedOutput));
+        assertTrue(actualOutput.startsWith(expectedOutputStart));
+        assertTrue(actualOutput.endsWith(expectedOutputEnd));
     }
 
     @Test
     public void testHideLoaderBarAfterHide() throws IOException, InterruptedException {
-        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
+        String expectedOutputStart = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s";
+        String expectedEndOutputEnd = " \u001B[u\u001B[s";
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
-        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 2);
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
@@ -225,7 +228,8 @@ public class TestConsole {
         spyConsole.hideProgressor();
 
         String actualOutput = getOutputContent();
-        assertTrue(actualOutput.startsWith(expectedOutput));
+        assertTrue(actualOutput.startsWith(expectedOutputStart));
+        assertTrue(actualOutput.endsWith(expectedEndOutputEnd));
     }
 
     @Test

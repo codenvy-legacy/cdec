@@ -24,6 +24,7 @@ import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Commons;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 
 import static com.codenvy.im.command.SimpleCommand.createLocalCommand;
+import static com.codenvy.im.config.NodeConfig.extractConfigFrom;
 import static com.codenvy.im.config.NodeConfig.extractConfigsFrom;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.getVersionsList;
@@ -71,10 +73,13 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Version getInstalledVersion() throws IOException {
+    public Version getInstalledVersion() throws IOException {   // TODO [ndp] read installed version of Codenvy multi node
         String response;
         try {
             response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
+//            String codenvyHostDns = getCodenvyHostDns();  // TODO [ndp]
+//            String checkServiceUrl = format("http://%s/api", codenvyHostDns);
+//            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
         } catch (IOException e) {
             return null;
         }
@@ -123,8 +128,8 @@ public class CDECArtifact extends AbstractArtifact {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createLocalReplaceCommand("/tmp/cdec/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createLocalReplaceCommand("/tmp/cdec/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalPropertyReplaceCommand("/tmp/cdec/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalPropertyReplaceCommand("/tmp/cdec/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
                 return new MacroCommand(commands, "Configure Codenvy");
 
@@ -167,21 +172,6 @@ public class CDECArtifact extends AbstractArtifact {
                                 "Launch puppet agent",
                                 "Install Codenvy (~25 min)",
                                 "Boot Codenvy");
-    }
-
-    private List<String> getInstallInfoForMultiServer() {
-        return ImmutableList.of(
-            "Disable SELinux on nodes"
-//            "Install puppet master",  // TODO [ndp]
-//            "Install puppet agents",
-//            "Unzip Codenvy binaries",
-//            "Configure puppet master",
-//            "Configure puppet agents",
-//            "Launch puppet master",
-//            "Launch puppet agents",
-//            "Install Codenvy",
-//            "Boot Codenvy"
-        );
     }
 
     /** {@inheritDoc} */
@@ -265,8 +255,8 @@ public class CDECArtifact extends AbstractArtifact {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createLocalReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createLocalReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
 
                 return new MacroCommand(commands, "Configure puppet master");
@@ -274,7 +264,7 @@ public class CDECArtifact extends AbstractArtifact {
             case 4:
                 return new MacroCommand(ImmutableList.of(
                         createLocalRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
-                        createLocalCommand(format("sudo sed -i '1i[master]' /etc/puppet/puppet.conf")),
+                        createLocalCommand("sudo sed -i '1i[master]' /etc/puppet/puppet.conf"),
                         createLocalCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
                         createLocalCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                                   "  dns_alt_names = puppet,%s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
@@ -325,8 +315,22 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
 
-    private Command getInstallCommandsForMultiServer(Version versionToInstall, Path pathToBinaries, Config config, int step) throws AgentException {
-        List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
+    private List<String> getInstallInfoForMultiServer() {
+        return ImmutableList.of(
+            "Disable SELinux on nodes",
+            "Install puppet binaries",
+            "Unzip Codenvy binaries",
+            "Configure puppet master",
+            "Configure puppet agents on each nodes",
+            "Launch puppet master",
+            "Launch puppet agents",
+            "Install Codenvy",
+            "Boot Codenvy"
+        );
+    }
+
+    private Command getInstallCommandsForMultiServer(Version versionToInstall, Path pathToBinaries, final Config config, int step) throws AgentException {
+        final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
         switch (step) {
             case 0:
                 return new MacroCommand(ImmutableList.of(
@@ -337,11 +341,135 @@ public class CDECArtifact extends AbstractArtifact {
                                        "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
                                        "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
                                        "    fi " +
-                                       "fi ", "Disable SELinux", nodeConfigs)
+                                       "fi ", nodeConfigs)
                     ),
                     "Disable SELinux");
 
-            // TODO [dnochevnov]
+            case 1:
+                return new MacroCommand(new ArrayList<Command>() {{
+                    // install puppet master
+                    add(createLocalCommand(
+                        "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+                        + format("then sudo yum install %s -y", config.getProperty(Config.PUPPET_RESOURCE_URL))
+                        + "; fi"));
+                    add(createLocalCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_SERVER_VERSION))));
+
+                    add(createLocalCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
+                                           " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
+                                           ".wants/puppetmaster.service'" +
+                                           "; fi"));
+                    add(createLocalCommand("sudo systemctl enable puppetmaster"));
+
+                    // install puppet agents on each node
+                    add(createShellCommand(
+                        "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+                        + format("then sudo yum install %s -y", config.getProperty(Config.PUPPET_RESOURCE_URL))
+                        + "; fi", nodeConfigs));
+                    add(createShellCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_AGENT_VERSION)), nodeConfigs));
+
+                    add(createShellCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                           " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                           ".wants/puppet.service'" +
+                                           "; fi", nodeConfigs));
+                    add(createShellCommand("sudo systemctl enable puppet", nodeConfigs));
+                }}, "Install puppet binaries");
+
+            case 2:
+                return createLocalCommand(format("sudo unzip -o %s -d /etc/puppet", pathToBinaries.toString()));
+
+            case 3: {
+                List<Command> commands = new ArrayList<>();
+
+                commands.add(createLocalRestoreOrBackupCommand("/etc/puppet/fileserver.conf"));
+                commands.add(createLocalCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
+                commands.add(createLocalCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
+                commands.add(createLocalCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
+
+
+                commands.add(createLocalCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/%s",
+                                                       "YOUR_DNS_NAME",
+                                                       config.getHostUrl(),
+                                                       Config.MULTI_SERVER_PROPERTIES)));
+
+                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                    String property = e.getKey();
+                    String value = e.getValue();
+
+                    commands.add(createLocalPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
+                }
+
+                for (Map.Entry<String, String> e : ConfigUtil.getPuppetNodesConfigReplacement(nodeConfigs)) {
+                    String replacingToken = e.getKey();
+                    String replacement = e.getValue();
+
+                    commands.add(createLocalReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
+                }
+
+                commands.add(createLocalRestoreOrBackupCommand("/etc/puppet/puppet.conf"));
+                commands.add(createLocalReplaceCommand("/etc/puppet/puppet.conf",
+                                                       "\\[main\\]",
+                                                       format("\\[master\\]\\n" +
+                                                              "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
+                                                              "    external_nodes = /etc/puppet/node.rb\\n" +
+                                                              "    node_terminus  = exec\\n" +
+                                                              "    ca = true\\n" +
+                                                              "    ssldir = /var/lib/puppet/ssl\\n" +
+                                                              "\\n"+
+                                                              "\\[main\\]\\n" +
+                                                              "    certname = %s\\n" +
+                                                              "    privatekeydir = $ssldir/private_keys { group = service }\\n" +
+                                                              "    hostprivkey = $privatekeydir/$certname.pem { mode = 640 }\\n" +
+                                                              "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
+                                                              "\\n",
+                                                              config.getProperty(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+
+                // sign up nodes certificates automatically
+                commands.add(createLocalCommand("sudo echo '*' > /etc/puppet/autosign.conf"));
+
+                return new MacroCommand(commands, "Configure puppet master");
+            }
+
+            case 4: {
+                List<Command> commands = new ArrayList<>();
+                commands.add(createShellRestoreOrBackupCommand("/etc/puppet/puppet.conf", nodeConfigs));
+                commands.add(createShellCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                              "  server = %s\\n" +
+                                              "  runinterval = 420\\n" +
+                                              "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                                       config.getProperty(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                                nodeConfigs));
+
+                for (NodeConfig node : nodeConfigs) {
+                    commands.add(createShellCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                                  "  show_diff = true\\n" +
+                                                  "  pluginsync = true\\n" +
+                                                  "  report = true\\n" +
+                                                  "  default_schedules = false\\n" +
+                                                  "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
+                }
+
+                return new MacroCommand(commands, "Configure puppet agent");
+            }
+
+            case 5:
+                return createLocalCommand("sudo systemctl start puppetmaster");
+
+            case 6:
+                return new MacroCommand(ImmutableList.of(createShellCommand("sudo systemctl start puppet", nodeConfigs)),
+                                        "Launch puppet agent");
+
+            case 7:
+                return createShellCommand("doneState=\"Installing\"; " +
+                                          "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                          "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                          "    sleep 30; " +
+                                          "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                          "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
+
+            case 8:
+                return new CheckInstalledVersionCommand(this, versionToInstall);
+
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
         }
@@ -364,12 +492,17 @@ public class CDECArtifact extends AbstractArtifact {
         return new MacroCommand(commands, "Patch resources");
     }
 
-    protected Command createLocalReplaceCommand(String file, String property, String value) {
-        return createLocalCommand(
-                format("sudo sed -i 's/%1$s = .*/%1$s = \"%2$s\"/g' %3$s",
-                       property,
-                       value.replace("/", "\\/"),
-                       file));
+    protected Command createLocalPropertyReplaceCommand(String file, String property, String value) {
+        String replacingToken = format("%s = .*", property);
+        String replacement = format("%s = \"%s\"", property, value);
+        return createLocalReplaceCommand(file, replacingToken, replacement);
+    }
+
+    protected Command createLocalReplaceCommand(String file, String replacingToken, String replacement) {
+        return createLocalCommand(format("sudo sed -i 's/%s/%s/g' %s",
+                                         replacingToken.replace("/", "\\/"),
+                                         replacement.replace("/", "\\/"),
+                                         file));
     }
 
     protected Command createLocalRestoreOrBackupCommand(final String file) {
@@ -393,8 +526,12 @@ public class CDECArtifact extends AbstractArtifact {
                    file);
     }
 
-    private Command createShellCommand(String command, String description, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createShellCommandsForEachNode(command, description, nodes);
+    private Command createShellCommand(String command, List<NodeConfig> nodes) throws AgentException {
+        return MacroCommand.createShellCommandsForEachNode(command, null, nodes);
+    }
+
+    private Command createShellCommand(String command, NodeConfig node) throws AgentException {
+        return MacroCommand.createShellCommandForNode(command, node);
     }
 
 }

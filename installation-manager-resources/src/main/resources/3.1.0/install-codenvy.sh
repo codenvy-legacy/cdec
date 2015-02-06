@@ -154,14 +154,15 @@ prepareConfig_multi() {
 
     askProperty "Codenvy user name (your email address)" "codenvy_user_name"
     askPassword
-    askDNS_multi "Please set the DNS hostname to be used as Puppet Master node" "host_url"
-    askDNS_multi "Please set the DNS hostname to be used as Data node" "data_host_name"
-    askDNS_multi "Please set the DNS hostname to be used as API node" "api_host_name"
-    askDNS_multi "Please set the DNS hostname to be used as Builder node" "builder_host_name"
-    askDNS_multi "Please set the DNS hostname to be used as Runner node" "runner_host_name"
-    askDNS_multi "Please set the DNS hostname to be used as Datasource node" "datasource_host_name"
-    askDNS_multi "Please set the DNS hostname to be used as Analytics node" "analytics_host_name"
-    askDNS_multi "Please set the DNS hostname to be used as Site node" "site_host_name"
+    askDNS_multi "Please set the DNS hostname to be used by Codenvy" "host_url"
+    askDNS_multi "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
+    askDNS_multi "Please set the DNS hostname of the Data node" "data_host_name"
+    askDNS_multi "Please set the DNS hostname of the API node" "api_host_name"
+    askDNS_multi "Please set the DNS hostname of the Builder node" "builder_host_name"
+    askDNS_multi "Please set the DNS hostname of the Runner node" "runner_host_name"
+    askDNS_multi "Please set the DNS hostname of the Datasource node" "datasource_host_name"
+    askDNS_multi "Please set the DNS hostname of the Analytics node" "analytics_host_name"
+    askDNS_multi "Please set the DNS hostname of the Site node" "site_host_name"
 }
 
 executeIMCommand() {
@@ -300,6 +301,7 @@ printPreInstallInfo_multi() {
     else
         CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
         HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
+        PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
         API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
         BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -314,6 +316,7 @@ printPreInstallInfo_multi() {
         printPrompt; echo "Codenvy password     : ******"
         printPrompt; echo
         printPrompt; echo "Codenvy DNS hostname : "${HOST_NAME}
+        printPrompt; echo "Codenvy Puppet Master node DNS hostname : "${PUPPET_MASTER_HOST_NAME}
         printPrompt; echo "Codenvy Data node DNS hostname : "${DATA_HOST_NAME}
         printPrompt; echo "Codenvy API node DNS hostname : "${API_HOST_NAME}
         printPrompt; echo "Codenvy Builder node DNS hostname : "${BUILDER_HOST_NAME}
@@ -398,14 +401,14 @@ printPostInstallInfo_single() {
 doInstallStep5_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTI NODES"
-    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTI NODES"
-#    executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 

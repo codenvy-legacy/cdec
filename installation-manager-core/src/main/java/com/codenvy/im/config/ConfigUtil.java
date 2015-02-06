@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -188,5 +189,46 @@ public class ConfigUtil {
         }
 
         return m;
+    }
+
+    /**
+     * Returns list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs.
+     */
+    public static Iterable<? extends Map.Entry<String, String>> getPuppetNodesConfigReplacement(List<NodeConfig> nodeConfigs) {
+        Map replacements = new HashMap<String, String>();
+
+        for (NodeConfig node : nodeConfigs) {
+            NodeConfig.NodeType type = node.getType();
+            switch (type) {
+                case DATA:
+                case API:
+                case SITE:
+                case DATASOURCE:
+                case ANALYTICS: {
+                    String replacingToken = format("%s.example.com", type.toString().toLowerCase());
+                    String replacement = node.getHost();
+                    replacements.put(replacingToken, replacement);
+                    break;
+                }
+
+                case BUILDER: {
+                    String replacingToken = "builder.*example.com";
+                    String replacement = format("builder\\\\d+\\\\.%s", node.getHost().replace("builder1.", ""));
+                    replacements.put(replacingToken, replacement);
+                    break;
+                }
+
+                case RUNNER: {
+                    String replacingToken = "runner.*example.com";
+                    String replacement = format("runner\\\\d+\\\\.%s", node.getHost().replace("runner1.", ""));
+                    replacements.put(replacingToken, replacement);
+                    break;
+                }
+
+                default:
+            }
+        }
+
+        return replacements.entrySet();
     }
 }

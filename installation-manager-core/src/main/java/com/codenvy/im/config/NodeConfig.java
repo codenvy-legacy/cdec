@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.config;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,12 +25,13 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class NodeConfig {
+
     public enum NodeType {
-        DATA(),
+        DATA,
         API,
         SITE,
-        RUNNER,
         BUILDER,
+        RUNNER,
         DATASOURCE,
         ANALYTICS
     }
@@ -87,22 +89,6 @@ public class NodeConfig {
         return type;
     }
 
-    /**
-     * Return default node config of all types of node where just the type and host={NodeType}.{host_url} are set according to the existent types of nodes
-     */
-    public static List<NodeConfig> extractConfigsFrom(Config config) {
-        List<NodeConfig> nodeConfigs = new ArrayList<>();
-        for (NodeType type: NodeType.values()) {
-            String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
-            String nodeHost = config.getProperty(nodeHostPropertyName);
-            if ((nodeHost != null) && (!nodeHost.isEmpty())) {
-                nodeConfigs.add(new NodeConfig(type, nodeHost));
-            }
-        }
-
-        return nodeConfigs;
-    }
-
     @Override
     public String toString() {
         return format("{'host':'%1$s', 'port':'%2$s', 'user':'%3$s', 'privateKeyFile':'%4$s', 'type':'%5$s'}",
@@ -111,5 +97,34 @@ public class NodeConfig {
                       user,
                       privateKeyFile,
                       type);
+    }
+
+    /**
+     * @return node config of all types of node where hostname are being obtained from the config properties
+     */
+    public static List<NodeConfig> extractConfigsFrom(Config config) {
+        List<NodeConfig> nodeConfigs = new ArrayList<>();
+        for (NodeType type: NodeType.values()) {
+            NodeConfig node = extractConfigFrom(config, type);
+            if (node != null) {
+                nodeConfigs.add(node);
+            }
+        }
+
+        return nodeConfigs;
+    }
+
+    /**
+     * @return config of node of certain type with hostname which is being obtained from the config properties.
+     */
+    @Nullable
+    public static NodeConfig extractConfigFrom(Config config, NodeType type) {
+        String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
+        String nodeHost = config.getProperty(nodeHostPropertyName);
+        if ((nodeHost != null) && (!nodeHost.isEmpty())) {
+            return new NodeConfig(type, nodeHost);
+        }
+
+        return null;
     }
 }

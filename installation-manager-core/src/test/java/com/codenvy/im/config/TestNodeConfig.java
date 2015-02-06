@@ -76,7 +76,7 @@ public class TestNodeConfig {
 
     @Test
     public void testTypeEnum() throws Exception {
-        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, API, SITE, RUNNER, BUILDER, DATASOURCE, ANALYTICS]");
+        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, API, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS]");
     }
 
     @Test
@@ -99,8 +99,8 @@ public class TestNodeConfig {
                                         "{'host':'data.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'DATA'}, " +
                                         "{'host':'api.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'API'}, " +
                                         "{'host':'site.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'SITE'}, " +
-                                        "{'host':'runner1.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'RUNNER'}, " +
                                         "{'host':'builder1.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'BUILDER'}, " +
+                                        "{'host':'runner1.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'RUNNER'}, " +
                                         "{'host':'datasource.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'DATASOURCE'}, " +
                                         "{'host':'analytics.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'ANALYTICS'}" +
                                         "]");
