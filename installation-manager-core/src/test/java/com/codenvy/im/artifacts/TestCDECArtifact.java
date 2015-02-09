@@ -22,6 +22,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -34,6 +35,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.nio.file.Files.createDirectories;
-import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -58,6 +59,7 @@ import static org.testng.Assert.assertTrue;
  * @author Dmytro Nochevnov
  */
 public class TestCDECArtifact {
+    public static final String TEST_HOST_DNS = "localhost";
     private CDECArtifact spyCdecArtifact;
 
     @Mock
@@ -66,7 +68,10 @@ public class TestCDECArtifact {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact("", mockTransport));
+        spyCdecArtifact = spy(new CDECArtifact(mockTransport));
+
+        InstallationManagerConfig.CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
+        InstallationManagerConfig.storeCdecHostDns(TEST_HOST_DNS);
     }
 
     @Test
@@ -106,7 +111,7 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstalledVersion() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), (String)isNull())).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+        when(mockTransport.doOption("http://localhost/api", null)).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
         Version version = spyCdecArtifact.getInstalledVersion();
         assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
@@ -114,15 +119,19 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
-        doThrow(new ConnectException()).when(mockTransport).doOption(endsWith("api/"), (String)isNull());
+        doThrow(new ConnectException()).when(mockTransport).doOption("http://localhost/api", null);
         Version version = spyCdecArtifact.getInstalledVersion();
+        assertNull(version);
+
+        InstallationManagerConfig.CONFIG_FILE = Paths.get("unexisted");
+        version = spyCdecArtifact.getInstalledVersion();
         assertNull(version);
     }
 
     @Test(expectedExceptions = JsonSyntaxException.class,
             expectedExceptionsMessageRegExp = "(.*)Expected ':' at line 1 column 14")
     public void testGetInstalledVersionError() throws Exception {
-        when(mockTransport.doOption(endsWith("api/"), (String)isNull())).thenReturn("{\"some text\"}");
+        when(mockTransport.doOption("http://localhost/api", null)).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion();
     }
 
@@ -159,5 +168,13 @@ public class TestCDECArtifact {
         String output = command.execute();
         assertEquals(output, "1.0.1\n" +
                              "1.0.2\n");
+    }
+
+    @Test
+    public void testCreateSaveCodenvyHostDnsCommand() throws IOException {
+        String testHostDns = "test";
+        Command command = spyCdecArtifact.createSaveCodenvyHostDnsCommand(testHostDns);
+        command.execute();
+        assertEquals(InstallationManagerConfig.readCdecHostDns(), testHostDns);
     }
 }

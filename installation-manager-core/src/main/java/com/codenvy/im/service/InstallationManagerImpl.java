@@ -49,6 +49,7 @@ import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
+import static com.codenvy.im.service.InstallationManagerConfig.storeProperty;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.ArtifactsSet;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -327,27 +328,7 @@ public class InstallationManagerImpl implements InstallationManager {
     }
 
     protected void storeProperty(String property, String value) throws IOException {
-        Path conf = getConfFile();
-
-        Properties props = new Properties();
-        if (exists(conf)) {
-            try (InputStream in = newInputStream(conf)) {
-                if (in != null) {
-                    props.load(in);
-                } else {
-                    throw new IOException("Can't store property into configuration");
-                }
-            }
-        }
-
-        props.put(property, value);
-        try (OutputStream out = newOutputStream(conf)) {
-            props.store(out, null);
-        }
-    }
-
-    protected Path getConfFile() throws IOException {
-        return InjectorBootstrap.getConfFile();
+        InstallationManagerConfig.storeProperty(property, value);
     }
 
     /** Filters what need to download, either all updates or a specific one. */

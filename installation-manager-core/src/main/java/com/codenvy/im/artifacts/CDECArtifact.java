@@ -22,11 +22,13 @@ import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.command.CommandException;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
@@ -35,7 +37,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,7 +49,6 @@ import java.util.NavigableSet;
 import static com.codenvy.im.command.SimpleCommand.createLocalCommand;
 import static com.codenvy.im.config.NodeConfig.extractConfigFrom;
 import static com.codenvy.im.config.NodeConfig.extractConfigsFrom;
-import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -62,24 +62,26 @@ public class CDECArtifact extends AbstractArtifact {
     public static final String NAME = "cdec";
 
     private final HttpTransport transport;
-    private final String apiNodeUrl;
 
     @Inject
-    public CDECArtifact(@Named("cdec.api-node.url") String apiNodeUrl, HttpTransport transport) {
+    public CDECArtifact(HttpTransport transport) {
         super(NAME);
         this.transport = transport;
-        this.apiNodeUrl = apiNodeUrl;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Version getInstalledVersion() throws IOException {   // TODO [ndp] read installed version of Codenvy multi node
+    public Version getInstalledVersion() throws IOException {
         String response;
         try {
-            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
-//            String codenvyHostDns = getCodenvyHostDns();  // TODO [ndp]
-//            String checkServiceUrl = format("http://%s/api", codenvyHostDns);
 //            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
+            String codenvyHostDns = InstallationManagerConfig.readCdecHostDns();
+            if (codenvyHostDns == null) {
+                return null;
+            }
+
+            String checkServiceUrl = format("http://%s/api", codenvyHostDns);
+            response = transport.doOption(checkServiceUrl, null);
         } catch (IOException e) {
             return null;
         }
@@ -307,13 +309,17 @@ public class CDECArtifact extends AbstractArtifact {
                                            "done");
 
             case 8:
-                return new CheckInstalledVersionCommand(this, versionToInstall);
+                return new MacroCommand(ImmutableList.of(
+                        createSaveCodenvyHostDnsCommand(config.getHostUrl()),
+                        new CheckInstalledVersionCommand(this, versionToInstall)
+                    ),
+                    "Check if CDEC has already installed");
+
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
         }
     }
-
 
     private List<String> getInstallInfoForMultiServer() {
         return ImmutableList.of(
@@ -334,6 +340,7 @@ public class CDECArtifact extends AbstractArtifact {
         switch (step) {
             case 0:
                 return new MacroCommand(ImmutableList.of(
+                    // disable selinux on puppet agent
                     createShellRestoreOrBackupCommand("/etc/selinux/config", nodeConfigs),
                     createShellCommand("if sudo test -f /etc/selinux/config; then " +
                                        "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
@@ -341,9 +348,20 @@ public class CDECArtifact extends AbstractArtifact {
                                        "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
                                        "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
                                        "    fi " +
-                                       "fi ", nodeConfigs)
-                    ),
-                    "Disable SELinux");
+                                       "fi ", nodeConfigs),
+
+                    // disable selinux on puppet master
+                    createLocalRestoreOrBackupCommand("/etc/selinux/config"),
+                    createLocalCommand("if sudo test -f /etc/selinux/config; then " +
+                                       "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                       "        sudo setenforce 0; " +
+                                       "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                       "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                       "    fi " +
+                                       "fi ")
+
+                ), "Disable SELinux");
+
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
@@ -372,6 +390,17 @@ public class CDECArtifact extends AbstractArtifact {
                                            ".wants/puppet.service'" +
                                            "; fi", nodeConfigs));
                     add(createShellCommand("sudo systemctl enable puppet", nodeConfigs));
+
+                    // disable firewalld to open connection with puppet agents
+                    add(createLocalCommand("service firewalld stop"));
+                    add(createLocalCommand("sudo systemctl disable firewalld"));
+
+                    // install iptables and open port 8140 for puppet  // TODO [ndp]
+                    /*
+                        yum install iptables-services
+                        // add next row into /etc/sysconfig/iptables: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 8140 -j ACCEPT'
+                        service iptables
+                    */
                 }}, "Install puppet binaries");
 
             case 2:
@@ -384,7 +413,6 @@ public class CDECArtifact extends AbstractArtifact {
                 commands.add(createLocalCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
                 commands.add(createLocalCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
                 commands.add(createLocalCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
-
 
                 commands.add(createLocalCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/%s",
                                                        "YOUR_DNS_NAME",
@@ -411,8 +439,6 @@ public class CDECArtifact extends AbstractArtifact {
                                                        "\\[main\\]",
                                                        format("\\[master\\]\\n" +
                                                               "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
-                                                              "    external_nodes = /etc/puppet/node.rb\\n" +
-                                                              "    node_terminus  = exec\\n" +
                                                               "    ca = true\\n" +
                                                               "    ssldir = /var/lib/puppet/ssl\\n" +
                                                               "\\n"+
@@ -424,8 +450,13 @@ public class CDECArtifact extends AbstractArtifact {
                                                               "\\n",
                                                               config.getProperty(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
 
-                // sign up nodes certificates automatically
-                commands.add(createLocalCommand("sudo echo '*' > /etc/puppet/autosign.conf"));
+                // remove "[agent]" section
+                commands.add(createLocalReplaceCommand("/etc/puppet/puppet.conf",
+                                                       "\\[agent\\].*",
+                                                       ""));
+
+                // make it possible to sign up nodes' certificates automatically
+                commands.add(createLocalCommand("sudo sh -c \"echo '*' > /etc/puppet/autosign.conf\""));
 
                 return new MacroCommand(commands, "Configure puppet master");
             }
@@ -468,7 +499,11 @@ public class CDECArtifact extends AbstractArtifact {
                                           "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
 
             case 8:
-                return new CheckInstalledVersionCommand(this, versionToInstall);
+                return new MacroCommand(ImmutableList.of(
+                    createSaveCodenvyHostDnsCommand(config.getHostUrl()),
+                    new CheckInstalledVersionCommand(this, versionToInstall)
+                ),
+                "Check if CDEC has already installed");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -526,12 +561,29 @@ public class CDECArtifact extends AbstractArtifact {
                    file);
     }
 
-    private Command createShellCommand(String command, List<NodeConfig> nodes) throws AgentException {
+    protected Command createShellCommand(String command, List<NodeConfig> nodes) throws AgentException {
         return MacroCommand.createShellCommandsForEachNode(command, null, nodes);
     }
 
-    private Command createShellCommand(String command, NodeConfig node) throws AgentException {
+    protected Command createShellCommand(String command, NodeConfig node) throws AgentException {
         return MacroCommand.createShellCommandForNode(command, node);
     }
 
+    protected Command createSaveCodenvyHostDnsCommand(final String hostDns) {
+        return new Command() {   // TODO [ndp] extract class
+            @Override
+            public String execute() throws CommandException {
+                try {
+                    InstallationManagerConfig.storeCdecHostDns(hostDns);
+                } catch (IOException e) {
+                    throw new CommandException("It is impossible to save CDEC host DNS.", e);
+                }
+                return null;
+            }
+
+            @Override public String getDescription() {
+                return "Save CDEC host DNS into the IM configuration.";
+            }
+        };
+    }
 }

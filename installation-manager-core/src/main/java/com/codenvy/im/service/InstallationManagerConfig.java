@@ -17,8 +17,24 @@
  */
 package com.codenvy.im.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
+
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
+
 /** @author Anatoliy Bazko */
 public class InstallationManagerConfig {
+    public static Path CONFIG_FILE = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
+
+    private static final String CDEC_HOST_DNS = "cdec.host.dns";
+
     private String downloadDir;
     private String proxyPort;
     private String proxyUrl;
@@ -62,5 +78,51 @@ public class InstallationManagerConfig {
 
     private boolean checkEmptyParam(String param) {
         return param == null || param.isEmpty();
+    }
+
+    public static void storeProperty(String property, String value) throws IOException {
+        Path confFile = getConfFile();
+        Properties props = readProperties(confFile);
+        props.put(property, value);
+        try (OutputStream out = newOutputStream(confFile)) {
+            props.store(out, null);
+        }
+    }
+
+    protected static Properties readProperties(Path conf) throws IOException {
+        Properties props = new Properties();
+        if (exists(conf)) {
+            try (InputStream in = newInputStream(conf)) {
+                if (in != null) {
+                    props.load(in);
+                } else {
+                    throw new IOException("Can't store property into configuration");
+                }
+            }
+        }
+        return props;
+    }
+
+    public static void storeCdecHostDns(String hostDns) throws IOException {
+        storeProperty(CDEC_HOST_DNS, hostDns);
+    }
+
+    public static String readCdecHostDns() throws IOException {
+        Properties props = readProperties(CONFIG_FILE);
+        return (String) props.get(CDEC_HOST_DNS);
+    }
+
+    /** @return configuration file path. Insure directory with conf file is existed. */
+    public static Path getConfFile() {
+        Path confFile = CONFIG_FILE;
+        if (!exists(confFile.getParent())) {
+            try {
+                createDirectories(confFile.getParent());
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        return confFile;
     }
 }

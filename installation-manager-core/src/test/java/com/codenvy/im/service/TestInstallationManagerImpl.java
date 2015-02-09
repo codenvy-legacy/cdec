@@ -86,7 +86,7 @@ public class TestInstallationManagerImpl {
         installer = mock(Installer.class);
 
         installManagerArtifact = spy(new InstallManagerArtifact());
-        cdecArtifact = spy(new CDECArtifact(UPDATE_ENDPOINT, transport));
+        cdecArtifact = spy(new CDECArtifact(transport));
 
         manager = spy(new InstallationManagerImpl(
                 UPDATE_ENDPOINT,
@@ -492,15 +492,5 @@ public class TestInstallationManagerImpl {
 
         Long binariesSize = manager.getBinariesSize(cdecArtifact, version);
         assertEquals(binariesSize.intValue(), 100);
-    }
-
-    @Test
-    public void testStoreProperty() throws Exception {
-        Path confFile = Paths.get("target/properties");
-        doReturn(confFile).when(manager).getConfFile();
-
-        manager.storeProperty("hello", "value");
-
-        assertTrue(readFileToString(confFile.toFile()).contains("hello=value"));
     }
 }

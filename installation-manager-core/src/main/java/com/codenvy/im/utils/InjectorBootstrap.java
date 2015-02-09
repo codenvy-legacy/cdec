@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.service.InstallationManager;
+import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.service.InstallationManagerImpl;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.InstallationManagerServiceImpl;
@@ -76,7 +77,7 @@ public class InjectorBootstrap {
                 bindProperties("codenvy/update-server.properties");
                 bindProperties("codenvy/installation-manager.properties");
 
-                Path conf = getConfFile();
+                Path conf = InstallationManagerConfig.getConfFile();
                 if (exists(conf)) {
                     try (InputStream in = newInputStream(conf)) {
                         doBindProperties(in);
@@ -127,19 +128,5 @@ public class InjectorBootstrap {
                 }
             }
         });
-    }
-
-    /** @return configuration file path */
-    public static Path getConfFile() {
-        Path confFile = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
-        if (!exists(confFile.getParent())) {
-            try {
-                createDirectories(confFile.getParent());
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        return confFile;
     }
 }
