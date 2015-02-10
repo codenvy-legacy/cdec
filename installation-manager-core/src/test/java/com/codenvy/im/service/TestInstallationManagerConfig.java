@@ -81,11 +81,8 @@ public class TestInstallationManagerConfig {
     }
 
     @Test
-    public void testReadStoreCdecHostDns() throws Exception {
+    public void testReadCdecHostDns() throws Exception {
         assertEquals(InstallationManagerConfig.readCdecHostDns(), "localhost");
-
-        InstallationManagerConfig.storeCdecHostDns("new");
-        assertEquals(InstallationManagerConfig.readCdecHostDns(), "new");
     }
 
     @Test

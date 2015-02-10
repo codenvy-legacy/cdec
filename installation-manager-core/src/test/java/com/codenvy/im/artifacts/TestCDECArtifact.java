@@ -17,21 +17,27 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
 
+import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -41,8 +47,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
@@ -60,7 +69,9 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestCDECArtifact {
     public static final String TEST_HOST_DNS = "localhost";
+    public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
     private CDECArtifact spyCdecArtifact;
+    public static final String initialOsVersion = OSUtils.VERSION;
 
     @Mock
     private HttpTransport mockTransport;
@@ -71,11 +82,16 @@ public class TestCDECArtifact {
         spyCdecArtifact = spy(new CDECArtifact(mockTransport));
 
         InstallationManagerConfig.CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
-        InstallationManagerConfig.storeCdecHostDns(TEST_HOST_DNS);
+        InstallationManagerConfig.storeProperty(InstallationManagerConfig.CDEC_HOST_DNS, TEST_HOST_DNS);
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        OSUtils.VERSION = initialOsVersion;
     }
 
     @Test
-    public void testGetInstallInfo() throws Exception {
+    public void testGetInstallSingleServerInfo() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(1);
@@ -86,7 +102,36 @@ public class TestCDECArtifact {
     }
 
     @Test
-    public void testGetInstallCommand() throws Exception {
+    public void testGetInstallMultiServerInfo() throws Exception {
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setStep(1);
+
+        List<String> info = spyCdecArtifact.getInstallInfo(options);
+        assertNotNull(info);
+        assertTrue(info.size() > 1);
+    }
+
+    @Test
+    public void testGetInstallSingleServerCommandOsVersion6() throws Exception {
+        OSUtils.VERSION = "6";
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setConfigProperties(ImmutableMap.of("some property", "some value"));
+
+        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        for (int i = 0; i < steps; i++) {
+            options.setStep(i);
+            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+            assertNotNull(command);
+        }
+    }
+
+    @Test
+    public void testGetInstallSingleServerCommandOsVersion7() throws Exception {
+        OSUtils.VERSION = "7";
+
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
@@ -100,7 +145,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testGetInstallCommandError() throws Exception {
+    public void testGetInstallSingleServerCommandError() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
@@ -110,8 +155,54 @@ public class TestCDECArtifact {
     }
 
     @Test
+    public void testGetInstallMultiServerCommandsForMultiServer() throws IOException {
+        OSUtils.VERSION = "7";
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setConfigProperties(ImmutableMap.of("site_host_name", "site.example.com"));
+
+        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        for (int i = 0; i < steps; i++) {
+            options.setStep(i);
+            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+            assertNotNull(command);
+        }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Site node config not found.")
+    public void testGetInstallMultiServerCommandsForMultiServerError() throws IOException {
+        OSUtils.VERSION = "7";
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setConfigProperties(ImmutableMap.of("some property", "some value"));
+
+        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        for (int i = 0; i < steps; i++) {
+            options.setStep(i);
+            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+            assertNotNull(command);
+        }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Only installation of multi-node version of CDEC on Centos 7 is supported")
+    public void testGetInstallMultiServerCommandsWrongOS() throws IOException {
+        OSUtils.VERSION = "6";
+
+        InstallOptions options = new InstallOptions();
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setConfigProperties(ImmutableMap.of("some property", "some value"));
+        options.setStep(1);
+
+        spyCdecArtifact.getInstallCommand(null, null, options);
+    }
+
+    @Test
     public void testGetInstalledVersion() throws Exception {
-        when(mockTransport.doOption("http://localhost/api", null)).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+        when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
 
         Version version = spyCdecArtifact.getInstalledVersion();
         assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
@@ -119,7 +210,7 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
-        doThrow(new ConnectException()).when(mockTransport).doOption("http://localhost/api", null);
+        doThrow(new ConnectException()).when(mockTransport).doOption("http://localhost/api/", null);
         Version version = spyCdecArtifact.getInstalledVersion();
         assertNull(version);
 
@@ -131,7 +222,7 @@ public class TestCDECArtifact {
     @Test(expectedExceptions = JsonSyntaxException.class,
             expectedExceptionsMessageRegExp = "(.*)Expected ':' at line 1 column 14")
     public void testGetInstalledVersionError() throws Exception {
-        when(mockTransport.doOption("http://localhost/api", null)).thenReturn("{\"some text\"}");
+        when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion();
     }
 
@@ -171,10 +262,96 @@ public class TestCDECArtifact {
     }
 
     @Test
-    public void testCreateSaveCodenvyHostDnsCommand() throws IOException {
-        String testHostDns = "test";
-        Command command = spyCdecArtifact.createSaveCodenvyHostDnsCommand(testHostDns);
-        command.execute();
-        assertEquals(InstallationManagerConfig.readCdecHostDns(), testHostDns);
+    public void testCreateLocalPropertyReplaceCommand() {
+        Command testCommand = spyCdecArtifact.createLocalPropertyReplaceCommand("testFile", "property", "newValue");
+        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/property = .*/property = \"newValue\"/g' testFile', " +
+                                             "'agent'='LocalAgent'}");
     }
+
+    @Test
+    public void testCreateLocalReplaceCommand() {
+        Command testCommand = spyCdecArtifact.createLocalReplaceCommand("testFile", "old", "new");
+        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/old/new/g' testFile', " +
+                                             "'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testGetRestoreOrBackupCommand() {
+        String testCommand = spyCdecArtifact.getRestoreOrBackupCommand("testFile");
+        assertEquals(testCommand.toString(), "if sudo test -f testFile; then" +
+                                             "     if ! sudo test -f testFile.back; then" +
+                                             "         sudo cp testFile testFile.back;" +
+                                             "     else" +
+                                             "         sudo cp testFile.back testFile;" +
+                                             "     fi fi");
+    }
+
+    @Test
+    public void testCreateShellCommandForNodeList() throws AgentException {
+        String expectedCommandString = format("[" +
+                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "]",
+                                              SYSTEM_USER_NAME);
+
+        List<NodeConfig> nodes = ImmutableList.of(
+            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+        );
+
+        Command testCommand = spyCdecArtifact.createShellCommand("testCommand", nodes);
+        assertEquals(testCommand.toString(), expectedCommandString);
+    }
+
+    @Test
+    public void testCreateShellCommandForNode() throws AgentException {
+        String expectedCommandString = format("{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                                              SYSTEM_USER_NAME);
+
+        NodeConfig node = new NodeConfig(NodeConfig.NodeType.DATA, "localhost");
+        Command testCommand = spyCdecArtifact.createShellCommand("testCommand", node);
+        assertEquals(testCommand.toString(), expectedCommandString);
+    }
+
+    @Test
+    public void testCreateLocalRestoreOrBackupCommand() throws AgentException {
+        Command testCommand = spyCdecArtifact.createLocalRestoreOrBackupCommand("testFile");
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='if sudo test -f testFile; then" +
+                                             "     if ! sudo test -f testFile.back; then" +
+                                             "         sudo cp testFile testFile.back;" +
+                                             "     else" +
+                                             "         sudo cp testFile.back testFile;" +
+                                             "     fi fi', 'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testCreateShellRestoreOrBackupCommand() throws AgentException {
+        String expectedCommandString = format("[" +
+                                              "{'command'='if sudo test -f testFile; then" +
+                                              "     if ! sudo test -f testFile.back; then" +
+                                              "         sudo cp testFile testFile.back;" +
+                                              "     else" +
+                                              "         sudo cp testFile.back testFile;" +
+                                              "     fi fi', " +
+                                              "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                              "{'command'='if sudo test -f testFile; then " +
+                                              "    if ! sudo test -f testFile.back; then" +
+                                              "         sudo cp testFile testFile.back;" +
+                                              "     else" +
+                                              "         sudo cp testFile.back testFile;" +
+                                              "     fi fi', " +
+                                              "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "]",
+                                              SYSTEM_USER_NAME);
+
+        List<NodeConfig> nodes = ImmutableList.of(
+            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+        );
+
+        Command testCommand = spyCdecArtifact.createShellRestoreOrBackupCommand("testFile", nodes);
+        assertEquals(testCommand.toString(), expectedCommandString);
+    }
+
 }

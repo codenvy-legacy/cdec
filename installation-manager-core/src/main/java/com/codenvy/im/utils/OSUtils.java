@@ -29,7 +29,7 @@ import static java.lang.String.format;
 
 /** @author Anatoliy Bazko */
 public class OSUtils {
-    public static final String VERSION;
+    public static String VERSION;
     public static final String      RED_HAT_OS_VERSION = "RedHatOSVersion";
     public static final Set<String> SUPPORTED_VERSIONS = ImmutableSet.of("6", "7");
 

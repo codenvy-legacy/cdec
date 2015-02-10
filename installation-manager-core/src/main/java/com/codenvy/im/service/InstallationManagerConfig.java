@@ -33,7 +33,7 @@ import static java.nio.file.Files.newOutputStream;
 public class InstallationManagerConfig {
     public static Path CONFIG_FILE = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
 
-    private static final String CDEC_HOST_DNS = "cdec.host.dns";
+    public static final String CDEC_HOST_DNS = "cdec.host.dns";
 
     private String downloadDir;
     private String proxyPort;
@@ -101,10 +101,6 @@ public class InstallationManagerConfig {
             }
         }
         return props;
-    }
-
-    public static void storeCdecHostDns(String hostDns) throws IOException {
-        storeProperty(CDEC_HOST_DNS, hostDns);
     }
 
     public static String readCdecHostDns() throws IOException {

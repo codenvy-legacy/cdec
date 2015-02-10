@@ -22,8 +22,8 @@ import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
-import com.codenvy.im.command.CommandException;
 import com.codenvy.im.command.MacroCommand;
+import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.config.NodeConfig;
@@ -74,13 +74,12 @@ public class CDECArtifact extends AbstractArtifact {
     public Version getInstalledVersion() throws IOException {
         String response;
         try {
-//            response = transport.doOption(combinePaths(apiNodeUrl, "api/"), null);
             String codenvyHostDns = InstallationManagerConfig.readCdecHostDns();
             if (codenvyHostDns == null) {
                 return null;
             }
 
-            String checkServiceUrl = format("http://%s/api", codenvyHostDns);
+            String checkServiceUrl = format("http://%s/api/", codenvyHostDns);
             response = transport.doOption(checkServiceUrl, null);
         } catch (IOException e) {
             return null;
@@ -310,7 +309,7 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 8:
                 return new MacroCommand(ImmutableList.of(
-                        createSaveCodenvyHostDnsCommand(config.getHostUrl()),
+                        StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand("localhost"),
                         new CheckInstalledVersionCommand(this, versionToInstall)
                     ),
                     "Check if CDEC has already installed");
@@ -335,7 +334,18 @@ public class CDECArtifact extends AbstractArtifact {
         );
     }
 
-    private Command getInstallCommandsForMultiServer(Version versionToInstall, Path pathToBinaries, final Config config, int step) throws AgentException {
+    /**
+     * @throws AgentException if there was a problem with LocalAgent or SecureShellAgent instantiation.
+     * @throws IllegalArgumentException if there is no Site node config.
+     * @throws IllegalStateException if local OS version != 7
+     */
+    private Command getInstallCommandsForMultiServer(Version versionToInstall, Path pathToBinaries, final Config config, int step) throws AgentException,
+                                                                                                                                          IllegalArgumentException,
+                                                                                                                                          IllegalStateException {
+        if (!OSUtils.getVersion().equals("7")) {
+            throw new IllegalStateException("Only installation of multi-node version of CDEC on Centos 7 is supported");
+        }
+
         final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
         switch (step) {
             case 0:
@@ -395,11 +405,11 @@ public class CDECArtifact extends AbstractArtifact {
                     add(createLocalCommand("service firewalld stop"));
                     add(createLocalCommand("sudo systemctl disable firewalld"));
 
-                    // install iptables and open port 8140 for puppet  // TODO [ndp]
+                    // install iptables and open port 8140 for puppet  TODO isn't mandatory
                     /*
-                        yum install iptables-services
+                        sudo yum install iptables-services
                         // add next row into /etc/sysconfig/iptables: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 8140 -j ACCEPT'
-                        service iptables
+                        sudoservice iptables
                     */
                 }}, "Install puppet binaries");
 
@@ -491,6 +501,11 @@ public class CDECArtifact extends AbstractArtifact {
                                         "Launch puppet agent");
 
             case 7:
+                NodeConfig siteNodeConfig = extractConfigFrom(config, NodeConfig.NodeType.SITE);
+                if (siteNodeConfig == null) {
+                    throw new IllegalArgumentException("Site node config not found.");
+                }
+
                 return createShellCommand("doneState=\"Installing\"; " +
                                           "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                           "while [ \"${doneState}\" != \"Installed\" ]; do " +
@@ -500,7 +515,7 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 8:
                 return new MacroCommand(ImmutableList.of(
-                    createSaveCodenvyHostDnsCommand(config.getHostUrl()),
+                    StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand(config.getHostUrl()),
                     new CheckInstalledVersionCommand(this, versionToInstall)
                 ),
                 "Check if CDEC has already installed");
@@ -567,23 +582,5 @@ public class CDECArtifact extends AbstractArtifact {
 
     protected Command createShellCommand(String command, NodeConfig node) throws AgentException {
         return MacroCommand.createShellCommandForNode(command, node);
-    }
-
-    protected Command createSaveCodenvyHostDnsCommand(final String hostDns) {
-        return new Command() {   // TODO [ndp] extract class
-            @Override
-            public String execute() throws CommandException {
-                try {
-                    InstallationManagerConfig.storeCdecHostDns(hostDns);
-                } catch (IOException e) {
-                    throw new CommandException("It is impossible to save CDEC host DNS.", e);
-                }
-                return null;
-            }
-
-            @Override public String getDescription() {
-                return "Save CDEC host DNS into the IM configuration.";
-            }
-        };
     }
 }
