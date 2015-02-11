@@ -23,6 +23,7 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
+import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
@@ -329,8 +330,8 @@ public class CDECArtifact extends AbstractArtifact {
             "Configure puppet agents on each nodes",
             "Launch puppet master",
             "Launch puppet agents",
-            "Install Codenvy",
-            "Boot Codenvy"
+            "Install Codenvy (~15 min)",
+            "Boot Codenvy (~10 min)"
         );
     }
 
@@ -402,7 +403,7 @@ public class CDECArtifact extends AbstractArtifact {
                     add(createShellCommand("sudo systemctl enable puppet", nodeConfigs));
 
                     // disable firewalld to open connection with puppet agents
-                    add(createLocalCommand("service firewalld stop"));
+                    add(createLocalCommand("sudo service firewalld stop"));
                     add(createLocalCommand("sudo systemctl disable firewalld"));
 
                     // install iptables and open port 8140 for puppet  TODO isn't mandatory
@@ -581,6 +582,6 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     protected Command createShellCommand(String command, NodeConfig node) throws AgentException {
-        return MacroCommand.createShellCommandForNode(command, node);
+        return SimpleCommand.createShellCommandForNode(command, node);
     }
 }

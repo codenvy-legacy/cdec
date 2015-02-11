@@ -63,19 +63,10 @@ public class MacroCommand implements Command {
     public static Command createShellCommandsForEachNode(String command, String description, List<NodeConfig> nodes) throws AgentException {
         final List<Command> commands = new ArrayList<>();
         for (NodeConfig node : nodes) {
-            commands.add(createShellCommandForNode(command, node));
+            commands.add(SimpleCommand.createShellCommandForNode(command, node));
         }
 
         return new MacroCommand(commands, description);
     }
 
-    public static Command createShellCommandForNode(String command, NodeConfig node) throws AgentException {
-        return SimpleCommand.createShellCommand(
-            command,
-            node.getHost(),
-            node.getPort(),
-            node.getUser(),
-            node.getPrivateKeyFile()
-        );
-    }
 }

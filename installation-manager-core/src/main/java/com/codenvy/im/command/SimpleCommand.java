@@ -21,6 +21,7 @@ import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
+import com.codenvy.im.config.NodeConfig;
 
 import static java.lang.String.format;
 
@@ -50,6 +51,16 @@ public class SimpleCommand implements Command {
         return new SimpleCommand(command,
                                  new SecureShellAgent(host, port, user, privateKeyFilePath, null),
                                  null);
+    }
+
+    public static Command createShellCommandForNode(String command, NodeConfig node) throws AgentException {
+        return SimpleCommand.createShellCommand(
+            command,
+            node.getHost(),
+            node.getPort(),
+            node.getUser(),
+            node.getPrivateKeyFile()
+        );
     }
 
     /** {@inheritDoc} */

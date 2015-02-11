@@ -20,6 +20,7 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
+import com.codenvy.im.config.NodeConfig;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeTest;
@@ -98,15 +99,27 @@ public class TestSimpleCommand {
 
     @Test
     public void testCreateShellCommand() throws AgentException {
-        String command = "command";
+        String command = "test command";
         String host = "localhost";
         int port = 22;
         String user = System.getProperty("user.name");
         String privateKeyFile = format("/home/%s/.ssh/id_rsa", System.getProperty("user.name"));
 
-        String expectedResult = format("{'command'='command', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", host, user, privateKeyFile);
+        String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
 
         Command testCommand = SimpleCommand.createShellCommand(command, host, port, user, privateKeyFile);
         assertEquals(testCommand.toString(), expectedResult);
+    }
+
+    @Test
+    public void testCreateShellCommandForNode() throws AgentException {
+        String command = "test command";
+        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
+
+        String user = System.getProperty("user.name");
+        String expectedCommand = format("{'command'='%s', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", command, user);
+
+        Command testMacroCommand = SimpleCommand.createShellCommandForNode(command, node);
+        assertEquals(testMacroCommand.toString(), expectedCommand);
     }
 }

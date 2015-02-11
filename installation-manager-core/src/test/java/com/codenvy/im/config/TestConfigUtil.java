@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
@@ -165,5 +167,23 @@ public class TestConfigUtil {
         Path properties = Paths.get("target/unexisted");
         doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         configUtil.loadInstalledCssProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+    }
+
+    @Test
+    public void testGetPuppetNodesConfigReplacement() {
+        List<NodeConfig> nodes = ImmutableList.of(
+            new NodeConfig(NodeConfig.NodeType.API, "api.dev.com"),
+            new NodeConfig(NodeConfig.NodeType.DATA, "data.dev.com"),
+            new NodeConfig(NodeConfig.NodeType.BUILDER, "builder1.dev.com"),
+            new NodeConfig(NodeConfig.NodeType.RUNNER, "runner1.dev.com")
+        );
+
+        Iterable<? extends Map.Entry<String, String>> result = ConfigUtil.getPuppetNodesConfigReplacement(nodes);
+        assertEquals(result.toString(), "[" +
+                                        "builder.*example.com=builder\\\\d+\\\\.dev.com, " +
+                                        "runner.*example.com=runner\\\\d+\\\\.dev.com, " +
+                                        "data.example.com=data.dev.com, " +
+                                        "api.example.com=api.dev.com" +
+                                        "]");
     }
 }
