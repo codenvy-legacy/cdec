@@ -4,7 +4,7 @@
     CODENVY CONFIDENTIAL
     __________________
 
-     [2012] - [2014] Codenvy, S.A.
+     [2012] - [2015] Codenvy, S.A.
      All Rights Reserved.
 
     NOTICE:  All information contained herein is, and remains
@@ -23,7 +23,7 @@
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>com.codenvy</groupId>
-        <version>1.11.0</version>
+        <version>1.12.1</version>
         <relativePath />
     </parent>
     <groupId>com.codenvy.im</groupId>

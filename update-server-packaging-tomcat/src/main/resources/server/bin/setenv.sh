@@ -2,7 +2,7 @@
 # CODENVY CONFIDENTIAL
 # ________________
 #
-# [2012] - [2014] Codenvy, S.A.
+# [2012] - [2015] Codenvy, S.A.
 # All Rights Reserved.
 # NOTICE: All information contained herein is, and remains
 # the property of Codenvy S.A. and its suppliers,

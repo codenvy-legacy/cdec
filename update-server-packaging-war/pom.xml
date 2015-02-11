@@ -4,7 +4,7 @@
     CODENVY CONFIDENTIAL
     __________________
 
-     [2012] - [2014] Codenvy, S.A.
+     [2012] - [2015] Codenvy, S.A.
      All Rights Reserved.
 
     NOTICE:  All information contained herein is, and remains
@@ -67,7 +67,7 @@
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
-            <artifactId>jsr311-api</artifactId>
+            <artifactId>javax.ws.rs-api</artifactId>
             <version>${javax.ws.rs.version}</version>
         </dependency>
         <dependency>
