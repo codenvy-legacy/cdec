@@ -321,7 +321,7 @@ printPreInstallInfo_multi() {
         printPrompt; echo "Codenvy API node DNS hostname : "${API_HOST_NAME}
         printPrompt; echo "Codenvy Builder node DNS hostname : "${BUILDER_HOST_NAME}
         printPrompt; echo "Codenvy Runner node DNS hostname : "${RUNNER_HOST_NAME}
-        printPrompt; echo "Codenvy Datasource node DNS hostname : "${RUNNER_HOST_NAME}
+        printPrompt; echo "Codenvy Datasource node DNS hostname : "${DATASOURCE_HOST_NAME}
         printPrompt; echo "Codenvy Analytics node DNS hostname : "${ANALYTICS_HOST_NAME}
         printPrompt; echo "Codenvy Site node DNS hostname : "${SITE_HOST_NAME}
         printPrompt; echo
