@@ -23,7 +23,7 @@ import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,6 +39,7 @@ import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Version.valueOf;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.newDirectoryStream;
 
 /**
  * @author Anatoliy Bazko
@@ -124,25 +125,27 @@ public abstract class AbstractArtifact implements Artifact {
         Path artifactDir = downloadDir.resolve(getName());
 
         if (exists(artifactDir)) {
-            Iterator<Path> pathIterator = Files.newDirectoryStream(artifactDir).iterator();
+            try (DirectoryStream<Path> paths = newDirectoryStream(artifactDir)) {
+                Iterator<Path> pathIterator = paths.iterator();
 
-            while (pathIterator.hasNext()) {
-                try {
-                    Path versionDir = pathIterator.next();
-                    if (isDirectory(versionDir)) {
-                        Version version = valueOf(versionDir.getFileName().toString());
+                while (pathIterator.hasNext()) {
+                    try {
+                        Path versionDir = pathIterator.next();
+                        if (isDirectory(versionDir)) {
+                            Version version = valueOf(versionDir.getFileName().toString());
 
-                        Map properties = getProperties(version, updateEndpoint, transport);
-                        String md5sum = properties.get(MD5_PROPERTY).toString();
-                        String fileName = properties.get(FILE_NAME_PROPERTY).toString();
+                            Map properties = getProperties(version, updateEndpoint, transport);
+                            String md5sum = properties.get(MD5_PROPERTY).toString();
+                            String fileName = properties.get(FILE_NAME_PROPERTY).toString();
 
-                        Path file = versionDir.resolve(fileName);
-                        if (exists(file) && md5sum.equals(calculateMD5Sum(file))) {
-                            versions.put(version, file);
+                            Path file = versionDir.resolve(fileName);
+                            if (exists(file) && md5sum.equals(calculateMD5Sum(file))) {
+                                versions.put(version, file);
+                            }
                         }
+                    } catch (IllegalArgumentException e) {
+                        // maybe it isn't a version directory
                     }
-                } catch (IllegalArgumentException e) {
-                    // maybe it isn't a version directory
                 }
             }
         }

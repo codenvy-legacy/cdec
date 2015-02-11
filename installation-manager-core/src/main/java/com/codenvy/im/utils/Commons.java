@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -151,16 +152,18 @@ public class Commons {
             return versions;
         }
 
-        Iterator<Path> pathIterator = newDirectoryStream(dir).iterator();
-        while (pathIterator.hasNext()) {
-            try {
-                Path item = pathIterator.next();
-                if (isDirectory(item)) {
-                    Version v = valueOf(item.getFileName().toString());
-                    versions.add(v);
+        try (DirectoryStream<Path> paths = newDirectoryStream(dir)) {
+            Iterator<Path> pathIterator = paths.iterator();
+            while (pathIterator.hasNext()) {
+                try {
+                    Path item = pathIterator.next();
+                    if (isDirectory(item)) {
+                        Version v = valueOf(item.getFileName().toString());
+                        versions.add(v);
+                    }
+                } catch (IllegalArgumentException e) {
+                    // maybe it isn't a version directory
                 }
-            } catch (IllegalArgumentException e) {
-                // maybe it isn't a version directory
             }
         }
 
