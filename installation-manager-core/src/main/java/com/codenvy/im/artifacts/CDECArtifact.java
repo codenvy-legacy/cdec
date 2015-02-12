@@ -330,7 +330,7 @@ public class CDECArtifact extends AbstractArtifact {
             "Configure puppet agents on each nodes",
             "Launch puppet master",
             "Launch puppet agents",
-            "Install Codenvy (~15 min)",
+            "Install Codenvy (~10 min)",
             "Boot Codenvy (~10 min)"
         );
     }

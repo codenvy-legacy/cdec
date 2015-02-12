@@ -7,9 +7,9 @@ ARTIFACT="cdec"
 CODENVY_TYPE='single'
 
 if [ -z $1 ]; then
-    VERSION=`curl -s https://codenvy-stg.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
 elif [ "$1" == "-multi" ]; then
-    VERSION=`curl -s https://codenvy-stg.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
     CODENVY_TYPE='multi'
 else
     VERSION=$1
@@ -29,6 +29,11 @@ checkOS() {
 
     if [ "${VERSION}" == "3.1.0" ] && [ "${OS_VERSION}" != "6" ]; then
         echo "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
+        exit 1
+    fi
+
+    if [ "${CODENVY_TYPE}" == "multi" ] && [ "${OS_VERSION}" != "7" ]; then
+        echo "Codenvy multi-node can be installed onto CentOS 7.x only"
         exit 1
     fi
 }
@@ -131,10 +136,6 @@ askDNS_multi() {
     printPrompt; echo -n "${PROMPT}: "
     read DNS
     insertProperty "$2" ${DNS}
-
-#    if ! sudo grep -Fq "${DNS}" /etc/hosts; then
-#        echo "127.0.0.1 ${DNS}" | sudo tee --append /etc/hosts > /dev/null   # TODO [ndp] review
-#    fi    
 }
 
 prepareConfig_single() {
@@ -270,19 +271,9 @@ printPreInstallInfo_multi() {
     read -n1 -s
     clear
 
-    printPrompt; echo "Checking for system pre-requisites..."  # TODO [dnochevnov] update this section to comply with multi node type
+    printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
     printPrompt; echo
-    printPrompt; echo "RESOURCE      : MINIMUM : AVAILABLE"
-    printPrompt; echo "RAM           : 8GB     : ${availableRAM}GB"
-    printPrompt; echo "CPU           : 4 cores : ${availableCores} cores"
-    printPrompt; echo "Disk Space    : 300GB   : ${availableDiskSpace}B"
-    printPrompt; echo
-    printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
-    printPrompt; echo
-    printPrompt; echo "Press any key to continue"
-    read -n1 -s
-    clear
 
     if [ ! -f ${CONFIG} ]; then
         printPrompt; echo "Configuration file : not detected - will download template"

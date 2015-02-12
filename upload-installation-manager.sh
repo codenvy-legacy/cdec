@@ -58,6 +58,18 @@ uploadCodenvyServerInstallScript() {
     fi
 }
 
+uploadCodenvyServerInstallMultiScript() {
+    ARTIFACT=install-codenvy-multi
+    FILENAME=install-codenvy-multi.sh
+    VERSION=$1
+    SOURCE=installation-manager-resources/src/main/resources/${VERSION}/${FILENAME}
+    doUpload
+
+    if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
+        ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    fi
+}
+
 uploadCodenvySingleServerInstallProperties() {
     ARTIFACT=codenvy-single-server-properties
     FILENAME=codenvy-single-server.properties
@@ -110,3 +122,8 @@ done
 for VERSION in 3.5.0; do
     uploadCodenvyMultiServerInstallProperties ${VERSION}
 done
+
+for VERSION in 3.5.0; do
+    uploadCodenvyServerInstallMultiScript ${VERSION}
+done
+
