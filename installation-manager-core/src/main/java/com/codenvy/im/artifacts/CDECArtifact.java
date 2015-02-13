@@ -324,12 +324,12 @@ public class CDECArtifact extends AbstractArtifact {
     private List<String> getInstallInfoForMultiServer() {
         return ImmutableList.of(
             "Disable SELinux on nodes",
-            "Install puppet binaries",
+            "Install puppet master on master node and puppet agents on other nodes",
             "Unzip Codenvy binaries",
             "Configure puppet master",
-            "Configure puppet agents on each nodes",
+            "Configure puppet agents for each node",
             "Launch puppet master",
-            "Launch puppet agents",
+            "Launch puppet agents on each node",
             "Install Codenvy (~10 min)",
             "Boot Codenvy (~10 min)"
         );

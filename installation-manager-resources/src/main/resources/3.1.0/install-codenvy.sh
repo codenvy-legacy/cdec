@@ -254,7 +254,7 @@ printPreInstallInfo_multi() {
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    printPrompt; echo "Welcome. This program installs Codenvy on multi nodes."
+    printPrompt; echo "Welcome. This program installs Codenvy on multiple nodes."
     printPrompt; echo
     printPrompt; echo "This program will:"
     printPrompt; echo "1. Configure the system"
@@ -273,7 +273,7 @@ printPreInstallInfo_multi() {
 
     printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
-    printPrompt; echo
+    printPrompt; echo   # TODO [ndp] display info about requirments for the nodes
 
     if [ ! -f ${CONFIG} ]; then
         printPrompt; echo "Configuration file : not detected - will download template"
@@ -391,14 +391,14 @@ printPostInstallInfo_single() {
 
 doInstallStep5_multi() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTI NODES"
+    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTIPLE NODES"
     executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_multi() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTI NODES"
+    printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTIPLE NODES"
     executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
