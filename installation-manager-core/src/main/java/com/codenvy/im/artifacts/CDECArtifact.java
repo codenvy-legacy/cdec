@@ -406,7 +406,7 @@ public class CDECArtifact extends AbstractArtifact {
                     add(createLocalCommand("sudo service firewalld stop"));
                     add(createLocalCommand("sudo systemctl disable firewalld"));
 
-                    // install iptables and open port 8140 for puppet  TODO isn't mandatory
+                    // install iptables and open port 8140 for puppet  TODO [ndp] isn't mandatory
                     /*
                         sudo yum install iptables-services
                         // add next row into /etc/sysconfig/iptables: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 8140 -j ACCEPT'
