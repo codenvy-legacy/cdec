@@ -36,7 +36,7 @@ public class TestRequest {
     @Test
     public void testRequest() throws Exception {
         Request testRequest = new Request()
-                .setArtifactName("cdec")
+                .setArtifactName("codenvy")
                 .setVersion("1.0.1")
                 .setUserCredentials(new UserCredentials("test token", "test account id"));
 
@@ -59,7 +59,7 @@ public class TestRequest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequestErrorIfVersionInvalid() throws Exception {
         Request testRequest = new Request()
-                .setArtifactName("cdec")
+                .setArtifactName("codenvy")
                 .setVersion("00.1.1");
 
         testRequest.getVersion();
@@ -68,12 +68,12 @@ public class TestRequest {
     @Test
     public void testEquals() throws Exception {
         Request request1 = new Request()
-                .setArtifactName("cdec")
+                .setArtifactName("codenvy")
                 .setVersion("1.0.1")
                 .setUserCredentials(new UserCredentials("test token", "test account id"));
 
         Request request2 = new Request()
-                .setArtifactName("cdec")
+                .setArtifactName("codenvy")
                 .setVersion("1.0.1")
                 .setUserCredentials(new UserCredentials("test token", "test account id"));
 

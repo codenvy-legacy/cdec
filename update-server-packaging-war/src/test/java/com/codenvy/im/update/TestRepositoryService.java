@@ -123,15 +123,15 @@ public class TestRepositoryService extends BaseTest {
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
         collection.remove(new BasicDBObject());
 
-        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", true);
-        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", true);
-        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", false);
-        mongoStorage.updateDownloadStatistics("uid1", "cdec", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", false);
+        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", false);
         mongoStorage.updateDownloadStatistics("uid1", "artifact2", "1.0.1", false);
 
-        mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.1", true);
-        mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.2", true);
-        mongoStorage.updateDownloadStatistics("uid2", "cdec", "1.0.3", true);
+        mongoStorage.updateDownloadStatistics("uid2", "codenvy", "1.0.1", true);
+        mongoStorage.updateDownloadStatistics("uid2", "codenvy", "1.0.2", true);
+        mongoStorage.updateDownloadStatistics("uid2", "codenvy", "1.0.3", true);
         mongoStorage.updateDownloadStatistics("uid2", "artifact3", "1.0.1", false);
 
         collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
@@ -224,20 +224,20 @@ public class TestRepositoryService extends BaseTest {
         when(httpTransport.doGet("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
         .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
     @Test
     public void testDownloadPublicArtifactErrorWhenSubscriptionRequired() throws Exception {
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
-        Response response = given().when().get("/repository/public/download/cdec/1.0.1");
+        Response response = given().when().get("/repository/public/download/codenvy/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
     }
 
@@ -246,20 +246,20 @@ public class TestRepositoryService extends BaseTest {
         when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(httpTransport.doGet("/account/accountId/subscriptions")).thenReturn("[]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
     @Test
     public void testDownloadArtifactWhenAuthenticationError() throws Exception {
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
 
-        Response response = given().when().get("repository/public/download/cdec/1.0.1");
+        Response response = given().when().get("repository/public/download/codenvy/1.0.1");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNAUTHORIZED.getStatusCode());
     }
 
@@ -269,11 +269,11 @@ public class TestRepositoryService extends BaseTest {
                  .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(httpTransport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
                  .thenReturn("[]");
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", subscriptionProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
@@ -284,7 +284,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        Response response = given().when().get("repository/download/cdec/1.0.1/accountId");
+        Response response = given().when().get("repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 
@@ -308,11 +308,11 @@ public class TestRepositoryService extends BaseTest {
         when(httpTransport.doGet("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
                 .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "cdec", "1.0.1", "tmp", authenticationRequiredProperties);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/cdec/1.0.1/accountId");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
@@ -323,7 +323,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"unknownAccountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        Response response = given().when().get("repository/download/cdec/1.0.1/accountId");
+        Response response = given().when().get("repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 
@@ -334,12 +334,12 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1-SNAPSHOT");
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy/1.0.1-SNAPSHOT");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get("/repository/public/download/cdec");
+                .get("/repository/public/download/codenvy");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
@@ -351,15 +351,15 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1-SNAPSHOT");
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy/1.0.1-SNAPSHOT");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
-        Path artifact = Paths.get("target", "download", "cdec", "1.0.1-SNAPSHOT", "tmp-1.0.1.txt");
+        Path artifact = Paths.get("target", "download", "codenvy", "1.0.1-SNAPSHOT", "tmp-1.0.1.txt");
         assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
         assertTrue(Files.exists(artifact));
 
-        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1-SNAPSHOT", ArtifactStorage.PROPERTIES_FILE);
+        Path propertiesFile = Paths.get("target", "download", "codenvy", "1.0.1-SNAPSHOT", ArtifactStorage.PROPERTIES_FILE);
         assertTrue(Files.exists(propertiesFile));
 
         Properties properties = new Properties();
@@ -367,7 +367,7 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(properties.size(), 3);
         assertEquals(properties.get(VERSION_PROPERTY), "1.0.1-SNAPSHOT");
         assertEquals(properties.get(FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
-        assertEquals(properties.get(ARTIFACT_PROPERTY), "cdec");
+        assertEquals(properties.get(ARTIFACT_PROPERTY), "codenvy");
     }
 
 
@@ -378,15 +378,15 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec/1.0.1?revision=abcd&build-time=20140930");
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy/1.0.1?revision=abcd&build-time=20140930");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
-        Path artifact = Paths.get("target", "download", "cdec", "1.0.1", "tmp-1.0.1.txt");
+        Path artifact = Paths.get("target", "download", "codenvy", "1.0.1", "tmp-1.0.1.txt");
         assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
         assertTrue(Files.exists(artifact));
 
-        Path propertiesFile = Paths.get("target", "download", "cdec", "1.0.1", ArtifactStorage.PROPERTIES_FILE);
+        Path propertiesFile = Paths.get("target", "download", "codenvy", "1.0.1", ArtifactStorage.PROPERTIES_FILE);
         assertTrue(Files.exists(propertiesFile));
 
         Properties properties = new Properties();
@@ -395,7 +395,7 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(properties.get(VERSION_PROPERTY), "1.0.1");
         assertEquals(properties.get(FILE_NAME_PROPERTY), "tmp-1.0.1.txt");
         assertEquals(properties.get(BUILD_TIME_PROPERTY), "20140930");
-        assertEquals(properties.get(ARTIFACT_PROPERTY), "cdec");
+        assertEquals(properties.get(ARTIFACT_PROPERTY), "codenvy");
     }
 
     @Test
@@ -405,7 +405,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec-1.01.1/1.01.1");
+                .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy-1.01.1/1.01.1");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
@@ -416,7 +416,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .post(JettyHttpServer.SECURE_PATH + "/repository/upload/cdec-1.01.1/1.01.1");
+                .post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy-1.01.1/1.01.1");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
@@ -446,7 +446,7 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(m.get(MongoStorage.TOTAL), 1D);
 
         m = (Map)l.get(1);
-        assertEquals(m.get(MongoStorage.ARTIFACT), "cdec");
+        assertEquals(m.get(MongoStorage.ARTIFACT), "codenvy");
         assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
         assertEquals(m.get(MongoStorage.SUCCESS), 2D);
         assertEquals(m.get(MongoStorage.FAIL), 2D);
@@ -457,12 +457,12 @@ public class TestRepositoryService extends BaseTest {
     public void testGetDownloadStatisticByArtifact() throws Exception {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/cdec");
+                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/codenvy");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
 
         Map m = response.as(Map.class);
         assertEquals(m.size(), 5);
-        assertEquals(m.get(MongoStorage.ARTIFACT), "cdec");
+        assertEquals(m.get(MongoStorage.ARTIFACT), "codenvy");
         assertEquals(m.get(MongoStorage.SUCCESS), 5D);
         assertEquals(m.get(MongoStorage.FAIL), 2D);
         assertEquals(m.get(MongoStorage.TOTAL), 7D);

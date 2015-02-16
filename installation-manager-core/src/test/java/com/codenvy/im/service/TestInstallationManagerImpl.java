@@ -189,7 +189,7 @@ public class TestInstallationManagerImpl {
         manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Can not install the artifact 'cdec' version '1.0.0'.")
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Can not install the artifact 'codenvy' version '1.0.0'.")
     public void testInstallZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
@@ -304,7 +304,7 @@ public class TestInstallationManagerImpl {
 
         Map<Artifact, Version> updates = manager.getUpdates(testCredentials.getToken());
         assertEquals(updates.size(), 2);
-        assertEquals(updates.toString(), "{cdec=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
+        assertEquals(updates.toString(), "{codenvy=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
     }
 
     @Test
@@ -318,7 +318,7 @@ public class TestInstallationManagerImpl {
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(testCredentials.getToken());
 
         assertEquals(installedArtifacts.size(), 2);
-        assertEquals(installedArtifacts.toString(), "{cdec=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
+        assertEquals(installedArtifacts.toString(), "{codenvy=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
     }
 
     @Test
@@ -333,7 +333,7 @@ public class TestInstallationManagerImpl {
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
         assertEquals(artifactsToDownload.size(), 2);
-        assertEquals(artifactsToDownload.toString(), "{" + InstallManagerArtifact.NAME + "=2.0.0, cdec=1.0.0}");
+        assertEquals(artifactsToDownload.toString(), "{" + InstallManagerArtifact.NAME + "=2.0.0, codenvy=1.0.0}");
     }
 
     @Test
@@ -345,7 +345,7 @@ public class TestInstallationManagerImpl {
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(cdecArtifact, null, testCredentials.getToken());
         assertEquals(artifactsToDownload.size(), 1);
-        assertEquals(artifactsToDownload.toString(), "{cdec=1.0.0}");
+        assertEquals(artifactsToDownload.toString(), "{codenvy=1.0.0}");
     }
 
     @Test
@@ -385,7 +385,7 @@ public class TestInstallationManagerImpl {
         assertEquals(artifacts.size(), 2);
 
         // check order
-        assertEquals(artifacts.toString(), "{cdec={" +
+        assertEquals(artifacts.toString(), "{codenvy={" +
                                            "1.0.1=file2, " +
                                            "1.0.0=file1" +
                                            "}, " +
@@ -482,7 +482,7 @@ public class TestInstallationManagerImpl {
                                                                                     .getProperties(version, UPDATE_ENDPOINT, transport);
 
         Path path = manager.getPathToBinaries(cdecArtifact, version);
-        assertEquals(path, Paths.get(DOWNLOAD_DIR + "/cdec/1.0.1/binaries"));
+        assertEquals(path, Paths.get(DOWNLOAD_DIR + "/codenvy/1.0.1/binaries"));
     }
 
     @Test

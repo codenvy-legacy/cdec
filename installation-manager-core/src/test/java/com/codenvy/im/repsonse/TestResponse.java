@@ -61,10 +61,10 @@ public class TestResponse {
 
         assertEquals(response.toJson(), "{\n" +
                                         "  \"artifacts\" : [ {\n" +
-                                        "    \"artifact\" : \"cdec\",\n" +
+                                        "    \"artifact\" : \"codenvy\",\n" +
                                         "    \"version\" : \"1.0.1\"\n" +
                                         "  }, {\n" +
-                                        "    \"artifact\" : \"cdec\",\n" +
+                                        "    \"artifact\" : \"codenvy\",\n" +
                                         "    \"version\" : \"1.0.2\",\n" +
                                         "    \"status\" : \"SUCCESS\"\n" +
                                         "  } ],\n" +
@@ -82,7 +82,7 @@ public class TestResponse {
 
         assertEquals(response.toJson(), "{\n" +
                                         "  \"artifacts\" : [ {\n" +
-                                        "    \"artifact\" : \"cdec\",\n" +
+                                        "    \"artifact\" : \"codenvy\",\n" +
                                         "    \"version\" : \"1.0.1\"\n" +
                                         "  } ],\n" +
                                         "  \"status\" : \"OK\"\n" +
@@ -119,10 +119,10 @@ public class TestResponse {
                           + "    \"prop2\" : \"value2\"\n"
                           + "  },\n"
                           + "  \"artifacts\" : [ {\n"
-                          + "    \"artifact\" : \"cdec\",\n"
+                          + "    \"artifact\" : \"codenvy\",\n"
                           + "    \"version\" : \"1.0.1\"\n"
                           + "  }, {\n"
-                          + "    \"artifact\" : \"cdec\",\n"
+                          + "    \"artifact\" : \"codenvy\",\n"
                           + "    \"version\" : \"1.0.2\",\n"
                           + "    \"status\" : \"SUCCESS\"\n"
                           + "  }, {\n"

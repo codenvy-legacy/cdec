@@ -60,7 +60,7 @@ import static java.nio.file.Files.exists;
  */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
-    public static final String NAME = "cdec";
+    public static final String NAME = "codenvy";
 
     private final HttpTransport transport;
 

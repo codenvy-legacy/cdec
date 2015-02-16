@@ -67,7 +67,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     private UserCredentials userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
-                                       + "    \"artifact\" : \"cdec\",\n"
+                                       + "    \"artifact\" : \"codenvy\",\n"
                                        + "    \"version\" : \"1.0.1\",\n"
                                        + "    \"status\" : \"SUCCESS\"\n"
                                        + "  } ],\n"
@@ -123,7 +123,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "step 2 [OK]\n" +
                                       "{\n" +
                                       "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"cdec\",\n" +
+                                      "    \"artifact\" : \"codenvy\",\n" +
                                       "    \"version\" : \"1.0.1\",\n" +
                                       "    \"status\" : \"SUCCESS\"\n" +
                                       "  } ],\n" +
@@ -214,7 +214,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "step 2 [OK]\n" +
                                       "{\n" +
                                       "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"cdec\",\n" +
+                                      "    \"artifact\" : \"codenvy\",\n" +
                                       "    \"version\" : \"1.0.1\",\n" +
                                       "    \"status\" : \"SUCCESS\"\n" +
                                       "  } ],\n" +
@@ -303,7 +303,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         String output = result.getOutputStream();
         assertEquals(output, "{\n"
                              + "  \"artifacts\" : [ {\n"
-                             + "    \"artifact\" : \"cdec\",\n"
+                             + "    \"artifact\" : \"codenvy\",\n"
                              + "    \"version\" : \"1.0.1\",\n"
                              + "    \"status\" : \"SUCCESS\"\n"
                              + "  } ],\n"

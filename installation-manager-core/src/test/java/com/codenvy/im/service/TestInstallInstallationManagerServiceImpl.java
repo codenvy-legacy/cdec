@@ -71,7 +71,7 @@ public class TestInstallInstallationManagerServiceImpl {
         String response = installationManagerService.install(installOptions, request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"artifact\" : \"codenvy\",\n" +
                                "    \"version\" : \"2.10.5\",\n" +
                                "    \"status\" : \"SUCCESS\"\n" +
                                "  } ],\n" +
@@ -91,7 +91,7 @@ public class TestInstallInstallationManagerServiceImpl {
         String response = installationManagerService.install(installOptions, request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"artifact\" : \"codenvy\",\n" +
                                "    \"version\" : \"1.0.1\",\n" +
                                "    \"status\" : \"FAILURE\"\n" +
                                "  } ],\n" +

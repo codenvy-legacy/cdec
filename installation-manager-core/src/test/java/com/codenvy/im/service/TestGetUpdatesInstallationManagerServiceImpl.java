@@ -90,7 +90,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
                                "    \"version\" : \"1.0.0\",\n" +
                                "    \"status\" : \"DOWNLOADED\"\n" +
                                "  }, {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"artifact\" : \"codenvy\",\n" +
                                "    \"version\" : \"2.10.5\"\n" +
                                "  } ],\n" +
                                "  \"status\" : \"OK\"\n" +
@@ -117,7 +117,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
         String response = installationManagerService.getUpdates(request);
 
         assertEquals(response, "{\n" +
-                               "  \"message\" : \"Artifact 'cdec' not found\",\n" +
+                               "  \"message\" : \"Artifact 'codenvy' not found\",\n" +
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
     }

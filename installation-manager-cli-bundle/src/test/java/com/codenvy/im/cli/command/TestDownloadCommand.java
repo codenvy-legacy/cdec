@@ -55,9 +55,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                                  "  \"downloadInfo\" : {\n" +
                                                  "     \"downloadResult\" : {\n" +
                                                  "       \"artifacts\" :[ {\n" +
-                                                 "         \"artifact\" :\"cdec\",\n" +
+                                                 "         \"artifact\" :\"codenvy\",\n" +
                                                  "         \"version\" : \"3.0.0\",\n" +
-                                                 "         \"file\" :\"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
+                                                 "         \"file\" :\"/home/codenvy-shared/updates/codenvy/3.0.0/codenvy-3.0.0.zip\",\n" +
                                                  "         \"status\" :\"SUCCESS\"\n" +
                                                  "       } ],\n" +
                                                  "       \"status\" :\"OK\"\n" +
@@ -70,9 +70,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     private String ok100DownloadCommandResponse = "{\n" +
                                                   "  \"artifacts\" : [ {\n" +
-                                                  "    \"artifact\" : \"cdec\",\n" +
+                                                  "    \"artifact\" : \"codenvy\",\n" +
                                                   "    \"version\" : \"3.0.0\",\n" +
-                                                  "    \"file\" : \"/home/codenvy-shared/updates/cdec/3.0.0/cdec-3.0.0.zip\",\n" +
+                                                  "    \"file\" : \"/home/codenvy-shared/updates/codenvy/3.0.0/codenvy-3.0.0.zip\",\n" +
                                                   "    \"status\" : \"SUCCESS\"\n" +
                                                   "  } ],\n" +
                                                   "  \"status\" : \"OK\"\n" +
@@ -141,11 +141,11 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                         "  \"downloadInfo\" : {\n" +
                                         "    \"downloadResult\" : {\n" +
                                         "      \"artifacts\" : [ {\n" +
-                                        "        \"artifact\" :\"cdec\",\n" +
+                                        "        \"artifact\" :\"codenvy\",\n" +
                                         "        \"version\" :\"3.0.0\",\n" +
                                         "        \"status\" :\"FAILURE\"\n" +
                                         "      } ],\n" +
-                                        "      \"message\" :\"There is no any version of artifact 'cdec'\"," +
+                                        "      \"message\" :\"There is no any version of artifact 'codenvy'\"," +
                                         "      \"status\" :\"ERROR\"" +
                                         "    },\n" +
                                         "    \"percents\" : 0,\n" +
@@ -156,11 +156,11 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
         String serviceErrorResponse = "{\n" +
                                       "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"cdec\",\n" +
+                                      "    \"artifact\" : \"codenvy\",\n" +
                                       "    \"version\" : \"3.0.0\",\n" +
                                       "    \"status\" : \"FAILURE\"\n" +
                                       "  } ],\n" +
-                                      "  \"message\" : \"There is no any version of artifact 'cdec'\",\n" +
+                                      "  \"message\" : \"There is no any version of artifact 'codenvy'\",\n" +
                                       "  \"status\" : \"ERROR\"\n" +
                                       "}";
         Request request = new Request().setUserCredentials(testCredentials);

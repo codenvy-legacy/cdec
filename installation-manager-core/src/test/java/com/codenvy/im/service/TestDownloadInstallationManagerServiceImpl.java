@@ -139,7 +139,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
                                                         "  \"artifacts\" : [ {\n" +
-                                                        "    \"artifact\" : \"cdec\",\n" +
+                                                        "    \"artifact\" : \"codenvy\",\n" +
                                                         "    \"version\" : \"2.0.0\",\n" +
                                                         "    \"file\" : \"./target/cdec.zip\",\n" +
                                                         "    \"status\" : \"SUCCESS\"\n" +
@@ -187,7 +187,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
                                                         "  \"artifacts\" : [ {\n" +
-                                                        "    \"artifact\" : \"cdec\",\n" +
+                                                        "    \"artifact\" : \"codenvy\",\n" +
                                                         "    \"version\" : \"2.0.0\",\n" +
                                                         "    \"file\" : \"./target/cdec.zip\",\n" +
                                                         "    \"status\" : \"SUCCESS\"\n" +
@@ -229,7 +229,7 @@ public class TestDownloadInstallationManagerServiceImpl {
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
                                                         "  \"artifacts\" : [ {\n" +
-                                                        "    \"artifact\" : \"cdec\",\n" +
+                                                        "    \"artifact\" : \"codenvy\",\n" +
                                                         "    \"version\" : \"2.0.0\",\n" +
                                                         "    \"file\" : \"./target/cdec.zip\",\n" +
                                                         "    \"status\" : \"SUCCESS\"\n" +
@@ -324,7 +324,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         } while (info.getDownloadResult() == null);
 
         assertEquals(info.getDownloadResult().toJson(), "{\n" +
-                                                        "  \"message\" : \"Artifact cdec:2.0.0 not found\",\n" +
+                                                        "  \"message\" : \"Artifact codenvy:2.0.0 not found\",\n" +
                                                         "  \"status\" : \"ERROR\"\n" +
                                                         "}");
     }
@@ -431,12 +431,12 @@ public class TestDownloadInstallationManagerServiceImpl {
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"artifact\" : \"codenvy\",\n" +
                                "    \"version\" : \"1.0.0\",\n" +
                                "    \"file\" : \"target/file1\",\n" +
                                "    \"status\" : \"DOWNLOADED\"\n" +
                                "  }, {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"artifact\" : \"codenvy\",\n" +
                                "    \"version\" : \"1.0.1\",\n" +
                                "    \"file\" : \"target/file2\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
@@ -494,7 +494,7 @@ public class TestDownloadInstallationManagerServiceImpl {
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"cdec\",\n" +
+                               "    \"artifact\" : \"codenvy\",\n" +
                                "    \"version\" : \"2.0.0\",\n" +
                                "    \"file\" : \"target/file1\",\n" +
                                "    \"status\" : \"READY_TO_INSTALL\"\n" +
