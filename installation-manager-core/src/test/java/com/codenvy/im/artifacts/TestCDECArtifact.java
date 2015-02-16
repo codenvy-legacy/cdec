@@ -187,6 +187,19 @@ public class TestCDECArtifact {
         }
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Step number .* is out of install range")
+    public void testGetInstallMultiServerCommandUnexistedStepError() throws Exception {
+        OSUtils.VERSION = "7";
+
+        InstallOptions options = new InstallOptions();
+        options.setConfigProperties(Collections.<String, String>emptyMap());
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setStep(Integer.MAX_VALUE);
+
+        spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+    }
+
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "Only installation of multi-node version of CDEC on Centos 7 is supported")
     public void testGetInstallMultiServerCommandsWrongOS() throws IOException {
@@ -224,6 +237,33 @@ public class TestCDECArtifact {
     public void testGetInstalledVersionError() throws Exception {
         when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion();
+    }
+
+    @Test
+    public void testGetUpdateCommand() throws Exception {
+        InstallOptions options = new InstallOptions();
+        options.setConfigProperties(ImmutableMap.of("some property", "some value"));
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+
+        int steps = spyCdecArtifact.getUpdateInfo(options).size();
+        for (int i = 0; i < steps; i++) {
+            options.setStep(i);
+            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+            assertNotNull(command);
+        }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Step number .* is out of install range")
+    public void testGetUpdateCommandUnexistedStepError() throws Exception {
+        OSUtils.VERSION = "7";
+
+        InstallOptions options = new InstallOptions();
+        options.setConfigProperties(Collections.<String, String>emptyMap());
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setStep(Integer.MAX_VALUE);
+
+        spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
     }
 
     @Test

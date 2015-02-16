@@ -27,7 +27,6 @@ import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -130,10 +129,48 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "  \"status\" : \"OK\"\n" +
                                       "}\n";
 
-        doReturn(okServiceResponse).when(service).install(any(InstallOptions.class), any(Request.class));
+        doAnswer(new Answer<String>() {
+            @Override public String answer(InvocationOnMock invocation) throws Throwable {
+                InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
+                assertEquals(installOptions.getInstallType(), InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+                return okServiceResponse;
+            }
+        }).when(service).install(any(InstallOptions.class), any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, expectedOutput);
+    }
+
+    @Test
+    public void testInstallMultiServerArtifact() throws Exception {
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
+        final String expectedOutput = "step 1 [OK]\n" +
+                                      "step 2 [OK]\n" +
+                                      "{\n" +
+                                      "  \"artifacts\" : [ {\n" +
+                                      "    \"artifact\" : \"codenvy\",\n" +
+                                      "    \"version\" : \"1.0.1\",\n" +
+                                      "    \"status\" : \"SUCCESS\"\n" +
+                                      "  } ],\n" +
+                                      "  \"status\" : \"OK\"\n" +
+                                      "}\n";
+
+        doAnswer(new Answer<String>() {
+            @Override public String answer(InvocationOnMock invocation) throws Throwable {
+                InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
+                assertEquals(installOptions.getInstallType(), InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+                return okServiceResponse;
+            }
+        }).when(service).install(any(InstallOptions.class), any(Request.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.option("--multi", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

@@ -28,16 +28,20 @@ import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -62,10 +66,15 @@ public class TestConfigUtil {
     @Test
     public void testConfigProperties() throws Exception {
         Path conf = Paths.get("target", "conf.properties");
-
         FileUtils.write(conf.toFile(), "user=1\npwd=2\n");
 
         Map<String, String> m = configUtil.loadConfigProperties(conf);
+        assertEquals(m.size(), 2);
+        assertEquals(m.get("user"), "1");
+        assertEquals(m.get("pwd"), "2");
+
+
+        m = configUtil.loadConfigProperties(conf.toAbsolutePath());
         assertEquals(m.size(), 2);
         assertEquals(m.get("user"), "1");
         assertEquals(m.get("pwd"), "2");
@@ -76,8 +85,17 @@ public class TestConfigUtil {
         configUtil.loadConfigProperties("non-existed");
     }
 
+    @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Can't load properties: error")
+    public void testLoadConfigFileWhichCantBeLoad() throws IOException {
+        Path confFile = Paths.get("target", "conf.properties");
+        FileUtils.write(confFile.toFile(), "user=1\npwd=2\n");
+
+        doThrow(new IOException("error")).when(configUtil).doLoad(any(InputStream.class));
+        configUtil.loadConfigProperties(confFile);
+    }
+
     @Test
-    public void testLoadDefaultCdecConfig() throws Exception {
+    public void testLoadDefaultSingleServerCdecConfig() throws Exception {
         Path properties = Paths.get("target/test.properties");
         FileUtils.write(properties.toFile(), "a=1\n" +
                                              "b=2\n");
@@ -87,6 +105,40 @@ public class TestConfigUtil {
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
+    }
+
+    @Test
+    public void testLoadDefaultMultiServerCdecConfig() throws Exception {
+        Path properties = Paths.get("target/test.properties");
+        FileUtils.write(properties.toFile(), "a=1\n" +
+                                             "b=2\n");
+        doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
+
+        Map<String, String> m = configUtil.loadCdecDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(m.size(), 2);
+        assertEquals(m.get("a"), "1");
+        assertEquals(m.get("b"), "2");
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "Can't download installation properties. error")
+    public void testLoadDefaultCdecConfigTransportError() throws Exception {
+        doThrow(new IOException("error")).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
+
+        configUtil.loadCdecDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+    }
+
+    @Test(expectedExceptions = ConfigException.class,
+          expectedExceptionsMessageRegExp = "Can't load properties: error")
+    public void testLoadDefaultCdecConfigLoadError() throws Exception {
+        Path properties = Paths.get("target/test.properties");
+        FileUtils.write(properties.toFile(), "a=1\n" +
+                                             "b=2\n");
+        doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
+
+        doThrow(new IOException("error")).when(configUtil).doLoad(any(InputStream.class));
+
+        configUtil.loadCdecDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_MULTI_SERVER);
     }
 
     @Test
@@ -167,6 +219,17 @@ public class TestConfigUtil {
         Path properties = Paths.get("target/unexisted");
         doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         configUtil.loadInstalledCssProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+    }
+
+    @Test
+    public void testGetCssPropertiesFiles(){
+        Iterator<Path> singleServerCssPropertiesFiles = configUtil.getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        assertEquals(singleServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/single_server/single_server.pp");
+        assertEquals(singleServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/single_server/base_config.pp");
+
+        Iterator<Path> multiServerCssPropertiesFiles = configUtil.getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(multiServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp");
+        assertEquals(multiServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/multi_server/base_configurations.pp");
     }
 
     @Test

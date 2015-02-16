@@ -176,7 +176,7 @@ public class ConfigUtil {
         }
     }
 
-    private Map<String, String> doLoad(InputStream in) throws IOException {
+    protected Map<String, String> doLoad(InputStream in) throws IOException {
         Properties properties = new Properties();
         properties.load(in);
 
