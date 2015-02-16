@@ -148,27 +148,30 @@ public class TestConsole {
 
     @Test
     public void testShowHideLoaderBar() throws IOException, InterruptedException {
-        String expectedOutput = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s";
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
-        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);  // TODO [ndp] make more stable
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 2);
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertEquals(getOutputContent(), expectedOutput);
+        String actualOutput = getOutputContent();
+        assertTrue(actualOutput.startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s"));
+        assertTrue(actualOutput.endsWith(" \u001B[u\u001B[s"));
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.showProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertTrue(getOutputContent().startsWith(expectedOutput));
+        actualOutput = getOutputContent();
+        assertTrue(actualOutput.startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s"));
+        assertTrue(actualOutput.endsWith(" \u001B[u\u001B[s"));
     }
 
     @Test
     public void testShowHideRestoreHideLoaderBar() throws IOException, InterruptedException {
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
-        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 1);  // TODO [ndp] make more stable
+        long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 2);
 
         Console spyConsole = createInteractiveConsole();
         spyConsole.showProgressor();
@@ -179,8 +182,10 @@ public class TestConsole {
         spyConsole.restoreProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertTrue(getOutputContent().startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[stest\n"
-                                         + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s"));
+        String actualOutput = getOutputContent();
+        assertTrue(actualOutput.startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s"));
+        assertTrue(actualOutput.contains("\u001B[u\u001B[stest\n\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-"));
+        assertTrue(actualOutput.endsWith(" \u001B[u\u001B[s"));
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.showProgressor();
@@ -191,14 +196,16 @@ public class TestConsole {
         spyConsole.restoreProgressor();
         sleep(timeout);
         spyConsole.hideProgressor();
-        assertTrue(getOutputContent().startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s\u001B[94m[CODENVY] \u001B[mtest\n"
-                                   + "\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s \u001B[u\u001B[s"));
+        actualOutput = getOutputContent();
+        assertTrue(actualOutput.startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s"));
+        assertTrue(actualOutput.contains("\u001B[u\u001B[s\u001B[94m[CODENVY] \u001B[mtest\n\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-"));
+        assertTrue(actualOutput.endsWith(" \u001B[u\u001B[s"));
     }
 
     @Test
     public void testShowLoaderBarAfterShow() throws IOException, InterruptedException {
-        String expectedOutputEnd = " \u001B[u\u001B[s";
         String expectedOutputStart = "\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s";
+        String expectedOutputEnd = " \u001B[u\u001B[s";
         Console.LoadingBar.Visualizer loaderVisualizer = new Console(false).new LoadingBar().new Visualizer();
         long timeout = loaderVisualizer.CHAR_CHANGE_TIMEOUT_MILLIS * (loaderVisualizer.LOADER_CHARS.length + 2);
 
