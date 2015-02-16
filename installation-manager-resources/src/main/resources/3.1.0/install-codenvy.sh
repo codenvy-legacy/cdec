@@ -273,7 +273,19 @@ printPreInstallInfo_multi() {
 
     printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
-    printPrompt; echo   # TODO [ndp] display info about requirments for the nodes
+    printPrompt; echo
+    printPrompt; echo "Minimum requirements for the nodes:"
+    printPrompt; echo "RAM         : 1GB"
+    printPrompt; echo "Disk Space  : 14GB"
+    printPrompt; echo "OS          : CentOS 7"
+    printPrompt; echo
+    printPrompt; echo "Minimum requirements for the Runner node:"
+    printPrompt; echo "RAM         : 1,5GB"
+    printPrompt; echo "Disk Space  : 50GB"
+    printPrompt; echo "OS          : CentOS 7"
+    printPrompt; echo
+    printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
+    printPrompt; echo
 
     if [ ! -f ${CONFIG} ]; then
         printPrompt; echo "Configuration file : not detected - will download template"
