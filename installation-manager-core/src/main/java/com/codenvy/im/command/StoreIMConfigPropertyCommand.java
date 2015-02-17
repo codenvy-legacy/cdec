@@ -49,7 +49,8 @@ public class StoreIMConfigPropertyCommand implements Command {
     }
 
     /** {@inheritDoc} */
-    @Override public String getDescription() {
+    @Override
+    public String getDescription() {
         return format("Save property %s = %s into the installation manager config", propertyName, propertyValue);
     }
 

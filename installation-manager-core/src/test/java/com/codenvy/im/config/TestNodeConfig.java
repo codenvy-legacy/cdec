@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class TestNodeConfig {
     private static final String              TEST_HOST     = "host";
@@ -50,7 +51,7 @@ public class TestNodeConfig {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Port 0 isn't supported.")
+            expectedExceptionsMessageRegExp = "Port number must be positive")
     public void testIllegalPortArgument() throws Exception {
         NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
         config.setPort(0);

@@ -80,8 +80,7 @@ public class InstallOptions {
 
     /** Indicates if all necessary options are set. */
     public boolean checkValid() {
-        if (getInstallType() == InstallType.CODENVY_SINGLE_SERVER
-            || getInstallType() == InstallType.CODENVY_MULTI_SERVER) {
+        if (getInstallType() != null) {
             if (configProperties == null) {
                 return false;
             }

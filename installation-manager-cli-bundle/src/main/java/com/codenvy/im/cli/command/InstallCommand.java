@@ -75,7 +75,7 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
 
-    @Option(name = "--multi", aliases = "-m", description = "To install artifact on multi nodes (default is single node)", required = false)
+    @Option(name = "--multi", aliases = "-m", description = "To install artifact on multiply nodes (by default on single node)", required = false)
     private boolean multi;
 
     @Option(name = "--config", aliases = "-c", description = "Path to the configuration file", required = false)
@@ -281,10 +281,10 @@ public class InstallCommand extends AbstractIMCommand {
                     properties = configUtil.loadConfigProperties(configFilePath);
                 } else {
                     if (isInstall()) {
-                        properties = configUtil.loadCdecDefaultProperties(version, installType);
+                        properties = configUtil.loadCodenvyDefaultProperties(version, installType);
                     } else {
-                        properties = configUtil.merge(configUtil.loadInstalledCssProperties(installType),
-                                                      configUtil.loadCdecDefaultProperties(version, installType));
+                        properties = configUtil.merge(configUtil.loadInstalledCodenvyProperties(installType),
+                                                      configUtil.loadCodenvyDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
                     }
                 }

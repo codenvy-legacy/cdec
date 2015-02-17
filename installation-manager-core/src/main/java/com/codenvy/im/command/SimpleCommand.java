@@ -38,29 +38,28 @@ public class SimpleCommand implements Command {
     }
 
     /** Factory method */
-    public static SimpleCommand createLocalCommand(String command) {
+    public static SimpleCommand createLocalAgentCommand(String command) {
         return new SimpleCommand(command, new LocalAgent(), null);
     }
 
     /** Factory method */
-    public static SimpleCommand createShellCommand(String command,
-                                                   final String host,
-                                                   final int port,
-                                                   final String user,
-                                                   final String privateKeyFilePath) throws AgentException {
+    public static SimpleCommand createShellAgentCommand(String command,
+                                                        final String host,
+                                                        final int port,
+                                                        final String user,
+                                                        final String privateKeyFilePath) throws AgentException {
         return new SimpleCommand(command,
                                  new SecureShellAgent(host, port, user, privateKeyFilePath, null),
                                  null);
     }
 
-    public static Command createShellCommandForNode(String command, NodeConfig node) throws AgentException {
-        return SimpleCommand.createShellCommand(
-            command,
-            node.getHost(),
-            node.getPort(),
-            node.getUser(),
-            node.getPrivateKeyFile()
-        );
+    /** Factory method */
+    public static Command createShellAgentCommand(String command, NodeConfig node) throws AgentException {
+        return SimpleCommand.createShellAgentCommand(command,
+                                                     node.getHost(),
+                                                     node.getPort(),
+                                                     node.getUser(),
+                                                     node.getPrivateKeyFile());
     }
 
     /** {@inheritDoc} */

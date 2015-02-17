@@ -82,7 +82,9 @@ public class TestInstallCommand extends AbstractTestCommand {
     @BeforeMethod
     public void initMocks() throws Exception {
         configUtil = mock(ConfigUtil.class);
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configUtil).loadCdecDefaultProperties("1.0.1", InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configUtil).loadCodenvyDefaultProperties("1.0.1",
+                                                                                                                 InstallOptions.InstallType
+                                                                                                                         .CODENVY_SINGLE_SERVER);
 
         service = mock(InstallationManagerService.class);
         doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());
