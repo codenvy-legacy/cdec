@@ -110,9 +110,17 @@ public class CDECArtifact extends AbstractArtifact {
                                 "Update Codenvy");
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     * @throws IOException
+     * @throws IllegalArgumentException if step number is out of range, or if installation type != CODENVY_SINGLE_SERVER
+     */
     @Override
-    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException, IllegalArgumentException {
+        if (installOptions.getInstallType() != InstallOptions.InstallType.CODENVY_SINGLE_SERVER) {
+            throw new IllegalArgumentException("Only update to single-server version is supported");
+        }
+
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 

@@ -31,14 +31,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -74,7 +71,7 @@ public class TestConfigUtil {
         assertEquals(m.get("pwd"), "2");
 
 
-        m = configUtil.loadConfigProperties(conf.toAbsolutePath());
+        m = configUtil.loadConfigProperties(conf.toAbsolutePath().toString());
         assertEquals(m.size(), 2);
         assertEquals(m.get("user"), "1");
         assertEquals(m.get("pwd"), "2");

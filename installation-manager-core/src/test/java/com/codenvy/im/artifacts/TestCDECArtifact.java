@@ -22,7 +22,6 @@ import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
-import com.codenvy.im.config.Config;
 import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.service.InstallationManagerConfig;
@@ -33,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
 
-import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -47,9 +45,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
@@ -241,6 +237,8 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetUpdateCommand() throws Exception {
+        when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"1.0.0\"}");
+
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
         options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
@@ -248,22 +246,35 @@ public class TestCDECArtifact {
         int steps = spyCdecArtifact.getUpdateInfo(options).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
-            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+            Command command = spyCdecArtifact.getUpdateCommand(Version.valueOf("2.0.0"), Paths.get("some path"), options);
             assertNotNull(command);
         }
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Step number .* is out of install range")
+          expectedExceptionsMessageRegExp = "Step number .* is out of update range")
     public void testGetUpdateCommandUnexistedStepError() throws Exception {
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(Integer.MAX_VALUE);
 
-        spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
+        spyCdecArtifact.getUpdateCommand(Version.valueOf("1.0.0"), Paths.get("some path"), options);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Only update to single-server version is supported")
+    public void testGetUpdateCommandMultiServerVersionError() throws Exception {
+        OSUtils.VERSION = "7";
+
+        InstallOptions options = new InstallOptions();
+        options.setConfigProperties(Collections.<String, String>emptyMap());
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setStep(0);
+
+        spyCdecArtifact.getUpdateCommand(Version.valueOf("1.0.0"), Paths.get("some path"), options);
     }
 
     @Test
