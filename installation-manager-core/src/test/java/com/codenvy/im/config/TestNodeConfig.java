@@ -51,7 +51,7 @@ public class TestNodeConfig {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Port number must be positive")
+            expectedExceptionsMessageRegExp = "Port number must be greater than zero")
     public void testIllegalPortArgument() throws Exception {
         NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
         config.setPort(0);

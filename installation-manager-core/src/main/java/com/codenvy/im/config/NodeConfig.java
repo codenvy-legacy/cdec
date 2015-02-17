@@ -60,7 +60,7 @@ public class NodeConfig {
      */
     public NodeConfig setPort(int port) throws IllegalArgumentException {
         if (port <= 0) {
-            throw new IllegalArgumentException("Port number must be positive");
+            throw new IllegalArgumentException("Port number must be greater than zero");
         }
 
         this.port = port;
