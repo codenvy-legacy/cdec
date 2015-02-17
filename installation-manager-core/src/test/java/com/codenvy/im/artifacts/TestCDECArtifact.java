@@ -195,8 +195,6 @@ public class TestCDECArtifact {
         spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Only installation of multi-node version of CDEC on Centos 7 is supported")
     @Test(expectedExceptions = IllegalStateException.class)
     public void testGetInstallMultiServerCommandsWrongOS() throws IOException {
         OSUtils.VERSION = "6";
