@@ -72,20 +72,12 @@ public class ConfigUtil {
     }
 
     /** Loads default properties. */
-    public Map<String, String> loadCdecDefaultProperties(String version, InstallOptions.InstallType installType) throws IOException {
+    public Map<String, String> loadCodenvyDefaultProperties(String version, InstallOptions.InstallType installType) throws IOException {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
 
-        String requestUrl = "";
-        switch (installType) {
-            case CODENVY_MULTI_SERVER:
-                requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-multi-server-properties/" + version);
-                break;
-
-            case CODENVY_SINGLE_SERVER:
-            default:
-                requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-single-server-properties/" + version);
-        }
-
+        String requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-" +
+                                                         (installType == InstallOptions.InstallType.CODENVY_MULTI_SERVER ? "multi" : "single")
+                                                         + "-server-properties/" + version);
         Path properties;
         try {
             properties = transport.download(requestUrl, tmpDir);
@@ -135,10 +127,10 @@ public class ConfigUtil {
      * <p/>
      * Finally method removes leading '$' for key name and quota characters for its value.
      */
-    public Map<String, String> loadInstalledCssProperties(InstallOptions.InstallType installType) throws IOException {
+    public Map<String, String> loadInstalledCodenvyProperties(InstallOptions.InstallType installType) throws IOException {
         Map<String, String> properties = new HashMap<>();
 
-        Iterator<Path> files = getCssPropertiesFiles(installType);
+        Iterator<Path> files = getCodenvyPropertiesFiles(installType);
         while (files.hasNext()) {
             Path propertiesFile = files.next();
 
@@ -163,7 +155,7 @@ public class ConfigUtil {
         return properties;
     }
 
-    protected Iterator<Path> getCssPropertiesFiles(InstallOptions.InstallType installType) {
+    protected Iterator<Path> getCodenvyPropertiesFiles(InstallOptions.InstallType installType) {
         switch (installType) {
             case CODENVY_MULTI_SERVER:
                 return ImmutableList.of(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES),
@@ -191,11 +183,9 @@ public class ConfigUtil {
         return m;
     }
 
-    /**
-     * Returns list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs.
-     */
-    public static Iterable<? extends Map.Entry<String, String>> getPuppetNodesConfigReplacement(List<NodeConfig> nodeConfigs) {
-        Map replacements = new HashMap<String, String>();
+    /** @return list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs. */
+    public static Map<String, String> getPuppetNodesConfigReplacement(List<NodeConfig> nodeConfigs) {
+        Map<String, String> replacements = new HashMap<>(nodeConfigs.size());
 
         for (NodeConfig node : nodeConfigs) {
             NodeConfig.NodeType type = node.getType();
@@ -229,6 +219,6 @@ public class ConfigUtil {
             }
         }
 
-        return replacements.entrySet();
+        return replacements;
     }
 }

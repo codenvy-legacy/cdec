@@ -20,6 +20,7 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.config.NodeConfig;
 import com.google.common.collect.ImmutableList;
+
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -93,7 +94,7 @@ public class TestMacroCommand {
                                         "{'command'='command', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
                                         "]", user);
 
-        Command testMacroCommand = MacroCommand.createShellCommandsForEachNode(command, description, nodes);
+        Command testMacroCommand = MacroCommand.createShellAgentCommand(command, description, nodes);
         assertEquals(testMacroCommand.toString(), expectedCommand);
     }
 

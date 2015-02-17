@@ -59,8 +59,8 @@ public class NodeConfig {
      * @throws IllegalArgumentException if the port = 0.
      */
     public NodeConfig setPort(int port) throws IllegalArgumentException {
-        if (port == 0) {
-            throw new IllegalArgumentException("Port 0 isn't supported.");
+        if (port <= 0) {
+            throw new IllegalArgumentException("Port number must be positive");
         }
 
         this.port = port;
@@ -121,7 +121,7 @@ public class NodeConfig {
     public static NodeConfig extractConfigFrom(Config config, NodeType type) {
         String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
         String nodeHost = config.getProperty(nodeHostPropertyName);
-        if ((nodeHost != null) && (!nodeHost.isEmpty())) {
+        if (nodeHost != null && !nodeHost.isEmpty()) {
             return new NodeConfig(type, nodeHost);
         }
 

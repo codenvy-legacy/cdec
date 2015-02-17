@@ -121,6 +121,7 @@ public class SecureShellAgent extends AbstractAgent {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public String toString() {
         try {

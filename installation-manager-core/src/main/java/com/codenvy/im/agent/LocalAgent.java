@@ -187,6 +187,7 @@ public class LocalAgent extends AbstractAgent {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public String toString() {
         return this.getClass().getSimpleName();

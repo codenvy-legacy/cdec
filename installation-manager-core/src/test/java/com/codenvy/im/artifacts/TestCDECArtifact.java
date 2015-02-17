@@ -22,7 +22,6 @@ import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
-import com.codenvy.im.config.Config;
 import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.service.InstallationManagerConfig;
@@ -33,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
 
-import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -47,13 +45,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -202,6 +197,7 @@ public class TestCDECArtifact {
 
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "Only installation of multi-node version of CDEC on Centos 7 is supported")
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testGetInstallMultiServerCommandsWrongOS() throws IOException {
         OSUtils.VERSION = "6";
 
@@ -303,14 +299,14 @@ public class TestCDECArtifact {
 
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
-        Command testCommand = spyCdecArtifact.createLocalPropertyReplaceCommand("testFile", "property", "newValue");
+        Command testCommand = spyCdecArtifact.createLocalAgentPropertyReplaceCommand("testFile", "property", "newValue");
         assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/property = .*/property = \"newValue\"/g' testFile', " +
                                              "'agent'='LocalAgent'}");
     }
 
     @Test
     public void testCreateLocalReplaceCommand() {
-        Command testCommand = spyCdecArtifact.createLocalReplaceCommand("testFile", "old", "new");
+        Command testCommand = spyCdecArtifact.createLocalAgentReplaceCommand("testFile", "old", "new");
         assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/old/new/g' testFile', " +
                                              "'agent'='LocalAgent'}");
     }
@@ -318,12 +314,12 @@ public class TestCDECArtifact {
     @Test
     public void testGetRestoreOrBackupCommand() {
         String testCommand = spyCdecArtifact.getRestoreOrBackupCommand("testFile");
-        assertEquals(testCommand.toString(), "if sudo test -f testFile; then" +
-                                             "     if ! sudo test -f testFile.back; then" +
-                                             "         sudo cp testFile testFile.back;" +
-                                             "     else" +
-                                             "         sudo cp testFile.back testFile;" +
-                                             "     fi fi");
+        assertEquals(testCommand, "if sudo test -f testFile; then" +
+                                  "     if ! sudo test -f testFile.back; then" +
+                                  "         sudo cp testFile testFile.back;" +
+                                  "     else" +
+                                  "         sudo cp testFile.back testFile;" +
+                                  "     fi fi");
     }
 
     @Test
@@ -339,7 +335,7 @@ public class TestCDECArtifact {
             new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
         );
 
-        Command testCommand = spyCdecArtifact.createShellCommand("testCommand", nodes);
+        Command testCommand = spyCdecArtifact.createShellAgentCommand("testCommand", nodes);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
@@ -349,13 +345,13 @@ public class TestCDECArtifact {
                                               SYSTEM_USER_NAME);
 
         NodeConfig node = new NodeConfig(NodeConfig.NodeType.DATA, "localhost");
-        Command testCommand = spyCdecArtifact.createShellCommand("testCommand", node);
+        Command testCommand = spyCdecArtifact.createShellAgentCommand("testCommand", node);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
     @Test
     public void testCreateLocalRestoreOrBackupCommand() throws AgentException {
-        Command testCommand = spyCdecArtifact.createLocalRestoreOrBackupCommand("testFile");
+        Command testCommand = spyCdecArtifact.createLocalAgentRestoreOrBackupCommand("testFile");
         assertEquals(testCommand.toString(), "{" +
                                              "'command'='if sudo test -f testFile; then" +
                                              "     if ! sudo test -f testFile.back; then" +
@@ -390,7 +386,7 @@ public class TestCDECArtifact {
             new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
         );
 
-        Command testCommand = spyCdecArtifact.createShellRestoreOrBackupCommand("testFile", nodes);
+        Command testCommand = spyCdecArtifact.createShellAgentRestoreOrBackupCommand("testFile", nodes);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 

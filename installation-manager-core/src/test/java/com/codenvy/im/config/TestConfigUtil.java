@@ -21,6 +21,7 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -45,9 +46,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -101,7 +99,7 @@ public class TestConfigUtil {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configUtil.loadCdecDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        Map<String, String> m = configUtil.loadCodenvyDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -186,7 +184,7 @@ public class TestConfigUtil {
     }
 
     @Test
-    public void testLoadInstalledCssProperties() throws Exception {
+    public void testLoadInstalledCodenvyProperties() throws Exception {
         Path properties = Paths.get("target/test.properties");
         FileUtils.write(properties.toFile(), "#\n" +
                                              "# Please finalize configurations by entering required values below:\n" +
@@ -207,16 +205,20 @@ public class TestConfigUtil {
                                              "  $builder_max_execution_time = \"600\"\n" +
                                              "\n");
 
-        doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-        Map<String, String> m = configUtil.loadInstalledCssProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        doReturn(ImmutableList.of(properties).iterator()).when(configUtil)
+                                                         .getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        Map<String, String> m = configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
     }
 
     @Test(expectedExceptions = ConfigException.class)
-    public void testLoadInstalledCssPropertiesErrorIfFileAbsent() throws Exception {
+    public void testLoadInstalledCodenvyPropertiesErrorIfFileAbsent() throws Exception {
         Path properties = Paths.get("target/unexisted");
+        doReturn(ImmutableList.of(properties).iterator()).when(configUtil)
+                                                         .getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         doReturn(ImmutableList.of(properties).iterator()).when(configUtil).getCssPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
         configUtil.loadInstalledCssProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
     }
@@ -241,12 +243,12 @@ public class TestConfigUtil {
             new NodeConfig(NodeConfig.NodeType.RUNNER, "runner1.dev.com")
         );
 
-        Iterable<? extends Map.Entry<String, String>> result = ConfigUtil.getPuppetNodesConfigReplacement(nodes);
-        assertEquals(result.toString(), "[" +
-                                        "builder.*example.com=builder\\\\d+\\\\.dev.com, " +
-                                        "runner.*example.com=runner\\\\d+\\\\.dev.com, " +
-                                        "data.example.com=data.dev.com, " +
-                                        "api.example.com=api.dev.com" +
-                                        "]");
+        Map<String, String> expected = ImmutableMap.of("builder.*example.com", "builder\\\\d+\\\\.dev.com",
+                                                       "runner.*example.com", "runner\\\\d+\\\\.dev.com",
+                                                       "data.example.com", "data.dev.com",
+                                                       "api.example.com", "api.dev.com");
+        Map<String, String> actual = ConfigUtil.getPuppetNodesConfigReplacement(nodes);
+
+        assertEquals(actual, expected);
     }
 }
