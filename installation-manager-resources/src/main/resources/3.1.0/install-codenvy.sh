@@ -3,7 +3,7 @@
 # bash <(curl -L -s https://start.codenvy.com/install-single)
 set -e
 
-ARTIFACT="cdec"
+ARTIFACT="codenvy"
 CODENVY_TYPE='single'
 
 if [ -z $1 ]; then
