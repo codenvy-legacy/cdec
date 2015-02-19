@@ -212,7 +212,7 @@ public class InstallCommand extends AbstractIMCommand {
         Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
         switch (artifactName) {
             case CDECArtifact.NAME:
-                console.println("Please, enter mandatory CDEC parameters (values cannot be left blank):");
+                console.println("Please, enter mandatory Codenvy parameters (values cannot be left blank):");
                 for (Map.Entry<String, String> e : m.entrySet()) {
                     String propName = e.getKey().toLowerCase();
                     String currentValue = e.getValue();
@@ -244,7 +244,7 @@ public class InstallCommand extends AbstractIMCommand {
         Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
         switch (artifactName) {
             case CDECArtifact.NAME:
-                console.println("Please, enter CDEC parameters (just press 'Enter' key to keep value as is):");
+                console.println("Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):");
 
                 for (Map.Entry<String, String> e : m.entrySet()) {
                     String propName = e.getKey().toLowerCase();
@@ -323,7 +323,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         for (; ; ) {
             console.println();
-            console.println("CDEC parameters list:");
+            console.println("Codenvy parameters list:");
             console.println(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
             sleep(1500);   // pause reading keyboard 1,5 sec to allow user to stop before confirming parameters list
             console.reset();

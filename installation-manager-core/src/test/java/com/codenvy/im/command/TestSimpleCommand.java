@@ -20,7 +20,7 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
-import com.codenvy.im.config.NodeConfig;
+import com.codenvy.im.node.NodeConfig;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

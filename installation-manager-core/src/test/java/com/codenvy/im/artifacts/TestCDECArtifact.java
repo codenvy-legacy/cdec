@@ -17,12 +17,10 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
-import com.codenvy.im.config.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.HttpTransport;
@@ -31,7 +29,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
-
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -47,7 +44,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -64,7 +60,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestCDECArtifact {
     public static final String TEST_HOST_DNS = "localhost";
-    public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+
     private CDECArtifact spyCdecArtifact;
     public static final String initialOsVersion = OSUtils.VERSION;
 
@@ -77,7 +73,7 @@ public class TestCDECArtifact {
         spyCdecArtifact = spy(new CDECArtifact(mockTransport));
 
         InstallationManagerConfig.CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
-        InstallationManagerConfig.storeProperty(InstallationManagerConfig.CDEC_HOST_DNS, TEST_HOST_DNS);
+        InstallationManagerConfig.storeProperty(InstallationManagerConfig.CODENVY_HOST_DNS, TEST_HOST_DNS);
     }
 
     @AfterMethod
@@ -308,99 +304,6 @@ public class TestCDECArtifact {
         String output = command.execute();
         assertEquals(output, "1.0.1\n" +
                              "1.0.2\n");
-    }
-
-    @Test
-    public void testCreateLocalPropertyReplaceCommand() {
-        Command testCommand = spyCdecArtifact.createLocalAgentPropertyReplaceCommand("testFile", "property", "newValue");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/property = .*/property = \"newValue\"/g' testFile', " +
-                                             "'agent'='LocalAgent'}");
-    }
-
-    @Test
-    public void testCreateLocalReplaceCommand() {
-        Command testCommand = spyCdecArtifact.createLocalAgentReplaceCommand("testFile", "old", "new");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/old/new/g' testFile', " +
-                                             "'agent'='LocalAgent'}");
-    }
-
-    @Test
-    public void testGetRestoreOrBackupCommand() {
-        String testCommand = spyCdecArtifact.getRestoreOrBackupCommand("testFile");
-        assertEquals(testCommand, "if sudo test -f testFile; then" +
-                                  "     if ! sudo test -f testFile.back; then" +
-                                  "         sudo cp testFile testFile.back;" +
-                                  "     else" +
-                                  "         sudo cp testFile.back testFile;" +
-                                  "     fi fi");
-    }
-
-    @Test
-    public void testCreateShellCommandForNodeList() throws AgentException {
-        String expectedCommandString = format("[" +
-                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
-                                              "]",
-                                              SYSTEM_USER_NAME);
-
-        List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
-            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
-        );
-
-        Command testCommand = spyCdecArtifact.createShellAgentCommand("testCommand", nodes);
-        assertEquals(testCommand.toString(), expectedCommandString);
-    }
-
-    @Test
-    public void testCreateShellCommandForNode() throws AgentException {
-        String expectedCommandString = format("{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
-                                              SYSTEM_USER_NAME);
-
-        NodeConfig node = new NodeConfig(NodeConfig.NodeType.DATA, "localhost");
-        Command testCommand = spyCdecArtifact.createShellAgentCommand("testCommand", node);
-        assertEquals(testCommand.toString(), expectedCommandString);
-    }
-
-    @Test
-    public void testCreateLocalRestoreOrBackupCommand() throws AgentException {
-        Command testCommand = spyCdecArtifact.createLocalAgentRestoreOrBackupCommand("testFile");
-        assertEquals(testCommand.toString(), "{" +
-                                             "'command'='if sudo test -f testFile; then" +
-                                             "     if ! sudo test -f testFile.back; then" +
-                                             "         sudo cp testFile testFile.back;" +
-                                             "     else" +
-                                             "         sudo cp testFile.back testFile;" +
-                                             "     fi fi', 'agent'='LocalAgent'}");
-    }
-
-    @Test
-    public void testCreateShellRestoreOrBackupCommand() throws AgentException {
-        String expectedCommandString = format("[" +
-                                              "{'command'='if sudo test -f testFile; then" +
-                                              "     if ! sudo test -f testFile.back; then" +
-                                              "         sudo cp testFile testFile.back;" +
-                                              "     else" +
-                                              "         sudo cp testFile.back testFile;" +
-                                              "     fi fi', " +
-                                              "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                              "{'command'='if sudo test -f testFile; then " +
-                                              "    if ! sudo test -f testFile.back; then" +
-                                              "         sudo cp testFile testFile.back;" +
-                                              "     else" +
-                                              "         sudo cp testFile.back testFile;" +
-                                              "     fi fi', " +
-                                              "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
-                                              "]",
-                                              SYSTEM_USER_NAME);
-
-        List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
-            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
-        );
-
-        Command testCommand = spyCdecArtifact.createShellAgentRestoreOrBackupCommand("testFile", nodes);
-        assertEquals(testCommand.toString(), expectedCommandString);
     }
 
 }

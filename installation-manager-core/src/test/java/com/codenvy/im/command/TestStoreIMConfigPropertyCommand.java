@@ -52,16 +52,16 @@ public class TestStoreIMConfigPropertyCommand {
     public void testCommandExecute() throws IOException {
         String testHostDns = "testDns";
 
-        Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CDEC_HOST_DNS, testHostDns);
+        Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, testHostDns);
         assertNull(testCommand.execute());
         assertEquals(InstallationManagerConfig.readCdecHostDns(), testHostDns);
     }
 
     @Test(expectedExceptions = CommandException.class,
-          expectedExceptionsMessageRegExp = "It is impossible to store \\{'propertyName':'cdec.host.dns','propertyValue':'test'\\}")
+          expectedExceptionsMessageRegExp = "It is impossible to store \\{'propertyName':'codenvy.host.dns','propertyValue':'test'\\}")
     public void testCommandExecuteException() throws IOException {
         CONFIG_FILE = Paths.get("/dev/null/im.properties");
-        Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CDEC_HOST_DNS, "test");
+        Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, "test");
         testCommand.execute();
     }
 

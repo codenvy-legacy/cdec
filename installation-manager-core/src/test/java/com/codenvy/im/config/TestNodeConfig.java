@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.node.NodeConfig;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -51,7 +52,7 @@ public class TestNodeConfig {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Port number must be greater than zero")
+          expectedExceptionsMessageRegExp = "Port number must be greater than zero")
     public void testIllegalPortArgument() throws Exception {
         NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
         config.setPort(0);

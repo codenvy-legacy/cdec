@@ -19,7 +19,6 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.im.response.Response;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;

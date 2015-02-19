@@ -21,7 +21,7 @@ import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
-import com.codenvy.im.config.NodeConfig;
+import com.codenvy.im.node.NodeConfig;
 
 import static java.lang.String.format;
 

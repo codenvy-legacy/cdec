@@ -46,6 +46,7 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
+        <apache.commons-lang3.version>3.3.2</apache.commons-lang3.version>
         <maven.releases.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-releases/</maven.releases.repo.url>
         <maven.snapshots.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-snapshots/</maven.snapshots.repo.url>
         <org.apache.karaf.version>3.0.2</org.apache.karaf.version>

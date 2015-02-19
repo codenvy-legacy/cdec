@@ -20,3 +20,5 @@ com.codenvy.im.cli.command.LoginCommand
 com.codenvy.im.cli.command.SubscriptionCommand
 com.codenvy.im.cli.command.ConfigCommand
 com.codenvy.im.cli.command.HelpCommand
+com.codenvy.im.cli.command.AddNodeCommand
+com.codenvy.im.cli.command.RemoveNodeCommand

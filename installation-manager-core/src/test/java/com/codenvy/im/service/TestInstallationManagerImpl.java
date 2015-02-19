@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
+import com.codenvy.im.node.NodeManager;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
@@ -94,7 +95,8 @@ public class TestInstallationManagerImpl {
                 new HttpTransportConfiguration("", "0"),
                 transport,
                 installer,
-                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
+                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
+                new NodeManager()));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -106,12 +108,12 @@ public class TestInstallationManagerImpl {
 
     @Test
     public void testInitializationIfDownloadDirectoryNotExist() throws Exception {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet());
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null);
     }
 
     @Test
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet());
+        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -492,5 +494,15 @@ public class TestInstallationManagerImpl {
 
         Long binariesSize = manager.getBinariesSize(cdecArtifact, version);
         assertEquals(binariesSize.intValue(), 100);
+    }
+
+    @Test
+    public void testAddNode() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testRemoveNode() {
+        // TODO [ndp]
     }
 }

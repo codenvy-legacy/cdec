@@ -61,8 +61,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
     private InstallationManagerService service;
-    private ConfigUtil configUtil;
-    private CommandSession             commandSession;
+    private ConfigUtil      mockConfigUtil;
+    private CommandSession  commandSession;
     private UserCredentials userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
@@ -81,9 +81,9 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws Exception {
-        configUtil = mock(ConfigUtil.class);
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configUtil).loadCodenvyDefaultProperties("1.0.1",
-                                                                                                                 InstallOptions.InstallType
+        mockConfigUtil = mock(ConfigUtil.class);
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigUtil).loadCodenvyDefaultProperties("1.0.1",
+                                                                                                                     InstallOptions.InstallType
                                                                                                                          .CODENVY_SINGLE_SERVER);
 
         service = mock(InstallationManagerService.class);
@@ -92,7 +92,7 @@ public class TestInstallCommand extends AbstractTestCommand {
             .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
-        spyCommand = spy(new InstallCommand(configUtil));
+        spyCommand = spy(new InstallCommand(mockConfigUtil));
         spyCommand.service = service;
 
         performBaseMocks(spyCommand, true);
@@ -183,7 +183,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn("1.0.2").when(service).getVersionToInstall(any(Request.class), anyInt());
         doReturn(false).when(spyCommand).isInstall();
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configUtil).merge(anyMap(), anyMap());
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 
         // user always enter "some value" as property value
         doAnswer(new Answer() {
@@ -218,22 +218,22 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left blank):\n"
+        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n"
                              + "b: some value\n"
                              + "\n"
-                             + "CDEC parameters list:\n"
+                             + "Codenvy parameters list:\n"
                              + "{\n"
                              + "  \"a\"       : \"2\",\n"
                              + "  \"b\"       : \"some value\",\n"
                              + "  \"version\" : \"1.0.2\"\n"
                              + "}\n"
                              + "Do you confirm parameters above? [y/N]\n"
-                             + "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
+                             + "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
                              + "a (value='2'): some value\n"
                              + "b (value='some value'): some value\n"
                              + "version (value='1.0.2'): some value\n"
                              + "\n"
-                             + "CDEC parameters list:\n"
+                             + "Codenvy parameters list:\n"
                              + "{\n"
                              + "  \"a\"       : \"some value\",\n"
                              + "  \"b\"       : \"some value\",\n"
@@ -352,7 +352,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configUtil).merge(anyMap(), anyMap());
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
             .when(service)
@@ -405,18 +405,18 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory CDEC parameters (values cannot be left blank):\n"
+        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n"
                              + "a: some value\n"
                              + "\n"
-                             + "CDEC parameters list:\n"
+                             + "Codenvy parameters list:\n"
                              + "{\n"
                              + "  \"a\" : \"some value\"\n"
                              + "}\n"
                              + "Do you confirm parameters above? [y/N]\n"
-                             + "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
+                             + "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
                              + "a (value='some value'): some value\n"
                              + "\n"
-                             + "CDEC parameters list:\n"
+                             + "Codenvy parameters list:\n"
                              + "{\n"
                              + "  \"a\" : \"some value\"\n"
                              + "}\n"
@@ -447,7 +447,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         options.setConfigProperties(properties);
         Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
         assertEquals(result.toString(), "{some property=test}");
-        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left blank):\n");
+        assertEquals(outputStream.toString(), "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n");
     }
 
     @Test
@@ -479,7 +479,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         options.setConfigProperties(properties);
         Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
         assertEquals(result.toString(), "{property 1=value 1, property 2=new value, property 3=}");
-        assertEquals(outputStream.toString(), "Please, enter mandatory CDEC parameters (values cannot be left blank):\n"
+        assertEquals(outputStream.toString(), "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n"
                                               + "property 2: property 2: property 2: ");
     }
 
@@ -523,7 +523,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         options.setConfigProperties(properties);
         Map<String, String> result = spyCommand.enterAllOptions(options).getConfigProperties();
         assertEquals(result.toString(), "{property 1=value 1, property 2=value 2, property 3=new value}");
-        assertEquals(outputStream.toString(), "Please, enter CDEC parameters (just press 'Enter' key to keep value as is):\n"
+        assertEquals(outputStream.toString(), "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
                                               + "property 1 (value='value 1'): property 2 (value='value 2'): property 3 (value=''): ");
     }
 }

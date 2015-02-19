@@ -156,4 +156,14 @@ public class TestInstallInstallationManagerServiceImpl {
 
         installationManagerService.doGetVersionToInstall(request, 1);
     }
+
+    @Test
+    public void testAddNode() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testRemoveNode() {
+        // TODO [ndp]
+    }
 }

@@ -18,6 +18,7 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -251,4 +252,10 @@ public class TestConfigUtil {
 
         assertEquals(actual, expected);
     }
+
+    @Test
+    public void testLoadConfigProperties() {
+        // TODO [ndp]
+    }
+
 }

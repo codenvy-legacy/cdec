@@ -15,7 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.config;
+package com.codenvy.im.node;
+
+import com.codenvy.im.config.Config;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -49,6 +51,11 @@ public class NodeConfig {
 
     public String getHost() {
         return host;
+    }
+
+    public NodeConfig setHost(String host) {
+        this.host = host;
+        return this;
     }
 
     public int getPort() {
@@ -89,6 +96,11 @@ public class NodeConfig {
         return type;
     }
 
+
+    public void setType(NodeType type) {
+        this.type = type;
+    }
+
     @Override
     public String toString() {
         return format("{'host':'%1$s', 'port':'%2$s', 'user':'%3$s', 'privateKeyFile':'%4$s', 'type':'%5$s'}",
@@ -127,4 +139,5 @@ public class NodeConfig {
 
         return null;
     }
+
 }

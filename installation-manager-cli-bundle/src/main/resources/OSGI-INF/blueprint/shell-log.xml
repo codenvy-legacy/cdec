@@ -38,5 +38,11 @@
         <command>
             <action class="com.codenvy.im.cli.command.HelpCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.AddNodeCommand"/>
+        </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.RemoveNodeCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

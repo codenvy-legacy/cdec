@@ -42,7 +42,7 @@ public class TestInstallationManagerConfig {
     @BeforeMethod
     public void setupConfigFile() throws IOException {
         CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
-        FileUtils.writeStringToFile(CONFIG_FILE.toFile(), "cdec.host.dns=localhost");
+        FileUtils.writeStringToFile(CONFIG_FILE.toFile(), "codenvy.host.dns=localhost");
     }
 
     @Test
@@ -73,11 +73,11 @@ public class TestInstallationManagerConfig {
     @Test
     public void testReadStoreProperty() throws Exception {
         Properties result = InstallationManagerConfig.readProperties(CONFIG_FILE);
-        assertEquals(result.entrySet().toString(), "[cdec.host.dns=localhost]");
+        assertEquals(result.entrySet().toString(), "[codenvy.host.dns=localhost]");
 
         InstallationManagerConfig.storeProperty("hello", "value");
         result = InstallationManagerConfig.readProperties(CONFIG_FILE);
-        assertEquals(result.entrySet().toString(), "[hello=value, cdec.host.dns=localhost]");
+        assertEquals(result.entrySet().toString(), "[codenvy.host.dns=localhost, hello=value]");
     }
 
     @Test

@@ -18,17 +18,21 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -183,6 +187,21 @@ public class ConfigUtil {
         return m;
     }
 
+    public Map<String, String> loadConfigProperties(String configFilePath, Version version, InstallOptions.InstallType installType, boolean isInstall) throws IOException {
+        if (configFilePath != null) {
+            return loadConfigProperties(configFilePath);
+        } else {
+            if (isInstall) {
+                return loadCodenvyDefaultProperties(version.toString(), installType);
+            } else {
+                Map<String, String> properties = merge(loadInstalledCodenvyProperties(installType),
+                                    loadCodenvyDefaultProperties(version.toString(), installType));
+                properties.put(Config.VERSION, version.toString());
+                return properties;
+            }
+        }
+    }
+
     /** @return list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs. */
     public static Map<String, String> getPuppetNodesConfigReplacement(List<NodeConfig> nodeConfigs) {
         Map<String, String> replacements = new HashMap<>(nodeConfigs.size());
@@ -216,9 +235,11 @@ public class ConfigUtil {
                 }
 
                 default:
+                    break;
             }
         }
 
         return replacements;
     }
+
 }

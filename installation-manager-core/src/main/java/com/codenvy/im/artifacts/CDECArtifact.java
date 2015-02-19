@@ -23,11 +23,10 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.config.NodeConfig;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Commons;
@@ -47,9 +46,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 
+import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
+import static com.codenvy.im.command.CommandFactory.createShellAgentRestoreOrBackupCommand;
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
-import static com.codenvy.im.config.NodeConfig.extractConfigFrom;
-import static com.codenvy.im.config.NodeConfig.extractConfigsFrom;
+import static com.codenvy.im.node.NodeConfig.extractConfigFrom;
+import static com.codenvy.im.node.NodeConfig.extractConfigsFrom;
 import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -103,7 +107,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
-        return ImmutableList.of("Unzip Codenvy binaries to /tmp/cdec",
+        return ImmutableList.of("Unzip Codenvy binaries to /tmp/codenvy",
                                 "Configure Codenvy",
                                 "Patch resources",
                                 "Move Codenvy binaries to /etc/puppet",
@@ -126,31 +130,31 @@ public class CDECArtifact extends AbstractArtifact {
 
         switch (step) {
             case 0:
-                return createLocalAgentCommand(format("rm -rf /tmp/cdec; " +
-                                                      "mkdir /tmp/cdec/; " +
-                                                      "unzip -o %s -d /tmp/cdec", pathToBinaries.toString()));
+                return createLocalAgentCommand(format("rm -rf /tmp/codenvy; " +
+                                                      "mkdir /tmp/codenvy/; " +
+                                                      "unzip -o %s -d /tmp/codenvy", pathToBinaries.toString()));
 
             case 1:
                 List<Command> commands = new ArrayList<>();
-                commands.add(createLocalAgentCommand(format("sed -i 's/%s/%s/g' /tmp/cdec/manifests/nodes/single_server/single_server.pp",
+                commands.add(createLocalAgentCommand(format("sed -i 's/%s/%s/g' /tmp/codenvy/manifests/nodes/single_server/single_server.pp",
                                                             "YOUR_DNS_NAME", config.getHostUrl())));
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/cdec/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/cdec/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                return getPatchCommand(Paths.get("/tmp/cdec/patches/"), versionToUpdate);
+                return getPatchCommand(Paths.get("/tmp/codenvy/patches/"), versionToUpdate);
 
             case 3:
                 return createLocalAgentCommand("sudo rm -rf /etc/puppet/files; " +
                                                "sudo rm -rf /etc/puppet/modules; " +
                                                "sudo rm -rf /etc/puppet/manifests; " +
-                                               "sudo mv /tmp/cdec/* /etc/puppet");
+                                               "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
                 return new CheckInstalledVersionCommand(this, versionToUpdate);
@@ -323,7 +327,7 @@ public class CDECArtifact extends AbstractArtifact {
                         StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand("localhost"),
                         new CheckInstalledVersionCommand(this, versionToInstall)
                     ),
-                    "Check if CDEC has already installed");
+                    "Check if Codenvy has already installed");
 
 
             default:
@@ -529,7 +533,7 @@ public class CDECArtifact extends AbstractArtifact {
                     StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand(config.getHostUrl()),
                     new CheckInstalledVersionCommand(this, versionToInstall)
                 ),
-                "Check if CDEC has already installed");
+                "Check if Codenvy has already installed");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -551,47 +555,5 @@ public class CDECArtifact extends AbstractArtifact {
         }
 
         return new MacroCommand(commands, "Patch resources");
-    }
-
-    protected Command createLocalAgentPropertyReplaceCommand(String file, String property, String value) {
-        String replacingToken = format("%s = .*", property);
-        String replacement = format("%s = \"%s\"", property, value);
-        return createLocalAgentReplaceCommand(file, replacingToken, replacement);
-    }
-
-    protected Command createLocalAgentReplaceCommand(String file, String replacingToken, String replacement) {
-        return createLocalAgentCommand(format("sudo sed -i 's/%s/%s/g' %s",
-                                              replacingToken.replace("/", "\\/"),
-                                              replacement.replace("/", "\\/"),
-                                              file));
-    }
-
-    protected Command createLocalAgentRestoreOrBackupCommand(final String file) {
-        return createLocalAgentCommand(getRestoreOrBackupCommand(file));
-    }
-
-    protected Command createShellAgentRestoreOrBackupCommand(final String file, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createShellAgentCommand(getRestoreOrBackupCommand(file), null, nodes);
-    }
-
-    protected String getRestoreOrBackupCommand(final String file) {
-        final String backupFile = file + ".back";
-        return format("if sudo test -f %2$s; then " +
-                   "    if ! sudo test -f %1$s; then " +
-                   "        sudo cp %2$s %1$s; " +
-                   "    else " +
-                   "        sudo cp %1$s %2$s; " +
-                   "    fi " +
-                   "fi",
-                   backupFile,
-                   file);
-    }
-
-    protected Command createShellAgentCommand(String command, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createShellAgentCommand(command, null, nodes);
-    }
-
-    protected Command createShellAgentCommand(String command, NodeConfig node) throws AgentException {
-        return SimpleCommand.createShellAgentCommand(command, node);
     }
 }

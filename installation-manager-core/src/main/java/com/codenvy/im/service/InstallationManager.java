@@ -19,6 +19,7 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
@@ -130,4 +131,10 @@ public interface InstallationManager {
     Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version, String authToken) throws IOException;
 
     boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException;
+
+    /** Add node to multi-server Codenvy */
+    void addNode(NodeConfig node, String configFilePath) throws IOException;
+
+    /** Remove node from multi-server Codenvy */
+    void removeNode(String dns, String configFilePath) throws IOException;
 }

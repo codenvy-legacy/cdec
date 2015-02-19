@@ -62,6 +62,6 @@ public class StoreIMConfigPropertyCommand implements Command {
 
     /** Factory */
     public static Command createSaveCodenvyHostDnsCommand(final String hostDns) {
-        return new StoreIMConfigPropertyCommand(InstallationManagerConfig.CDEC_HOST_DNS, hostDns);
+        return new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, hostDns);
     }
 }

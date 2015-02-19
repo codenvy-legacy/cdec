@@ -17,23 +17,26 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.utils.AccountUtils;
+import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 
 /**
- * @author Alexander Reshetnyak
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-@Command(scope = "codenvy", name = "im-subscription", description = "Check Codenvy subscription")
-public class SubscriptionCommand extends AbstractIMCommand {
+@Command(scope = "codenvy", name = "remove-node", description = "Remove builder or runner node")
+public class RemoveNodeCommand extends AbstractIMCommand {
 
-    @Option(name = "--check", aliases = "-c", description = "The name of the subscription to check", required = false)
-    private String subscription;
+    @Argument(name = "dns", description = "DNS name of removing node.", required = true, multiValued = false, index = 0)
+    private String dns;
+
+    @Option(name = "--config", aliases = "-c", description = "Path to the configuration file", required = true)
+    private String configFilePath;
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        String subscription2check = subscription != null ? subscription : AccountUtils.ON_PREMISES;
-        console.printResponse(service.checkSubscription(subscription2check, initRequest()));
+        if (dns != null && !dns.isEmpty()) {
+            console.printResponse(service.removeNode(dns, configFilePath));
+        }
     }
 }

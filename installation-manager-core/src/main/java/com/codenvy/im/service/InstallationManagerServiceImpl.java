@@ -20,6 +20,7 @@ package com.codenvy.im.service;
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.DownloadStatusInfo;
@@ -450,6 +451,26 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     public String setConfig(InstallationManagerConfig config) {
         try {
             manager.setConfig(config);
+            return new Response().setStatus(ResponseCode.OK).toJson();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    @Override public String addNode(NodeConfig node, String configFilePath) {
+        try {
+            manager.addNode(node, configFilePath);
+            return new Response().setStatus(ResponseCode.OK).toJson();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e).toJson();
+        }
+    }
+
+    @Override public String removeNode(String dns, String configFilePath) {
+        try {
+            manager.removeNode(dns, configFilePath);
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);

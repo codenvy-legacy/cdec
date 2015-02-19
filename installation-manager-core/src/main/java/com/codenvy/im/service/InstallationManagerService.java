@@ -18,6 +18,7 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
 
 import javax.annotation.Nullable;
@@ -73,4 +74,10 @@ public interface InstallationManagerService {
 
     /** Sets new configuration for installation manager */
     String setConfig(InstallationManagerConfig config);
+
+    /** Add node to multi-server Codenvy */
+    String addNode(NodeConfig node, String configFilePath);
+
+    /** Remove node from multi-server Codenvy */
+    String removeNode(String dns, String configFilePath);
 }

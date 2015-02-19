@@ -17,8 +17,16 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.node.NodeConfig;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,6 +55,11 @@ public class Config {
     public static final String NODE_HOST_PROPERTY_SUFFIX        = "_host_name";  // suffix of property like "builder_host_name"
     public static final String PUPPET_MASTER_HOST_NAME_PROPERTY = "puppet_master_host_name";
 
+    public static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_PROPERTIES = ImmutableMap.of(
+        NodeConfig.NodeType.BUILDER, "additional_builders",
+        NodeConfig.NodeType.RUNNER, "additional_runners"
+    );
+
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
             put("6", "puppet-3.4.3-1.el6.noarch");
@@ -61,7 +74,6 @@ public class Config {
             put("7", "https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm");
         }});
     }};
-
 
     public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
 
@@ -121,5 +133,24 @@ public class Config {
         }
 
         return true;
+    }
+
+    @Nullable
+    public NodeConfig.NodeType resolveNodeTypeAmongAdditionalNodes(String dns) {
+        for (Map.Entry<NodeConfig.NodeType, String> entry : Config.ADDITIONAL_NODES_PROPERTIES.entrySet()) {
+            String additionalNodesProperty = entry.getValue();
+            String additionalNodes = getProperty(additionalNodesProperty);
+
+            if (additionalNodes != null && additionalNodes.contains(dns)) {
+                return entry.getKey();
+            }
+        }
+
+        return null;
+    }
+
+    public List<String> extractCommaSeperatedValues(String property) {
+        String value = getProperty(property);
+        return new ArrayList<>(Arrays.asList(StringUtils.split(value, ',')));
     }
 }

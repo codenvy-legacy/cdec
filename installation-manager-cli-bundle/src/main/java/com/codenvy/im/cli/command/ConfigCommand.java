@@ -19,7 +19,6 @@ package com.codenvy.im.cli.command;
 
 
 import com.codenvy.im.service.InstallationManagerConfig;
-
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 

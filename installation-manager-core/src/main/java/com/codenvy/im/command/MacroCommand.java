@@ -18,7 +18,7 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.config.NodeConfig;
+import com.codenvy.im.node.NodeConfig;
 
 import java.util.ArrayList;
 import java.util.List;

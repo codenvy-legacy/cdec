@@ -22,10 +22,11 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
+import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.node.NodeManager;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
-import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -34,22 +35,18 @@ import com.google.inject.Singleton;
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
-import static com.codenvy.im.service.InstallationManagerConfig.storeProperty;
 import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.ArtifactsSet;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -59,8 +56,6 @@ import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
-import static java.nio.file.Files.newInputStream;
-import static java.nio.file.Files.newOutputStream;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
@@ -77,6 +72,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Installer     installer;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
+    private final NodeManager   nodeManager;
 
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -84,7 +80,8 @@ public class InstallationManagerImpl implements InstallationManager {
                                    HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
                                    Installer installer,
-                                   Set<Artifact> artifacts) throws IOException {
+                                   Set<Artifact> artifacts,
+                                   NodeManager nodeManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
@@ -96,6 +93,8 @@ public class InstallationManagerImpl implements InstallationManager {
         } catch (IOException e) {
             createAndSetDownloadDir(Paths.get(System.getenv("HOME"), "codenvy-updates"));
         }
+
+        this.nodeManager = nodeManager;
     }
 
     private void createAndSetDownloadDir(Path downloadDir) throws IOException {
@@ -375,4 +374,18 @@ public class InstallationManagerImpl implements InstallationManager {
     public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
         return artifact.isInstallable(version, authToken);
     }
+
+    @Override
+    public void addNode(NodeConfig node, String configFilePath) throws IOException {
+        nodeManager.add(node, configFilePath);
+    }
+
+    @Override
+    /**
+     * @throws IllegalArgumentException if node isn't of type of builder or runner
+     */
+    public void removeNode(String dns, String configFilePath) throws IOException, IllegalArgumentException {
+        nodeManager.remove(dns, configFilePath);
+    }
+
 }

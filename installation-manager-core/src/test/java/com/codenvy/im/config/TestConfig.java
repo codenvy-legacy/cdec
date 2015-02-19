@@ -106,4 +106,14 @@ public class TestConfig {
         assertNotNull(config.getProperty(Config.PUPPET_SERVER_VERSION));
         assertNotNull(config.getProperty(Config.PUPPET_RESOURCE_URL));
     }
+
+    @Test
+    public void testResolveNodeTypeAmongAdditionalNodes() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testExtractCommaSeperatedValues() {
+        // TODO [ndp]
+    }
 }
