@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
+import com.codenvy.im.command.CommandFactory;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.config.Config;
@@ -31,6 +32,8 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupCommand;
@@ -70,71 +73,88 @@ public class NodeManager {
 
         // add node into puppet master config and wait until node becomes alive
         try {
+            List<Command> commands = new ArrayList<>();
+
+            // modify puppet master config
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
+            commands.add(createLocalAgentBackupCommand(puppetMasterConfigFilePath));
+            commands.add(createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
+                                                                "$" + property,
+                                                                value));
 
-            Command command = new MacroCommand(ImmutableList.of(
-                // modify puppet master config
-                createLocalAgentBackupCommand(puppetMasterConfigFilePath),
-                createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                                       "$" + property,
-                                                       value),
-
-                // check if there is a puppet agent started on adding node
-                // service puppet status
-                //                puppet: unrecognized service
-
-
+            // check if there is a puppet agent started on adding node
+            if (!isPuppetAgentActive(node)) {
                 // install puppet agents on adding node
-                createShellAgentCommand(
-                    "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                    + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
-                    + "; fi", node),
-                createShellAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_AGENT_VERSION)), node),
+                commands.add(createShellAgentCommand("if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+                                                     + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
+                                                     + "; fi",
+                                                     node));
+                commands.add(createShellAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_AGENT_VERSION)), node));
 
-                createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                        " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                        ".wants/puppet.service'" +
-                                        "; fi", node),
-                createShellAgentCommand("sudo systemctl enable puppet", node),
+                commands.add(createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                                     " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                                     ".wants/puppet.service'" +
+                                                     "; fi",
+                                                     node));
+                commands.add(createShellAgentCommand("sudo systemctl enable puppet", node));
 
                 // configure puppet agent
-                createShellAgentBackupCommand("/etc/puppet/puppet.conf", node),
-                createShellAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                               "  server = %s\\n" +
-                                               "  runinterval = 420\\n" +
-                                               "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                               config.getValueOf(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
-                                        node),
+                commands.add(createShellAgentBackupCommand("/etc/puppet/puppet.conf", node));
+                commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                            "  server = %s\\n" +
+                                                            "  runinterval = 420\\n" +
+                                                            "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                                            config.getValueOf(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                                     node));
 
-                createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                                        "  show_diff = true\\n" +
-                                                        "  pluginsync = true\\n" +
-                                                        "  report = true\\n" +
-                                                        "  default_schedules = false\\n" +
-                                                        "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node),
+                commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                                            "  show_diff = true\\n" +
+                                                            "  pluginsync = true\\n" +
+                                                            "  report = true\\n" +
+                                                            "  default_schedules = false\\n" +
+                                                            "  certname = %s\\n/g' /etc/puppet/puppet.conf",
+                                                            node.getHost()),
+                                                     node));
 
                 // start puppet agent
-                createShellAgentCommand("sudo systemctl start puppet", node),
-
-
+                commands.add(createShellAgentCommand("sudo systemctl start puppet", node));
 
                 // wait until server on additional node is installed
-                createShellAgentCommand("doneState=\"Installing\"; " +
-                                        "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                        "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                        "    sleep 30; " +
-                                        "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                        "done", node),
+                commands.add(createShellAgentCommand("doneState=\"Installing\"; " +
+                                                     "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                                     "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                                     "    sleep 30; " +
+                                                     "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                                     "done",
+                                                     node));
+            }
 
-                // wait until there is a changed configuration on API server
+            // wait until there is a changed configuration on API server
+            NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
+            commands.add(createShellAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                                        "while true; do " +
+                                                        "    if sudo grep \"%s$\" ${testFile}; then break; fi; " +
+                                                        "    sleep 5; " +  // sleep 5 sec
+                                                        "done; " +
+                                                        "sleep 15; # delay to involve into start of rebooting api server", value),
+                                                 apiNode));
 
-                // wait until API server restarts
-                new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion)
-            ), "Add node commands");
-            command.execute();
+            // wait until API server restarts
+            commands.add(new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion));
+
+            new MacroCommand(commands, "Add node commands").execute();
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
+    }
+
+    private boolean isPuppetAgentActive(NodeConfig node) throws AgentException, CommandException {
+        Command getPuppetAgentStatusCommand = CommandFactory.createShellAgentCommand("sudo service puppet status", node);
+        String result = getPuppetAgentStatusCommand.execute();
+
+        return result != null
+               && !result.contains("Loaded: not-found")
+               && !result.contains("Active: inactive (dead)");
     }
 
     /**
@@ -165,7 +185,14 @@ public class NodeManager {
                                                        "$" + property,
                                                        value),
 
-                // wait until there is changed configuration on API server
+                // wait until there node is removed from configuration on API server
+                createShellAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                               "while true; do " +
+                                               "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
+                                               "    sleep 5; " +  // sleep 5 sec
+                                               "done; " +
+                                               "sleep 15; # delay to involve into start of rebooting api server", dns),
+                                        NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API)),
 
                 // wait until API server restarts
                 new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion)
