@@ -15,8 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.config;
+package com.codenvy.im.node;
 
+import com.codenvy.im.config.Config;
 import com.codenvy.im.node.NodeConfig;
 import org.testng.annotations.Test;
 

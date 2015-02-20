@@ -458,9 +458,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    @Override public String addNode(NodeConfig node, String configFilePath) {
+    /** {@inheritDoc} */
+    @Override
+    public String addNode(NodeConfig node) {
         try {
-            manager.addNode(node, configFilePath);
+            manager.addNode(node);
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
@@ -468,9 +470,11 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    @Override public String removeNode(String dns, String configFilePath) {
+    /** {@inheritDoc} */
+    @Override
+    public String removeNode(String dns) {
         try {
-            manager.removeNode(dns, configFilePath);
+            manager.removeNode(dns);
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);

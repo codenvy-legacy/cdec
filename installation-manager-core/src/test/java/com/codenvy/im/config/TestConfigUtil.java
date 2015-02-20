@@ -253,9 +253,4 @@ public class TestConfigUtil {
         assertEquals(actual, expected);
     }
 
-    @Test
-    public void testLoadConfigProperties() {
-        // TODO [ndp]
-    }
-
 }

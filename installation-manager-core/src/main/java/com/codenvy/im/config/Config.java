@@ -55,11 +55,6 @@ public class Config {
     public static final String NODE_HOST_PROPERTY_SUFFIX        = "_host_name";  // suffix of property like "builder_host_name"
     public static final String PUPPET_MASTER_HOST_NAME_PROPERTY = "puppet_master_host_name";
 
-    public static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_PROPERTIES = ImmutableMap.of(
-        NodeConfig.NodeType.BUILDER, "additional_builders",
-        NodeConfig.NodeType.RUNNER, "additional_runners"
-    );
-
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
             put("6", "puppet-3.4.3-1.el6.noarch");
@@ -106,12 +101,26 @@ public class Config {
     }
 
     /** @return the property value */
-    public final String getProperty(String property) {
+    public final String getValueOf(String property) {
         property = property.toLowerCase();
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
             return PROPERTIES_BY_VERSION.get(property).get(getVersion());
         }
         return properties.get(property);
+    }
+
+    /**
+     * @return list of comma separated values of property
+     */
+    public List<String> getValuesOf(String property) {
+        property = property.toLowerCase();
+        String value = null;
+        if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
+            value = PROPERTIES_BY_VERSION.get(property).get(getVersion());
+        } else {
+            value = getValueOf(property);
+        }
+        return new ArrayList<>(Arrays.asList(StringUtils.split(value, ',')));
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */
@@ -135,22 +144,5 @@ public class Config {
         return true;
     }
 
-    @Nullable
-    public NodeConfig.NodeType resolveNodeTypeAmongAdditionalNodes(String dns) {
-        for (Map.Entry<NodeConfig.NodeType, String> entry : Config.ADDITIONAL_NODES_PROPERTIES.entrySet()) {
-            String additionalNodesProperty = entry.getValue();
-            String additionalNodes = getProperty(additionalNodesProperty);
 
-            if (additionalNodes != null && additionalNodes.contains(dns)) {
-                return entry.getKey();
-            }
-        }
-
-        return null;
-    }
-
-    public List<String> extractCommaSeperatedValues(String property) {
-        String value = getProperty(property);
-        return new ArrayList<>(Arrays.asList(StringUtils.split(value, ',')));
-    }
 }

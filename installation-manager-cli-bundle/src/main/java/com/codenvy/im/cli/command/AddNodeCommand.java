@@ -24,7 +24,7 @@ import org.apache.karaf.shell.commands.Option;
 /**
  * @author Dmytro Nochevnov
  */
-@Command(scope = "codenvy", name = "add-node", description = "Add builder or runner node")
+@Command(scope = "codenvy", name = "add-node", description = "Add node into Codenvy")
 public class AddNodeCommand extends AbstractIMCommand {
 
     @Option(name = "--builder", aliases = "-b", description = "DNS of builder node", required = false)
@@ -33,19 +33,16 @@ public class AddNodeCommand extends AbstractIMCommand {
     @Option(name = "--runner", aliases = "-r", description = "DNS of runner node", required = false)
     private String runnerDns;
 
-    @Option(name = "--config", aliases = "-c", description = "Path to the configuration file", required = true)
-    private String configFilePath;
-
     @Override
     protected void doExecuteCommand() throws Exception {
         if (builderDns != null) {
             NodeConfig node = new NodeConfig(NodeConfig.NodeType.BUILDER, builderDns);
-            console.printResponse(service.addNode(node, configFilePath));
+            console.printResponse(service.addNode(node));
         }
 
         if (runnerDns != null) {
             NodeConfig node = new NodeConfig(NodeConfig.NodeType.RUNNER, runnerDns);
-            console.printResponse(service.addNode(node, configFilePath));
+            console.printResponse(service.addNode(node));
         }
     }
 }

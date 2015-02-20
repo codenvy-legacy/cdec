@@ -15,24 +15,38 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.cli.command;
+package com.codenvy.im.node;
 
-import org.apache.karaf.shell.commands.Argument;
-import org.apache.karaf.shell.commands.Command;
+import org.testng.annotations.Test;
 
-/**
- * @author Dmytro Nochevnov
- */
-@Command(scope = "codenvy", name = "remove-node", description = "Remove additional node")
-public class RemoveNodeCommand extends AbstractIMCommand {
+import static org.testng.Assert.*;
 
-    @Argument(name = "dns", description = "DNS name of removing node.", required = true, multiValued = false, index = 0)
-    private String dns;
-
-    @Override
-    protected void doExecuteCommand() throws Exception {
-        if (dns != null && !dns.isEmpty()) {
-            console.printResponse(service.removeNode(dns));
-        }
+/** @author Dmytro Nochevnov */
+public class TestAdditionalNodesConfigUtil {
+    @Test
+    public void testRecognizeNodeTypeBy() {
+        // TODO [ndp]
     }
+
+    @Test
+    public void testGetPropertyNameBy() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testGetValueWithNode() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testGetValueWithoutNode() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testGetAdditionalNodeUrl() {
+        // TODO [ndp]
+    }
+
+
 }

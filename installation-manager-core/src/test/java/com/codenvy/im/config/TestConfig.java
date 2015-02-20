@@ -102,9 +102,9 @@ public class TestConfig {
     @Test
     public void testGetPropertyByVersion() throws Exception {
         Config config = new Config(Collections.<String, String>emptyMap());
-        assertNotNull(config.getProperty(Config.PUPPET_AGENT_VERSION));
-        assertNotNull(config.getProperty(Config.PUPPET_SERVER_VERSION));
-        assertNotNull(config.getProperty(Config.PUPPET_RESOURCE_URL));
+        assertNotNull(config.getValueOf(Config.PUPPET_AGENT_VERSION));
+        assertNotNull(config.getValueOf(Config.PUPPET_SERVER_VERSION));
+        assertNotNull(config.getValueOf(Config.PUPPET_RESOURCE_URL));
     }
 
     @Test
@@ -114,6 +114,11 @@ public class TestConfig {
 
     @Test
     public void testExtractCommaSeperatedValues() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testGetAdditionalNodesProperty() {
         // TODO [ndp]
     }
 }

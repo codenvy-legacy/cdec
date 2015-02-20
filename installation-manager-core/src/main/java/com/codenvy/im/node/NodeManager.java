@@ -29,40 +29,42 @@ import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Singleton;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
-@Singleton
 public class NodeManager {
+    private AdditionalNodesConfigUtil nodesConfigUtil;
+    private Config                    config;
+
+    public NodeManager() throws IOException {
+        ConfigUtil configUtil = INJECTOR.getInstance(ConfigUtil.class);
+        config = getCodenvyConfig(configUtil);
+        this.nodesConfigUtil = new AdditionalNodesConfigUtil(config);
+    }
 
     /**
      * @throws IllegalArgumentException if node type isn't supported, or if there is adding node in the list of additional nodes
      */
-    public void add(NodeConfig node, String configFilePath) throws IOException, IllegalArgumentException {
+    public void add(NodeConfig node) throws IOException, IllegalArgumentException {
         // check if Codenvy is alive
         CDECArtifact cdecArtifact = INJECTOR.getInstance(CDECArtifact.class);
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
 
-        String property = Config.ADDITIONAL_NODES_PROPERTIES.get(node.getType());
+        String property = nodesConfigUtil.getPropertyNameBy(node.getType());
         if (property == null) {
             throw new IllegalArgumentException("This type of node can't have several instances");
         }
 
-        Config config = getConfig(configFilePath, currentCodenvyVersion, true);
-        String value = addNodeToAdditionalNodes(property, config, node);
+        String value = nodesConfigUtil.getValueWithNode(node);
 
         validate(node);
 
@@ -77,18 +79,17 @@ public class NodeManager {
                                                        "$" + property,
                                                        value),
 
-                // modify local codenvy config
-                createLocalAgentBackupCommand(configFilePath),
-                createLocalAgentReplaceCommand(configFilePath,
-                                               format("%s=.*", property),
-                                               format("%s=%s", property, value)),
+                // check if there is a puppet agent started on adding node
+                // service puppet status
+                //                puppet: unrecognized service
+
 
                 // install puppet agents on adding node
                 createShellAgentCommand(
                     "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                    + format("then sudo yum install %s -y", config.getProperty(Config.PUPPET_RESOURCE_URL))
+                    + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
                     + "; fi", node),
-                createShellAgentCommand(format("sudo yum install %s -y", config.getProperty(Config.PUPPET_AGENT_VERSION)), node),
+                createShellAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_AGENT_VERSION)), node),
 
                 createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
                                         " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
@@ -102,7 +103,7 @@ public class NodeManager {
                                                "  server = %s\\n" +
                                                "  runinterval = 420\\n" +
                                                "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                               config.getProperty(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                               config.getValueOf(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
                                         node),
 
                 createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
@@ -115,13 +116,17 @@ public class NodeManager {
                 // start puppet agent
                 createShellAgentCommand("sudo systemctl start puppet", node),
 
-                // wait until runner/builder server are installed
+
+
+                // wait until server on additional node is installed
                 createShellAgentCommand("doneState=\"Installing\"; " +
                                         "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
                                         "while [ \"${doneState}\" != \"Installed\" ]; do " +
                                         "    sleep 30; " +
                                         "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
                                         "done", node),
+
+                // wait until there is a changed configuration on API server
 
                 // wait until API server restarts
                 new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion)
@@ -135,28 +140,23 @@ public class NodeManager {
     /**
      * @throws IllegalArgumentException if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
-    public void remove(String dns, String configFilePath) throws IOException, IllegalArgumentException {
+    public void remove(String dns) throws IOException, IllegalArgumentException {
         // check if Codenvy is alive
         CDECArtifact cdecArtifact = INJECTOR.getInstance(CDECArtifact.class);
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
 
-        Config config = getConfig(configFilePath, currentCodenvyVersion, true);
-
-        NodeConfig.NodeType nodeType = config.resolveNodeTypeAmongAdditionalNodes(dns);
+        NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeBy(dns);
         if (nodeType == null) {
             throw new NodeException(format("Node '%s' is not found in Codenvy configuration among additional nodes", dns));
         }
 
-        if (nodeType != NodeConfig.NodeType.BUILDER
-            && nodeType != NodeConfig.NodeType.RUNNER) {
+        String property = nodesConfigUtil.getPropertyNameBy(nodeType);
+        if (property == null) {
             throw new IllegalArgumentException(format("Node type '%s' isn't supported", nodeType));
         }
 
-        // remove node from puppet master config
-        String property = Config.ADDITIONAL_NODES_PROPERTIES.get(nodeType);
-        String value = removeNodeFromAdditionalNodes(property, config, new NodeConfig(nodeType, dns));
-
         try {
+            String value = nodesConfigUtil.getValueWithoutNode(new NodeConfig(nodeType, dns));
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
             Command command = new MacroCommand(ImmutableList.of(
                 // modify puppet master config
@@ -165,11 +165,7 @@ public class NodeManager {
                                                        "$" + property,
                                                        value),
 
-                // modify local codenvy config
-                createLocalAgentBackupCommand(configFilePath),
-                createLocalAgentReplaceCommand(configFilePath,
-                                               format("%s=.*", property),
-                                               format("%s=%s", property, value)),
+                // wait until there is changed configuration on API server
 
                 // wait until API server restarts
                 new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion)
@@ -190,58 +186,9 @@ public class NodeManager {
         }
     }
 
-    protected Config getConfig(String configFilePath, Version currentCodenvyVersion, boolean isInstall) throws IOException {
-        // get install codenvy properties
-        ConfigUtil configUtil = INJECTOR.getInstance(ConfigUtil.class);
-        Map<String, String> properties = configUtil.loadConfigProperties(configFilePath,
-                                                                         currentCodenvyVersion,
-                                                                         InstallOptions.InstallType.CODENVY_MULTI_SERVER,
-                                                                         isInstall
-        );
-
+    protected Config getCodenvyConfig(ConfigUtil configUtil) throws IOException {
+        Map<String, String> properties = configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
         return new Config(properties);
-    }
-
-    /**
-     * @throws IllegalArgumentException if there is adding node in the list of additional nodes
-     */
-    protected String addNodeToAdditionalNodes(String additionalNodesProperty, Config config, NodeConfig addingNode) throws IllegalArgumentException {
-        List<String> nodesUrls = config.extractCommaSeperatedValues(additionalNodesProperty);
-
-        String nodeUrl = getAdditionalNodeUrl(addingNode);
-        if (nodesUrls.contains(nodeUrl)) {
-            throw new IllegalArgumentException(format("Node %s has been already used", addingNode.getHost()));
-        }
-
-        nodesUrls.add(nodeUrl);
-
-        return StringUtils.join(nodesUrls, ',');
-    }
-
-    /**
-     * @throws IllegalArgumentException if there is no removing node in the list of additional nodes
-     */
-    protected String removeNodeFromAdditionalNodes(String additionalNodesProperty, Config config, NodeConfig removingNode) throws IllegalArgumentException {
-        List<String> nodesUrls = config.extractCommaSeperatedValues(additionalNodesProperty);
-
-        String nodeUrl = getAdditionalNodeUrl(removingNode);
-        if (!nodesUrls.contains(nodeUrl)) {
-            throw new IllegalArgumentException(format("There is no node %s in the list of additional nodes", removingNode.getHost()));
-        }
-
-        nodesUrls.remove(nodeUrl);
-
-        return StringUtils.join(nodesUrls, ",");
-    }
-
-    /**
-     * @return link like "http://builder3.example.com:8080/builder/internal/builder", or "http://runner3.example.com:8080/runner/internal/runner"
-     */
-    private String getAdditionalNodeUrl(NodeConfig node) {
-        return format("http://%1$s:8080/%2$s/internal/%2$s",
-                      node.getHost(),
-                      node.getType().toString().toLowerCase()
-        );
     }
 
 }

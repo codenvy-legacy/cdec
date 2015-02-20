@@ -132,7 +132,7 @@ public class NodeConfig {
     @Nullable
     public static NodeConfig extractConfigFrom(Config config, NodeType type) {
         String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
-        String nodeHost = config.getProperty(nodeHostPropertyName);
+        String nodeHost = config.getValueOf(nodeHostPropertyName);
         if (nodeHost != null && !nodeHost.isEmpty()) {
             return new NodeConfig(type, nodeHost);
         }

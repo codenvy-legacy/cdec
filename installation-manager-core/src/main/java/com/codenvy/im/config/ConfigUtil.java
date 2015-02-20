@@ -152,7 +152,7 @@ public class ConfigUtil {
                 }
 
             } catch (IOException e) {
-                throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
+                throw new ConfigException(format("Can't load Codenvy properties: %s", e.getMessage()), e);
             }
         }
 
@@ -185,21 +185,6 @@ public class ConfigUtil {
         }
 
         return m;
-    }
-
-    public Map<String, String> loadConfigProperties(String configFilePath, Version version, InstallOptions.InstallType installType, boolean isInstall) throws IOException {
-        if (configFilePath != null) {
-            return loadConfigProperties(configFilePath);
-        } else {
-            if (isInstall) {
-                return loadCodenvyDefaultProperties(version.toString(), installType);
-            } else {
-                Map<String, String> properties = merge(loadInstalledCodenvyProperties(installType),
-                                    loadCodenvyDefaultProperties(version.toString(), installType));
-                properties.put(Config.VERSION, version.toString());
-                return properties;
-            }
-        }
     }
 
     /** @return list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs. */

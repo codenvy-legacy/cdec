@@ -72,7 +72,6 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Installer     installer;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
-    private final NodeManager   nodeManager;
 
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -80,8 +79,7 @@ public class InstallationManagerImpl implements InstallationManager {
                                    HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
                                    Installer installer,
-                                   Set<Artifact> artifacts,
-                                   NodeManager nodeManager) throws IOException {
+                                   Set<Artifact> artifacts) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
@@ -93,8 +91,6 @@ public class InstallationManagerImpl implements InstallationManager {
         } catch (IOException e) {
             createAndSetDownloadDir(Paths.get(System.getenv("HOME"), "codenvy-updates"));
         }
-
-        this.nodeManager = nodeManager;
     }
 
     private void createAndSetDownloadDir(Path downloadDir) throws IOException {
@@ -317,6 +313,7 @@ public class InstallationManagerImpl implements InstallationManager {
         return newVersions;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Version getLatestInstallableVersion(String authToken, Artifact artifact) throws IOException {
         return artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
@@ -370,22 +367,29 @@ public class InstallationManagerImpl implements InstallationManager {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
         return artifact.isInstallable(version, authToken);
     }
 
+    /** {@inheritDoc}
+     * @throws IllegalArgumentException if node's type isn't supported
+     */
     @Override
-    public void addNode(NodeConfig node, String configFilePath) throws IOException {
-        nodeManager.add(node, configFilePath);
+    public void addNode(NodeConfig node) throws IOException, IllegalArgumentException {
+        NodeManager nodeManager = new NodeManager();
+        nodeManager.add(node);
     }
 
-    @Override
     /**
-     * @throws IllegalArgumentException if node isn't of type of builder or runner
+     * {@inheritDoc}
+     * @throws IllegalArgumentException if node's type isn't supported
      */
-    public void removeNode(String dns, String configFilePath) throws IOException, IllegalArgumentException {
-        nodeManager.remove(dns, configFilePath);
+    @Override
+    public void removeNode(String dns) throws IOException, IllegalArgumentException {
+        NodeManager nodeManager = new NodeManager();
+        nodeManager.remove(dns);
     }
 
 }

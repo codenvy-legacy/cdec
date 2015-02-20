@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeManager;
@@ -95,8 +96,7 @@ public class TestInstallationManagerImpl {
                 new HttpTransportConfiguration("", "0"),
                 transport,
                 installer,
-                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
-                new NodeManager()));
+                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -108,12 +108,12 @@ public class TestInstallationManagerImpl {
 
     @Test
     public void testInitializationIfDownloadDirectoryNotExist() throws Exception {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null);
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet());
     }
 
     @Test
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null);
+        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet());
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
