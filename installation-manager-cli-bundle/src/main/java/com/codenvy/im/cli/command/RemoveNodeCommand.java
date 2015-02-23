@@ -32,7 +32,12 @@ public class RemoveNodeCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         if (dns != null && !dns.isEmpty()) {
-            console.printResponse(service.removeNode(dns));
+            try {
+                console.showProgressor();
+                console.printResponse(service.removeNode(dns));
+            } finally {
+                console.hideProgressor();
+            }
         }
     }
 }

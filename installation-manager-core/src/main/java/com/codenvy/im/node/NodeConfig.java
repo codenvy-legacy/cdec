@@ -140,4 +140,43 @@ public class NodeConfig {
         return null;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        NodeConfig that = (NodeConfig)o;
+
+        if (port != that.port) {
+            return false;
+        }
+        if (host != null ? !host.equals(that.host) : that.host != null) {
+            return false;
+        }
+        if (privateKeyFile != null ? !privateKeyFile.equals(that.privateKeyFile) : that.privateKeyFile != null) {
+            return false;
+        }
+        if (type != that.type) {
+            return false;
+        }
+        if (user != null ? !user.equals(that.user) : that.user != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = host != null ? host.hashCode() : 0;
+        result = 31 * result + port;
+        result = 31 * result + (user != null ? user.hashCode() : 0);
+        result = 31 * result + (privateKeyFile != null ? privateKeyFile.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
+    }
 }

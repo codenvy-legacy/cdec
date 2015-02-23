@@ -37,12 +37,22 @@ public class AddNodeCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         if (builderDns != null) {
             NodeConfig node = new NodeConfig(NodeConfig.NodeType.BUILDER, builderDns);
-            console.printResponse(service.addNode(node));
+            try {
+                console.showProgressor();
+                console.printResponse(service.addNode(node));
+            } finally {
+                console.hideProgressor();
+            }
         }
 
         if (runnerDns != null) {
             NodeConfig node = new NodeConfig(NodeConfig.NodeType.RUNNER, runnerDns);
-            console.printResponse(service.addNode(node));
+            try {
+                console.showProgressor();
+                console.printResponse(service.addNode(node));
+            } finally {
+                console.hideProgressor();
+            }
         }
     }
 }

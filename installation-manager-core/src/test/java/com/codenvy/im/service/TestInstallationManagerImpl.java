@@ -21,23 +21,23 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -51,13 +51,12 @@ import java.util.TreeMap;
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -77,15 +76,18 @@ public class TestInstallationManagerImpl {
     private Artifact installManagerArtifact;
 
     private InstallationManagerImpl manager;
-    private HttpTransport           transport;
-    private Installer               installer;
+    private UserCredentials         testCredentials;
 
-    private UserCredentials testCredentials;
+    @Mock
+    private HttpTransport transport;
+    @Mock
+    private Installer     installer;
+    @Mock
+    private NodeManager   mockNodeManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        transport = mock(HttpTransport.class);
-        installer = mock(Installer.class);
+        MockitoAnnotations.initMocks(this);
 
         installManagerArtifact = spy(new InstallManagerArtifact());
         cdecArtifact = spy(new CDECArtifact(transport));
@@ -97,6 +99,8 @@ public class TestInstallationManagerImpl {
                 transport,
                 installer,
                 new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
+
+        doReturn(mockNodeManager).when(manager).getNodeManager();
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -497,12 +501,45 @@ public class TestInstallationManagerImpl {
     }
 
     @Test
-    public void testAddNode() {
-        // TODO [ndp]
+    public void testAddNode() throws IOException {
+        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
+        doNothing().when(mockNodeManager).add(TEST_BUILDER_NODE);
+
+        manager.addNode(TEST_BUILDER_NODE);
+        verify(mockNodeManager).add(TEST_BUILDER_NODE);
+
+
+        final NodeConfig TEST_RUNNER_NODE  = new NodeConfig(NodeConfig.NodeType.RUNNER, "runner.node.com");
+        doNothing().when(mockNodeManager).add(TEST_RUNNER_NODE);
+
+        manager.addNode(TEST_RUNNER_NODE);
+        verify(mockNodeManager).add(TEST_RUNNER_NODE);
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testAddNodeException() throws IOException {
+        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
+        doThrow(new IOException("error")).when(mockNodeManager).add(TEST_BUILDER_NODE);
+
+        manager.addNode(TEST_BUILDER_NODE);
     }
 
     @Test
-    public void testRemoveNode() {
-        // TODO [ndp]
+    public void testRemoveNode() throws IOException {
+        final String TEST_NODE_DNS = "builder.node.com";
+        doNothing().when(mockNodeManager).remove(TEST_NODE_DNS);
+
+        manager.removeNode(TEST_NODE_DNS);
+        verify(mockNodeManager).remove(TEST_NODE_DNS);
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testRemoveNodeException() throws IOException {
+        final String TEST_NODE_DNS = "builder.node.com";
+        doThrow(new IOException("error")).when(mockNodeManager).remove(TEST_NODE_DNS);
+
+        manager.removeNode(TEST_NODE_DNS);
     }
 }

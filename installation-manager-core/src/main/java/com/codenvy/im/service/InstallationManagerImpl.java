@@ -378,7 +378,7 @@ public class InstallationManagerImpl implements InstallationManager {
      */
     @Override
     public void addNode(NodeConfig node) throws IOException, IllegalArgumentException {
-        NodeManager nodeManager = new NodeManager();
+        NodeManager nodeManager = getNodeManager();
         nodeManager.add(node);
     }
 
@@ -388,8 +388,11 @@ public class InstallationManagerImpl implements InstallationManager {
      */
     @Override
     public void removeNode(String dns) throws IOException, IllegalArgumentException {
-        NodeManager nodeManager = new NodeManager();
+        NodeManager nodeManager = getNodeManager();
         nodeManager.remove(dns);
     }
 
+    protected NodeManager getNodeManager() throws IOException {
+        return new NodeManager();
+    }
 }
