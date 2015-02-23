@@ -375,6 +375,13 @@ public class RepositoryService {
                             LOG.error(errMsg, ex);
                         }
                     }
+
+                    LOG.info("EVENT#im-artifact-downloaded# TIME#{}# USER#{}# ARTIFACT#{}# VERSION#{}#",
+                             System.currentTimeMillis(),
+                             userId == null ? "" : userId,
+                             artifact,
+                             version);
+
                 } catch (ClientAbortException e) {
                     // do nothing
                 } catch (Exception e) {
@@ -386,7 +393,7 @@ public class RepositoryService {
                                     format("Can't update download statistics artifact '%s':'%s' for user '%s'", artifact, version, userId);
                             LOG.error(errMsg, ex);
                         }
-                        }
+                    }
 
                     LOG.error("Can't send an artifact " + artifact + ":" + version, e);
                     throw new IOException(e.getMessage(), e);
@@ -500,7 +507,7 @@ public class RepositoryService {
             }
 
 
-            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(accountId, accessToken);
+            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(userId, accountId, accessToken);
             mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
 
             sendNotificationLetter(accountId, userManager.getCurrentUser());
@@ -512,8 +519,9 @@ public class RepositoryService {
         }
     }
 
-    protected SubscriptionInfo doAddTrialSubscription(String accountId, String accessToken) throws IOException, JsonParseException {
+    protected SubscriptionInfo doAddTrialSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
         try {
+            final String planId = "opm-com-25u-y";
             final DateFormat df = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
             final int trialDuration = 30;
             final Calendar startDate = Calendar.getInstance();
@@ -538,7 +546,7 @@ public class RepositoryService {
 
             Map<String, Object> body = new HashMap<>();
             body.put("accountId", accountId);
-            body.put("planId", "opm-com-25u-y");
+            body.put("planId", planId);
             body.put("subscriptionAttributes", new JsonStringMapImpl<>(attributes));
 
             Map m = asMap(httpTransport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
@@ -551,6 +559,12 @@ public class RepositoryService {
             }
             String subscriptionId = String.valueOf(m.get("id"));
             LOG.info("Trial subscription added. " + body.toString());
+
+            LOG.info("EVENT#im-subscription-added# TIME#{}# USER#{}# PLAN#{}# STOP-TIME#{}#",
+                     startDate.getTimeInMillis(),
+                     userId,
+                     planId,
+                     endDate.getTimeInMillis());
 
             return new SubscriptionInfo(accountId,
                                         subscriptionId,
