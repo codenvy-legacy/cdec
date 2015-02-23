@@ -86,10 +86,10 @@ public class NodeManager {
             if (!isPuppetAgentActive(node)) {
                 // install puppet agents on adding node
                 commands.add(createShellAgentCommand("if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                                                     + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
+                                                     + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
                                                      + "; fi",
                                                      node));
-                commands.add(createShellAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_AGENT_VERSION)), node));
+                commands.add(createShellAgentCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
 
                 commands.add(createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
                                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
@@ -104,7 +104,7 @@ public class NodeManager {
                                                             "  server = %s\\n" +
                                                             "  runinterval = 420\\n" +
                                                             "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                            config.getValueOf(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                                            config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
                                                      node));
 
                 commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +

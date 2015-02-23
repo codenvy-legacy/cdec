@@ -19,6 +19,7 @@ package com.codenvy.im.node;
 
 import com.codenvy.im.config.Config;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
@@ -47,7 +48,7 @@ public class AdditionalNodesConfigUtil {
     public NodeConfig.NodeType recognizeNodeTypeBy(String dns) {
         for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {
             String additionalNodesProperty = entry.getValue();
-            String additionalNodes = config.getValueOf(additionalNodesProperty);
+            String additionalNodes = config.getValue(additionalNodesProperty);
 
             if (additionalNodes != null && additionalNodes.contains(dns)) {
                 return entry.getKey();
@@ -67,7 +68,7 @@ public class AdditionalNodesConfigUtil {
      */
     public String getValueWithNode(NodeConfig addingNode) throws IllegalArgumentException {
         String additionalNodesProperty = getPropertyNameBy(addingNode.getType());
-        List<String> nodesUrls = config.getValuesOf(additionalNodesProperty);
+        List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
 
         String nodeUrl = getAdditionalNodeUrl(addingNode);
         if (nodesUrls.contains(nodeUrl)) {
@@ -84,7 +85,7 @@ public class AdditionalNodesConfigUtil {
      */
     public String getValueWithoutNode(NodeConfig removingNode) throws IllegalArgumentException {
         String removingNodesProperty = getPropertyNameBy(removingNode.getType());
-        List<String> nodesUrls = config.getValuesOf(removingNodesProperty);
+        List<String> nodesUrls = config.getAllValues(removingNodesProperty);
 
         String nodeUrl = getAdditionalNodeUrl(removingNode);
         if (!nodesUrls.contains(nodeUrl)) {
