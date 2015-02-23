@@ -26,8 +26,8 @@ import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -225,10 +225,10 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createLocalAgentCommand(
                             "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
+                            + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
                             + "; fi"));
-                    add(createLocalAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_SERVER_VERSION))));
-                    add(createLocalAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_AGENT_VERSION))));
+                    add(createLocalAgentCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_SERVER_VERSION))));
+                    add(createLocalAgentCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION))));
 
                     if (OSUtils.getVersion().equals("6")) {
                         add(createLocalAgentCommand("sudo chkconfig --add puppetmaster"));
@@ -393,9 +393,9 @@ public class CDECArtifact extends AbstractArtifact {
                     // install puppet master
                     add(createLocalAgentCommand(
                             "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
+                            + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
                             + "; fi"));
-                    add(createLocalAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_SERVER_VERSION))));
+                    add(createLocalAgentCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_SERVER_VERSION))));
 
                     add(createLocalAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
                                                 " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
@@ -406,9 +406,9 @@ public class CDECArtifact extends AbstractArtifact {
                     // install puppet agents on each node
                     add(createShellAgentCommand(
                             "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum install %s -y", config.getValueOf(Config.PUPPET_RESOURCE_URL))
+                            + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
                             + "; fi", nodeConfigs));
-                    add(createShellAgentCommand(format("sudo yum install %s -y", config.getValueOf(Config.PUPPET_AGENT_VERSION)), nodeConfigs));
+                    add(createShellAgentCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));
 
                     add(createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
                                                 " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
@@ -473,7 +473,7 @@ public class CDECArtifact extends AbstractArtifact {
                                                                    "    hostprivkey = $privatekeydir/$certname.pem { mode = 640 }\\n" +
                                                                    "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
                                                                    "\\n",
-                                                                   config.getValueOf(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+                                                                   config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
 
                 // remove "[agent]" section
                 commands.add(createLocalAgentReplaceCommand("/etc/puppet/puppet.conf",
@@ -493,7 +493,7 @@ public class CDECArtifact extends AbstractArtifact {
                                                             "  server = %s\\n" +
                                                             "  runinterval = 420\\n" +
                                                             "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                            config.getValueOf(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                                            config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
                                                      nodeConfigs));
 
                 for (NodeConfig node : nodeConfigs) {

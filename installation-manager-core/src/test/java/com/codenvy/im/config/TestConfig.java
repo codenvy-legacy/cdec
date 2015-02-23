@@ -18,6 +18,7 @@
 package com.codenvy.im.config;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -102,9 +103,9 @@ public class TestConfig {
     @Test
     public void testGetPropertyByVersion() throws Exception {
         Config config = new Config(Collections.<String, String>emptyMap());
-        assertNotNull(config.getValueOf(Config.PUPPET_AGENT_VERSION));
-        assertNotNull(config.getValueOf(Config.PUPPET_SERVER_VERSION));
-        assertNotNull(config.getValueOf(Config.PUPPET_RESOURCE_URL));
+        assertNotNull(config.getValue(Config.PUPPET_AGENT_VERSION));
+        assertNotNull(config.getValue(Config.PUPPET_SERVER_VERSION));
+        assertNotNull(config.getValue(Config.PUPPET_RESOURCE_URL));
     }
 
     @Test

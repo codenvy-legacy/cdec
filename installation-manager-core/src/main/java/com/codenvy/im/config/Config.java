@@ -17,11 +17,8 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.node.NodeConfig;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -101,7 +98,7 @@ public class Config {
     }
 
     /** @return the property value */
-    public final String getValueOf(String property) {
+    public final String getValue(String property) {
         property = property.toLowerCase();
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
             return PROPERTIES_BY_VERSION.get(property).get(getVersion());
@@ -109,16 +106,14 @@ public class Config {
         return properties.get(property);
     }
 
-    /**
-     * @return list of comma separated values of property
-     */
-    public List<String> getValuesOf(String property) {
+    /** @return list of values separated by comma */
+    public List<String> getAllValues(String property) {
         property = property.toLowerCase();
-        String value = null;
+        String value;
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
             value = PROPERTIES_BY_VERSION.get(property).get(getVersion());
         } else {
-            value = getValueOf(property);
+            value = getValue(property);
         }
         return new ArrayList<>(Arrays.asList(StringUtils.split(value, ',')));
     }
