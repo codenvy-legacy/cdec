@@ -24,12 +24,13 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.command.CommandFactory;
 import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,41 +41,51 @@ import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupComman
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
-import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
+@Singleton
 public class NodeManager {
-    private AdditionalNodesConfigUtil nodesConfigUtil;
-    private Config                    config;
+    private ConfigUtil   configUtil;
+    private CDECArtifact cdecArtifact;
 
-    public NodeManager() throws IOException {
-        ConfigUtil configUtil = INJECTOR.getInstance(ConfigUtil.class);
-        config = getCodenvyConfig(configUtil);
-        this.nodesConfigUtil = new AdditionalNodesConfigUtil(config);
+    @Inject
+    public NodeManager(ConfigUtil configUtil, CDECArtifact cdecArtifact) throws IOException {
+        this.configUtil = configUtil;
+        this.cdecArtifact = cdecArtifact;
     }
 
     /**
      * @throws IllegalArgumentException if node type isn't supported, or if there is adding node in the list of additional nodes
      */
-    public void add(NodeConfig node) throws IOException, IllegalArgumentException {
+    public String add(NodeConfig node) throws IOException, IllegalArgumentException {
+        Config config = getCodenvyConfig(configUtil);
+        AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
+
         // check if Codenvy is alive
-        CDECArtifact cdecArtifact = INJECTOR.getInstance(CDECArtifact.class);
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
 
         String property = nodesConfigUtil.getPropertyNameBy(node.getType());
         if (property == null) {
-            throw new IllegalArgumentException("This type of node can't have several instances");
+            throw new IllegalArgumentException("This type of node isn't supported");
         }
-
-        String value = nodesConfigUtil.getValueWithNode(node);
 
         validate(node);
 
-        // add node into puppet master config and wait until node becomes alive
-        try {
-            List<Command> commands = new ArrayList<>();
+        Command addNodeCommand = getAddNodeCommand(currentCodenvyVersion, property, nodesConfigUtil, node, config);
+        return addNodeCommand.execute();
+    }
 
+    /**
+     * @return commands to add node into puppet master config and wait until node becomes alive
+     */
+    protected Command getAddNodeCommand(Version currentCodenvyVersion, String property, AdditionalNodesConfigUtil nodesConfigUtil, NodeConfig node, Config config) throws NodeException {
+        List<Command> commands = new ArrayList<>();
+
+        String value = nodesConfigUtil.getValueWithNode(node);
+        NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
+
+        try {
             // modify puppet master config
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
             commands.add(createLocalAgentBackupCommand(puppetMasterConfigFilePath));
@@ -129,8 +140,11 @@ public class NodeManager {
                                                      node));
             }
 
+            // force to apply master config through puppet agent on API server
+            commands.add(createShellAgentCommand("puppet agent -t",
+                                                 apiNode));
+
             // wait until there is a changed configuration on API server
-            NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
             commands.add(createShellAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
                                                         "while true; do " +
                                                         "    if sudo grep \"%s$\" ${testFile}; then break; fi; " +
@@ -141,28 +155,21 @@ public class NodeManager {
 
             // wait until API server restarts
             commands.add(new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion));
-
-            new MacroCommand(commands, "Add node commands").execute();
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
-    }
 
-    private boolean isPuppetAgentActive(NodeConfig node) throws AgentException, CommandException {
-        Command getPuppetAgentStatusCommand = CommandFactory.createShellAgentCommand("sudo service puppet status", node);
-        String result = getPuppetAgentStatusCommand.execute();
-
-        return result != null
-               && !result.contains("Loaded: not-found")
-               && !result.contains("Active: inactive (dead)");
+        return new MacroCommand(commands, "Add node commands");
     }
 
     /**
      * @throws IllegalArgumentException if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
-    public void remove(String dns) throws IOException, IllegalArgumentException {
+    public String remove(String dns) throws IOException, IllegalArgumentException {
+        Config config = getCodenvyConfig(configUtil);
+        AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
+
         // check if Codenvy is alive
-        CDECArtifact cdecArtifact = INJECTOR.getInstance(CDECArtifact.class);
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
 
         NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeBy(dns);
@@ -175,15 +182,30 @@ public class NodeManager {
             throw new IllegalArgumentException(format("Node type '%s' isn't supported", nodeType));
         }
 
+        Command command = getRemoveNodeCommand(new NodeConfig(nodeType, dns), config, nodesConfigUtil, currentCodenvyVersion, property);
+        return command.execute();
+    }
+
+    protected Command getRemoveNodeCommand(NodeConfig node,
+                                          Config config,
+                                          AdditionalNodesConfigUtil nodesConfigUtil,
+                                          Version currentCodenvyVersion,
+                                          String property) throws NodeException {
         try {
-            String value = nodesConfigUtil.getValueWithoutNode(new NodeConfig(nodeType, dns));
+            String value = nodesConfigUtil.getValueWithoutNode(node);
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
-            Command command = new MacroCommand(ImmutableList.of(
+            NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
+
+            return new MacroCommand(ImmutableList.of(
                 // modify puppet master config
                 createLocalAgentBackupCommand(puppetMasterConfigFilePath),
                 createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
                                                        "$" + property,
                                                        value),
+
+                // force to apply master config through puppet agent on API server
+                createShellAgentCommand("puppet agent -t",
+                                        apiNode),
 
                 // wait until there node is removed from configuration on API server
                 createShellAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
@@ -191,26 +213,39 @@ public class NodeManager {
                                                "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
                                                "    sleep 5; " +  // sleep 5 sec
                                                "done; " +
-                                               "sleep 15; # delay to involve into start of rebooting api server", dns),
-                                        NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API)),
+                                               "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
+                                        apiNode),
 
                 // wait until API server restarts
                 new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion)
             ), "Remove node commands");
-            command.execute();
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
     }
 
+    protected boolean isPuppetAgentActive(NodeConfig node) throws AgentException, CommandException {
+        Command getPuppetAgentStatusCommand = getShellAgentCommand("sudo service puppet status", node);
+        String result = getPuppetAgentStatusCommand.execute();
+
+        return result != null
+               && result.contains("Loaded: loaded")
+               && result.contains("Active: active (running)");
+    }
+
     protected void validate(NodeConfig node) throws NodeException {
         String testCommand = "sudo ls";
         try {
-            Command nodeCommand = SimpleCommand.createShellAgentCommand(testCommand, node);
+            Command nodeCommand = getShellAgentCommand(testCommand, node);
             nodeCommand.execute();
         } catch (AgentException | CommandException e) {
             throw new NodeException(e.getMessage(), e);
         }
+    }
+
+    /** for testing propose */
+    protected Command getShellAgentCommand(String command, NodeConfig node) throws AgentException {
+        return CommandFactory.createShellAgentCommand(command, node);
     }
 
     protected Config getCodenvyConfig(ConfigUtil configUtil) throws IOException {
@@ -218,4 +253,8 @@ public class NodeManager {
         return new Config(properties);
     }
 
+    /** for testing propose */
+    protected AdditionalNodesConfigUtil getNodesConfigUtil(Config config) {
+        return new AdditionalNodesConfigUtil(config);
+    }
 }

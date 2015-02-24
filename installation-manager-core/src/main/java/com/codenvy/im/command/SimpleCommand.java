@@ -54,7 +54,7 @@ public class SimpleCommand implements Command {
     }
 
     /** Factory method */
-    public static Command createShellAgentCommand(String command, NodeConfig node) throws AgentException {
+    protected static Command createShellAgentCommand(String command, NodeConfig node) throws AgentException {
         return SimpleCommand.createShellAgentCommand(command,
                                                      node.getHost(),
                                                      node.getPort(),

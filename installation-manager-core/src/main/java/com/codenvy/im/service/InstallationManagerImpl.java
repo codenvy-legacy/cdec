@@ -72,14 +72,15 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Installer     installer;
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
-
+    private final NodeManager   nodeManager;
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                                    @Named("installation-manager.download_dir") String downloadDir,
                                    HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
                                    Installer installer,
-                                   Set<Artifact> artifacts) throws IOException {
+                                   Set<Artifact> artifacts,
+                                   NodeManager nodeManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
@@ -91,6 +92,8 @@ public class InstallationManagerImpl implements InstallationManager {
         } catch (IOException e) {
             createAndSetDownloadDir(Paths.get(System.getenv("HOME"), "codenvy-updates"));
         }
+
+        this.nodeManager = nodeManager;
     }
 
     private void createAndSetDownloadDir(Path downloadDir) throws IOException {
@@ -378,7 +381,6 @@ public class InstallationManagerImpl implements InstallationManager {
      */
     @Override
     public void addNode(NodeConfig node) throws IOException, IllegalArgumentException {
-        NodeManager nodeManager = getNodeManager();
         nodeManager.add(node);
     }
 
@@ -388,11 +390,6 @@ public class InstallationManagerImpl implements InstallationManager {
      */
     @Override
     public void removeNode(String dns) throws IOException, IllegalArgumentException {
-        NodeManager nodeManager = getNodeManager();
         nodeManager.remove(dns);
-    }
-
-    protected NodeManager getNodeManager() throws IOException {
-        return new NodeManager();
     }
 }

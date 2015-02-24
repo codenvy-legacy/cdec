@@ -98,9 +98,8 @@ public class TestInstallationManagerImpl {
                 new HttpTransportConfiguration("", "0"),
                 transport,
                 installer,
-                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
-
-        doReturn(mockNodeManager).when(manager).getNodeManager();
+                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
+                mockNodeManager));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -112,12 +111,12 @@ public class TestInstallationManagerImpl {
 
     @Test
     public void testInitializationIfDownloadDirectoryNotExist() throws Exception {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet());
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null);
     }
 
     @Test
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet());
+        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -503,15 +502,10 @@ public class TestInstallationManagerImpl {
     @Test
     public void testAddNode() throws IOException {
         final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
-        doNothing().when(mockNodeManager).add(TEST_BUILDER_NODE);
-
         manager.addNode(TEST_BUILDER_NODE);
         verify(mockNodeManager).add(TEST_BUILDER_NODE);
 
-
         final NodeConfig TEST_RUNNER_NODE  = new NodeConfig(NodeConfig.NodeType.RUNNER, "runner.node.com");
-        doNothing().when(mockNodeManager).add(TEST_RUNNER_NODE);
-
         manager.addNode(TEST_RUNNER_NODE);
         verify(mockNodeManager).add(TEST_RUNNER_NODE);
     }
@@ -521,15 +515,12 @@ public class TestInstallationManagerImpl {
     public void testAddNodeException() throws IOException {
         final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
         doThrow(new IOException("error")).when(mockNodeManager).add(TEST_BUILDER_NODE);
-
         manager.addNode(TEST_BUILDER_NODE);
     }
 
     @Test
     public void testRemoveNode() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
-        doNothing().when(mockNodeManager).remove(TEST_NODE_DNS);
-
         manager.removeNode(TEST_NODE_DNS);
         verify(mockNodeManager).remove(TEST_NODE_DNS);
     }
@@ -539,7 +530,6 @@ public class TestInstallationManagerImpl {
     public void testRemoveNodeException() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
         doThrow(new IOException("error")).when(mockNodeManager).remove(TEST_NODE_DNS);
-
         manager.removeNode(TEST_NODE_DNS);
     }
 }
