@@ -379,7 +379,7 @@ public class RepositoryService {
                     LOG.info("EVENT#im-artifact-downloaded# TIME#{}# USER#{}# ARTIFACT#{}# VERSION#{}#",
                              System.currentTimeMillis(),
                              userId == null ? "" : userId,
-                             artifact,
+                             artifact.toLowerCase(),
                              version);
 
                 } catch (ClientAbortException e) {
