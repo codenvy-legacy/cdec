@@ -24,7 +24,6 @@ import com.codenvy.im.command.CommandException;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.utils.Version;
-import com.google.common.collect.ImmutableMap;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -33,6 +32,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static java.lang.String.format;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -42,8 +42,9 @@ import static org.testng.Assert.assertNotNull;
 
 /** @author Dmytro Nochevnov */
 public class TestNodeManager {
+    public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
     @Mock
-    private ConfigUtil                mockConfigUtil;
+    private ConfigUtil mockConfigUtil;
     @Mock
     private Config                    mockConfig;
     @Mock
@@ -54,14 +55,14 @@ public class TestNodeManager {
     private Command                   mockCommand;
 
 
-    private static final String TEST_NODE_DNS = "localhost";
-    public static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
-    private static final NodeConfig TEST_NODE          = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
+    private static final String              TEST_NODE_DNS  = "localhost";
+    private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
+    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
 
-    private static final Version TEST_VERSION                      = Version.valueOf("1.0.0");
-    private static final String  TEST_RUNNER_NODE_URL              = "test_runner_node_url";
-    private static final String  ADDITIONAL_RUNNERS_PROPERTY_NAME  = "additional_runners";
-    private static final String  MOCK_COMMAND_EXECUTE_RESULT       = "mock_command_execute_result";
+    private static final Version TEST_VERSION                     = Version.valueOf("1.0.0");
+    private static final String  TEST_RUNNER_NODE_URL             = "test_runner_node_url";
+    private static final String  ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
+    private static final String  MOCK_COMMAND_EXECUTE_RESULT      = "mock_command_execute_result";
 
     private NodeManager spyManager;
 
@@ -109,19 +110,19 @@ public class TestNodeManager {
         doReturn(true).when(spyManager).isPuppetAgentActive(TEST_NODE);
 
         Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
-        assertEquals(result.toString(), "[" +
+        assertEquals(result.toString(), format("[" +
                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
                                         "'agent'='LocalAgent'}, " +
                                         "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"test_runner_node_url\"/g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
                                         "'agent'='LocalAgent'}, " +
                                         "[{'command'='puppet agent -t', " +
-                                        "'agent'='{'host'='127.0.0.1', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do" +
                                         "     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;" +
                                         "     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', " +
-                                        "'agent'='{'host'='127.0.0.1', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                        "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'" +
                                         "}], " +
-                                        "Expected to be installed 'mockCdecArtifact' of the version '1.0.0']");
+                                        "Expected to be installed 'mockCdecArtifact' of the version '1.0.0']", System.getProperty("user.name")));
     }
 
     @Test
@@ -129,34 +130,34 @@ public class TestNodeManager {
         doReturn(false).when(spyManager).isPuppetAgentActive(TEST_NODE);
 
         Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
-        assertEquals(result.toString(), "[" +
+        assertEquals(result.toString(), format("[" +
                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
                                         "'agent'='LocalAgent'}, " +
                                         "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"test_runner_node_url\"/g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
                                         "'agent'='LocalAgent'}, " +
                                         "[{'command'='if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; then sudo yum install null -y; fi', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo yum install null -y', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target.wants/puppet.service'; fi', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo systemctl enable puppet', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo sed -i 's/\\[main\\]/\\[main\\]\\n  server = null\\n  runinterval = 420\\n  configtimeout = 600\\n/g' /etc/puppet/puppet.conf', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n  show_diff = true\\n  pluginsync = true\\n  report = true\\n  default_schedules = false\\n  certname = localhost\\n/g' /etc/puppet/puppet.conf', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo systemctl start puppet', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='doneState=\"Installing\"; testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; while [ \"${doneState}\" != \"Installed\" ]; do     sleep 30;     if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; done', " +
-                                        "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='puppet agent -t', " +
-                                        "'agent'='{'host'='127.0.0.1', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', " +
-                                        "'agent'='{'host'='127.0.0.1', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
-                                        "Expected to be installed 'mockCdecArtifact' of the version '1.0.0']");
+                                        "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "Expected to be installed 'mockCdecArtifact' of the version '1.0.0']", System.getProperty("user.name")));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -196,17 +197,17 @@ public class TestNodeManager {
     public void testGetRemoveNodeCommand() throws IOException {
         Command removeNodeCommand = spyManager.getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
         assertEquals(removeNodeCommand.toString(),
-                     "[" +
+                     format("[" +
                      "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
                      "'agent'='LocalAgent'}, " +
                      "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"null\"/g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
                      "'agent'='LocalAgent'}, " +
                      "[{'command'='puppet agent -t', " +
-                     "'agent'='{'host'='127.0.0.1', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                     "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                      "[{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', " +
-                     "'agent'='{'host'='127.0.0.1', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                     "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                      "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'" +
-                     "]");
+                     "]", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = NodeException.class,
@@ -270,7 +271,7 @@ public class TestNodeManager {
     @Test
     public void testShellAgentCommand() throws AgentException {
         Command command = spyManager.getShellAgentCommand("test", TEST_NODE);
-        assertEquals(command.toString(), "[{'command'='test', " +
-                                         "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}]");
+        assertEquals(command.toString(), format("[{'command'='test', " +
+                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}]", SYSTEM_USER_NAME));
     }
 }

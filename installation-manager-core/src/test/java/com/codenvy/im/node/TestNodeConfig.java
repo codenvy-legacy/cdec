@@ -18,7 +18,6 @@
 package com.codenvy.im.node;
 
 import com.codenvy.im.config.Config;
-import com.codenvy.im.node.NodeConfig;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;

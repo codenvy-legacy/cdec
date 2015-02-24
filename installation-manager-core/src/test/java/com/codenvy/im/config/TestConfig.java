@@ -114,7 +114,7 @@ public class TestConfig {
     }
 
     @Test
-    public void testExtractCommaSeperatedValues() {
+    public void testExtractCommaSeparatedValues() {
         // TODO [ndp]
     }
 

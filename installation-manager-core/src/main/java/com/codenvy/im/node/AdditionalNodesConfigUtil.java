@@ -65,14 +65,18 @@ public class AdditionalNodesConfigUtil {
 
     /**
      * @throws IllegalArgumentException if there is adding node in the list of additional nodes
+     * @throws IllegalStateException if additional nodes property isn't found in Codenvy config
      */
-    public String getValueWithNode(NodeConfig addingNode) throws IllegalArgumentException {
+    public String getValueWithNode(NodeConfig addingNode) throws IllegalArgumentException, IllegalStateException {
         String additionalNodesProperty = getPropertyNameBy(addingNode.getType());
         List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        if (nodesUrls == null) {
+            throw new IllegalStateException(format("Additional nodes property '%s' isn't found in Codenvy config", additionalNodesProperty));
+        }
 
         String nodeUrl = getAdditionalNodeUrl(addingNode);
         if (nodesUrls.contains(nodeUrl)) {
-            throw new IllegalArgumentException(format("Node %s has been already used", addingNode.getHost()));
+            throw new IllegalArgumentException(format("Node '%s' has been already used", addingNode.getHost()));
         }
 
         nodesUrls.add(nodeUrl);
@@ -82,14 +86,18 @@ public class AdditionalNodesConfigUtil {
 
     /**
      * @throws IllegalArgumentException if there is no removing node in the list of additional nodes
+     * @throws IllegalStateException if additional nodes property isn't found in Codenvy config
      */
     public String getValueWithoutNode(NodeConfig removingNode) throws IllegalArgumentException {
-        String removingNodesProperty = getPropertyNameBy(removingNode.getType());
-        List<String> nodesUrls = config.getAllValues(removingNodesProperty);
+        String additionalNodesProperty = getPropertyNameBy(removingNode.getType());
+        List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        if (nodesUrls == null) {
+            throw new IllegalStateException(format("Additional nodes property '%s' isn't found in Codenvy config", additionalNodesProperty));
+        }
 
         String nodeUrl = getAdditionalNodeUrl(removingNode);
         if (!nodesUrls.contains(nodeUrl)) {
-            throw new IllegalArgumentException(format("There is no node %s in the list of additional nodes", removingNode.getHost()));
+            throw new IllegalArgumentException(format("There is no node '%s' in the list of additional nodes", removingNode.getHost()));
         }
 
         nodesUrls.remove(nodeUrl);

@@ -19,12 +19,18 @@ package com.codenvy.im.node;
 
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertEquals;
+
 /** @author Dmytro Nochevnov */
 public class TestNodeException {
 
     @Test
     public void testNodeException() {
-       // TODO [ndp]
-    }
+        NodeException nodeException = new NodeException("error");
+        assertEquals(nodeException.toString(), "com.codenvy.im.node.NodeException: error");
 
+        nodeException = new NodeException("error", new RuntimeException());
+        assertEquals(nodeException.toString(), "com.codenvy.im.node.NodeException: error");
+        assertEquals(nodeException.getCause().toString(), "java.lang.RuntimeException");
+    }
 }
