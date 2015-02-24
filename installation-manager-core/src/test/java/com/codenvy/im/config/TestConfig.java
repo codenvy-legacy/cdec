@@ -17,11 +17,15 @@
  */
 package com.codenvy.im.config;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
@@ -101,25 +105,27 @@ public class TestConfig {
     }
 
     @Test
-    public void testGetPropertyByVersion() throws Exception {
+    public void testGetValueByVersion() throws Exception {
         Config config = new Config(Collections.<String, String>emptyMap());
         assertNotNull(config.getValue(Config.PUPPET_AGENT_VERSION));
         assertNotNull(config.getValue(Config.PUPPET_SERVER_VERSION));
         assertNotNull(config.getValue(Config.PUPPET_RESOURCE_URL));
     }
 
-    @Test
-    public void testResolveNodeTypeAmongAdditionalNodes() {
-        // TODO [ndp]
+    @Test(dataProvider = "GetValues")
+    public void testGetValues(String propertyValue, List<String> expectedResult) {
+        Config config = new Config(Collections.singletonMap("property", propertyValue));
+        List<String> result = config.getAllValues("property");
+        assertEquals(result.toString(), expectedResult.toString());
     }
 
-    @Test
-    public void testExtractCommaSeparatedValues() {
-        // TODO [ndp]
-    }
-
-    @Test
-    public void testGetAdditionalNodesProperty() {
-        // TODO [ndp]
+    @DataProvider(name = "GetValues")
+    public static Object[][] GetValueWithoutNode() {
+        return new Object[][]{
+            {"", new ArrayList<String>()},
+            {"value1", new ArrayList<String>(ImmutableList.of("value1"))},
+            {"value1,value2", new ArrayList<String>(ImmutableList.of("value1", "value2"))},
+            {"value1,value2,value3", new ArrayList<String>(ImmutableList.of("value1", "value2", "value3"))},
+        };
     }
 }
