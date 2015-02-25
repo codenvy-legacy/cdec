@@ -21,6 +21,8 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Command runs until expected version is installed.
@@ -31,6 +33,8 @@ public class CheckInstalledVersionCommand implements Command {
     private final Artifact artifact;
     private final Version  expectedVersion;
 
+    private static final Logger LOG = Logger.getLogger(CheckInstalledVersionCommand.class.getSimpleName());
+
     public CheckInstalledVersionCommand(Artifact artifact, Version expectedVersion) {
         this.artifact = artifact;
         this.expectedVersion = expectedVersion;
@@ -39,6 +43,7 @@ public class CheckInstalledVersionCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
+        LOG.log(Level.INFO, toString());
         for (; ; ) {
             try {
                 if (checkExpectedVersion()) {

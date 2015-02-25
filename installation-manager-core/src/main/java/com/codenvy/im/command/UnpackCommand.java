@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
@@ -46,6 +48,8 @@ public class UnpackCommand implements Command {
     private final Path   pack;
     private final Path   dirToUnpack;
 
+    private static final Logger LOG = Logger.getLogger(UnpackCommand.class.getSimpleName());
+
     public UnpackCommand(Path pack, Path dirToUnpack, String description) {
         this.pack = pack;
         this.dirToUnpack = dirToUnpack;
@@ -55,6 +59,7 @@ public class UnpackCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
+        LOG.log(Level.INFO, toString());
         try (TarArchiveInputStream in = new TarArchiveInputStream(
             new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
 

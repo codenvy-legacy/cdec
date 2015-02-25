@@ -23,6 +23,9 @@ import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
 import com.codenvy.im.node.NodeConfig;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -30,6 +33,8 @@ public class SimpleCommand implements Command {
     private final String description;
     private final String command;
     private final Agent  agent;
+
+    private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
 
     public SimpleCommand(String command, Agent agent, String description) {
         this.agent = agent;
@@ -66,6 +71,7 @@ public class SimpleCommand implements Command {
     @Override
     public String execute() throws CommandException {
         try {
+            LOG.log(Level.INFO, toString());
             return agent.execute(command);
         } catch (AgentException e) {
             throw makeCommandException(e);

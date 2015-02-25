@@ -58,7 +58,7 @@ public class TestStoreIMConfigPropertyCommand {
     }
 
     @Test(expectedExceptions = CommandException.class,
-          expectedExceptionsMessageRegExp = "It is impossible to store \\{'propertyName':'codenvy.host.dns','propertyValue':'test'\\}")
+          expectedExceptionsMessageRegExp = "It is impossible to store \\{'propertyName':'codenvy_host_dns','propertyValue':'test'\\}")
     public void testCommandExecuteException() throws IOException {
         CONFIG_FILE = Paths.get("/dev/null/im.properties");
         Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, "test");

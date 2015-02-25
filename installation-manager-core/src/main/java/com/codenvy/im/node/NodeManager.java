@@ -41,6 +41,8 @@ import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupComman
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
+import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
+import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -99,6 +101,8 @@ public class NodeManager {
 
             // check if there is a puppet agent started on adding node
             if (!isPuppetAgentActive(node)) {
+                String puppetMasterNodeDns = readPuppetMasterNodeDns();
+
                 // install puppet agents on adding node
                 commands.add(createShellAgentCommand("if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
                                                      + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
@@ -119,7 +123,7 @@ public class NodeManager {
                                                             "  server = %s\\n" +
                                                             "  runinterval = 420\\n" +
                                                             "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                            config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                                            puppetMasterNodeDns),
                                                      node));
 
                 commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
@@ -130,6 +134,9 @@ public class NodeManager {
                                                             "  certname = %s\\n/g' /etc/puppet/puppet.conf",
                                                             node.getHost()),
                                                      node));
+
+                // configure puppet master to use new puppet agent - remove out-date agent's certificate
+                commands.add(createLocalAgentCommand(format("sudo puppet cert clean %s", node.getHost())));
 
                 // start puppet agent
                 commands.add(createShellAgentCommand("sudo systemctl start puppet", node));

@@ -41,8 +41,8 @@ import static org.testng.Assert.assertTrue;
 public class TestInstallationManagerConfig {
     @BeforeMethod
     public void setupConfigFile() throws IOException {
-        CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
-        FileUtils.writeStringToFile(CONFIG_FILE.toFile(), "codenvy.host.dns=localhost");
+        CONFIG_FILE = Paths.get(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath() + "im.properties.temp");
+        FileUtils.writeStringToFile(CONFIG_FILE.toFile(), "codenvy_host_dns=localhost");
     }
 
     @Test
@@ -73,11 +73,11 @@ public class TestInstallationManagerConfig {
     @Test
     public void testReadStoreProperty() throws Exception {
         Properties result = InstallationManagerConfig.readProperties(CONFIG_FILE);
-        assertEquals(result.entrySet().toString(), "[codenvy.host.dns=localhost]");
+        assertEquals(result.entrySet().toString(), "[codenvy_host_dns=localhost]");
 
         InstallationManagerConfig.storeProperty("hello", "value");
         result = InstallationManagerConfig.readProperties(CONFIG_FILE);
-        assertEquals(result.entrySet().toString(), "[codenvy.host.dns=localhost, hello=value]");
+        assertEquals(result.entrySet().toString(), "[codenvy_host_dns=localhost, hello=value]");
     }
 
     @Test

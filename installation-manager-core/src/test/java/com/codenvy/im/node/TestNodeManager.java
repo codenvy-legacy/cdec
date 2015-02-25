@@ -31,7 +31,9 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
+import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static java.lang.String.format;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.doNothing;
@@ -78,6 +80,8 @@ public class TestNodeManager {
         spyManager = spy(new NodeManager(mockConfigUtil, mockCdecArtifact));
         doReturn(mockConfig).when(spyManager).getCodenvyConfig(mockConfigUtil);
         doReturn(mockNodesConfigUtil).when(spyManager).getNodesConfigUtil(mockConfig);
+
+        CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
     }
 
     private void initConfigs() {
@@ -144,10 +148,11 @@ public class TestNodeManager {
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
-                                        "[{'command'='sudo sed -i 's/\\[main\\]/\\[main\\]\\n  server = null\\n  runinterval = 420\\n  configtimeout = 600\\n/g' /etc/puppet/puppet.conf', " +
+                                        "[{'command'='sudo sed -i 's/\\[main\\]/\\[main\\]\\n  server = master\\n  runinterval = 420\\n  configtimeout = 600\\n/g' /etc/puppet/puppet.conf', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n  show_diff = true\\n  pluginsync = true\\n  report = true\\n  default_schedules = false\\n  certname = localhost\\n/g' /etc/puppet/puppet.conf', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                                        "{'command'='sudo puppet cert clean localhost', 'agent'='LocalAgent'}, " +
                                         "[{'command'='sudo systemctl start puppet', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='doneState=\"Installing\"; testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; while [ \"${doneState}\" != \"Installed\" ]; do     sleep 30;     if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; done', " +

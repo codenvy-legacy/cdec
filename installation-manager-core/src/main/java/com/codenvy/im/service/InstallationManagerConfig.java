@@ -33,7 +33,8 @@ import static java.nio.file.Files.newOutputStream;
 public class InstallationManagerConfig {
     public static Path CONFIG_FILE = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
 
-    public static final String CODENVY_HOST_DNS = "codenvy.host.dns";
+    public static final String CODENVY_HOST_DNS = "codenvy_host_dns";
+    public static final String PUPPET_MASTER_HOST_NAME = "puppet_master_host_name";
 
     private String downloadDir;
     private String proxyPort;
@@ -104,8 +105,16 @@ public class InstallationManagerConfig {
     }
 
     public static String readCdecHostDns() throws IOException {
+        return readProperty(CODENVY_HOST_DNS);
+    }
+
+    public static String readPuppetMasterNodeDns() throws IOException {
+        return readProperty(PUPPET_MASTER_HOST_NAME);
+    }
+
+    private static String readProperty(String property) throws IOException {
         Properties props = readProperties(CONFIG_FILE);
-        return (String) props.get(CODENVY_HOST_DNS);
+        return (String) props.get(property);
     }
 
     /** @return configuration file path. Insure directory with conf file is existed. */

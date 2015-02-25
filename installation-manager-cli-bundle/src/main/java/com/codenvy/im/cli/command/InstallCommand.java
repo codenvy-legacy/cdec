@@ -30,6 +30,7 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
+import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 
@@ -136,6 +137,8 @@ public class InstallCommand extends AbstractIMCommand {
             return null;
         }
 
+        storePuppetMasterHostName(installOptions);
+
         List<String> infos = responseObj.getInfos();
         final int finalStep = infos.size() - 1;
         final int firstStep = getFirstInstallStep();
@@ -183,6 +186,18 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         return null;
+    }
+
+    protected void storePuppetMasterHostName(InstallOptions installOptions) throws IOException {
+        if (installOptions.getInstallType() == InstallOptions.InstallType.CODENVY_MULTI_SERVER) {
+
+            String puppetMasterHostName = installOptions.getConfigProperties().get(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME);
+            if (puppetMasterHostName != null) {
+                InstallationManagerConfig
+                    .storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME,
+                                   puppetMasterHostName);
+            }
+        }
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JSONException, JsonParseException {

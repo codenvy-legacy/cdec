@@ -22,6 +22,7 @@ import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
+import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
@@ -38,9 +39,11 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -99,6 +102,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         userCredentials = new UserCredentials("token", "accountId");
         doReturn(userCredentials).when(spyCommand).getCredentials();
+
+        CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
     }
 
     @BeforeMethod
@@ -525,5 +530,16 @@ public class TestInstallCommand extends AbstractTestCommand {
         assertEquals(result.toString(), "{property 1=value 1, property 2=value 2, property 3=new value}");
         assertEquals(outputStream.toString(), "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
                                               + "property 1 (value='value 1'): property 2 (value='value 2'): property 3 (value=''): ");
+    }
+
+    @Test
+    public void testStorePuppetMasterHostName() throws IOException {
+        InstallOptions options = new InstallOptions();
+        final String puppetMasterHost = "master";
+        Map<String, String> properties = ImmutableMap.of(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, puppetMasterHost);
+        options.setConfigProperties(properties);
+        spyCommand.storePuppetMasterHostName(options);
+
+        assertEquals(InstallationManagerConfig.readPuppetMasterNodeDns(), puppetMasterHost);
     }
 }

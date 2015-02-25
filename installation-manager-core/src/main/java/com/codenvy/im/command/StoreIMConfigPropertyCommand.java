@@ -20,6 +20,8 @@ package com.codenvy.im.command;
 import com.codenvy.im.service.InstallationManagerConfig;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
@@ -32,6 +34,8 @@ public class StoreIMConfigPropertyCommand implements Command {
     private final String propertyName;
     private final String propertyValue;
 
+    private static final Logger LOG = Logger.getLogger(StoreIMConfigPropertyCommand.class.getSimpleName());
+
     public StoreIMConfigPropertyCommand(String propertyName, String propertyValue) {
         this.propertyName = propertyName;
         this.propertyValue = propertyValue;
@@ -40,6 +44,7 @@ public class StoreIMConfigPropertyCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String execute() throws CommandException {
+        LOG.log(Level.INFO, toString());
         try {
             InstallationManagerConfig.storeProperty(propertyName, propertyValue);
         } catch (IOException e) {

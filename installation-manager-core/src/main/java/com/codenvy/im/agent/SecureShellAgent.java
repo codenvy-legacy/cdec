@@ -83,6 +83,7 @@ public class SecureShellAgent extends AbstractAgent {
             ChannelExec channel = (ChannelExec)session.openChannel("exec");
             channel.setCommand(command);
             channel.setInputStream(null);
+            channel.setPty(true);         // to avoid error "sudo: sorry, you must have a tty to run sudo" in time of execution sudo command
 
             InputStream in = channel.getInputStream();
             InputStream error = channel.getErrStream();
@@ -110,7 +111,13 @@ public class SecureShellAgent extends AbstractAgent {
 
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
+
+        // workaround to fix IM hung up on dropbox when performing install puppet agent command
+        // http://stackoverflow.com/questions/27843871/java-application-hungs-up-for-long-time-even-script-on-remote-server-completes-t
         session.setConfig(config);
+        session.setServerAliveInterval(100);
+        session.setServerAliveCountMax(150 * 1000);
+        session.setTimeout(0);
 
         return session;
     }

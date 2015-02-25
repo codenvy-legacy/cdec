@@ -240,12 +240,12 @@ public class TestConfigUtil {
         List<NodeConfig> nodes = ImmutableList.of(
             new NodeConfig(NodeConfig.NodeType.API, "api.dev.com"),
             new NodeConfig(NodeConfig.NodeType.DATA, "data.dev.com"),
-            new NodeConfig(NodeConfig.NodeType.BUILDER, "builder1.dev.com"),
-            new NodeConfig(NodeConfig.NodeType.RUNNER, "runner1.dev.com")
+            new NodeConfig(NodeConfig.NodeType.BUILDER, "builder2.dev.com"),
+            new NodeConfig(NodeConfig.NodeType.RUNNER, "runner23.runner89.com")
         );
 
         Map<String, String> expected = ImmutableMap.of("builder.*example.com", "builder\\\\d+\\\\.dev.com",
-                                                       "runner.*example.com", "runner\\\\d+\\\\.dev.com",
+                                                       "runner.*example.com", "runner\\\\d+\\\\.runner89.com",
                                                        "data.example.com", "data.dev.com",
                                                        "api.example.com", "api.dev.com");
         Map<String, String> actual = ConfigUtil.getPuppetNodesConfigReplacement(nodes);

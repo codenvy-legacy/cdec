@@ -88,7 +88,6 @@ public class CommandFactory {
                       file);
     }
 
-
     public static Command createShellAgentBackupCommand(String file, NodeConfig node) throws AgentException {
         return createShellAgentCommand(getBackupCommand(file), node);
     }

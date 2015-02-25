@@ -20,10 +20,12 @@ package com.codenvy.im.command;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.node.NodeConfig;
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections.list.UnmodifiableList;
 import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentRestoreOrBackupCommand;
@@ -102,6 +104,25 @@ public class TestCommandFactory {
     }
 
     @Test
+    public void testCreateShellAgentRestoreOrBackupCommandForNode() throws AgentException {
+        String expectedCommandString = format("[" +
+                                              "{'command'='if sudo test -f testFile; then" +
+                                              "     if ! sudo test -f testFile.back; then" +
+                                              "         sudo cp testFile testFile.back;" +
+                                              "     else" +
+                                              "         sudo cp testFile.back testFile;" +
+                                              "     fi fi', " +
+                                              "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "]",
+                                              SYSTEM_USER_NAME);
+
+        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
+
+        Command testCommand = createShellAgentRestoreOrBackupCommand("testFile", node);
+        assertEquals(testCommand.toString(), expectedCommandString);
+    }
+
+    @Test
     public void testCreateShellRestoreOrBackupCommand() throws AgentException {
         String expectedCommandString = format("[" +
                                               "{'command'='if sudo test -f testFile; then" +
@@ -131,22 +152,8 @@ public class TestCommandFactory {
     }
 
     @Test
-    public void testCreateShellAgentRestoreOrBackupCommandForOneNode() {
-        // TODO [ndp]
-    }
-
-    @Test
     public void testCreateLocalAgentBackupCommand() {
-        // TODO [ndp]
-    }
-
-    @Test
-    public void testCreateShellAgentBackupCommandOnNode() {
-        // TODO [ndp]
-    }
-
-    @Test
-    public void testGetBackupCommand() {
-        // TODO [ndp]
+        Command result = createLocalAgentBackupCommand("test_file");
+        assertEquals(result.toString(), "{'command'='sudo cp test_file test_file.back', 'agent'='LocalAgent'}");
     }
 }
