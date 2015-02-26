@@ -243,7 +243,7 @@ public class NodeManager {
 
         return result != null
                && result.contains("Loaded: loaded")
-               && result.contains("Active: active (running)");
+               && result.contains("(running)");
     }
 
     protected void validate(NodeConfig node) throws NodeException {
