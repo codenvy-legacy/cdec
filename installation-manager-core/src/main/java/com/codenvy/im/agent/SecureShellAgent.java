@@ -72,6 +72,7 @@ public class SecureShellAgent extends AbstractAgent {
         try {
             session.connect();
         } catch (Exception e) {
+            session.disconnect();
             String errorMessage = format("Can't connect to host '%s@%s:%s'.",
                                          session.getUserName(),
                                          session.getHost(),
@@ -79,11 +80,13 @@ public class SecureShellAgent extends AbstractAgent {
             throw makeAgentException(errorMessage, e);
         }
 
+        ChannelExec channel = null;
         try {
-            ChannelExec channel = (ChannelExec)session.openChannel("exec");
+            channel = (ChannelExec)session.openChannel("exec");
             channel.setCommand(command);
             channel.setInputStream(null);
             channel.setPty(true);         // to avoid error "sudo: sorry, you must have a tty to run sudo" in time of execution sudo command
+            channel.getOutputStream().flush();
 
             InputStream in = channel.getInputStream();
             InputStream error = channel.getErrStream();
@@ -97,6 +100,10 @@ public class SecureShellAgent extends AbstractAgent {
             String errorMessage = format("Can't execute command '%s'.", command);
             throw makeAgentException(errorMessage, e);
         } finally {
+            if (channel != null) {
+                channel.disconnect();
+            }
+
             session.disconnect();
         }
     }
@@ -112,12 +119,9 @@ public class SecureShellAgent extends AbstractAgent {
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
 
-        // workaround to fix IM hung up on dropbox when performing install puppet agent command
-        // http://stackoverflow.com/questions/27843871/java-application-hungs-up-for-long-time-even-script-on-remote-server-completes-t
         session.setConfig(config);
-        session.setServerAliveInterval(100);
-        session.setServerAliveCountMax(150 * 1000);
-        session.setTimeout(0);
+        session.setServerAliveInterval(15 * 1000);  // 15 sec
+        session.setServerAliveCountMax(150);
 
         return session;
     }

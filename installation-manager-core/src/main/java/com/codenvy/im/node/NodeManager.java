@@ -99,57 +99,51 @@ public class NodeManager {
 //            commands.add(createShellAgentCommand("sudo puppet agent -t",
 //                                                 apiNode));
 
-            // check if there is a puppet agent started on adding node
-            if (!isPuppetAgentActive(node)) {
-                String puppetMasterNodeDns = readPuppetMasterNodeDns();
+            String puppetMasterNodeDns = readPuppetMasterNodeDns();
 
-                // install puppet agents on adding node
-                commands.add(createShellAgentCommand("if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                                                     + format("then sudo yum install %s -y", config.getValue(Config.PUPPET_RESOURCE_URL))
-                                                     + "; fi",
-                                                     node));
-                commands.add(createShellAgentCommand(format("sudo yum install %s -y", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
+            // install puppet agents on adding node
+            commands.add(createShellAgentCommand("if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+                                                 + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
+                                                 + "; fi",
+                                                 node));
+            commands.add(createShellAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
 
-                commands.add(createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                                     " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                                     ".wants/puppet.service'" +
-                                                     "; fi",
-                                                     node));
-                commands.add(createShellAgentCommand("sudo systemctl enable puppet", node));
+            commands.add(createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                                 " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                                 ".wants/puppet.service'" +
+                                                 "; fi",
+                                                 node));
+            commands.add(createShellAgentCommand("sudo systemctl enable puppet", node));
 
-                // configure puppet agent
-                commands.add(createShellAgentBackupCommand("/etc/puppet/puppet.conf", node));
-                commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                                            "  server = %s\\n" +
-                                                            "  runinterval = 420\\n" +
-                                                            "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                            puppetMasterNodeDns),
-                                                     node));
+            // configure puppet agent
+            commands.add(createShellAgentBackupCommand("/etc/puppet/puppet.conf", node));
+            commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                        "  server = %s\\n" +
+                                                        "  runinterval = 420\\n" +
+                                                        "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                                        puppetMasterNodeDns),
+                                                 node));
 
-                commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                                            "  show_diff = true\\n" +
-                                                            "  pluginsync = true\\n" +
-                                                            "  report = true\\n" +
-                                                            "  default_schedules = false\\n" +
-                                                            "  certname = %s\\n/g' /etc/puppet/puppet.conf",
-                                                            node.getHost()),
-                                                     node));
+            commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                                        "  show_diff = true\\n" +
+                                                        "  pluginsync = true\\n" +
+                                                        "  report = true\\n" +
+                                                        "  default_schedules = false\\n" +
+                                                        "  certname = %s\\n/g' /etc/puppet/puppet.conf",
+                                                        node.getHost()),
+                                                 node));
 
-                // configure puppet master to use new puppet agent - remove out-date agent's certificate
-                commands.add(createLocalAgentCommand(format("sudo puppet cert clean %s", node.getHost())));
+            // start puppet agent
+            commands.add(createShellAgentCommand("sudo systemctl start puppet", node));
 
-                // start puppet agent
-                commands.add(createShellAgentCommand("sudo systemctl start puppet", node));
-
-                // wait until server on additional node is installed
-                commands.add(createShellAgentCommand("doneState=\"Installing\"; " +
-                                                     "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                                     "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                                     "    sleep 30; " +
-                                                     "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                                     "done",
-                                                     node));
-            }
+            // wait until server on additional node is installed
+            commands.add(createShellAgentCommand("doneState=\"Installing\"; " +
+                                                 "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                                 "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                                 "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                                 "    sleep 30; " +
+                                                 "done",
+                                                 node));
 
             // wait until there is a changed configuration on API server
             commands.add(createShellAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
@@ -224,7 +218,15 @@ public class NodeManager {
                                         apiNode),
 
                 // wait until API server restarts
-                new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion)
+                new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
+
+                // remove out-date puppet agent's certificate
+                createLocalAgentCommand(format("sudo puppet cert clean %s", node.getHost())),
+                createLocalAgentCommand("sudo service puppetmaster restart"),
+
+                // stop puppet agent on removing node and remove out-date certificate
+                createShellAgentCommand("sudo service puppet stop", node),
+                createShellAgentCommand("rm -rf /var/lib/puppet/ssl", node)
             ), "Remove node commands");
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
