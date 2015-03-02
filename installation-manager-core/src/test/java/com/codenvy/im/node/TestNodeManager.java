@@ -186,9 +186,9 @@ public class TestNodeManager {
                      "{'command'='sudo service puppetmaster restart', " +
                      "'agent'='LocalAgent'}, " +
                      "[{'command'='sudo service puppet stop', " +
-                     "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}], " +
+                     "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                      "[{'command'='rm -rf /var/lib/puppet/ssl', " +
-                     "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}]" +
+                     "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}]" +
                      "]", SYSTEM_USER_NAME));
     }
 
