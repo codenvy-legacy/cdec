@@ -57,14 +57,14 @@ public class TestAdditionalNodesConfigUtil {
     @Test
     public void testRecognizeNodeTypeBy() {
         doReturn(TEST_NODE_DNS).when(mockConfig).getValue(ADDITIONAL_RUNNERS_PROPERTY_NAME);
-        NodeConfig.NodeType result = spyConfigUtil.recognizeNodeTypeBy(TEST_NODE_DNS);
+        NodeConfig.NodeType result = spyConfigUtil.recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
 
         assertEquals(result, NodeConfig.NodeType.RUNNER);
     }
 
     @Test
     public void testRecognizeNodeTypeFail() {
-        NodeConfig.NodeType result = spyConfigUtil.recognizeNodeTypeBy(TEST_NODE_DNS);
+        NodeConfig.NodeType result = spyConfigUtil.recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
         assertNull(result);
     }
 
@@ -174,5 +174,34 @@ public class TestAdditionalNodesConfigUtil {
             {new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS), "http://localhost:8080/builder/internal/builder"},
             {new NodeConfig(NodeConfig.NodeType.SITE, TEST_NODE_DNS), "http://localhost:8080/site/internal/site"},
         };
+    }
+
+    @Test(dataProvider = "RecognizeNodeConfigFromDns")
+    public void testRecognizeNodeConfigFromDns(String dns, String baseNodeDomain, NodeConfig expectedResult) {
+        doReturn(baseNodeDomain).when(mockConfig).getValue(NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        doReturn(baseNodeDomain).when(mockConfig).getValue(NodeConfig.NodeType.RUNNER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        assertEquals(spyConfigUtil.recognizeNodeConfigFromDns(dns), expectedResult);
+    }
+
+    @DataProvider(name = "RecognizeNodeConfigFromDns")
+    public static Object[][] RecognizeNodeConfigFromDns() {
+        return new Object[][]{
+            {"runner123.dev.com", "runner1.dev.com", new NodeConfig(NodeConfig.NodeType.RUNNER, "runner123.dev.com")},
+            {"builder123.com", "builder1.com", new NodeConfig(NodeConfig.NodeType.BUILDER, "builder123.com")}
+        };
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Host name of base node of type 'BUILDER' wasn't found.")
+    public void testRecognizeNodeConfigFromDnsWhenBaseNodeDomainUnknown() {
+        spyConfigUtil.recognizeNodeConfigFromDns("some");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Illegal DNS name 'runner2.another.com' of additional node. Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '.*'")
+    public void testRecognizeNodeConfigFromDnsWhenDnsDoesnotComplyBaseNodeDomain() {
+        doReturn("builder1.some.com").when(mockConfig).getValue(NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        doReturn("runner1.some.com").when(mockConfig).getValue(NodeConfig.NodeType.RUNNER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        spyConfigUtil.recognizeNodeConfigFromDns("runner2.another.com");
     }
 }

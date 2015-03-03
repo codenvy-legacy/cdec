@@ -17,9 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.node.NodeConfig;
+import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.commands.Option;
 
 /**
  * @author Dmytro Nochevnov
@@ -27,29 +26,15 @@ import org.apache.karaf.shell.commands.Option;
 @Command(scope = "codenvy", name = "add-node", description = "Add node into Codenvy")
 public class AddNodeCommand extends AbstractIMCommand {
 
-    @Option(name = "--builder", aliases = "-b", description = "DNS of builder node", required = false)
-    private String builderDns;
-
-    @Option(name = "--runner", aliases = "-r", description = "DNS of runner node", required = false)
-    private String runnerDns;
+    @Argument(name = "dns", description = "DNS name of adding node.", required = true, multiValued = false, index = 0)
+    private String dns;
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        if (builderDns != null) {
-            NodeConfig node = new NodeConfig(NodeConfig.NodeType.BUILDER, builderDns);
+        if (dns != null && !dns.isEmpty()) {
             try {
                 console.showProgressor();
-                console.printResponse(service.addNode(node));
-            } finally {
-                console.hideProgressor();
-            }
-        }
-
-        if (runnerDns != null) {
-            NodeConfig node = new NodeConfig(NodeConfig.NodeType.RUNNER, runnerDns);
-            try {
-                console.showProgressor();
-                console.printResponse(service.addNode(node));
+                console.printResponse(service.addNode(dns));
             } finally {
                 console.hideProgressor();
             }

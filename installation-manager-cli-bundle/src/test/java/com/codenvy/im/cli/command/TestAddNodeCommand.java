@@ -17,22 +17,20 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
@@ -45,9 +43,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     private CommandSession             commandSession;
 
     private UserCredentials credentials;
-
-    private static final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
-    private static final NodeConfig TEST_RUNNER_NODE  = new NodeConfig(NodeConfig.NodeType.RUNNER, "runner.node.com");
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -63,33 +58,36 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testAddNodeCommand() throws Exception {
+    public void testAddNode() throws Exception {
         String okServiceResponse = "{\n"
                                    + "  \"status\" : \"OK\"\n"
                                    + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).addNode(TEST_BUILDER_NODE);
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).addNode(TEST_RUNNER_NODE);
+        String TEST_DNS_NAME = "some";
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--builder", TEST_BUILDER_NODE.getHost());
-        commandInvoker.option("--runner", TEST_RUNNER_NODE.getHost());
+        commandInvoker.argument("dns", TEST_DNS_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, okServiceResponse + "\n" + okServiceResponse + "\n");
-
-        verify(mockInstallationManagerProxy).addNode(TEST_BUILDER_NODE);
-        verify(mockInstallationManagerProxy).addNode(TEST_RUNNER_NODE);
+        assertEquals(output, okServiceResponse + "\n");
     }
 
     @Test
-    public void testAddNodeCommandWithoutOptions() throws Exception {
+    public void testAddNodeThrowsError() throws Exception {
+        String expectedOutput = "{\n"
+                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
+                                + "}";
+        String TEST_DNS_NAME = "some";
+        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+            .when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("dns", TEST_DNS_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, "");
-
-        verify(mockInstallationManagerProxy, never()).addNode(any(NodeConfig.class));
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, expectedOutput + "\n");
     }
 }

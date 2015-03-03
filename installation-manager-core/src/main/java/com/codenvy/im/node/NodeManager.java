@@ -59,10 +59,12 @@ public class NodeManager {
 
     /**
      * @throws IllegalArgumentException if node type isn't supported, or if there is adding node in the list of additional nodes
+     * @param dns
      */
-    public String add(NodeConfig node) throws IOException, IllegalArgumentException {
+    public NodeConfig add(String dns) throws IOException, IllegalArgumentException {
         Config config = getCodenvyConfig(configUtil);
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
+        NodeConfig node = nodesConfigUtil.recognizeNodeConfigFromDns(dns);
 
         // check if Codenvy is alive
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
@@ -75,7 +77,9 @@ public class NodeManager {
         validate(node);
 
         Command addNodeCommand = getAddNodeCommand(currentCodenvyVersion, property, nodesConfigUtil, node, config);
-        return addNodeCommand.execute();
+        addNodeCommand.execute();
+
+        return node;
     }
 
     /**
@@ -98,6 +102,10 @@ public class NodeManager {
 //            // force to apply master config through puppet agent on API server  // TODO [ndp] take into account possible concurrent applying of config and lock of puppet agent on API server
 //            commands.add(createShellAgentCommand("sudo puppet agent -t",
 //                                                 apiNode));
+
+            // add node into the autosign list of puppet master
+            commands.add(createLocalAgentCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
+                                                        node.getHost())));
 
             String puppetMasterNodeDns = readPuppetMasterNodeDns();
 
@@ -166,14 +174,14 @@ public class NodeManager {
     /**
      * @throws IllegalArgumentException if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
-    public String remove(String dns) throws IOException, IllegalArgumentException {
+    public NodeConfig remove(String dns) throws IOException, IllegalArgumentException {
         Config config = getCodenvyConfig(configUtil);
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
 
         // check if Codenvy is alive
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
 
-        NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeBy(dns);
+        NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeFromConfigBy(dns);
         if (nodeType == null) {
             throw new NodeException(format("Node '%s' is not found in Codenvy configuration among additional nodes", dns));
         }
@@ -184,7 +192,9 @@ public class NodeManager {
         }
 
         Command command = getRemoveNodeCommand(new NodeConfig(nodeType, dns), config, nodesConfigUtil, currentCodenvyVersion, property);
-        return command.execute();
+        command.execute();
+
+        return new NodeConfig(nodeType, dns);
     }
 
     protected Command getRemoveNodeCommand(NodeConfig node,
@@ -226,7 +236,7 @@ public class NodeManager {
 
                 // stop puppet agent on removing node and remove out-date certificate
                 createShellAgentCommand("sudo service puppet stop", node),
-                createShellAgentCommand("rm -rf /var/lib/puppet/ssl", node)
+                createShellAgentCommand("sudo rm -rf /var/lib/puppet/ssl", node)
             ), "Remove node commands");
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);

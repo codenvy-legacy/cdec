@@ -223,7 +223,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = JsonSyntaxException.class,
-            expectedExceptionsMessageRegExp = "(.*)Expected ':' at line 1 column 14")
+            expectedExceptionsMessageRegExp = ".*Expected ':' at line 1 column 14.*")
     public void testGetInstalledVersionError() throws Exception {
         when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion();

@@ -18,6 +18,7 @@
 package com.codenvy.im.node;
 
 import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigUtil;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,7 @@ public class AdditionalNodesConfigUtil {
     }
 
     @Nullable
-    public NodeConfig.NodeType recognizeNodeTypeBy(String dns) {
+    public NodeConfig.NodeType recognizeNodeTypeFromConfigBy(String dns) {
         for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {
             String additionalNodesProperty = entry.getValue();
             String additionalNodes = config.getValue(additionalNodesProperty);
@@ -56,6 +57,35 @@ public class AdditionalNodesConfigUtil {
         }
 
         return null;
+    }
+
+    /**
+     * @throws IllegalArgumentException if dns doesn't comply with convension '<supported_node_type><number>(base_node_domain)' where supported prefix
+     * */
+    public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException {
+        for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {
+            NodeConfig.NodeType type = entry.getKey();
+
+            NodeConfig baseNode = NodeConfig.extractConfigFrom(config, type);
+            if (baseNode == null) {
+                throw new IllegalStateException(format("Host name of base node of type '%s' wasn't found.", type));
+            }
+
+            String typeString = type.toString().toLowerCase();
+            String base_node_domain = ConfigUtil.getBaseNodeDomain(baseNode).toLowerCase();
+            String regex = format("^%s\\d+%s$",
+                                  typeString,
+                                  base_node_domain);
+
+            if (dns != null && dns.toLowerCase().matches(regex)) {
+                return new NodeConfig(type, dns);
+            }
+        }
+
+        throw new IllegalArgumentException(format("Illegal DNS name '%s' of additional node. " +
+                                                  "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '%s'",
+                                                  dns,
+                                                  ADDITIONAL_NODES_CODENVY_PROPERTIES.keySet().toString().toLowerCase()));
     }
 
     @Nullable

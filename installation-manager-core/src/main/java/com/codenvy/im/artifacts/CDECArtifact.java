@@ -416,9 +416,18 @@ public class CDECArtifact extends AbstractArtifact {
                                                 "; fi", nodeConfigs));
                     add(createShellAgentCommand("sudo systemctl enable puppet", nodeConfigs));
 
-                    // disable firewalld to open connection with puppet agents
-                    add(createLocalAgentCommand("sudo service firewalld stop"));
-                    add(createLocalAgentCommand("sudo systemctl disable firewalld"));
+                    // disable iptables or firewalld to open connection with puppet agents
+                    add(createLocalAgentCommand("systemctl | grep iptables.service; "
+                                                + "if [ $? -eq 0 ]; "
+                                                + "then "
+                                                + "  sudo service iptables stop; "
+                                                + "fi; "
+                                                + "systemctl | grep firewalld.service; "
+                                                + "if [ $? -eq 0 ]; "
+                                                + "then "
+                                                + "  sudo service firewalld stop; "
+                                                + "fi; "
+                    ));
 
                     // install iptables and open port 8140 for puppet  TODO [ndp] isn't mandatory
                     /*
@@ -481,7 +490,12 @@ public class CDECArtifact extends AbstractArtifact {
                                                             ""));
 
                 // make it possible to sign up nodes' certificates automatically
-                commands.add(createLocalAgentCommand("sudo sh -c \"echo '*' > /etc/puppet/autosign.conf\""));
+                String autosignFileContent = "";
+                for (NodeConfig node : nodeConfigs) {
+                    autosignFileContent += format("%s\n", node.getHost());
+                }
+                commands.add(createLocalAgentCommand(format("sudo sh -c \"echo -e '%s' > /etc/puppet/autosign.conf\"",
+                                                            autosignFileContent)));
 
                 return new MacroCommand(commands, "Configure puppet master");
             }

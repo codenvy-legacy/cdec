@@ -76,7 +76,7 @@ public interface InstallationManagerService {
     String setConfig(InstallationManagerConfig config);
 
     /** Add node to multi-server Codenvy */
-    String addNode(NodeConfig node);
+    String addNode(String dns);
 
     /** Remove node from multi-server Codenvy */
     String removeNode(String dns);

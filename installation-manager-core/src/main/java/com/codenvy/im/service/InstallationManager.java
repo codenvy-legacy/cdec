@@ -133,8 +133,8 @@ public interface InstallationManager {
     boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException;
 
     /** Add node to multi-server Codenvy */
-    void addNode(NodeConfig node) throws IOException;
+    NodeConfig addNode(String dns) throws IOException;
 
     /** Remove node from multi-server Codenvy */
-    void removeNode(String dns) throws IOException;
+    NodeConfig removeNode(String dns) throws IOException;
 }

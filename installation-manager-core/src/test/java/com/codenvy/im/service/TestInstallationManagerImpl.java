@@ -502,27 +502,24 @@ public class TestInstallationManagerImpl {
     @Test
     public void testAddNode() throws IOException {
         final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
-        manager.addNode(TEST_BUILDER_NODE);
-        verify(mockNodeManager).add(TEST_BUILDER_NODE);
-
-        final NodeConfig TEST_RUNNER_NODE  = new NodeConfig(NodeConfig.NodeType.RUNNER, "runner.node.com");
-        manager.addNode(TEST_RUNNER_NODE);
-        verify(mockNodeManager).add(TEST_RUNNER_NODE);
+        doReturn(TEST_BUILDER_NODE).when(mockNodeManager).add("builder.node.com");
+        NodeConfig result = manager.addNode("builder.node.com");
+        assertEquals(result, TEST_BUILDER_NODE);
     }
 
     @Test(expectedExceptions = IOException.class,
           expectedExceptionsMessageRegExp = "error")
     public void testAddNodeException() throws IOException {
-        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
-        doThrow(new IOException("error")).when(mockNodeManager).add(TEST_BUILDER_NODE);
-        manager.addNode(TEST_BUILDER_NODE);
+        doThrow(new IOException("error")).when(mockNodeManager).add("node");
+        manager.addNode("node");
     }
 
     @Test
     public void testRemoveNode() throws IOException {
-        final String TEST_NODE_DNS = "builder.node.com";
-        manager.removeNode(TEST_NODE_DNS);
-        verify(mockNodeManager).remove(TEST_NODE_DNS);
+        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
+        doReturn(TEST_BUILDER_NODE).when(mockNodeManager).remove("builder.node.com");
+        NodeConfig result = manager.removeNode("builder.node.com");
+        assertEquals(result, TEST_BUILDER_NODE);
     }
 
     @Test(expectedExceptions = IOException.class,

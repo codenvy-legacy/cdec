@@ -380,8 +380,8 @@ public class InstallationManagerImpl implements InstallationManager {
      * @throws IllegalArgumentException if node's type isn't supported
      */
     @Override
-    public void addNode(NodeConfig node) throws IOException, IllegalArgumentException {
-        nodeManager.add(node);
+    public NodeConfig addNode(String dns) throws IOException, IllegalArgumentException {
+        return nodeManager.add(dns);
     }
 
     /**
@@ -389,7 +389,7 @@ public class InstallationManagerImpl implements InstallationManager {
      * @throws IllegalArgumentException if node's type isn't supported
      */
     @Override
-    public void removeNode(String dns) throws IOException, IllegalArgumentException {
-        nodeManager.remove(dns);
+    public NodeConfig removeNode(String dns) throws IOException, IllegalArgumentException {
+        return nodeManager.remove(dns);
     }
 }

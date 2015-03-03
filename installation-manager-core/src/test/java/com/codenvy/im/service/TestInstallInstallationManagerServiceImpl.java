@@ -161,30 +161,23 @@ public class TestInstallInstallationManagerServiceImpl {
 
     @Test
     public void testAddNode() throws IOException {
-        String expectedResult = "{\n"
-                                + "  \"status\" : \"OK\"\n"
-                                + "}";
-
-        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
-        doNothing().when(mockInstallationManager).addNode(TEST_BUILDER_NODE);
-
-        assertEquals(installationManagerService.addNode(TEST_BUILDER_NODE), expectedResult);
-        verify(mockInstallationManager).addNode(TEST_BUILDER_NODE);
-
-        final NodeConfig TEST_RUNNER_NODE  = new NodeConfig(NodeConfig.NodeType.RUNNER, "runner.node.com");
-        doNothing().when(mockInstallationManager).addNode(TEST_RUNNER_NODE);
-
-        assertEquals(installationManagerService.addNode(TEST_RUNNER_NODE), expectedResult);
-        verify(mockInstallationManager).addNode(TEST_RUNNER_NODE);
+        doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com")).when(mockInstallationManager).addNode("builder.node.com");
+        assertEquals(installationManagerService.addNode("builder.node.com"), "{\n"
+                                                                             + "  \"node\" : {\n"
+                                                                             + "    \"type\" : \"BUILDER\",\n"
+                                                                             + "    \"host\" : \"builder.node.com\",\n"
+                                                                             + "    \"status\" : \"SUCCESS\"\n"
+                                                                             + "  },\n"
+                                                                             + "  \"status\" : \"OK\"\n"
+                                                                             + "}");
     }
 
 
     @Test
     public void testAddNodeException() throws IOException {
-        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
-        doThrow(new IOException("error")).when(mockInstallationManager).addNode(TEST_BUILDER_NODE);
+        doThrow(new IOException("error")).when(mockInstallationManager).addNode("builder.node.com");
 
-        assertEquals(installationManagerService.addNode(TEST_BUILDER_NODE), "{\n"
+        assertEquals(installationManagerService.addNode("builder.node.com"), "{\n"
                                                                             + "  \"message\" : \"error\",\n"
                                                                             + "  \"status\" : \"ERROR\"\n"
                                                                             + "}");
@@ -193,12 +186,17 @@ public class TestInstallInstallationManagerServiceImpl {
     @Test
     public void testRemoveNode() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
-        doNothing().when(mockInstallationManager).removeNode(TEST_NODE_DNS);
+        final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS);
+        doReturn(TEST_NODE).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
         assertEquals(installationManagerService.removeNode(TEST_NODE_DNS), "{\n"
+                                                                           + "  \"node\" : {\n"
+                                                                           + "    \"type\" : \"BUILDER\",\n"
+                                                                           + "    \"host\" : \"builder.node.com\",\n"
+                                                                           + "    \"status\" : \"SUCCESS\"\n"
+                                                                           + "  },\n"
                                                                            + "  \"status\" : \"OK\"\n"
                                                                            + "}");
-        verify(mockInstallationManager).removeNode(TEST_NODE_DNS);
     }
 
     @Test

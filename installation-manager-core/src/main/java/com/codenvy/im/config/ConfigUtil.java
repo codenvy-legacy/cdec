@@ -207,14 +207,14 @@ public class ConfigUtil {
 
                 case BUILDER: {
                     String replacingToken = "builder.*example.com";
-                    String replacement = format("builder\\\\d+\\\\.%s", node.getHost().replaceAll("^builder\\d+.", ""));
+                    String replacement = format("builder\\\\d+\\\\%s", getBaseNodeDomain(node));
                     replacements.put(replacingToken, replacement);
                     break;
                 }
 
                 case RUNNER: {
                     String replacingToken = "runner.*example.com";
-                    String replacement = format("runner\\\\d+\\\\.%s", node.getHost().replaceAll("^runner\\d+.", ""));
+                    String replacement = format("runner\\\\d+\\\\%s", getBaseNodeDomain(node));
                     replacements.put(replacingToken, replacement);
                     break;
                 }
@@ -225,6 +225,11 @@ public class ConfigUtil {
         }
 
         return replacements;
+    }
+
+    public static String getBaseNodeDomain(NodeConfig node) {
+        String regex = format("^%s\\d+", node.getType().toString().toLowerCase());
+        return node.getHost().toLowerCase().replaceAll(regex, "");
     }
 
 }

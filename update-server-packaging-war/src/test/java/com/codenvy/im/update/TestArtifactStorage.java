@@ -20,13 +20,16 @@ package com.codenvy.im.update;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.google.common.io.InputSupplier;
 
+import org.apache.commons.io.IOUtils;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -199,12 +202,10 @@ public class TestArtifactStorage extends BaseTest {
 
         Path tmp = Paths.get("target", "download", "tmp");
         try (InputStream in = artifactStorage.download("installation-manager", "1.0.1")) {
-            copy(new InputSupplier<InputStream>() {
-                @Override
-                public InputStream getInput() throws IOException {
-                    return in;
-                }
-            }, tmp.toFile());
+            OutputStream out = new FileOutputStream(tmp.toFile());
+            IOUtils.copyLarge(in, out);
+            in.close();
+            out.close();
         }
 
         try (BufferedReader reader = Files.newBufferedReader(artifact, Charset.defaultCharset())) {

@@ -35,7 +35,7 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "message", "status"})
+@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "message", "status"})
 @JsonIgnoreProperties({"CLI client version"})
 public class Response {
     private List<ArtifactInfo>            artifacts;
@@ -45,6 +45,7 @@ public class Response {
     private LinkedHashMap<String, String> config;
     private List<String>                  infos;
     private String                        subscription;
+    private NodeInfo                      node;
 
     public Response() {
     }
@@ -148,6 +149,15 @@ public class Response {
 
     public Response setInfos(List<String> infos) {
         this.infos = infos;
+        return this;
+    }
+
+    public NodeInfo getNode() {
+        return node;
+    }
+
+    public Response setNode(NodeInfo node) {
+        this.node = node;
         return this;
     }
 

@@ -40,6 +40,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -94,31 +95,32 @@ public class TestNodeManager {
     @Test
     public void testAddNode() throws IOException {
         doNothing().when(spyManager).validate(TEST_NODE);
-        doReturn(true).when(spyManager).isPuppetAgentActive(TEST_NODE);
-
+        doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
         doReturn(mockCommand).when(spyManager).getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
-        doReturn(MOCK_COMMAND_EXECUTE_RESULT).when(mockCommand).execute();
 
-        assertEquals(spyManager.add(TEST_NODE), MOCK_COMMAND_EXECUTE_RESULT);
+        assertEquals(spyManager.add(TEST_NODE_DNS), TEST_NODE);
+        verify(mockCommand).execute();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "This type of node isn't supported")
     public void testAddNodeWhichIsNotSupported() throws IOException {
-        doReturn(ADDITIONAL_RUNNERS_PROPERTY_NAME).when(mockNodesConfigUtil).getPropertyNameBy(TEST_NODE.getType());
+        doNothing().when(spyManager).validate(TEST_NODE);
+        doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
+        doReturn(null).when(mockNodesConfigUtil).getPropertyNameBy(TEST_NODE.getType());
 
-        spyManager.add(new NodeConfig(NodeConfig.NodeType.API, "some"));
+        spyManager.add(TEST_NODE_DNS);
     }
 
     @Test
-    public void testGetAddNodeCommandWithoutPuppetAgent() throws IOException {
-        doReturn(false).when(spyManager).isPuppetAgentActive(TEST_NODE);
-
+    public void testGetAddNodeCommand() throws IOException {
         Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
         assertEquals(result.toString(), format("[" +
                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
                                         "'agent'='LocalAgent'}, " +
                                         "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"test_runner_node_url\"/g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
+                                        "'agent'='LocalAgent'}, " +
+                                        "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', " +
                                         "'agent'='LocalAgent'}, " +
                                         "[{'command'='if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; then sudo yum -y -q install null; fi', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
@@ -153,20 +155,21 @@ public class TestNodeManager {
 
     @Test
     public void testRemoveNode() throws IOException {
-        doReturn(TEST_NODE_TYPE).when(mockNodesConfigUtil).recognizeNodeTypeBy(TEST_NODE_DNS);
+        doReturn(TEST_NODE_TYPE).when(mockNodesConfigUtil).recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
         doReturn(mockCommand).when(spyManager).getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
-        doReturn(MOCK_COMMAND_EXECUTE_RESULT).when(mockCommand).execute();
+        doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
 
-        assertEquals(spyManager.remove(TEST_NODE_DNS), MOCK_COMMAND_EXECUTE_RESULT);
+        assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
+        verify(mockCommand).execute();
     }
 
     @Test(expectedExceptions = NodeException.class,
           expectedExceptionsMessageRegExp = "Node 'localhost' is not found in Codenvy configuration among additional nodes")
     public void testRemoveNonExistsNodeError() throws IOException {
         doReturn(mockCommand).when(spyManager).getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
-        doReturn(MOCK_COMMAND_EXECUTE_RESULT).when(mockCommand).execute();
 
-        assertEquals(spyManager.remove(TEST_NODE_DNS), MOCK_COMMAND_EXECUTE_RESULT);
+        assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
+        verify(mockCommand).execute();
     }
 
     @Test
@@ -187,7 +190,7 @@ public class TestNodeManager {
                      "'agent'='LocalAgent'}, " +
                      "[{'command'='sudo service puppet stop', " +
                      "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
-                     "[{'command'='rm -rf /var/lib/puppet/ssl', " +
+                     "[{'command'='sudo rm -rf /var/lib/puppet/ssl', " +
                      "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}]" +
                      "]", SYSTEM_USER_NAME));
     }

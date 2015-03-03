@@ -24,6 +24,7 @@ import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.DownloadStatusInfo;
+import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
@@ -460,10 +461,12 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
     /** {@inheritDoc} */
     @Override
-    public String addNode(NodeConfig node) {
+    public String addNode(String dns) {
         try {
-            manager.addNode(node);
-            return new Response().setStatus(ResponseCode.OK).toJson();
+            NodeConfig node = manager.addNode(dns);
+            return new Response().setNode(NodeInfo.createSuccessInfo(node))
+                                 .setStatus(ResponseCode.OK)
+                                 .toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
@@ -474,8 +477,10 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String removeNode(String dns) {
         try {
-            manager.removeNode(dns);
-            return new Response().setStatus(ResponseCode.OK).toJson();
+            NodeConfig node = manager.removeNode(dns);
+            return new Response().setNode(NodeInfo.createSuccessInfo(node))
+                                 .setStatus(ResponseCode.OK)
+                                 .toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
