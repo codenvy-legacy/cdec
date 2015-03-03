@@ -23,7 +23,9 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -32,6 +34,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static java.lang.String.format;
@@ -46,9 +49,11 @@ import static org.testng.Assert.assertNotNull;
 
 /** @author Dmytro Nochevnov */
 public class TestNodeManager {
+
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+
     @Mock
-    private ConfigUtil mockConfigUtil;
+    private ConfigUtil                mockConfigUtil;
     @Mock
     private Config                    mockConfig;
     @Mock
@@ -58,7 +63,6 @@ public class TestNodeManager {
     @Mock
     private Command                   mockCommand;
 
-
     private static final String              TEST_NODE_DNS  = "localhost";
     private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
     private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
@@ -66,7 +70,6 @@ public class TestNodeManager {
     private static final Version TEST_VERSION                     = Version.valueOf("1.0.0");
     private static final String  TEST_RUNNER_NODE_URL             = "test_runner_node_url";
     private static final String  ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
-    private static final String  MOCK_COMMAND_EXECUTE_RESULT      = "mock_command_execute_result";
 
     private NodeManager spyManager;
 
@@ -250,13 +253,20 @@ public class TestNodeManager {
 
     @Test
     public void testGetCodenvyConfig() throws IOException {
-        Config config = spyManager.getCodenvyConfig(mockConfigUtil);
-        assertNotNull(config);
+        Map<String, String> properties = ImmutableMap.of("some property", "some value");
+        doReturn(properties).when(mockConfigUtil).loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+
+        NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
+        Config config = manager.getCodenvyConfig(mockConfigUtil);
+
+        assertEquals(config.getProperties().toString(), 
+                     properties.toString());
     }
 
     @Test
-    public void testNodesConfigUtil() {
-        AdditionalNodesConfigUtil config = spyManager.getNodesConfigUtil(mockConfig);
+    public void testNodesConfigUtil() throws IOException {
+        NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
+        AdditionalNodesConfigUtil config = manager.getNodesConfigUtil(mockConfig);
         assertNotNull(config);
     }
 
@@ -264,6 +274,6 @@ public class TestNodeManager {
     public void testShellAgentCommand() throws AgentException {
         Command command = spyManager.getShellAgentCommand("test", TEST_NODE);
         assertEquals(command.toString(), format("[{'command'='test', " +
-                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}]", SYSTEM_USER_NAME));
+                                                "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}]", SYSTEM_USER_NAME));
     }
 }
