@@ -99,10 +99,6 @@ public class NodeManager {
                                                                 "$" + property,
                                                                 value));
 
-//            // force to apply master config through puppet agent on API server  // TODO [ndp] take into account possible concurrent applying of config and lock of puppet agent on API server
-//            commands.add(createShellAgentCommand("sudo puppet agent -t",
-//                                                 apiNode));
-
             // add node into the autosign list of puppet master
             commands.add(createLocalAgentCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
                                                         node.getHost())));
@@ -214,10 +210,6 @@ public class NodeManager {
                                                        "$" + property,
                                                        value),
 
-//                // force to apply master config through puppet agent on API server  // TODO [ndp] take into account possible concurrent applying of config and lock of puppet agent on API server
-//                createShellAgentCommand("sudo puppet agent -t",
-//                                        apiNode),
-
                 // wait until there node is removed from configuration on API server
                 createShellAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
                                                "while true; do " +
@@ -246,7 +238,7 @@ public class NodeManager {
     protected boolean isPuppetAgentActive(NodeConfig node) throws AgentException {
         Command getPuppetAgentStatusCommand = getShellAgentCommand("sudo service puppet status", node);
 
-        String result = null;
+        String result;
         try {
             result = getPuppetAgentStatusCommand.execute();
         } catch (CommandException e) {

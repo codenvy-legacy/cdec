@@ -19,21 +19,17 @@ package com.codenvy.im.update;
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.Version;
-import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.io.FileUtils;
+
 import org.apache.commons.io.IOUtils;
 
 import javax.inject.Named;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,7 +42,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.Commons.getVersionsList;
-import static com.google.common.io.Files.copy;
+import static java.nio.file.Files.newOutputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -93,10 +89,11 @@ public class ArtifactStorage {
         props.put(ARTIFACT_PROPERTY, artifact);
         storeProperties(artifact, version, props);
 
-        OutputStream out = new FileOutputStream(getArtifact(artifact, version, fileName).toFile());
-        IOUtils.copyLarge(in, out);
-        in.close();
-        out.close();
+        try (OutputStream out = newOutputStream(getArtifact(artifact, version, fileName))) {
+            IOUtils.copyLarge(in, out);
+        } finally {
+            in.close();
+        }
     }
 
     /**
@@ -150,7 +147,7 @@ public class ArtifactStorage {
             Files.createDirectories(dir);
         }
 
-        try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(propertiesFile))) {
+        try (OutputStream out = new BufferedOutputStream(newOutputStream(propertiesFile))) {
             props.store(out, null);
         }
     }

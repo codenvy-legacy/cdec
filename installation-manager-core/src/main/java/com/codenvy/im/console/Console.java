@@ -28,6 +28,7 @@ import org.fusesource.jansi.Ansi;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,12 +45,13 @@ public class Console {
     public static final  String CODENVY_PREFIX     = "[CODENVY] ";
     private static final Logger LOG                = Logger.getLogger(Console.class.getName());
 
+    private static final AtomicReference<Console> consoleInstance = new AtomicReference<>();
+
     private final boolean       interactive;
     protected     ConsoleReader consoleReader;
     private final LoadingBar    loaderBar;
     private       int           rowCounter;
 
-    private static Console consoleInstance;
 
     protected Console(boolean interactive) throws IOException {
         this.interactive = interactive;
@@ -57,17 +59,23 @@ public class Console {
         this.loaderBar = new LoadingBar();
     }
 
+    /**
+     * Returns console instance.
+     * It has to be created first using {@link #create} method with appropriate mode.
+     */
     public static Console getInstance() throws IllegalStateException {
-        if (consoleInstance == null) {
+        if (consoleInstance.get() == null) {
             throw new IllegalStateException("There is no console.");
         }
-
-        return consoleInstance;
+        return consoleInstance.get();
     }
 
+    /**
+     * Factory method to initialize console with appropriate mode.
+     */
     public static Console create(boolean interactive) throws IOException {
-        consoleInstance = new Console(interactive);
-        return consoleInstance;
+        consoleInstance.set(new Console(interactive));
+        return consoleInstance.get();
     }
 
     public void println(String message) {

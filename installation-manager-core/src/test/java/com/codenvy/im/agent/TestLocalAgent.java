@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static com.codenvy.im.console.TestConsole.ConsoleTested;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -53,9 +52,9 @@ import static org.testng.Assert.fail;
  * @author Dmytro Nochevnov
  */
 public class TestLocalAgent {
-    private static final String TEST_PASSWORD = "test";
-    public static final String COMMAND_WITHOUT_SUDO = "sleep 1; ls;";
-    public static final String COMMAND_WITH_SUDO = "sudo true";
+    private static final String TEST_PASSWORD        = "test";
+    public static final  String COMMAND_WITHOUT_SUDO = "sleep 1; ls;";
+    public static final  String COMMAND_WITH_SUDO    = "sudo true";
 
     @Mock
     Console mockConsole;
@@ -90,21 +89,24 @@ public class TestLocalAgent {
 
         outputOfMockConsole = "";
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 outputOfMockConsole += "\n";
                 return null;
             }
         }).when(mockConsole).println();
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 outputOfMockConsole += invocation.getArguments()[0] + "\n";
                 return null;
             }
         }).when(mockConsole).println(anyString());
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 outputOfMockConsole += invocation.getArguments()[0];
                 return null;
             }
@@ -125,7 +127,7 @@ public class TestLocalAgent {
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Can't obtain correct password")
+            expectedExceptionsMessageRegExp = "Can't obtain correct password")
     public void testSudoCommandRequiredPasswordWithoutConsole() throws Exception {
         inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_STATUS.getBytes());
         spyTestAgent.execute("sudo true;");
@@ -142,7 +144,7 @@ public class TestLocalAgent {
     }
 
     @Test(expectedExceptions = AgentException.class,
-          expectedExceptionsMessageRegExp = "Can't execute command '" + COMMAND_WITH_SUDO + "'. Output: mock output; Error: mock error.")
+            expectedExceptionsMessageRegExp = "Can't execute command '" + COMMAND_WITH_SUDO + "'. Output: mock output; Error: mock error.")
     public void testSudoCommandWithPassingPasswordError() throws Exception {
         doReturn(TEST_PASSWORD.toCharArray()).when(spyTestAgent).obtainPassword();
         doReturn(true).when(spyTestAgent).isPasswordRequired(COMMAND_WITH_SUDO);
@@ -186,7 +188,7 @@ public class TestLocalAgent {
 
     @Test
     public void testIsPasswordCorrectTrue() throws Exception {
-        errorStreamOfSpyProcess = new ByteArrayInputStream(new byte[] {-1});
+        errorStreamOfSpyProcess = new ByteArrayInputStream(new byte[]{-1});
         assertTrue(spyTestAgent.isPasswordCorrect(TEST_PASSWORD.toCharArray()));
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_IS_PASSWORD_CORRECT_COMMAND);
     }
@@ -196,22 +198,6 @@ public class TestLocalAgent {
         errorStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.PASSWORD_INCORRECT_STATUS.getBytes());
         assertFalse(spyTestAgent.isPasswordCorrect(TEST_PASSWORD.toCharArray()));
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_IS_PASSWORD_CORRECT_COMMAND);
-    }
-
-    @Test(enabled = false) // TODO [AB]: rework initialization
-    public void testGetConsole() throws IOException {
-        LocalAgent agent = new LocalAgent();
-        try {
-            agent.getConsole();
-        } catch(AgentException e) {
-            assertEquals(e.getMessage(), "Can't obtain correct password");
-
-            Console console = ConsoleTested.create(true);
-            assertEquals(agent.getConsole(), console);
-            return;
-        }
-
-        fail("Here should be an AgentException");
     }
 
     @Test
@@ -241,7 +227,8 @@ public class TestLocalAgent {
                                                      "\n", System.getProperty("user.name"));
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 outputOfMockConsole += "\n";
                 return TEST_PASSWORD;
             }
@@ -268,7 +255,8 @@ public class TestLocalAgent {
                                                      "\nsudo: 3 incorrect password attempts\n", System.getProperty("user.name"));
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 outputOfMockConsole += "\n";
                 return TEST_PASSWORD;
             }
@@ -278,7 +266,7 @@ public class TestLocalAgent {
 
         try {
             spyTestAgent.obtainPassword();
-        } catch(AgentException e) {
+        } catch (AgentException e) {
             assertEquals(e.getMessage(), "Can't obtain correct password");
 
             assertEquals(outputOfMockConsole, expectedConsoleOutput);
@@ -293,37 +281,45 @@ public class TestLocalAgent {
     }
 
     class LocalAgentTested extends LocalAgent {
-        @Override protected Process getProcess(String command) {
+        @Override
+        protected Process getProcess(String command) {
             return spyProcess;
         }
 
-        @Override protected Console getConsole() throws AgentException {
+        @Override
+        protected Console getConsole() throws AgentException {
             return mockConsole;
         }
     }
 
     class ProcessTested extends Process {
-        @Override public OutputStream getOutputStream() {
+        @Override
+        public OutputStream getOutputStream() {
             return outputStreamOfSpyProcess;
         }
 
-        @Override public InputStream getInputStream() {
+        @Override
+        public InputStream getInputStream() {
             return inputStreamOfSpyProcess;
         }
 
-        @Override public InputStream getErrorStream() {
+        @Override
+        public InputStream getErrorStream() {
             return errorStreamOfSpyProcess;
         }
 
-        @Override public int waitFor() throws InterruptedException {
+        @Override
+        public int waitFor() throws InterruptedException {
             return 0;
         }
 
-        @Override public int exitValue() {
+        @Override
+        public int exitValue() {
             return 0;
         }
 
-        @Override public void destroy() {
+        @Override
+        public void destroy() {
         }
     }
 }
