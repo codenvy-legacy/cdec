@@ -73,5 +73,11 @@ public class TestStoreIMConfigPropertyCommand {
         assertEquals(InstallationManagerConfig.readCdecHostDns(), testHostDns);
     }
 
-
+    @Test
+    public void testCreateSavePuppetMasterHostDnsCommand() throws IOException {
+        String testPuppetMasterHostDns = "test";
+        Command command = StoreIMConfigPropertyCommand.createSavePuppetMasterHostDnsCommand(testPuppetMasterHostDns);
+        command.execute();
+        assertEquals(InstallationManagerConfig.readPuppetMasterNodeDns(), testPuppetMasterHostDns);
+    }
 }

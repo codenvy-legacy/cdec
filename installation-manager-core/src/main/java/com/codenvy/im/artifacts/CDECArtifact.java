@@ -107,6 +107,10 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
+        if (installOptions.getInstallType() != InstallOptions.InstallType.CODENVY_SINGLE_SERVER) {
+            throw new IllegalArgumentException("Only update to single-server version is supported");
+        }
+
         return ImmutableList.of("Unzip Codenvy binaries to /tmp/codenvy",
                                 "Configure Codenvy",
                                 "Patch resources",
@@ -211,22 +215,22 @@ public class CDECArtifact extends AbstractArtifact {
         switch (step) {
             case 0:
                 return new MacroCommand(ImmutableList.of(
-                        createLocalAgentRestoreOrBackupCommand("/etc/selinux/config"),
-                        createLocalAgentCommand("if sudo test -f /etc/selinux/config; then " +
-                                                "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
-                                                "        sudo setenforce 0; " +
-                                                "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
-                                                "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
-                                                "    fi " +
-                                                "fi ")),
-                    "Disable SELinux");
+                    createLocalAgentRestoreOrBackupCommand("/etc/selinux/config"),
+                    createLocalAgentCommand("if sudo test -f /etc/selinux/config; then " +
+                                            "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                            "        sudo setenforce 0; " +
+                                            "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                            "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                            "    fi " +
+                                            "fi ")),
+                                        "Disable SELinux");
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createLocalAgentCommand(
-                            "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                            + "; fi"));
+                        "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+                        + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
+                        + "; fi"));
                     add(createLocalAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
                     add(createLocalAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
 
@@ -272,26 +276,26 @@ public class CDECArtifact extends AbstractArtifact {
 
                     commands.add(createLocalAgentPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
                     commands.add(
-                            createLocalAgentPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                        createLocalAgentPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
 
                 return new MacroCommand(commands, "Configure puppet master");
 
             case 4:
                 return new MacroCommand(ImmutableList.of(
-                        createLocalAgentRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
-                        createLocalAgentCommand("sudo sed -i '1i[master]' /etc/puppet/puppet.conf"),
-                        createLocalAgentCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
-                        createLocalAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                                       "  dns_alt_names = puppet,%s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
-                        createLocalAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                                       "  show_diff = true\\n" +
-                                                       "  pluginsync = true\\n" +
-                                                       "  report = true\\n" +
-                                                       "  default_schedules = false\\n" +
-                                                       "  certname = %s\\n" +
-                                                       "  runinterval = 300\\n" +
-                                                       "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
+                    createLocalAgentRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
+                    createLocalAgentCommand("sudo sed -i '1i[master]' /etc/puppet/puppet.conf"),
+                    createLocalAgentCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
+                    createLocalAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                   "  dns_alt_names = puppet,%s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
+                    createLocalAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                                   "  show_diff = true\\n" +
+                                                   "  pluginsync = true\\n" +
+                                                   "  report = true\\n" +
+                                                   "  default_schedules = false\\n" +
+                                                   "  certname = %s\\n" +
+                                                   "  runinterval = 300\\n" +
+                                                   "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
                                         "Configure puppet agent");
 
             case 5:
@@ -304,13 +308,13 @@ public class CDECArtifact extends AbstractArtifact {
             case 6:
                 if (OSUtils.getVersion().equals("6")) {
                     return new MacroCommand(ImmutableList.<Command>of(
-                            createLocalAgentCommand("sleep 30"),
-                            createLocalAgentCommand("sudo service puppet start")),
+                        createLocalAgentCommand("sleep 30"),
+                        createLocalAgentCommand("sudo service puppet start")),
                                             "Launch puppet agent");
                 } else {
                     return new MacroCommand(ImmutableList.<Command>of(
-                            createLocalAgentCommand("sleep 30"),
-                            createLocalAgentCommand("sudo systemctl start puppet")),
+                        createLocalAgentCommand("sleep 30"),
+                        createLocalAgentCommand("sudo systemctl start puppet")),
                                             "Launch puppet agent");
                 }
 
@@ -324,10 +328,10 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 8:
                 return new MacroCommand(ImmutableList.of(
-                        StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand("localhost"),
-                        new CheckInstalledVersionCommand(this, versionToInstall)
-                    ),
-                    "Check if Codenvy has already installed");
+                    StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand("localhost"),
+                    new CheckInstalledVersionCommand(this, versionToInstall)
+                ),
+                                        "Check if Codenvy has already installed");
 
 
             default:
@@ -355,8 +359,8 @@ public class CDECArtifact extends AbstractArtifact {
      * @throws IllegalStateException if local OS version != 7
      */
     private Command getInstallCommandsMultiServer(Version versionToInstall, Path pathToBinaries, final Config config, int step) throws AgentException,
-                                                                                                                                          IllegalArgumentException,
-                                                                                                                                          IllegalStateException {
+                                                                                                                                       IllegalArgumentException,
+                                                                                                                                       IllegalStateException {
         if (!OSUtils.getVersion().equals("7")) {
             throw new IllegalStateException("Multi-serve installation is supported only on CentOS 7");
         }
@@ -392,9 +396,10 @@ public class CDECArtifact extends AbstractArtifact {
                 return new MacroCommand(new ArrayList<Command>() {{
                     // install puppet master
                     add(createLocalAgentCommand(
-                            "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                            + "; fi"));
+                        "yum list installed | grep puppetlabs-release.noarch; "
+                        + "if [ $? -ne 0 ]; "
+                        + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
+                        + "; fi"));
                     add(createLocalAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
 
                     add(createLocalAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
@@ -405,9 +410,10 @@ public class CDECArtifact extends AbstractArtifact {
 
                     // install puppet agents on each node
                     add(createShellAgentCommand(
-                            "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                            + format("then sudo yum -y -q install %s ", config.getValue(Config.PUPPET_RESOURCE_URL))
-                            + "; fi", nodeConfigs));
+                        "yum list installed | grep puppetlabs-release.noarch; "
+                        + "if [ $? -ne 0 ]; "
+                        + format("then sudo yum -y -q install %s ", config.getValue(Config.PUPPET_RESOURCE_URL))
+                        + "; fi", nodeConfigs));
                     add(createShellAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));  // -q here is needed to avoid hung up of ssh
 
                     add(createShellAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
@@ -538,9 +544,10 @@ public class CDECArtifact extends AbstractArtifact {
             case 8:
                 return new MacroCommand(ImmutableList.of(
                     StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand(config.getHostUrl()),
+                    StoreIMConfigPropertyCommand.createSavePuppetMasterHostDnsCommand(config.getValue(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME)),
                     new CheckInstalledVersionCommand(this, versionToInstall)
                 ),
-                "Check if Codenvy has already installed");
+                                        "Check if Codenvy has already installed");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

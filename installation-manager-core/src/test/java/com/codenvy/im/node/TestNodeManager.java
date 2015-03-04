@@ -125,7 +125,7 @@ public class TestNodeManager {
                                         "'agent'='LocalAgent'}, " +
                                         "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', " +
                                         "'agent'='LocalAgent'}, " +
-                                        "[{'command'='if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; then sudo yum -y -q install null; fi', " +
+                                        "[{'command'='yum list installed | grep puppetlabs-release.noarch; if [ $? -ne 0 ]; then sudo yum -y -q install null; fi', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
                                         "[{'command'='sudo yum -y -q install null', " +
                                         "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}], " +
@@ -259,7 +259,7 @@ public class TestNodeManager {
         NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
         Config config = manager.getCodenvyConfig(mockConfigUtil);
 
-        assertEquals(config.getProperties().toString(), 
+        assertEquals(config.getProperties().toString(),
                      properties.toString());
     }
 

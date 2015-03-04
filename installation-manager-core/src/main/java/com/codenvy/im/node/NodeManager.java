@@ -106,7 +106,8 @@ public class NodeManager {
             String puppetMasterNodeDns = readPuppetMasterNodeDns();
 
             // install puppet agents on adding node
-            commands.add(createShellAgentCommand("if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+            commands.add(createShellAgentCommand("yum list installed | grep puppetlabs-release.noarch; "
+                                                 + "if [ $? -ne 0 ]; "
                                                  + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
                                                  + "; fi",
                                                  node));

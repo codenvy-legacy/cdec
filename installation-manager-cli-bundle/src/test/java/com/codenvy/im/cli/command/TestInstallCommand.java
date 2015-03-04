@@ -532,14 +532,4 @@ public class TestInstallCommand extends AbstractTestCommand {
                                               + "property 1 (value='value 1'): property 2 (value='value 2'): property 3 (value=''): ");
     }
 
-    @Test
-    public void testStorePuppetMasterHostName() throws IOException {
-        InstallOptions options = new InstallOptions();
-        final String puppetMasterHost = "master";
-        Map<String, String> properties = ImmutableMap.of(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, puppetMasterHost);
-        options.setConfigProperties(properties);
-        spyCommand.storePuppetMasterHostName(options);
-
-        assertEquals(InstallationManagerConfig.readPuppetMasterNodeDns(), puppetMasterHost);
-    }
 }
