@@ -419,6 +419,8 @@ printPostInstallInfo_multi() {
     printPrompt; echo
     HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
     printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
+    printPrompt; echo
+    printPrompt; echo "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node"
 }
 
 clear
