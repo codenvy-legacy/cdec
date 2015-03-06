@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -L -s https://codenvy.com/update/repository/public/download/install-im-cli)
+# bash <(curl -s https://codenvy.com/update/repository/public/download/install-im-cli)
 set -e
 
 DIR="${HOME}/codenvy-im"

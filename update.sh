@@ -20,7 +20,7 @@ filename=`ls update-server-packaging-tomcat/target | grep update-server-packagin
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
     SSH_AS_USER_NAME=codenvy
-    AS_IP=update.codenvycorp.com
+    AS_IP=updater.codenvycorp.com
     echo "============[ Production will be updated ]=============="
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=as1-cldide_cl-server.skey

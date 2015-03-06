@@ -19,7 +19,7 @@
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=$2
     SSH_AS_USER_NAME=codenvy
-    AS_IP=update.codenvycorp.com
+    AS_IP=updater.codenvycorp.com
     echo "=========> Uploading on production"
 elif [ "$1" == "stg" ]; then
     SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
