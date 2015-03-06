@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.5.3-SNAPSHOT</version>
+        <version>3.7.0</version>
     </parent>
     <artifactId>installation-manager-cli-assembly</artifactId>
     <name>Codenvy :: IM :: Installation Manager Assembly</name>
