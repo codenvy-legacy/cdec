@@ -26,6 +26,7 @@ fi
 
 GENERAL_OPTS="-Dcodenvy.local.conf.dir=${CODENVY_LOCAL_CONF_DIR} \
               -Dcodenvy.logback.smtp.appender=${CODENVY_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
+              -Dcodenvy.syslog.appender=${CODENVY_LOCAL_CONF_DIR}/syslog-appender.xml \
               -Dcodenvy.logs.dir=${CATALINA_HOME}/logs"
 
 #JMX_OPTS="-Dcom.sun.management.jmxremote.authenticate=true \

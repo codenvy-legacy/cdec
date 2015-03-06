@@ -339,7 +339,7 @@ public class RepositoryService {
         }
     }
 
-    private Response doDownloadArtifact(final String artifact, final String version, boolean publicAccess) throws IOException {
+    private Response doDownloadArtifact(final String artifact, final String version, final boolean publicAccess) throws IOException {
         final java.nio.file.Path path = artifactStorage.getArtifact(artifact, version);
 
         if (!Files.exists(path)) {
@@ -354,10 +354,10 @@ public class RepositoryService {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
-        String fileName = artifactStorage.getFileName(artifact, version);
+        final String fileName = artifactStorage.getFileName(artifact, version);
 
         if (!publicAccess) {
-            LOG.info("User '" + userManager.getCurrentUser() + "' is downloading " + fileName);
+            LOG.info("User '" + userManager.getCurrentUser().getId() + "' is downloading " + fileName);
         }
 
         final String userId = userManager.getCurrentUser() != null ? userManager.getCurrentUser().getId() : null;
@@ -381,6 +381,10 @@ public class RepositoryService {
                              userId == null ? "" : userId,
                              artifact.toLowerCase(),
                              version);
+
+                    if (!publicAccess) {
+                        LOG.info(format("User '%s' finished downloading %s:%s", userManager.getCurrentUser().getId(), artifact, version));
+                    }
 
                 } catch (ClientAbortException e) {
                     // do nothing
