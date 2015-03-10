@@ -54,6 +54,7 @@ import static com.codenvy.im.command.CommandFactory.createShellAgentRestoreOrBac
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
 import static com.codenvy.im.node.NodeConfig.extractConfigFrom;
 import static com.codenvy.im.node.NodeConfig.extractConfigsFrom;
+import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
 import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -107,8 +108,8 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
-        if (installOptions.getInstallType() != InstallOptions.InstallType.CODENVY_SINGLE_SERVER) {
-            throw new IllegalArgumentException("Only update to single-server version is supported");
+        if (installOptions.getInstallType() != getInstalledType()) {
+            throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
         return ImmutableList.of("Unzip Codenvy binaries to /tmp/codenvy",
@@ -121,17 +122,27 @@ public class CDECArtifact extends AbstractArtifact {
     /**
      * {@inheritDoc}
      * @throws IOException
-     * @throws IllegalArgumentException if step number is out of range, or if installation type != CODENVY_SINGLE_SERVER
      */
     @Override
     public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException, IllegalArgumentException {
-        if (installOptions.getInstallType() != InstallOptions.InstallType.CODENVY_SINGLE_SERVER) {
-            throw new IllegalArgumentException("Only update to single-server version is supported");
+        if (installOptions.getInstallType() != getInstalledType()) {
+            throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 
+        switch (getInstalledType()) {
+            case CODENVY_MULTI_SERVER:
+                return getUpdateCommandMultiServer(versionToUpdate, pathToBinaries, config, step);
+
+            case CODENVY_SINGLE_SERVER:
+            default:
+                return getUpdateCommandSingleServer(versionToUpdate, pathToBinaries, config, step);
+        }
+    }
+
+    public Command getUpdateCommandSingleServer(Version versionToUpdate, Path pathToBinaries, Config config, int step) throws IOException {
         switch (step) {
             case 0:
                 return createLocalAgentCommand(format("rm -rf /tmp/codenvy; " +
@@ -140,14 +151,59 @@ public class CDECArtifact extends AbstractArtifact {
 
             case 1:
                 List<Command> commands = new ArrayList<>();
-                commands.add(createLocalAgentCommand(format("sed -i 's/%s/%s/g' /tmp/codenvy/manifests/nodes/single_server/single_server.pp",
-                                                            "YOUR_DNS_NAME", config.getHostUrl())));
+                commands.add(createLocalAgentCommand(format("sed -i 's/%s/%s/g' /tmp/codenvy/%s",
+                                                            "YOUR_DNS_NAME",
+                                                            config.getHostUrl(),
+                                                            Config.SINGLE_SERVER_PROPERTIES)));
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
                     String value = e.getValue();
 
                     commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
                     commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                }
+                return new MacroCommand(commands, "Configure Codenvy");
+
+            case 2:
+                return getPatchCommand(Paths.get("/tmp/codenvy/patches/"), versionToUpdate);
+
+            case 3:
+                return createLocalAgentCommand("sudo rm -rf /etc/puppet/files; " +
+                                               "sudo rm -rf /etc/puppet/modules; " +
+                                               "sudo rm -rf /etc/puppet/manifests; " +
+                                               "sudo mv /tmp/codenvy/* /etc/puppet");
+
+            case 4:
+                return new CheckInstalledVersionCommand(this, versionToUpdate);
+
+            default:
+                throw new IllegalArgumentException(format("Step number %d is out of update range", step));
+        }
+    }
+
+    private Command getUpdateCommandMultiServer(Version versionToUpdate, Path pathToBinaries, Config config, int step) throws IOException {
+        switch (step) {
+            case 0:
+                return createLocalAgentCommand(format("rm -rf /tmp/codenvy; " +
+                                                      "mkdir /tmp/codenvy/; " +
+                                                      "unzip -o %s -d /tmp/codenvy", pathToBinaries.toString()));
+
+            case 1:
+                List<Command> commands = new ArrayList<>();
+                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                    String property = e.getKey();
+                    String value = e.getValue();
+
+                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
+                }
+
+                final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
+                for (Map.Entry<String, String> e : ConfigUtil.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
+                    String replacingToken = e.getKey();
+                    String replacement = e.getValue();
+
+                    commands.add(createLocalAgentReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
                 return new MacroCommand(commands, "Configure Codenvy");
 
@@ -447,11 +503,6 @@ public class CDECArtifact extends AbstractArtifact {
                 commands.add(createLocalAgentCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
                 commands.add(createLocalAgentCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
 
-                commands.add(createLocalAgentCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/%s",
-                                                            "YOUR_DNS_NAME",
-                                                            config.getHostUrl(),
-                                                            Config.MULTI_SERVER_PROPERTIES)));
-
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
                     String value = e.getValue();
@@ -474,6 +525,7 @@ public class CDECArtifact extends AbstractArtifact {
                                                                    "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
                                                                    "    ca = true\\n" +
                                                                    "    ssldir = /var/lib/puppet/ssl\\n" +
+                                                                   "    pluginsync = true\\n" +
                                                                    "\\n" +
                                                                    "\\[main\\]\\n" +
                                                                    "    certname = %s\\n" +
@@ -569,5 +621,13 @@ public class CDECArtifact extends AbstractArtifact {
         }
 
         return new MacroCommand(commands, "Patch resources");
+    }
+
+    protected InstallOptions.InstallType getInstalledType() throws IOException {
+        if (readPuppetMasterNodeDns() == null) {
+            return InstallOptions.InstallType.CODENVY_SINGLE_SERVER;
+        }
+
+        return InstallOptions.InstallType.CODENVY_MULTI_SERVER;
     }
 }

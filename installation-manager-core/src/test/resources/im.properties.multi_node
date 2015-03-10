@@ -17,3 +17,4 @@
 #
 
 codenvy_host_dns=localhost
+puppet_master_host_name=master

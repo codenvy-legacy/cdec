@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.service;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -104,14 +105,17 @@ public class InstallationManagerConfig {
         return props;
     }
 
+    @Nullable
     public static String readCdecHostDns() throws IOException {
         return readProperty(CODENVY_HOST_DNS);
     }
 
+    @Nullable
     public static String readPuppetMasterNodeDns() throws IOException {
         return readProperty(PUPPET_MASTER_HOST_NAME);
     }
 
+    @Nullable
     private static String readProperty(String property) throws IOException {
         Properties props = readProperties(CONFIG_FILE);
         return (String) props.get(property);

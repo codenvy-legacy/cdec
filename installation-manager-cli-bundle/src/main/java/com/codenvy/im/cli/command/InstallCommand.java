@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
 import static com.codenvy.im.config.Config.isEmpty;
 import static com.codenvy.im.config.Config.isMandatory;
 import static com.codenvy.im.config.Config.isValidForMandatoryProperty;
+import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -287,6 +288,10 @@ public class InstallCommand extends AbstractIMCommand {
                         properties = configUtil.merge(configUtil.loadInstalledCodenvyProperties(installType),
                                                       configUtil.loadCodenvyDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
+
+                        if (installType == InstallOptions.InstallType.CODENVY_MULTI_SERVER) {
+                            properties.put("puppet_master_host_name", readPuppetMasterNodeDns());  // restore host name of puppet master of im.properties
+                        }
                     }
                 }
 

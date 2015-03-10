@@ -24,6 +24,7 @@ import com.codenvy.im.command.CommandException;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import org.mockito.Mock;
@@ -33,7 +34,10 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
@@ -85,7 +89,10 @@ public class TestNodeManager {
         doReturn(mockConfig).when(spyManager).getCodenvyConfig(mockConfigUtil);
         doReturn(mockNodesConfigUtil).when(spyManager).getNodesConfigUtil(mockConfig);
 
-        CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
+        Path initialImProperties = Paths.get(this.getClass().getClassLoader().getResource("im.properties.multi_node").getPath());
+        Path testImProperties = initialImProperties.getParent().resolve("im.properties.test");
+        Files.copy(initialImProperties, testImProperties, StandardCopyOption.REPLACE_EXISTING);
+        InstallationManagerConfig.CONFIG_FILE = testImProperties;
     }
 
     private void initConfigs() {
