@@ -29,6 +29,7 @@ import java.util.Set;
 
 import static com.codenvy.im.utils.OSUtils.getVersion;
 import static com.google.common.base.Splitter.on;
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
@@ -125,7 +126,7 @@ public class Config {
             return new ArrayList<>();
         }
 
-        return Lists.newArrayList(split);
+        return newArrayList(split);
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */

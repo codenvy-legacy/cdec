@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Joiner.*;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -142,7 +143,7 @@ public class AdditionalNodesConfigUtil {
 
         nodesUrls.add(nodeUrl);
 
-        return Joiner.on(',').skipNulls().join(nodesUrls);
+        return on(',').skipNulls().join(nodesUrls);
     }
 
     /**
@@ -170,7 +171,7 @@ public class AdditionalNodesConfigUtil {
 
         nodesUrls.remove(nodeUrl);
 
-        return Joiner.on(',').skipNulls().join(nodesUrls);
+        return on(',').skipNulls().join(nodesUrls);
     }
 
     /**
