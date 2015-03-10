@@ -17,10 +17,10 @@
  */
 package com.codenvy.im.config;
 
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.codenvy.im.utils.OSUtils.getVersion;
+import static com.google.common.base.Splitter.on;
 import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
@@ -115,7 +116,16 @@ public class Config {
         } else {
             value = getValue(property);
         }
-        return new ArrayList<>(Arrays.asList(StringUtils.split(value, ',')));
+
+        Iterable<String> split = on(',')
+                                 .trimResults()
+                                 .omitEmptyStrings()
+                                 .split(value);
+        if (split == null) {
+            return new ArrayList<>();
+        }
+
+        return Lists.newArrayList(split);
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */

@@ -123,9 +123,9 @@ public class TestConfig {
     public static Object[][] GetValueWithoutNode() {
         return new Object[][]{
             {"", new ArrayList<String>()},
-            {"value1", new ArrayList<String>(ImmutableList.of("value1"))},
-            {"value1,value2", new ArrayList<String>(ImmutableList.of("value1", "value2"))},
-            {"value1,value2,value3", new ArrayList<String>(ImmutableList.of("value1", "value2", "value3"))},
+            {"value1", new ArrayList<>(ImmutableList.of("value1"))},
+            {"value1,value2", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+            {"value1,value2,value3", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
         };
     }
 }

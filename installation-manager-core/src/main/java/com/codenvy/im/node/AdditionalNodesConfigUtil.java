@@ -19,11 +19,13 @@ package com.codenvy.im.node;
 
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -140,7 +142,7 @@ public class AdditionalNodesConfigUtil {
 
         nodesUrls.add(nodeUrl);
 
-        return StringUtils.join(nodesUrls, ',');
+        return Joiner.on(',').skipNulls().join(nodesUrls);
     }
 
     /**
@@ -168,7 +170,7 @@ public class AdditionalNodesConfigUtil {
 
         nodesUrls.remove(nodeUrl);
 
-        return StringUtils.join(nodesUrls, ",");
+        return Joiner.on(',').skipNulls().join(nodesUrls);
     }
 
     /**
