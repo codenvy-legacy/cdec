@@ -17,9 +17,11 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.utils.OSUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import org.junit.After;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -37,6 +39,12 @@ import static org.testng.Assert.assertTrue;
  * @author Dmytro Nochevnov
  */
 public class TestConfig {
+    public static final String INITIAL_OS_VERSION = OSUtils.VERSION;
+
+    @After
+    public void tearDown() {
+        OSUtils.VERSION = INITIAL_OS_VERSION;
+    }
 
     @Test
     public void testIsValid() throws Exception {
@@ -70,7 +78,7 @@ public class TestConfig {
         assertFalse(Config.isEmpty("test"));
     }
 
-        @Test
+    @Test
     public void testIsValidDefaultConfig() throws Exception {
         Config config = new Config(Collections.<String, String>emptyMap());
         assertTrue(config.isValid());
@@ -113,19 +121,22 @@ public class TestConfig {
     }
 
     @Test(dataProvider = "GetValues")
-    public void testGetValues(String propertyValue, List<String> expectedResult) {
-        Config config = new Config(Collections.singletonMap("property", propertyValue));
-        List<String> result = config.getAllValues("property");
+    public void testGetValues(String propertyName, String propertyValue, String osVersion, List<String> expectedResult) {
+        OSUtils.VERSION = osVersion;
+        Config config = new Config(Collections.singletonMap(propertyName, propertyValue));
+        List<String> result = config.getAllValues(propertyName);
         assertEquals(result.toString(), expectedResult.toString());
     }
 
     @DataProvider(name = "GetValues")
-    public static Object[][] GetValueWithoutNode() {
+    public static Object[][] GetValues() {
         return new Object[][]{
-            {"", new ArrayList<String>()},
-            {"value1", new ArrayList<>(ImmutableList.of("value1"))},
-            {"value1,value2", new ArrayList<>(ImmutableList.of("value1", "value2"))},
-            {"value1,value2,value3", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
+            {"property", "", "6", new ArrayList<String>()},
+            {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
+            {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+            {"property", "value1,value2,value3", "6", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
+            {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
+            {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
     }
 }

@@ -281,6 +281,33 @@ public class TestCDECArtifact {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
+    public void testGetUpdateInfoFromSingleToMultiServerError() throws Exception {
+        OSUtils.VERSION = "7";
+
+        InstallOptions options = new InstallOptions();
+        options.setConfigProperties(Collections.<String, String>emptyMap());
+        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setStep(0);
+
+        spyCdecArtifact.getUpdateInfo(options);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
+    public void testGetUpdateInfoFromMultiToSingleServerError() throws Exception {
+        OSUtils.VERSION = "7";
+        InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
+
+        InstallOptions options = new InstallOptions();
+        options.setConfigProperties(Collections.<String, String>emptyMap());
+        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setStep(0);
+
+        spyCdecArtifact.getUpdateInfo(options);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromSingleToMultiServerError() throws Exception {
         OSUtils.VERSION = "7";
 

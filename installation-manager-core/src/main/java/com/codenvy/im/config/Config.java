@@ -118,15 +118,10 @@ public class Config {
             value = getValue(property);
         }
 
-        Iterable<String> split = on(',')
-                                 .trimResults()
-                                 .omitEmptyStrings()
-                                 .split(value);
-        if (split == null) {
-            return new ArrayList<>();
-        }
-
-        return newArrayList(split);
+        return on(',')
+               .trimResults()
+               .omitEmptyStrings()
+               .splitToList(value);
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */
