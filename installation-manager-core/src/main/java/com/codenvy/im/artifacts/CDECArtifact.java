@@ -478,18 +478,31 @@ public class CDECArtifact extends AbstractArtifact {
                                                 "; fi", nodeConfigs));
                     add(createShellAgentCommand("sudo systemctl enable puppet", nodeConfigs));
 
-                    // disable iptables or firewalld to open connection with puppet agents
-                    add(createLocalAgentCommand("systemctl | grep iptables.service; "
+                    // open puppet master to puppet agent
+                    add(createLocalAgentCommand("systemctl | grep iptables.service; "  // disable 'iptables' service
                                                 + "if [ $? -eq 0 ]; "
                                                 + "then "
                                                 + "  sudo service iptables stop; "
                                                 + "fi; "
-                                                + "systemctl | grep firewalld.service; "
-                                                + "if [ $? -eq 0 ]; "
+
+                                                // install 'firewalld', if needed
+                                                + "yum list installed | grep firewalld; "
+                                                + "if [ $? -ne 0 ]; "
                                                 + "then "
-                                                + "  sudo service firewalld stop; "
+                                                + "  sudo yum -y -q install firewalld; "
                                                 + "fi; "
-                    ));
+
+                                                // start 'firewalld' service, if needed
+                                                + "systemctl | grep firewalld.service; "
+                                                + "if [ $? -ne 0 ]; "
+                                                + "then "
+                                                + "  sudo service firewalld start; "
+                                                + "fi; "
+
+                                                // open firewall port 8140 permanently
+                                                // http://stackoverflow.com/questions/24729024/centos-7-open-firewall-port
+                                                + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; "
+                                                + "sudo firewall-cmd --reload; "));
                 }}, "Install puppet binaries");
 
             case 2:
