@@ -20,6 +20,7 @@ package com.codenvy.im.artifacts;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -198,6 +199,11 @@ public class TestAbstractArtifact {
                                                                .getProperties(any(Version.class), anyString(), any(HttpTransport.class));
 
         spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT, mockTransport);
+    }
+
+    @Test
+    public void testGetInstalledType() throws IOException {
+        assertEquals(spyTestArtifact.getInstalledType(), InstallType.UNKNOWN);
     }
 
     private static class TestedAbstractArtifact extends AbstractArtifact {

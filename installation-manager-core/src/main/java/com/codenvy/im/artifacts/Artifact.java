@@ -19,6 +19,7 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -71,4 +72,7 @@ public interface Artifact extends Comparable<Artifact> {
 
     /** @return the list of downloaded versions */
     SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
+
+    /** @return type of already installed artifact */
+    InstallType getInstalledType() throws IOException;
 }

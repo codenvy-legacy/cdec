@@ -84,6 +84,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
         throw new UnsupportedOperationException();
     }
 
+    /** {@inheritDoc} */
     @Override
     public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
         return new ArrayList<String>() {{
@@ -97,6 +98,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
         throw new UnsupportedOperationException();
     }
 
+    /** {@inheritDoc} */
     @Override
     public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
         int step = installOptions.getStep();

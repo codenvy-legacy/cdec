@@ -136,7 +136,8 @@ public class CDECArtifact extends AbstractArtifact {
                .getInstallCommand(versionToInstall, pathToBinaries, installOptions);
     }
 
-    protected InstallType getInstalledType() throws IOException {
+    /** {@inheritDoc} */
+    public InstallType getInstalledType() throws IOException {
         if (readPuppetMasterNodeDns() == null) {
             return InstallType.CODENVY_SINGLE_SERVER;
         }

@@ -19,6 +19,7 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -26,6 +27,7 @@ import org.mockito.Mock;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -114,5 +116,10 @@ public class TestInstallManagerArtifact {
     @Test
     public void testGetInstalledPath() throws Exception {
         assertEquals(imArtifact.getInstalledPath(), testExecutionPath);
+    }
+
+    @Test
+    public void testGetInstalledType() throws IOException {
+        assertEquals(imArtifact.getInstalledType(), InstallType.UNKNOWN);
     }
 }

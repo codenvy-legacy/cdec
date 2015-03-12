@@ -18,6 +18,7 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -196,5 +197,10 @@ public abstract class AbstractArtifact implements Artifact {
     protected Version getLatestVersion(String updateEndpoint, HttpTransport transport) throws IOException {
         Map m = getLatestVersionProperties(updateEndpoint, transport);
         return valueOf(m.get(VERSION_PROPERTY).toString());
+    }
+
+    /** {@inheritDoc} */
+    public InstallType getInstalledType() throws IOException {
+        return InstallType.UNKNOWN;
     }
 }
