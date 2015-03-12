@@ -23,7 +23,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
@@ -40,7 +40,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
-import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static java.lang.String.format;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.doNothing;
@@ -261,7 +260,7 @@ public class TestNodeManager {
     @Test
     public void testGetCodenvyConfig() throws IOException {
         Map<String, String> properties = ImmutableMap.of("some property", "some value");
-        doReturn(properties).when(mockConfigUtil).loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        doReturn(properties).when(mockConfigUtil).loadInstalledCodenvyProperties(InstallType.CODENVY_MULTI_SERVER);
 
         NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
         Config config = manager.getCodenvyConfig(mockConfigUtil);

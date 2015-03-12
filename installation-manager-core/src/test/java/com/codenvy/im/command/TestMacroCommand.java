@@ -18,20 +18,29 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.nio.file.Files.createDirectories;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -96,6 +105,40 @@ public class TestMacroCommand {
 
         Command testMacroCommand = MacroCommand.createShellAgentCommand(command, description, nodes);
         assertEquals(testMacroCommand.toString(), expectedCommand);
+    }
+
+    @Test
+    public void testCreatePatchCommand() throws Exception {
+        Path patchDir = Paths.get("target/patches");
+        createDirectories(patchDir);
+        createDirectories(patchDir.resolve("1.0.1"));
+        createDirectories(patchDir.resolve("1.0.2"));
+
+        FileUtils.write(patchDir.resolve("1.0.1").resolve("patch.sh").toFile(), "echo -n \"1.0.1\"");
+        FileUtils.write(patchDir.resolve("1.0.2").resolve("patch.sh").toFile(), "echo -n \"1.0.2\"");
+
+        Command command = MacroCommand.createPatchCommand(patchDir, Version.valueOf("1.0.0"), Version.valueOf("1.0.2"));
+        assertTrue(command instanceof MacroCommand);
+
+        String batch = command.toString();
+        batch = batch.substring(1, batch.length() - 1);
+        String[] s = batch.split(", ");
+
+        assertEquals(Arrays.toString(s), "[" +
+                                         "{'command'='sudo bash target/patches/1.0.1/patch.sh', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo bash target/patches/1.0.2/patch.sh', 'agent'='LocalAgent'}" +
+                                         "]");
+
+        String patchCommandWithoutSudo1 = s[0].substring(17, 51);
+        String patchCommandWithoutSudo2 = s[2].substring(17, 51);
+
+        command = new MacroCommand(ImmutableList.<Command>of(new SimpleCommand(patchCommandWithoutSudo1, new LocalAgent(), null),
+                                                             new SimpleCommand(patchCommandWithoutSudo2, new LocalAgent(), null)),
+                                   null);
+
+        String output = command.execute();
+        assertEquals(output, "1.0.1\n" +
+                             "1.0.2\n");
     }
 
     class DummyCommand implements Command {

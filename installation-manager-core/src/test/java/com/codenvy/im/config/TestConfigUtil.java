@@ -17,12 +17,11 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -97,7 +96,7 @@ public class TestConfigUtil {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configUtil.loadCodenvyDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        Map<String, String> m = configUtil.loadCodenvyDefaultProperties("3.1.0", InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -110,7 +109,7 @@ public class TestConfigUtil {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configUtil.loadCodenvyDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        Map<String, String> m = configUtil.loadCodenvyDefaultProperties("3.1.0", InstallType.CODENVY_MULTI_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -121,7 +120,7 @@ public class TestConfigUtil {
     public void testLoadDefaultCdecConfigTransportError() throws Exception {
         doThrow(new IOException("error")).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        configUtil.loadCodenvyDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        configUtil.loadCodenvyDefaultProperties("3.1.0", InstallType.CODENVY_MULTI_SERVER);
     }
 
     @Test(expectedExceptions = ConfigException.class,
@@ -134,7 +133,7 @@ public class TestConfigUtil {
 
         doThrow(new IOException("error")).when(configUtil).doLoad(any(InputStream.class));
 
-        configUtil.loadCodenvyDefaultProperties("3.1.0", InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        configUtil.loadCodenvyDefaultProperties("3.1.0", InstallType.CODENVY_MULTI_SERVER);
     }
 
     @Test
@@ -204,8 +203,8 @@ public class TestConfigUtil {
                                              "\n");
 
         doReturn(ImmutableList.of(properties).iterator()).when(configUtil)
-                                                         .getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-        Map<String, String> m = configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+                                                         .getCodenvyPropertiesFiles(InstallType.CODENVY_SINGLE_SERVER);
+        Map<String, String> m = configUtil.loadInstalledCodenvyProperties(InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
@@ -215,20 +214,20 @@ public class TestConfigUtil {
     public void testLoadInstalledCodenvyPropertiesErrorIfFileAbsent() throws Exception {
         Path properties = Paths.get("target/unexisted");
         doReturn(ImmutableList.of(properties).iterator()).when(configUtil)
-                                                         .getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-        configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+                                                         .getCodenvyPropertiesFiles(InstallType.CODENVY_SINGLE_SERVER);
+        configUtil.loadInstalledCodenvyProperties(InstallType.CODENVY_SINGLE_SERVER);
         doReturn(ImmutableList.of(properties).iterator()).when(configUtil)
-                                                         .getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
-        configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+                                                         .getCodenvyPropertiesFiles(InstallType.CODENVY_SINGLE_SERVER);
+        configUtil.loadInstalledCodenvyProperties(InstallType.CODENVY_SINGLE_SERVER);
     }
 
     @Test
     public void testGetCssPropertiesFiles(){
-        Iterator<Path> singleServerCssPropertiesFiles = configUtil.getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        Iterator<Path> singleServerCssPropertiesFiles = configUtil.getCodenvyPropertiesFiles(InstallType.CODENVY_SINGLE_SERVER);
         assertEquals(singleServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/single_server/single_server.pp");
         assertEquals(singleServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/single_server/base_config.pp");
 
-        Iterator<Path> multiServerCssPropertiesFiles = configUtil.getCodenvyPropertiesFiles(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        Iterator<Path> multiServerCssPropertiesFiles = configUtil.getCodenvyPropertiesFiles(InstallType.CODENVY_MULTI_SERVER);
         assertEquals(multiServerCssPropertiesFiles.next().toAbsolutePath().toString(),
                      "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp");
         assertEquals(multiServerCssPropertiesFiles.next().toAbsolutePath().toString(),

@@ -19,9 +19,19 @@ package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.utils.Version;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NavigableSet;
+
+import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
+import static com.codenvy.im.utils.Commons.getVersionsList;
+import static java.lang.String.format;
+import static java.nio.file.Files.exists;
 
 /** @author Dmytro Nochevnov */
 public class MacroCommand implements Command {
@@ -67,6 +77,23 @@ public class MacroCommand implements Command {
         }
 
         return new MacroCommand(commands, description);
+    }
+
+    public static Command createPatchCommand(Path patchDir, Version installedVersion, Version versionToUpdate) throws IOException {
+        List<Command> commands;
+        commands = new ArrayList<>();
+
+        NavigableSet<Version> versions = getVersionsList(patchDir).subSet(installedVersion, false, versionToUpdate, true);
+        Iterator<Version> iter = versions.iterator();
+        while (iter.hasNext()) {
+            Version v = iter.next();
+            Path patchFile = patchDir.resolve(v.toString()).resolve("patch.sh");
+            if (exists(patchFile)) {
+                commands.add(createLocalAgentCommand(format("sudo bash %s", patchFile)));
+            }
+        }
+
+        return new MacroCommand(commands, "Patch resources");
     }
 
 }

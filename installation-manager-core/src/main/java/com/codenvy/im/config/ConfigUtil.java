@@ -18,6 +18,7 @@
 package com.codenvy.im.config;
 
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -76,11 +77,11 @@ public class ConfigUtil {
     }
 
     /** Loads default properties. */
-    public Map<String, String> loadCodenvyDefaultProperties(String version, InstallOptions.InstallType installType) throws IOException {
+    public Map<String, String> loadCodenvyDefaultProperties(String version, InstallType installType) throws IOException {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
 
         String requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-" +
-                                                         (installType == InstallOptions.InstallType.CODENVY_MULTI_SERVER ? "multi" : "single")
+                                                         (installType == InstallType.CODENVY_MULTI_SERVER ? "multi" : "single")
                                                          + "-server-properties/" + version);
         Path properties;
         try {
@@ -131,7 +132,7 @@ public class ConfigUtil {
      * <p/>
      * Finally method removes leading '$' for key name and quota characters for its value.
      */
-    public Map<String, String> loadInstalledCodenvyProperties(InstallOptions.InstallType installType) throws IOException {
+    public Map<String, String> loadInstalledCodenvyProperties(InstallType installType) throws IOException {
         Map<String, String> properties = new HashMap<>();
 
         Iterator<Path> files = getCodenvyPropertiesFiles(installType);
@@ -159,7 +160,7 @@ public class ConfigUtil {
         return properties;
     }
 
-    protected Iterator<Path> getCodenvyPropertiesFiles(InstallOptions.InstallType installType) {
+    protected Iterator<Path> getCodenvyPropertiesFiles(InstallType installType) {
         switch (installType) {
             case CODENVY_MULTI_SERVER:
                 return ImmutableList.of(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES),

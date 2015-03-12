@@ -31,12 +31,6 @@ public class InstallOptions {
     private Map<String, String> configProperties;
     private String cliUserHomeDir;
 
-    /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
-    public static enum InstallType {
-        CODENVY_SINGLE_SERVER,
-        CODENVY_MULTI_SERVER
-    }
-
     /** Getter for {@link #installType} */
     public InstallType getInstallType() {
         return installType;

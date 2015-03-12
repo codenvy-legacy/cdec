@@ -20,9 +20,9 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
@@ -86,7 +86,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void initMocks() throws Exception {
         mockConfigUtil = mock(ConfigUtil.class);
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigUtil).loadCodenvyDefaultProperties("1.0.1",
-                                                                                                                     InstallOptions.InstallType
+                                                                                                                     InstallType
                                                                                                                          .CODENVY_SINGLE_SERVER);
 
         service = mock(InstallationManagerService.class);
@@ -139,7 +139,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         doAnswer(new Answer<String>() {
             @Override public String answer(InvocationOnMock invocation) throws Throwable {
                 InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
-                assertEquals(installOptions.getInstallType(), InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+                assertEquals(installOptions.getInstallType(), InstallType.CODENVY_SINGLE_SERVER);
                 return okServiceResponse;
             }
         }).when(service).install(any(InstallOptions.class), any(Request.class));
@@ -170,7 +170,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         doAnswer(new Answer<String>() {
             @Override public String answer(InvocationOnMock invocation) throws Throwable {
                 InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
-                assertEquals(installOptions.getInstallType(), InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+                assertEquals(installOptions.getInstallType(), InstallType.CODENVY_MULTI_SERVER);
                 return okServiceResponse;
             }
         }).when(service).install(any(InstallOptions.class), any(Request.class));
@@ -433,7 +433,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testEnterEmptyMandatoryOptions() throws IOException {
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         Map<String, String> properties = ImmutableMap.of();
         options.setConfigProperties(properties);
@@ -446,7 +446,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         spyCommand.artifactName = CDECArtifact.NAME;
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         Map<String, String> properties = ImmutableSortedMap.of("some property", "test");
         options.setConfigProperties(properties);
@@ -460,7 +460,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         spyCommand.artifactName = CDECArtifact.NAME;
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         // firstly readLine() returns invalid "", then invalid "MANDATORY", then valid "new value"
         doAnswer(new Answer() {
@@ -491,7 +491,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testEnterEmptyAllOptions() throws IOException {
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         Map<String, String> properties = ImmutableMap.of();
         options.setConfigProperties(properties);
@@ -504,7 +504,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         spyCommand.artifactName = CDECArtifact.NAME;
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         // firstly readLine() returns invalid "", then invalid "MANDATORY", then valid "new value"
         doAnswer(new Answer() {

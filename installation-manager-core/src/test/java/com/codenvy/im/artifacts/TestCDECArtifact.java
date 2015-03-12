@@ -17,19 +17,15 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.command.Command;
-import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
-import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -42,12 +38,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static java.nio.file.Files.createDirectories;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -88,7 +81,7 @@ public class TestCDECArtifact {
     @Test
     public void testGetInstallSingleServerInfo() throws Exception {
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(1);
 
         List<String> info = spyCdecArtifact.getInstallInfo(options);
@@ -99,7 +92,7 @@ public class TestCDECArtifact {
     @Test
     public void testGetInstallMultiServerInfo() throws Exception {
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setStep(1);
 
         List<String> info = spyCdecArtifact.getInstallInfo(options);
@@ -112,7 +105,7 @@ public class TestCDECArtifact {
         OSUtils.VERSION = "6";
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
 
         int steps = spyCdecArtifact.getInstallInfo(options).size();
@@ -128,7 +121,7 @@ public class TestCDECArtifact {
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
 
         int steps = spyCdecArtifact.getInstallInfo(options).size();
@@ -143,7 +136,7 @@ public class TestCDECArtifact {
     public void testGetInstallSingleServerCommandError() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(Integer.MAX_VALUE);
 
         spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
@@ -154,7 +147,7 @@ public class TestCDECArtifact {
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("site_host_name", "site.example.com"));
 
         int steps = spyCdecArtifact.getInstallInfo(options).size();
@@ -171,7 +164,7 @@ public class TestCDECArtifact {
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
 
         int steps = spyCdecArtifact.getInstallInfo(options).size();
@@ -189,7 +182,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setStep(Integer.MAX_VALUE);
 
         spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
@@ -200,7 +193,7 @@ public class TestCDECArtifact {
         OSUtils.VERSION = "6";
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
         options.setStep(1);
 
@@ -239,7 +232,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         int steps = spyCdecArtifact.getUpdateInfo(options).size();
         for (int i = 0; i < steps; i++) {
@@ -256,7 +249,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
 
         int steps = spyCdecArtifact.getUpdateInfo(options).size();
         for (int i = 0; i < steps; i++) {
@@ -273,7 +266,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(Integer.MAX_VALUE);
 
         spyCdecArtifact.getUpdateCommand(Version.valueOf("1.0.0"), Paths.get("some path"), options);
@@ -286,7 +279,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setStep(0);
 
         spyCdecArtifact.getUpdateInfo(options);
@@ -300,7 +293,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(0);
 
         spyCdecArtifact.getUpdateInfo(options);
@@ -313,7 +306,7 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setStep(0);
 
         spyCdecArtifact.getUpdateCommand(Version.valueOf("1.0.0"), Paths.get("some path"), options);
@@ -327,52 +320,17 @@ public class TestCDECArtifact {
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(0);
 
         spyCdecArtifact.getUpdateCommand(Version.valueOf("1.0.0"), Paths.get("some path"), options);
     }
 
     @Test
-    public void testGetPatchCommand() throws Exception {
-        Path patchDir = Paths.get("target/patches");
-        createDirectories(patchDir);
-        createDirectories(patchDir.resolve("1.0.1"));
-        createDirectories(patchDir.resolve("1.0.2"));
-
-        FileUtils.write(patchDir.resolve("1.0.1").resolve("patch.sh").toFile(), "echo -n \"1.0.1\"");
-        FileUtils.write(patchDir.resolve("1.0.2").resolve("patch.sh").toFile(), "echo -n \"1.0.2\"");
-
-        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
-        Command command = spyCdecArtifact.getPatchCommand(patchDir, Version.valueOf("1.0.2"));
-        assertTrue(command instanceof MacroCommand);
-
-        String batch = command.toString();
-        batch = batch.substring(1, batch.length() - 1);
-        String[] s = batch.split(", ");
-
-        assertEquals(Arrays.toString(s), "[" +
-                                         "{'command'='sudo bash target/patches/1.0.1/patch.sh', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo bash target/patches/1.0.2/patch.sh', 'agent'='LocalAgent'}" +
-                                         "]");
-
-        String patchCommandWithoutSudo1 = s[0].substring(17, 51);
-        String patchCommandWithoutSudo2 = s[2].substring(17, 51);
-
-        command = new MacroCommand(ImmutableList.<Command>of(new SimpleCommand(patchCommandWithoutSudo1, new LocalAgent(), null),
-                                                             new SimpleCommand(patchCommandWithoutSudo2, new LocalAgent(), null)),
-                                   null);
-
-        String output = command.execute();
-        assertEquals(output, "1.0.1\n" +
-                             "1.0.2\n");
-    }
-
-    @Test
     public void testGetInstalledType() throws IOException {
-        assertEquals(spyCdecArtifact.getInstalledType(), InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        assertEquals(spyCdecArtifact.getInstalledType(), InstallType.CODENVY_SINGLE_SERVER);
 
         InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
-        assertEquals(spyCdecArtifact.getInstalledType(), InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(spyCdecArtifact.getInstalledType(), InstallType.CODENVY_MULTI_SERVER);
     }
 }

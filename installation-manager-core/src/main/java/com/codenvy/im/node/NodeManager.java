@@ -26,7 +26,7 @@ import com.codenvy.im.command.CommandFactory;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -267,7 +267,7 @@ public class NodeManager {
     }
 
     protected Config getCodenvyConfig(ConfigUtil configUtil) throws IOException {
-        Map<String, String> properties = configUtil.loadInstalledCodenvyProperties(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        Map<String, String> properties = configUtil.loadInstalledCodenvyProperties(InstallType.CODENVY_MULTI_SERVER);
         return new Config(properties);
     }
 

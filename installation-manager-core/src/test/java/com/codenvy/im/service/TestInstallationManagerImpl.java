@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
@@ -198,7 +199,7 @@ public class TestInstallationManagerImpl {
     public void testInstallZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(0);
 
         doReturn(new TreeMap<Version, Path>() {{
@@ -215,7 +216,7 @@ public class TestInstallationManagerImpl {
     public void testInstallNonZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(1);
 
         doReturn(new TreeMap<Version, Path>() {{
@@ -241,7 +242,7 @@ public class TestInstallationManagerImpl {
         doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
 
         InstallOptions testOptions = new InstallOptions();
-        testOptions.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        testOptions.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         testOptions.setStep(1);
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");

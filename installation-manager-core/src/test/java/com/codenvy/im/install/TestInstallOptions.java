@@ -38,7 +38,7 @@ public class TestInstallOptions {
         InstallOptions options = new InstallOptions();
         assertTrue(options.checkValid());
 
-        options.setInstallType(InstallOptions.InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
 
         assertFalse(options.checkValid());
 
@@ -51,7 +51,7 @@ public class TestInstallOptions {
         InstallOptions options = new InstallOptions();
         assertTrue(options.checkValid());
 
-        options.setInstallType(InstallOptions.InstallType.CODENVY_MULTI_SERVER);
+        options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
 
         assertFalse(options.checkValid());
 

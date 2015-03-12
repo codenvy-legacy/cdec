@@ -25,15 +25,14 @@ import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -66,7 +65,7 @@ public class InstallCommand extends AbstractIMCommand {
     private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
     private final ConfigUtil configUtil;
-    private InstallOptions.InstallType installType;
+    private InstallType installType;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     protected String artifactName;
@@ -115,9 +114,9 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         if (multi) {
-            installType = InstallOptions.InstallType.CODENVY_MULTI_SERVER;
+            installType = InstallType.CODENVY_MULTI_SERVER;
         } else {
-            installType = InstallOptions.InstallType.CODENVY_SINGLE_SERVER;
+            installType = InstallType.CODENVY_SINGLE_SERVER;
         }
 
         final Request request = initRequest(artifactName, version);
@@ -289,7 +288,7 @@ public class InstallCommand extends AbstractIMCommand {
                                                       configUtil.loadCodenvyDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
 
-                        if (installType == InstallOptions.InstallType.CODENVY_MULTI_SERVER) {
+                        if (installType == InstallType.CODENVY_MULTI_SERVER) {
                             properties.put("puppet_master_host_name", readPuppetMasterNodeDns());  // restore host name of puppet master of im.properties
                         }
                     }
