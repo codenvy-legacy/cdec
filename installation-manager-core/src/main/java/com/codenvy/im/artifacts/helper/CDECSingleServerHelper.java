@@ -18,11 +18,14 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.command.CommandFactory;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
@@ -35,8 +38,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.backup.BackupConfig.Component.LDAP;
+import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalPackCommand;
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
 import static java.lang.String.format;
 
@@ -49,7 +55,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         super(original);
     }
 
-    @Override public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
+    @Override
+    public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return ImmutableList.of("Disable SELinux",
                                 "Install puppet binaries",
                                 "Unzip Codenvy binaries",
@@ -61,14 +68,15 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                 "Boot Codenvy");
     }
 
-    @Override public Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+    @Override
+    public Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException {
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 
         switch (step) {
             case 0:
                 return new MacroCommand(ImmutableList.of(
-                    createLocalAgentRestoreOrBackupCommand("/etc/selinux/config"),
+                    createLocalAgentFileRestoreOrBackupCommand("/etc/selinux/config"),
                     createLocalAgentCommand("if sudo test -f /etc/selinux/config; then " +
                                             "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
                                             "        sudo setenforce 0; " +
@@ -114,7 +122,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             case 3:
                 List<Command> commands = new ArrayList<>();
 
-                commands.add(createLocalAgentRestoreOrBackupCommand("/etc/puppet/fileserver.conf"));
+                commands.add(createLocalAgentFileRestoreOrBackupCommand("/etc/puppet/fileserver.conf"));
                 commands.add(createLocalAgentCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
                 commands.add(createLocalAgentCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
                 commands.add(createLocalAgentCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
@@ -136,7 +144,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
             case 4:
                 return new MacroCommand(ImmutableList.of(
-                    createLocalAgentRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
+                    createLocalAgentFileRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
                     createLocalAgentCommand("sudo sed -i '1i[master]' /etc/puppet/puppet.conf"),
                     createLocalAgentCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
                     createLocalAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
@@ -193,7 +201,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
     }
 
-    @Override public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+    @Override
+    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 
@@ -219,7 +228,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                return MacroCommand.createPatchCommand(Paths.get("/tmp/codenvy/patches/"), original.getInstalledVersion(), versionToUpdate);
+                return CommandFactory.createPatchCommand(Paths.get("/tmp/codenvy/patches/"), original.getInstalledVersion(), versionToUpdate);
 
             case 3:
                 return createLocalAgentCommand("sudo rm -rf /etc/puppet/files; " +
@@ -234,5 +243,42 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 throw new IllegalArgumentException(format("Step number %d is out of update range", step));
         }
 
+    }
+
+    @Override
+    public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        List<Command> commands = new ArrayList<>();
+        Config config = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Path backupTempDirectory = backupConfig.obtainArtifactBackupTempDirectory();
+        Path backupFile = backupConfig.obtainBackupTarPack();
+
+        // stop services
+        commands.add(CommandFactory.createLocalStopServiceCommand("puppet"));
+        commands.add(CommandFactory.createLocalStopServiceCommand("crond"));
+        commands.add(CommandFactory.createLocalStopServiceCommand("codenvy"));
+        commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
+
+        // dump LDAP into backup directory
+        Path ldapBackupPath = backupConfig.obtainBaseTempDirectory(backupTempDirectory, LDAP);
+        commands.add(createLocalAgentCommand(format("mkdir -p %s", ldapBackupPath.getParent())));
+        commands.add(createLocalAgentCommand(format("sudo slapcat > %s", ldapBackupPath)));
+
+        // dump mongo into backup directory
+        Path mongoBackupPath = backupConfig.obtainBaseTempDirectory(backupTempDirectory, MONGO);
+        commands.add(createLocalAgentCommand(format("mkdir -p %s", mongoBackupPath)));
+        commands.add(createLocalAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
+                                                    config.getMongoAdminPassword(),
+                                                    mongoBackupPath)));
+
+        // add dumps to the backup file
+        commands.add(createLocalPackCommand(backupTempDirectory, backupFile, "."));
+
+        // add filesystem data to the {backup_file}/fs folder
+        commands.add(createLocalPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/."));
+
+        // start services
+        commands.add(CommandFactory.createLocalStartServiceCommand("puppet"));
+
+        return new MacroCommand(commands, "Backup data commands");
     }
 }

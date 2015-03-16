@@ -17,7 +17,9 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
@@ -239,6 +241,10 @@ public class TestAbstractArtifact {
 
         @Override
         public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
+            return null;
+        }
+
+        @Override public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
             return null;
         }
     }

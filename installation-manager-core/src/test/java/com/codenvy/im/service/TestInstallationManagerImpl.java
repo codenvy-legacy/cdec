@@ -100,7 +100,7 @@ public class TestInstallationManagerImpl {
                 transport,
                 installer,
                 new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
-                mockNodeManager));
+                mockNodeManager, null));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -112,12 +112,12 @@ public class TestInstallationManagerImpl {
 
     @Test
     public void testInitializationIfDownloadDirectoryNotExist() throws Exception {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null);
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null);
+        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,

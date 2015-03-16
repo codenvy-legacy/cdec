@@ -21,7 +21,9 @@ import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
 import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.service.InstallationManagerConfig;
@@ -145,7 +147,16 @@ public class CDECArtifact extends AbstractArtifact {
         return InstallType.CODENVY_MULTI_SERVER;
     }
 
-    protected CDECArtifactHelper getHelper(InstallType type) {
+    /** {@inheritDoc} */
+    @Override
+    public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        return getHelper(getInstalledType())
+               .getBackupCommand(backupConfig, codenvyConfigUtil);
+    }
+
+    private CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }
+
+
 }

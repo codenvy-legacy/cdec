@@ -22,3 +22,4 @@ com.codenvy.im.cli.command.ConfigCommand
 com.codenvy.im.cli.command.HelpCommand
 com.codenvy.im.cli.command.AddNodeCommand
 com.codenvy.im.cli.command.RemoveNodeCommand
+com.codenvy.im.cli.command.BackupCommand

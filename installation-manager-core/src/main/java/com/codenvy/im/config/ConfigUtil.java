@@ -233,4 +233,8 @@ public class ConfigUtil {
         return node.getHost().toLowerCase().replaceAll(regex, "");
     }
 
+    public Config loadInstalledCodenvyConfig(InstallType installType) throws IOException {
+        Map<String, String> properties = loadInstalledCodenvyProperties(installType);
+        return new Config(properties);
+    }
 }

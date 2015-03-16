@@ -78,22 +78,4 @@ public class MacroCommand implements Command {
 
         return new MacroCommand(commands, description);
     }
-
-    public static Command createPatchCommand(Path patchDir, Version installedVersion, Version versionToUpdate) throws IOException {
-        List<Command> commands;
-        commands = new ArrayList<>();
-
-        NavigableSet<Version> versions = getVersionsList(patchDir).subSet(installedVersion, false, versionToUpdate, true);
-        Iterator<Version> iter = versions.iterator();
-        while (iter.hasNext()) {
-            Version v = iter.next();
-            Path patchFile = patchDir.resolve(v.toString()).resolve("patch.sh");
-            if (exists(patchFile)) {
-                commands.add(createLocalAgentCommand(format("sudo bash %s", patchFile)));
-            }
-        }
-
-        return new MacroCommand(commands, "Patch resources");
-    }
-
 }

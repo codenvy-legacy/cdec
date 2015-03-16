@@ -18,7 +18,9 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 
@@ -41,4 +43,6 @@ public abstract class CDECArtifactHelper {
     public abstract Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     public abstract Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException;
+
+    public abstract Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
 }

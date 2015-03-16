@@ -35,11 +35,10 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentFileBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createShellAgentBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createShellAgentFileBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
 import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
@@ -94,7 +93,7 @@ public class NodeManager {
         try {
             // modify puppet master config
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
-            commands.add(createLocalAgentBackupCommand(puppetMasterConfigFilePath));
+            commands.add(createLocalAgentFileBackupCommand(puppetMasterConfigFilePath));
             commands.add(createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
                                                                 "$" + property,
                                                                 value));
@@ -121,7 +120,7 @@ public class NodeManager {
             commands.add(createShellAgentCommand("sudo systemctl enable puppet", node));
 
             // configure puppet agent
-            commands.add(createShellAgentBackupCommand("/etc/puppet/puppet.conf", node));
+            commands.add(createShellAgentFileBackupCommand("/etc/puppet/puppet.conf", node));
             commands.add(createShellAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                                         "  server = %s\\n" +
                                                         "  runinterval = 420\\n" +
@@ -206,7 +205,7 @@ public class NodeManager {
 
             return new MacroCommand(ImmutableList.of(
                 // modify puppet master config
-                createLocalAgentBackupCommand(puppetMasterConfigFilePath),
+                createLocalAgentFileBackupCommand(puppetMasterConfigFilePath),
                 createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
                                                        "$" + property,
                                                        value),
@@ -267,8 +266,7 @@ public class NodeManager {
     }
 
     protected Config getCodenvyConfig(ConfigUtil configUtil) throws IOException {
-        Map<String, String> properties = configUtil.loadInstalledCodenvyProperties(InstallType.CODENVY_MULTI_SERVER);
-        return new Config(properties);
+        return configUtil.loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
     }
 
     /** for testing propose */

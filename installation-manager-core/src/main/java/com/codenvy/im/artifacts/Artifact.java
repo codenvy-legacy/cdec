@@ -17,7 +17,9 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
@@ -75,4 +77,7 @@ public interface Artifact extends Comparable<Artifact> {
 
     /** @return type of already installed artifact */
     InstallType getInstalledType() throws IOException;
+
+    /** @return command to collect backup data at the certain backup directory */
+    Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
 }

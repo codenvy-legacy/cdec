@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.service;
 
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
@@ -80,4 +81,10 @@ public interface InstallationManagerService {
 
     /** Remove node from multi-server Codenvy */
     String removeNode(String dns);
+
+    /**
+     * Perform backup according to certain backup config.
+     * @return updated backup config
+     * */
+    String backup(BackupConfig config) throws IOException;
 }

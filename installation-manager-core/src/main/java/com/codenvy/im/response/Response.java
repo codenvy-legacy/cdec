@@ -35,7 +35,7 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "message", "status"})
+@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "backup", "message", "status"})
 @JsonIgnoreProperties({"CLI client version"})
 public class Response {
     private List<ArtifactInfo>            artifacts;
@@ -46,6 +46,7 @@ public class Response {
     private List<String>                  infos;
     private String                        subscription;
     private NodeInfo                      node;
+    private BackupInfo                    backup;
 
     public Response() {
     }
@@ -158,6 +159,15 @@ public class Response {
 
     public Response setNode(NodeInfo node) {
         this.node = node;
+        return this;
+    }
+
+    public BackupInfo getBackup() {
+        return backup;
+    }
+
+    public Response setBackup(BackupInfo backup) {
+        this.backup = backup;
         return this;
     }
 

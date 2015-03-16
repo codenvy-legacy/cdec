@@ -18,22 +18,30 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.collections.list.UnmodifiableList;
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
-import static com.codenvy.im.command.CommandFactory.createLocalAgentBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentFileBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
-import static com.codenvy.im.command.CommandFactory.createShellAgentRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandFactory.getRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createShellAgentFileRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createShellAgentFileRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.getFileRestoreOrBackupCommand;
 import static java.lang.String.format;
+import static java.nio.file.Files.createDirectories;
 import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
 public class TestCommandFactory {
@@ -55,7 +63,7 @@ public class TestCommandFactory {
 
     @Test
     public void testGetRestoreOrBackupCommand() {
-        String testCommand = getRestoreOrBackupCommand("testFile");
+        String testCommand = getFileRestoreOrBackupCommand("testFile");
         assertEquals(testCommand, "if sudo test -f testFile; then" +
                                   "     if ! sudo test -f testFile.back; then" +
                                   "         sudo cp testFile testFile.back;" +
@@ -92,8 +100,8 @@ public class TestCommandFactory {
     }
 
     @Test
-    public void testCreateLocalRestoreOrBackupCommand() throws AgentException {
-        Command testCommand = createLocalAgentRestoreOrBackupCommand("testFile");
+    public void testCreateLocalFileRestoreOrBackupCommand() throws AgentException {
+        Command testCommand = createLocalAgentFileRestoreOrBackupCommand("testFile");
         assertEquals(testCommand.toString(), "{" +
                                              "'command'='if sudo test -f testFile; then" +
                                              "     if ! sudo test -f testFile.back; then" +
@@ -104,7 +112,7 @@ public class TestCommandFactory {
     }
 
     @Test
-    public void testCreateShellAgentRestoreOrBackupCommandForNode() throws AgentException {
+    public void testCreateShellAgentFileRestoreOrBackupCommandForNode() throws AgentException {
         String expectedCommandString = format("[" +
                                               "{'command'='if sudo test -f testFile; then" +
                                               "     if ! sudo test -f testFile.back; then" +
@@ -118,12 +126,12 @@ public class TestCommandFactory {
 
         NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
 
-        Command testCommand = createShellAgentRestoreOrBackupCommand("testFile", node);
+        Command testCommand = createShellAgentFileRestoreOrBackupCommand("testFile", node);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
     @Test
-    public void testCreateShellRestoreOrBackupCommand() throws AgentException {
+    public void testCreateShellFileRestoreOrBackupCommand() throws AgentException {
         String expectedCommandString = format("[" +
                                               "{'command'='if sudo test -f testFile; then" +
                                               "     if ! sudo test -f testFile.back; then" +
@@ -147,13 +155,53 @@ public class TestCommandFactory {
             new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
         );
 
-        Command testCommand = createShellAgentRestoreOrBackupCommand("testFile", nodes);
+        Command testCommand = createShellAgentFileRestoreOrBackupCommand("testFile", nodes);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
     @Test
-    public void testCreateLocalAgentBackupCommand() {
-        Command result = createLocalAgentBackupCommand("test_file");
+    public void testCreateLocalAgentFileBackupCommand() {
+        Command result = createLocalAgentFileBackupCommand("test_file");
         assertEquals(result.toString(), "{'command'='sudo cp test_file test_file.back', 'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testCreatePatchCommand() throws Exception {
+        Path patchDir = Paths.get("target/patches");
+        createDirectories(patchDir);
+        createDirectories(patchDir.resolve("1.0.1"));
+        createDirectories(patchDir.resolve("1.0.2"));
+
+        FileUtils.write(patchDir.resolve("1.0.1").resolve("patch.sh").toFile(), "echo -n \"1.0.1\"");
+        FileUtils.write(patchDir.resolve("1.0.2").resolve("patch.sh").toFile(), "echo -n \"1.0.2\"");
+
+        Command command = CommandFactory.createPatchCommand(patchDir, Version.valueOf("1.0.0"), Version.valueOf("1.0.2"));
+        assertTrue(command instanceof MacroCommand);
+
+        String batch = command.toString();
+        batch = batch.substring(1, batch.length() - 1);
+        String[] s = batch.split(", ");
+
+        assertEquals(Arrays.toString(s), "[" +
+                                         "{'command'='sudo bash target/patches/1.0.1/patch.sh', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo bash target/patches/1.0.2/patch.sh', 'agent'='LocalAgent'}" +
+                                         "]");
+
+        String patchCommandWithoutSudo1 = s[0].substring(17, 51);
+        String patchCommandWithoutSudo2 = s[2].substring(17, 51);
+
+        command = new MacroCommand(ImmutableList.<Command>of(new SimpleCommand(patchCommandWithoutSudo1, new LocalAgent(), null),
+                                                             new SimpleCommand(patchCommandWithoutSudo2, new LocalAgent(), null)),
+                                   null);
+
+        String output = command.execute();
+        assertEquals(output, "1.0.1\n" +
+                             "1.0.2\n");
+    }
+
+
+    @Test
+    public void testCreateLocalStopServiceCommand() {
+        // TODO [ndp]
     }
 }

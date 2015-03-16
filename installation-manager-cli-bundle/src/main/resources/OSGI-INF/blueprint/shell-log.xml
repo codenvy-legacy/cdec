@@ -44,5 +44,8 @@
         <command>
             <action class="com.codenvy.im.cli.command.RemoveNodeCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.BackupCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

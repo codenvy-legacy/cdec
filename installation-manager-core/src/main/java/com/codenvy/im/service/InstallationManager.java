@@ -18,6 +18,7 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.Version;
@@ -137,4 +138,10 @@ public interface InstallationManager {
 
     /** Remove node from multi-server Codenvy */
     NodeConfig removeNode(String dns) throws IOException;
+
+    /**
+     * Perform backup according to certain backup config.
+     * @return updated backup config
+     * */
+    BackupConfig backup(BackupConfig config) throws IOException;
 }

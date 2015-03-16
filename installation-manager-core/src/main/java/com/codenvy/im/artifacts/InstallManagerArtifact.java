@@ -19,9 +19,11 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.SimpleCommand;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -145,5 +147,11 @@ public class InstallManagerArtifact extends AbstractArtifact {
     protected Path getInstalledPath() throws URISyntaxException {
         URL location = getClass().getProtectionDomain().getCodeSource().getLocation();
         return Paths.get(location.toURI()).getParent();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        throw new UnsupportedOperationException();
     }
 }

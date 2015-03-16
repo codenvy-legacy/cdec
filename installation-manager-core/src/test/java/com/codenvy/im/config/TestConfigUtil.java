@@ -252,4 +252,9 @@ public class TestConfigUtil {
         assertEquals(actual, expected);
     }
 
+    @Test  // TODO [ndp]
+    public void testLoadInstalledCodenvyConfig() {
+
+    }
+
 }

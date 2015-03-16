@@ -20,6 +20,8 @@ package com.codenvy.im.service;
 import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.backup.BackupManager;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
@@ -73,6 +75,8 @@ public class InstallationManagerImpl implements InstallationManager {
     private final HttpTransport transport;
     private final Set<Artifact> artifacts;
     private final NodeManager   nodeManager;
+    private final BackupManager backupManager;
+
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                                    @Named("installation-manager.download_dir") String downloadDir,
@@ -80,7 +84,8 @@ public class InstallationManagerImpl implements InstallationManager {
                                    HttpTransport transport,
                                    Installer installer,
                                    Set<Artifact> artifacts,
-                                   NodeManager nodeManager) throws IOException {
+                                   NodeManager nodeManager,
+                                   BackupManager backupManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transportConf = transportConf;
         this.transport = transport;
@@ -94,6 +99,7 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         this.nodeManager = nodeManager;
+        this.backupManager = backupManager;
     }
 
     private void createAndSetDownloadDir(Path downloadDir) throws IOException {
@@ -391,5 +397,11 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public NodeConfig removeNode(String dns) throws IOException, IllegalArgumentException {
         return nodeManager.remove(dns);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public BackupConfig backup(BackupConfig config) throws IOException {
+        return backupManager.backup(config);
     }
 }

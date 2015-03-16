@@ -139,4 +139,9 @@ public class TestConfig {
             {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
     }
+
+    @Test
+    public void testGetMongoAdminPassword() {
+        // TODO [ndp]
+    }
 }

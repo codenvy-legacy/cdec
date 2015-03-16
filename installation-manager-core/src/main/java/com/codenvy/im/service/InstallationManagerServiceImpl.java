@@ -19,10 +19,12 @@ package com.codenvy.im.service;
 
 import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
@@ -484,6 +486,22 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String backup(BackupConfig config) throws IOException {
+        try {
+            BackupConfig updatedConfig = manager.backup(config);
+            return new Response().setBackup(BackupInfo.createSuccessInfo(updatedConfig))
+                                 .setStatus(ResponseCode.OK)
+                                 .toJson();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e)
+                           .setBackup(BackupInfo.createFailureInfo(config))
+                           .toJson();
         }
     }
 }

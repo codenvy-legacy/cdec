@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.command;
 
+import com.codenvy.im.utils.TarUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -60,28 +61,8 @@ public class UnpackCommand implements Command {
     @Override
     public String execute() throws CommandException {
         LOG.log(Level.INFO, toString());
-        try (TarArchiveInputStream in = new TarArchiveInputStream(
-            new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
-
-            if (!Files.exists(dirToUnpack)) {
-                createDirectories(dirToUnpack);
-            }
-
-            TarArchiveEntry tarEntry;
-            while ((tarEntry = in.getNextTarEntry()) != null) {
-                Path destPath = dirToUnpack.resolve(tarEntry.getName());
-
-                if (tarEntry.isDirectory()) {
-                    if (!Files.exists(destPath)) {
-                        createDirectories(destPath);
-                    }
-                } else {
-                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
-                        copy(in, out);
-                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
-                    }
-                }
-            }
+        try {
+            TarUtils.unpack(pack, dirToUnpack);
         } catch (IOException e) {
             throw new CommandException(e.getMessage(), e);
         }

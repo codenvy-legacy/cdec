@@ -259,14 +259,11 @@ public class TestNodeManager {
 
     @Test
     public void testGetCodenvyConfig() throws IOException {
-        Map<String, String> properties = ImmutableMap.of("some property", "some value");
-        doReturn(properties).when(mockConfigUtil).loadInstalledCodenvyProperties(InstallType.CODENVY_MULTI_SERVER);
+        doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
 
         NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
         Config config = manager.getCodenvyConfig(mockConfigUtil);
-
-        assertEquals(config.getProperties().toString(),
-                     properties.toString());
+        assertEquals(config, mockConfig);
     }
 
     @Test
