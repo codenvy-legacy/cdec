@@ -17,9 +17,22 @@
  */
 package com.codenvy.im.response;
 
+import com.codenvy.im.artifacts.CDECArtifact;
+import org.testng.annotations.Test;
+
 import static org.testng.Assert.*;
 
 /** @author Dmytro Nochevnov */
 public class TestBackupInfo {
-   // TODO [ndp]
+    @Test
+    public void testBackupInfo() {
+        String testFile = "test";
+        BackupInfo info = new BackupInfo().setArtifact(CDECArtifact.NAME)
+                                          .setFile(testFile)
+                                          .setStatus(Status.SUCCESS);
+
+        assertEquals(info.getArtifact(), CDECArtifact.NAME);
+        assertEquals(info.getFile(), testFile);
+        assertEquals(info.getStatus(), Status.SUCCESS);
+    }
 }

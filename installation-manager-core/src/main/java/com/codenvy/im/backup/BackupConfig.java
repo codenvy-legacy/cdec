@@ -29,6 +29,8 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class BackupConfig {
 
+    public static final String BACKUP_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
+
     public enum Component {
         LDAP("ldap.ldif"),
         MONGO,
@@ -53,8 +55,8 @@ public class BackupConfig {
         }
     }
 
-    public static final Path DEFAULT_BACKUP_DIRECTORY = Paths.get(System.getenv("HOME")).resolve(".codenvy").resolve("backups");
-    public static final Path BASE_TMP_DIRECTORY       = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+    protected static Path DEFAULT_BACKUP_DIRECTORY = Paths.get(System.getenv("HOME")).resolve(".codenvy").resolve("backups");
+    protected static Path BASE_TMP_DIRECTORY       = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
     private String artifactName;
     private Path   backupDirectory;
@@ -88,7 +90,7 @@ public class BackupConfig {
     @Nonnull
     public Path getBackupFile() {
         if (backupFile == null) {
-            String fileName = obtainBackupFileName();
+            String fileName = generateBackupFileName();
             backupFile = getBackupDirectory().resolve(fileName);
         }
 
@@ -106,15 +108,15 @@ public class BackupConfig {
                                  .setBackupFile(config.getBackupFile());
     }
 
-    public Path obtainArtifactTempDirectory() {
-        return obtainTempDirectory().resolve(artifactName);
+    public Path getArtifactTempDirectory() {
+        return getTempDirectory().resolve(artifactName);
     }
 
-    public static Path obtainTempDirectory() {
+    public static Path getTempDirectory() {
         return BASE_TMP_DIRECTORY;
     }
 
-    public static Path obtainBaseTempBackupPath(Path parentDirectory, Component component) {
+    public static Path getTempPath(Path parentDirectory, Component component) {
         return parentDirectory.resolve(component.getRelativeBackupPath());
     }
 
@@ -128,12 +130,59 @@ public class BackupConfig {
     }
 
     /**
-     * @return name of backup file without extension
+     * @return default name of backup file
      */
-    private String obtainBackupFileName() {
-        DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy_HH-mm-ss");
-        String currentTime = dateFormat.format(new Date());
-        return format("%s_backup_%s.tar", artifactName, currentTime);
+    private String generateBackupFileName() {
+        DateFormat dateFormat = new SimpleDateFormat(BACKUP_NAME_TIME_FORMAT);
+        String currentTime = dateFormat.format(getCurrentDate());
+
+        if (artifactName != null) {
+            return format("%s_backup_%s.tar", artifactName, currentTime);
+        } else {
+            return format("backup_%s.tar", currentTime);
+        }
     }
 
+    protected Date getCurrentDate() {
+        return new Date();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        BackupConfig that = (BackupConfig)o;
+
+        if (getArtifactName() != null ? !getArtifactName().equals(that.getArtifactName()) : that.getArtifactName() != null) {
+            return false;
+        }
+        if (getBackupDirectory() != null ? !getBackupDirectory().equals(that.getBackupDirectory()) : that.getBackupDirectory() != null) {
+            return false;
+        }
+        if (getBackupFile() != null ? !getBackupFile().equals(that.getBackupFile()) : that.getBackupFile() != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getArtifactName() != null ? getArtifactName().hashCode() : 0;
+        result = 31 * result + (getBackupDirectory() != null ? getBackupDirectory().hashCode() : 0);
+        result = 31 * result + (getBackupFile() != null ? getBackupFile().hashCode() : 0);
+        return result;
+    }
+
+    @Override public String toString() {
+        return format("{'artifactName':'%s', 'backupDirectory':'%s', 'backupFile':'%s'}",
+                      getArtifactName(),
+                      getBackupDirectory().toString(),
+                      getBackupFile().toString());
+    }
 }

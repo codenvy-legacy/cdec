@@ -142,6 +142,7 @@ public class TestConfig {
 
     @Test
     public void testGetMongoAdminPassword() {
-        // TODO [ndp]
+        Config config = new Config(ImmutableMap.of(Config.MONGO_ADMIN_PASSWORD_PROPERTY, "pswd"));
+        assertEquals(config.getMongoAdminPassword(), "pswd");
     }
 }

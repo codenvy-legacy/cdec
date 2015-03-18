@@ -23,7 +23,6 @@ import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.utils.TarUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,7 +53,7 @@ public class BackupManager {
         Artifact artifact = createArtifact(backupConfig.getArtifactName());
         Files.createDirectories(backupConfig.getBackupDirectory());
 
-        Path baseTempDir = backupConfig.obtainTempDirectory();
+        Path baseTempDir = backupConfig.getTempDirectory();
         try {
             Path backupFile = backupConfig.getBackupFile();
             Command backupCommand = artifact.getBackupCommand(backupConfig, configUtil);
@@ -81,7 +80,7 @@ public class BackupManager {
         }
 
         Artifact artifact = createArtifact(backupConfig.getArtifactName());
-        Path tempDir = backupConfig.obtainArtifactTempDirectory();
+        Path tempDir = backupConfig.getArtifactTempDirectory();
         try {
             TarUtils.unpack(compressedBackupFile, tempDir);
 

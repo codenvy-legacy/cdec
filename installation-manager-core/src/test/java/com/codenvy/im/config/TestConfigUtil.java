@@ -252,9 +252,13 @@ public class TestConfigUtil {
         assertEquals(actual, expected);
     }
 
-    @Test  // TODO [ndp]
-    public void testLoadInstalledCodenvyConfig() {
+    @Test
+    public void testLoadInstalledCodenvyConfig() throws IOException {
+        Map<String, String> properties = ImmutableMap.of("a", "1", "b", "2");
+        doReturn(properties).when(configUtil).loadInstalledCodenvyProperties(InstallType.CODENVY_MULTI_SERVER);
 
+        Config result = configUtil.loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(result.getProperties().toString(), properties.toString());
     }
 
 }

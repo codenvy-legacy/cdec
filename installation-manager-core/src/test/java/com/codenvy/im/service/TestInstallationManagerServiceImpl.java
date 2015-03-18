@@ -19,6 +19,7 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
@@ -30,6 +31,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -43,7 +45,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestInstallInstallationManagerServiceImpl {
+public class TestInstallationManagerServiceImpl {
     private InstallationManagerServiceImpl installationManagerService;
 
     private InstallationManager mockInstallationManager;
@@ -208,5 +210,83 @@ public class TestInstallInstallationManagerServiceImpl {
                                                                             + "  \"message\" : \"error\",\n"
                                                                             + "  \"status\" : \"ERROR\"\n"
                                                                             + "}");
+    }
+
+    @Test
+    public void testBackup() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupDirectory(testBackupDirectory);
+
+        doReturn(testBackupConfig.setBackupFile(testBackupFile)).when(mockInstallationManager).backup(testBackupConfig);
+        assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
+                                                                          + "  \"backup\" : {\n"
+                                                                          + "    \"artifact\" : \"codenvy\",\n"
+                                                                          + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                          + "    \"status\" : \"SUCCESS\"\n"
+                                                                          + "  },\n"
+                                                                          + "  \"status\" : \"OK\"\n"
+                                                                          + "}");
+    }
+
+
+    @Test
+    public void testBackupException() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupDirectory(testBackupDirectory);
+
+        Path testBackupFile = testBackupConfig.getBackupFile();
+
+        doThrow(new IOException("error")).when(mockInstallationManager).backup(testBackupConfig);
+
+        assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
+                                                                          + "  \"backup\" : {\n"
+                                                                          + "    \"artifact\" : \"codenvy\",\n"
+                                                                          + "    \"file\" : \"" + testBackupFile.toString() + "\",\n"
+                                                                          + "    \"status\" : \"FAILURE\"\n"
+                                                                          + "  },\n"
+                                                                          + "  \"message\" : \"error\",\n"
+                                                                          + "  \"status\" : \"ERROR\"\n"
+                                                                          + "}");
+    }
+
+    @Test
+    public void testRestore() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupFile(testBackupFile);
+
+        assertEquals(installationManagerService.restore(testBackupConfig), "{\n"
+                                                                           + "  \"backup\" : {\n"
+                                                                           + "    \"artifact\" : \"codenvy\",\n"
+                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                           + "    \"status\" : \"SUCCESS\"\n"
+                                                                           + "  },\n"
+                                                                           + "  \"status\" : \"OK\"\n"
+                                                                           + "}");
+    }
+
+
+    @Test
+    public void testRestoreException() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupFile(testBackupFile);
+
+        doThrow(new IOException("error")).when(mockInstallationManager).restore(testBackupConfig);
+
+        assertEquals(installationManagerService.restore(testBackupConfig), "{\n"
+                                                                           + "  \"backup\" : {\n"
+                                                                           + "    \"artifact\" : \"codenvy\",\n"
+                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                           + "    \"status\" : \"FAILURE\"\n"
+                                                                           + "  },\n"
+                                                                           + "  \"message\" : \"error\",\n"
+                                                                           + "  \"status\" : \"ERROR\"\n"
+                                                                           + "}");
     }
 }

@@ -19,12 +19,10 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
-import com.google.common.collect.ImmutableList;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 
 import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * @author Dmytro Nochevnov
@@ -32,16 +30,16 @@ import java.util.List;
 @Command(scope = "codenvy", name = "im-backup", description = "Backup Codenvy")
 public class BackupCommand extends AbstractIMCommand {
 
-    @Argument(name = "directory", description = "Path to directory to store backup.", required = false, multiValued = false, index = 0)
-    private String directoryToBackup;
+    @Argument(name = "directory", description = "Path to directory with backup.", required = false, multiValued = false, index = 0)
+    private String backupDirectory;
 
     @Override
     protected void doExecuteCommand() throws Exception {
         String artifactToBackup = CDECArtifact.NAME;
         BackupConfig config = new BackupConfig().setArtifactName(artifactToBackup);
 
-        if (directoryToBackup != null && !directoryToBackup.isEmpty()) {
-            config.setBackupDirectory(Paths.get(directoryToBackup));
+        if (backupDirectory != null && !backupDirectory.isEmpty()) {
+            config.setBackupDirectory(Paths.get(backupDirectory));
         }
 
         try {

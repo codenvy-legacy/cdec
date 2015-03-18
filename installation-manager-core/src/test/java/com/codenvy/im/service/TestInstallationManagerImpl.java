@@ -21,6 +21,8 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.backup.BackupManager;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.install.Installer;
@@ -85,6 +87,8 @@ public class TestInstallationManagerImpl {
     private Installer     installer;
     @Mock
     private NodeManager   mockNodeManager;
+    @Mock
+    private BackupManager mockBackupManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -94,13 +98,14 @@ public class TestInstallationManagerImpl {
         cdecArtifact = spy(new CDECArtifact(transport));
 
         manager = spy(new InstallationManagerImpl(
-                UPDATE_ENDPOINT,
-                DOWNLOAD_DIR,
-                new HttpTransportConfiguration("", "0"),
-                transport,
-                installer,
-                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
-                mockNodeManager, null));
+            UPDATE_ENDPOINT,
+            DOWNLOAD_DIR,
+            new HttpTransportConfiguration("", "0"),
+            transport,
+            installer,
+            new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
+            mockNodeManager,
+            mockBackupManager));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -121,7 +126,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
+          expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         final Version version2101 = Version.valueOf("2.10.1");
 
@@ -157,7 +162,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = FileNotFoundException.class,
-            expectedExceptionsMessageRegExp = "Binaries to install artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1' not found")
+          expectedExceptionsMessageRegExp = "Binaries to install artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1' not found")
     public void testNotInstallableUpdate() throws Exception {
         final Version version200 = Version.valueOf("2.0.0");
 
@@ -529,5 +534,51 @@ public class TestInstallationManagerImpl {
         final String TEST_NODE_DNS = "builder.node.com";
         doThrow(new IOException("error")).when(mockNodeManager).remove(TEST_NODE_DNS);
         manager.removeNode(TEST_NODE_DNS);
+    }
+
+    @Test
+    public void testBackup() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupDirectory(testBackupDirectory);
+
+        BackupConfig resultBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                            .setBackupDirectory(testBackupDirectory)
+                                                            .setBackupFile(testBackupConfig.getBackupFile());
+
+        doReturn(resultBackupConfig).when(mockBackupManager).backup(testBackupConfig);
+        BackupConfig result = manager.backup(testBackupConfig);
+        assertEquals(result, resultBackupConfig);
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testBackupException() throws IOException {
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        doThrow(new IOException("error")).when(mockBackupManager).backup(testBackupConfig);
+        mockBackupManager.backup(testBackupConfig);
+    }
+
+    @Test
+    public void testRestore() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupFile(testBackupFile);
+
+        manager.restore(testBackupConfig);
+        verify(mockBackupManager).restore(testBackupConfig);
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testRestoreException() throws IOException {
+        Path testBackupDirectory = Paths.get("test/backup/directory");
+        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                          .setBackupFile(testBackupFile);
+
+        doThrow(new IOException("error")).when(mockBackupManager).restore(testBackupConfig);
+        mockBackupManager.restore(testBackupConfig);
     }
 }

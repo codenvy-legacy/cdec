@@ -35,10 +35,10 @@ import java.nio.file.Paths;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnnov */
-public class TestBackupCommand  extends AbstractTestCommand {
+public class TestRestoreCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
@@ -50,14 +50,14 @@ public class TestBackupCommand  extends AbstractTestCommand {
 
     private BackupConfig testBackupConfig;
 
-    private Path testBackupDirectory = Paths.get("test/backup/directory");
-    private String testArtifact = CDECArtifact.NAME;
+    private Path   testBackupFile      = Paths.get("test/backup/directory/backup.tar.gz");
+    private String testArtifact        = CDECArtifact.NAME;
 
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        spyCommand = spy(new BackupCommand());
+        spyCommand = spy(new RestoreCommand());
         spyCommand.service = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
@@ -68,52 +68,18 @@ public class TestBackupCommand  extends AbstractTestCommand {
 
 
     @Test
-    public void testBackup() throws Exception {
-        testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
-
-        String okServiceResponse = "{\n"
-                                   + "  \"status\" : \"OK\"\n"
-                                   + "}";
-
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).backup(testBackupConfig);
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
-    }
-
-    @Test
-    public void testBackupToDirWithEmptyName() throws Exception {
-        testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
-
-        String okServiceResponse = "{\n"
-                                   + "  \"status\" : \"OK\"\n"
-                                   + "}";
-
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).backup(testBackupConfig);
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("directory", "");
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
-    }
-
-    @Test
-    public void testBackupToDirectory() throws Exception {
+    public void testRestore() throws Exception {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
-                                             .setBackupDirectory(testBackupDirectory);
+                                             .setBackupFile(testBackupFile);
 
         String okServiceResponse = "{\n"
                                    + "  \"status\" : \"OK\"\n"
                                    + "}";
 
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("directory", testBackupDirectory.toString());
+        commandInvoker.argument("backup", testBackupFile.toString());
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -121,8 +87,9 @@ public class TestBackupCommand  extends AbstractTestCommand {
     }
 
     @Test
-    public void testBackupThrowsError() throws Exception {
-        testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
+    public void testRestoreThrowsError() throws Exception {
+        testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
+                                             .setBackupFile(testBackupFile);
 
         String expectedOutput = "{\n"
                                 + "  \"message\" : \"Server Error Exception\",\n"
@@ -130,9 +97,11 @@ public class TestBackupCommand  extends AbstractTestCommand {
                                 + "}";
 
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(mockInstallationManagerProxy).backup(testBackupConfig);
+            .when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("backup", testBackupFile.toString());
+
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");
