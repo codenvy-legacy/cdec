@@ -247,5 +247,9 @@ public class TestAbstractArtifact {
         @Override public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
             return null;
         }
+
+        @Override public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+            return null;
+        }
     }
 }
