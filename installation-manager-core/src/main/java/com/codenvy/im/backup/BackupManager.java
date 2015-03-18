@@ -30,6 +30,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.codenvy.im.backup.BackupConfig.removeGzipExtension;
+import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 @Singleton
@@ -52,21 +54,47 @@ public class BackupManager {
         Artifact artifact = createArtifact(backupConfig.getArtifactName());
         Files.createDirectories(backupConfig.getBackupDirectory());
 
-        Path tempBackupDirectory = backupConfig.obtainBaseTempDirectory();
+        Path baseTempDir = backupConfig.obtainTempDirectory();
         try {
-            FileUtils.deleteDirectory(tempBackupDirectory.toFile());
-            Files.createDirectories(tempBackupDirectory);
-
+            Path backupFile = backupConfig.getBackupFile();
             Command backupCommand = artifact.getBackupCommand(backupConfig, configUtil);
             backupCommand.execute();
 
-            TarUtils.packFile(backupConfig.obtainBackupTarPack(), backupConfig.obtainBackupTarGzippedPack());
-            Files.deleteIfExists(backupConfig.obtainBackupTarPack());
-            FileUtils.deleteDirectory(tempBackupDirectory.toFile());
+            Path compressedBackupFile = backupConfig.addGzipExtension(backupFile);
+            TarUtils.packFile(backupFile, compressedBackupFile);
+
+            Files.deleteIfExists(backupFile);
+            backupConfig.setBackupFile(compressedBackupFile);
         } catch(Exception e) {
             throw new BackupException(e.getMessage(), e);
         }
 
         return backupConfig;
+    }
+
+    /** Restore due to config */
+    public void restore(BackupConfig initialConfig) throws IOException {
+        BackupConfig backupConfig = BackupConfig.clone(initialConfig);
+        Path compressedBackupFile = backupConfig.getBackupFile();
+        if (!Files.exists(compressedBackupFile)) {
+            throw new IllegalArgumentException(format("Backup file %s doesn't exist.", compressedBackupFile));
+        }
+
+        Artifact artifact = createArtifact(backupConfig.getArtifactName());
+        Path tempDir = backupConfig.obtainArtifactTempDirectory();
+        try {
+            TarUtils.unpack(compressedBackupFile, tempDir);
+
+            String backupFileName = removeGzipExtension(compressedBackupFile).getFileName().toString();
+            Path backupFile = tempDir.resolve(backupFileName);
+            backupConfig.setBackupFile(backupFile);
+
+            backupConfig.setBackupDirectory(tempDir);
+
+            Command restoreCommand = artifact.getRestoreCommand(backupConfig, configUtil);
+            restoreCommand.execute();
+        } catch(Exception e) {
+            throw new BackupException(e.getMessage(), e);
+        }
     }
 }

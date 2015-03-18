@@ -154,6 +154,13 @@ public class CDECArtifact extends AbstractArtifact {
                .getBackupCommand(backupConfig, codenvyConfigUtil);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        return getHelper(getInstalledType())
+            .getRestoreCommand(backupConfig, codenvyConfigUtil);
+    }
+
     private CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }

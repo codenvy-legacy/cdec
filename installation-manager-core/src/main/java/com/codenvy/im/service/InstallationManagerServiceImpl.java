@@ -504,4 +504,20 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
                            .toJson();
         }
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public String restore(BackupConfig config) throws IOException {
+        try {
+            manager.restore(config);
+            return new Response().setBackup(BackupInfo.createSuccessInfo(config))
+                                 .setStatus(ResponseCode.OK)
+                                 .toJson();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e)
+                           .setBackup(BackupInfo.createFailureInfo(config))
+                           .toJson();
+        }
+    }
 }

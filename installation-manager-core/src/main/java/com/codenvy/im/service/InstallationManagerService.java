@@ -82,9 +82,9 @@ public interface InstallationManagerService {
     /** Remove node from multi-server Codenvy */
     String removeNode(String dns);
 
-    /**
-     * Perform backup according to certain backup config.
-     * @return updated backup config
-     * */
+    /** Perform backup according to certain backup config */
     String backup(BackupConfig config) throws IOException;
+
+    /** Perform restore according to certain backup config */
+    String restore(BackupConfig config) throws IOException;
 }

@@ -404,4 +404,10 @@ public class InstallationManagerImpl implements InstallationManager {
     public BackupConfig backup(BackupConfig config) throws IOException {
         return backupManager.backup(config);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public void restore(BackupConfig config) throws IOException {
+        backupManager.restore(config);
+    }
 }

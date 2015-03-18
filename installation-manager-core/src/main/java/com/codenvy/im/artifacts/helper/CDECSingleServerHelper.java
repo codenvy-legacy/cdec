@@ -43,6 +43,7 @@ import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalPackCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalUnpackCommand;
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
 import static java.lang.String.format;
 
@@ -191,8 +192,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new MacroCommand(ImmutableList.of(
                     StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand("localhost"),
                     new CheckInstalledVersionCommand(original, versionToInstall)
-                ),
-                                        "Check if Codenvy has already installed");
+                ), "Check if Codenvy has already installed");
 
 
             default:
@@ -248,9 +248,12 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
     @Override
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
-        Config config = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
-        Path backupTempDirectory = backupConfig.obtainArtifactBackupTempDirectory();
-        Path backupFile = backupConfig.obtainBackupTarPack();
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Path tempDir = backupConfig.obtainArtifactTempDirectory();
+        Path backupFile = backupConfig.getBackupFile();
+
+        // create temp dir
+        commands.add(createLocalAgentCommand(format("mkdir -p %s", tempDir)));
 
         // stop services
         commands.add(CommandFactory.createLocalStopServiceCommand("puppet"));
@@ -259,19 +262,22 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
 
         // dump LDAP into backup directory
-        Path ldapBackupPath = backupConfig.obtainBaseTempDirectory(backupTempDirectory, LDAP);
+        Path ldapBackupPath = backupConfig.obtainBaseTempBackupPath(tempDir, LDAP);
         commands.add(createLocalAgentCommand(format("mkdir -p %s", ldapBackupPath.getParent())));
         commands.add(createLocalAgentCommand(format("sudo slapcat > %s", ldapBackupPath)));
 
         // dump mongo into backup directory
-        Path mongoBackupPath = backupConfig.obtainBaseTempDirectory(backupTempDirectory, MONGO);
+        Path mongoBackupPath = backupConfig.obtainBaseTempBackupPath(tempDir, MONGO);
         commands.add(createLocalAgentCommand(format("mkdir -p %s", mongoBackupPath)));
         commands.add(createLocalAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
-                                                    config.getMongoAdminPassword(),
+                                                    codenvyConfig.getMongoAdminPassword(),
                                                     mongoBackupPath)));
 
+        Path adminDatabaseBackup = mongoBackupPath.resolve("admin");
+        commands.add(createLocalAgentCommand(format("rm -rf %s", adminDatabaseBackup)));  // remove useless 'admin' database
+
         // add dumps to the backup file
-        commands.add(createLocalPackCommand(backupTempDirectory, backupFile, "."));
+        commands.add(createLocalPackCommand(tempDir, backupFile, "."));
 
         // add filesystem data to the {backup_file}/fs folder
         commands.add(createLocalPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/."));
@@ -279,6 +285,58 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         // start services
         commands.add(CommandFactory.createLocalStartServiceCommand("puppet"));
 
+        // remove temp dir
+        commands.add(createLocalAgentCommand(format("sudo rm -rf %s", tempDir)));
+
         return new MacroCommand(commands, "Backup data commands");
+    }
+
+    @Override
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        List<Command> commands = new ArrayList<>();
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Path tempDir = backupConfig.obtainArtifactTempDirectory();
+        Path backupFile = backupConfig.getBackupFile();
+
+        // create temp dir
+        commands.add(createLocalAgentCommand(format("mkdir -p %s", tempDir)));
+
+        // unpack backupFile into the tempDir
+        commands.add(createLocalUnpackCommand(backupFile, tempDir));
+
+        // stop services
+        commands.add(CommandFactory.createLocalStopServiceCommand("puppet"));
+        commands.add(CommandFactory.createLocalStopServiceCommand("crond"));
+        commands.add(CommandFactory.createLocalStopServiceCommand("codenvy"));
+        commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
+
+        // restore LDAP from {temp_backup_directory}/ldap folder
+        Path ldapBackupPath = backupConfig.obtainBaseTempBackupPath(tempDir, LDAP);
+        commands.add(createLocalAgentCommand("sudo rm -rf /var/lib/ldap"));
+        commands.add(createLocalAgentCommand("sudo mkdir -p /var/lib/ldap"));
+        commands.add(createLocalAgentCommand(format("sudo slapadd -q <%s", ldapBackupPath)));
+        commands.add(createLocalAgentCommand("sudo chown ldap:ldap /var/lib/ldap/*"));
+
+
+        // restore mongo from {temp_backup_directory}/mongo folder
+        Path mongoBackupPath = backupConfig.obtainBaseTempBackupPath(tempDir, MONGO);
+        commands.add(createLocalAgentCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
+                                                    codenvyConfig.getMongoAdminPassword(),
+                                                    mongoBackupPath)));
+
+        // restore filesystem data from {backup_file}/fs folder
+        commands.add(createLocalAgentCommand("sudo rm -rf /home/codenvy/codenvy-data/fs"));
+        commands.add(createLocalUnpackCommand(backupFile, Paths.get("/home/codenvy/codenvy-data"), "fs"));
+
+        // start services
+        commands.add(CommandFactory.createLocalStartServiceCommand("puppet"));
+
+        // wait until API server restarts
+        commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+
+        // remove temp dir
+        commands.add(createLocalAgentCommand(format("sudo rm -rf %s", tempDir)));
+
+        return new MacroCommand(commands, "Restore data commands");
     }
 }

@@ -47,5 +47,8 @@
         <command>
             <action class="com.codenvy.im.cli.command.BackupCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.RestoreCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

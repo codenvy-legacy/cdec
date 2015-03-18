@@ -154,4 +154,10 @@ public class InstallManagerArtifact extends AbstractArtifact {
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         throw new UnsupportedOperationException();
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        throw new UnsupportedOperationException();
+    }
 }

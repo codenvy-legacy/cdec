@@ -95,14 +95,6 @@ public class BackupConfig {
         return backupFile;
     }
 
-    public Path obtainBackupTarPack() {
-        return Paths.get(format("%s.tar", getBackupFile().toString()));
-    }
-
-    public Path obtainBackupTarGzippedPack() {
-        return Paths.get(format("%s.tar.gz", getBackupFile().toString()));
-    }
-
     public BackupConfig setBackupFile(Path backupFile) {
         this.backupFile = backupFile;
         return this;
@@ -114,16 +106,25 @@ public class BackupConfig {
                                  .setBackupFile(config.getBackupFile());
     }
 
-    public Path obtainArtifactBackupTempDirectory() {
-        return obtainBaseTempDirectory().resolve(artifactName);
+    public Path obtainArtifactTempDirectory() {
+        return obtainTempDirectory().resolve(artifactName);
     }
 
-    public Path obtainBaseTempDirectory() {
+    public static Path obtainTempDirectory() {
         return BASE_TMP_DIRECTORY;
     }
 
-    public Path obtainBaseTempDirectory(Path parentDirectory, Component component) {
+    public static Path obtainBaseTempBackupPath(Path parentDirectory, Component component) {
         return parentDirectory.resolve(component.getRelativeBackupPath());
+    }
+
+    public static Path addGzipExtension(Path file) {
+        return Paths.get(format("%s.gz", file.toString()));
+    }
+
+    public static Path removeGzipExtension(Path file) {
+        String fixedFilePath = file.toString().replaceAll("[.]gz$", "");  // remove '.gz' extension
+        return Paths.get(fixedFilePath);
     }
 
     /**
@@ -132,7 +133,7 @@ public class BackupConfig {
     private String obtainBackupFileName() {
         DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy_HH-mm-ss");
         String currentTime = dateFormat.format(new Date());
-        return format("%s_backup_%s", getArtifactName(), currentTime);
+        return format("%s_backup_%s.tar", artifactName, currentTime);
     }
 
 }

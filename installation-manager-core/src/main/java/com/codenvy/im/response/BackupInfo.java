@@ -56,13 +56,13 @@ public class BackupInfo {
 
     public static BackupInfo createSuccessInfo(BackupConfig config) {
         return new BackupInfo().setArtifact(config.getArtifactName())
-                               .setFile(config.obtainBackupTarGzippedPack().toString())
+                               .setFile(config.getBackupFile().toString())
                                .setStatus(Status.SUCCESS);
     }
 
     public static BackupInfo createFailureInfo(BackupConfig config) {
         return new BackupInfo().setArtifact(config.getArtifactName())
-                               .setFile(config.obtainBackupTarGzippedPack().toString())
+                               .setFile(config.getBackupFile().toString())
                                .setStatus(Status.FAILURE);
     }
 

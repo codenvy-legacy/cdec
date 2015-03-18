@@ -22,6 +22,7 @@ import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -187,6 +188,31 @@ public class CommandFactory {
                       fromDir,
                       packFile,
                       pathWithinThePack);
+    }
+
+    public static Command createLocalUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
+        return createLocalAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack));
+    }
+
+    public static Command createLocalUnpackCommand(Path packFile, Path toDir) {
+        return createLocalAgentCommand(getUnpackCommand(packFile, toDir, null));
+    }
+
+    public static Command createRemoteUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
+        return createShellAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack), node);
+    }
+
+    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack) {
+        if (pathWithinThePack == null) {
+            return format("sudo tar -xf %s -C %s",
+                          packFile,
+                          toDir);
+        } else {
+            return format("sudo tar -xf %s -C %s %s",
+                          packFile,
+                          toDir,
+                          pathWithinThePack);
+        }
     }
 
     public static Command createCopyFromRemoteToLocalCommand(Path fromPath, Path toPath, NodeConfig remote) {

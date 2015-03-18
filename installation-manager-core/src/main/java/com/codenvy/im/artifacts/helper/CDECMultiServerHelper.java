@@ -42,12 +42,15 @@ import java.util.Map;
 
 import static com.codenvy.im.backup.BackupConfig.Component.LDAP;
 import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
+import static com.codenvy.im.command.CommandFactory.createCopyFromLocalToRemoteCommand;
 import static com.codenvy.im.command.CommandFactory.createCopyFromRemoteToLocalCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalPackCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalUnpackCommand;
 import static com.codenvy.im.command.CommandFactory.createRemotePackCommand;
+import static com.codenvy.im.command.CommandFactory.createRemoteUnpackCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
 import static com.codenvy.im.command.CommandFactory.createShellAgentFileRestoreOrBackupCommand;
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
@@ -285,8 +288,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand(config.getHostUrl()),
                     StoreIMConfigPropertyCommand.createSavePuppetMasterHostDnsCommand(config.getValue(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME)),
                     new CheckInstalledVersionCommand(original, versionToInstall)
-                ),
-                                        "Check if Codenvy has already installed");
+                ), "Check if Codenvy has already installed");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -345,13 +347,16 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config config = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
-        NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
-        NodeConfig dataNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.DATA);
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
+        NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
-        Path localBackupTempDirectory = backupConfig.obtainArtifactBackupTempDirectory();
-        Path remoteBackupTempDirectory = Paths.get("/tmp/codenvy");
-        Path backupFile = backupConfig.obtainBackupTarPack();
+        Path localTempDir = backupConfig.obtainArtifactTempDirectory();
+        Path remoteTempDir = Paths.get("/tmp/codenvy");
+        Path backupFile = backupConfig.getBackupFile();
+
+        // create local temp dir
+        commands.add(createLocalAgentCommand(format("mkdir -p %s", localTempDir)));
 
         // stop services on API node
         commands.add(CommandFactory.createRemoteStopServiceCommand("puppet", apiNode));
@@ -365,7 +370,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(CommandFactory.createRemoteStopServiceCommand("slapd", dataNode));
 
         // add filesystem data from API node to the {backup_file}/fs folder, and copy it to local node at the first
-        Path tempApiNodeBackupFile = remoteBackupTempDirectory.resolve(backupConfig.getBackupFile().getFileName().toString());
+        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
         commands.add(createShellAgentCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
         commands.add(createRemotePackCommand(Paths.get("/home/codenvy/codenvy-data/data"), tempApiNodeBackupFile, "fs/.", apiNode));
 
@@ -373,45 +378,132 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                         backupFile,
                                                         apiNode));
 
-        commands.add(createShellAgentCommand(format("rm -rf %s", remoteBackupTempDirectory), apiNode));
+        commands.add(createShellAgentCommand(format("rm -rf %s", remoteTempDir), apiNode));  // cleanup
 
         // dump mongo from DATA node to local backup directory
-        Path remoteMongoBackupPath = backupConfig.obtainBaseTempDirectory(remoteBackupTempDirectory, MONGO);
-        Path localMongoBackupPath = backupConfig.obtainBaseTempDirectory(localBackupTempDirectory, MONGO);
+        Path remoteMongoBackupPath = backupConfig.obtainBaseTempBackupPath(remoteTempDir, MONGO);
+        Path localMongoBackupPath = backupConfig.obtainBaseTempBackupPath(localTempDir, MONGO);
 
         commands.add(createShellAgentCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
         commands.add(createShellAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
-                                                    config.getMongoAdminPassword(),
+                                                    codenvyConfig.getMongoAdminPassword(),
                                                     remoteMongoBackupPath), dataNode));
+
+        Path adminDatabaseBackup = remoteMongoBackupPath.resolve("admin");
+        commands.add(createShellAgentCommand(format("rm -rf %s", adminDatabaseBackup), dataNode));  // remove useless 'admin' database
 
         commands.add(createLocalAgentCommand(format("mkdir -p %s", localMongoBackupPath)));
         commands.add(createCopyFromRemoteToLocalCommand(remoteMongoBackupPath,
                                                         localMongoBackupPath.getParent(),
                                                         dataNode));
 
-        commands.add(createShellAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));
+        commands.add(createShellAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));  // cleanup
 
         // dump LDAP from DATA node to local backup directory
-        Path remoteLdapBackupPath = backupConfig.obtainBaseTempDirectory(remoteBackupTempDirectory, LDAP);
-        Path localLdapBackupPath = backupConfig.obtainBaseTempDirectory(localBackupTempDirectory, LDAP);
+        Path remoteLdapBackupPath = backupConfig.obtainBaseTempBackupPath(remoteTempDir, LDAP);
+        Path localLdapBackupFilePath = backupConfig.obtainBaseTempBackupPath(localTempDir, LDAP);
 
         commands.add(createShellAgentCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
         commands.add(createShellAgentCommand(format("sudo slapcat > %s", remoteLdapBackupPath), dataNode));
 
-        commands.add(createLocalAgentCommand(format("mkdir -p %s", localLdapBackupPath.getParent())));
+        commands.add(createLocalAgentCommand(format("mkdir -p %s", localLdapBackupFilePath.getParent())));
         commands.add(createCopyFromRemoteToLocalCommand(remoteLdapBackupPath,
-                                                        localLdapBackupPath,
+                                                        localLdapBackupFilePath,
                                                         dataNode));
 
-        commands.add(createShellAgentCommand(format("rm -rf %s", remoteLdapBackupPath), dataNode));
+        commands.add(createShellAgentCommand(format("rm -rf %s", localLdapBackupFilePath.getParent()), dataNode));  // cleanup
 
         // add dumps to the backup file
-        commands.add(createLocalPackCommand(localBackupTempDirectory, backupFile, "."));
+        commands.add(createLocalPackCommand(localTempDir, backupFile, "."));
 
         // start services
         commands.add(CommandFactory.createRemoteStartServiceCommand("puppet", apiNode));
         commands.add(CommandFactory.createRemoteStartServiceCommand("puppet", dataNode));
 
+        // remove local temp dir
+        commands.add(createLocalAgentCommand(format("sudo rm -rf %s", localTempDir)));
+
         return new MacroCommand(commands, "Backup data commands");
+    }
+
+    @Override
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        List<Command> commands = new ArrayList<>();
+
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
+        NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
+
+        Path localTempDir = backupConfig.obtainArtifactTempDirectory();
+        Path remoteTempDir = Paths.get("/tmp/codenvy");
+        Path backupFile = backupConfig.getBackupFile();
+
+
+        // unpack backupFile into the tempDir
+        commands.add(createLocalUnpackCommand(backupFile, localTempDir));
+
+        // stop services on API node
+        commands.add(CommandFactory.createRemoteStopServiceCommand("puppet", apiNode));
+        commands.add(CommandFactory.createRemoteStopServiceCommand("crond", apiNode));
+        commands.add(CommandFactory.createRemoteStopServiceCommand("codenvy", apiNode));
+        commands.add(CommandFactory.createRemoteStopServiceCommand("codenvy-codeassistant ", apiNode));
+
+        // stop services on DATA node
+        commands.add(CommandFactory.createRemoteStopServiceCommand("puppet", dataNode));
+        commands.add(CommandFactory.createRemoteStopServiceCommand("crond", dataNode));
+        commands.add(CommandFactory.createRemoteStopServiceCommand("slapd", dataNode));
+
+        // restore filesystem data from {backup_file}/fs folder
+        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
+        commands.add(createShellAgentCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
+        commands.add(createCopyFromLocalToRemoteCommand(backupFile,
+                                                        tempApiNodeBackupFile,
+                                                        apiNode));
+
+        commands.add(createShellAgentCommand("sudo rm -rf /home/codenvy/codenvy-data/fs", apiNode));
+        commands.add(createRemoteUnpackCommand(tempApiNodeBackupFile, Paths.get("/home/codenvy/codenvy-data/data"), "fs", apiNode));
+
+        commands.add(createShellAgentCommand(format("rm -rf %s", tempApiNodeBackupFile.getParent()), apiNode));  // cleanup
+
+        // restore MONGO from {temp_backup_directory}/mongo folder
+        Path remoteMongoBackupPath = backupConfig.obtainBaseTempBackupPath(remoteTempDir, MONGO);
+        Path localMongoBackupPath = backupConfig.obtainBaseTempBackupPath(localTempDir, MONGO);
+        commands.add(createShellAgentCommand(format("mkdir -p %s", localMongoBackupPath), dataNode));
+        commands.add(createCopyFromLocalToRemoteCommand(localMongoBackupPath,
+                                                        remoteMongoBackupPath,
+                                                        dataNode));
+
+        commands.add(createShellAgentCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
+                                                    codenvyConfig.getMongoAdminPassword(),
+                                                    remoteMongoBackupPath), dataNode));
+
+        commands.add(createShellAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));  // cleanup
+
+        // restore LDAP from {temp_backup_directory}/ldap folder
+        Path localLdapBackupPath = backupConfig.obtainBaseTempBackupPath(localTempDir, LDAP);
+        Path remoteLdapBackupPath = backupConfig.obtainBaseTempBackupPath(remoteTempDir, LDAP);
+        commands.add(createShellAgentCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
+        commands.add(createCopyFromLocalToRemoteCommand(localLdapBackupPath,
+                                                        remoteLdapBackupPath,
+                                                        dataNode));
+
+        commands.add(createShellAgentCommand("sudo rm -rf /var/lib/ldap", dataNode));
+        commands.add(createShellAgentCommand("sudo mkdir -p /var/lib/ldap", dataNode));
+        commands.add(createShellAgentCommand(format("sudo slapadd -q <%s", remoteLdapBackupPath), dataNode));
+        commands.add(createShellAgentCommand("sudo chown ldap:ldap /var/lib/ldap/*", dataNode));
+
+        commands.add(createShellAgentCommand(format("rm -rf %s", remoteLdapBackupPath.getParent()), dataNode));  // cleanup
+
+        // start services
+        commands.add(CommandFactory.createRemoteStartServiceCommand("puppet", apiNode));
+        commands.add(CommandFactory.createRemoteStartServiceCommand("puppet", dataNode));
+
+        // wait until API server restarts
+        commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+
+        // remove local temp dir
+        commands.add(createLocalAgentCommand(format("sudo rm -rf %s", localTempDir)));
+
+        return new MacroCommand(commands, "Restore data commands");
     }
 }

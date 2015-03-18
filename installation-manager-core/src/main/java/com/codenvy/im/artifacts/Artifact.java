@@ -80,4 +80,7 @@ public interface Artifact extends Comparable<Artifact> {
 
     /** @return command to collect backup data at the certain backup directory */
     Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
+
+    /** @return command to restore data from backup */
+    Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
 }
