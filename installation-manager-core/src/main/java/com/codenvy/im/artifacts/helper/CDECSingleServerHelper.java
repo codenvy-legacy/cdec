@@ -262,12 +262,12 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
 
         // dump LDAP into backup directory
-        Path ldapBackupPath = backupConfig.getTempPath(tempDir, LDAP);
+        Path ldapBackupPath = backupConfig.getComponentTempPath(tempDir, LDAP);
         commands.add(createLocalAgentCommand(format("mkdir -p %s", ldapBackupPath.getParent())));
         commands.add(createLocalAgentCommand(format("sudo slapcat > %s", ldapBackupPath)));
 
         // dump mongo into backup directory
-        Path mongoBackupPath = backupConfig.getTempPath(tempDir, MONGO);
+        Path mongoBackupPath = backupConfig.getComponentTempPath(tempDir, MONGO);
         commands.add(createLocalAgentCommand(format("mkdir -p %s", mongoBackupPath)));
         commands.add(createLocalAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
                                                     codenvyConfig.getMongoAdminPassword(),
@@ -311,7 +311,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
 
         // restore LDAP from {temp_backup_directory}/ldap folder
-        Path ldapBackupPath = backupConfig.getTempPath(tempDir, LDAP);
+        Path ldapBackupPath = backupConfig.getComponentTempPath(tempDir, LDAP);
         commands.add(createLocalAgentCommand("sudo rm -rf /var/lib/ldap"));
         commands.add(createLocalAgentCommand("sudo mkdir -p /var/lib/ldap"));
         commands.add(createLocalAgentCommand(format("sudo slapadd -q <%s", ldapBackupPath)));
@@ -319,7 +319,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
 
         // restore mongo from {temp_backup_directory}/mongo folder
-        Path mongoBackupPath = backupConfig.getTempPath(tempDir, MONGO);
+        Path mongoBackupPath = backupConfig.getComponentTempPath(tempDir, MONGO);
         commands.add(createLocalAgentCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
                                                     codenvyConfig.getMongoAdminPassword(),
                                                     mongoBackupPath)));

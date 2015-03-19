@@ -17,7 +17,12 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
+import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
+import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.service.InstallationManagerConfig;
@@ -40,7 +45,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -54,13 +61,15 @@ import static org.testng.Assert.assertTrue;
  * @author Dmytro Nochevnov
  */
 public class TestCDECArtifact {
-    public static final String TEST_HOST_DNS = "localhost";
-
     private CDECArtifact spyCdecArtifact;
     public static final String initialOsVersion = OSUtils.VERSION;
 
     @Mock
     private HttpTransport mockTransport;
+    @Mock
+    private ConfigUtil mockConfigUtil;
+    @Mock
+    private Config mockConfig;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -333,4 +342,66 @@ public class TestCDECArtifact {
         InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
         assertEquals(spyCdecArtifact.getInstalledType(), InstallType.CODENVY_MULTI_SERVER);
     }
+
+    @Test
+    public void testGetBackupSingleServerCommand() throws IOException {
+        doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_SINGLE_SERVER);
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
+
+        doReturn(InstallType.CODENVY_SINGLE_SERVER).when(spyCdecArtifact).getInstalledType();
+        doReturn(new CDECSingleServerHelper(spyCdecArtifact)).when(spyCdecArtifact).getHelper(InstallType.CODENVY_SINGLE_SERVER);
+        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, mockConfigUtil));
+    }
+
+    @Test
+    public void testGetBackupMultiServerCommand() throws IOException {
+
+        Map<String, String> codenvyMultiServerProperties = ImmutableMap.of(
+            "api_host_name", "api.example.com",
+            "data_host_name", "data.example.com");
+        doReturn(new Config(codenvyMultiServerProperties)).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
+
+        doReturn(InstallType.CODENVY_MULTI_SERVER).when(spyCdecArtifact).getInstalledType();
+        doReturn(new CDECMultiServerHelper(spyCdecArtifact)).when(spyCdecArtifact).getHelper(InstallType.CODENVY_MULTI_SERVER);
+        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, mockConfigUtil));
+    }
+
+    @Test
+    public void testGetRestoreSingleServerCommand() throws IOException {
+        doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_SINGLE_SERVER);
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupFile(Paths.get("dummyFile"))
+                                                      .setBackupDirectory(Paths.get("dummyDirectory"));
+
+        doReturn(InstallType.CODENVY_SINGLE_SERVER).when(spyCdecArtifact).getInstalledType();
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+        doReturn(new CDECSingleServerHelper(spyCdecArtifact)).when(spyCdecArtifact).getHelper(InstallType.CODENVY_SINGLE_SERVER);
+
+        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, mockConfigUtil));
+    }
+
+    @Test
+    public void testGetRestoreMultiServerCommand() throws IOException {
+        Map<String, String> codenvyMultiServerProperties = ImmutableMap.of(
+            "api_host_name", "api.example.com",
+            "data_host_name", "data.example.com");
+        doReturn(new Config(codenvyMultiServerProperties)).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupFile(Paths.get("dummyFile"))
+                                                      .setBackupDirectory(Paths.get("dummyDirectory"));
+
+        doReturn(InstallType.CODENVY_MULTI_SERVER).when(spyCdecArtifact).getInstalledType();
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+        doReturn(new CDECMultiServerHelper(spyCdecArtifact)).when(spyCdecArtifact).getHelper(InstallType.CODENVY_MULTI_SERVER);
+
+        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, mockConfigUtil));
+    }
+
 }

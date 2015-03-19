@@ -381,8 +381,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createShellAgentCommand(format("rm -rf %s", remoteTempDir), apiNode));  // cleanup
 
         // dump mongo from DATA node to local backup directory
-        Path remoteMongoBackupPath = backupConfig.getTempPath(remoteTempDir, MONGO);
-        Path localMongoBackupPath = backupConfig.getTempPath(localTempDir, MONGO);
+        Path remoteMongoBackupPath = backupConfig.getComponentTempPath(remoteTempDir, MONGO);
+        Path localMongoBackupPath = backupConfig.getComponentTempPath(localTempDir, MONGO);
 
         commands.add(createShellAgentCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
         commands.add(createShellAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
@@ -400,8 +400,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createShellAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));  // cleanup
 
         // dump LDAP from DATA node to local backup directory
-        Path remoteLdapBackupPath = backupConfig.getTempPath(remoteTempDir, LDAP);
-        Path localLdapBackupFilePath = backupConfig.getTempPath(localTempDir, LDAP);
+        Path remoteLdapBackupPath = backupConfig.getComponentTempPath(remoteTempDir, LDAP);
+        Path localLdapBackupFilePath = backupConfig.getComponentTempPath(localTempDir, LDAP);
 
         commands.add(createShellAgentCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
         commands.add(createShellAgentCommand(format("sudo slapcat > %s", remoteLdapBackupPath), dataNode));
@@ -466,8 +466,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createShellAgentCommand(format("rm -rf %s", tempApiNodeBackupFile.getParent()), apiNode));  // cleanup
 
         // restore MONGO from {temp_backup_directory}/mongo folder
-        Path remoteMongoBackupPath = backupConfig.getTempPath(remoteTempDir, MONGO);
-        Path localMongoBackupPath = backupConfig.getTempPath(localTempDir, MONGO);
+        Path remoteMongoBackupPath = backupConfig.getComponentTempPath(remoteTempDir, MONGO);
+        Path localMongoBackupPath = backupConfig.getComponentTempPath(localTempDir, MONGO);
         commands.add(createShellAgentCommand(format("mkdir -p %s", localMongoBackupPath), dataNode));
         commands.add(createCopyFromLocalToRemoteCommand(localMongoBackupPath,
                                                         remoteMongoBackupPath,
@@ -480,8 +480,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createShellAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));  // cleanup
 
         // restore LDAP from {temp_backup_directory}/ldap folder
-        Path localLdapBackupPath = backupConfig.getTempPath(localTempDir, LDAP);
-        Path remoteLdapBackupPath = backupConfig.getTempPath(remoteTempDir, LDAP);
+        Path localLdapBackupPath = backupConfig.getComponentTempPath(localTempDir, LDAP);
+        Path remoteLdapBackupPath = backupConfig.getComponentTempPath(remoteTempDir, LDAP);
         commands.add(createShellAgentCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
         commands.add(createCopyFromLocalToRemoteCommand(localLdapBackupPath,
                                                         remoteLdapBackupPath,

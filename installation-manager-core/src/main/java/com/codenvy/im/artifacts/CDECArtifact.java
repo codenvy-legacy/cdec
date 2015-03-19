@@ -161,7 +161,7 @@ public class CDECArtifact extends AbstractArtifact {
             .getRestoreCommand(backupConfig, codenvyConfigUtil);
     }
 
-    private CDECArtifactHelper getHelper(InstallType type) {
+    protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }
 

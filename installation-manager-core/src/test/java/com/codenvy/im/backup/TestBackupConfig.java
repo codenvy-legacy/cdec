@@ -18,10 +18,9 @@
 package com.codenvy.im.backup;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import org.junit.After;
-import org.junit.Before;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.nio.file.Files;
@@ -31,26 +30,24 @@ import java.util.Date;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov  */
 public class TestBackupConfig {
-    private BackupConfig spyTestConfig;
-
     private static final Path ORIGIN_DEFAULT_BACKUP_DIRECTORY = BackupConfig.DEFAULT_BACKUP_DIRECTORY;
     private static final Path ORIGIN_BASE_TMP_DIRECTORY       = BackupConfig.BASE_TMP_DIRECTORY;
 
-    private static final Path TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("backup/codenvy");
-    private static final Path TEST_BASE_TMP_DIRECTORY       = Paths.get("tmp_backup/codenvy");
-
+    private static final Path TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backup/codenvy");
+    private static final Path TEST_BASE_TMP_DIRECTORY       = Paths.get("target/tmp_backup/codenvy");
 
     @BeforeMethod
     public void setup() {
-        spyTestConfig = spy(new BackupConfig());
         BackupConfig.DEFAULT_BACKUP_DIRECTORY = TEST_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
-
-        doReturn(new Date(1278139510000l)).when(spyTestConfig).getCurrentDate();  // return Date(07/03/2010 9:45:10)
     }
 
     @AfterMethod
@@ -61,39 +58,61 @@ public class TestBackupConfig {
 
     @Test
     public void testEmptyInstance() {
-        assertEquals(spyTestConfig.toString(), "{'artifactName':'null', " +
-                                               "'backupDirectory':'backup/codenvy', " +
-                                               "'backupFile':'backup/codenvy/backup_03-Jul-2010_09-45-10.tar'}");
+        BackupConfig testConfig = new BackupConfig();
+        assertEquals(testConfig.toString(), "{'artifactName':'null', " +
+                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupFile':'null'}");
 
-        assertNull(spyTestConfig.getArtifactName());
-        assertEquals(spyTestConfig.getBackupDirectory(), Paths.get("backup/codenvy"));
-        assertEquals(spyTestConfig.getBackupFile(), Paths.get("backup/codenvy/backup_03-Jul-2010_09-45-10.tar"));
+        assertNull(testConfig.getArtifactName());
+        assertEquals(testConfig.getBackupDirectory(), Paths.get("target/backup/codenvy"));
+        assertNull(testConfig.getBackupFile());
+    }
+
+    @Test
+    public void testEquals() throws InterruptedException {
+        BackupConfig backupConfig = new BackupConfig();
+        BackupConfig anotherBackupConfig = new BackupConfig();
+
+        assertTrue(backupConfig.equals(anotherBackupConfig));
+
+        Path backupFile = backupConfig.generateBackupFilePath();
+        backupConfig.setBackupFile(backupFile);
+        assertFalse(backupConfig.equals(anotherBackupConfig));
+
+        anotherBackupConfig.setBackupFile(backupFile);
+        assertTrue(backupConfig.equals(anotherBackupConfig));
     }
 
     @Test
     public void testInstanceWithArtifact() {
-        spyTestConfig.setArtifactName(CDECArtifact.NAME);
-        assertEquals(spyTestConfig.toString(), "{'artifactName':'codenvy', " +
-                                               "'backupDirectory':'backup/codenvy', " +
-                                               "'backupFile':'backup/codenvy/codenvy_backup_03-Jul-2010_09-45-10.tar'}");
+        BackupConfig testConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        assertEquals(testConfig.toString(), "{'artifactName':'codenvy', " +
+                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupFile':'null'}");
+
+        assertTrue(testConfig.hashCode() != 0);
     }
 
     @Test
     public void testInstanceWithDirectory() {
-        spyTestConfig.setArtifactName(CDECArtifact.NAME)
-                     .setBackupDirectory(Paths.get("testDirectory"));
-        assertEquals(spyTestConfig.toString(), "{'artifactName':'codenvy', " +
-                                               "'backupDirectory':'testDirectory', " +
-                                               "'backupFile':'testDirectory/codenvy_backup_03-Jul-2010_09-45-10.tar'}");
+        BackupConfig testConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                    .setBackupDirectory(Paths.get("testDirectory"));
+        assertEquals(testConfig.toString(), "{'artifactName':'codenvy', " +
+                                            "'backupDirectory':'testDirectory', " +
+                                            "'backupFile':'null'}");
+
+        assertTrue(testConfig.hashCode() != 0);
     }
 
     @Test
     public void testInstanceWithFile() {
-        spyTestConfig.setArtifactName(CDECArtifact.NAME)
-                     .setBackupFile(Paths.get("testFile"));
-        assertEquals(spyTestConfig.toString(), "{'artifactName':'codenvy'," +
-                                               " 'backupDirectory':'backup/codenvy'," +
-                                               " 'backupFile':'testFile'}");
+        BackupConfig testConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                    .setBackupFile(Paths.get("testFile"));
+        assertEquals(testConfig.toString(), "{'artifactName':'codenvy'," +
+                                            " 'backupDirectory':'target/backup/codenvy'," +
+                                            " 'backupFile':'testFile'}");
+
+        assertTrue(testConfig.hashCode() != 0);
     }
 
     @Test
@@ -105,8 +124,66 @@ public class TestBackupConfig {
     @Test
     public void testDefaultFields() {
         assertNotNull(ORIGIN_DEFAULT_BACKUP_DIRECTORY);
-
         assertNotNull(ORIGIN_BASE_TMP_DIRECTORY);
         assertTrue(Files.exists(ORIGIN_BASE_TMP_DIRECTORY.getParent()));
+    }
+
+    @Test
+    public void testGetArtifactTempDirectory() {
+        BackupConfig testConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        assertEquals(testConfig.getArtifactTempDirectory().toString(), "target/tmp_backup/codenvy/codenvy");
+    }
+
+    @Test
+    public void testGetTempDirectory() {
+        assertEquals(BackupConfig.getTempDirectory().toString(), "target/tmp_backup/codenvy");
+    }
+
+    @Test(dataProvider = "GetComponentTempPath")
+    public void testGetComponentTempPath(String parentDir, BackupConfig.Component component, String expectedResult) {
+        Path result = BackupConfig.getComponentTempPath(Paths.get(parentDir), component);
+        assertEquals(result, Paths.get(expectedResult));
+    }
+
+    @DataProvider(name = "GetComponentTempPath")
+    public static Object[][] GetComponentTempPath() {
+        return new Object[][]{
+            {"test", BackupConfig.Component.MONGO, "test/mongo"},
+            {"test", BackupConfig.Component.LDAP, "test/ldap/ldap.ldif"},
+            {"test", BackupConfig.Component.FS, "test/fs"}
+        };
+    }
+
+    @Test
+    public void testGenerateBackupFilePath() {
+        BackupConfig spyTestConfig = spy(new BackupConfig());
+        doReturn(new Date(1278139510000l)).when(spyTestConfig).getCurrentDate();  // 1278139510000l == '07/03/2010 9:45:10'
+        assertEquals(spyTestConfig.generateBackupFilePath(), Paths.get("target/backup/codenvy/backup_03-Jul-2010_09-45-10.tar"));
+    }
+
+    @Test
+    public void testAddGzipExtension() {
+        Path result = BackupConfig.addGzipExtension(Paths.get("test/backup.tar"));
+        assertEquals(result, Paths.get("test/backup.tar.gz"));
+    }
+
+    @Test
+    public void testRemoveGzipExtension() {
+        Path result = BackupConfig.removeGzipExtension(Paths.get("test/backup.tar.gz"));
+        assertEquals(result, Paths.get("test/backup.tar"));
+    }
+
+    @Test
+    public void testClone() {
+        BackupConfig testConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                    .setBackupDirectory(Paths.get("someDir"))
+                                                    .setBackupFile(Paths.get("someDir/someFile"));
+
+        BackupConfig cloneTestConfig = testConfig.clone();
+        testConfig.setBackupFile(Paths.get("anotherFile"));
+
+        assertEquals(cloneTestConfig.toString(), "{'artifactName':'codenvy', " +
+                                                 "'backupDirectory':'someDir', " +
+                                                 "'backupFile':'someDir/someFile'}");
     }
 }

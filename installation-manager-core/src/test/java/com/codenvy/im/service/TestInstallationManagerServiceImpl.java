@@ -237,14 +237,11 @@ public class TestInstallationManagerServiceImpl {
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupDirectory(testBackupDirectory);
 
-        Path testBackupFile = testBackupConfig.getBackupFile();
-
         doThrow(new IOException("error")).when(mockInstallationManager).backup(testBackupConfig);
 
         assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
                                                                           + "  \"backup\" : {\n"
                                                                           + "    \"artifact\" : \"codenvy\",\n"
-                                                                          + "    \"file\" : \"" + testBackupFile.toString() + "\",\n"
                                                                           + "    \"status\" : \"FAILURE\"\n"
                                                                           + "  },\n"
                                                                           + "  \"message\" : \"error\",\n"

@@ -20,6 +20,7 @@ package com.codenvy.im.backup;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.ConfigUtil;
+import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.TarUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -49,13 +50,17 @@ public class BackupManager {
      * @return updated backup config
      */
     public BackupConfig backup(BackupConfig initialConfig) throws IOException {
-        BackupConfig backupConfig = BackupConfig.clone(initialConfig);
-        Artifact artifact = createArtifact(backupConfig.getArtifactName());
+        BackupConfig backupConfig = initialConfig.clone();
+        Artifact artifact = getArtifact(backupConfig.getArtifactName());
         Files.createDirectories(backupConfig.getBackupDirectory());
 
-        Path baseTempDir = backupConfig.getTempDirectory();
         try {
             Path backupFile = backupConfig.getBackupFile();
+            if (backupFile == null) {
+                backupFile = backupConfig.generateBackupFilePath();
+                backupConfig.setBackupFile(backupFile);
+            }
+
             Command backupCommand = artifact.getBackupCommand(backupConfig, configUtil);
             backupCommand.execute();
 
@@ -73,13 +78,18 @@ public class BackupManager {
 
     /** Restore due to config */
     public void restore(BackupConfig initialConfig) throws IOException {
-        BackupConfig backupConfig = BackupConfig.clone(initialConfig);
+        BackupConfig backupConfig = initialConfig.clone();
         Path compressedBackupFile = backupConfig.getBackupFile();
-        if (!Files.exists(compressedBackupFile)) {
-            throw new IllegalArgumentException(format("Backup file %s doesn't exist.", compressedBackupFile));
+
+        if (compressedBackupFile == null) {
+            throw new IllegalArgumentException("Backup file is unknown.");
         }
 
-        Artifact artifact = createArtifact(backupConfig.getArtifactName());
+        if (!Files.exists(compressedBackupFile)) {
+            throw new IllegalArgumentException(format("Backup file '%s' doesn't exist.", compressedBackupFile));
+        }
+
+        Artifact artifact = getArtifact(backupConfig.getArtifactName());
         Path tempDir = backupConfig.getArtifactTempDirectory();
         try {
             TarUtils.unpack(compressedBackupFile, tempDir);
@@ -95,5 +105,9 @@ public class BackupManager {
         } catch(Exception e) {
             throw new BackupException(e.getMessage(), e);
         }
+    }
+
+    protected Artifact getArtifact(String artifactName) throws ArtifactNotFoundException {
+        return createArtifact(artifactName);
     }
 }

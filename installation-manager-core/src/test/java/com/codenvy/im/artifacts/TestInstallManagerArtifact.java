@@ -122,4 +122,14 @@ public class TestInstallManagerArtifact {
     public void testGetInstalledType() throws IOException {
         assertEquals(imArtifact.getInstalledType(), InstallType.UNKNOWN);
     }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testBackupCommand() throws IOException {
+        imArtifact.getBackupCommand(null, null);
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testRestoreCommand() throws IOException {
+        imArtifact.getRestoreCommand(null, null);
+    }
 }
