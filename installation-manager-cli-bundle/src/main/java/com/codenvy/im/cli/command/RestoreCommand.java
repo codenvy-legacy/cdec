@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 @Command(scope = "codenvy", name = "im-restore", description = "Restore Codenvy")
 public class RestoreCommand extends AbstractIMCommand {
 
-    @Argument(name = "backup", description = "Path to backup file. There should be *.tar file compressed into the *.tar.gz.", required = true, multiValued = false, index = 0)
+    @Argument(name = "backup", description = "Relative path to backup file. There should be <backup_name>.tar.gz file with the compressed <backup_name>.tar file with the same backup name. For example: backup file codenvy_backup_19-Mar-2015_16-52-06.tar.gz which consists of codenvy_backup_19-Mar-2015_16-52-06.tar", required = true, multiValued = false, index = 0)
     private String backup;
 
     @Override

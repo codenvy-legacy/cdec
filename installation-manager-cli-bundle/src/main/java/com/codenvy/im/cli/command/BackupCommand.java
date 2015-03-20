@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 @Command(scope = "codenvy", name = "im-backup", description = "Backup Codenvy")
 public class BackupCommand extends AbstractIMCommand {
 
-    @Argument(name = "directory", description = "Path to directory with backup.", required = false, multiValued = false, index = 0)
+    @Argument(name = "directory", description = "Relative path to directory with backup. Default location is ~/.codenvy/backups/", required = false, multiValued = false, index = 0)
     private String backupDirectory;
 
     @Override
