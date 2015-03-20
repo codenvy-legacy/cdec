@@ -90,7 +90,7 @@ public class TestBackupManager {
     @Test
     public void testBackupCodenvy() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
-        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath());
+        BackupConfig expectedBackupConfig = initialBackupConfig.clone().setBackupFile(initialBackupConfig.generateBackupFilePath());
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {

@@ -23,10 +23,6 @@ import java.io.IOException;
  * @author Dmytro Nochevnov
  */
 public class BackupException extends IOException {
-    public BackupException(String message) {
-        super(message);
-    }
-
     public BackupException(String message, Throwable e) {
         super(message, e);
     }

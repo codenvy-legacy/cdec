@@ -38,8 +38,10 @@ import static java.nio.file.Files.exists;
 /** @author Dmytro Nochevnov */
 public class CommandFactory {
 
-    private static final String STOP = "stop";
-    private static final String START = "start";
+    private static final String STOP     = "stop";
+    private static final String START    = "start";
+    private static final String ACTIVE   = "active";
+    private static final String INACTIVE = "inactive";
 
     private CommandFactory() {
     }
@@ -61,12 +63,12 @@ public class CommandFactory {
         return createLocalAgentCommand(getFileRestoreOrBackupCommand(file));
     }
 
-    public static Command createShellAgentFileRestoreOrBackupCommand(final String file, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createShellAgentCommand(getFileRestoreOrBackupCommand(file), null, nodes);
+    public static Command createRemoteAgentFileRestoreOrBackupCommand(final String file, List<NodeConfig> nodes) throws AgentException {
+        return MacroCommand.createRemoteAgentsCommand(getFileRestoreOrBackupCommand(file), null, nodes);
     }
 
-    public static Command createShellAgentFileRestoreOrBackupCommand(final String file, NodeConfig node) throws AgentException {
-        return MacroCommand.createShellAgentCommand(getFileRestoreOrBackupCommand(file), null, ImmutableList.of(node));
+    public static Command createRemoteAgentFileRestoreOrBackupCommand(final String file, NodeConfig node) throws AgentException {
+        return MacroCommand.createRemoteAgentsCommand(getFileRestoreOrBackupCommand(file), null, ImmutableList.of(node));
     }
 
     protected static String getFileRestoreOrBackupCommand(final String file) {
@@ -82,8 +84,8 @@ public class CommandFactory {
                       file);
     }
 
-    public static Command createShellAgentFileBackupCommand(String file, NodeConfig node) throws AgentException {
-        return createShellAgentCommand(getFileBackupCommand(file), node);
+    public static Command createRemoteAgentFileBackupCommand(String file, NodeConfig node) throws AgentException {
+        return createRemoteAgentCommand(getFileBackupCommand(file), node);
     }
 
     public static Command createLocalAgentFileBackupCommand(final String file) {
@@ -97,14 +99,13 @@ public class CommandFactory {
                       backupFile);
     }
 
-    public static Command createShellAgentCommand(String command, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createShellAgentCommand(command, null, nodes);
+    public static Command createRemoteAgentsCommand(String command, List<NodeConfig> nodes) throws AgentException {
+        return MacroCommand.createRemoteAgentsCommand(command, null, nodes);
     }
 
-    public static Command createShellAgentCommand(String command, NodeConfig node) throws AgentException {
-        return createShellAgentCommand(command, ImmutableList.of(node));
+    public static Command createRemoteAgentCommand(String command, NodeConfig node) throws AgentException {
+        return createRemoteAgentsCommand(command, ImmutableList.of(node));
     }
-
 
     public static Command createPatchCommand(Path patchDir, Version installedVersion, Version versionToUpdate) throws IOException {
         List<Command> commands;
@@ -123,39 +124,39 @@ public class CommandFactory {
         return new MacroCommand(commands, "Patch resources");
     }
 
-    public static Command createLocalStopServiceCommand(String serviceName) {
+    public static Command createLocalAgentStopServiceCommand(String serviceName) {
         return createLocalAgentCommand(getServiceManagementCommand(serviceName, STOP));
     }
 
-    public static Command createRemoteStopServiceCommand(String serviceName, NodeConfig node) throws AgentException {
-        return createShellAgentCommand(getServiceManagementCommand(serviceName, STOP), node);
+    public static Command createRemoteAgentStopServiceCommand(String serviceName, NodeConfig node) throws AgentException {
+        return createRemoteAgentCommand(getServiceManagementCommand(serviceName, STOP), node);
     }
 
-    public static Command createLocalStartServiceCommand(String serviceName) {
+    public static Command createLocalAgentStartServiceCommand(String serviceName) {
         return createLocalAgentCommand(getServiceManagementCommand(serviceName, START));
     }
 
-    public static Command createRemoteStartServiceCommand(String serviceName, NodeConfig node) throws AgentException {
-        return createShellAgentCommand(getServiceManagementCommand(serviceName, START), node);
+    public static Command createRemoteAgentStartServiceCommand(String serviceName, NodeConfig node) throws AgentException {
+        return createRemoteAgentCommand(getServiceManagementCommand(serviceName, START), node);
     }
 
     private static String getServiceManagementCommand(String serviceName, String action) {
         switch (action) {
             case STOP:
-                return format("sudo service --status-all | grep %1$s; "
+                return format("sudo service %1$s status | grep 'Active: active (running)'; "
                               + "if [ $? -eq 0 ]; then "
                               + "  sudo service %1$s stop; "
                               + "fi; ",
                               serviceName);
 
             case START:
-                return format("sudo service --status-all | grep %1$s; "
+                return format("sudo service %1$s status | grep 'Active: active (running)'; "
                               + "if [ $? -ne 0 ]; then "
                               + "  sudo service %1$s start; "
                               + "fi; ",
                               serviceName);
             default:
-                return "";
+                throw new IllegalArgumentException(format("Service action '%s' isn't supported", action));
         }
     }
 
@@ -165,7 +166,7 @@ public class CommandFactory {
      *
      * Don't gzip to be able to update pack in future.
      */
-    public static Command createLocalPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
+    public static Command createLocalAgentPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
         return createLocalAgentCommand(getPackCommand(fromDir, packFile, pathWithinThePack));
     }
 
@@ -175,8 +176,8 @@ public class CommandFactory {
      *
      * Don't gzip to be able to update pack in future.
      */
-    public static Command createRemotePackCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createShellAgentCommand(getPackCommand(fromDir, packFile, pathWithinThePack), node);
+    public static Command createRemoteAgentPackCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
+        return createRemoteAgentCommand(getPackCommand(fromDir, packFile, pathWithinThePack), node);
     }
 
     private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
@@ -190,16 +191,16 @@ public class CommandFactory {
                       pathWithinThePack);
     }
 
-    public static Command createLocalUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
+    public static Command createLocalAgentUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
         return createLocalAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack));
     }
 
-    public static Command createLocalUnpackCommand(Path packFile, Path toDir) {
+    public static Command createLocalAgentUnpackCommand(Path packFile, Path toDir) {
         return createLocalAgentCommand(getUnpackCommand(packFile, toDir, null));
     }
 
-    public static Command createRemoteUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createShellAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack), node);
+    public static Command createRemoteAgentUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
+        return createRemoteAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack), node);
     }
 
     private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack) {
@@ -227,5 +228,37 @@ public class CommandFactory {
 
     private static String getScpCommand(String fromPath, String toPath) {
         return format("scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no %s %s", fromPath, toPath);
+    }
+
+    public static Command createLocalAgentWaitServiceActiveCommand(String service) {
+        return createLocalAgentCommand(getWaitServiceStatusCommand(service, ACTIVE));
+    }
+
+    public static Command createRemoteAgentWaitServiceActiveCommand(String service, NodeConfig node) throws AgentException {
+        return createRemoteAgentCommand(getWaitServiceStatusCommand(service, ACTIVE), node);
+    }
+
+    private static String getWaitServiceStatusCommand(String service, String status) {
+        String operator;
+        switch (status) {
+            case ACTIVE:
+                operator = "-eq";
+                break;
+
+            case INACTIVE:
+                operator = "-ne";
+                break;
+
+            default:
+                throw new IllegalArgumentException(format("Service status '%s' isn't supported", status));
+        }
+
+        return format("doneState=\"Checking\"; " +
+                      "while [ \"${doneState}\" != \"Done\" ]; do " +
+                      "    sudo service %s status | grep 'Active: active (running)'; " +
+                      "    if [ $? %s 0 ]; then doneState=\"Done\"; " +
+                      "    else sleep 5; " +
+                      "    fi; " +
+                      "done", service, operator);
     }
 }

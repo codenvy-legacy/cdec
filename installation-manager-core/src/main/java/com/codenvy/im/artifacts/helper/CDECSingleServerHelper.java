@@ -40,10 +40,15 @@ import java.util.Map;
 
 import static com.codenvy.im.backup.BackupConfig.Component.LDAP;
 import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
+import static com.codenvy.im.backup.BackupConfig.getComponentTempPath;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalPackCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalUnpackCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentPackCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentStartServiceCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentStopServiceCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentUnpackCommand;
+import static com.codenvy.im.command.CommandFactory.createLocalAgentWaitServiceActiveCommand;
+import static com.codenvy.im.command.CommandFactory.createPatchCommand;
 import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
 import static java.lang.String.format;
 
@@ -228,7 +233,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                return CommandFactory.createPatchCommand(Paths.get("/tmp/codenvy/patches/"), original.getInstalledVersion(), versionToUpdate);
+                return createPatchCommand(Paths.get("/tmp/codenvy/patches/"), original.getInstalledVersion(), versionToUpdate);
 
             case 3:
                 return createLocalAgentCommand("sudo rm -rf /etc/puppet/files; " +
@@ -256,18 +261,18 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createLocalAgentCommand(format("mkdir -p %s", tempDir)));
 
         // stop services
-        commands.add(CommandFactory.createLocalStopServiceCommand("puppet"));
-        commands.add(CommandFactory.createLocalStopServiceCommand("crond"));
-        commands.add(CommandFactory.createLocalStopServiceCommand("codenvy"));
-        commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
+        commands.add(createLocalAgentStopServiceCommand("puppet"));
+        commands.add(createLocalAgentStopServiceCommand("crond"));
+        commands.add(createLocalAgentStopServiceCommand("codenvy"));
+        commands.add(createLocalAgentStopServiceCommand("slapd"));
 
         // dump LDAP into backup directory
-        Path ldapBackupPath = backupConfig.getComponentTempPath(tempDir, LDAP);
+        Path ldapBackupPath = getComponentTempPath(tempDir, LDAP);
         commands.add(createLocalAgentCommand(format("mkdir -p %s", ldapBackupPath.getParent())));
         commands.add(createLocalAgentCommand(format("sudo slapcat > %s", ldapBackupPath)));
 
         // dump mongo into backup directory
-        Path mongoBackupPath = backupConfig.getComponentTempPath(tempDir, MONGO);
+        Path mongoBackupPath = getComponentTempPath(tempDir, MONGO);
         commands.add(createLocalAgentCommand(format("mkdir -p %s", mongoBackupPath)));
         commands.add(createLocalAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
                                                     codenvyConfig.getMongoAdminPassword(),
@@ -277,13 +282,18 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createLocalAgentCommand(format("rm -rf %s", adminDatabaseBackup)));  // remove useless 'admin' database
 
         // add dumps to the backup file
-        commands.add(createLocalPackCommand(tempDir, backupFile, "."));
+        commands.add(createLocalAgentPackCommand(tempDir, backupFile, "."));
 
         // add filesystem data to the {backup_file}/fs folder
-        commands.add(createLocalPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/."));
+        commands.add(createLocalAgentPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/."));
 
         // start services
-        commands.add(CommandFactory.createLocalStartServiceCommand("puppet"));
+        commands.add(createLocalAgentStartServiceCommand("slapd"));
+        commands.add(createLocalAgentStartServiceCommand("codenvy"));
+        commands.add(createLocalAgentStartServiceCommand("puppet"));
+        commands.add(createLocalAgentWaitServiceActiveCommand("puppet"));
+        commands.add(createLocalAgentWaitServiceActiveCommand("codenvy"));
+        commands.add(createLocalAgentWaitServiceActiveCommand("slapd"));
 
         // wait until API server restarts
         commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
@@ -305,34 +315,40 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createLocalAgentCommand(format("mkdir -p %s", tempDir)));
 
         // unpack backupFile into the tempDir
-        commands.add(createLocalUnpackCommand(backupFile, tempDir));
+        commands.add(createLocalAgentUnpackCommand(backupFile, tempDir));
 
         // stop services
-        commands.add(CommandFactory.createLocalStopServiceCommand("puppet"));
-        commands.add(CommandFactory.createLocalStopServiceCommand("crond"));
-        commands.add(CommandFactory.createLocalStopServiceCommand("codenvy"));
-        commands.add(CommandFactory.createLocalStopServiceCommand("slapd"));
+        commands.add(createLocalAgentStopServiceCommand("puppet"));
+        commands.add(createLocalAgentStopServiceCommand("crond"));
+        commands.add(createLocalAgentStopServiceCommand("codenvy"));
+        commands.add(createLocalAgentStopServiceCommand("slapd"));
 
         // restore LDAP from {temp_backup_directory}/ldap folder
-        Path ldapBackupPath = backupConfig.getComponentTempPath(tempDir, LDAP);
+        Path ldapBackupPath = getComponentTempPath(tempDir, LDAP);
         commands.add(createLocalAgentCommand("sudo rm -rf /var/lib/ldap"));
         commands.add(createLocalAgentCommand("sudo mkdir -p /var/lib/ldap"));
         commands.add(createLocalAgentCommand(format("sudo slapadd -q <%s", ldapBackupPath)));
+        commands.add(createLocalAgentCommand("sudo chown ldap:ldap /var/lib/ldap"));
         commands.add(createLocalAgentCommand("sudo chown ldap:ldap /var/lib/ldap/*"));
 
 
         // restore mongo from {temp_backup_directory}/mongo folder
-        Path mongoBackupPath = backupConfig.getComponentTempPath(tempDir, MONGO);
+        Path mongoBackupPath = getComponentTempPath(tempDir, MONGO);
         commands.add(createLocalAgentCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
                                                     codenvyConfig.getMongoAdminPassword(),
                                                     mongoBackupPath)));
 
         // restore filesystem data from {backup_file}/fs folder
         commands.add(createLocalAgentCommand("sudo rm -rf /home/codenvy/codenvy-data/fs"));
-        commands.add(createLocalUnpackCommand(backupFile, Paths.get("/home/codenvy/codenvy-data"), "fs"));
+        commands.add(CommandFactory.createLocalAgentUnpackCommand(backupFile, Paths.get("/home/codenvy/codenvy-data"), "fs"));
 
         // start services
-        commands.add(CommandFactory.createLocalStartServiceCommand("puppet"));
+        commands.add(createLocalAgentStartServiceCommand("slapd"));
+        commands.add(createLocalAgentStartServiceCommand("codenvy"));
+        commands.add(createLocalAgentStartServiceCommand("puppet"));
+        commands.add(createLocalAgentWaitServiceActiveCommand("puppet"));
+        commands.add(createLocalAgentWaitServiceActiveCommand("codenvy"));
+        commands.add(createLocalAgentWaitServiceActiveCommand("slapd"));
 
         // wait until API server restarts
         commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));

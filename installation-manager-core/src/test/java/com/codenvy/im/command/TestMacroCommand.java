@@ -18,24 +18,17 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.node.NodeConfig;
-import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
-import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
-import static java.nio.file.Files.createDirectories;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -102,7 +95,7 @@ public class TestMacroCommand {
                                         "{'command'='command', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
                                         "]", user);
 
-        Command testMacroCommand = MacroCommand.createShellAgentCommand(command, description, nodes);
+        Command testMacroCommand = MacroCommand.createRemoteAgentsCommand(command, description, nodes);
         assertEquals(testMacroCommand.toString(), expectedCommand);
     }
 

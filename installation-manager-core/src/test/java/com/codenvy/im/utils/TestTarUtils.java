@@ -17,9 +17,24 @@
  */
 package com.codenvy.im.utils;
 
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+
 import static org.testng.Assert.*;
 
 /** @author Dmytro Nochevnov */
 public class TestTarUtils {
-    // TODO [ndp]
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Packing file doesn't exist")
+    public void testPackNonExistsFileException() throws IOException {
+        TarUtils.packFile(Paths.get("non-exists"), Paths.get("somePack"));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Packing item is a directory")
+    public void testPackDirectoryAsFileException() throws IOException {
+        TarUtils.packFile(Paths.get("target"), Paths.get("somePack"));
+    }
 }

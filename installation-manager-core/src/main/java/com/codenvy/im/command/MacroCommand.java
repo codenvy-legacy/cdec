@@ -67,10 +67,10 @@ public class MacroCommand implements Command {
     }
 
     /**
-     * Factory method. Creates MacroCommand which includes identical list of commands
+     * Factory method. Creates MacroCommand which includes list of identical commands
      * with {@link com.codenvy.im.agent.SecureShellAgent} to be applied at every node in the given list.
      */
-    public static Command createShellAgentCommand(String command, String description, List<NodeConfig> nodes) throws AgentException {
+    public static Command createRemoteAgentsCommand(String command, String description, List<NodeConfig> nodes) throws AgentException {
         final List<Command> commands = new ArrayList<>(nodes.size());
         for (NodeConfig node : nodes) {
             commands.add(SimpleCommand.createShellAgentCommand(command, node));

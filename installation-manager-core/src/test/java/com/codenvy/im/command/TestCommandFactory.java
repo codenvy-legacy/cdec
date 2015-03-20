@@ -34,9 +34,8 @@ import static com.codenvy.im.command.CommandFactory.createLocalAgentFileBackupCo
 import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
 import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandFactory.createShellAgentCommand;
-import static com.codenvy.im.command.CommandFactory.createShellAgentFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandFactory.createShellAgentFileRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandFactory.createRemoteAgentsCommand;
+import static com.codenvy.im.command.CommandFactory.createRemoteAgentFileRestoreOrBackupCommand;
 import static com.codenvy.im.command.CommandFactory.getFileRestoreOrBackupCommand;
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
@@ -85,7 +84,7 @@ public class TestCommandFactory {
             new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
         );
 
-        Command testCommand = createShellAgentCommand("testCommand", nodes);
+        Command testCommand = createRemoteAgentsCommand("testCommand", nodes);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
@@ -95,7 +94,7 @@ public class TestCommandFactory {
                                               SYSTEM_USER_NAME);
 
         NodeConfig node = new NodeConfig(NodeConfig.NodeType.DATA, "localhost");
-        Command testCommand = createShellAgentCommand("testCommand", node);
+        Command testCommand = CommandFactory.createRemoteAgentCommand("testCommand", node);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
@@ -126,7 +125,7 @@ public class TestCommandFactory {
 
         NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
 
-        Command testCommand = createShellAgentFileRestoreOrBackupCommand("testFile", node);
+        Command testCommand = createRemoteAgentFileRestoreOrBackupCommand("testFile", node);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
@@ -155,7 +154,7 @@ public class TestCommandFactory {
             new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
         );
 
-        Command testCommand = createShellAgentFileRestoreOrBackupCommand("testFile", nodes);
+        Command testCommand = CommandFactory.createRemoteAgentFileRestoreOrBackupCommand("testFile", nodes);
         assertEquals(testCommand.toString(), expectedCommandString);
     }
 
@@ -198,7 +197,6 @@ public class TestCommandFactory {
         assertEquals(output, "1.0.1\n" +
                              "1.0.2\n");
     }
-
 
     @Test
     public void testCreateLocalStopServiceCommand() {
