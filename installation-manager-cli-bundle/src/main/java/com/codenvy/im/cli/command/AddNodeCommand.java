@@ -23,7 +23,7 @@ import org.apache.karaf.shell.commands.Command;
 /**
  * @author Dmytro Nochevnov
  */
-@Command(scope = "codenvy", name = "add-node", description = "Add node into Codenvy")
+@Command(scope = "codenvy", name = "im-add-node", description = "Add node into Codenvy")
 public class AddNodeCommand extends AbstractIMCommand {
 
     @Argument(name = "dns", description = "DNS name of adding node.", required = true, multiValued = false, index = 0)

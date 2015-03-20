@@ -23,7 +23,7 @@ import org.apache.karaf.shell.commands.Command;
 /**
  * @author Dmytro Nochevnov
  */
-@Command(scope = "codenvy", name = "remove-node", description = "Remove additional node")
+@Command(scope = "codenvy", name = "im-remove-node", description = "Remove additional node")
 public class RemoveNodeCommand extends AbstractIMCommand {
 
     @Argument(name = "dns", description = "DNS name of removing node.", required = true, multiValued = false, index = 0)
