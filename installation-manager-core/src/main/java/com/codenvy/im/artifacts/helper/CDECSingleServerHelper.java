@@ -285,6 +285,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         // start services
         commands.add(CommandFactory.createLocalStartServiceCommand("puppet"));
 
+        // wait until API server restarts
+        commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+
         // remove temp dir
         commands.add(createLocalAgentCommand(format("sudo rm -rf %s", tempDir)));
 

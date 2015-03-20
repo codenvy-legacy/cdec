@@ -420,6 +420,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(CommandFactory.createRemoteStartServiceCommand("puppet", apiNode));
         commands.add(CommandFactory.createRemoteStartServiceCommand("puppet", dataNode));
 
+        // wait until API server restarts
+        commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+
         // remove local temp dir
         commands.add(createLocalAgentCommand(format("sudo rm -rf %s", localTempDir)));
 

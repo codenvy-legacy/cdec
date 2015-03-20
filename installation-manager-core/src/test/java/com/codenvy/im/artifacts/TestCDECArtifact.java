@@ -351,6 +351,7 @@ public class TestCDECArtifact {
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
 
         doReturn(InstallType.CODENVY_SINGLE_SERVER).when(spyCdecArtifact).getInstalledType();
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
         doReturn(new CDECSingleServerHelper(spyCdecArtifact)).when(spyCdecArtifact).getHelper(InstallType.CODENVY_SINGLE_SERVER);
         assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, mockConfigUtil));
     }
@@ -367,6 +368,7 @@ public class TestCDECArtifact {
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
 
         doReturn(InstallType.CODENVY_MULTI_SERVER).when(spyCdecArtifact).getInstalledType();
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
         doReturn(new CDECMultiServerHelper(spyCdecArtifact)).when(spyCdecArtifact).getHelper(InstallType.CODENVY_MULTI_SERVER);
         assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, mockConfigUtil));
     }
