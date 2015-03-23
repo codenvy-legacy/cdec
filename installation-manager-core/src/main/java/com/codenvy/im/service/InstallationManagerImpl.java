@@ -28,7 +28,6 @@ import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -65,8 +64,6 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
  */
 @Singleton
 public class InstallationManagerImpl implements InstallationManager {
-    private final HttpTransportConfiguration transportConf;
-
     private final String        updateEndpoint;
     private final Installer     installer;
     private final HttpTransport transport;
@@ -78,14 +75,12 @@ public class InstallationManagerImpl implements InstallationManager {
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                                    @Named("installation-manager.download_dir") String downloadDir,
-                                   HttpTransportConfiguration transportConf,
                                    HttpTransport transport,
                                    Installer installer,
                                    Set<Artifact> artifacts,
                                    NodeManager nodeManager,
                                    BackupManager backupManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
-        this.transportConf = transportConf;
         this.transport = transport;
         this.installer = installer;
         this.artifacts = new ArtifactsSet(artifacts); // keep order
@@ -201,31 +196,14 @@ public class InstallationManagerImpl implements InstallationManager {
         return new LinkedHashMap<String, String>() {{
             put("download directory", downloadDir.toString());
             put("base url", extractServerUrl(updateEndpoint));
-
-            if (transportConf.getProxyUrl() != null && !transportConf.getProxyUrl().isEmpty()) {
-                put("proxy url", transportConf.getProxyUrl());
-            }
-
-            if (transportConf.getProxyPort() > 0) {
-                put("proxy port", String.valueOf(transportConf.getProxyPort()));
-            }
         }};
     }
 
 
-    // TODO [AB] get rid of
     /** {@inheritDoc} */
     @Override
     public void setConfig(InstallationManagerConfig config) throws IOException {
-        if (config.getProxyPort() != null) {
-            transportConf.setProxyPort(config.getProxyPort());
-            storeProperty("installation-manager.proxy_port", String.valueOf(transportConf.getProxyPort()));
-        }
-
-        if (config.getProxyUrl() != null) {
-            transportConf.setProxyUrl(config.getProxyUrl());
-            storeProperty("installation-manager.proxy_url", transportConf.getProxyUrl());
-        }
+        // do nothing
     }
 
     protected void validatePath(Path newDownloadDir) throws IOException {

@@ -141,8 +141,9 @@ public interface InstallationManager {
 
     /**
      * Perform backup according to certain backup config.
+     *
      * @return updated backup config
-     * */
+     */
     BackupConfig backup(BackupConfig config) throws IOException;
 
     /** Perform backup according to certain backup config. */

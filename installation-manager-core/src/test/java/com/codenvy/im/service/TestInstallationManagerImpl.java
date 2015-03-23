@@ -30,7 +30,6 @@ import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 
@@ -99,14 +98,13 @@ public class TestInstallationManagerImpl {
         cdecArtifact = spy(new CDECArtifact(transport));
 
         manager = spy(new InstallationManagerImpl(
-            UPDATE_ENDPOINT,
-            DOWNLOAD_DIR,
-            new HttpTransportConfiguration("", "0"),
-            transport,
-            installer,
-            new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
-            mockNodeManager,
-            mockBackupManager));
+                UPDATE_ENDPOINT,
+                DOWNLOAD_DIR,
+                transport,
+                installer,
+                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
+                mockNodeManager,
+                mockBackupManager));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -118,16 +116,16 @@ public class TestInstallationManagerImpl {
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null, null);
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null, null);
+        new InstallationManagerImpl("", "/root", null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         final Version version2101 = Version.valueOf("2.10.1");
 
@@ -163,7 +161,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = FileNotFoundException.class,
-          expectedExceptionsMessageRegExp = "Binaries to install artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1' not found")
+            expectedExceptionsMessageRegExp = "Binaries to install artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1' not found")
     public void testNotInstallableUpdate() throws Exception {
         final Version version200 = Version.valueOf("2.0.0");
 
@@ -201,7 +199,8 @@ public class TestInstallationManagerImpl {
         manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Can not install the artifact 'codenvy' version '1.0.0'.")
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Can not install the artifact 'codenvy' version '1.0" +
+                                                                                              ".0'.")
     public void testInstallZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
@@ -422,31 +421,7 @@ public class TestInstallationManagerImpl {
         doNothing().when(manager).storeProperty(anyString(), anyString());
         doNothing().when(manager).validatePath(any(Path.class));
 
-        InstallationManagerConfig config = new InstallationManagerConfig();
-        config.setProxyPort("1000");
-        config.setProxyUrl("localhost");
-        manager.setConfig(config);
-
         Map<String, String> m = manager.getConfig();
-        assertEquals(m.size(), 4);
-        assertTrue(m.containsValue("target/download"));
-        assertTrue(m.containsValue("1000"));
-        assertTrue(m.containsValue("localhost"));
-        assertTrue(m.containsValue("http://update.com"));
-
-        config.setProxyPort("");
-        manager.setConfig(config);
-
-        m = manager.getConfig();
-        assertEquals(m.size(), 3);
-        assertTrue(m.containsValue("target/download"));
-        assertTrue(m.containsValue("localhost"));
-        assertTrue(m.containsValue("http://update.com"));
-
-        config.setProxyUrl("");
-        manager.setConfig(config);
-
-        m = manager.getConfig();
         assertEquals(m.size(), 2);
         assertTrue(m.containsValue("target/download"));
         assertTrue(m.containsValue("http://update.com"));
@@ -492,7 +467,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testAddNodeException() throws IOException {
         doThrow(new IOException("error")).when(mockNodeManager).add("node");
         manager.addNode("node");
@@ -507,7 +482,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testRemoveNodeException() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
         doThrow(new IOException("error")).when(mockNodeManager).remove(TEST_NODE_DNS);
@@ -530,7 +505,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testBackupException() throws IOException {
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
         doThrow(new IOException("error")).when(mockBackupManager).backup(testBackupConfig);
@@ -540,7 +515,7 @@ public class TestInstallationManagerImpl {
     @Test
     public void testRestore() throws IOException {
         Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 
@@ -549,10 +524,10 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testRestoreException() throws IOException {
         Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 

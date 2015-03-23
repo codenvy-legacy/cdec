@@ -18,7 +18,6 @@
 package com.codenvy.im.utils;
 
 import com.codenvy.dto.server.DtoFactory;
-import com.google.inject.Inject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,8 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -53,13 +50,6 @@ import static java.nio.file.Files.newOutputStream;
 public class HttpTransport {
     private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
     private static final String  MESSAGE   = "message";
-
-    private final HttpTransportConfiguration transportConf;
-
-    @Inject
-    public HttpTransport(HttpTransportConfiguration transportConf) {
-        this.transportConf = transportConf;
-    }
 
     /**
      * Performs OPTION request.
@@ -231,13 +221,7 @@ public class HttpTransport {
     }
 
     protected HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
-        HttpURLConnection connection;
-        if (transportConf.isProxyConfValid()) {
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(transportConf.getProxyUrl(), transportConf.getProxyPort()));
-            connection = (HttpURLConnection)new URL(path).openConnection(proxy);
-        } else {
-            connection = (HttpURLConnection)new URL(path).openConnection();
-        }
+        HttpURLConnection connection = (HttpURLConnection)new URL(path).openConnection();
 
         if (accessToken != null) {
             String accessTokenCookie = String.format("session-access-key=%s;", accessToken);

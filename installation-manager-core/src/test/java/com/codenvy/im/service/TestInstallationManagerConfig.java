@@ -28,7 +28,6 @@ import java.util.Properties;
 import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static java.nio.file.Files.exists;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
@@ -39,25 +38,6 @@ public class TestInstallationManagerConfig {
         FileUtils.writeStringToFile(CONFIG_FILE.toFile(), "codenvy_host_dns=localhost");
     }
 
-    @Test
-    public void testFields() throws Exception {
-        InstallationManagerConfig config = new InstallationManagerConfig();
-
-        config.setProxyUrl("localhost");
-        assertEquals(config.getProxyUrl(), "localhost");
-
-        config.setProxyPort("1234");
-        assertEquals(config.getProxyPort(), "1234");
-    }
-
-    @Test
-    public void testCheckEmptyConfig() throws Exception {
-        InstallationManagerConfig config = new InstallationManagerConfig();
-        assertTrue(config.checkEmptyConfig());
-
-        config.setProxyUrl("localhost");
-        assertFalse(config.checkEmptyConfig());
-    }
 
     @Test
     public void testReadStoreProperty() throws Exception {

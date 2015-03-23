@@ -18,7 +18,6 @@
 package com.codenvy.im.cli.command;
 
 
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.service.InstallationManagerService;
 
 import org.apache.felix.service.command.CommandSession;
@@ -29,7 +28,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -52,18 +50,6 @@ public class TestConfigCommand extends AbstractTestCommand {
         spyCommand.service = service;
 
         performBaseMocks(spyCommand, true);
-    }
-
-    @Test
-    public void testSetEmptyPort() throws Exception {
-        doReturn(okStatus).when(service).setConfig(any(InstallationManagerConfig.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--proxy-port", " ");
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, okStatus + "\n");
     }
 
     @Test

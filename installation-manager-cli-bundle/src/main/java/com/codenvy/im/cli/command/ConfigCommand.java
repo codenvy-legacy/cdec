@@ -18,37 +18,14 @@
 package com.codenvy.im.cli.command;
 
 
-import com.codenvy.im.service.InstallationManagerConfig;
-
 import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.commands.Option;
-
-// TODO [AB] get rid of
 
 /** @author Anatoliy Bazko */
 @Command(scope = "codenvy", name = "im-config", description = "Config installation manager")
 public class ConfigCommand extends AbstractIMCommand {
 
-    @Option(name = "--proxy-url", description = "To set the proxy url", required = false)
-    private String proxyUrl;
-
-    @Option(name = "--proxy-port", description = "To set the proxy port", required = false)
-    private String proxyPort;
-
     @Override
     protected void doExecuteCommand() throws Exception {
-        InstallationManagerConfig config = new InstallationManagerConfig();
-        if (proxyUrl != null) {
-            config.setProxyUrl(proxyUrl);
-        }
-        if (proxyPort != null) {
-            config.setProxyPort(proxyPort);
-        }
-
-        if (!config.checkEmptyConfig()) {
-            console.printResponse(service.setConfig(config));
-        } else {
-            console.printResponse(service.getConfig());
-        }
+        console.printResponse(service.getConfig());
     }
 }

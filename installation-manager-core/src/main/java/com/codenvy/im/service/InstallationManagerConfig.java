@@ -39,38 +39,7 @@ public class InstallationManagerConfig {
     public static final String CODENVY_HOST_DNS = "codenvy_host_dns";
     public static final String PUPPET_MASTER_HOST_NAME = "puppet_master_host_name";
 
-    private String proxyPort;
-    private String proxyUrl;
-
     public InstallationManagerConfig() {
-    }
-
-    /** Getter for #proxyUrl */
-    public String getProxyUrl() {
-        return proxyUrl;
-    }
-
-    /** Setter for #proxyUrl */
-    public void setProxyUrl(String proxyUrl) {
-        this.proxyUrl = proxyUrl;
-    }
-
-    /** Getter for #proxyPort */
-    public String getProxyPort() {
-        return proxyPort;
-    }
-
-    /** Setter for #proxyPort */
-    public void setProxyPort(String proxyPort) {
-        this.proxyPort = proxyPort;
-    }
-
-    public boolean checkEmptyConfig() {
-        return checkEmptyParam(proxyUrl) && checkEmptyParam(proxyPort);
-    }
-
-    private boolean checkEmptyParam(String param) {
-        return param == null || param.isEmpty();
     }
 
     public static void storeProperty(String property, String value) throws IOException {
@@ -109,7 +78,7 @@ public class InstallationManagerConfig {
     @Nullable
     private static String readProperty(String property) throws IOException {
         Properties props = readProperties(CONFIG_FILE);
-        return (String) props.get(property);
+        return (String)props.get(property);
     }
 
     /** @return configuration file path. Insure directory with conf file is existed. */
