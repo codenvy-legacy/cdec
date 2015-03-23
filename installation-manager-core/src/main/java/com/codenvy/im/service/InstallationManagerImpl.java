@@ -57,7 +57,6 @@ import static com.codenvy.im.utils.Commons.getProperException;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.delete;
-import static java.nio.file.Files.exists;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
@@ -66,8 +65,6 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
  */
 @Singleton
 public class InstallationManagerImpl implements InstallationManager {
-    private Path downloadDir; // not final, possibly to be configured
-
     private final HttpTransportConfiguration transportConf;
 
     private final String        updateEndpoint;
@@ -76,6 +73,7 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Set<Artifact> artifacts;
     private final NodeManager   nodeManager;
     private final BackupManager backupManager;
+    private final Path downloadDir;
 
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -92,29 +90,23 @@ public class InstallationManagerImpl implements InstallationManager {
         this.installer = installer;
         this.artifacts = new ArtifactsSet(artifacts); // keep order
 
-        try {
-            createAndSetDownloadDir(Paths.get(downloadDir));
-        } catch (IOException e) {
-            createAndSetDownloadDir(Paths.get(System.getenv("HOME"), "codenvy-updates"));
-        }
+        this.downloadDir = Paths.get(downloadDir);
+        checkRWPermissions(this.downloadDir);
 
         this.nodeManager = nodeManager;
         this.backupManager = backupManager;
     }
 
-    private void createAndSetDownloadDir(Path downloadDir) throws IOException {
-        if (!exists(downloadDir)) {
-            createDirectories(downloadDir);
-        }
-
-        checkRWPermissions(downloadDir);
-        this.downloadDir = downloadDir;
-    }
-
     private void checkRWPermissions(Path downloadDir) throws IOException {
-        Path tmp = downloadDir.resolve("tmp.tmp");
-        createFile(tmp);
-        delete(tmp);
+        try {
+            createDirectories(downloadDir);
+
+            Path tmp = downloadDir.resolve("tmp.tmp");
+            createFile(tmp);
+            delete(tmp);
+        } catch (IOException e) {
+            throw new IOException("Installation Manager probably doesn't have r/w permissions to " + downloadDir.toString(), e);
+        }
     }
 
     /** {@inheritDoc} */
@@ -220,6 +212,8 @@ public class InstallationManagerImpl implements InstallationManager {
         }};
     }
 
+
+    // TODO [AB] get rid of
     /** {@inheritDoc} */
     @Override
     public void setConfig(InstallationManagerConfig config) throws IOException {
@@ -231,27 +225,6 @@ public class InstallationManagerImpl implements InstallationManager {
         if (config.getProxyUrl() != null) {
             transportConf.setProxyUrl(config.getProxyUrl());
             storeProperty("installation-manager.proxy_url", transportConf.getProxyUrl());
-        }
-
-        if (config.getDownloadDir() != null) {
-            Path currentDownloadDir = this.downloadDir;
-            Path newDownloadDir = Paths.get(config.getDownloadDir());
-
-            validatePath(newDownloadDir);
-
-            try {
-                createAndSetDownloadDir(newDownloadDir);
-            } catch (IOException e) {
-                this.downloadDir = currentDownloadDir;
-                throw new IOException("Can't set new download directory. Installation Manager probably doesn't have r/w permissions.", e);
-            }
-
-            try {
-                storeProperty("installation-manager.download_dir", newDownloadDir.toString());
-            } catch (IOException e) {
-                this.downloadDir = currentDownloadDir;
-                throw e;
-            }
         }
     }
 
@@ -332,6 +305,7 @@ public class InstallationManagerImpl implements InstallationManager {
         return downloadDir.resolve(artifact.getName()).resolve(version.toString());
     }
 
+    // TODO [AB] get rid of
     protected void storeProperty(String property, String value) throws IOException {
         InstallationManagerConfig.storeProperty(property, value);
     }

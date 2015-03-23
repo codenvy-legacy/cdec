@@ -20,6 +20,7 @@ package com.codenvy.im.backup;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.utils.TarUtils;
 import org.apache.commons.io.FileUtils;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.mockito.Mockito.doReturn;
@@ -168,9 +171,12 @@ public class TestBackupConfig {
 
     @Test
     public void testGenerateBackupFilePath() {
+        DateFormat df = new SimpleDateFormat(BackupConfig.BACKUP_NAME_TIME_FORMAT);
+        Date date = new Date(1278139510000L); // == '07/03/2010 9:45:10'
+
         BackupConfig spyTestConfig = spy(new BackupConfig());
-        doReturn(new Date(1278139510000l)).when(spyTestConfig).getCurrentDate();  // 1278139510000l == '07/03/2010 9:45:10'
-        assertEquals(spyTestConfig.generateBackupFilePath(), Paths.get("target/backup/codenvy/backup_03-Jul-2010_09-45-10.tar"));
+        doReturn(date).when(spyTestConfig).getCurrentDate();
+        assertEquals(spyTestConfig.generateBackupFilePath(), Paths.get("target/backup/codenvy/backup_" + df.format(date) + ".tar"));
     }
 
     @Test

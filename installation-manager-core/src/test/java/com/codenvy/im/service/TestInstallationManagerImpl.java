@@ -33,6 +33,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.HttpTransportConfiguration;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -115,12 +116,12 @@ public class TestInstallationManagerImpl {
         deleteDirectory(Paths.get("target", "download").toFile());
     }
 
-    @Test
-    public void testInitializationIfDownloadDirectoryNotExist() throws Exception {
+    @Test(expectedExceptions = IOException.class)
+    public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
         new InstallationManagerImpl("", "/home/bla-bla", null, null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
-    @Test
+    @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
         new InstallationManagerImpl("", "/root", null, null, null, Collections.<Artifact>emptySet(), null, null);
     }
@@ -350,7 +351,6 @@ public class TestInstallationManagerImpl {
     @Test
     public void testGetUpdatesToDownloadForSpecificArtifact() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
-        final Version version200 = Version.valueOf("2.0.0");
 
         doReturn(version100).when(cdecArtifact).getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
 
@@ -423,19 +423,17 @@ public class TestInstallationManagerImpl {
         doNothing().when(manager).validatePath(any(Path.class));
 
         InstallationManagerConfig config = new InstallationManagerConfig();
-        config.setDownloadDir("target/new-download");
         config.setProxyPort("1000");
         config.setProxyUrl("localhost");
         manager.setConfig(config);
 
         Map<String, String> m = manager.getConfig();
         assertEquals(m.size(), 4);
-        assertTrue(m.containsValue("target/new-download"));
+        assertTrue(m.containsValue("target/download"));
         assertTrue(m.containsValue("1000"));
         assertTrue(m.containsValue("localhost"));
         assertTrue(m.containsValue("http://update.com"));
 
-        config.setDownloadDir("target/download");
         config.setProxyPort("");
         manager.setConfig(config);
 
@@ -452,26 +450,6 @@ public class TestInstallationManagerImpl {
         assertEquals(m.size(), 2);
         assertTrue(m.containsValue("target/download"));
         assertTrue(m.containsValue("http://update.com"));
-    }
-
-    @Test(expectedExceptions = IOException.class)
-    public void testSetConfigErrorIfDirectoryCantCreateDirectory() throws Exception {
-        doNothing().when(manager).storeProperty(anyString(), anyString());
-
-        InstallationManagerConfig config = new InstallationManagerConfig();
-        config.setDownloadDir("/hello/world");
-
-        manager.setConfig(config);
-    }
-
-    @Test(expectedExceptions = IOException.class)
-    public void testSetConfigErrorIfDirectoryIsNotAbsolute() throws Exception {
-        doNothing().when(manager).storeProperty(anyString(), anyString());
-
-        InstallationManagerConfig config = new InstallationManagerConfig();
-        config.setDownloadDir("hello");
-
-        manager.setConfig(config);
     }
 
     @Test

@@ -22,17 +22,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Properties;
 
 import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
-import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
-import static org.apache.commons.io.FileUtils.readFileToString;
-import static org.mockito.Mockito.doReturn;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -48,8 +42,6 @@ public class TestInstallationManagerConfig {
     @Test
     public void testFields() throws Exception {
         InstallationManagerConfig config = new InstallationManagerConfig();
-        config.setDownloadDir("dir");
-        assertEquals(config.getDownloadDir(), "dir");
 
         config.setProxyUrl("localhost");
         assertEquals(config.getProxyUrl(), "localhost");
@@ -61,9 +53,6 @@ public class TestInstallationManagerConfig {
     @Test
     public void testCheckEmptyConfig() throws Exception {
         InstallationManagerConfig config = new InstallationManagerConfig();
-        assertTrue(config.checkEmptyConfig());
-
-        config.setDownloadDir("");
         assertTrue(config.checkEmptyConfig());
 
         config.setProxyUrl("localhost");

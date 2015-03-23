@@ -19,15 +19,15 @@ package com.codenvy.im.cli.command;
 
 
 import com.codenvy.im.service.InstallationManagerConfig;
+
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+
+// TODO [AB] get rid of
 
 /** @author Anatoliy Bazko */
 @Command(scope = "codenvy", name = "im-config", description = "Config installation manager")
 public class ConfigCommand extends AbstractIMCommand {
-
-    @Option(name = "--download-dir", description = "To set the download directory", required = false)
-    private String downloadDir;
 
     @Option(name = "--proxy-url", description = "To set the proxy url", required = false)
     private String proxyUrl;
@@ -38,9 +38,6 @@ public class ConfigCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         InstallationManagerConfig config = new InstallationManagerConfig();
-        if (downloadDir != null) {
-            config.setDownloadDir(downloadDir);
-        }
         if (proxyUrl != null) {
             config.setProxyUrl(proxyUrl);
         }

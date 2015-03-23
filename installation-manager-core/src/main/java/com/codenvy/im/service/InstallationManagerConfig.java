@@ -30,6 +30,8 @@ import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 
+// TODO [AB] get rid of
+
 /** @author Anatoliy Bazko */
 public class InstallationManagerConfig {
     public static Path CONFIG_FILE = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
@@ -37,21 +39,10 @@ public class InstallationManagerConfig {
     public static final String CODENVY_HOST_DNS = "codenvy_host_dns";
     public static final String PUPPET_MASTER_HOST_NAME = "puppet_master_host_name";
 
-    private String downloadDir;
     private String proxyPort;
     private String proxyUrl;
 
     public InstallationManagerConfig() {
-    }
-
-    /** Getter for #downloadDir */
-    public String getDownloadDir() {
-        return downloadDir;
-    }
-
-    /** Setter for #downloadDir */
-    public void setDownloadDir(String downloadDir) {
-        this.downloadDir = downloadDir;
     }
 
     /** Getter for #proxyUrl */
@@ -75,7 +66,7 @@ public class InstallationManagerConfig {
     }
 
     public boolean checkEmptyConfig() {
-        return checkEmptyParam(downloadDir) && checkEmptyParam(proxyUrl) && checkEmptyParam(proxyPort);
+        return checkEmptyParam(proxyUrl) && checkEmptyParam(proxyPort);
     }
 
     private boolean checkEmptyParam(String param) {
