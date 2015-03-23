@@ -108,7 +108,7 @@ public class TestSimpleCommand {
 
         String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
 
-        Command testCommand = SimpleCommand.createShellAgentCommand(command, host, port, user, privateKeyFile);
+        Command testCommand = SimpleCommand.createCommand(command, host, port, user, privateKeyFile);
         assertEquals(testCommand.toString(), expectedResult);
     }
 
@@ -120,7 +120,7 @@ public class TestSimpleCommand {
         String user = System.getProperty("user.name");
         String expectedCommand = format("{'command'='%s', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", command, user);
 
-        Command testMacroCommand = SimpleCommand.createShellAgentCommand(command, node);
+        Command testMacroCommand = SimpleCommand.createCommand(command, node);
         assertEquals(testMacroCommand.toString(), expectedCommand);
     }
 }

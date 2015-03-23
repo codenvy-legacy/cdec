@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.command.CommandLibrary;
 import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
@@ -42,23 +43,18 @@ import java.util.Map;
 import static com.codenvy.im.backup.BackupConfig.Component.LDAP;
 import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
 import static com.codenvy.im.backup.BackupConfig.getComponentTempPath;
-import static com.codenvy.im.command.CommandFactory.createCopyFromLocalToRemoteCommand;
-import static com.codenvy.im.command.CommandFactory.createCopyFromRemoteToLocalCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentPackCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentUnpackCommand;
-import static com.codenvy.im.command.CommandFactory.createPatchCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentPackCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentStartServiceCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentStopServiceCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentUnpackCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentWaitServiceActiveCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentsCommand;
-import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
+import static com.codenvy.im.command.CommandLibrary.createCopyFromLocalToRemoteCommand;
+import static com.codenvy.im.command.CommandLibrary.createCopyFromRemoteToLocalCommand;
+import static com.codenvy.im.command.CommandLibrary.createFileRestoreOrBackupCommand;
+import static com.codenvy.im.command.CommandLibrary.createPackCommand;
+import static com.codenvy.im.command.CommandLibrary.createPatchCommand;
+import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.command.CommandLibrary.createReplaceCommand;
+import static com.codenvy.im.command.CommandLibrary.createStartServiceCommand;
+import static com.codenvy.im.command.CommandLibrary.createStopServiceCommand;
+import static com.codenvy.im.command.CommandLibrary.createUnpackCommand;
+import static com.codenvy.im.command.MacroCommand.createCommand;
+import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static com.codenvy.im.node.NodeConfig.extractConfigFrom;
 import static com.codenvy.im.node.NodeConfig.extractConfigsFrom;
 import static java.lang.String.format;
@@ -72,6 +68,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         super(original);
     }
 
+    /** {@inheritDoc} */
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return ImmutableList.of(
@@ -108,24 +105,24 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             case 0:
                 return new MacroCommand(ImmutableList.of(
                     // disable selinux on puppet agent
-                    createRemoteAgentFileRestoreOrBackupCommand("/etc/selinux/config", nodeConfigs),
-                    createRemoteAgentsCommand("if sudo test -f /etc/selinux/config; then " +
-                                              "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
-                                              "        sudo setenforce 0; " +
-                                              "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
-                                              "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
-                                              "    fi " +
-                                              "fi ", nodeConfigs),
+                    CommandLibrary.createFileRestoreOrBackupCommand("/etc/selinux/config", nodeConfigs),
+                    createCommand("if sudo test -f /etc/selinux/config; then " +
+                                  "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                  "        sudo setenforce 0; " +
+                                  "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                  "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                  "    fi " +
+                                  "fi ", nodeConfigs),
 
                     // disable selinux on puppet master
-                    createLocalAgentFileRestoreOrBackupCommand("/etc/selinux/config"),
-                    createLocalAgentCommand("if sudo test -f /etc/selinux/config; then " +
-                                            "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
-                                            "        sudo setenforce 0; " +
-                                            "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
-                                            "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
-                                            "    fi " +
-                                            "fi ")
+                    createFileRestoreOrBackupCommand("/etc/selinux/config"),
+                    createCommand("if sudo test -f /etc/selinux/config; then " +
+                                  "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+                                  "        sudo setenforce 0; " +
+                                  "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+                                  "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+                                  "    fi " +
+                                  "fi ")
 
                 ), "Disable SELinux");
 
@@ -133,146 +130,146 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
                     // install puppet master
-                    add(createLocalAgentCommand(
+                    add(createCommand(
                         "yum list installed | grep puppetlabs-release.noarch; "
                         + "if [ $? -ne 0 ]; "
                         + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
                         + "; fi"));
-                    add(createLocalAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
 
-                    add(createLocalAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
-                                                " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
-                                                ".wants/puppetmaster.service'" +
-                                                "; fi"));
-                    add(createLocalAgentCommand("sudo systemctl enable puppetmaster"));
+                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
+                                      " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
+                                      ".wants/puppetmaster.service'" +
+                                      "; fi"));
+                    add(createCommand("sudo systemctl enable puppetmaster"));
 
                     // install puppet agents on each node
-                    add(createRemoteAgentsCommand(
+                    add(createCommand(
                         "yum list installed | grep puppetlabs-release.noarch; "
                         + "if [ $? -ne 0 ]; "
                         + format("then sudo yum -y -q install %s ", config.getValue(Config.PUPPET_RESOURCE_URL))
                         + "; fi", nodeConfigs));
-                    add(createRemoteAgentsCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));  // -q here is needed to avoid hung up of ssh
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));  // -q here is needed to avoid hung up of ssh
 
-                    add(createRemoteAgentsCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                                  " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                                  ".wants/puppet.service'" +
-                                                  "; fi", nodeConfigs));
-                    add(createRemoteAgentsCommand("sudo systemctl enable puppet", nodeConfigs));
+                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                      ".wants/puppet.service'" +
+                                      "; fi", nodeConfigs));
+                    add(createCommand("sudo systemctl enable puppet", nodeConfigs));
 
                     // open puppet master to puppet agent
-                    add(createLocalAgentCommand("systemctl | grep iptables.service; "  // disable 'iptables' service
-                                                + "if [ $? -eq 0 ]; "
-                                                + "then "
-                                                + "  sudo service iptables stop; "
-                                                + "fi; "
+                    add(createCommand("systemctl | grep iptables.service; "  // disable 'iptables' service
+                                      + "if [ $? -eq 0 ]; "
+                                      + "then "
+                                      + "  sudo service iptables stop; "
+                                      + "fi; "
 
-                                                // install 'firewalld', if needed
-                                                + "yum list installed | grep firewalld; "
-                                                + "if [ $? -ne 0 ]; "
-                                                + "then "
-                                                + "  sudo yum -y -q install firewalld; "
-                                                + "fi; "
+                                      // install 'firewalld', if needed
+                                      + "yum list installed | grep firewalld; "
+                                      + "if [ $? -ne 0 ]; "
+                                      + "then "
+                                      + "  sudo yum -y -q install firewalld; "
+                                      + "fi; "
 
-                                                // start 'firewalld' service, if needed
-                                                + "systemctl | grep firewalld.service; "
-                                                + "if [ $? -ne 0 ]; "
-                                                + "then "
-                                                + "  sudo service firewalld start; "
-                                                + "fi; "
+                                      // start 'firewalld' service, if needed
+                                      + "systemctl | grep firewalld.service; "
+                                      + "if [ $? -ne 0 ]; "
+                                      + "then "
+                                      + "  sudo service firewalld start; "
+                                      + "fi; "
 
-                                                // open firewall port 8140 permanently
-                                                // http://stackoverflow.com/questions/24729024/centos-7-open-firewall-port
-                                                + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; "
-                                                + "sudo firewall-cmd --reload; "));
+                                      // open firewall port 8140 permanently
+                                      // http://stackoverflow.com/questions/24729024/centos-7-open-firewall-port
+                                      + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; "
+                                      + "sudo firewall-cmd --reload; "));
                 }}, "Install puppet binaries");
 
             case 2:
-                return createLocalAgentCommand(format("sudo unzip -o %s -d /etc/puppet", pathToBinaries.toString()));
+                return createCommand(format("sudo unzip -o %s -d /etc/puppet", pathToBinaries.toString()));
 
             case 3: {
                 List<Command> commands = new ArrayList<>();
 
-                commands.add(createLocalAgentFileRestoreOrBackupCommand("/etc/puppet/fileserver.conf"));
-                commands.add(createLocalAgentCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
-                commands.add(createLocalAgentCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
-                commands.add(createLocalAgentCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
+                commands.add(createFileRestoreOrBackupCommand("/etc/puppet/fileserver.conf"));
+                commands.add(createCommand("sudo sed -i \"\\$a[file]\"                      /etc/puppet/fileserver.conf"));
+                commands.add(createCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
+                commands.add(createCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
 
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createLocalAgentPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createLocalAgentPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
 
                 for (Map.Entry<String, String> e : ConfigUtil.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
                     String replacingToken = e.getKey();
                     String replacement = e.getValue();
 
-                    commands.add(createLocalAgentReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
+                    commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
 
-                commands.add(createLocalAgentFileRestoreOrBackupCommand("/etc/puppet/puppet.conf"));
-                commands.add(createLocalAgentReplaceCommand("/etc/puppet/puppet.conf",
-                                                            "\\[main\\]",
-                                                            format("\\[master\\]\\n" +
-                                                                   "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
-                                                                   "    ca = true\\n" +
-                                                                   "    ssldir = /var/lib/puppet/ssl\\n" +
-                                                                   "    pluginsync = true\\n" +
-                                                                   "\\n" +
-                                                                   "\\[main\\]\\n" +
-                                                                   "    certname = %s\\n" +
-                                                                   "    privatekeydir = $ssldir/private_keys { group = service }\\n" +
-                                                                   "    hostprivkey = $privatekeydir/$certname.pem { mode = 640 }\\n" +
-                                                                   "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
-                                                                   "\\n",
-                                                                   config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+                commands.add(createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf"));
+                commands.add(createReplaceCommand("/etc/puppet/puppet.conf",
+                                                  "\\[main\\]",
+                                                  format("\\[master\\]\\n" +
+                                                         "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
+                                                         "    ca = true\\n" +
+                                                         "    ssldir = /var/lib/puppet/ssl\\n" +
+                                                         "    pluginsync = true\\n" +
+                                                         "\\n" +
+                                                         "\\[main\\]\\n" +
+                                                         "    certname = %s\\n" +
+                                                         "    privatekeydir = $ssldir/private_keys { group = service }\\n" +
+                                                         "    hostprivkey = $privatekeydir/$certname.pem { mode = 640 }\\n" +
+                                                         "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
+                                                         "\\n",
+                                                         config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
 
                 // remove "[agent]" section
-                commands.add(createLocalAgentReplaceCommand("/etc/puppet/puppet.conf",
-                                                            "\\[agent\\].*",
-                                                            ""));
+                commands.add(createReplaceCommand("/etc/puppet/puppet.conf",
+                                                  "\\[agent\\].*",
+                                                  ""));
 
                 // make it possible to sign up nodes' certificates automatically
                 String autosignFileContent = "";
                 for (NodeConfig node : nodeConfigs) {
                     autosignFileContent += format("%s\n", node.getHost());
                 }
-                commands.add(createLocalAgentCommand(format("sudo sh -c \"echo -e '%s' > /etc/puppet/autosign.conf\"",
-                                                            autosignFileContent)));
+                commands.add(createCommand(format("sudo sh -c \"echo -e '%s' > /etc/puppet/autosign.conf\"",
+                                                  autosignFileContent)));
 
                 return new MacroCommand(commands, "Configure puppet master");
             }
 
             case 4: {
                 List<Command> commands = new ArrayList<>();
-                commands.add(createRemoteAgentFileRestoreOrBackupCommand("/etc/puppet/puppet.conf", nodeConfigs));
-                commands.add(createRemoteAgentsCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                                              "  server = %s\\n" +
-                                                              "  runinterval = 420\\n" +
-                                                              "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                              config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
-                                                       nodeConfigs));
+                commands.add(CommandLibrary.createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf", nodeConfigs));
+                commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                  "  server = %s\\n" +
+                                                  "  runinterval = 420\\n" +
+                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                           nodeConfigs));
 
                 for (NodeConfig node : nodeConfigs) {
-                    commands.add(createRemoteAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                                                 "  show_diff = true\\n" +
-                                                                 "  pluginsync = true\\n" +
-                                                                 "  report = true\\n" +
-                                                                 "  default_schedules = false\\n" +
-                                                                 "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
+                    commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                                      "  show_diff = true\\n" +
+                                                      "  pluginsync = true\\n" +
+                                                      "  report = true\\n" +
+                                                      "  default_schedules = false\\n" +
+                                                      "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
                 }
 
                 return new MacroCommand(commands, "Configure puppet agent");
             }
 
             case 5:
-                return createLocalAgentCommand("sudo systemctl start puppetmaster");
+                return createCommand("sudo systemctl start puppetmaster");
 
             case 6:
-                return new MacroCommand(ImmutableList.of(createRemoteAgentsCommand("sudo systemctl start puppet", nodeConfigs)),
+                return new MacroCommand(ImmutableList.of(createCommand("sudo systemctl start puppet", nodeConfigs)),
                                         "Launch puppet agent");
 
             case 7:
@@ -281,12 +278,12 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     throw new IllegalArgumentException("Site node config not found.");
                 }
 
-                return createRemoteAgentCommand("doneState=\"Installing\"; " +
-                                                "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                                "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                                "    sleep 30; " +
-                                                "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                                "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
+                return createCommand("doneState=\"Installing\"; " +
+                                     "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                     "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                     "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                     "    sleep 30; " +
+                                     "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
 
             case 8:
                 return new MacroCommand(ImmutableList.of(
@@ -301,6 +298,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException {
         final Config config = new Config(installOptions.getConfigProperties());
@@ -308,9 +306,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         switch (step) {
             case 0:
-                return createLocalAgentCommand(format("rm -rf /tmp/codenvy; " +
-                                                      "mkdir /tmp/codenvy/; " +
-                                                      "unzip -o %s -d /tmp/codenvy", pathToBinaries.toString()));
+                return createCommand(format("rm -rf /tmp/codenvy; " +
+                                            "mkdir /tmp/codenvy/; " +
+                                            "unzip -o %s -d /tmp/codenvy", pathToBinaries.toString()));
 
             case 1:
                 List<Command> commands = new ArrayList<>();
@@ -318,8 +316,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createLocalAgentPropertyReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createPropertyReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createPropertyReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
 
                 final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
@@ -327,7 +325,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     String replacingToken = e.getKey();
                     String replacement = e.getValue();
 
-                    commands.add(createLocalAgentReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
+                    commands.add(createReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
                 return new MacroCommand(commands, "Configure Codenvy");
 
@@ -335,10 +333,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 return createPatchCommand(Paths.get("/tmp/codenvy/patches/"), original.getInstalledVersion(), versionToUpdate);
 
             case 3:
-                return createLocalAgentCommand("sudo rm -rf /etc/puppet/files; " +
-                                               "sudo rm -rf /etc/puppet/modules; " +
-                                               "sudo rm -rf /etc/puppet/manifests; " +
-                                               "sudo mv /tmp/codenvy/* /etc/puppet");
+                return createCommand("sudo rm -rf /etc/puppet/files; " +
+                                     "sudo rm -rf /etc/puppet/modules; " +
+                                     "sudo rm -rf /etc/puppet/manifests; " +
+                                     "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
                 return new CheckInstalledVersionCommand(original, versionToUpdate);
@@ -348,6 +346,27 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
     }
 
+    /**
+     * Given:
+     * - path to backup file
+     * - path to local backup dir for artifact
+     * - codenvy config
+     *
+     * Commands:
+     * - obtain config of API and DATA nodes from puppet-master config file
+     * - create local temp dir for the artifact backup data
+     * - stop services on API node
+     * - stop services on DATA node
+     * - pack filesystem data of API node to the {backup_file}/fs folder, copy backup file to local temp dir
+     * - create dump of MONGO at the DATA node, copy it to {local_backup_dir}/mongo
+     * - create dump of LDAP at the DATA node, copy it to {local_backup_dir}/ldap
+     * - add dumps to the local backup file
+     * - start services
+     * - wait until API server starts
+     * - remove local temp dir
+     *
+     * @return MacroCommand which holds all commands
+     */
     @Override
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
@@ -361,86 +380,96 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         Path backupFile = backupConfig.getBackupFile();
 
         // create local temp dir
-        commands.add(createLocalAgentCommand(format("mkdir -p %s", localTempDir)));
+        commands.add(createCommand(format("mkdir -p %s", localTempDir)));
 
         // stop services on API node
-        commands.add(createRemoteAgentStopServiceCommand("puppet", apiNode));
-        commands.add(createRemoteAgentStopServiceCommand("crond", apiNode));
-        commands.add(createRemoteAgentStopServiceCommand("codenvy", apiNode));
-        commands.add(createRemoteAgentStopServiceCommand("codenvy-codeassistant ", apiNode));
+        commands.add(createStopServiceCommand("puppet", apiNode));
+        commands.add(createStopServiceCommand("crond", apiNode));
+        commands.add(createStopServiceCommand("codenvy", apiNode));
+        commands.add(createStopServiceCommand("codenvy-codeassistant ", apiNode));
 
         // stop services on DATA node
-        commands.add(createRemoteAgentStopServiceCommand("puppet", dataNode));
-        commands.add(createRemoteAgentStopServiceCommand("crond", dataNode));
-        commands.add(createRemoteAgentStopServiceCommand("slapd", dataNode));
+        commands.add(createStopServiceCommand("puppet", dataNode));
+        commands.add(createStopServiceCommand("crond", dataNode));
+        commands.add(createStopServiceCommand("slapd", dataNode));
 
-        // add filesystem data from API node to the {backup_file}/fs folder, and copy it to local node at the first
+        // pack filesystem data of API node to the {backup_file}/fs folder, and then copy it to local temp dir
         Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
-        commands.add(createRemoteAgentCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
-        commands.add(createRemoteAgentPackCommand(Paths.get("/home/codenvy/codenvy-data/data"), tempApiNodeBackupFile, "fs/.", apiNode));
+        commands.add(createCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
+        commands.add(createPackCommand(Paths.get("/home/codenvy/codenvy-data/data"), tempApiNodeBackupFile, "fs/.", apiNode));
 
         commands.add(createCopyFromRemoteToLocalCommand(tempApiNodeBackupFile,
                                                         backupFile,
                                                         apiNode));
 
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", remoteTempDir), apiNode));  // cleanup
+        commands.add(createCommand(format("rm -rf %s", remoteTempDir), apiNode));  // cleanup api node
 
-        // dump mongo from DATA node to local backup directory
+        // create dump of MONGO at the DATA node, copy it to {local_backup_dir}/mongo
         Path remoteMongoBackupPath = getComponentTempPath(remoteTempDir, MONGO);
         Path localMongoBackupPath = getComponentTempPath(localTempDir, MONGO);
 
-        commands.add(createRemoteAgentCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
-        commands.add(createRemoteAgentCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
-                                                     codenvyConfig.getMongoAdminPassword(),
-                                                     remoteMongoBackupPath), dataNode));
+        commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
+        commands.add(createCommand(format("/usr/bin/mongodump -uSuperAdmin -p%s -o %s --authenticationDatabase admin",
+                                          codenvyConfig.getMongoAdminPassword(),
+                                          remoteMongoBackupPath), dataNode));
 
         Path adminDatabaseBackup = remoteMongoBackupPath.resolve("admin");
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", adminDatabaseBackup), dataNode));  // remove useless 'admin' database
+        commands.add(createCommand(format("rm -rf %s", adminDatabaseBackup), dataNode));  // remove useless 'admin' database
 
-        commands.add(createLocalAgentCommand(format("mkdir -p %s", localMongoBackupPath)));
+        commands.add(createCommand(format("mkdir -p %s", localMongoBackupPath)));
         commands.add(createCopyFromRemoteToLocalCommand(remoteMongoBackupPath,
                                                         localMongoBackupPath.getParent(),
                                                         dataNode));
 
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));  // cleanup
-
-        // dump LDAP from DATA node to local backup directory
+        // create dump of LDAP at the DATA node, copy it to {local_backup_dir}/ldap
         Path remoteLdapBackupPath = getComponentTempPath(remoteTempDir, LDAP);
         Path localLdapBackupFilePath = getComponentTempPath(localTempDir, LDAP);
 
-        commands.add(createRemoteAgentCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
-        commands.add(createRemoteAgentCommand(format("sudo slapcat > %s", remoteLdapBackupPath), dataNode));
+        commands.add(createCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
+        commands.add(createCommand(format("sudo slapcat > %s", remoteLdapBackupPath), dataNode));
 
-        commands.add(createLocalAgentCommand(format("mkdir -p %s", localLdapBackupFilePath.getParent())));
+        commands.add(createCommand(format("mkdir -p %s", localLdapBackupFilePath.getParent())));
         commands.add(createCopyFromRemoteToLocalCommand(remoteLdapBackupPath,
                                                         localLdapBackupFilePath,
                                                         dataNode));
 
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", localLdapBackupFilePath.getParent()), dataNode));  // cleanup
+        commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));  // cleanup data node
 
-        // add dumps to the backup file
-        commands.add(createLocalAgentPackCommand(localTempDir, backupFile, "."));
+        // add dumps to the local backup file
+        commands.add(createPackCommand(localTempDir, backupFile, "."));
 
         // start services
-        commands.add(createRemoteAgentStartServiceCommand("codenvy", apiNode));
-        commands.add(createRemoteAgentStartServiceCommand("puppet", apiNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("puppet", apiNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("codenvy", apiNode));
-
-        commands.add(createRemoteAgentStartServiceCommand("slapd", dataNode));
-        commands.add(createRemoteAgentStartServiceCommand("puppet", dataNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("puppet", dataNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("slapd", dataNode));
+        commands.add(createStartServiceCommand("puppet", dataNode));
+        commands.add(createStartServiceCommand("puppet", apiNode));
 
         // wait until API server restarts
-        commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        if (original.getInstalledVersion() != null) {
+            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        }
 
         // remove local temp dir
-        commands.add(createLocalAgentCommand(format("sudo rm -rf %s", localTempDir)));
+        commands.add(createCommand(format("sudo rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Backup data commands");
     }
 
+    /**
+     * Given:
+     * - path to backup file
+     * - codenvy config
+     *
+     * Commands:
+     * - unpack backupFile into the tempDir
+     * - stop services on API node
+     * - stop services on DATA node
+     * - restore filesystem data at the API node from {backup_file}/fs folder
+     * - restore MONGO data at the DATA node from {temp_backup_directory}/mongo folder
+     * - restore LDAP at the DATA node from {temp_backup_directory}/ldap/ldap.ldif file
+     * - start services
+     * - remove local temp dir
+     *
+     * @return MacroCommand which holds all commands
+     */
     @Override
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
@@ -453,79 +482,72 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         Path remoteTempDir = Paths.get("/tmp/codenvy");
         Path backupFile = backupConfig.getBackupFile();
 
-
         // unpack backupFile into the tempDir
-        commands.add(createLocalAgentUnpackCommand(backupFile, localTempDir));
+        commands.add(createUnpackCommand(backupFile, localTempDir));
 
         // stop services on API node
-        commands.add(createRemoteAgentStopServiceCommand("puppet", apiNode));
-        commands.add(createRemoteAgentStopServiceCommand("crond", apiNode));
-        commands.add(createRemoteAgentStopServiceCommand("codenvy", apiNode));
-        commands.add(createRemoteAgentStopServiceCommand("codenvy-codeassistant ", apiNode));
+        commands.add(createStopServiceCommand("puppet", apiNode));
+        commands.add(createStopServiceCommand("crond", apiNode));
+        commands.add(createStopServiceCommand("codenvy", apiNode));
+        commands.add(createStopServiceCommand("codenvy-codeassistant ", apiNode));
 
         // stop services on DATA node
-        commands.add(createRemoteAgentStopServiceCommand("puppet", dataNode));
-        commands.add(createRemoteAgentStopServiceCommand("crond", dataNode));
-        commands.add(createRemoteAgentStopServiceCommand("slapd", dataNode));
+        commands.add(createStopServiceCommand("puppet", dataNode));
+        commands.add(createStopServiceCommand("crond", dataNode));
+        commands.add(createStopServiceCommand("slapd", dataNode));
 
-        // restore filesystem data from {backup_file}/fs folder
-        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
-        commands.add(createRemoteAgentCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
+        // restore filesystem data at the API node from {backup_file}/fs folder
+        Path apiNodeTempBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
+        commands.add(createCommand(format("mkdir -p %s", apiNodeTempBackupFile.getParent()), apiNode));
         commands.add(createCopyFromLocalToRemoteCommand(backupFile,
-                                                        tempApiNodeBackupFile,
+                                                        apiNodeTempBackupFile,
                                                         apiNode));
 
-        commands.add(createRemoteAgentCommand("sudo rm -rf /home/codenvy/codenvy-data/fs", apiNode));
-        commands.add(createRemoteAgentUnpackCommand(tempApiNodeBackupFile, Paths.get("/home/codenvy/codenvy-data/data"), "fs", apiNode));
+        commands.add(createCommand("sudo rm -rf /home/codenvy/codenvy-data/fs", apiNode));
+        commands.add(createUnpackCommand(apiNodeTempBackupFile, Paths.get("/home/codenvy/codenvy-data/data"), "fs", apiNode));
 
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", tempApiNodeBackupFile.getParent()), apiNode));  // cleanup
+        commands.add(createCommand(format("rm -rf %s", remoteTempDir), apiNode));  // cleanup api node
 
-        // restore MONGO from {temp_backup_directory}/mongo folder
+        // restore MONGO data at the DATA node from {temp_backup_directory}/mongo folder
         Path remoteMongoBackupPath = getComponentTempPath(remoteTempDir, MONGO);
         Path localMongoBackupPath = getComponentTempPath(localTempDir, MONGO);
-        commands.add(createRemoteAgentCommand(format("mkdir -p %s", localMongoBackupPath), dataNode));
+
+        commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
         commands.add(createCopyFromLocalToRemoteCommand(localMongoBackupPath,
                                                         remoteMongoBackupPath,
                                                         dataNode));
 
-        commands.add(createRemoteAgentCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
-                                                     codenvyConfig.getMongoAdminPassword(),
-                                                     remoteMongoBackupPath), dataNode));
+        commands.add(createCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
+                                          codenvyConfig.getMongoAdminPassword(),
+                                          remoteMongoBackupPath.getParent()), dataNode));
 
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", localMongoBackupPath), dataNode));  // cleanup
-
-        // restore LDAP from {temp_backup_directory}/ldap folder
+        // restore LDAP at the DATA node from {temp_backup_directory}/ldap/ldap.ldif file
         Path localLdapBackupPath = getComponentTempPath(localTempDir, LDAP);
         Path remoteLdapBackupPath = getComponentTempPath(remoteTempDir, LDAP);
-        commands.add(createRemoteAgentCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
+        commands.add(createCommand(format("mkdir -p %s", remoteLdapBackupPath.getParent()), dataNode));
         commands.add(createCopyFromLocalToRemoteCommand(localLdapBackupPath,
                                                         remoteLdapBackupPath,
                                                         dataNode));
 
-        commands.add(createRemoteAgentCommand("sudo rm -rf /var/lib/ldap", dataNode));
-        commands.add(createRemoteAgentCommand("sudo mkdir -p /var/lib/ldap", dataNode));
-        commands.add(createRemoteAgentCommand(format("sudo slapadd -q <%s", remoteLdapBackupPath), dataNode));
-        commands.add(createRemoteAgentCommand("sudo chown ldap:ldap /var/lib/ldap", dataNode));
-        commands.add(createRemoteAgentCommand("sudo chown ldap:ldap /var/lib/ldap/*", dataNode));
+        commands.add(createCommand("sudo rm -rf /var/lib/ldap", dataNode));
+        commands.add(createCommand("sudo mkdir -p /var/lib/ldap", dataNode));
+        commands.add(createCommand(format("sudo slapadd -q <%s", remoteLdapBackupPath), dataNode));
+        commands.add(createCommand("sudo chown ldap:ldap /var/lib/ldap", dataNode));
+        commands.add(createCommand("sudo chown ldap:ldap /var/lib/ldap/*", dataNode));
 
-        commands.add(createRemoteAgentCommand(format("rm -rf %s", remoteLdapBackupPath.getParent()), dataNode));  // cleanup
+        commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));  // cleanup data node
 
         // start services
-        commands.add(createRemoteAgentStartServiceCommand("codenvy", apiNode));
-        commands.add(createRemoteAgentStartServiceCommand("puppet", apiNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("puppet", apiNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("codenvy", apiNode));
-
-        commands.add(createRemoteAgentStartServiceCommand("slapd", dataNode));
-        commands.add(createRemoteAgentStartServiceCommand("puppet", dataNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("puppet", dataNode));
-        commands.add(createRemoteAgentWaitServiceActiveCommand("slapd", dataNode));
+        commands.add(createStartServiceCommand("puppet", apiNode));
+        commands.add(createStartServiceCommand("puppet", dataNode));
 
         // wait until API server restarts
-        commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        if (original.getInstalledVersion() != null) {
+            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        }
 
         // remove local temp dir
-        commands.add(createLocalAgentCommand(format("sudo rm -rf %s", localTempDir)));
+        commands.add(createCommand(format("sudo rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Restore data commands");
     }

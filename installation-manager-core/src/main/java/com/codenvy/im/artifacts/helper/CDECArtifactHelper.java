@@ -38,13 +38,28 @@ public abstract class CDECArtifactHelper {
         this.original = original;
     }
 
+    /**
+     * @return list of install command description
+     */
     public abstract List<String> getInstallInfo(InstallOptions installOptions) throws IOException;
 
+    /**
+     * @return list of commands to install Codenvy due to given version, install options and path to binaries
+     */
     public abstract Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
+    /**
+     * @return list of commands to update Codenvy due to given version to update, install options and path to binaries
+     */
     public abstract Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
+    /**
+     * @return list of commands to backup codenvy due to given backup config and codenvy config
+     */
     public abstract Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
 
+    /**
+     * @return list of commands to restore codenvy due to given backup config and codenvy config
+     */
     public abstract Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
 }

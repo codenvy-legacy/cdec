@@ -95,7 +95,7 @@ public class TestBackupManager {
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 BackupConfig backupConfig = (BackupConfig) invocationOnMock.getArguments()[0];
-                return SimpleCommand.createLocalAgentCommand(String.format("echo '' > %s", backupConfig.getBackupFile().toString()));  // create empty backup file for testing propose
+                return SimpleCommand.createCommand(String.format("echo '' > %s", backupConfig.getBackupFile().toString()));  // create empty backup file for testing propose
             }
         }).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigUtil);
 

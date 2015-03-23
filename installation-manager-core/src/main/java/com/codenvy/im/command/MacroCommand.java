@@ -19,19 +19,9 @@ package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.node.NodeConfig;
-import com.codenvy.im.utils.Version;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NavigableSet;
-
-import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
-import static com.codenvy.im.utils.Commons.getVersionsList;
-import static java.lang.String.format;
-import static java.nio.file.Files.exists;
 
 /** @author Dmytro Nochevnov */
 public class MacroCommand implements Command {
@@ -66,14 +56,19 @@ public class MacroCommand implements Command {
         return commands.toString();
     }
 
+    /** Create command which will be executed on several remote nodes. */
+    public static Command createCommand(String command, List<NodeConfig> nodes) throws AgentException {
+        return createCommand(command, null, nodes);
+    }
+
     /**
      * Factory method. Creates MacroCommand which includes list of identical commands
-     * with {@link com.codenvy.im.agent.SecureShellAgent} to be applied at every node in the given list.
+     * with {@link com.codenvy.im.agent.SecureShellAgent} to be applied at every remote node in the given nodes list.
      */
-    public static Command createRemoteAgentsCommand(String command, String description, List<NodeConfig> nodes) throws AgentException {
+    public static Command createCommand(String command, String description, List<NodeConfig> nodes) throws AgentException {
         final List<Command> commands = new ArrayList<>(nodes.size());
         for (NodeConfig node : nodes) {
-            commands.add(SimpleCommand.createShellAgentCommand(command, node));
+            commands.add(SimpleCommand.createCommand(command, node));
         }
 
         return new MacroCommand(commands, description);

@@ -35,11 +35,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.codenvy.im.command.CommandFactory.createLocalAgentFileBackupCommand;
-import static com.codenvy.im.command.CommandFactory.createLocalAgentPropertyReplaceCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentCommand;
-import static com.codenvy.im.command.CommandFactory.createRemoteAgentFileBackupCommand;
-import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
+import static com.codenvy.im.command.CommandLibrary.createFileBackupCommand;
+import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
 import static java.lang.String.format;
 
@@ -92,70 +90,70 @@ public class NodeManager {
         try {
             // modify puppet master config
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
-            commands.add(createLocalAgentFileBackupCommand(puppetMasterConfigFilePath));
-            commands.add(createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                                                "$" + property,
-                                                                value));
+            commands.add(createFileBackupCommand(puppetMasterConfigFilePath));
+            commands.add(createPropertyReplaceCommand(puppetMasterConfigFilePath,
+                                                      "$" + property,
+                                                      value));
 
             // add node into the autosign list of puppet master
-            commands.add(createLocalAgentCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
-                                                        node.getHost())));
+            commands.add(createCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
+                                              node.getHost())));
 
             String puppetMasterNodeDns = readPuppetMasterNodeDns();
 
             // install puppet agents on adding node
-            commands.add(createRemoteAgentCommand("yum list installed | grep puppetlabs-release.noarch; "
-                                                  + "if [ $? -ne 0 ]; "
-                                                  + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                                                  + "; fi",
-                                                  node));
-            commands.add(createRemoteAgentCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
+            commands.add(createCommand("yum list installed | grep puppetlabs-release.noarch; "
+                                       + "if [ $? -ne 0 ]; "
+                                       + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
+                                       + "; fi",
+                                       node));
+            commands.add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
 
-            commands.add(createRemoteAgentCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                                  " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                                  ".wants/puppet.service'" +
-                                                  "; fi",
-                                                  node));
-            commands.add(createRemoteAgentCommand("sudo systemctl enable puppet", node));
+            commands.add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                       " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                       ".wants/puppet.service'" +
+                                       "; fi",
+                                       node));
+            commands.add(createCommand("sudo systemctl enable puppet", node));
 
             // configure puppet agent
-            commands.add(createRemoteAgentFileBackupCommand("/etc/puppet/puppet.conf", node));
-            commands.add(createRemoteAgentCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                                         "  server = %s\\n" +
-                                                         "  runinterval = 420\\n" +
-                                                         "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                         puppetMasterNodeDns),
-                                                  node));
+            commands.add(createFileBackupCommand("/etc/puppet/puppet.conf", node));
+            commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                              "  server = %s\\n" +
+                                              "  runinterval = 420\\n" +
+                                              "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                              puppetMasterNodeDns),
+                                       node));
 
-            commands.add(createRemoteAgentCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                                         "  show_diff = true\\n" +
-                                                         "  pluginsync = true\\n" +
-                                                         "  report = true\\n" +
-                                                         "  default_schedules = false\\n" +
-                                                         "  certname = %s\\n/g' /etc/puppet/puppet.conf",
-                                                         node.getHost()),
-                                                  node));
+            commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                              "  show_diff = true\\n" +
+                                              "  pluginsync = true\\n" +
+                                              "  report = true\\n" +
+                                              "  default_schedules = false\\n" +
+                                              "  certname = %s\\n/g' /etc/puppet/puppet.conf",
+                                              node.getHost()),
+                                       node));
 
             // start puppet agent
-            commands.add(createRemoteAgentCommand("sudo systemctl start puppet", node));
+            commands.add(createCommand("sudo systemctl start puppet", node));
 
             // wait until server on additional node is installed
-            commands.add(createRemoteAgentCommand("doneState=\"Installing\"; " +
-                                                  "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                                  "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                                  "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                                  "    sleep 30; " +
-                                                  "done",
-                                                  node));
+            commands.add(createCommand("doneState=\"Installing\"; " +
+                                       "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                       "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                       "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                       "    sleep 30; " +
+                                       "done",
+                                       node));
 
             // wait until there is a changed configuration on API server
-            commands.add(createRemoteAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                                         "while true; do " +
-                                                         "    if sudo grep \"%s$\" ${testFile}; then break; fi; " +
-                                                         "    sleep 5; " +  // sleep 5 sec
-                                                         "done; " +
-                                                         "sleep 15; # delay to involve into start of rebooting api server", value),
-                                                  apiNode));
+            commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                              "while true; do " +
+                                              "    if sudo grep \"%s$\" ${testFile}; then break; fi; " +
+                                              "    sleep 5; " +  // sleep 5 sec
+                                              "done; " +
+                                              "sleep 15; # delay to involve into start of rebooting api server", value),
+                                       apiNode));
 
             // wait until API server restarts
             commands.add(new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion));
@@ -204,30 +202,30 @@ public class NodeManager {
 
             return new MacroCommand(ImmutableList.of(
                 // modify puppet master config
-                createLocalAgentFileBackupCommand(puppetMasterConfigFilePath),
-                createLocalAgentPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                                       "$" + property,
-                                                       value),
+                createFileBackupCommand(puppetMasterConfigFilePath),
+                createPropertyReplaceCommand(puppetMasterConfigFilePath,
+                                             "$" + property,
+                                             value),
 
                 // wait until there node is removed from configuration on API server
-                createRemoteAgentCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                                "while true; do " +
-                                                "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
-                                                "    sleep 5; " +  // sleep 5 sec
-                                                "done; " +
-                                                "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
-                                         apiNode),
+                createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                     "while true; do " +
+                                     "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
+                                     "    sleep 5; " +  // sleep 5 sec
+                                     "done; " +
+                                     "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
+                              apiNode),
 
                 // wait until API server restarts
                 new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
 
                 // remove out-date puppet agent's certificate
-                createLocalAgentCommand(format("sudo puppet cert clean %s", node.getHost())),
-                createLocalAgentCommand("sudo service puppetmaster restart"),
+                createCommand(format("sudo puppet cert clean %s", node.getHost())),
+                createCommand("sudo service puppetmaster restart"),
 
                 // stop puppet agent on removing node and remove out-date certificate
-                createRemoteAgentCommand("sudo service puppet stop", node),
-                createRemoteAgentCommand("sudo rm -rf /var/lib/puppet/ssl", node)
+                createCommand("sudo service puppet stop", node),
+                createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
             ), "Remove node commands");
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
@@ -261,7 +259,7 @@ public class NodeManager {
 
     /** for testing propose */
     protected Command getShellAgentCommand(String command, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(command, node);
+        return createCommand(command, node);
     }
 
     protected Config getCodenvyConfig(ConfigUtil configUtil) throws IOException {

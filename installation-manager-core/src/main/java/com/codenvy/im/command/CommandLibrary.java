@@ -30,45 +30,45 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableSet;
 
-import static com.codenvy.im.command.SimpleCommand.createLocalAgentCommand;
+import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 
 /** @author Dmytro Nochevnov */
-public class CommandFactory {
+public class CommandLibrary {
 
     private static final String STOP     = "stop";
     private static final String START    = "start";
     private static final String ACTIVE   = "active";
     private static final String INACTIVE = "inactive";
 
-    private CommandFactory() {
+    private CommandLibrary() {
     }
 
-    public static Command createLocalAgentPropertyReplaceCommand(String file, String property, String value) {
+    public static Command createPropertyReplaceCommand(String file, String property, String value) {
         String replacingToken = format("%s = .*", property);
         String replacement = format("%s = \"%s\"", property, value);
-        return createLocalAgentReplaceCommand(file, replacingToken, replacement);
+        return createReplaceCommand(file, replacingToken, replacement);
     }
 
-    public static Command createLocalAgentReplaceCommand(String file, String replacingToken, String replacement) {
-        return createLocalAgentCommand(format("sudo sed -i 's/%s/%s/g' %s",
-                                              replacingToken.replace("/", "\\/"),
-                                              replacement.replace("/", "\\/"),
-                                              file));
+    public static Command createReplaceCommand(String file, String replacingToken, String replacement) {
+        return createCommand(format("sudo sed -i 's/%s/%s/g' %s",
+                                    replacingToken.replace("/", "\\/"),
+                                    replacement.replace("/", "\\/"),
+                                    file));
     }
 
-    public static Command createLocalAgentFileRestoreOrBackupCommand(final String file) {
-        return createLocalAgentCommand(getFileRestoreOrBackupCommand(file));
+    public static Command createFileRestoreOrBackupCommand(final String file) {
+        return createCommand(getFileRestoreOrBackupCommand(file));
     }
 
-    public static Command createRemoteAgentFileRestoreOrBackupCommand(final String file, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createRemoteAgentsCommand(getFileRestoreOrBackupCommand(file), null, nodes);
+    public static Command createFileRestoreOrBackupCommand(final String file, List<NodeConfig> nodes) throws AgentException {
+        return MacroCommand.createCommand(getFileRestoreOrBackupCommand(file), null, nodes);
     }
 
-    public static Command createRemoteAgentFileRestoreOrBackupCommand(final String file, NodeConfig node) throws AgentException {
-        return MacroCommand.createRemoteAgentsCommand(getFileRestoreOrBackupCommand(file), null, ImmutableList.of(node));
+    public static Command createFileRestoreOrBackupCommand(final String file, NodeConfig node) throws AgentException {
+        return MacroCommand.createCommand(getFileRestoreOrBackupCommand(file), null, ImmutableList.of(node));
     }
 
     protected static String getFileRestoreOrBackupCommand(final String file) {
@@ -84,12 +84,12 @@ public class CommandFactory {
                       file);
     }
 
-    public static Command createRemoteAgentFileBackupCommand(String file, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(getFileBackupCommand(file), node);
+    public static Command createFileBackupCommand(String file, NodeConfig node) throws AgentException {
+        return createCommand(getFileBackupCommand(file), node);
     }
 
-    public static Command createLocalAgentFileBackupCommand(final String file) {
-        return createLocalAgentCommand(getFileBackupCommand(file));
+    public static Command createFileBackupCommand(final String file) {
+        return createCommand(getFileBackupCommand(file));
     }
 
     protected static String getFileBackupCommand(final String file) {
@@ -97,14 +97,6 @@ public class CommandFactory {
         return format("sudo cp %s %s",
                       file,
                       backupFile);
-    }
-
-    public static Command createRemoteAgentsCommand(String command, List<NodeConfig> nodes) throws AgentException {
-        return MacroCommand.createRemoteAgentsCommand(command, null, nodes);
-    }
-
-    public static Command createRemoteAgentCommand(String command, NodeConfig node) throws AgentException {
-        return createRemoteAgentsCommand(command, ImmutableList.of(node));
     }
 
     public static Command createPatchCommand(Path patchDir, Version installedVersion, Version versionToUpdate) throws IOException {
@@ -117,27 +109,27 @@ public class CommandFactory {
             Version v = iter.next();
             Path patchFile = patchDir.resolve(v.toString()).resolve("patch.sh");
             if (exists(patchFile)) {
-                commands.add(createLocalAgentCommand(format("sudo bash %s", patchFile)));
+                commands.add(createCommand(format("sudo bash %s", patchFile)));
             }
         }
 
         return new MacroCommand(commands, "Patch resources");
     }
 
-    public static Command createLocalAgentStopServiceCommand(String serviceName) {
-        return createLocalAgentCommand(getServiceManagementCommand(serviceName, STOP));
+    public static Command createStopServiceCommand(String serviceName) {
+        return createCommand(getServiceManagementCommand(serviceName, STOP));
     }
 
-    public static Command createRemoteAgentStopServiceCommand(String serviceName, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(getServiceManagementCommand(serviceName, STOP), node);
+    public static Command createStopServiceCommand(String serviceName, NodeConfig node) throws AgentException {
+        return createCommand(getServiceManagementCommand(serviceName, STOP), node);
     }
 
-    public static Command createLocalAgentStartServiceCommand(String serviceName) {
-        return createLocalAgentCommand(getServiceManagementCommand(serviceName, START));
+    public static Command createStartServiceCommand(String serviceName) {
+        return createCommand(getServiceManagementCommand(serviceName, START));
     }
 
-    public static Command createRemoteAgentStartServiceCommand(String serviceName, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(getServiceManagementCommand(serviceName, START), node);
+    public static Command createStartServiceCommand(String serviceName, NodeConfig node) throws AgentException {
+        return createCommand(getServiceManagementCommand(serviceName, START), node);
     }
 
     private static String getServiceManagementCommand(String serviceName, String action) {
@@ -166,8 +158,8 @@ public class CommandFactory {
      *
      * Don't gzip to be able to update pack in future.
      */
-    public static Command createLocalAgentPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
-        return createLocalAgentCommand(getPackCommand(fromDir, packFile, pathWithinThePack));
+    public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack));
     }
 
     /**
@@ -176,8 +168,8 @@ public class CommandFactory {
      *
      * Don't gzip to be able to update pack in future.
      */
-    public static Command createRemoteAgentPackCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(getPackCommand(fromDir, packFile, pathWithinThePack), node);
+    public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack), node);
     }
 
     private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
@@ -191,16 +183,16 @@ public class CommandFactory {
                       pathWithinThePack);
     }
 
-    public static Command createLocalAgentUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
-        return createLocalAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack));
+    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack));
     }
 
-    public static Command createLocalAgentUnpackCommand(Path packFile, Path toDir) {
-        return createLocalAgentCommand(getUnpackCommand(packFile, toDir, null));
+    public static Command createUnpackCommand(Path packFile, Path toDir) {
+        return createCommand(getUnpackCommand(packFile, toDir, null));
     }
 
-    public static Command createRemoteAgentUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(getUnpackCommand(packFile, toDir, pathWithinThePack), node);
+    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack), node);
     }
 
     private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack) {
@@ -218,24 +210,24 @@ public class CommandFactory {
 
     public static Command createCopyFromRemoteToLocalCommand(Path fromPath, Path toPath, NodeConfig remote) {
         String fromRemotePath = format("%s:%s", remote.getHost(), fromPath);
-        return createLocalAgentCommand(getScpCommand(fromRemotePath, toPath.toString()));
+        return createCommand(getScpCommand(fromRemotePath, toPath.toString()));
     }
 
     public static Command createCopyFromLocalToRemoteCommand(Path fromPath, Path toPath, NodeConfig remote) {
         String toRemotePath = format("%s:%s", remote.getHost(), toPath);
-        return createLocalAgentCommand(getScpCommand(fromPath.toString(), toRemotePath));
+        return createCommand(getScpCommand(fromPath.toString(), toRemotePath));
     }
 
     private static String getScpCommand(String fromPath, String toPath) {
         return format("scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no %s %s", fromPath, toPath);
     }
 
-    public static Command createLocalAgentWaitServiceActiveCommand(String service) {
-        return createLocalAgentCommand(getWaitServiceStatusCommand(service, ACTIVE));
+    public static Command createWaitServiceActiveCommand(String service) {
+        return createCommand(getWaitServiceStatusCommand(service, ACTIVE));
     }
 
-    public static Command createRemoteAgentWaitServiceActiveCommand(String service, NodeConfig node) throws AgentException {
-        return createRemoteAgentCommand(getWaitServiceStatusCommand(service, ACTIVE), node);
+    public static Command createWaitServiceActiveCommand(String service, NodeConfig node) throws AgentException {
+        return createCommand(getWaitServiceStatusCommand(service, ACTIVE), node);
     }
 
     private static String getWaitServiceStatusCommand(String service, String status) {

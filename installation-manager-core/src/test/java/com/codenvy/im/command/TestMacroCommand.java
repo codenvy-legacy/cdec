@@ -38,6 +38,8 @@ import static org.testng.Assert.assertTrue;
  * @author Dmytro Nochevnov
  */
 public class TestMacroCommand {
+    public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+
     @Test
     public void testDescription() {
         MacroCommand testCommand = new MacroCommand(Collections.<Command>emptyList(), "macro");
@@ -95,8 +97,25 @@ public class TestMacroCommand {
                                         "{'command'='command', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
                                         "]", user);
 
-        Command testMacroCommand = MacroCommand.createRemoteAgentsCommand(command, description, nodes);
+        Command testMacroCommand = MacroCommand.createCommand(command, description, nodes);
         assertEquals(testMacroCommand.toString(), expectedCommand);
+    }
+
+    @Test
+    public void testCreateShellCommandForNodeList() throws AgentException {
+        String expectedCommandString = format("[" +
+                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "]",
+                                              SYSTEM_USER_NAME);
+
+        List<NodeConfig> nodes = ImmutableList.of(
+            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+        );
+
+        Command testCommand = MacroCommand.createCommand("testCommand", nodes);
+        assertEquals(testCommand.toString(), expectedCommandString);
     }
 
     class DummyCommand implements Command {

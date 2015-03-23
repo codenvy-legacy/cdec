@@ -42,29 +42,29 @@ public class SimpleCommand implements Command {
         this.command = command;
     }
 
-    /** Factory method */
-    public static SimpleCommand createLocalAgentCommand(String command) {
+    /** Factory method to create command which will be executed on the current computer. */
+    public static SimpleCommand createCommand(String command) {
         return new SimpleCommand(command, new LocalAgent(), null);
     }
 
-    /** Factory method */
-    public static SimpleCommand createShellAgentCommand(String command,
-                                                        final String host,
-                                                        final int port,
-                                                        final String user,
-                                                        final String privateKeyFilePath) throws AgentException {
+    /** Factory method to create command which will be executed on remote host. */
+    protected static SimpleCommand createCommand(String command,
+                                              final String host,
+                                              final int port,
+                                              final String user,
+                                              final String privateKeyFilePath) throws AgentException {
         return new SimpleCommand(command,
                                  new SecureShellAgent(host, port, user, privateKeyFilePath, null),
                                  null);
     }
 
-    /** Factory method */
-    protected static Command createShellAgentCommand(String command, NodeConfig node) throws AgentException {
-        return SimpleCommand.createShellAgentCommand(command,
-                                                     node.getHost(),
-                                                     node.getPort(),
-                                                     node.getUser(),
-                                                     node.getPrivateKeyFile());
+    /** Factory method to create command which will be executed on remote node. */
+    public static Command createCommand(String command, NodeConfig node) throws AgentException {
+        return SimpleCommand.createCommand(command,
+                                           node.getHost(),
+                                           node.getPort(),
+                                           node.getUser(),
+                                           node.getPrivateKeyFile());
     }
 
     /** {@inheritDoc} */
