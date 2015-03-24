@@ -219,11 +219,14 @@ public class TestInstallationManagerServiceImpl {
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupDirectory(testBackupDirectory);
 
-        doReturn(testBackupConfig.setBackupFile(testBackupFile)).when(mockInstallationManager).backup(testBackupConfig);
+        doReturn(testBackupConfig.setBackupFile(testBackupFile).setArtifactVersion("1.0.0")).when(mockInstallationManager).backup(testBackupConfig);
         assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
                                                                           + "  \"backup\" : {\n"
-                                                                          + "    \"artifact\" : \"codenvy\",\n"
                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                          + "    \"artifactInfo\" : {\n"
+                                                                          + "      \"artifact\" : \"codenvy\",\n"
+                                                                          + "      \"version\" : \"1.0.0\"\n"
+                                                                          + "    },\n"
                                                                           + "    \"status\" : \"SUCCESS\"\n"
                                                                           + "  },\n"
                                                                           + "  \"status\" : \"OK\"\n"
@@ -241,7 +244,9 @@ public class TestInstallationManagerServiceImpl {
 
         assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
                                                                           + "  \"backup\" : {\n"
-                                                                          + "    \"artifact\" : \"codenvy\",\n"
+                                                                          + "    \"artifactInfo\" : {\n"
+                                                                          + "      \"artifact\" : \"codenvy\"\n"
+                                                                          + "    },\n"
                                                                           + "    \"status\" : \"FAILURE\"\n"
                                                                           + "  },\n"
                                                                           + "  \"message\" : \"error\",\n"
@@ -258,8 +263,10 @@ public class TestInstallationManagerServiceImpl {
 
         assertEquals(installationManagerService.restore(testBackupConfig), "{\n"
                                                                            + "  \"backup\" : {\n"
-                                                                           + "    \"artifact\" : \"codenvy\",\n"
                                                                            + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                           + "    \"artifactInfo\" : {\n"
+                                                                           + "      \"artifact\" : \"codenvy\"\n"
+                                                                           + "    },\n"
                                                                            + "    \"status\" : \"SUCCESS\"\n"
                                                                            + "  },\n"
                                                                            + "  \"status\" : \"OK\"\n"
@@ -278,8 +285,10 @@ public class TestInstallationManagerServiceImpl {
 
         assertEquals(installationManagerService.restore(testBackupConfig), "{\n"
                                                                            + "  \"backup\" : {\n"
-                                                                           + "    \"artifact\" : \"codenvy\",\n"
                                                                            + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                           + "    \"artifactInfo\" : {\n"
+                                                                           + "      \"artifact\" : \"codenvy\"\n"
+                                                                           + "    },\n"
                                                                            + "    \"status\" : \"FAILURE\"\n"
                                                                            + "  },\n"
                                                                            + "  \"message\" : \"error\",\n"

@@ -28,6 +28,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -41,7 +42,7 @@ import static org.apache.commons.io.IOUtils.copy;
 /** @author Dmytro Nochevnov */
 public class TarUtils {
 
-    public static void unpack(Path pack, Path dirToUnpack) throws IOException {
+    public static void uncompress(Path pack, Path dirToUnpack) throws IOException {
         try (TarArchiveInputStream in = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(newInputStream(pack))))) {
 
             if (!Files.exists(dirToUnpack)) {
@@ -66,7 +67,40 @@ public class TarUtils {
         }
     }
 
+    public static void unpackFile(Path pack, Path dirToUnpack, Path fileToUnpack) throws IOException {
+        try (TarArchiveInputStream in = new TarArchiveInputStream(new BufferedInputStream(newInputStream(pack)))) {
+
+            if (!Files.exists(dirToUnpack)) {
+                createDirectories(dirToUnpack);
+            }
+
+            TarArchiveEntry tarEntry;
+            while ((tarEntry = in.getNextTarEntry()) != null) {
+                Path destPath = dirToUnpack.resolve(tarEntry.getName());
+
+                if (tarEntry.isFile() && tarEntry.getName().equals(fileToUnpack.toFile().getName())) {
+                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
+                        copy(in, out);
+                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
+                    }
+
+                    return;
+                }
+            }
+        }
+    }
+
+    /** Pack file without compression */
     public static void packFile(Path fileToPack, Path packageFile) throws IOException {
+        pack(fileToPack, packageFile, false);
+    }
+
+    /** Pack file with compression */
+    public static void compressFile(Path fileToPack, Path packageFile) throws IOException {
+        pack(fileToPack, packageFile, true);
+    }
+
+    private static void pack(Path fileToPack, Path packageFile, boolean needCompress) throws IOException {
         if (!Files.exists(fileToPack)) {
             throw new IllegalArgumentException("Packing file doesn't exist");
         }
@@ -75,7 +109,12 @@ public class TarUtils {
             throw new IllegalArgumentException("Packing item is a directory");
         }
 
-        try (TarArchiveOutputStream out = new TarArchiveOutputStream(new GzipCompressorOutputStream(new BufferedOutputStream(newOutputStream(packageFile))))) {
+        OutputStream os = new BufferedOutputStream(newOutputStream(packageFile));
+        if (needCompress) {
+            os = new GzipCompressorOutputStream(os);
+        }
+
+        try (TarArchiveOutputStream out = new TarArchiveOutputStream(os)) {
             out.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
             TarArchiveEntry tarEntry = new TarArchiveEntry(fileToPack.toFile(),
                                                            fileToPack.getFileName().toString());
@@ -84,4 +123,5 @@ public class TarUtils {
             out.closeArchiveEntry();
         }
     }
+
 }

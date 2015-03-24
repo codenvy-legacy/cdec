@@ -27,11 +27,14 @@ public class TestBackupInfo {
     @Test
     public void testBackupInfo() {
         String testFile = "test";
-        BackupInfo info = new BackupInfo().setArtifact(CDECArtifact.NAME)
+        ArtifactInfo artifactInfo = new ArtifactInfo().setArtifact(CDECArtifact.NAME)
+                                                      .setVersion("1.0.0");
+
+        BackupInfo info = new BackupInfo().setArtifactInfo(artifactInfo)
                                           .setFile(testFile)
                                           .setStatus(Status.SUCCESS);
 
-        assertEquals(info.getArtifact(), CDECArtifact.NAME);
+        assertEquals(info.getArtifactInfo(), artifactInfo);
         assertEquals(info.getFile(), testFile);
         assertEquals(info.getStatus(), Status.SUCCESS);
     }

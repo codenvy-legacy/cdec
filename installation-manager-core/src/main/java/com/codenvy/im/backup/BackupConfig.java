@@ -17,7 +17,15 @@
  */
 package com.codenvy.im.backup;
 
+import com.codenvy.commons.json.JsonParseException;
+import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.TarUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.io.FileUtils;
+
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -28,6 +36,8 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class BackupConfig {
+
+    protected static final String BACKUP_CONFIG_FILE = "backup.config.json";
 
     public enum Component {
         LDAP("ldap.ldif"),
@@ -58,8 +68,9 @@ public class BackupConfig {
     protected static Path   BASE_TMP_DIRECTORY       = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
     private String artifactName;
-    private Path   backupDirectory = DEFAULT_BACKUP_DIRECTORY;
-    private Path   backupFile;
+    private String artifactVersion;
+    private Path backupDirectory = DEFAULT_BACKUP_DIRECTORY;
+    private Path backupFile;
 
     public String getArtifactName() {
         return artifactName;
@@ -67,6 +78,15 @@ public class BackupConfig {
 
     public BackupConfig setArtifactName(String artifactName) {
         this.artifactName = artifactName;
+        return this;
+    }
+
+    public String getArtifactVersion() {
+        return artifactVersion;
+    }
+
+    public BackupConfig setArtifactVersion(String artifactVersion) {
+        this.artifactVersion = artifactVersion;
         return this;
     }
 
@@ -94,11 +114,12 @@ public class BackupConfig {
 
     public BackupConfig clone() {
         return new BackupConfig().setArtifactName(artifactName)
+                                 .setArtifactVersion(artifactVersion)
                                  .setBackupDirectory(backupDirectory)
                                  .setBackupFile(backupFile);
     }
 
-    public Path getArtifactTempDirectory() {
+    public Path obtainArtifactTempDirectory() {
         return getTempDirectory().resolve(artifactName);
     }
 
@@ -154,6 +175,9 @@ public class BackupConfig {
         if (artifactName != null ? !artifactName.equals(that.artifactName) : that.artifactName != null) {
             return false;
         }
+        if (artifactVersion != null ? !artifactVersion.equals(that.artifactVersion) : that.artifactVersion != null) {
+            return false;
+        }
         if (backupDirectory != null ? !backupDirectory.equals(that.backupDirectory) : that.backupDirectory != null) {
             return false;
         }
@@ -167,15 +191,65 @@ public class BackupConfig {
     @Override
     public int hashCode() {
         int result = artifactName != null ? artifactName.hashCode() : 0;
+        result = 31 * result + (artifactVersion != null ? artifactVersion.hashCode() : 0);
         result = 31 * result + (backupDirectory != null ? backupDirectory.hashCode() : 0);
         result = 31 * result + (backupFile != null ? backupFile.hashCode() : 0);
         return result;
     }
 
     @Override public String toString() {
-        return format("{'artifactName':'%s', 'backupDirectory':'%s', 'backupFile':'%s'}",
+        return format("{'artifactName':'%s', 'artifactVersion':'%s', 'backupDirectory':'%s', 'backupFile':'%s'}",
                       artifactName,
+                      artifactVersion,
                       backupDirectory,
                       backupFile);
+    }
+
+    public String toJson() throws JsonProcessingException {
+        BackupConfig config = this.clone();
+        config.setBackupFile(null);
+        config.setBackupDirectory(null);
+        return Commons.toJson(config);
+    }
+
+    public static BackupConfig fromJson(String json) throws JsonParseException {
+        return Commons.fromJson(json, BackupConfig.class);
+    }
+
+    /**
+     * Store config of backup file in this.backupFile
+     */
+    public void storeConfigIntoBackupFile() throws IOException {
+        String configJson = toJson();
+
+        Path tempDir = BASE_TMP_DIRECTORY;
+        Files.createDirectories(tempDir);
+
+        Path configFile = tempDir.resolve(BACKUP_CONFIG_FILE);
+        FileUtils.write(configFile.toFile(), configJson);
+
+        TarUtils.packFile(configFile, backupFile);
+
+        // cleanup
+        Files.deleteIfExists(configFile);
+    }
+
+    /**
+     * @return config of backup, stored in this.backupFile
+     */
+    public BackupConfig extractConfigFromBackupFile() throws JsonParseException, IOException {
+        Path tempDir = BASE_TMP_DIRECTORY;
+        Files.createDirectories(tempDir);
+
+        TarUtils.unpackFile(backupFile, tempDir, Paths.get(BACKUP_CONFIG_FILE));
+        Path storedConfigFile = tempDir.resolve(BACKUP_CONFIG_FILE);
+
+        String storedConfigJson = FileUtils.readFileToString(storedConfigFile.toFile());
+        BackupConfig storedConfig = fromJson(storedConfigJson);
+
+        // cleanup
+        Files.deleteIfExists(storedConfigFile);
+
+        return storedConfig;
     }
 }

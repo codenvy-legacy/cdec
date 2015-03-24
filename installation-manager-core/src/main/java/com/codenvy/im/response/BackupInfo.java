@@ -21,11 +21,11 @@ import com.codenvy.im.backup.BackupConfig;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /** @author Dmytro Nochevnov */
-@JsonPropertyOrder({"artifact", "file", "status"})
+@JsonPropertyOrder({"file", "artifactInfo", "status"})
 public class BackupInfo {
-    private String artifact;
-    private String file;
-    private Status status;
+    private ArtifactInfo artifactInfo;
+    private String       file;
+    private Status       status;
 
     public Status getStatus() {
         return status;
@@ -36,12 +36,12 @@ public class BackupInfo {
         return this;
     }
 
-    public String getArtifact() {
-        return artifact;
+    public ArtifactInfo getArtifactInfo() {
+        return artifactInfo;
     }
 
-    public BackupInfo setArtifact(String artifact) {
-        this.artifact = artifact;
+    public BackupInfo setArtifactInfo(ArtifactInfo artifactInfo) {
+        this.artifactInfo = artifactInfo;
         return this;
     }
 
@@ -55,13 +55,15 @@ public class BackupInfo {
     }
 
     public static BackupInfo createSuccessInfo(BackupConfig config) {
-        return new BackupInfo().setArtifact(config.getArtifactName())
+        ArtifactInfo artifactInfo = new ArtifactInfo().setArtifact(config.getArtifactName()).setVersion(config.getArtifactVersion());
+        return new BackupInfo().setArtifactInfo(artifactInfo)
                                .setFile(config.getBackupFile() != null ? config.getBackupFile().toString() : null)
                                .setStatus(Status.SUCCESS);
     }
 
     public static BackupInfo createFailureInfo(BackupConfig config) {
-        return new BackupInfo().setArtifact(config.getArtifactName())
+        ArtifactInfo artifactInfo = new ArtifactInfo().setArtifact(config.getArtifactName()).setVersion(config.getArtifactVersion());
+        return new BackupInfo().setArtifactInfo(artifactInfo)
                                .setFile(config.getBackupFile() != null ? config.getBackupFile().toString() : null)
                                .setStatus(Status.FAILURE);
     }

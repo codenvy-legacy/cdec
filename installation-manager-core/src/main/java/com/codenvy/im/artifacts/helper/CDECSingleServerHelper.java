@@ -42,13 +42,12 @@ import static com.codenvy.im.backup.BackupConfig.Component.LDAP;
 import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
 import static com.codenvy.im.backup.BackupConfig.getComponentTempPath;
 import static com.codenvy.im.command.CommandLibrary.createFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandLibrary.createPackCommand;
+import static com.codenvy.im.command.CommandLibrary.createPatchCommand;
+import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandLibrary.createStartServiceCommand;
 import static com.codenvy.im.command.CommandLibrary.createStopServiceCommand;
 import static com.codenvy.im.command.CommandLibrary.createUnpackCommand;
-import static com.codenvy.im.command.CommandLibrary.createWaitServiceActiveCommand;
-import static com.codenvy.im.command.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static java.lang.String.format;
 
@@ -276,7 +275,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
         Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
-        Path tempDir = backupConfig.getArtifactTempDirectory();
+        Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = backupConfig.getBackupFile();
 
         // create temp dir
@@ -344,7 +343,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
         Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
-        Path tempDir = backupConfig.getArtifactTempDirectory();
+        Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = backupConfig.getBackupFile();
 
         // unpack backupFile into the tempDir

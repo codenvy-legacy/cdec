@@ -23,6 +23,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.command.SimpleCommand;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.utils.TarUtils;
+import com.codenvy.im.utils.Version;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,6 +31,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -37,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -44,26 +47,29 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
 public class TestBackupManager {
 
     @Mock
-    private ConfigUtil                mockConfigUtil;
+    private ConfigUtil   mockConfigUtil;
     @Mock
-    private CDECArtifact              mockCdecArtifact;
+    private CDECArtifact mockCdecArtifact;
     @Mock
-    private Command                   mockCommand;
+    private Command      mockCommand;
 
     private BackupManager spyManager;
 
-    private static final Path ORIGIN_DEFAULT_BACKUP_DIRECTORY = BackupConfig.DEFAULT_BACKUP_DIRECTORY;
-    private static final Path ORIGIN_BASE_TMP_DIRECTORY       = BackupConfig.BASE_TMP_DIRECTORY;
-    private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT = BackupConfig.BACKUP_NAME_TIME_FORMAT;
+    private static final Path   ORIGIN_DEFAULT_BACKUP_DIRECTORY = BackupConfig.DEFAULT_BACKUP_DIRECTORY;
+    private static final Path   ORIGIN_BASE_TMP_DIRECTORY       = BackupConfig.BASE_TMP_DIRECTORY;
+    private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT  = BackupConfig.BACKUP_NAME_TIME_FORMAT;
 
-    private static final Path TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backup");
-    private static final Path TEST_BASE_TMP_DIRECTORY       = Paths.get("target/tmp_backup");
-    private static final String TEST_BACKUP_NAME_TIME_FORMAT = "dd-MMM-yyyy";
+    private static final Path   TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backup");
+    private static final Path   TEST_BASE_TMP_DIRECTORY       = Paths.get("target/tmp_backup");
+    private static final String TEST_BACKUP_NAME_TIME_FORMAT  = "dd-MMM-yyyy";
+
+    private static final String TEST_VERSION = "1.0.0";
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -78,6 +84,9 @@ public class TestBackupManager {
 
         spyManager = spy(new BackupManager(mockConfigUtil));
         doReturn(mockCdecArtifact).when(spyManager).getArtifact(CDECArtifact.NAME);
+
+        doReturn(CDECArtifact.NAME).when(mockCdecArtifact).getName();
+        doReturn(Version.valueOf("1.0.0")).when(mockCdecArtifact).getInstalledVersion();
     }
 
     @AfterMethod
@@ -90,12 +99,14 @@ public class TestBackupManager {
     @Test
     public void testBackupCodenvy() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
-        BackupConfig expectedBackupConfig = initialBackupConfig.clone().setBackupFile(initialBackupConfig.generateBackupFilePath());
+        BackupConfig expectedBackupConfig = initialBackupConfig.clone()
+                                                               .setBackupFile(initialBackupConfig.generateBackupFilePath())
+                                                               .setArtifactVersion(TEST_VERSION);
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                BackupConfig backupConfig = (BackupConfig) invocationOnMock.getArguments()[0];
-                return SimpleCommand.createCommand(String.format("echo '' > %s", backupConfig.getBackupFile().toString()));  // create empty backup file for testing propose
+                BackupConfig backupConfig = (BackupConfig)invocationOnMock.getArguments()[0];
+                return SimpleCommand.createCommand(format("echo '' > %s", backupConfig.getBackupFile().toString()));  // create empty backup file for testing propose
             }
         }).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigUtil);
 
@@ -110,7 +121,8 @@ public class TestBackupManager {
           expectedExceptionsMessageRegExp = "error")
     public void testBackupException() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
-        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath());
+        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath())
+                                                               .setArtifactVersion(TEST_VERSION);
 
         doThrow(new IOException("error")).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigUtil);
         spyManager.backup(initialBackupConfig);
@@ -119,16 +131,23 @@ public class TestBackupManager {
     @Test
     public void testRestoreCodenvy() throws IOException {
         Path backupFile = TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar");
+        String backupConfigJson = "{\n"
+                                 + "  \"artifactName\" : \"codenvy\",\n"
+                                 + "  \"artifactVersion\" : \"1.0.0\"\n"
+                                 + "}";
+        Path backupConfigFile = backupFile.getParent().resolve(BackupConfig.BACKUP_CONFIG_FILE);
+        FileUtils.writeStringToFile(backupConfigFile.toFile(), backupConfigJson);
+        TarUtils.packFile(backupConfigFile, backupFile);
+
         Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
-        FileUtils.writeStringToFile(backupFile.toFile(), "");
-        TarUtils.packFile(backupFile, compressedBackupFile);
+        TarUtils.compressFile(backupFile, compressedBackupFile);
 
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
                                                              .setBackupFile(compressedBackupFile);
 
         BackupConfig expectedBackupConfig = new BackupConfig().setArtifactName("codenvy");
 
-        Path expectedBackupDirectory = expectedBackupConfig.getArtifactTempDirectory();
+        Path expectedBackupDirectory = expectedBackupConfig.obtainArtifactTempDirectory();
         expectedBackupConfig.setBackupDirectory(expectedBackupDirectory);
 
         Path tempBackupFile = expectedBackupDirectory.resolve(backupFile.getFileName().toString());
@@ -161,9 +180,16 @@ public class TestBackupManager {
           expectedExceptionsMessageRegExp = "error")
     public void testRestoreException() throws IOException {
         Path backupFile = TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar");
+        String backupConfigJson = "{\n"
+                                  + "  \"artifactName\" : \"codenvy\",\n"
+                                  + "  \"artifactVersion\" : \"1.0.0\"\n"
+                                  + "}";
+        Path backupConfigFile = backupFile.getParent().resolve(BackupConfig.BACKUP_CONFIG_FILE);
+        FileUtils.writeStringToFile(backupConfigFile.toFile(), backupConfigJson);
+        TarUtils.packFile(backupConfigFile, backupFile);
+
         Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
-        FileUtils.writeStringToFile(backupFile.toFile(), "");
-        TarUtils.packFile(backupFile, compressedBackupFile);
+        TarUtils.compressFile(backupFile, compressedBackupFile);
 
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
                                                              .setBackupFile(compressedBackupFile);
@@ -177,5 +203,59 @@ public class TestBackupManager {
         BackupManager manager = new BackupManager(mockConfigUtil);
         Artifact result = manager.getArtifact("codenvy");
         assertEquals(result.getName(), "codenvy");
+    }
+
+    @Test
+    public void testCheckBackupSuccessful() {
+        BackupConfig checkingConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                              .setArtifactVersion(TEST_VERSION);
+
+        spyManager.checkBackup(mockCdecArtifact, checkingConfig);
+    }
+
+    @Test
+    public void testCheckBackupIllegalArgumentException(BackupConfig checkingConfig, String expectedExceptionMessage) {
+        try {
+            spyManager.checkBackup(mockCdecArtifact, checkingConfig);
+        } catch(IllegalArgumentException e) {
+            assertEquals(e.getMessage(), expectedExceptionMessage);
+            return;
+        }
+
+        fail(format("Here should be IllegalArgumentException with message '%s'", expectedExceptionMessage));
+    }
+
+    @DataProvider()
+    public Object[][] GetCheckBackupIllegalArgumentExceptionData() {
+        return new Object[][] {
+            {new BackupConfig().setArtifactName("anotherArtifact"),
+             "Backed up restoringArtifact 'anotherArtifact' doesn't equal restoring restoringArtifact 'codenvy'"},
+
+            {new BackupConfig().setArtifactName("codenvy").setArtifactVersion("0.0.1"),
+             "Backed up restoringArtifact version '0.0.1' doesn't equal restoring restoringArtifact version '1.0.0'"},
+        };
+    }
+
+    @Test
+    public void testCheckBackupIllegalStateException() throws IOException {
+        BackupConfig checkingConfig = new BackupConfig().setArtifactName("codenvy");
+
+        String expectedExceptionMessage = "It is impossible to get version of restoring artifact 'codenvy'";
+
+        doReturn(null).when(mockCdecArtifact).getInstalledVersion();
+        try {
+            spyManager.checkBackup(mockCdecArtifact, checkingConfig);
+            fail("Here should be IllegalStateException.");
+        } catch(IllegalStateException e) {
+            assertEquals(e.getMessage(), expectedExceptionMessage);
+        }
+
+        doThrow(new IOException()).when(mockCdecArtifact).getInstalledVersion();
+        try {
+            spyManager.checkBackup(mockCdecArtifact, checkingConfig);
+            fail("Here should be IllegalStateException.");
+        } catch(IllegalStateException e) {
+            assertEquals(e.getMessage(), expectedExceptionMessage);
+        }
     }
 }

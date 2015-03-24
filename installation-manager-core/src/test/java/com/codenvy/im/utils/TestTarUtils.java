@@ -22,19 +22,17 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-import static org.testng.Assert.*;
-
 /** @author Dmytro Nochevnov */
 public class TestTarUtils {
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Packing file doesn't exist")
     public void testPackNonExistsFileException() throws IOException {
-        TarUtils.packFile(Paths.get("non-exists"), Paths.get("somePack"));
+        TarUtils.compressFile(Paths.get("non-exists"), Paths.get("somePack"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Packing item is a directory")
     public void testPackDirectoryAsFileException() throws IOException {
-        TarUtils.packFile(Paths.get("target"), Paths.get("somePack"));
+        TarUtils.compressFile(Paths.get("target"), Paths.get("somePack"));
     }
 }

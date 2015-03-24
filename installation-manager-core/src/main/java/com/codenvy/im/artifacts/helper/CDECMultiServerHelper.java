@@ -375,7 +375,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
-        Path localTempDir = backupConfig.getArtifactTempDirectory();
+        Path localTempDir = backupConfig.obtainArtifactTempDirectory();
         Path remoteTempDir = Paths.get("/tmp/codenvy");
         Path backupFile = backupConfig.getBackupFile();
 
@@ -478,7 +478,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
-        Path localTempDir = backupConfig.getArtifactTempDirectory();
+        Path localTempDir = backupConfig.obtainArtifactTempDirectory();
         Path remoteTempDir = Paths.get("/tmp/codenvy");
         Path backupFile = backupConfig.getBackupFile();
 

@@ -22,6 +22,7 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.TarUtils;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -49,7 +50,7 @@ public class BackupManager {
      * @param initialConfig initial backup config
      * @return updated backup config
      */
-    public BackupConfig backup(BackupConfig initialConfig) throws IOException {
+    public BackupConfig backup(BackupConfig initialConfig) throws IOException, IllegalStateException {
         BackupConfig backupConfig = initialConfig.clone();
         Artifact artifact = getArtifact(backupConfig.getArtifactName());
         Files.createDirectories(backupConfig.getBackupDirectory());
@@ -61,11 +62,18 @@ public class BackupManager {
                 backupConfig.setBackupFile(backupFile);
             }
 
+            Version artifactVersion = artifact.getInstalledVersion();
+            if (artifactVersion == null) {
+                throw new IllegalStateException("Artifact version is unavailable");
+            }
+            backupConfig.setArtifactVersion(artifactVersion.toString());
+            backupConfig.storeConfigIntoBackupFile();
+
             Command backupCommand = artifact.getBackupCommand(backupConfig, configUtil);
             backupCommand.execute();
 
-            Path compressedBackupFile = backupConfig.addGzipExtension(backupFile);
-            TarUtils.packFile(backupFile, compressedBackupFile);
+            Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
+            TarUtils.compressFile(backupFile, compressedBackupFile);
 
             Files.deleteIfExists(backupFile);
             backupConfig.setBackupFile(compressedBackupFile);
@@ -77,7 +85,7 @@ public class BackupManager {
     }
 
     /** Restore due to config */
-    public void restore(BackupConfig initialConfig) throws IOException {
+    public void restore(BackupConfig initialConfig) throws IOException, IllegalArgumentException {
         BackupConfig backupConfig = initialConfig.clone();
         Path compressedBackupFile = backupConfig.getBackupFile();
 
@@ -89,25 +97,59 @@ public class BackupManager {
             throw new IllegalArgumentException(format("Backup file '%s' doesn't exist.", compressedBackupFile));
         }
 
-        Artifact artifact = getArtifact(backupConfig.getArtifactName());
-        Path tempDir = backupConfig.getArtifactTempDirectory();
         try {
-            TarUtils.unpack(compressedBackupFile, tempDir);
+            Artifact artifact = getArtifact(backupConfig.getArtifactName());
+            Path tempDir = backupConfig.obtainArtifactTempDirectory();
+
+            TarUtils.uncompress(compressedBackupFile, tempDir);
 
             String backupFileName = removeGzipExtension(compressedBackupFile).getFileName().toString();
             Path backupFile = tempDir.resolve(backupFileName);
             backupConfig.setBackupFile(backupFile);
-
             backupConfig.setBackupDirectory(tempDir);
+
+            BackupConfig storedBackupConfig = backupConfig.extractConfigFromBackupFile();
+            checkBackup(artifact, storedBackupConfig);
 
             Command restoreCommand = artifact.getRestoreCommand(backupConfig, configUtil);
             restoreCommand.execute();
+        } catch(IllegalArgumentException | IllegalStateException ie) {
+            throw ie;
         } catch(Exception e) {
             throw new BackupException(e.getMessage(), e);
+        }
+    }
+
+    protected void checkBackup(Artifact restoringArtifact, BackupConfig storedBackupConfig) throws IllegalArgumentException, IllegalStateException {
+        String backedUpArtifactName = storedBackupConfig.getArtifactName();
+        String restoringArtifactName = restoringArtifact.getName();
+        if (!restoringArtifactName.equals(backedUpArtifactName)) {
+            throw new IllegalArgumentException(format("Backed up restoringArtifact '%s' doesn't equal restoring restoringArtifact '%s'",
+                                                      backedUpArtifactName,
+                                                      restoringArtifactName));
+        }
+
+        String backedUpArtifactVersion = storedBackupConfig.getArtifactVersion();
+        Version restoringArtifactVersion = null;
+        String nullVersionErrorMessage = format("It is impossible to get version of restoring artifact '%s'", restoringArtifactName);
+        try {
+            restoringArtifactVersion = restoringArtifact.getInstalledVersion();
+        } catch (IOException e) {
+            throw new IllegalStateException(nullVersionErrorMessage);
+        }
+        if (restoringArtifactVersion == null) {
+            throw new IllegalStateException(nullVersionErrorMessage);
+        }
+
+        if (!restoringArtifactVersion.toString().equals(backedUpArtifactVersion)) {
+            throw new IllegalArgumentException(format("Backed up restoringArtifact version '%s' doesn't equal restoring restoringArtifact version '%s'",
+                                                      backedUpArtifactVersion,
+                                                      restoringArtifactVersion));
         }
     }
 
     protected Artifact getArtifact(String artifactName) throws ArtifactNotFoundException {
         return createArtifact(artifactName);
     }
+
 }

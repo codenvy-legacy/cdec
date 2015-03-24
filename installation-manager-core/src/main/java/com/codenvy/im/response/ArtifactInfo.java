@@ -57,32 +57,36 @@ public class ArtifactInfo {
         return artifact;
     }
 
+    public ArtifactInfo setArtifact(String artifact) {
+        this.artifact = artifact;
+        return this;
+    }
+
     public String getVersion() {
         return version;
     }
 
-    public void setArtifact(String artifact) {
-        this.artifact = artifact;
-    }
-
-    public void setVersion(String version) {
+    public ArtifactInfo setVersion(String version) {
         this.version = version;
+        return this;
     }
 
     public Status getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public ArtifactInfo setStatus(Status status) {
         this.status = status;
+        return this;
     }
 
     public String getFile() {
         return file;
     }
 
-    public void setFile(String file) {
+    public ArtifactInfo setFile(String file) {
         this.file = file;
+        return this;
     }
 
 }
