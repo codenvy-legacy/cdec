@@ -237,15 +237,24 @@ public class BackupConfig {
     /**
      * @return config of backup, stored in this.backupFile
      */
-    public BackupConfig extractConfigFromBackupFile() throws JsonParseException, IOException {
+    @Nonnull
+    public BackupConfig extractConfigFromBackupFile() throws IOException {
         Path tempDir = BASE_TMP_DIRECTORY;
         Files.createDirectories(tempDir);
 
         TarUtils.unpackFile(backupFile, tempDir, Paths.get(BACKUP_CONFIG_FILE));
         Path storedConfigFile = tempDir.resolve(BACKUP_CONFIG_FILE);
 
-        String storedConfigJson = FileUtils.readFileToString(storedConfigFile.toFile());
-        BackupConfig storedConfig = fromJson(storedConfigJson);
+        BackupConfig storedConfig = null;
+        try {
+            String storedConfigJson = FileUtils.readFileToString(storedConfigFile.toFile());
+            storedConfig = fromJson(storedConfigJson);
+            if (storedConfig == null) {
+                throw new IOException();
+            }
+        } catch (JsonParseException | IOException e) {
+            throw new BackupException(format("There was a problem with config of backup which should be placed in file '%s/%s'", backupFile.getFileName(), BACKUP_CONFIG_FILE));
+        }
 
         // cleanup
         Files.deleteIfExists(storedConfigFile);

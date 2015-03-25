@@ -113,8 +113,8 @@ public class BackupManager {
 
             Command restoreCommand = artifact.getRestoreCommand(backupConfig, configUtil);
             restoreCommand.execute();
-        } catch(IllegalArgumentException | IllegalStateException ie) {
-            throw ie;
+        } catch(IllegalArgumentException | IllegalStateException | BackupException e) {
+            throw e;
         } catch(Exception e) {
             throw new BackupException(e.getMessage(), e);
         }

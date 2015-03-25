@@ -357,7 +357,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * - create local temp dir for the artifact backup data
      * - stop services on API node
      * - stop services on DATA node
-     * - pack filesystem data of API node to the {backup_file}/fs folder, copy backup file to local temp dir
+     * - copy backup file into api node, pack filesystem data of API node to the {backup_file}/fs folder into backup file, and then copy it to local temp dir
      * - create dump of MONGO at the DATA node, copy it to {local_backup_dir}/mongo
      * - create dump of LDAP at the DATA node, copy it to {local_backup_dir}/ldap
      * - add dumps to the local backup file
@@ -393,11 +393,13 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("crond", dataNode));
         commands.add(createStopServiceCommand("slapd", dataNode));
 
-        // pack filesystem data of API node to the {backup_file}/fs folder, and then copy it to local temp dir
+        // copy backup file into api node, pack filesystem data of API node to the {backup_file}/fs folder into backup file, and then copy it to local temp dir
         Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
         commands.add(createCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
+        commands.add(createCopyFromLocalToRemoteCommand(backupFile,
+                                                        tempApiNodeBackupFile,
+                                                        apiNode));
         commands.add(createPackCommand(Paths.get("/home/codenvy/codenvy-data/data"), tempApiNodeBackupFile, "fs/.", apiNode));
-
         commands.add(createCopyFromRemoteToLocalCommand(tempApiNodeBackupFile,
                                                         backupFile,
                                                         apiNode));
