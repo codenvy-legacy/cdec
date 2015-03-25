@@ -18,11 +18,14 @@
 package com.codenvy.im.backup;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.utils.TarUtils;
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,7 +50,10 @@ public class TestBackupConfig {
     private static final String TEST_VERSION = "1.0.0";
 
     @BeforeMethod
-    public void setup() {
+    public void setup() throws IOException {
+        FileUtils.deleteDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toFile());
+        FileUtils.deleteDirectory(TEST_BASE_TMP_DIRECTORY.toFile());
+
         BackupConfig.DEFAULT_BACKUP_DIRECTORY = TEST_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
     }
@@ -193,5 +199,60 @@ public class TestBackupConfig {
                                                  "'artifactVersion':'1.0.0', " +
                                                  "'backupDirectory':'someDir', " +
                                                  "'backupFile':'someDir/someFile'}");
+    }
+
+    @Test
+    public void testStoreConfigIntoBackup() throws IOException {
+        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
+        Path testBackupFile = TEST_BASE_TMP_DIRECTORY.resolve("test_backup.tar");
+        BackupConfig testConfig = new BackupConfig().setArtifactName("codenvy")
+                                                    .setArtifactVersion("1.0.0")
+                                                    .setBackupFile(testBackupFile);
+
+        testConfig.storeConfigIntoBackup();
+        assertTrue(Files.exists(testConfig.getBackupFile()));
+
+        Path tempDir = TEST_BASE_TMP_DIRECTORY;
+        Files.createDirectories(tempDir);
+
+        TarUtils.unpackFile(testBackupFile, tempDir, Paths.get(BackupConfig.BACKUP_CONFIG_FILE));
+        Path storedConfigFile = tempDir.resolve(BackupConfig.BACKUP_CONFIG_FILE);
+
+        String storedTestConfigContent = FileUtils.readFileToString(storedConfigFile.toFile());
+        assertEquals(storedTestConfigContent, "{\n"
+                                              + "  \"artifactName\" : \"codenvy\",\n"
+                                              + "  \"artifactVersion\" : \"1.0.0\"\n"
+                                              + "}");
+    }
+
+    @Test
+    public void testExtractConfigFromBackup() throws IOException {
+        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
+
+        String testingBackup = getClass().getClassLoader().getResource("backup/backup.tar.test").getPath();
+        BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                    .setArtifactVersion("1.0.0")
+                                                    .setBackupFile(Paths.get(testingBackup));
+
+        BackupConfig testConfig = backupConfig.extractConfigFromBackup();
+        assertEquals(testConfig.toString(), "{" +
+                                            "'artifactName':'codenvy', " +
+                                            "'artifactVersion':'1.0.0', " +
+                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupFile':'null'" +
+                                            "}");
+    }
+
+    @Test(expectedExceptions = BackupException.class,
+          expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_without_config.tar.test/backup.config.json'")
+    public void testExtractAbsenceConfigFromBackupError() throws IOException {
+        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
+
+        String testingBackup = getClass().getClassLoader().getResource("backup/backup_without_config.tar.test").getPath();
+        BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                      .setArtifactVersion("1.0.0")
+                                                      .setBackupFile(Paths.get(testingBackup));
+
+        backupConfig.extractConfigFromBackup();
     }
 }

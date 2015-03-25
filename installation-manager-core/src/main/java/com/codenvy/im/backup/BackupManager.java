@@ -67,7 +67,7 @@ public class BackupManager {
                 throw new IllegalStateException("Artifact version is unavailable");
             }
             backupConfig.setArtifactVersion(artifactVersion.toString());
-            backupConfig.storeConfigIntoBackupFile();
+            backupConfig.storeConfigIntoBackup();
 
             Command backupCommand = artifact.getBackupCommand(backupConfig, configUtil);
             backupCommand.execute();
@@ -108,7 +108,7 @@ public class BackupManager {
             backupConfig.setBackupFile(backupFile);
             backupConfig.setBackupDirectory(tempDir);
 
-            BackupConfig storedBackupConfig = backupConfig.extractConfigFromBackupFile();
+            BackupConfig storedBackupConfig = backupConfig.extractConfigFromBackup();
             checkBackup(artifact, storedBackupConfig);
 
             Command restoreCommand = artifact.getRestoreCommand(backupConfig, configUtil);
@@ -124,7 +124,7 @@ public class BackupManager {
         String backedUpArtifactName = storedBackupConfig.getArtifactName();
         String restoringArtifactName = restoringArtifact.getName();
         if (!restoringArtifactName.equals(backedUpArtifactName)) {
-            throw new IllegalArgumentException(format("Backed up restoringArtifact '%s' doesn't equal restoring restoringArtifact '%s'",
+            throw new IllegalArgumentException(format("Backed up artifact '%s' doesn't equal to restoring artifact '%s'",
                                                       backedUpArtifactName,
                                                       restoringArtifactName));
         }
@@ -142,7 +142,7 @@ public class BackupManager {
         }
 
         if (!restoringArtifactVersion.toString().equals(backedUpArtifactVersion)) {
-            throw new IllegalArgumentException(format("Backed up restoringArtifact version '%s' doesn't equal restoring restoringArtifact version '%s'",
+            throw new IllegalArgumentException(format("Version of backed up artifact '%s' doesn't equal to restoring restoring version '%s'",
                                                       backedUpArtifactVersion,
                                                       restoringArtifactVersion));
         }

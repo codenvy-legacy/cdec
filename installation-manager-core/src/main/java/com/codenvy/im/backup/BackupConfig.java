@@ -217,9 +217,9 @@ public class BackupConfig {
     }
 
     /**
-     * Store config of backup file in this.backupFile
+     * Store backup config in this.backupFile
      */
-    public void storeConfigIntoBackupFile() throws IOException {
+    public void storeConfigIntoBackup() throws IOException {
         String configJson = toJson();
 
         Path tempDir = BASE_TMP_DIRECTORY;
@@ -238,7 +238,7 @@ public class BackupConfig {
      * @return config of backup, stored in this.backupFile
      */
     @Nonnull
-    public BackupConfig extractConfigFromBackupFile() throws IOException {
+    public BackupConfig extractConfigFromBackup() throws IOException {
         Path tempDir = BASE_TMP_DIRECTORY;
         Files.createDirectories(tempDir);
 

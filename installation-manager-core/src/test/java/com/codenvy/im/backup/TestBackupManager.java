@@ -229,10 +229,10 @@ public class TestBackupManager {
     public Object[][] GetCheckBackupIllegalArgumentExceptionData() {
         return new Object[][] {
             {new BackupConfig().setArtifactName("anotherArtifact"),
-             "Backed up restoringArtifact 'anotherArtifact' doesn't equal restoring restoringArtifact 'codenvy'"},
+             "Backed up artifact 'anotherArtifact' doesn't equal restoring artifact 'codenvy'"},
 
             {new BackupConfig().setArtifactName("codenvy").setArtifactVersion("0.0.1"),
-             "Backed up restoringArtifact version '0.0.1' doesn't equal restoring restoringArtifact version '1.0.0'"},
+             "Backed up artifact version '0.0.1' doesn't equal to restoring artifact version '1.0.0'"},
         };
     }
 
