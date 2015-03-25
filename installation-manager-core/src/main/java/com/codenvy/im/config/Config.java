@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.config;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,10 +116,11 @@ public class Config {
             value = getValue(property);
         }
 
-        return on(',')
+        List<String> unmodifiableList = on(',')
             .trimResults()
             .omitEmptyStrings()
             .splitToList(value);
+        return new ArrayList<>(unmodifiableList);
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */
