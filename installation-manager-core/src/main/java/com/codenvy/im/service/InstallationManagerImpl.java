@@ -199,13 +199,6 @@ public class InstallationManagerImpl implements InstallationManager {
         }};
     }
 
-
-    /** {@inheritDoc} */
-    @Override
-    public void setConfig(InstallationManagerConfig config) throws IOException {
-        // do nothing
-    }
-
     protected void validatePath(Path newDownloadDir) throws IOException {
         if (!newDownloadDir.isAbsolute()) {
             throw new IOException("Path must be absolute.");
@@ -281,11 +274,6 @@ public class InstallationManagerImpl implements InstallationManager {
 
     private Path getDownloadDirectory(Artifact artifact, Version version) {
         return downloadDir.resolve(artifact.getName()).resolve(version.toString());
-    }
-
-    // TODO [AB] get rid of
-    protected void storeProperty(String property, String value) throws IOException {
-        InstallationManagerConfig.storeProperty(property, value);
     }
 
     /** Filters what need to download, either all updates or a specific one. */

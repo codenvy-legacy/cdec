@@ -98,7 +98,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     public String addTrialSubscription(Request request) throws IOException {
         try {
             transport
-                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
+                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
@@ -447,18 +447,6 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     @Override
     public String getConfig() {
         return new Response().setStatus(ResponseCode.OK).setConfig(manager.getConfig()).toJson();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String setConfig(InstallationManagerConfig config) {
-        try {
-            manager.setConfig(config);
-            return new Response().setStatus(ResponseCode.OK).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
-        }
     }
 
     /** {@inheritDoc} */

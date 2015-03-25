@@ -23,7 +23,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
 import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Version;
 
 import org.mockito.Mock;
@@ -32,10 +31,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,11 +58,6 @@ public class TestInstaller {
     public void setUp() throws IOException {
         MockitoAnnotations.initMocks(this);
         installer = spy(new Installer());
-
-        Path initialImProperties = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
-        Path testImProperties = initialImProperties.getParent().resolve("im.properties.test");
-        Files.copy(initialImProperties, testImProperties, StandardCopyOption.REPLACE_EXISTING);
-        InstallationManagerConfig.CONFIG_FILE = testImProperties;
     }
 
     @Test

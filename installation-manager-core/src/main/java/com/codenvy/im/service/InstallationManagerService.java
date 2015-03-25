@@ -19,7 +19,6 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
 
 import javax.annotation.Nullable;
@@ -72,9 +71,6 @@ public interface InstallationManagerService {
 
     /** @return the configuration of the Installation Manager */
     String getConfig();
-
-    /** Sets new configuration for installation manager */
-    String setConfig(InstallationManagerConfig config);
 
     /** Add node to multi-server Codenvy */
     String addNode(String dns);

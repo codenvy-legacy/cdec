@@ -111,9 +111,6 @@ public interface InstallationManager {
     /** @return the configuration */
     LinkedHashMap<String, String> getConfig();
 
-    /** Sets new configuration */
-    void setConfig(InstallationManagerConfig config) throws IOException;
-
     /**
      * @return path to artifact into the local repository
      * @throws java.io.IOException

@@ -39,7 +39,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
+import static com.codenvy.im.command.ReadMasterHostNameCommand.fetchMasterHostName;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
 
@@ -131,22 +131,24 @@ public class CDECArtifact extends AbstractArtifact {
 
     /**
      * {@inheritDoc}
+     *
      * @throws IOException
      */
     @Override
-    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException, IllegalArgumentException {
+    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions)
+            throws IOException, IllegalArgumentException {
         if (installOptions.getInstallType() != getInstalledType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
         return getHelper(installOptions.getInstallType())
-               .getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
+                .getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
     }
 
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return getHelper(installOptions.getInstallType())
-               .getInstallInfo(installOptions);
+                .getInstallInfo(installOptions);
     }
 
     /** {@inheritDoc} */
@@ -156,12 +158,13 @@ public class CDECArtifact extends AbstractArtifact {
                                      final InstallOptions installOptions) throws IOException {
 
         return getHelper(installOptions.getInstallType())
-               .getInstallCommand(versionToInstall, pathToBinaries, installOptions);
+                .getInstallCommand(versionToInstall, pathToBinaries, installOptions);
     }
 
     /** {@inheritDoc} */
+    // TODO [AB] review
     public InstallType getInstalledType() throws IOException {
-        if (readPuppetMasterNodeDns() == null) {
+        if (fetchMasterHostName() == null) {
             return InstallType.CODENVY_SINGLE_SERVER;
         }
 
@@ -172,14 +175,14 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         return getHelper(getInstalledType())
-               .getBackupCommand(backupConfig, codenvyConfigUtil);
+                .getBackupCommand(backupConfig, codenvyConfigUtil);
     }
 
     /** {@inheritDoc} */
     @Override
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         return getHelper(getInstalledType())
-            .getRestoreCommand(backupConfig, codenvyConfigUtil);
+                .getRestoreCommand(backupConfig, codenvyConfigUtil);
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {

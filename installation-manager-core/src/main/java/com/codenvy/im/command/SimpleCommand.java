@@ -30,9 +30,9 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class SimpleCommand implements Command {
-    private final String description;
-    private final String command;
-    private final Agent  agent;
+    protected final String description;
+    protected final String command;
+    protected final Agent  agent;
 
     private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
 

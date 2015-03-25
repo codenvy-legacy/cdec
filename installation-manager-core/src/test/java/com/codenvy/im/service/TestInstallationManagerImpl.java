@@ -91,7 +91,7 @@ public class TestInstallationManagerImpl {
     @Mock
     private BackupManager mockBackupManager;
     @Mock
-    private ConfigUtil configUtil;
+    private ConfigUtil    configUtil;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -421,7 +421,6 @@ public class TestInstallationManagerImpl {
 
     @Test
     public void testSetAndGetConfig() throws Exception {
-        doNothing().when(manager).storeProperty(anyString(), anyString());
         doNothing().when(manager).validatePath(any(Path.class));
 
         Map<String, String> m = manager.getConfig();

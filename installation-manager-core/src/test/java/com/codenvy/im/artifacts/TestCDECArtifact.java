@@ -21,17 +21,18 @@ import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.command.ReadMasterHostNameCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
 
+import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -40,14 +41,14 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.file.Files.delete;
+import static java.nio.file.Files.exists;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -63,29 +64,28 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestCDECArtifact {
     private CDECArtifact spyCdecArtifact;
-    public static final String initialOsVersion = OSUtils.VERSION;
+    private static final String initialOsVersion = OSUtils.VERSION;
+    private static final Path   PUPPET_CONF_FILE = Paths.get("target", "puppet", ReadMasterHostNameCommand.CONF_FILE);
 
     @Mock
     private HttpTransport mockTransport;
     @Mock
-    private ConfigUtil mockConfigUtil;
+    private ConfigUtil    mockConfigUtil;
     @Mock
-    private Config mockConfig;
+    private Config        mockConfig;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         spyCdecArtifact = spy(new CDECArtifact(mockTransport, mockConfigUtil));
-
-        Path initialImProperties = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
-        Path testImProperties = initialImProperties.getParent().resolve("im.properties.test");
-        Files.copy(initialImProperties, testImProperties, StandardCopyOption.REPLACE_EXISTING);
-        InstallationManagerConfig.CONFIG_FILE = testImProperties;
     }
 
     @AfterMethod
-    public void tearDown() {
+    public void tearDown() throws Exception {
         OSUtils.VERSION = initialOsVersion;
+        if (exists(PUPPET_CONF_FILE)) {
+            delete(PUPPET_CONF_FILE);
+        }
     }
 
     @Test
@@ -169,7 +169,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Site node config not found.")
+            expectedExceptionsMessageRegExp = "Site node config not found.")
     public void testGetInstallMultiServerCommandsForMultiServerError() throws IOException {
         OSUtils.VERSION = "7";
 
@@ -186,7 +186,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Step number .* is out of install range")
+            expectedExceptionsMessageRegExp = "Step number .* is out of install range")
     public void testGetInstallMultiServerCommandUnexistedStepError() throws Exception {
         OSUtils.VERSION = "7";
 
@@ -224,7 +224,6 @@ public class TestCDECArtifact {
         Version version = spyCdecArtifact.getInstalledVersion();
         assertNull(version);
 
-        InstallationManagerConfig.CONFIG_FILE = Paths.get("unexisted");
         version = spyCdecArtifact.getInstalledVersion();
         assertNull(version);
     }
@@ -254,8 +253,8 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetUpdateMultiServerCommand() throws Exception {
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\nserver=bla.bla.com");
         when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"1.0.0\"}");
-        InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
@@ -270,7 +269,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Step number .* is out of update range")
+            expectedExceptionsMessageRegExp = "Step number .* is out of update range")
     public void testGetUpdateCommandUnexistedStepError() throws Exception {
         OSUtils.VERSION = "7";
 
@@ -283,7 +282,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
+            expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromSingleToMultiServerError() throws Exception {
         OSUtils.VERSION = "7";
 
@@ -296,10 +295,10 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
+            expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromMultiToSingleServerError() throws Exception {
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\nserver=bla.bla.com");
         OSUtils.VERSION = "7";
-        InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
@@ -310,7 +309,7 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
+            expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromSingleToMultiServerError() throws Exception {
         OSUtils.VERSION = "7";
 
@@ -323,10 +322,10 @@ public class TestCDECArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
+            expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromMultiToSingleServerError() throws Exception {
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\nserver=bla.bla.com");
         OSUtils.VERSION = "7";
-        InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
@@ -340,7 +339,7 @@ public class TestCDECArtifact {
     public void testGetInstalledType() throws IOException {
         assertEquals(spyCdecArtifact.getInstalledType(), InstallType.CODENVY_SINGLE_SERVER);
 
-        InstallationManagerConfig.storeProperty(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, "some");
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\nserver=bla.bla.com");
         assertEquals(spyCdecArtifact.getInstalledType(), InstallType.CODENVY_MULTI_SERVER);
     }
 
@@ -359,10 +358,9 @@ public class TestCDECArtifact {
 
     @Test
     public void testGetBackupMultiServerCommand() throws IOException {
-
         Map<String, String> codenvyMultiServerProperties = ImmutableMap.of(
-            "api_host_name", "api.example.com",
-            "data_host_name", "data.example.com");
+                "api_host_name", "api.example.com",
+                "data_host_name", "data.example.com");
         doReturn(new Config(codenvyMultiServerProperties)).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
@@ -392,8 +390,8 @@ public class TestCDECArtifact {
     @Test
     public void testGetRestoreMultiServerCommand() throws IOException {
         Map<String, String> codenvyMultiServerProperties = ImmutableMap.of(
-            "api_host_name", "api.example.com",
-            "data_host_name", "data.example.com");
+                "api_host_name", "api.example.com",
+                "data_host_name", "data.example.com");
         doReturn(new Config(codenvyMultiServerProperties)).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)

@@ -41,11 +41,9 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -96,7 +94,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         service = mock(InstallationManagerService.class);
         doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-            .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+                .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand(mockConfigUtil));
@@ -106,8 +104,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         userCredentials = new UserCredentials("token", "accountId");
         doReturn(userCredentials).when(spyCommand).getCredentials();
-
-        CONFIG_FILE = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
     }
 
     @BeforeMethod
@@ -141,7 +137,8 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "}\n";
 
         doAnswer(new Answer<String>() {
-            @Override public String answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
                 InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
                 assertEquals(installOptions.getInstallType(), InstallType.CODENVY_SINGLE_SERVER);
                 return okServiceResponse;
@@ -172,7 +169,8 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "}\n";
 
         doAnswer(new Answer<String>() {
-            @Override public String answer(InvocationOnMock invocation) throws Throwable {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
                 InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
                 assertEquals(installOptions.getInstallType(), InstallType.CODENVY_MULTI_SERVER);
                 return okServiceResponse;
@@ -364,8 +362,8 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 
         doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-            .when(service)
-            .getInstalledVersions(any(Request.class));
+                .when(service)
+                .getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);

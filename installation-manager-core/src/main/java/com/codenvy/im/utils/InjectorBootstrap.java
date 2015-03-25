@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.service.InstallationManager;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.service.InstallationManagerImpl;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.InstallationManagerServiceImpl;
@@ -34,17 +33,11 @@ import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.newInputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -77,14 +70,15 @@ public class InjectorBootstrap {
                 bindProperties("codenvy/update-server.properties");
                 bindProperties("codenvy/installation-manager.properties");
 
-                Path conf = InstallationManagerConfig.getConfFile();
-                if (exists(conf)) {
-                    try (InputStream in = newInputStream(conf)) {
-                        doBindProperties(in);
-                    } catch (IOException e) {
-                        throw new IllegalStateException("Can't load properties", e);
-                    }
-                }
+                // TODO [AB]
+//                Path conf = InstallationManagerConfig.getConfFile();
+//                if (exists(conf)) {
+//                    try (InputStream in = newInputStream(conf)) {
+//                        doBindProperties(in);
+//                    } catch (IOException e) {
+//                        throw new IllegalStateException("Can't load properties", e);
+//                    }
+//                }
 
                 for (Map.Entry<String, String> e : boundProperties.entrySet()) {
                     binder.bindConstant().annotatedWith(Names.named(e.getKey())).to(e.getValue());

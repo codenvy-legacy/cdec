@@ -24,6 +24,7 @@ import com.codenvy.im.agent.LocalAgent;
  *
  * @author Anatoliy Bazko
  */
+// TODO [AB] test
 public class DetectRedHatVersionCommand extends SimpleCommand {
     public DetectRedHatVersionCommand() {
         super("if [ ! -f /etc/redhat-release ]; then" +
