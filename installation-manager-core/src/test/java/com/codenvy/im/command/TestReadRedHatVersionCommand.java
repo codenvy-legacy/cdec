@@ -1,0 +1,56 @@
+/*
+ * CODENVY CONFIDENTIAL
+ * __________________
+ *
+ *  [2012] - [2015] Codenvy, S.A.
+ *  All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Codenvy S.A. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Codenvy S.A.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Codenvy S.A..
+ */
+package com.codenvy.im.command;
+
+import org.apache.commons.io.FileUtils;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static com.codenvy.im.command.ReadRedHatVersionCommand.fetchRedHatVersion;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+
+/**
+ * @author Anatoliy Bazko
+ */
+public class TestReadRedHatVersionCommand {
+    private static final Path RELEASE_FILE = Paths.get("target", "redhat-release");
+
+    @Test
+    public void shouldReturnNullIfFileAbsent() throws Exception {
+        Files.delete(RELEASE_FILE);
+        assertNull(fetchRedHatVersion());
+    }
+
+    @Test(dataProvider = "GetTestedVersions")
+    public void shouldReturnHostNameNoWhiteSpacesInLine(String str, String expectedVersion) throws Exception {
+        FileUtils.write(RELEASE_FILE.toFile(), str);
+        assertEquals(fetchRedHatVersion(), expectedVersion, "'" + str + "'");
+    }
+
+    @DataProvider(name = "GetTestedVersions")
+    public static Object[][] GetTestedVersions() {
+        return new Object[][]{{"RedHat 7.7 OS", "7.7"},
+                              {"RedHat 7.7 ", "7.7"},
+                              {" 7 ", "7"}};
+    }
+}

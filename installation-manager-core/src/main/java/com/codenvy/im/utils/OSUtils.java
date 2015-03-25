@@ -17,14 +17,13 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
-import com.codenvy.im.command.DetectRedHatVersionCommand;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.codenvy.im.command.ReadRedHatVersionCommand.fetchRedHatVersion;
 import static java.lang.String.format;
 
 /** @author Anatoliy Bazko */
@@ -48,13 +47,12 @@ public class OSUtils {
     }
 
     protected static String detectVersion() throws CommandException {
-        String version = System.getProperty(RED_HAT_OS_VERSION);
-        if (version != null) {
-            return version;
+        String version = System.getProperty(RED_HAT_OS_VERSION); // major version only
+        if (version == null) {
+            version = fetchRedHatVersion();
         }
 
-        Command command = new DetectRedHatVersionCommand();
-        return fetchVersion(command.execute());
+        return parseMajorVersion(version);
     }
 
     /**
@@ -63,7 +61,7 @@ public class OSUtils {
      * @throws IllegalStateException
      *         if version is unsupported
      */
-    protected static String fetchVersion(String version) throws IllegalArgumentException, IllegalStateException {
+    protected static String parseMajorVersion(String version) throws IllegalArgumentException, IllegalStateException {
         if (version == null || version.trim().isEmpty()) {
             throw new IllegalArgumentException("OS version is unknown");
         }

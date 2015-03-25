@@ -17,48 +17,40 @@
  */
 package com.codenvy.im.command;
 
-
 import com.codenvy.im.agent.LocalAgent;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
-import java.io.File;
 
 import static java.lang.String.format;
 
 /**
- * Reads puppet master host name from the puppet configuration file /etc/puppet/puppet.conf.
- * File structure:
- *
- * [main]
- *   server = PUPPET_MASTER_HOST_NAME
- *   ...
+ * This command retrieves the version of RedHat distribution Linux.
+ * File format for instance: 'CentOS Linux release 7.0.1406 (Core)'
  *
  * @author Anatoliy Bazko
  */
 @Singleton
-public class ReadMasterHostNameCommand extends SimpleCommand {
-    public static final String CONF_FILE = "puppet.conf";
+public class ReadRedHatVersionCommand extends SimpleCommand {
 
     @Inject
-    private ReadMasterHostNameCommand(@Named("puppet.base_dir") String puppetDir) {
+    private ReadRedHatVersionCommand(@Named("os.redhat_release_file") String releaseFile) {
         super(format("if [ ! -f %1$s ]; then" +
                      "     exit 1;" +
                      " else" +
-                     "     cat %1$s | grep server | grep = | sed 's/\\s*server\\s*=\\(.*\\)/\\1/';" +
-                     " fi",
-                     puppetDir + File.separator + CONF_FILE),
+                     "     cat %1$s | sed 's/.*\\s\\([0-9\\.]*\\)\\s.*/\\1/';" +
+                     " fi", releaseFile),
               new LocalAgent(),
-              "Reads puppet master host name");
+              "Gets CentOS version");
     }
 
     /**
      * @see com.codenvy.im.command.SimpleCommand#fetchValue
      */
     @Nullable
-    public static String fetchMasterHostName() {
-        return fetchValue(ReadMasterHostNameCommand.class);
+    public static String fetchRedHatVersion() {
+        return fetchValue(ReadRedHatVersionCommand.class);
     }
 }

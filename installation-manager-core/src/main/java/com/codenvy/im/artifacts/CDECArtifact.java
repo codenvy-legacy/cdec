@@ -162,7 +162,6 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
-    // TODO [AB] review
     public InstallType getInstalledType() throws IOException {
         if (fetchMasterHostName() == null) {
             return InstallType.CODENVY_SINGLE_SERVER;

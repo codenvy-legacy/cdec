@@ -26,18 +26,18 @@ public class TestOSUtils {
 
     @Test
     public void testFetchVersion() throws Exception {
-        assertEquals(OSUtils.fetchVersion("6.6"), "6");
-        assertEquals(OSUtils.fetchVersion("7"), "7");
+        assertEquals(OSUtils.parseMajorVersion("6.6"), "6");
+        assertEquals(OSUtils.parseMajorVersion("7"), "7");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchVersionErrorUnsupportedVersion() throws Exception {
-        OSUtils.fetchVersion("8.1");
+        OSUtils.parseMajorVersion("8.1");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFetchVersionError() throws Exception {
-        OSUtils.fetchVersion("");
+        OSUtils.parseMajorVersion("");
     }
 
     @Test

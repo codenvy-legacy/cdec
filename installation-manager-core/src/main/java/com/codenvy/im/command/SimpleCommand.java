@@ -22,7 +22,9 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.agent.SecureShellAgent;
 import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.utils.InjectorBootstrap;
 
+import javax.annotation.Nullable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -97,5 +99,23 @@ public class SimpleCommand implements Command {
         }
 
         return new CommandException(errorMessage, e);
+    }
+
+    /**
+     * Utility method. Creates and executes the command.
+     * Null will be returned if command fails or empty value is fetched.
+     */
+    @Nullable
+    public static String fetchValue(Class commandClazz) {
+        try {
+            Command command = (Command)InjectorBootstrap.INJECTOR.getInstance(commandClazz);
+            String value = command.execute().trim();
+            if (value.isEmpty()) {
+                return null;
+            }
+            return value;
+        } catch (CommandException e) {
+            return null;
+        }
     }
 }
