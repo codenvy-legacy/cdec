@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.backup.BackupManager;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.install.Installer;
@@ -89,13 +90,15 @@ public class TestInstallationManagerImpl {
     private NodeManager   mockNodeManager;
     @Mock
     private BackupManager mockBackupManager;
+    @Mock
+    private ConfigUtil configUtil;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         installManagerArtifact = spy(new InstallManagerArtifact());
-        cdecArtifact = spy(new CDECArtifact(transport));
+        cdecArtifact = spy(new CDECArtifact(transport, configUtil));
 
         manager = spy(new InstallationManagerImpl(
                 UPDATE_ENDPOINT,

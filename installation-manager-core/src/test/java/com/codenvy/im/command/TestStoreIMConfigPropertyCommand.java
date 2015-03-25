@@ -18,6 +18,7 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.service.InstallationManagerConfig;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -26,7 +27,6 @@ import java.nio.file.Paths;
 
 import static com.codenvy.im.service.InstallationManagerConfig.CONFIG_FILE;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 /** @author Dmytro Nochevnov */
 public class TestStoreIMConfigPropertyCommand {
@@ -46,31 +46,6 @@ public class TestStoreIMConfigPropertyCommand {
     public void testCommandDescription() {
         Command testCommand = new StoreIMConfigPropertyCommand("property", "value");
         assertEquals(testCommand.getDescription(), "Save property property = value into the installation manager config");
-    }
-
-    @Test
-    public void testCommandExecute() throws IOException {
-        String testHostDns = "testDns";
-
-        Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, testHostDns);
-        assertNull(testCommand.execute());
-        assertEquals(InstallationManagerConfig.readCdecHostDns(), testHostDns);
-    }
-
-    @Test(expectedExceptions = CommandException.class,
-          expectedExceptionsMessageRegExp = "It is impossible to store \\{'propertyName':'codenvy_host_dns','propertyValue':'test'\\}")
-    public void testCommandExecuteException() throws IOException {
-        CONFIG_FILE = Paths.get("/dev/null/im.properties");
-        Command testCommand = new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, "test");
-        testCommand.execute();
-    }
-
-    @Test
-    public void testCreateSaveCodenvyHostDnsCommand() throws IOException {
-        String testHostDns = "test";
-        Command command = StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand(testHostDns);
-        command.execute();
-        assertEquals(InstallationManagerConfig.readCdecHostDns(), testHostDns);
     }
 
     @Test

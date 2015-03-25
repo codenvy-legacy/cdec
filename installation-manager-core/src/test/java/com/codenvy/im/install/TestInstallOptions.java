@@ -18,6 +18,7 @@
 package com.codenvy.im.install;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -57,6 +58,10 @@ public class TestInstallOptions {
 
         options.setConfigProperties(properties);
         assertEquals(options.checkValid(), expectedResult);
+    }
+
+    @Test
+    public void testDetectInstallType() throws Exception {
     }
 
     @DataProvider(name = "test data")

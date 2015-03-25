@@ -34,9 +34,9 @@ import static java.nio.file.Files.newOutputStream;
 
 /** @author Anatoliy Bazko */
 public class InstallationManagerConfig {
+    // TODO [AB] get rid of
     public static Path CONFIG_FILE = Paths.get(System.getenv("HOME"), ".codenvy", "im.properties");
 
-    public static final String CODENVY_HOST_DNS = "codenvy_host_dns";
     public static final String PUPPET_MASTER_HOST_NAME = "puppet_master_host_name";
 
     public InstallationManagerConfig() {
@@ -63,11 +63,6 @@ public class InstallationManagerConfig {
             }
         }
         return props;
-    }
-
-    @Nullable
-    public static String readCdecHostDns() throws IOException {
-        return readProperty(CODENVY_HOST_DNS);
     }
 
     @Nullable

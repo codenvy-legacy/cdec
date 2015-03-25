@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -49,8 +50,6 @@ import static org.testng.Assert.assertTrue;
  * @author Anatoliy Bazko
  */
 public class TestCommons {
-
-    public static final Path DOWNLOAD_DIR = Paths.get("target", "download");
 
     @Test
     public void testExtractVersion() throws Exception {
@@ -268,5 +267,15 @@ public class TestCommons {
 
         TreeSet<Version> versions = Commons.getVersionsList(baseDir.resolve("fake"));
         assertTrue(versions.isEmpty());
+    }
+
+    @Test
+    public void testHostIsReachable() throws Exception {
+        assertTrue(Commons.isReachable("localhost"));
+    }
+
+    @Test
+    public void testHostIsUnReachable() throws Exception {
+        assertFalse(Commons.isReachable("bla-bla-bla"));
     }
 }

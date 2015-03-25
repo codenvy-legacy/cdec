@@ -23,11 +23,10 @@ import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
+import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
-import com.codenvy.im.service.InstallationManagerConfig;
-import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -41,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
 
 /**
@@ -49,38 +49,59 @@ import static java.lang.String.format;
  */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
-    private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of(
-        InstallType.CODENVY_SINGLE_SERVER, new CDECSingleServerHelper(this),
-        InstallType.CODENVY_MULTI_SERVER, new CDECMultiServerHelper(this)
-    );
+    private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of
+            (
+                    InstallType.CODENVY_SINGLE_SERVER, new CDECSingleServerHelper(this),
+                    InstallType.CODENVY_MULTI_SERVER, new CDECMultiServerHelper(this)
+            );
 
     public static final String NAME = "codenvy";
 
     private final HttpTransport transport;
+    private final ConfigUtil configUtil;
 
     @Inject
-    public CDECArtifact(HttpTransport transport) {
+    public CDECArtifact(HttpTransport transport, ConfigUtil configUtil) {
         super(NAME);
         this.transport = transport;
+        this.configUtil = configUtil;
     }
 
     /** {@inheritDoc} */
+    // TODO [AB] new tests
     @Override
     public Version getInstalledVersion() throws IOException {
+        Version singleTypeVersion = getInstalledVersion("localhost");
+
+        Version multiTypeVersion;
+        try {
+            Config config = configUtil.loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+            multiTypeVersion = config == null ? null : getInstalledVersion(config.getHostUrl());
+        } catch (IOException e) {
+            multiTypeVersion = null;
+        }
+
+        if (singleTypeVersion == null) {
+            return multiTypeVersion;
+        } else {
+            if (multiTypeVersion == null || multiTypeVersion.equals(singleTypeVersion)) {
+                return singleTypeVersion;
+            } else {
+                throw new IllegalStateException("There are two Codenvy installation types with different versions.");
+            }
+        }
+    }
+
+    protected Version getInstalledVersion(String hostName) throws IOException {
         String response;
         try {
-            String codenvyHostDns = InstallationManagerConfig.readCdecHostDns();
-            if (codenvyHostDns == null) {
-                return null;
-            }
-
-            String checkServiceUrl = format("http://%s/api/", codenvyHostDns);
+            String checkServiceUrl = format("http://%s/api/", hostName);
             response = transport.doOption(checkServiceUrl, null);
         } catch (IOException e) {
             return null;
         }
 
-        ApiInfo apiInfo = Commons.createDtoFromJson(response, ApiInfo.class);
+        ApiInfo apiInfo = createDtoFromJson(response, ApiInfo.class);
         if (apiInfo.getIdeVersion() == null && apiInfo.getImplementationVersion().equals("0.26.0")) {
             return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
         } else {

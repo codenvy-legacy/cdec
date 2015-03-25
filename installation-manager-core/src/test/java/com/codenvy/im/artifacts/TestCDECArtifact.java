@@ -31,6 +31,7 @@ import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonSyntaxException;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -74,7 +75,7 @@ public class TestCDECArtifact {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact(mockTransport));
+        spyCdecArtifact = spy(new CDECArtifact(mockTransport, mockConfigUtil));
 
         Path initialImProperties = Paths.get(this.getClass().getClassLoader().getResource("im.properties").getPath());
         Path testImProperties = initialImProperties.getParent().resolve("im.properties.test");

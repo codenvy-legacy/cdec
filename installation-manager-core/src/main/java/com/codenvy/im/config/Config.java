@@ -26,7 +26,6 @@ import java.util.Set;
 
 import static com.codenvy.im.utils.OSUtils.getVersion;
 import static com.google.common.base.Splitter.on;
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
@@ -123,10 +122,6 @@ public class Config {
         return new ArrayList<>(unmodifiableList);
     }
 
-    /** @return the either #HOST_URL or #AIO_HOST_URL property value */
-    public final String getHostUrl() {
-        return properties.containsKey(HOST_URL) ? properties.get(HOST_URL) : properties.get(AIO_HOST_URL);
-    }
 
     /** Getter for #properties. Unmodifiable map will be returned */
     public Map<String, String> getProperties() {
@@ -146,5 +141,10 @@ public class Config {
 
     public Object getMongoAdminPassword() {
         return getValue(MONGO_ADMIN_PASSWORD_PROPERTY);
+    }
+
+    /** @return the either #HOST_URL or #AIO_HOST_URL property value */
+    public final String getHostUrl() {
+        return properties.containsKey(HOST_URL) ? properties.get(HOST_URL) : properties.get(AIO_HOST_URL);
     }
 }

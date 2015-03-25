@@ -17,23 +17,19 @@
  */
 package com.codenvy.im.config;
 
-import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
-import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -98,7 +94,8 @@ public class ConfigUtil {
     }
 
     /**
-     * Merges two bunches of the properties from old and new configurations. As a rule method keeps the values of old configuration
+     * Merges two bunches of the properties from old and new configurations.
+     * As a rule method keeps the values of old configuration
      * except the {@link com.codenvy.im.config.Config#VERSION} property
      */
     public Map<String, String> merge(Map<String, String> oldProps, Map<String, String> newProps) {
@@ -145,7 +142,7 @@ public class ConfigUtil {
                 for (Map.Entry<String, String> e : m.entrySet()) {
                     String key = e.getKey().trim();
                     if (key.startsWith("$")) {
-                        key = key.substring(1); // remotes '$'
+                        key = key.substring(1); // removes '$'
                         String value = e.getValue().substring(1, e.getValue().length() - 1); // removes "
 
                         properties.put(key, value);
@@ -233,6 +230,9 @@ public class ConfigUtil {
         return node.getHost().toLowerCase().replaceAll(regex, "");
     }
 
+    /**
+     * Loads appropriate Codenvy config depending on installation type.
+     */
     public Config loadInstalledCodenvyConfig(InstallType installType) throws IOException {
         Map<String, String> properties = loadInstalledCodenvyProperties(installType);
         return new Config(properties);

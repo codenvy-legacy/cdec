@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
@@ -28,6 +29,7 @@ import com.codenvy.im.service.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -87,7 +89,9 @@ public class TestInstallCommand extends AbstractTestCommand {
         mockConfigUtil = mock(ConfigUtil.class);
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigUtil).loadCodenvyDefaultProperties("1.0.1",
                                                                                                                      InstallType
-                                                                                                                         .CODENVY_SINGLE_SERVER);
+                                                                                                                             .CODENVY_SINGLE_SERVER);
+        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigUtil)
+                                                                              .loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
 
         service = mock(InstallationManagerService.class);
         doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());

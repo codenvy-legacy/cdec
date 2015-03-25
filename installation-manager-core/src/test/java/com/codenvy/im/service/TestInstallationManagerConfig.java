@@ -50,11 +50,6 @@ public class TestInstallationManagerConfig {
     }
 
     @Test
-    public void testReadCdecHostDns() throws Exception {
-        assertEquals(InstallationManagerConfig.readCdecHostDns(), "localhost");
-    }
-
-    @Test
     public void testGetConfFile() {
         String testConfigPath = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath() + "another/im.properties";
         CONFIG_FILE = Paths.get(testConfigPath);

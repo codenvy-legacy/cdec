@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
@@ -255,6 +256,15 @@ public class Commons {
     public static boolean isInstall(Artifact artifact, Version version) throws IOException {
         Version installedVersion = artifact.getInstalledVersion();
         return installedVersion == null || installedVersion.equals(version);
+    }
+
+    /** Indicates if given host is reachable or not. */
+    public static boolean isReachable(String hostName) {
+        try {
+            return InetAddress.getByName(hostName).isReachable(250);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private static class JsonUtils {

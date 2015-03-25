@@ -22,6 +22,7 @@ import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -260,5 +261,4 @@ public class TestConfigUtil {
         Config result = configUtil.loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
         assertEquals(result.getProperties().toString(), properties.toString());
     }
-
 }

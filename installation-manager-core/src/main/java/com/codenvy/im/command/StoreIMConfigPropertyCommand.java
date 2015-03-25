@@ -66,11 +66,6 @@ public class StoreIMConfigPropertyCommand implements Command {
     }
 
     /** Factory */
-    public static Command createSaveCodenvyHostDnsCommand(final String hostDns) {
-        return new StoreIMConfigPropertyCommand(InstallationManagerConfig.CODENVY_HOST_DNS, hostDns);
-    }
-
-    /** Factory */
     public static Command createSavePuppetMasterHostDnsCommand(final String puppetMasterHostDns) {
         return new StoreIMConfigPropertyCommand(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME, puppetMasterHostDns);
     }
