@@ -261,4 +261,17 @@ public class TestBackupConfig {
 
         backupConfig.extractConfigFromBackup();
     }
+
+    @Test(expectedExceptions = BackupException.class,
+          expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_empty_config.tar.test/backup.config.json'")
+    public void testExtractEmptyConfigFromBackupError() throws IOException {
+        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
+
+        String testingBackup = getClass().getClassLoader().getResource("backup/backup_empty_config.tar.test").getPath();
+        BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                      .setArtifactVersion("1.0.0")
+                                                      .setBackupFile(Paths.get(testingBackup));
+
+        backupConfig.extractConfigFromBackup();
+    }
 }

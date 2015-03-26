@@ -31,20 +31,20 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.codenvy.im.command.CommandLibrary.createFileBackupCommand;
+import static com.codenvy.im.command.CommandLibrary.createFileRestoreOrBackupCommand;
 import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
 import static com.codenvy.im.command.CommandLibrary.createReplaceCommand;
-import static com.codenvy.im.command.CommandLibrary.createFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.MacroCommand.createCommand;
-import static com.codenvy.im.command.CommandLibrary.createFileRestoreOrBackupCommand;
 import static com.codenvy.im.command.CommandLibrary.getFileRestoreOrBackupCommand;
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
-import static org.testng.Assert.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestCommandLibrary {
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+    public static final NodeConfig TEST_API_NODE = new NodeConfig(NodeConfig.NodeType.API, "localhost");
+    public static final NodeConfig TEST_DATA_NODE = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1");
 
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
@@ -123,8 +123,8 @@ public class TestCommandLibrary {
                                               SYSTEM_USER_NAME);
 
         List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
-            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+            TEST_API_NODE,
+            TEST_DATA_NODE
         );
 
         Command testCommand = CommandLibrary.createFileRestoreOrBackupCommand("testFile", nodes);
@@ -172,7 +172,113 @@ public class TestCommandLibrary {
     }
 
     @Test
-    public void testCreateLocalStopServiceCommand() {
-        // TODO [ndp]
+    public void testCreateStopServiceCommand() throws AgentException {
+        Command testCommand = CommandLibrary.createStopServiceCommand("test-service");
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
+                                             "if [ $? -eq 0 ]; then" +
+                                             "   sudo service test-service stop; " +
+                                             "fi; ', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+
+        testCommand = CommandLibrary.createStopServiceCommand("test-service", TEST_API_NODE);
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
+                                             "if [ $? -eq 0 ]; then" +
+                                             "   sudo service test-service stop; " +
+                                             "fi; ', " +
+                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "}");
+    }
+
+    @Test
+    public void testCreateStartServiceCommand() throws AgentException {
+        Command testCommand = CommandLibrary.createStartServiceCommand("test-service");
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
+                                             "if [ $? -ne 0 ]; then" +
+                                             "   sudo service test-service start; " +
+                                             "fi; ', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+
+        testCommand = CommandLibrary.createStartServiceCommand("test-service", TEST_API_NODE);
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
+                                             "if [ $? -ne 0 ]; then" +
+                                             "   sudo service test-service start; " +
+                                             "fi; ', " +
+                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "}");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Service action 'unknown-action' isn't supported")
+    public void testGetServiceManagementCommandException() {
+        CommandLibrary.getServiceManagementCommand("test-service", "unknown-action");
+    }
+
+    @Test
+    public void testCreateCopyFromLocalToRemoteCommand() {
+        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), TEST_API_NODE);
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no local/path localhost:remote/path', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+    }
+
+    @Test
+    public void testCreateCopyFromRemoteToLocalCommand() {
+        Command testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), TEST_API_NODE);
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no localhost:remote/path local/path', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+    }
+
+    @Test
+    public void testCreateWaitServiceActiveCommand() throws AgentException {
+        Command testCommand = CommandLibrary.createWaitServiceActiveCommand("test-service");
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='doneState=\"Checking\"; " +
+                                             "while [ \"${doneState}\" != \"Done\" ]; do" +
+                                             "     sudo service test-service status | grep 'Active: active (running)';" +
+                                             "     if [ $? -eq 0 ]; then doneState=\"Done\";" +
+                                             "     else sleep 5;" +
+                                             "     fi; " +
+                                             "done', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+
+        testCommand = CommandLibrary.createWaitServiceActiveCommand("test-service", TEST_API_NODE);
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='doneState=\"Checking\"; " +
+                                             "while [ \"${doneState}\" != \"Done\" ]; do" +
+                                             "     sudo service test-service status | grep 'Active: active (running)';" +
+                                             "     if [ $? -eq 0 ]; then doneState=\"Done\";" +
+                                             "     else sleep 5;" +
+                                             "     fi; " +
+                                             "done', " +
+                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "}");
+    }
+
+    @Test
+    public void testGetWaitServiceInactiveStatusCommand() {
+        String testCommand = CommandLibrary.getWaitServiceStatusCommand("test-service", "inactive");
+        assertEquals(testCommand, "doneState=\"Checking\"; " +
+                                  "while [ \"${doneState}\" != \"Done\" ]; do" +
+                                  "     sudo service test-service status | grep 'Active: active (running)';" +
+                                  "     if [ $? -ne 0 ]; then doneState=\"Done\";" +
+                                  "     else sleep 5;" +
+                                  "     fi; " +
+                                  "done");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Service status 'unknown' isn't supported")
+    public void testGetWaitServiceStatusCommandException() {
+        String testCommand = CommandLibrary.getWaitServiceStatusCommand("test-service", "unknown");
     }
 }

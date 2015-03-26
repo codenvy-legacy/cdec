@@ -132,7 +132,7 @@ public class CommandLibrary {
         return createCommand(getServiceManagementCommand(serviceName, START), node);
     }
 
-    private static String getServiceManagementCommand(String serviceName, String action) {
+    protected static String getServiceManagementCommand(String serviceName, String action) {
         switch (action) {
             case STOP:
                 return format("sudo service %1$s status | grep 'Active: active (running)'; "
@@ -230,7 +230,7 @@ public class CommandLibrary {
         return createCommand(getWaitServiceStatusCommand(service, ACTIVE), node);
     }
 
-    private static String getWaitServiceStatusCommand(String service, String status) {
+    protected static String getWaitServiceStatusCommand(String service, String status) {
         String operator;
         switch (status) {
             case ACTIVE:
