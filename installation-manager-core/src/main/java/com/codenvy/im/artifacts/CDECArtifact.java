@@ -35,6 +35,7 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -71,27 +72,24 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Version getInstalledVersion() throws IOException {
-        Version singleTypeVersion = getInstalledVersion("localhost");
-
-        Version multiTypeVersion;
+        Config config;
         try {
-            Config config = configUtil.loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
-            multiTypeVersion = config == null ? null : getInstalledVersion(config.getHostUrl());
+            config = configUtil.loadInstalledCodenvyConfig(getInstalledType());
+            if (config == null) {
+                return null;
+            }
         } catch (IOException e) {
-            multiTypeVersion = null;
+            return null;
         }
 
-        if (singleTypeVersion == null) {
-            return multiTypeVersion;
-        } else {
-            if (multiTypeVersion == null || multiTypeVersion.equals(singleTypeVersion)) {
-                return singleTypeVersion;
-            } else {
-                throw new IllegalStateException("There are two Codenvy installation types with different versions.");
-            }
+        try {
+            return getInstalledVersion(config.getHostUrl());
+        } catch (IOException e) {
+            return null;
         }
     }
 
+    @Nullable
     protected Version getInstalledVersion(String hostName) throws IOException {
         String response;
         try {
@@ -102,11 +100,17 @@ public class CDECArtifact extends AbstractArtifact {
         }
 
         ApiInfo apiInfo = createDtoFromJson(response, ApiInfo.class);
-        if (apiInfo.getIdeVersion() == null && apiInfo.getImplementationVersion().equals("0.26.0")) {
-            return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
-        } else {
-            return Version.valueOf(apiInfo.getIdeVersion());
+        if (apiInfo == null) {
+            return null;
         }
+
+        if (apiInfo.getIdeVersion() == null
+            && apiInfo.getImplementationVersion() != null
+            && apiInfo.getImplementationVersion().equals("0.26.0")) {
+            return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
+        }
+
+        return Version.valueOf(apiInfo.getIdeVersion());
     }
 
     /** {@inheritDoc} */

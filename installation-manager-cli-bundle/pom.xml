@@ -155,16 +155,16 @@
                         <configuration>
                             <target>
                                 <?SORTPOM IGNORE?>
-                                <echo append="false" file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor">
-                                    com.codenvy.api.account.server.dto.DtoServerImpls
-                                    com.codenvy.api.core.server.dto.DtoServerImpls
+                                <echo append="false" file="${project.build.directory}/classes/META-INF/services/org.eclipse.che.dto.server.DtoFactoryVisitor">
+                                    org.eclipse.che.api.account.server.dto.DtoServerImpls
+                                    org.eclipse.che.api.core.server.dto.DtoServerImpls
                                 </echo>
                                 <?SORTPOM RESUME?>
                                 <tstamp>
                                     <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                 </tstamp>
                                 <touch datetime="${touch.time}">
-                                    <fileset file="${project.build.directory}/classes/META-INF/services/com.codenvy.dto.server.DtoFactoryVisitor" />
+                                    <fileset file="${project.build.directory}/classes/META-INF/services/org.eclipse.che.dto.server.DtoFactoryVisitor" />
                                 </touch>
                                 <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
                                     <zipfileset dir="${project.build.directory}/classes/META-INF/services/" prefix="META-INF/services" />
