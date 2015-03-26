@@ -183,13 +183,13 @@ public class TestCommandLibrary {
                                              "}");
 
         testCommand = CommandLibrary.createStopServiceCommand("test-service", TEST_API_NODE);
-        assertEquals(testCommand.toString(), "{" +
+        assertEquals(testCommand.toString(), format("{" +
                                              "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
                                              "if [ $? -eq 0 ]; then" +
                                              "   sudo service test-service stop; " +
                                              "fi; ', " +
-                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                             "}");
+                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "}", SYSTEM_USER_NAME));
     }
 
     @Test
@@ -204,13 +204,13 @@ public class TestCommandLibrary {
                                              "}");
 
         testCommand = CommandLibrary.createStartServiceCommand("test-service", TEST_API_NODE);
-        assertEquals(testCommand.toString(), "{" +
+        assertEquals(testCommand.toString(), format("{" +
                                              "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
                                              "if [ $? -ne 0 ]; then" +
                                              "   sudo service test-service start; " +
                                              "fi; ', " +
-                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                             "}");
+                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "}", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -252,7 +252,7 @@ public class TestCommandLibrary {
                                              "}");
 
         testCommand = CommandLibrary.createWaitServiceActiveCommand("test-service", TEST_API_NODE);
-        assertEquals(testCommand.toString(), "{" +
+        assertEquals(testCommand.toString(), format("{" +
                                              "'command'='doneState=\"Checking\"; " +
                                              "while [ \"${doneState}\" != \"Done\" ]; do" +
                                              "     sudo service test-service status | grep 'Active: active (running)';" +
@@ -260,8 +260,8 @@ public class TestCommandLibrary {
                                              "     else sleep 5;" +
                                              "     fi; " +
                                              "done', " +
-                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                             "}");
+                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "}", SYSTEM_USER_NAME));
     }
 
     @Test
