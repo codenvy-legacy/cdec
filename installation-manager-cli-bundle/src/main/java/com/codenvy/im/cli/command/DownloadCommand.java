@@ -18,15 +18,16 @@
 package com.codenvy.im.cli.command;
 
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+import org.eclipse.che.commons.json.JsonParseException;
 import org.json.JSONException;
 
 import static java.lang.Thread.sleep;

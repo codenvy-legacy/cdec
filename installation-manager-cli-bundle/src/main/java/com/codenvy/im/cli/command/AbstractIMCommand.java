@@ -17,18 +17,19 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
-import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.service.UserCredentials;
+
+import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.dto.server.DtoFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

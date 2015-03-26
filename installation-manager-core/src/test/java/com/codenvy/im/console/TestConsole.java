@@ -18,10 +18,12 @@
 
 package com.codenvy.im.console;
 
-import com.codenvy.commons.json.JsonParseException;
+import jline.console.ConsoleReader;
+
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-import jline.console.ConsoleReader;
+
+import org.eclipse.che.commons.json.JsonParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.mockito.Mock;
@@ -35,7 +37,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ConnectException;
 
-import static java.lang.Thread.MAX_PRIORITY;
 import static java.lang.Thread.sleep;
 import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Matchers.any;
@@ -48,9 +49,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
 public class TestConsole {
@@ -184,7 +183,8 @@ public class TestConsole {
         spyConsole.hideProgressor();
         String actualOutput = getOutputContent();
         assertTrue(actualOutput.startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s"));
-        assertTrue(actualOutput.contains("\u001B[u\u001B[stest\n\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-"));
+        assertTrue(actualOutput
+                           .contains("\u001B[u\u001B[stest\n\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-"));
         assertTrue(actualOutput.endsWith(" \u001B[u\u001B[s"));
 
         spyConsole = createNonInteractiveConsole();
@@ -198,7 +198,9 @@ public class TestConsole {
         spyConsole.hideProgressor();
         actualOutput = getOutputContent();
         assertTrue(actualOutput.startsWith("\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-\u001B[u\u001B[s"));
-        assertTrue(actualOutput.contains("\u001B[u\u001B[s\u001B[94m[CODENVY] \u001B[mtest\n\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u\u001B[s-"));
+        assertTrue(actualOutput.contains(
+                "\u001B[u\u001B[s\u001B[94m[CODENVY] \u001B[mtest\n\u001B[u\u001B[s-\u001B[u\u001B[s\\\u001B[u\u001B[s|\u001B[u\u001B[s/\u001B[u" +
+                "\u001B[s-"));
         assertTrue(actualOutput.endsWith(" \u001B[u\u001B[s"));
     }
 
@@ -432,14 +434,12 @@ public class TestConsole {
     public void testGetInstance() throws IOException {
         Console console = ConsoleTested.create(true);
         assertEquals(Console.getInstance(), console);
-        return;
     }
 
     @Test
     public void testGetInstanceError() throws IOException {
         Console console = ConsoleTested.create(true);
         assertEquals(Console.getInstance(), console);
-        return;
     }
 
     private Console createInteractiveConsole() throws IOException {

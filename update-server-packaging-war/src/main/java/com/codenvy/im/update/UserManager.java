@@ -17,9 +17,10 @@
  */
 package com.codenvy.im.update;
 
-import com.codenvy.commons.env.EnvironmentContext;
-import com.codenvy.commons.user.User;
 import com.google.inject.Singleton;
+
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.user.User;
 
 /**
  * @author Anatoliy Bazko

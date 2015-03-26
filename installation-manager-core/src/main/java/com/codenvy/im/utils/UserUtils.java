@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.api.user.shared.dto.UserDescriptor;
+import org.eclipse.che.api.user.shared.dto.UserDescriptor;
 
 import java.io.IOException;
 

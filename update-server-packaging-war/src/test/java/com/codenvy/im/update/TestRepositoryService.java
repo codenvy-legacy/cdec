@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.update;
 
-import com.codenvy.commons.user.UserImpl;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
@@ -30,6 +29,7 @@ import com.mongodb.DBCollection;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.commons.user.UserImpl;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.testng.MockitoTestNGListener;

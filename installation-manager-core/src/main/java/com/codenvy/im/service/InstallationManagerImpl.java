@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
@@ -32,6 +31,8 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.inject.Named;
 import java.io.FileNotFoundException;

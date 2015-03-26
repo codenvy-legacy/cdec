@@ -17,10 +17,10 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionAttributesDescriptor;
-import com.codenvy.api.account.shared.dto.SubscriptionDescriptor;
+import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
+import org.eclipse.che.api.account.shared.dto.SubscriptionAttributesDescriptor;
+import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

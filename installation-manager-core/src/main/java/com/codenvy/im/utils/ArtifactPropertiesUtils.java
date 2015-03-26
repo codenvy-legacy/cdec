@@ -17,9 +17,10 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
+
+import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
 import java.util.Map;

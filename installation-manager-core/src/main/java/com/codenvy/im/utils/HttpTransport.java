@@ -17,8 +17,7 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.dto.server.DtoFactory;
-
+import org.eclipse.che.dto.server.DtoFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,10 +36,10 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.commons.lang.IoUtil.deleteRecursive;
-import static com.codenvy.commons.lang.IoUtil.readAndCloseQuietly;
 import static com.codenvy.im.utils.Commons.copyInterruptable;
 import static java.nio.file.Files.newOutputStream;
+import static org.eclipse.che.commons.lang.IoUtil.deleteRecursive;
+import static org.eclipse.che.commons.lang.IoUtil.readAndCloseQuietly;
 
 /**
  * @author Anatoliy Bazko

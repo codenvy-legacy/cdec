@@ -17,8 +17,6 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.dto.server.DtoFactory;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
@@ -29,6 +27,9 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+
+import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.dto.server.DtoFactory;
 
 import java.io.IOException;
 import java.io.InputStream;

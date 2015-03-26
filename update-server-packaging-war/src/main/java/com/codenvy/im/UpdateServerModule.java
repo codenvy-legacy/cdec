@@ -18,8 +18,9 @@
 package com.codenvy.im;
 
 import com.codenvy.im.update.RepositoryService;
-import com.codenvy.inject.DynaModule;
 import com.google.inject.AbstractModule;
+
+import org.eclipse.che.inject.DynaModule;
 
 /**
  * @author Anatoliy Bazko

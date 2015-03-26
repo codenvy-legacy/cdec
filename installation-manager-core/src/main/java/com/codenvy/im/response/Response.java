@@ -17,13 +17,14 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import org.eclipse.che.commons.json.JsonParseException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

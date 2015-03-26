@@ -17,11 +17,12 @@
  */
 package com.codenvy.im.backup;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.TarUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.apache.commons.io.FileUtils;
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -245,7 +246,7 @@ public class BackupConfig {
         TarUtils.unpackFile(backupFile, tempDir, Paths.get(BACKUP_CONFIG_FILE));
         Path storedConfigFile = tempDir.resolve(BACKUP_CONFIG_FILE);
 
-        BackupConfig storedConfig = null;
+        BackupConfig storedConfig;
         try {
             String storedConfigJson = FileUtils.readFileToString(storedConfigFile.toFile());
             storedConfig = fromJson(storedConfigJson);

@@ -17,9 +17,9 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.im.exceptions.AuthenticationException;
 
+import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

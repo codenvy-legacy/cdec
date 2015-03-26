@@ -19,10 +19,10 @@ package com.codenvy.im;
 
 import com.codenvy.auth.sso.client.LoginFilter;
 import com.codenvy.auth.sso.client.deploy.SsoClientServletModule;
-import com.codenvy.inject.DynaModule;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
 
+import org.eclipse.che.inject.DynaModule;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
 
 /** @author Anatoliy Bazko */

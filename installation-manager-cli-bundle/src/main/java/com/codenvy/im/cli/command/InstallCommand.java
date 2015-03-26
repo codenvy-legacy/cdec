@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
@@ -37,6 +36,7 @@ import com.codenvy.im.utils.Version;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+import org.eclipse.che.commons.json.JsonParseException;
 import org.json.JSONException;
 
 import java.io.IOException;

@@ -17,12 +17,11 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
-import com.codenvy.api.account.shared.dto.MemberDescriptor;
-import com.codenvy.dto.server.DtoFactory;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.testng.annotations.Test;
 
 import java.io.FileInputStream;

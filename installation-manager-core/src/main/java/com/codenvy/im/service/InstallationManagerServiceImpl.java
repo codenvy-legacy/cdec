@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
@@ -36,6 +35,8 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.eclipse.che.api.account.shared.dto.AccountReference;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;

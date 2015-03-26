@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
@@ -30,6 +29,7 @@ import com.codenvy.im.service.UserCredentials;
 import com.google.common.io.Files;
 
 import org.apache.felix.service.command.CommandSession;
+import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;

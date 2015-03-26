@@ -19,10 +19,10 @@ package com.codenvy.im.console;
 
 import jline.console.ConsoleReader;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.response.Response;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.commons.json.JsonParseException;
 import org.fusesource.jansi.Ansi;
 
 import javax.annotation.Nullable;

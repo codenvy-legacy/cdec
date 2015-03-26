@@ -58,15 +58,23 @@ public class HelpCommand extends AbstractIMCommand {
                                        .withEntry(withCyan("stop"), "Stop one or more runner processes")
                                        .withEntry(withCyan("create-project"), "Create a project")
                                        .withEntry(withCyan("create-factory"), "Create a factory")
+                                       .withEntry(withCyan("delete-factory"), "Delete a factory")
+                                       .withEntry(withCyan("update-factory"), "Update a factory")
+                                       .withEntry(withCyan("list-factories"), "List factories")
                                        .withEntry(withCyan("privacy"), "Change privacy for a project")
                                        .withEntry(withCyan("delete-project"), "Delete a project")
                                        .withEntry(withCyan("push"), "Push local project changes back to Codenvy")
                                        .withEntry(withCyan("pull"), "Update project sync point directory created by clone-local")
-                                       .withEntry(withCyan("im-config"), "Config installation manager")
+                                       .withEntry(withCyan("im-config"), "Get installation manager configuration")
                                        .withEntry(withCyan("im-download"), "Download artifacts or print the list of installed ones")
                                        .withEntry(withCyan("im-install"), "Install, update artifact or print the list of already installed ones")
+                                       .withEntry(withCyan("im-backup"), "Backup all Codenvy data")
+                                       .withEntry(withCyan("im-restore"), "Restore Codenvy data")
+                                       .withEntry(withCyan("im-add-node"), "Add new Codenvy node such as builder or runner")
+                                       .withEntry(withCyan("im-remove-node"), "Remove Codenvy node")
                                        .withEntry(withCyan("im-subscription"), "Check Codenvy subscription")
                                        .alphabeticalSort().toAscii();
+
         buffer.a(value);
 
         // Display Remotes

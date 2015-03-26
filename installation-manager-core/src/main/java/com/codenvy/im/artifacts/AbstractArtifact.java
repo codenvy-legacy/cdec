@@ -17,10 +17,11 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

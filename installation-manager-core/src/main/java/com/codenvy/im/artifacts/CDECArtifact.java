@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.api.core.rest.shared.dto.ApiInfo;
 import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
 import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
@@ -33,6 +32,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 
 import java.io.IOException;
 import java.nio.file.Path;

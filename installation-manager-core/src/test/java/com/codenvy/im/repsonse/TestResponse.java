@@ -18,7 +18,6 @@
 package com.codenvy.im.repsonse;
 
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
@@ -31,6 +30,7 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
+import org.eclipse.che.commons.json.JsonParseException;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;

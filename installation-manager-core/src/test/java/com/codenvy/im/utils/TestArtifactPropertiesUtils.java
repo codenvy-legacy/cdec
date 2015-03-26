@@ -17,9 +17,9 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.commons.json.JsonParseException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 
+import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;

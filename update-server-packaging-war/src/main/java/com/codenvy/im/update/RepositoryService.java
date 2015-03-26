@@ -18,10 +18,6 @@
 package com.codenvy.im.update;
 
 
-import com.codenvy.api.core.rest.annotations.GenerateLink;
-import com.codenvy.commons.json.JsonParseException;
-import com.codenvy.commons.user.User;
-import com.codenvy.dto.server.JsonStringMapImpl;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
@@ -36,6 +32,10 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.api.core.rest.annotations.GenerateLink;
+import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.commons.user.User;
+import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

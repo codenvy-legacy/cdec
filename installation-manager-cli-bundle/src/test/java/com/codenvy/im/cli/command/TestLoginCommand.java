@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.api.account.shared.dto.AccountReference;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.request.Request;
@@ -25,6 +24,7 @@ import com.codenvy.im.service.InstallationManagerService;
 import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
+import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.restlet.resource.ResourceException;

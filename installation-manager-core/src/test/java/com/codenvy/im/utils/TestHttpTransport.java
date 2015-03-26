@@ -17,12 +17,12 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.api.core.ServerException;
-import com.codenvy.api.core.rest.annotations.OPTIONS;
-import com.codenvy.dto.server.JsonStringMapImpl;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.rest.annotations.OPTIONS;
+import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.ITestContext;
