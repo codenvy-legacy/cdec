@@ -58,6 +58,10 @@ public class NodeManager {
      * @param dns
      */
     public NodeConfig add(String dns) throws IOException, IllegalArgumentException {
+        if (!InstallType.CODENVY_MULTI_SERVER.equals(cdecArtifact.getInstalledType())) {
+            throw new IllegalStateException("You can add node to Multi-Server Codenvy only");
+        }
+
         Config config = getCodenvyConfig(configUtil);
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
         NodeConfig node = nodesConfigUtil.recognizeNodeConfigFromDns(dns);
@@ -168,6 +172,10 @@ public class NodeManager {
      * @throws IllegalArgumentException if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
     public NodeConfig remove(String dns) throws IOException, IllegalArgumentException {
+        if (!InstallType.CODENVY_MULTI_SERVER.equals(cdecArtifact.getInstalledType())) {
+            throw new IllegalStateException("You can remove node from Multi-Server Codenvy only");
+        }
+
         Config config = getCodenvyConfig(configUtil);
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
 
