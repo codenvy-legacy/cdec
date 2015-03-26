@@ -68,7 +68,6 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
-    // TODO [AB] new tests
     @Override
     public Version getInstalledVersion() throws IOException {
         Version singleTypeVersion = getInstalledVersion("localhost");

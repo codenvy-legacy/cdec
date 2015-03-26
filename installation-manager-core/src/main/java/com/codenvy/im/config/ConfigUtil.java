@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import javax.inject.Named;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,12 +47,15 @@ import static java.nio.file.Files.newInputStream;
 public class ConfigUtil {
     private final HttpTransport transport;
     private final String        updateEndpoint;
+    private final String puppetBaseDir;
 
     @Inject
     public ConfigUtil(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
+                      @Named("puppet.base_dir") String puppetBaseDir,
                       HttpTransport transport) {
         this.transport = transport;
         this.updateEndpoint = updateEndpoint;
+        this.puppetBaseDir = puppetBaseDir;
     }
 
     /** Loads properties from the given file. */
@@ -160,13 +164,13 @@ public class ConfigUtil {
     protected Iterator<Path> getCodenvyPropertiesFiles(InstallType installType) {
         switch (installType) {
             case CODENVY_MULTI_SERVER:
-                return ImmutableList.of(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES),
-                                        Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).iterator();
+                return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.MULTI_SERVER_PROPERTIES),
+                                        Paths.get(puppetBaseDir + File.separator + Config.MULTI_SERVER_BASE_PROPERTIES)).iterator();
 
             case CODENVY_SINGLE_SERVER:
             default:
-                return ImmutableList.of(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES),
-                                        Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
+                return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_PROPERTIES),
+                                        Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
         }
     }
 

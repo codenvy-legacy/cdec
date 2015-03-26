@@ -40,7 +40,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -210,26 +209,74 @@ public class TestCDECArtifact {
         spyCdecArtifact.getInstallCommand(null, null, options);
     }
 
+    /**
+     * Single-node Codenvy installation type: run and returns 3.2.0 version
+     * Multi-node Codenvy installation type: stopped
+     */
     @Test
-    public void testGetInstalledVersion() throws Exception {
+    public void testGetInstalledVersionUseCase1() throws Exception {
+        doReturn(new Config(ImmutableMap.of("host_url", "multi"))).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
         when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+        doThrow(IOException.class).when(mockTransport).doOption("http://multi/api/", null);
 
         Version version = spyCdecArtifact.getInstalledVersion();
         assertEquals(version, Version.valueOf("3.2.0-SNAPSHOT"));
     }
 
+    /**
+     * Single-node Codenvy installation type: stopped
+     * Multi-node Codenvy installation type: run and returns 3.3.0 version
+     */
     @Test
-    public void testGetInstalledVersionReturnNullIfCDECNotInstalled() throws Exception {
-        doThrow(new ConnectException()).when(mockTransport).doOption("http://localhost/api/", null);
-        Version version = spyCdecArtifact.getInstalledVersion();
-        assertNull(version);
+    public void testGetInstalledVersionUseCase2() throws Exception {
+        doReturn(new Config(ImmutableMap.of("host_url", "multi"))).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        when(mockTransport.doOption("http://multi/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0-SNAPSHOT\"}");
+        doThrow(IOException.class).when(mockTransport).doOption("http://localhost/api/", null);
 
-        version = spyCdecArtifact.getInstalledVersion();
-        assertNull(version);
+        Version version = spyCdecArtifact.getInstalledVersion();
+        assertEquals(version, Version.valueOf("3.3.0-SNAPSHOT"));
     }
 
-    @Test(expectedExceptions = JsonSyntaxException.class,
-            expectedExceptionsMessageRegExp = ".*Expected ':' at line 1 column 14.*")
+    /**
+     * Single-node Codenvy installation type: stopped
+     * Multi-node Codenvy installation type: stopped
+     */
+    @Test
+    public void testGetInstalledVersionUseCase3() throws Exception {
+        doReturn(new Config(ImmutableMap.of("host_url", "multi"))).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        doThrow(IOException.class).when(mockTransport).doOption("http://localhost/api/", null);
+        doThrow(IOException.class).when(mockTransport).doOption("http://multi/api/", null);
+
+        assertNull(spyCdecArtifact.getInstalledVersion());
+    }
+
+    /**
+     * Single-node Codenvy installation type: stopped.
+     * Multi-node Codenvy installation type: there is no configuration file.
+     */
+    @Test
+    public void testGetInstalledVersionUseCase4() throws Exception {
+        doReturn(null).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        doThrow(IOException.class).when(mockTransport).doOption("http://localhost/api/", null);
+        doThrow(IOException.class).when(mockTransport).doOption("http://multi/api/", null);
+
+        assertNull(spyCdecArtifact.getInstalledVersion());
+    }
+
+    /**
+     * Single-node Codenvy installation type: run and returns 3.2.0 version
+     * Multi-node Codenvy installation type: run and returns 3.3.0 version
+     */
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testGetInstalledVersionUseCase5() throws Exception {
+        doReturn(new Config(ImmutableMap.of("host_url", "multi"))).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"3.2.0-SNAPSHOT\"}");
+        when(mockTransport.doOption("http://multi/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0-SNAPSHOT\"}");
+
+        spyCdecArtifact.getInstalledVersion();
+    }
+
+    @Test(expectedExceptions = JsonSyntaxException.class)
     public void testGetInstalledVersionError() throws Exception {
         when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"some text\"}");
         spyCdecArtifact.getInstalledVersion();

@@ -80,7 +80,6 @@ uploadCodenvyServerInstallInstalationManagerScript() {
     if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
         ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
     fi
-
 }
 
 uploadCodenvySingleServerInstallProperties() {

@@ -44,6 +44,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -56,7 +57,7 @@ public class TestConfigUtil {
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
-        configUtil = spy(new ConfigUtil("", transport));
+        configUtil = spy(new ConfigUtil("", "target/puppet", transport));
     }
 
     @Test
@@ -225,14 +226,16 @@ public class TestConfigUtil {
     @Test
     public void testGetCssPropertiesFiles(){
         Iterator<Path> singleServerCssPropertiesFiles = configUtil.getCodenvyPropertiesFiles(InstallType.CODENVY_SINGLE_SERVER);
-        assertEquals(singleServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/single_server/single_server.pp");
-        assertEquals(singleServerCssPropertiesFiles.next().toAbsolutePath().toString(), "/etc/puppet/manifests/nodes/single_server/base_config.pp");
+        assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
+                                                 .endsWith("target/puppet/manifests/nodes/single_server/single_server.pp"));
+        assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
+                                                 .endsWith("target/puppet/manifests/nodes/single_server/base_config.pp"));
 
         Iterator<Path> multiServerCssPropertiesFiles = configUtil.getCodenvyPropertiesFiles(InstallType.CODENVY_MULTI_SERVER);
-        assertEquals(multiServerCssPropertiesFiles.next().toAbsolutePath().toString(),
-                     "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp");
-        assertEquals(multiServerCssPropertiesFiles.next().toAbsolutePath().toString(),
-                     "/etc/puppet/manifests/nodes/multi_server/base_configurations.pp");
+        assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
+                                                .endsWith("target/puppet/manifests/nodes/multi_server/custom_configurations.pp"));
+        assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
+                                                .endsWith("target/puppet/manifests/nodes/multi_server/base_configurations.pp"));
     }
 
     @Test
