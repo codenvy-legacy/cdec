@@ -37,8 +37,8 @@ import java.util.List;
 
 import static com.codenvy.im.command.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.command.ReadMasterHostNameCommand.fetchMasterHostName;
 import static com.codenvy.im.command.SimpleCommand.createCommand;
-import static com.codenvy.im.service.InstallationManagerConfig.readPuppetMasterNodeDns;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -99,7 +99,7 @@ public class NodeManager {
             commands.add(createCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
                                               node.getHost())));
 
-            String puppetMasterNodeDns = readPuppetMasterNodeDns();
+            String puppetMasterNodeDns = fetchMasterHostName();
 
             // install puppet agents on adding node
             commands.add(createCommand("yum list installed | grep puppetlabs-release.noarch; "

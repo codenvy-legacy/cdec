@@ -23,12 +23,10 @@ import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandLibrary;
 import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -286,11 +284,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                      "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
 
             case 8:
-                return new MacroCommand(ImmutableList.of(
-                    StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand(config.getHostUrl()),
-                    StoreIMConfigPropertyCommand.createSavePuppetMasterHostDnsCommand(config.getValue(InstallationManagerConfig.PUPPET_MASTER_HOST_NAME)),
-                    new CheckInstalledVersionCommand(original, versionToInstall)
-                ), "Check if Codenvy has already installed");
+                return new CheckInstalledVersionCommand(original, versionToInstall);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

@@ -23,7 +23,6 @@ import com.codenvy.im.command.CheckInstalledVersionCommand;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandLibrary;
 import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.command.StoreIMConfigPropertyCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallOptions;
@@ -96,9 +95,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
                     add(createCommand(
-                        "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                        + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                        + "; fi"));
+                            "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
+                            + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
+                            + "; fi"));
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
 
@@ -195,11 +194,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                      "done");
 
             case 8:
-                return new MacroCommand(ImmutableList.of(
-                    StoreIMConfigPropertyCommand.createSaveCodenvyHostDnsCommand("localhost"),
-                    new CheckInstalledVersionCommand(original, versionToInstall)
-                ), "Check if Codenvy has already installed");
-
+                return new CheckInstalledVersionCommand(original, versionToInstall);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

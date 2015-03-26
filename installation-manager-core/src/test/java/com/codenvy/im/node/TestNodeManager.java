@@ -21,12 +21,12 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.command.CommandException;
+import com.codenvy.im.command.MacroCommand;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.install.InstallType;
-import com.codenvy.im.service.InstallationManagerConfig;
 import com.codenvy.im.utils.Version;
-import com.google.common.collect.ImmutableMap;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -34,14 +34,10 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Map;
 
 import static java.lang.String.format;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -87,11 +83,6 @@ public class TestNodeManager {
         spyManager = spy(new NodeManager(mockConfigUtil, mockCdecArtifact));
         doReturn(mockConfig).when(spyManager).getCodenvyConfig(mockConfigUtil);
         doReturn(mockNodesConfigUtil).when(spyManager).getNodesConfigUtil(mockConfig);
-
-        Path initialImProperties = Paths.get(this.getClass().getClassLoader().getResource("im.properties.multi_node").getPath());
-        Path testImProperties = initialImProperties.getParent().resolve("im.properties.test");
-        Files.copy(initialImProperties, testImProperties, StandardCopyOption.REPLACE_EXISTING);
-        InstallationManagerConfig.CONFIG_FILE = testImProperties;
     }
 
     private void initConfigs() {
@@ -105,14 +96,15 @@ public class TestNodeManager {
     public void testAddNode() throws IOException {
         doNothing().when(spyManager).validate(TEST_NODE);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
-        doReturn(mockCommand).when(spyManager).getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
+        doReturn(mockCommand).when(spyManager)
+                             .getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
 
         assertEquals(spyManager.add(TEST_NODE_DNS), TEST_NODE);
         verify(mockCommand).execute();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "This type of node isn't supported")
+            expectedExceptionsMessageRegExp = "This type of node isn't supported")
     public void testAddNodeWhichIsNotSupported() throws IOException {
         doNothing().when(spyManager).validate(TEST_NODE);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
@@ -124,38 +116,12 @@ public class TestNodeManager {
     @Test
     public void testGetAddNodeCommand() throws IOException {
         Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
-        assertEquals(result.toString(), format("[" +
-                                        "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
-                                        "'agent'='LocalAgent'}, " +
-                                        "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"test_runner_node_url\"/g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
-                                        "'agent'='LocalAgent'}, " +
-                                        "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', " +
-                                        "'agent'='LocalAgent'}, " +
-                                        "{'command'='yum list installed | grep puppetlabs-release.noarch; if [ $? -ne 0 ]; then sudo yum -y -q install null; fi', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo yum -y -q install null', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target.wants/puppet.service'; fi', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo systemctl enable puppet', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo sed -i 's/\\[main\\]/\\[main\\]\\n  server = master\\n  runinterval = 420\\n  configtimeout = 600\\n/g' /etc/puppet/puppet.conf', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n  show_diff = true\\n  pluginsync = true\\n  report = true\\n  default_schedules = false\\n  certname = localhost\\n/g' /etc/puppet/puppet.conf', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo systemctl start puppet', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='doneState=\"Installing\"; testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; while [ \"${doneState}\" != \"Installed\" ]; do     if sudo test -f ${testFile}; then doneState=\"Installed\"; fi;     sleep 30; done', " +
-                                        "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', " +
-                                        "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "Expected to be installed 'mockCdecArtifact' of the version '1.0.0']", System.getProperty("user.name")));
+        assertNotNull(result);
+        assertTrue(result instanceof MacroCommand);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testGetAddNodeCommandWhenGetValueWithNodeException() throws IOException {
         doThrow(new IllegalArgumentException("error")).when(mockNodesConfigUtil).getValueWithNode(TEST_NODE);
 
@@ -165,7 +131,8 @@ public class TestNodeManager {
     @Test
     public void testRemoveNode() throws IOException {
         doReturn(TEST_NODE_TYPE).when(mockNodesConfigUtil).recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
-        doReturn(mockCommand).when(spyManager).getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(mockCommand).when(spyManager)
+                             .getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
@@ -173,9 +140,10 @@ public class TestNodeManager {
     }
 
     @Test(expectedExceptions = NodeException.class,
-          expectedExceptionsMessageRegExp = "Node 'localhost' is not found in Codenvy configuration among additional nodes")
+            expectedExceptionsMessageRegExp = "Node 'localhost' is not found in Codenvy configuration among additional nodes")
     public void testRemoveNonExistsNodeError() throws IOException {
-        doReturn(mockCommand).when(spyManager).getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(mockCommand).when(spyManager)
+                             .getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
         verify(mockCommand).execute();
@@ -183,31 +151,37 @@ public class TestNodeManager {
 
     @Test
     public void testGetRemoveNodeCommand() throws IOException {
-        Command removeNodeCommand = spyManager.getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        Command removeNodeCommand =
+                spyManager.getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
         assertEquals(removeNodeCommand.toString(),
                      format("[" +
-                     "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
-                     "'agent'='LocalAgent'}, " +
-                     "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"null\"/g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
-                     "'agent'='LocalAgent'}, " +
-                     "{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', " +
-                     "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                     "Expected to be installed 'mockCdecArtifact' of the version '1.0.0', " +
-                     "{'command'='sudo puppet cert clean localhost', " +
-                     "'agent'='LocalAgent'}, " +
-                     "{'command'='sudo service puppetmaster restart', " +
-                     "'agent'='LocalAgent'}, " +
-                     "{'command'='sudo service puppet stop', " +
-                     "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                     "{'command'='sudo rm -rf /var/lib/puppet/ssl', " +
-                     "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
-                     "]", SYSTEM_USER_NAME));
+                            "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp " +
+                            "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
+                            "'agent'='LocalAgent'}, " +
+                            "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"null\"/g' " +
+                            "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
+                            "'agent'='LocalAgent'}, " +
+                            "{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep " +
+                            "\"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api" +
+                            " server', " +
+                            "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                            "Expected to be installed 'mockCdecArtifact' of the version '1.0.0', " +
+                            "{'command'='sudo puppet cert clean localhost', " +
+                            "'agent'='LocalAgent'}, " +
+                            "{'command'='sudo service puppetmaster restart', " +
+                            "'agent'='LocalAgent'}, " +
+                            "{'command'='sudo service puppet stop', " +
+                            "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                            "{'command'='sudo rm -rf /var/lib/puppet/ssl', " +
+                            "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                            "]", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = NodeException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testGetRemoveNodeCommandWhenGetValueWithNodeException() throws IOException {
-        doThrow(new IllegalArgumentException("error")).when(mockConfig).getValue(NodeConfig.NodeType.API.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        doThrow(new IllegalArgumentException("error")).when(mockConfig)
+                                                      .getValue(NodeConfig.NodeType.API.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
 
         spyManager.getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
     }
@@ -222,9 +196,9 @@ public class TestNodeManager {
     @DataProvider(name = "PuppetAgentStates")
     public static Object[][] PuppetAgentStates() {
         return new Object[][]{
-            {null, false},
-            {"Active: inactive (dead)", false},
-            {"Loaded: loaded  Active: active (running)", true},
+                {null, false},
+                {"Active: inactive (dead)", false},
+                {"Loaded: loaded  Active: active (running)", true},
         };
     }
 
@@ -243,7 +217,7 @@ public class TestNodeManager {
     }
 
     @Test(expectedExceptions = NodeException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testValidateNodeCommandException() throws IOException {
         doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo ls", TEST_NODE);
         doThrow(new CommandException("error", null)).when(mockCommand).execute();
@@ -251,7 +225,7 @@ public class TestNodeManager {
     }
 
     @Test(expectedExceptions = NodeException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testValidateNodeAgentException() throws AgentException, CommandException, NodeException {
         doThrow(new AgentException("error")).when(spyManager).getShellAgentCommand("sudo ls", TEST_NODE);
         spyManager.validate(TEST_NODE);
