@@ -21,6 +21,7 @@ import com.codenvy.im.command.ReadMasterHostNameCommand;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,7 +35,7 @@ import static java.nio.file.Files.exists;
 public class BaseTest {
     private static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", ReadMasterHostNameCommand.CONF_FILE);
 
-    @AfterMethod
+    @BeforeMethod
     public void clear() throws Exception {
         if (exists(PUPPET_CONF_FILE)) {
             delete(PUPPET_CONF_FILE);
