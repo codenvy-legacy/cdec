@@ -39,6 +39,7 @@ import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -277,7 +278,7 @@ public class RepositoryService {
                                        (version != null ? ":" + version : "") + "'.").build();
             }
 
-            return doDownloadArtifact(artifact, version, false);
+            return doDownloadArtifact(artifact, version, userId);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
                     "Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
@@ -304,7 +305,7 @@ public class RepositoryService {
     public Response downloadPublicArtifact(@PathParam("artifact") String artifact,
                                            @PathParam("version") String version) {
         try {
-            return doDownloadArtifact(artifact, version, true);
+            return doDownloadArtifact(artifact, version, null);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
                     "Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
@@ -329,7 +330,7 @@ public class RepositoryService {
     public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") String artifact) {
         try {
             String version = artifactStorage.getLatestVersion(artifact);
-            return doDownloadArtifact(artifact, version, true);
+            return doDownloadArtifact(artifact, version, null);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -339,8 +340,11 @@ public class RepositoryService {
         }
     }
 
-    private Response doDownloadArtifact(final String artifact, final String version, final boolean publicAccess) throws IOException {
+    private Response doDownloadArtifact(final String artifact,
+                                        final String version,
+                                        @Nullable final String userId) throws IOException {
         final java.nio.file.Path path = artifactStorage.getArtifact(artifact, version);
+        final boolean publicURL = userId == null;
 
         if (!Files.exists(path)) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -348,7 +352,7 @@ public class RepositoryService {
                                    "' version " + version + ". Probably the repository doesn't contain one.").build();
         }
 
-        if (publicAccess &&
+        if (publicURL &&
             (artifactStorage.isAuthenticationRequired(artifact, version)
              || artifactStorage.getRequiredSubscription(artifact, version) != null)) {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Artifact '" + artifact + "' is not in public access").build();
@@ -356,25 +360,14 @@ public class RepositoryService {
 
         final String fileName = artifactStorage.getFileName(artifact, version);
 
-        if (!publicAccess) {
-            LOG.info("User '" + userManager.getCurrentUser().getId() + "' is downloading " + fileName);
+        if (!publicURL) {
+            LOG.info(format("User '%s' is downloading %s", userId, fileName));
         }
-
-        final String userId = userManager.getCurrentUser() != null ? userManager.getCurrentUser().getId() : null;
 
         StreamingOutput stream = new StreamingOutput() {
             public void write(OutputStream output) throws IOException, WebApplicationException {
                 try (InputStream input = new FileInputStream(path.toFile())) {
                     IOUtils.copyLarge(input, output);
-
-                    if (userId != null) {
-                        try {
-                            mongoStorage.updateDownloadStatistics(userId, artifact, version, true);
-                        } catch (MongoException ex) {
-                            String errMsg = format("Can't update download statistics artifact '%s':'%s' for user '%s'", artifact, version, userId);
-                            LOG.error(errMsg, ex);
-                        }
-                    }
 
                     LOG.info("EVENT#im-artifact-downloaded# TIME#{}# USER#{}# ARTIFACT#{}# VERSION#{}#",
                              System.currentTimeMillis(),
@@ -382,24 +375,11 @@ public class RepositoryService {
                              artifact.toLowerCase(),
                              version);
 
-                    if (!publicAccess) {
-                        LOG.info(format("User '%s' finished downloading %s:%s", userManager.getCurrentUser().getId(), artifact, version));
-                    }
-
                 } catch (ClientAbortException e) {
                     // do nothing
+                    LOG.info(format("User %s aborted downloading %s:%s", userId == null ? "Anonymous" : userId, artifact, version));
                 } catch (Exception e) {
-                    if (userId != null) {
-                        try {
-                            mongoStorage.updateDownloadStatistics(userId, artifact, version, false);
-                        } catch (MongoException ex) {
-                            String errMsg =
-                                    format("Can't update download statistics artifact '%s':'%s' for user '%s'", artifact, version, userId);
-                            LOG.error(errMsg, ex);
-                        }
-                    }
-
-                    LOG.error("Can't send an artifact " + artifact + ":" + version, e);
+                    LOG.info(format("User %s failed to download %s:%s", userId == null ? "Anonymous" : userId, artifact, version), e);
                     throw new IOException(e.getMessage(), e);
                 }
             }

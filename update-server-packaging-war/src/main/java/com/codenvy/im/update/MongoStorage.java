@@ -196,6 +196,7 @@ public class MongoStorage {
     }
 
     /** Saves info concerning downloaded artifact by user. */
+    // CDEC-134
     public void updateDownloadStatistics(String userId, String artifact, String version, boolean isSuccessfullyDownloaded) throws MongoException {
         DBCollection collection = db.getCollection(DOWNLOAD_STATISTICS);
 
@@ -218,6 +219,7 @@ public class MongoStorage {
      * @return statistics by users about downloading specific artifact with versions, for instance
      * {userId=artifact, total=3, versions={version=1.0.1, success=1, fail=2}}
      */
+    // CDEC-134
     public Map<String, Object> getDownloadsInfoByArtifact(String artifact) throws MongoException, ArtifactNotFoundException {
         AggregationOutput output = aggregateByArtifact(artifact);
 
@@ -250,6 +252,7 @@ public class MongoStorage {
      * @return statistics by specific user about downloaded artifacts, for instance
      * {userId=user2, total=3, artifacts={artifact=artifact3, version=1.0.1, success=1, fail=2}}
      */
+    // CDEC-134
     public Map<String, Object> getDownloadsInfoByUserId(String userId) throws MongoException, ArtifactNotFoundException {
         AggregationOutput output = aggregateByUserId(userId);
 
