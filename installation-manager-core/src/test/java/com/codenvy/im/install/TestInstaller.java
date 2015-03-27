@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.install;
 
+import com.codenvy.im.BaseTest;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
@@ -48,7 +49,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestInstaller {
+public class TestInstaller extends BaseTest {
 
     @Mock
     private ConfigUtil configUtil;
@@ -88,6 +89,8 @@ public class TestInstaller {
 
     @Test
     public void testGetUpdateInfoInstalledLowerVersion() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
         InstallOptions options = new InstallOptions().setInstallType(InstallType.CODENVY_SINGLE_SERVER);
@@ -101,6 +104,8 @@ public class TestInstaller {
 
     @Test
     public void testGetUpdateInfoInstalledHigherVersion() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
         InstallOptions options = new InstallOptions().setInstallType(InstallType.CODENVY_SINGLE_SERVER);
@@ -152,6 +157,8 @@ public class TestInstaller {
 
     @Test
     public void testUpdateInstalledLowerVersion() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
         Path pathToBinaries = Paths.get("some path");
@@ -171,6 +178,8 @@ public class TestInstaller {
 
     @Test
     public void testIUpdateInstalledHigherVersion() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
         Path pathToBinaries = Paths.get("some path");

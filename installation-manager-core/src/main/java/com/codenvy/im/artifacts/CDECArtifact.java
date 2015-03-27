@@ -41,7 +41,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.im.command.ReadMasterHostNameCommand.fetchMasterHostName;
+import static com.codenvy.im.command.DetectInstallationTypeCommand.detectInstallationType;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
 
@@ -167,25 +167,21 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     public InstallType getInstalledType() throws IOException {
-        if (fetchMasterHostName() == null) {
-            return InstallType.CODENVY_SINGLE_SERVER;
-        }
-
-        return InstallType.CODENVY_MULTI_SERVER;
+        return detectInstallationType();
     }
 
     /** {@inheritDoc} */
     @Override
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
-        return getHelper(getInstalledType())
-                .getBackupCommand(backupConfig, codenvyConfigUtil);
+        CDECArtifactHelper helper = getHelper(getInstalledType());
+        return helper.getBackupCommand(backupConfig, codenvyConfigUtil);
     }
 
     /** {@inheritDoc} */
     @Override
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
-        return getHelper(getInstalledType())
-                .getRestoreCommand(backupConfig, codenvyConfigUtil);
+        CDECArtifactHelper helper = getHelper(getInstalledType());
+        return helper.getRestoreCommand(backupConfig, codenvyConfigUtil);
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {

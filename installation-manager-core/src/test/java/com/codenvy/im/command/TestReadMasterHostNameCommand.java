@@ -47,7 +47,7 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnNullIfStringIsEmpty() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "   server = ");
+                                                   "   certname = ");
 
         assertNull(fetchMasterHostName());
     }
@@ -55,7 +55,7 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnNullIfWrongFormat() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "   server  bla.bla.com");
+                                                   "   certname  bla.bla.com");
 
         assertNull(fetchMasterHostName());
     }
@@ -63,7 +63,7 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnHostName() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "   server=    bla.bla.com   ");
+                                                   "   certname=    bla.bla.com   ");
 
         assertEquals(fetchMasterHostName(), "bla.bla.com");
     }
@@ -71,7 +71,7 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnHostNameNoWhiteSpacesInLine() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "server=bla.bla.com");
+                                                   "certname=bla.bla.com");
 
         assertEquals(fetchMasterHostName(), "bla.bla.com");
     }
