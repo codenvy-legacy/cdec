@@ -47,7 +47,7 @@ public class ReadMasterHostNameCommand extends SimpleCommand {
         super(format("if [ ! -f %1$s ]; then" +
                      "     exit 1;" +
                      " else" +
-                     "     cat %1$s | grep certname | grep = | sed 's/\\s*certname\\s*=\\(.*\\)/\\1/';" +
+                     "     cat %1$s | grep 'certname =' | sed 's/\\s*certname\\s*=\\(.*\\)/\\1/';" +
                      " fi",
                      puppetDir + File.separator + CONF_FILE),
               new LocalAgent(),

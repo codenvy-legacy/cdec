@@ -55,7 +55,7 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnNullIfWrongFormat() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "   certname  bla.bla.com");
+                                                   "    certname  bla.bla.com\n");
 
         assertNull(fetchMasterHostName());
     }
@@ -63,7 +63,7 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnHostName() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "   certname=    bla.bla.com   ");
+                                                   "   certname =    bla.bla.com   ");
 
         assertEquals(fetchMasterHostName(), "bla.bla.com");
     }
@@ -71,8 +71,9 @@ public class TestReadMasterHostNameCommand {
     @Test
     public void shouldReturnHostNameNoWhiteSpacesInLine() throws Exception {
         FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                   "certname=bla.bla.com");
+                                                   "    certname = master.dev.com\n" +
+                                                   "    hostprivkey = $privatekeydir/$certname.pem { mode = 640 }\n");
 
-        assertEquals(fetchMasterHostName(), "bla.bla.com");
+        assertEquals(fetchMasterHostName(), "master.dev.com");
     }
 }
