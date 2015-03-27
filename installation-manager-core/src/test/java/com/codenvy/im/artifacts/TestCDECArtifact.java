@@ -79,6 +79,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetInstallSingleServerInfo() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
         options.setStep(1);
@@ -90,6 +92,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetInstallMultiServerInfo() throws Exception {
+        prepareConfForMultiNodeInstallation();
+
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.CODENVY_MULTI_SERVER);
         options.setStep(1);
@@ -101,6 +105,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetInstallSingleServerCommandOsVersion6() throws Exception {
+        prepareConfForSingleNodeInstallation();
         OSUtils.VERSION = "6";
 
         InstallOptions options = new InstallOptions();
@@ -117,6 +122,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetInstallSingleServerCommandOsVersion7() throws Exception {
+        prepareConfForSingleNodeInstallation();
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
@@ -133,6 +139,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testGetInstallSingleServerCommandError() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
@@ -142,7 +150,8 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetInstallMultiServerCommandsForMultiServer() throws IOException {
+    public void testGetInstallMultiServerCommandsForMultiServer() throws Exception {
+        prepareConfForMultiNodeInstallation();
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
@@ -159,7 +168,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Site node config not found.")
-    public void testGetInstallMultiServerCommandsForMultiServerError() throws IOException {
+    public void testGetInstallMultiServerCommandsForMultiServerError() throws Exception {
+        prepareConfForMultiNodeInstallation();
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
@@ -177,6 +187,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Step number .* is out of install range")
     public void testGetInstallMultiServerCommandUnexistedStepError() throws Exception {
+        prepareConfForMultiNodeInstallation();
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
@@ -188,7 +199,8 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testGetInstallMultiServerCommandsWrongOS() throws IOException {
+    public void testGetInstallMultiServerCommandsWrongOS() throws Exception {
+        prepareConfForMultiNodeInstallation();
         OSUtils.VERSION = "6";
 
         InstallOptions options = new InstallOptions();
@@ -292,6 +304,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetUpdateMultiServerCommand() throws Exception {
+        prepareConfForMultiNodeInstallation();
+
         when(mockTransport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"1.0.0\"}");
 
         InstallOptions options = new InstallOptions();
@@ -339,6 +353,8 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromMultiToSingleServerError() throws Exception {
+        prepareConfForMultiNodeInstallation();
+
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
@@ -367,6 +383,8 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromMultiToSingleServerError() throws Exception {
+        prepareConfForMultiNodeInstallation();
+
         OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
@@ -387,7 +405,9 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetBackupSingleServerCommand() throws IOException {
+    public void testGetBackupSingleServerCommand() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_SINGLE_SERVER);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
@@ -400,7 +420,9 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetBackupMultiServerCommand() throws IOException {
+    public void testGetBackupMultiServerCommand() throws Exception {
+        prepareConfForMultiNodeInstallation();
+
         Map<String, String> codenvyMultiServerProperties = ImmutableMap.of(
                 "api_host_name", "api.example.com",
                 "data_host_name", "data.example.com");
@@ -416,7 +438,9 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetRestoreSingleServerCommand() throws IOException {
+    public void testGetRestoreSingleServerCommand() throws Exception {
+        prepareConfForSingleNodeInstallation();
+
         doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_SINGLE_SERVER);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
@@ -431,7 +455,9 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetRestoreMultiServerCommand() throws IOException {
+    public void testGetRestoreMultiServerCommand() throws Exception {
+        prepareConfForMultiNodeInstallation();
+
         Map<String, String> codenvyMultiServerProperties = ImmutableMap.of(
                 "api_host_name", "api.example.com",
                 "data_host_name", "data.example.com");

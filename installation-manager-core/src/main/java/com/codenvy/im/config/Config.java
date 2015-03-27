@@ -30,6 +30,8 @@ import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
 public class Config {
+    public static final String PUPPET_CONF_FILE_NAME = "puppet.conf";
+
     public static final String SINGLE_SERVER_PROPERTIES      = "manifests/nodes/single_server/single_server.pp";
     public static final String SINGLE_SERVER_BASE_PROPERTIES = "manifests/nodes/single_server/base_config.pp";
 

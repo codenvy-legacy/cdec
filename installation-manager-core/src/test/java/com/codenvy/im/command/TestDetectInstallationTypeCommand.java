@@ -29,7 +29,7 @@ public class TestDetectInstallationTypeCommand extends BaseTest {
 
     @Test
     public void shouldReturnMultiIfFileAbsent() throws Exception {
-        assertEquals(detectInstallationType(), InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(detectInstallationType(), InstallType.UNKNOWN);
     }
 
     @Test

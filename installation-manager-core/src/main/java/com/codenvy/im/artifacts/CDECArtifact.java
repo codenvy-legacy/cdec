@@ -70,11 +70,17 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
+    // TODO [AB] more tests
     @Override
     public Version getInstalledVersion() throws IOException {
         Config config;
         try {
-            config = configUtil.loadInstalledCodenvyConfig(getInstalledType());
+            InstallType installType = detectInstallationType();
+            if (installType == InstallType.UNKNOWN) {
+                return null;
+            }
+
+            config = configUtil.loadInstalledCodenvyConfig(installType);
             if (config == null) {
                 return null;
             }
@@ -104,6 +110,7 @@ public class CDECArtifact extends AbstractArtifact {
             return null;
         }
 
+        // TODO [AB] review && rework
         if (apiInfo.getIdeVersion() == null
             && apiInfo.getImplementationVersion() != null
             && apiInfo.getImplementationVersion().equals("0.26.0")) {
@@ -166,8 +173,14 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
+    // TODO [AB] remove
     public InstallType getInstalledType() throws IOException {
-        return detectInstallationType();
+        InstallType installType = detectInstallationType();
+        if (installType == InstallType.UNKNOWN) {
+            throw new IllegalStateException("Codenvy installation type is unknown");
+        }
+
+        return installType;
     }
 
     /** {@inheritDoc} */
