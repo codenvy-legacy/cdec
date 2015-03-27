@@ -233,8 +233,6 @@ public class TestBackupConfig {
 
     @Test
     public void testExtractConfigFromBackup() throws IOException {
-        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
-
         String testingBackup = getClass().getClassLoader().getResource("backup/backup.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                     .setArtifactVersion("1.0.0")
@@ -252,8 +250,6 @@ public class TestBackupConfig {
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_without_config.tar.test/backup.config.json'")
     public void testExtractAbsenceConfigFromBackupError() throws IOException {
-        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
-
         String testingBackup = getClass().getClassLoader().getResource("backup/backup_without_config.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                       .setArtifactVersion("1.0.0")
@@ -265,8 +261,6 @@ public class TestBackupConfig {
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_empty_config.tar.test/backup.config.json'")
     public void testExtractEmptyConfigFromBackupError() throws IOException {
-        Files.createDirectories(TEST_BASE_TMP_DIRECTORY);
-
         String testingBackup = getClass().getClassLoader().getResource("backup/backup_empty_config.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                       .setArtifactVersion("1.0.0")

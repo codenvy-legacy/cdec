@@ -128,19 +128,19 @@ public class TestBackupManager {
         spyManager.backup(initialBackupConfig);
     }
 
+
+    @Test(expectedExceptions = BackupException.class,
+          expectedExceptionsMessageRegExp = "Artifact version is unavailable")
+    public void testBackupNullArtifactVersionException() throws IOException {
+        BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy");
+        doReturn(null).when(mockCdecArtifact).getInstalledVersion();
+        spyManager.backup(backupConfig);
+    }
+
     @Test
     public void testRestoreCodenvy() throws IOException {
         Path backupFile = TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar");
-        String backupConfigJson = "{\n"
-                                 + "  \"artifactName\" : \"codenvy\",\n"
-                                 + "  \"artifactVersion\" : \"1.0.0\"\n"
-                                 + "}";
-        Path backupConfigFile = backupFile.getParent().resolve(BackupConfig.BACKUP_CONFIG_FILE);
-        FileUtils.writeStringToFile(backupConfigFile.toFile(), backupConfigJson);
-        TarUtils.packFile(backupConfigFile, backupFile);
-
-        Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
-        TarUtils.compressFile(backupFile, compressedBackupFile);
+        Path compressedBackupFile = prepareCompressedBackup(backupFile);
 
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
                                                              .setBackupFile(compressedBackupFile);
@@ -178,24 +178,58 @@ public class TestBackupManager {
 
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "error")
-    public void testRestoreException() throws IOException {
-        Path backupFile = TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar");
-        String backupConfigJson = "{\n"
-                                  + "  \"artifactName\" : \"codenvy\",\n"
-                                  + "  \"artifactVersion\" : \"1.0.0\"\n"
-                                  + "}";
-        Path backupConfigFile = backupFile.getParent().resolve(BackupConfig.BACKUP_CONFIG_FILE);
-        FileUtils.writeStringToFile(backupConfigFile.toFile(), backupConfigJson);
-        TarUtils.packFile(backupConfigFile, backupFile);
-
-        Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
-        TarUtils.compressFile(backupFile, compressedBackupFile);
-
+    public void testRestoreIOException() throws IOException {
+        Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
                                                              .setBackupFile(compressedBackupFile);
 
         doThrow(new IOException("error")).when(mockCdecArtifact).getRestoreCommand(any(BackupConfig.class), any(ConfigUtil.class));
         spyManager.restore(initialBackupConfig);
+    }
+
+
+    @Test(expectedExceptions = BackupException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testRestoreBackupException() throws IOException {
+        Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
+
+        BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupFile(compressedBackupFile));
+
+        doReturn(spyBackupConfig).when(spyBackupConfig).clone();
+        doThrow(new BackupException("error")).when(spyBackupConfig).extractConfigFromBackup();
+
+        spyManager.restore(spyBackupConfig);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testRestoreIllegalArgumentException() throws IOException {
+        Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
+
+        BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupFile(compressedBackupFile));
+
+        doReturn(spyBackupConfig).when(spyBackupConfig).clone();
+        doReturn(spyBackupConfig).when(spyBackupConfig).extractConfigFromBackup();
+        doThrow(new IllegalArgumentException("error")).when(spyManager).checkBackup(mockCdecArtifact, spyBackupConfig);
+
+        spyManager.restore(spyBackupConfig);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testRestoreIllegalStateException() throws IOException {
+        Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
+
+        BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupFile(compressedBackupFile));
+
+        doReturn(spyBackupConfig).when(spyBackupConfig).clone();
+        doReturn(spyBackupConfig).when(spyBackupConfig).extractConfigFromBackup();
+        doThrow(new IllegalStateException("error")).when(spyManager).checkBackup(mockCdecArtifact, spyBackupConfig);
+
+        spyManager.restore(spyBackupConfig);
     }
 
     @Test
@@ -257,5 +291,19 @@ public class TestBackupManager {
         } catch(IllegalStateException e) {
             assertEquals(e.getMessage(), expectedExceptionMessage);
         }
+    }
+
+    private Path prepareCompressedBackup(Path backupFile) throws IOException {
+        String backupConfigJson = "{\n"
+                                  + "  \"artifactName\" : \"codenvy\",\n"
+                                  + "  \"artifactVersion\" : \"1.0.0\"\n"
+                                  + "}";
+        Path backupConfigFile = backupFile.getParent().resolve(BackupConfig.BACKUP_CONFIG_FILE);
+        FileUtils.writeStringToFile(backupConfigFile.toFile(), backupConfigJson);
+        TarUtils.packFile(backupConfigFile, backupFile);
+
+        Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
+        TarUtils.compressFile(backupFile, compressedBackupFile);
+        return compressedBackupFile;
     }
 }
