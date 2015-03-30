@@ -192,36 +192,6 @@ public class RepositoryService {
         return m;
     }
 
-    /**
-     * Gets download statistic.
-     *
-     * @return Response
-     * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByArtifact(String)
-     * @see com.codenvy.im.update.MongoStorage#getDownloadsInfoByUserId(String)
-     */
-    @GenerateLink(rel = "get download statistic by users for specific artifact")
-    @GET
-    @Path("/download/statistic/{entity}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"system/admin", "system/manager"})
-    public Response getDownloadStatistic(@PathParam("entity") final String entity) {
-        try {
-            Map<String, Object> response;
-            if (isArtifactName(entity)) {
-                response = mongoStorage.getDownloadsInfoByArtifact(entity);
-            } else {
-                response = mongoStorage.getDownloadsInfoByUserId(entity);
-            }
-
-            return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(response)).build();
-        } catch (ArtifactNotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
-        } catch (MongoException e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. Can't get information").build();
-        }
-    }
-
     private boolean isArtifactName(String entity) {
         if (entity.equalsIgnoreCase("install-codenvy")) {
             return true;

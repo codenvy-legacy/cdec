@@ -123,17 +123,6 @@ public class TestRepositoryService extends BaseTest {
         DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
         collection.remove(new BasicDBObject());
 
-        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", true);
-        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", true);
-        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", false);
-        mongoStorage.updateDownloadStatistics("uid1", "codenvy", "1.0.1", false);
-        mongoStorage.updateDownloadStatistics("uid1", "artifact2", "1.0.1", false);
-
-        mongoStorage.updateDownloadStatistics("uid2", "codenvy", "1.0.1", true);
-        mongoStorage.updateDownloadStatistics("uid2", "codenvy", "1.0.2", true);
-        mongoStorage.updateDownloadStatistics("uid2", "codenvy", "1.0.3", true);
-        mongoStorage.updateDownloadStatistics("uid2", "artifact3", "1.0.1", false);
-
         collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
         collection.remove(new BasicDBObject());
     }
@@ -419,107 +408,6 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy-1.01.1/1.01.1");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
-
-    @Test
-    public void testGetDownloadStatisticByUser() throws Exception {
-        Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                                   .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/uid1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        Map m = response.as(Map.class);
-        assertEquals(m.size(), 5);
-        assertEquals(m.get(MongoStorage.USER_ID), "uid1");
-        assertEquals(m.get(MongoStorage.TOTAL), 5D);
-        assertEquals(m.get(MongoStorage.SUCCESS), 2D);
-        assertEquals(m.get(MongoStorage.FAIL), 3D);
-        assertNotNull(m.get(MongoStorage.ARTIFACTS));
-
-        List l = (List)m.get(MongoStorage.ARTIFACTS);
-        assertEquals(l.size(), 2);
-
-        m = (Map)l.get(0);
-        assertEquals(m.get(MongoStorage.ARTIFACT), "artifact2");
-        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
-        assertEquals(m.get(MongoStorage.SUCCESS), 0D);
-        assertEquals(m.get(MongoStorage.FAIL), 1D);
-        assertEquals(m.get(MongoStorage.TOTAL), 1D);
-
-        m = (Map)l.get(1);
-        assertEquals(m.get(MongoStorage.ARTIFACT), "codenvy");
-        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
-        assertEquals(m.get(MongoStorage.SUCCESS), 2D);
-        assertEquals(m.get(MongoStorage.FAIL), 2D);
-        assertEquals(m.get(MongoStorage.TOTAL), 4D);
-    }
-
-    @Test
-    public void testGetDownloadStatisticByArtifact() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/codenvy");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        Map m = response.as(Map.class);
-        assertEquals(m.size(), 5);
-        assertEquals(m.get(MongoStorage.ARTIFACT), "codenvy");
-        assertEquals(m.get(MongoStorage.SUCCESS), 5D);
-        assertEquals(m.get(MongoStorage.FAIL), 2D);
-        assertEquals(m.get(MongoStorage.TOTAL), 7D);
-        assertNotNull(m.get(MongoStorage.VERSIONS));
-
-        List l = (List)m.get(MongoStorage.VERSIONS);
-        assertEquals(l.size(), 3);
-
-        m = (Map)l.get(0);
-        assertEquals(m.get(MongoStorage.VERSION), "1.0.3");
-        assertEquals(m.get(MongoStorage.SUCCESS), 1D);
-        assertEquals(m.get(MongoStorage.FAIL), 0D);
-        assertEquals(m.get(MongoStorage.TOTAL), 1D);
-
-        m = (Map)l.get(1);
-        assertEquals(m.get(MongoStorage.VERSION), "1.0.2");
-        assertEquals(m.get(MongoStorage.SUCCESS), 1D);
-        assertEquals(m.get(MongoStorage.FAIL), 0D);
-        assertEquals(m.get(MongoStorage.TOTAL), 1D);
-
-        m = (Map)l.get(2);
-        assertEquals(m.get(MongoStorage.VERSION), "1.0.1");
-        assertEquals(m.get(MongoStorage.SUCCESS), 3D);
-        assertEquals(m.get(MongoStorage.FAIL), 2D);
-        assertEquals(m.get(MongoStorage.TOTAL), 5D);
-    }
-
-    @Test
-    public void testGetDownloadStatisticByArtifactInstallCodenvy() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/install-codenvy");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        Map m = response.as(Map.class);
-        assertEquals(m.size(), 5);
-        assertEquals(m.get(MongoStorage.ARTIFACT), "install-codenvy");
-        assertEquals(m.get(MongoStorage.SUCCESS), 0D);
-        assertEquals(m.get(MongoStorage.FAIL), 0D);
-        assertEquals(m.get(MongoStorage.TOTAL), 0D);
-        assertNotNull(m.get(MongoStorage.VERSIONS));
-    }
-
-    @Test
-    public void testGetDownloadStatisticErrorUnknownArtifact() throws Exception {
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .get(JettyHttpServer.SECURE_PATH + "/repository/download/statistic/unknown_artifact");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-
-        Map m = response.as(Map.class);
-        assertEquals(m.size(), 5);
-        assertEquals(m.get(MongoStorage.USER_ID), "unknown_artifact");
-        assertEquals(m.get(MongoStorage.SUCCESS), 0D);
-        assertEquals(m.get(MongoStorage.FAIL), 0D);
-        assertEquals(m.get(MongoStorage.TOTAL), 0D);
-        assertNotNull(m.get(MongoStorage.ARTIFACTS));
     }
 
     @Test
