@@ -36,8 +36,8 @@ import static java.nio.file.Files.exists;
 
 /**
  * Detects which Codenvy installation type we use by analyzing puppet.conf.
- *
- * SINGLE type configuration sample:
+ * <p/>
+ * SINGLE-node type configuration sample:
  * [master]
  *      certname = host_name
  *      ...
@@ -45,8 +45,9 @@ import static java.nio.file.Files.exists;
  *      ...
  * [agent]
  *      certname = host_name
- *
- * MULTI type configuration sample:
+ * <p/>
+ * <p/>
+ * MULTI-node type configuration sample:
  * [master]
  *      ...
  * [main]
@@ -66,7 +67,7 @@ public class DetectInstallationTypeCommand implements Command {
 
     /** Utility method. */
     public static InstallType detectInstallationType() throws IOException {
-        DetectInstallationTypeCommand command = InjectorBootstrap.INJECTOR.getInstance(DetectInstallationTypeCommand.class);
+        Command command = InjectorBootstrap.INJECTOR.getInstance(DetectInstallationTypeCommand.class);
         return InstallType.valueOf(command.execute());
     }
 

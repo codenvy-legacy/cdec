@@ -17,7 +17,7 @@
  */
 package com.codenvy.im;
 
-import com.codenvy.im.command.ReadMasterHostNameCommand;
+import com.codenvy.im.config.Config;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
@@ -32,7 +32,7 @@ import static java.nio.file.Files.exists;
  * @author Anatoliy Bazko
  */
 public class BaseTest {
-    private static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", ReadMasterHostNameCommand.CONF_FILE);
+    public static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME);
 
     @BeforeMethod
     public void clear() throws Exception {

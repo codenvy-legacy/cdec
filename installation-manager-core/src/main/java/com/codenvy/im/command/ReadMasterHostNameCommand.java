@@ -18,18 +18,27 @@
 package com.codenvy.im.command;
 
 
-import com.codenvy.im.agent.LocalAgent;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.utils.InjectorBootstrap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.ini4j.IniFile;
+import org.ini4j.InvalidIniFormatException;
+
 import javax.annotation.Nullable;
 import javax.inject.Named;
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.prefs.BackingStoreException;
 
-import static java.lang.String.format;
+import static java.nio.file.Files.exists;
 
 /**
  * Reads puppet master host name from the puppet configuration file /etc/puppet/puppet.conf.
+ * It is supposed that we have deal with multi-server configuration type.
+ * @see com.codenvy.im.command.DetectInstallationTypeCommand
+ *
  * File structure:
  *
  * [main]
@@ -39,26 +48,52 @@ import static java.lang.String.format;
  * @author Anatoliy Bazko
  */
 @Singleton
-public class ReadMasterHostNameCommand extends SimpleCommand {
-    public static final String CONF_FILE = "puppet.conf";
+public class ReadMasterHostNameCommand implements Command {
+    public final Path puppetConfFile;
 
     @Inject
     private ReadMasterHostNameCommand(@Named("puppet.base_dir") String puppetDir) {
-        super(format("if [ ! -f %1$s ]; then" +
-                     "     exit 1;" +
-                     " else" +
-                     "     cat %1$s | grep 'certname\\s*=' | sed 's/\\s*certname\\s*=\\(.*\\)/\\1/';" +
-                     " fi",
-                     puppetDir + File.separator + CONF_FILE),
-              new LocalAgent(),
-              "Reads puppet master host name");
+        this.puppetConfFile = Paths.get(puppetDir, Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
     }
 
     /**
-     * @see com.codenvy.im.command.SimpleCommand#fetchValue
+     * Fetches master host name from the configuration.
+     *
+     * @throws java.lang.IllegalStateException
+     *         if property is absent
      */
     @Nullable
-    public static String fetchMasterHostName() {
-        return fetchValue(ReadMasterHostNameCommand.class);
+    public static String fetchMasterHostName() throws CommandException, IllegalStateException {
+        Command command = InjectorBootstrap.INJECTOR.getInstance(ReadMasterHostNameCommand.class);
+        String hostName = command.execute();
+        if (hostName == null || hostName.trim().isEmpty()) {
+            throw new IllegalStateException("There is no puppet master host name in the configuration");
+        }
+
+        return hostName;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String execute() throws CommandException {
+        if (!exists(puppetConfFile)) {
+            return null;
+        }
+
+        try {
+            IniFile iniFile = new IniFile(puppetConfFile.toFile());
+            return iniFile.node("main").get("certname", "");
+        } catch (BackingStoreException e) {
+            if (e.getCause() instanceof InvalidIniFormatException) {
+                return null;
+            }
+            throw new CommandException(e.getMessage(), e);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getDescription() {
+        return "Reads puppet master host name";
     }
 }

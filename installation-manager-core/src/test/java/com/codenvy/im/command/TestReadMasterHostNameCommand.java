@@ -17,52 +17,50 @@
  */
 package com.codenvy.im.command;
 
+import com.codenvy.im.BaseTest;
+
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static com.codenvy.im.command.ReadMasterHostNameCommand.fetchMasterHostName;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 public class TestReadMasterHostNameCommand {
-    private static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", ReadMasterHostNameCommand.CONF_FILE);
 
-    @Test
+    @Test(expectedExceptions = IllegalStateException.class)
     public void shouldReturnNullIfFileAbsent() throws Exception {
-        Files.delete(PUPPET_CONF_FILE);
-        assertNull(fetchMasterHostName());
+        Files.delete(BaseTest.PUPPET_CONF_FILE);
+        fetchMasterHostName();
     }
 
-    @Test
+    @Test(expectedExceptions = IllegalStateException.class)
     public void shouldReturnNullIfRowAbsent() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]");
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
 
-        assertNull(fetchMasterHostName());
+        fetchMasterHostName();
     }
 
-    @Test
+    @Test(expectedExceptions = IllegalStateException.class)
     public void shouldReturnNullIfStringIsEmpty() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                    "   certname = ");
 
-        assertNull(fetchMasterHostName());
+        fetchMasterHostName();
     }
 
-    @Test
+    @Test(expectedExceptions = IllegalStateException.class)
     public void shouldReturnNullIfWrongFormat() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                    "    certname  bla.bla.com\n");
 
-        assertNull(fetchMasterHostName());
+        fetchMasterHostName();
     }
 
     @Test
     public void shouldReturnHostName() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                    "    certname = master.dev.com\n" +
                                                    "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n");
 
@@ -71,9 +69,11 @@ public class TestReadMasterHostNameCommand {
 
     @Test
     public void shouldReturnHostNameNoWhiteSpacesInLine() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                    "certname=master.dev.com\n" +
-                                                   "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n");
+                                                   "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n" +
+                                                   "[agent]\n" +
+                                                   "certname=la-la.com");
 
         assertEquals(fetchMasterHostName(), "master.dev.com");
     }
