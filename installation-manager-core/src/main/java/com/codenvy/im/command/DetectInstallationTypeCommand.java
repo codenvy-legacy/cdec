@@ -18,62 +18,84 @@
 package com.codenvy.im.command;
 
 
-import com.codenvy.im.agent.LocalAgent;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.InjectorBootstrap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.ini4j.IniFile;
+
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.prefs.BackingStoreException;
 
-import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 
 /**
- * Detects which Codenvy installation type we have deal with.
- * The main idea is that we check if puppet configuration file contains [agent] section.
- * Commands relies on {@link com.codenvy.im.artifacts.helper.CDECMultiServerHelper}
- * where [agent] section is removed from config file in case of multi-node installation type.
+ * Detects which Codenvy installation type we use by analyzing puppet.conf.
+ *
+ * SINGLE type configuration sample:
+ * [master]
+ *      certname = host_name
+ *      ...
+ * [main]
+ *      ...
+ * [agent]
+ *      certname = host_name
+ *
+ * MULTI type configuration sample:
+ * [master]
+ *      ...
+ * [main]
+ *      certname = some_host_name
+ *      ...
  *
  * @author Anatoliy Bazko
  */
 @Singleton
-public class DetectInstallationTypeCommand extends SimpleCommand {
+public class DetectInstallationTypeCommand implements Command {
     public final Path puppetConfFile;
 
     @Inject
     private DetectInstallationTypeCommand(@Named("puppet.base_dir") String puppetDir) {
-        super(format("if [ ! -f %1$s ]; then" +
-                     "     exit 1;" +
-                     " else" +
-                     "     cat %1$s | grep -F [agent];" +
-                     " fi",
-                     puppetDir + "/" + Config.PUPPET_CONF_FILE_NAME),
-              new LocalAgent(),
-              "Detect Codenvy installation type");
-
-        this.puppetConfFile = Paths.get(puppetDir, Config.PUPPET_CONF_FILE_NAME);
+        this.puppetConfFile = Paths.get(puppetDir, Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
     }
 
-    /**
-     * Utility method.
-     */
-    public static InstallType detectInstallationType() {
+    /** Utility method. */
+    public static InstallType detectInstallationType() throws IOException {
         DetectInstallationTypeCommand command = InjectorBootstrap.INJECTOR.getInstance(DetectInstallationTypeCommand.class);
+        return InstallType.valueOf(command.execute());
+    }
 
-        if (!exists(command.puppetConfFile)) {
-            return InstallType.UNKNOWN;
+    /** {@inheritDoc} */
+    @Override
+    public String execute() throws CommandException {
+        if (!exists(puppetConfFile)) {
+            return InstallType.UNKNOWN.name();
         }
 
         try {
-            String value = command.execute().trim();
-            return value.isEmpty() ? InstallType.MULTI_SERVER : InstallType.SINGLE_SERVER;
-        } catch (IOException e) {
-            return InstallType.MULTI_SERVER;
+            IniFile iniFile = new IniFile(puppetConfFile.toFile());
+            return isSingleTypeConfig(iniFile) ? InstallType.CODENVY_SINGLE_SERVER.name()
+                                               : InstallType.CODENVY_MULTI_SERVER.name();
+        } catch (BackingStoreException e) {
+            throw new CommandException(e.getMessage(), e);
         }
+    }
+
+    private boolean isSingleTypeConfig(IniFile iniFile) throws BackingStoreException {
+        return iniFile.nodeExists("agent")
+               && !iniFile.node("agent").get("certname", "").isEmpty()
+               && iniFile.nodeExists("master")
+               && !iniFile.node("master").get("certname", "").isEmpty();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getDescription() {
+        return "Detect which Codenvy type is installed";
     }
 }

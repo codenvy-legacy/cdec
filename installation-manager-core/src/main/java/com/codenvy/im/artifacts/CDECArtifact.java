@@ -69,25 +69,15 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
-    // TODO [AB] more tests
     @Override
     public Version getInstalledVersion() throws IOException {
-        Config config;
         try {
             InstallType installType = detectInstallationType();
             if (installType == InstallType.UNKNOWN) {
                 return null;
             }
 
-            config = configUtil.loadInstalledCodenvyConfig(installType);
-            if (config == null) {
-                return null;
-            }
-        } catch (IOException e) {
-            return null;
-        }
-
-        try {
+            Config config = configUtil.loadInstalledCodenvyConfig(installType);
             return getInstalledVersion(config.getHostUrl());
         } catch (IOException e) {
             return null;
@@ -109,7 +99,6 @@ public class CDECArtifact extends AbstractArtifact {
             return null;
         }
 
-        // TODO [AB] review && rework
         if (apiInfo.getIdeVersion() == null
             && apiInfo.getImplementationVersion() != null
             && apiInfo.getImplementationVersion().equals("0.26.0")) {
@@ -153,8 +142,7 @@ public class CDECArtifact extends AbstractArtifact {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
-        return getHelper(installOptions.getInstallType())
-                .getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
+        return getHelper(installOptions.getInstallType()).getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
     }
 
     @Override

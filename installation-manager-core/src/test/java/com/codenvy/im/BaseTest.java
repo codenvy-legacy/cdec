@@ -20,7 +20,6 @@ package com.codenvy.im;
 import com.codenvy.im.command.ReadMasterHostNameCommand;
 
 import org.apache.commons.io.FileUtils;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.nio.file.Path;
@@ -43,10 +42,15 @@ public class BaseTest {
     }
 
     protected void prepareConfForSingleNodeInstallation() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[agent]");
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[master]\n" +
+                                                   "certname = hostname\n" +
+                                                   "[agent]\n" +
+                                                   "certname = hostname\n");
     }
 
     protected void prepareConfForMultiNodeInstallation() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "");
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[master]\n" +
+                                                   "[main]\n" +
+                                                   "certname = hostname\n");
     }
 }

@@ -68,6 +68,11 @@
             <version>${commons-compress.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jvnet.hudson.plugins.mercurial</groupId>
+            <artifactId>ini4j</artifactId>
+            <version>0.2.6</version>
+        </dependency>
+        <dependency>
             <groupId>org.restlet.jse</groupId>
             <artifactId>org.restlet.ext.jackson</artifactId>
             <version>${org.restlet.version}</version>

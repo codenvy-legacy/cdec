@@ -146,7 +146,7 @@ public class Config {
     }
 
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */
-    public final String getHostUrl() {
+    public String getHostUrl() {
         return properties.containsKey(HOST_URL) ? properties.get(HOST_URL) : properties.get(AIO_HOST_URL);
     }
 }
