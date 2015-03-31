@@ -41,6 +41,7 @@ uploadInstallationManagerCli() {
 
     FILENAME=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*-binary[.]tar.gz`
     VERSION=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${FILE}'-//' | sed 's/.jar//'`
+    PREVIOUS_VERSION=3.8.0
     SOURCE=${ARTIFACT}-assembly/target/${FILENAME}
 
     doUpload
@@ -109,6 +110,7 @@ doUpload() {
     echo "file=${FILENAME}" > .properties
     echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
+    echo "previous-version=${PREVIOUS_VERSION}" >> .properties
     echo "authentication-required=false" >> .properties
     echo "build-time="${BUILD_TIME} >> .properties
     echo "md5=${MD5}" >> .properties

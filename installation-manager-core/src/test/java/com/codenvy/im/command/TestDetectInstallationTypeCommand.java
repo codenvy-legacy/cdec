@@ -35,12 +35,12 @@ public class TestDetectInstallationTypeCommand extends BaseTest {
     @Test
     public void shouldReturnMultiIfSectionAbsent() throws Exception {
         prepareConfForMultiNodeInstallation();
-        assertEquals(detectInstallationType(), InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(detectInstallationType(), InstallType.MULTI_SERVER);
     }
 
     @Test
     public void shouldReturnSingleIfSectionExist() throws Exception {
         prepareConfForSingleNodeInstallation();
-        assertEquals(detectInstallationType(), InstallType.CODENVY_SINGLE_SERVER);
+        assertEquals(detectInstallationType(), InstallType.SINGLE_SERVER);
     }
 }

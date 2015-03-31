@@ -51,16 +51,15 @@ import static java.lang.String.format;
  */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
-    private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of
-            (
-                    InstallType.CODENVY_SINGLE_SERVER, new CDECSingleServerHelper(this),
-                    InstallType.CODENVY_MULTI_SERVER, new CDECMultiServerHelper(this)
-            );
+    private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of(
+        InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this),
+        InstallType.MULTI_SERVER, new CDECMultiServerHelper(this)
+    );
 
     public static final String NAME = "codenvy";
 
     private final HttpTransport transport;
-    private final ConfigUtil configUtil;
+    private final ConfigUtil    configUtil;
 
     @Inject
     public CDECArtifact(HttpTransport transport, ConfigUtil configUtil) {
@@ -135,9 +134,11 @@ public class CDECArtifact extends AbstractArtifact {
 
         return ImmutableList.of("Unzip Codenvy binaries to /tmp/codenvy",
                                 "Configure Codenvy",
-                                "Patch resources",
+                                "Patch resources before update",
                                 "Move Codenvy binaries to /etc/puppet",
-                                "Update Codenvy");
+                                "Update Codenvy",
+                                "Patch resources after update"
+        );
     }
 
     /**

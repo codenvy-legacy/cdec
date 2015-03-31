@@ -230,7 +230,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                return createPatchCommand(Paths.get("/tmp/codenvy/patches/"), original.getInstalledVersion(), versionToUpdate);
+                return createPatchCommand(Paths.get("/tmp/codenvy/patches/"),
+                                          CommandLibrary.PatchType.BEFORE_UPDATE,
+                                          installOptions);
 
             case 3:
                 return createCommand("sudo rm -rf /etc/puppet/files; " +
@@ -240,6 +242,11 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
             case 4:
                 return new CheckInstalledVersionCommand(original, versionToUpdate);
+
+            case 5:
+                return createPatchCommand(Paths.get("/tmp/codenvy/patches/"),
+                                          CommandLibrary.PatchType.AFTER_UPDATE,
+                                          installOptions);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of update range", step));

@@ -60,10 +60,10 @@ public interface Artifact extends Comparable<Artifact> {
     Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     /**
-     * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed
+     * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed and
      * version of the artifact
      */
-    boolean isInstallable(Version versionToInstall, String accessToken) throws IOException;
+    boolean isInstallable(Version versionToInstall, String updateEndpoint, HttpTransport transport) throws IOException;
 
     /** @return properties stored at update server */
     Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException;

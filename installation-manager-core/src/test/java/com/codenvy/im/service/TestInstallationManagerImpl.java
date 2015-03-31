@@ -137,7 +137,11 @@ public class TestInstallationManagerImpl {
                 put(version2101, Paths.get("target/download/" + InstallManagerArtifact.NAME + "/2.10.1/file1"));
             }});
         }}).when(manager).getDownloadedArtifacts();
+
+        doReturn(false).when(installManagerArtifact).isInstallable(version2101, UPDATE_ENDPOINT, transport);
+
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
+
         manager.install(testCredentials.getToken(), installManagerArtifact, version2101, new InstallOptions());
     }
 
@@ -151,7 +155,7 @@ public class TestInstallationManagerImpl {
             put(version100, null);
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+        doReturn(true).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
 
         doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
@@ -173,7 +177,7 @@ public class TestInstallationManagerImpl {
         }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
         manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.1"), new InstallOptions());
-        doReturn(false).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
+        doReturn(false).when(installManagerArtifact).isInstallable(version200, UPDATE_ENDPOINT, transport);
 
         manager.install(testCredentials.getToken(), installManagerArtifact, version200, null);
         verify(installer, never()).install(any(Artifact.class), any(Version.class), Paths.get("some path"), any(InstallOptions.class));
@@ -199,6 +203,8 @@ public class TestInstallationManagerImpl {
         }}).when(manager).getDownloadedArtifacts();
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
 
+        doReturn(false).when(installManagerArtifact).isInstallable(version2100, UPDATE_ENDPOINT, transport);
+
         manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
 
@@ -207,14 +213,14 @@ public class TestInstallationManagerImpl {
     public void testInstallZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.SINGLE_SERVER);
         options.setStep(0);
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, Paths.get("some path"));
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        doReturn(false).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+        doReturn(false).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
         doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
@@ -224,14 +230,14 @@ public class TestInstallationManagerImpl {
     public void testInstallNonZeroInstallationStep() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.SINGLE_SERVER);
         options.setStep(1);
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, Paths.get("some path"));
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        doReturn(false).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+        doReturn(false).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
         doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
@@ -247,10 +253,10 @@ public class TestInstallationManagerImpl {
             put(version100, Paths.get("some path"));
         }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        doReturn(true).when(cdecArtifact).isInstallable(version100, testCredentials.getToken());
+        doReturn(true).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
 
         InstallOptions testOptions = new InstallOptions();
-        testOptions.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        testOptions.setInstallType(InstallType.SINGLE_SERVER);
         testOptions.setStep(1);
 
         when(transport.doOption(endsWith("api/"), anyString())).thenReturn("{\"ideVersion\":\"3.0.0\"}");
@@ -281,7 +287,11 @@ public class TestInstallationManagerImpl {
         }}).when(manager).getDownloadedArtifacts();
 
         doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
+
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
+
+        doReturn(true).when(installManagerArtifact).isInstallable(version2102, UPDATE_ENDPOINT, transport);
+
         doNothing().when(installer).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install("auth token", installManagerArtifact, version2102, new InstallOptions());
@@ -434,10 +444,10 @@ public class TestInstallationManagerImpl {
         final Version version200 = Version.valueOf("2.0.0");
         final Version version201 = Version.valueOf("2.0.1");
 
-        doReturn(true).when(installManagerArtifact).isInstallable(version200, testCredentials.getToken());
+        doReturn(true).when(installManagerArtifact).isInstallable(version200, UPDATE_ENDPOINT, transport);
         assertTrue(manager.isInstallable(installManagerArtifact, version200, testCredentials.getToken()));
 
-        doReturn(false).when(installManagerArtifact).isInstallable(version201, testCredentials.getToken());
+        doReturn(false).when(installManagerArtifact).isInstallable(version201, UPDATE_ENDPOINT, transport);
         assertFalse(manager.isInstallable(installManagerArtifact, version201, testCredentials.getToken()));
     }
 

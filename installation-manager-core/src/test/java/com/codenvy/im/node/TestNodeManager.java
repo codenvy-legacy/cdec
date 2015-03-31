@@ -77,7 +77,7 @@ public class TestNodeManager {
         MockitoAnnotations.initMocks(this);
 
         doReturn(TEST_VERSION).when(mockCdecArtifact).getInstalledVersion();
-        doReturn(InstallType.CODENVY_MULTI_SERVER).when(mockCdecArtifact).getInstalledType();
+        doReturn(InstallType.MULTI_SERVER).when(mockCdecArtifact).getInstalledType();
 
         initConfigs();
 
@@ -117,7 +117,7 @@ public class TestNodeManager {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "You can add node to Multi-Server Codenvy only")
     public void testAddNodeToSingleServerCodenvyException() throws IOException {
-        doReturn(InstallType.CODENVY_SINGLE_SERVER).when(mockCdecArtifact).getInstalledType();
+        doReturn(InstallType.SINGLE_SERVER).when(mockCdecArtifact).getInstalledType();
         spyManager.add(TEST_NODE_DNS);
     }
 
@@ -161,7 +161,7 @@ public class TestNodeManager {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "You can remove node from Multi-Server Codenvy only")
     public void testRemoveNodeFromSingleServerCodenvyException() throws IOException {
-        doReturn(InstallType.CODENVY_SINGLE_SERVER).when(mockCdecArtifact).getInstalledType();
+        doReturn(InstallType.SINGLE_SERVER).when(mockCdecArtifact).getInstalledType();
         spyManager.remove(TEST_NODE_DNS);
     }
 
@@ -249,7 +249,7 @@ public class TestNodeManager {
 
     @Test
     public void testGetCodenvyConfig() throws IOException {
-        doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
         Config config = manager.getCodenvyConfig(mockConfigUtil);

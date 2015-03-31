@@ -27,6 +27,7 @@ public class TestArtifactProperties {
     @Test
     public void testArtifactProperties() {
         assertEquals(ArtifactProperties.VERSION_PROPERTY, "version");
+        assertEquals(ArtifactProperties.PREVIOUS_VERSION_PROPERTY, "previous-version");
         assertEquals(ArtifactProperties.ARTIFACT_PROPERTY , "artifact");
         assertEquals(ArtifactProperties.BUILD_TIME_PROPERTY , "build-time");
         assertEquals(ArtifactProperties.FILE_NAME_PROPERTY, "file");
@@ -38,6 +39,6 @@ public class TestArtifactProperties {
 
     @Test
     public void testPublicProperties() {
-        assertEquals(ArtifactProperties.PUBLIC_PROPERTIES.toString(), "[version, artifact, build-time, authentication-required, file, md5, size]");
+        assertEquals(ArtifactProperties.PUBLIC_PROPERTIES.toString(), "[version, previous-version, artifact, build-time, authentication-required, file, md5, size]");
     }
 }

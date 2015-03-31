@@ -45,6 +45,7 @@ import java.util.SortedMap;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -61,11 +62,11 @@ import static org.testng.Assert.assertTrue;
 public class TestAbstractArtifact {
     private AbstractArtifact spyTestArtifact;
 
-    private static final String  UPDATE_ENDPOINT    = "update/endpoint";
-    private static final String  TEST_ARTIFACT_NAME = "test_artifact_name";
-    private static final String  TEST_TOKEN         = "auth token";
-    private static final String  TEST_VERSION_STR   = "1.0.0";
-    private static final Version TEST_VERSION       = Version.valueOf("1.0.0");
+    private static final String  UPDATE_ENDPOINT     = "update/endpoint";
+    private static final String  TEST_ARTIFACT_NAME  = "test_artifact_name";
+    private static final String  TEST_TOKEN          = "auth token";
+    private static final String  TEST_VERSION_STRING = "1.0.0";
+    private static final Version TEST_VERSION        = Version.valueOf(TEST_VERSION_STRING);
 
     @Mock
     private HttpTransport mockTransport;
@@ -85,7 +86,7 @@ public class TestAbstractArtifact {
     @Test
     public void testGetArtifactProperties() throws Exception {
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
-        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STR));
+        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
 
         Map m = spyTestArtifact.getProperties(TEST_VERSION, UPDATE_ENDPOINT, mockTransport);
         assertTrue(m.containsKey("file"));
@@ -97,20 +98,48 @@ public class TestAbstractArtifact {
     @Test
     public void testGetLatestVersion() throws IOException {
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
-        doReturn("{\"version\":\"" + TEST_VERSION_STR + "\"}")
-                .when(mockTransport)
-                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
+        doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
+            .when(mockTransport)
+            .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
         Version version = spyTestArtifact.getLatestVersion(UPDATE_ENDPOINT, mockTransport);
-        assertEquals(version.toString(), TEST_VERSION_STR);
+        assertEquals(version.toString(), TEST_VERSION_STRING);
     }
 
     @Test
-    public void testIsInstallable() throws IOException {
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
+    public void testIsInstallableWhenPreviousVersionOfNewArtifactIsUnknown() throws IOException {
+        Version newVersion = Version.valueOf("2.0.0");
 
-        assertFalse(spyTestArtifact.isInstallable(TEST_VERSION, TEST_TOKEN));
-        assertTrue(spyTestArtifact.isInstallable(Version.valueOf("2.0.0"), TEST_TOKEN));
+        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
+        doNothing().when(spyTestArtifact).validateProperties(anyMap());
+        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // possible previous version of new artifact is unknown
+        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + newVersion));  // possible previous version of new artifact is unknown
+
+        assertFalse(spyTestArtifact.isInstallable(TEST_VERSION, UPDATE_ENDPOINT, mockTransport));
+        assertTrue(spyTestArtifact.isInstallable(newVersion, UPDATE_ENDPOINT, mockTransport));
+    }
+
+    @Test
+    public void testIsInstallableWhenThereIsNoInstalledArtifact() throws IOException {
+        doReturn(null).when(spyTestArtifact).getInstalledVersion();
+        doNothing().when(spyTestArtifact).validateProperties(anyMap());
+        doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + Version.valueOf("2.0.0")));
+
+        assertTrue(spyTestArtifact.isInstallable(TEST_VERSION, UPDATE_ENDPOINT, mockTransport));
+        assertTrue(spyTestArtifact.isInstallable(Version.valueOf("2.0.0"), UPDATE_ENDPOINT, mockTransport));
+    }
+
+    @Test
+    public void testIsInstallableBaseOnPreviousVersion() throws IOException {
+        String versionToInstall = "2.0.0";
+        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
+        doNothing().when(spyTestArtifact).validateProperties(anyMap());
+
+        doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + versionToInstall));
+        assertTrue(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall), UPDATE_ENDPOINT, mockTransport));
+
+        doReturn(Version.valueOf("0.0.1")).when(spyTestArtifact).getInstalledVersion();
+        assertFalse(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall), UPDATE_ENDPOINT, mockTransport));
     }
 
     @Test
@@ -123,6 +152,10 @@ public class TestAbstractArtifact {
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
+        doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}")
+            .when(mockTransport)
+            .doGet(contains("repository/properties/" + TEST_ARTIFACT_NAME + "/" + newVersion));
+
         Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
 
         assertNotNull(version);
@@ -134,9 +167,13 @@ public class TestAbstractArtifact {
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
         doNothing().when(spyTestArtifact).validateProperties(anyMap());
-        doReturn("{\"version\":\"" + TEST_VERSION_STR + "\"}")
+        doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
+
+        doReturn("{\"previous-version\":\"0.0.1\"}")
+            .when(mockTransport)
+            .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
 
         Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
         assertNull(version);
@@ -146,19 +183,26 @@ public class TestAbstractArtifact {
     public void testValidateProperties() throws Exception {
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
-        doReturn("{\"version\":\"1.0.0\", \"file\":\"file1\", \"md5\":\"a\", \"build-time\":\"01.01.01\", \"artifact\":\"" + TEST_ARTIFACT_NAME +
-                 "\", \"size\":456, \"authentication-required\":false}")
+        String artifactProperties =
+            "{\"version\":\"1.0.0\", \"previous-version\":\"0.0.1\", \"file\":\"file1\", \"md5\":\"a\", \"build-time\":\"01.01.01\", \"artifact\":\"" + TEST_ARTIFACT_NAME +
+            "\", \"size\":456, \"authentication-required\":false}";
+
+        doReturn(artifactProperties)
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
+
+        doReturn(artifactProperties)
+            .when(mockTransport)
+            .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
 
         Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
         assertNull(version);
     }
 
     @Test(expectedExceptions = IOException.class,
-            expectedExceptionsMessageRegExp = "Can't get artifact property: artifact")
+            expectedExceptionsMessageRegExp = "Can't get artifact property: previous-version")
     public void testValidatePropertiesFail() throws Exception {
-        doReturn("{\"version\":\"" + TEST_VERSION_STR + "\"}")
+        doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
 

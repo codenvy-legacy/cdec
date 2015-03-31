@@ -65,7 +65,7 @@ public class TestInstaller extends BaseTest {
     public void testGetInstallInfo() throws Exception {
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         doReturn(null).when(artifact).getInstalledVersion();
 
@@ -78,7 +78,7 @@ public class TestInstaller extends BaseTest {
     public void testGetInstallInfoInstalledSameVersion() throws Exception {
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         doReturn(version).when(artifact).getInstalledVersion();
 
@@ -93,7 +93,7 @@ public class TestInstaller extends BaseTest {
 
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         doReturn(Version.valueOf("0.9.1")).when(artifact).getInstalledVersion();
 
@@ -108,7 +108,7 @@ public class TestInstaller extends BaseTest {
 
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         doReturn(Version.valueOf("1.0.1")).when(artifact).getInstalledVersion();
 
@@ -124,7 +124,7 @@ public class TestInstaller extends BaseTest {
         Path pathToBinaries = Paths.get("some path");
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
@@ -143,7 +143,7 @@ public class TestInstaller extends BaseTest {
         Path pathToBinaries = Paths.get("some path");
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
@@ -164,7 +164,7 @@ public class TestInstaller extends BaseTest {
         Path pathToBinaries = Paths.get("some path");
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
@@ -185,7 +185,7 @@ public class TestInstaller extends BaseTest {
         Path pathToBinaries = Paths.get("some path");
 
         InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.CODENVY_SINGLE_SERVER);
+        options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 

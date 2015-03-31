@@ -81,7 +81,7 @@ public class ConfigUtil {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
 
         String requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-" +
-                                                         (installType == InstallType.CODENVY_MULTI_SERVER ? "multi" : "single")
+                                                         (installType == InstallType.MULTI_SERVER ? "multi" : "single")
                                                          + "-server-properties/" + version);
         Path properties;
         try {
@@ -163,11 +163,11 @@ public class ConfigUtil {
 
     protected Iterator<Path> getCodenvyPropertiesFiles(InstallType installType) {
         switch (installType) {
-            case CODENVY_MULTI_SERVER:
+            case MULTI_SERVER:
                 return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.MULTI_SERVER_PROPERTIES),
                                         Paths.get(puppetBaseDir + File.separator + Config.MULTI_SERVER_BASE_PROPERTIES)).iterator();
 
-            case CODENVY_SINGLE_SERVER:
+            case SINGLE_SERVER:
             default:
                 return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_PROPERTIES),
                                         Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();

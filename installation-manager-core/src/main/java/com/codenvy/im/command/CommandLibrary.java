@@ -18,6 +18,8 @@
 package com.codenvy.im.command;
 
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -25,10 +27,10 @@ import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NavigableSet;
+import java.util.Map;
 
 import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.getVersionsList;
@@ -42,6 +44,10 @@ public class CommandLibrary {
     private static final String START    = "start";
     private static final String ACTIVE   = "active";
     private static final String INACTIVE = "inactive";
+
+    public enum PatchType {
+        BEFORE_UPDATE, AFTER_UPDATE
+    }
 
     private CommandLibrary() {
     }
@@ -99,21 +105,32 @@ public class CommandLibrary {
                       backupFile);
     }
 
-    public static Command createPatchCommand(Path patchDir, Version installedVersion, Version versionToUpdate) throws IOException {
+    public static Command createPatchCommand(Path patchDir, PatchType patchType, InstallOptions installOptions) throws IOException {
         List<Command> commands;
         commands = new ArrayList<>();
 
-        NavigableSet<Version> versions = getVersionsList(patchDir).subSet(installedVersion, false, versionToUpdate, true);
-        Iterator<Version> iter = versions.iterator();
-        while (iter.hasNext()) {
-            Version v = iter.next();
-            Path patchFile = patchDir.resolve(v.toString()).resolve("patch.sh");
-            if (exists(patchFile)) {
-                commands.add(createCommand(format("sudo bash %s", patchFile)));
+        Path relativePatchFilePath = getRelativePatchFilePath(patchType, installOptions.getInstallType());
+        Path patchFile = patchDir.resolve(relativePatchFilePath);
+        if (exists(patchFile)) {
+            for (Map.Entry<String, String> e : installOptions.getConfigProperties().entrySet()) {
+                String property = e.getKey();
+                String value = e.getValue();
+
+                commands.add(createReplaceCommand(patchFile.toString(), "$" + property, value));
             }
+            commands.add(createCommand(format("bash %s", patchFile)));
         }
 
         return new MacroCommand(commands, "Patch resources");
+    }
+
+    /**
+     * Return relative path to patch file, for example:  "single_server/patch_before_update.sh"
+     */
+    private static Path getRelativePatchFilePath(PatchType patchType, InstallType installType) {
+        String pathFilename = format("patch_%s.sh", patchType.toString().toLowerCase());
+        return Paths.get(installType.toString().toLowerCase())
+                    .resolve(pathFilename);
     }
 
     public static Command createStopServiceCommand(String serviceName) {

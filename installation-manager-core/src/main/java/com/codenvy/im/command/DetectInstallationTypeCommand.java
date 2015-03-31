@@ -71,9 +71,9 @@ public class DetectInstallationTypeCommand extends SimpleCommand {
 
         try {
             String value = command.execute().trim();
-            return value.isEmpty() ? InstallType.CODENVY_MULTI_SERVER : InstallType.CODENVY_SINGLE_SERVER;
+            return value.isEmpty() ? InstallType.MULTI_SERVER : InstallType.SINGLE_SERVER;
         } catch (IOException e) {
-            return InstallType.CODENVY_MULTI_SERVER;
+            return InstallType.MULTI_SERVER;
         }
     }
 }

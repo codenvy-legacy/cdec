@@ -34,6 +34,7 @@ import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
@@ -90,9 +91,28 @@ public abstract class AbstractArtifact implements Artifact {
 
     /** {@inheritDoc} */
     @Override
-    public boolean isInstallable(Version versionToInstall, String accessToken) throws IOException {
+    public boolean isInstallable(Version versionToInstall, String updateEndpoint, HttpTransport transport) throws IOException {
         Version installedVersion = getInstalledVersion();
-        return installedVersion == null || installedVersion.compareTo(versionToInstall) < 0;
+
+        if (installedVersion == null) {  // check if there is installed version of artifact
+            return true;
+        }
+
+        Version previousVersion = getAllowedPreviousVersion(versionToInstall, updateEndpoint, transport);
+        if (previousVersion != null) {
+            return previousVersion.equals(installedVersion);
+        }
+
+        return installedVersion.compareTo(versionToInstall) < 0;
+    }
+
+    private Version getAllowedPreviousVersion(Version versionToInstall, String updateEndpoint, HttpTransport transport) throws IOException {
+        Map<String, String> properties = getProperties(versionToInstall, updateEndpoint, transport);
+        if (properties.containsKey(PREVIOUS_VERSION_PROPERTY)) {
+            return Version.valueOf(properties.get(PREVIOUS_VERSION_PROPERTY));
+        }
+
+        return null;
     }
 
     /** Initialize SSH agent */
@@ -112,7 +132,7 @@ public abstract class AbstractArtifact implements Artifact {
     public Version getLatestInstallableVersion(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {
         Version version = getLatestVersion(updateEndpoint, transport);
 
-        if (version != null && isInstallable(version, authToken)) {
+        if (version != null && isInstallable(version, updateEndpoint, transport)) {
             return version;
         } else {
             return null;

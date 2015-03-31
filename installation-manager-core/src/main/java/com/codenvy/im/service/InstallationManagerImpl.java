@@ -122,7 +122,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
             }
 
-            if (options.getStep() != 0 || artifact.isInstallable(version, authToken)) {
+            if (options.getStep() != 0 || artifact.isInstallable(version, updateEndpoint, transport)) {
                 installer.install(artifact, version, pathToBinaries, options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
@@ -320,7 +320,7 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
-        return artifact.isInstallable(version, authToken);
+        return artifact.isInstallable(version, updateEndpoint, transport);
     }
 
     /** {@inheritDoc}
