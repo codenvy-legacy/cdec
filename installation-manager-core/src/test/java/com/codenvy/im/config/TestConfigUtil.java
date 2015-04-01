@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.config;
 
+import com.codenvy.im.BaseTest;
+import com.codenvy.im.exceptions.UnknownInstallationTypeException;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.HttpTransport;
@@ -49,7 +51,7 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestConfigUtil {
+public class TestConfigUtil extends BaseTest {
 
     private ConfigUtil    configUtil;
     private HttpTransport transport;
@@ -264,4 +266,57 @@ public class TestConfigUtil {
         Config result = configUtil.loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         assertEquals(result.getProperties().toString(), properties.toString());
     }
+
+    @Test(expectedExceptions = UnknownInstallationTypeException.class)
+    public void testDetectInstallationTypeErrorIfConfAbsent() throws Exception {
+        configUtil.detectInstallationType();
+    }
+
+    @Test
+    public void testDetectInstallationMultiType() throws Exception {
+        createMultiNodeConf();
+        assertEquals(configUtil.detectInstallationType(), InstallType.MULTI_SERVER);
+    }
+
+    @Test
+    public void testDetectInstallationSingleType() throws Exception {
+        createSingleNodeConf();
+        assertEquals(configUtil.detectInstallationType(), InstallType.SINGLE_SERVER);
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testFetchMasterHostNameErrorIfFileAbsent() throws Exception {
+        configUtil.fetchMasterHostName();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testFetchMasterHostNameErrorIfPropertyAbsent() throws Exception {
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
+        configUtil.fetchMasterHostName();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testFetchMasterHostNameErrorIfValueEmpty() throws Exception {
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
+                                                            "   certname = ");
+        configUtil.fetchMasterHostName();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testFetchMasterHostNameErrorIfBadFormat() throws Exception {
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
+                                                            "    certname  bla.bla.com\n");
+        configUtil.fetchMasterHostName();
+    }
+
+    @Test
+    public void testFetchMasterHostName() throws Exception {
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
+                                                            "certname=master.dev.com\n" +
+                                                            "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n" +
+                                                            "[agent]\n" +
+                                                            "certname=la-la.com");
+        assertEquals(configUtil.fetchMasterHostName(), "master.dev.com");
+    }
 }
+

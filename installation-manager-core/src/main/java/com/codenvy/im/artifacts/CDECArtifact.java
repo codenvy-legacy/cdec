@@ -24,6 +24,7 @@ import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.command.Command;
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
+import com.codenvy.im.exceptions.UnknownInstallationTypeException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
@@ -41,7 +42,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.im.command.DetectInstallationTypeCommand.detectInstallationType;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
 
@@ -69,27 +69,12 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
-    // TODO [AB] more tests
     @Override
     public Version getInstalledVersion() throws IOException {
-        Config config;
         try {
-            InstallType installType = detectInstallationType();
-            if (installType == InstallType.UNKNOWN) {
-                return null;
-            }
-
-            config = configUtil.loadInstalledCodenvyConfig(installType);
-            if (config == null) {
-                return null;
-            }
-        } catch (IOException e) {
-            return null;
-        }
-
-        try {
+            Config config = configUtil.loadInstalledCodenvyConfig();
             return getInstalledVersion(config.getHostUrl());
-        } catch (IOException e) {
+        } catch (UnknownInstallationTypeException | IOException e) {
             return null;
         }
     }
@@ -109,7 +94,6 @@ public class CDECArtifact extends AbstractArtifact {
             return null;
         }
 
-        // TODO [AB] review && rework
         if (apiInfo.getIdeVersion() == null
             && apiInfo.getImplementationVersion() != null
             && apiInfo.getImplementationVersion().equals("0.26.0")) {
@@ -128,7 +112,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
-        if (installOptions.getInstallType() != getInstalledType()) {
+        if (installOptions.getInstallType() != configUtil.detectInstallationType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
@@ -141,26 +125,21 @@ public class CDECArtifact extends AbstractArtifact {
         );
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IOException
-     */
+    /** {@inheritDoc} */
     @Override
-    public Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions)
-            throws IOException, IllegalArgumentException {
-        if (installOptions.getInstallType() != getInstalledType()) {
+    public Command getUpdateCommand(Version versionToUpdate,
+                                    Path pathToBinaries,
+                                    InstallOptions installOptions) throws IOException, IllegalArgumentException {
+        if (installOptions.getInstallType() != configUtil.detectInstallationType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
-        return getHelper(installOptions.getInstallType())
-                .getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
+        return getHelper(installOptions.getInstallType()).getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
     }
 
     @Override
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
-        return getHelper(installOptions.getInstallType())
-                .getInstallInfo(installOptions);
+        return getHelper(installOptions.getInstallType()).getInstallInfo(installOptions);
     }
 
     /** {@inheritDoc} */
@@ -174,27 +153,16 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     /** {@inheritDoc} */
-    // TODO [AB] remove
-    public InstallType getInstalledType() throws IOException {
-        InstallType installType = detectInstallationType();
-        if (installType == InstallType.UNKNOWN) {
-            throw new IllegalStateException("Codenvy installation type is unknown");
-        }
-
-        return installType;
-    }
-
-    /** {@inheritDoc} */
     @Override
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
-        CDECArtifactHelper helper = getHelper(getInstalledType());
+        CDECArtifactHelper helper = getHelper(configUtil.detectInstallationType());
         return helper.getBackupCommand(backupConfig, codenvyConfigUtil);
     }
 
     /** {@inheritDoc} */
     @Override
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
-        CDECArtifactHelper helper = getHelper(getInstalledType());
+        CDECArtifactHelper helper = getHelper(configUtil.detectInstallationType());
         return helper.getRestoreCommand(backupConfig, codenvyConfigUtil);
     }
 

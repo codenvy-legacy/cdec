@@ -219,7 +219,9 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <replaceregexp file="${project.build.directory}/classes/codenvy/update-server.properties" match="mail.notification.recipients=.*" replace="mail.notification.recipients=cdec.im.test@gmail.com,cdec.im.test1@gmail.com" byline="true" />
+                                        <replaceregexp byline="true" file="${project.build.directory}/classes/codenvy/update-server.properties"
+                                                       match="mail.notification.recipients=.*"
+                                                       replace="mail.notification.recipients=cdec.im.test@gmail.com,cdec.im.test1@gmail.com"/>
                                         <tstamp>
                                             <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                         </tstamp>

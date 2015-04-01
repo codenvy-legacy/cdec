@@ -39,7 +39,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -180,9 +179,9 @@ public class TestInstallationManagerServiceImpl {
         doThrow(new IOException("error")).when(mockInstallationManager).addNode("builder.node.com");
 
         assertEquals(installationManagerService.addNode("builder.node.com"), "{\n"
-                                                                            + "  \"message\" : \"error\",\n"
-                                                                            + "  \"status\" : \"ERROR\"\n"
-                                                                            + "}");
+                                                                             + "  \"message\" : \"error\",\n"
+                                                                             + "  \"status\" : \"ERROR\"\n"
+                                                                             + "}");
     }
 
     @Test
@@ -207,15 +206,15 @@ public class TestInstallationManagerServiceImpl {
         doThrow(new IOException("error")).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
         assertEquals(installationManagerService.removeNode(TEST_NODE_DNS), "{\n"
-                                                                            + "  \"message\" : \"error\",\n"
-                                                                            + "  \"status\" : \"ERROR\"\n"
-                                                                            + "}");
+                                                                           + "  \"message\" : \"error\",\n"
+                                                                           + "  \"status\" : \"ERROR\"\n"
+                                                                           + "}");
     }
 
     @Test
     public void testBackup() throws IOException {
         Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupDirectory(testBackupDirectory);
 
@@ -257,7 +256,7 @@ public class TestInstallationManagerServiceImpl {
     @Test
     public void testRestore() throws IOException {
         Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 
@@ -277,7 +276,7 @@ public class TestInstallationManagerServiceImpl {
     @Test
     public void testRestoreException() throws IOException {
         Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile      = testBackupDirectory.resolve("backup.tar.gz");
+        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 

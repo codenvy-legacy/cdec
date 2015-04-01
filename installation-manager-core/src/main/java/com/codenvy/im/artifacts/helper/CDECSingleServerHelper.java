@@ -276,7 +276,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
     @Override
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
-        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = backupConfig.getBackupFile();
 
@@ -344,7 +344,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
     @Override
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
-        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = backupConfig.getBackupFile();
 

@@ -17,23 +17,29 @@
  */
 package com.codenvy.im;
 
-import com.codenvy.im.command.ReadMasterHostNameCommand;
+import com.codenvy.im.config.Config;
+import com.codenvy.im.config.ConfigUtil;
+import com.codenvy.im.install.InstallType;
+import com.codenvy.im.utils.HttpTransport;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Anatoliy Bazko
  */
 public class BaseTest {
-    private static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", ReadMasterHostNameCommand.CONF_FILE);
+    public static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
 
     @BeforeMethod
     public void clear() throws Exception {
@@ -42,11 +48,48 @@ public class BaseTest {
         }
     }
 
-    protected void prepareConfForSingleNodeInstallation() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[agent]");
+    protected void createSingleNodeConf() throws Exception {
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[master]\n" +
+                                                   "    certname = hostname\n" +
+                                                   "[agent]\n" +
+                                                   "    certname = hostname\n");
     }
 
-    protected void prepareConfForMultiNodeInstallation() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "");
+    protected void createMultiNodeConf() throws Exception {
+        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[master]\n" +
+                                                   "\n" +
+                                                   "[main]\n" +
+                                                   "    certname = hostname\n");
+    }
+
+    protected void prepareSingleNodeEnv(ConfigUtil configUtil, HttpTransport transport) throws Exception {
+        prepareSingleNodeEnv(configUtil);
+        when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
+    }
+
+    protected void prepareSingleNodeEnv(ConfigUtil configUtil) throws Exception {
+        Map<String, String> properties = ImmutableMap.of("host_url", "hostname");
+
+        createSingleNodeConf();
+        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+        doReturn(new Config(properties)).when(configUtil).loadInstalledCodenvyConfig();
+    }
+
+    protected void prepareMultiNodeEnv(ConfigUtil configUtil, HttpTransport transport) throws Exception {
+        prepareMultiNodeEnv(configUtil);
+        when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
+    }
+
+    protected void prepareMultiNodeEnv(ConfigUtil configUtil) throws Exception {
+        Map<String, String> properties = ImmutableMap.of
+                (
+                        "api_host_name", "api.example.com",
+                        "data_host_name", "data.example.com",
+                        "host_url", "hostname"
+                );
+
+        createMultiNodeConf();
+        doReturn(InstallType.MULTI_SERVER).when(configUtil).detectInstallationType();
+        doReturn(new Config(properties)).when(configUtil).loadInstalledCodenvyConfig();
     }
 }

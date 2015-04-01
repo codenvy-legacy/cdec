@@ -15,10 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.install;
+package com.codenvy.im.exceptions;
 
-/** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
-public enum InstallType {
-    SINGLE_SERVER,
-    MULTI_SERVER
+/**
+ * @author Anatoliy Bazko
+ */
+public class UnknownInstallationTypeException extends RuntimeException {
+    public static final String ERROR_MESSAGE = "Unknown Codenvy installation type";
+
+    public UnknownInstallationTypeException(Throwable cause) {
+        super(ERROR_MESSAGE, cause);
+    }
 }

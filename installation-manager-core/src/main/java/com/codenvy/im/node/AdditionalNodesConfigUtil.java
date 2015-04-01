@@ -19,17 +19,13 @@ package com.codenvy.im.node;
 
 import com.codenvy.im.config.Config;
 import com.codenvy.im.config.ConfigUtil;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Joiner.*;
+import static com.google.common.base.Joiner.on;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -37,9 +33,9 @@ public class AdditionalNodesConfigUtil {
 
     /** Names of properties of Config.MULTI_SERVER_PROPERTIES config file */
     private static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_CODENVY_PROPERTIES = ImmutableMap.of(
-        NodeConfig.NodeType.BUILDER, "additional_builders",
-        NodeConfig.NodeType.RUNNER, "additional_runners"
-    );
+            NodeConfig.NodeType.BUILDER, "additional_builders",
+            NodeConfig.NodeType.RUNNER, "additional_runners"
+                                                                                                               );
 
     public static final String ADDITIONAL_NODE_URL_TEMPLATE = "http://%1$s:8080/%2$s/internal/%2$s";
 
@@ -50,10 +46,11 @@ public class AdditionalNodesConfigUtil {
     }
 
     /**
-     * Read all urls of additional nodes stored from the puppet master config, find out node with certain dns and return type of additional node with certain dns.
+     * Read all urls of additional nodes stored from the puppet master config, find out node with certain dns and return type of additional node with
+     * certain dns.
      * For example: given:
-     *   $additional_builders = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
-     *   dns = "builder3.example.com"
+     * $additional_builders = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
+     * dns = "builder3.example.com"
      * Result = BUILDER
      */
     @Nullable
@@ -73,17 +70,18 @@ public class AdditionalNodesConfigUtil {
     /**
      * Iterate through registered additional node types to find type which = prefix of dns, and then return NodeConfig(found_type, dns).
      * For example: given:
-     *   dns = "builder2.dev.com"
-     *   $builder_host_name = "builder1.dev.com"  => base_node_domain = ".dev.com"
+     * dns = "builder2.dev.com"
+     * $builder_host_name = "builder1.dev.com"  => base_node_domain = ".dev.com"
      * Result = new NodeConfig(BUILDER, "builder2.dev.com")
-     *
+     * <p/>
      * Example 2: given:
-     *   dns = "builder2.dev.com"
-     *   $builder_host_name = "builder1.example.com"  => base_node_domain = ".example.com"  != ".dev.com"
+     * dns = "builder2.dev.com"
+     * $builder_host_name = "builder1.example.com"  => base_node_domain = ".example.com"  != ".dev.com"
      * Result = IllegalArgumentException("Illegal DNS name 'builder2.dev.com' of additional node....)
      *
-     * @throws IllegalArgumentException if dns doesn't comply with convension '<supported_node_type><number>(base_node_domain)' where supported prefix
-     * */
+     * @throws IllegalArgumentException
+     *         if dns doesn't comply with convension '<supported_node_type><number>(base_node_domain)' where supported prefix
+     */
     public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException {
         for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {
             NodeConfig.NodeType type = entry.getKey();
@@ -105,7 +103,8 @@ public class AdditionalNodesConfigUtil {
         }
 
         throw new IllegalArgumentException(format("Illegal DNS name '%s' of additional node. " +
-                                                  "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '%s'",
+                                                  "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from" +
+                                                  " the list '%s'",
                                                   dns,
                                                   ADDITIONAL_NODES_CODENVY_PROPERTIES.keySet().toString().toLowerCase()));
     }
@@ -122,12 +121,14 @@ public class AdditionalNodesConfigUtil {
      * Construct url of adding node, add it to the list of additional nodes of type = addingNode.getType() of the configuration of puppet master,
      * and return this list as row with comma-separated values.
      * For example: given:
-     *   $additional_builders = "http://builder2.example.com:8080/builder/internal/builder"
-     *   addingNode = new NodeConfig(BUILDER, "builder3.example.com")
+     * $additional_builders = "http://builder2.example.com:8080/builder/internal/builder"
+     * addingNode = new NodeConfig(BUILDER, "builder3.example.com")
      * Result = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
      *
-     * @throws IllegalArgumentException if there is adding node in the list of additional nodes
-     * @throws IllegalStateException if additional nodes property isn't found in Codenvy config
+     * @throws IllegalArgumentException
+     *         if there is adding node in the list of additional nodes
+     * @throws IllegalStateException
+     *         if additional nodes property isn't found in Codenvy config
      */
     public String getValueWithNode(NodeConfig addingNode) throws IllegalArgumentException, IllegalStateException {
         String additionalNodesProperty = getPropertyNameBy(addingNode.getType());
@@ -150,12 +151,14 @@ public class AdditionalNodesConfigUtil {
      * Erase url of removing node from the list of additional nodes of type = removingNode.getType() of the configuration of puppet master,
      * and return this list as row with comma-separated values.
      * For example: given:
-     *   $additional_builders = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
-     *   removingNode = new NodeConfig(BUILDER, "builder3.example.com")
+     * $additional_builders = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
+     * removingNode = new NodeConfig(BUILDER, "builder3.example.com")
      * Result = "http://builder2.example.com:8080/builder/internal/builder"
      *
-     * @throws IllegalArgumentException if there is no removing node in the list of additional nodes
-     * @throws IllegalStateException if additional nodes property isn't found in Codenvy config
+     * @throws IllegalArgumentException
+     *         if there is no removing node in the list of additional nodes
+     * @throws IllegalStateException
+     *         if additional nodes property isn't found in Codenvy config
      */
     public String getValueWithoutNode(NodeConfig removingNode) throws IllegalArgumentException {
         String additionalNodesProperty = getPropertyNameBy(removingNode.getType());
@@ -177,13 +180,13 @@ public class AdditionalNodesConfigUtil {
     /**
      * @return link like "http://builder3.example.com:8080/builder/internal/builder", or "http://runner3.example.com:8080/runner/internal/runner"
      * For example: given:
-     *   node = new NodeConfig(BUILDER, "builder2.example.com")
+     * node = new NodeConfig(BUILDER, "builder2.example.com")
      * Result = "http://builder2.example.com:8080/builder/internal/builder"
      */
     protected String getAdditionalNodeUrl(NodeConfig node) {
         return format(ADDITIONAL_NODE_URL_TEMPLATE,
                       node.getHost(),
                       node.getType().toString().toLowerCase()
-        );
+                     );
     }
 }

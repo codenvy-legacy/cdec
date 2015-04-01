@@ -89,7 +89,7 @@ public class TestInstaller extends BaseTest {
 
     @Test
     public void testGetUpdateInfoInstalledLowerVersion() throws Exception {
-        prepareConfForSingleNodeInstallation();
+        createSingleNodeConf();
 
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
@@ -104,7 +104,7 @@ public class TestInstaller extends BaseTest {
 
     @Test
     public void testGetUpdateInfoInstalledHigherVersion() throws Exception {
-        prepareConfForSingleNodeInstallation();
+        createSingleNodeConf();
 
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
@@ -157,7 +157,7 @@ public class TestInstaller extends BaseTest {
 
     @Test
     public void testUpdateInstalledLowerVersion() throws Exception {
-        prepareConfForSingleNodeInstallation();
+        createSingleNodeConf();
 
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
@@ -178,7 +178,7 @@ public class TestInstaller extends BaseTest {
 
     @Test
     public void testIUpdateInstalledHigherVersion() throws Exception {
-        prepareConfForSingleNodeInstallation();
+        createSingleNodeConf();
 
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));

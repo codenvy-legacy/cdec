@@ -46,7 +46,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.command.ReadMasterHostNameCommand.fetchMasterHostName;
 import static com.codenvy.im.config.Config.isEmpty;
 import static com.codenvy.im.config.Config.isMandatory;
 import static com.codenvy.im.config.Config.isValidForMandatoryProperty;
@@ -65,8 +64,8 @@ public class InstallCommand extends AbstractIMCommand {
 
     private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
-    private final ConfigUtil configUtil;
-    private InstallType installType;
+    private final ConfigUtil  configUtil;
+    private       InstallType installType;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     protected String artifactName;
@@ -290,7 +289,7 @@ public class InstallCommand extends AbstractIMCommand {
                         properties.put(Config.VERSION, version);
 
                         if (installType == InstallType.MULTI_SERVER) {
-                            properties.put("puppet_master_host_name", fetchMasterHostName());  // restore host name of puppet master
+                            properties.put("puppet_master_host_name", configUtil.fetchMasterHostName());  // restore host name of puppet master
                         }
                     }
                 }

@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.node;
 
+import com.codenvy.im.BaseTest;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.command.Command;
@@ -33,8 +34,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-
 import static java.lang.String.format;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -47,14 +46,14 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 /** @author Dmytro Nochevnov */
-public class TestNodeManager {
+public class TestNodeManager extends BaseTest {
 
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
 
     @Mock
-    private ConfigUtil                mockConfigUtil;
+    private ConfigUtil                configUtil;
     @Mock
-    private Config                    mockConfig;
+    private Config                    config;
     @Mock
     private AdditionalNodesConfigUtil mockNodesConfigUtil;
     @Mock
@@ -77,28 +76,28 @@ public class TestNodeManager {
         MockitoAnnotations.initMocks(this);
 
         doReturn(TEST_VERSION).when(mockCdecArtifact).getInstalledVersion();
-        doReturn(InstallType.MULTI_SERVER).when(mockCdecArtifact).getInstalledType();
 
         initConfigs();
 
-        spyManager = spy(new NodeManager(mockConfigUtil, mockCdecArtifact));
-        doReturn(mockConfig).when(spyManager).getCodenvyConfig(mockConfigUtil);
-        doReturn(mockNodesConfigUtil).when(spyManager).getNodesConfigUtil(mockConfig);
+        spyManager = spy(new NodeManager(configUtil, mockCdecArtifact));
+        doReturn(config).when(spyManager).getCodenvyConfig(configUtil);
+        doReturn(mockNodesConfigUtil).when(spyManager).getNodesConfigUtil(config);
     }
 
     private void initConfigs() {
         doReturn(ADDITIONAL_RUNNERS_PROPERTY_NAME).when(mockNodesConfigUtil).getPropertyNameBy(TEST_NODE_TYPE);
         doReturn(TEST_RUNNER_NODE_URL).when(mockNodesConfigUtil).getValueWithNode(TEST_NODE);
 
-        doReturn("127.0.0.1").when(mockConfig).getValue(NodeConfig.NodeType.API.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        doReturn("127.0.0.1").when(config).getValue(NodeConfig.NodeType.API.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
     }
 
     @Test
-    public void testAddNode() throws IOException {
+    public void testAddNode() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doNothing().when(spyManager).validate(TEST_NODE);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
         doReturn(mockCommand).when(spyManager)
-                             .getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
+                             .getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
 
         assertEquals(spyManager.add(TEST_NODE_DNS), TEST_NODE);
         verify(mockCommand).execute();
@@ -106,7 +105,8 @@ public class TestNodeManager {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "This type of node isn't supported")
-    public void testAddNodeWhichIsNotSupported() throws IOException {
+    public void testAddNodeWhichIsNotSupported() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doNothing().when(spyManager).validate(TEST_NODE);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
         doReturn(null).when(mockNodesConfigUtil).getPropertyNameBy(TEST_NODE.getType());
@@ -116,32 +116,34 @@ public class TestNodeManager {
 
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "You can add node to Multi-Server Codenvy only")
-    public void testAddNodeToSingleServerCodenvyException() throws IOException {
-        doReturn(InstallType.SINGLE_SERVER).when(mockCdecArtifact).getInstalledType();
+    public void testAddNodeToSingleServerCodenvyException() throws Exception {
+        prepareSingleNodeEnv(configUtil);
         spyManager.add(TEST_NODE_DNS);
     }
 
-
     @Test
-    public void testGetAddNodeCommand() throws IOException {
-        Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
+    public void testGetAddNodeCommand() throws Exception {
+        prepareMultiNodeEnv(configUtil);
+        Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
         assertNotNull(result);
         assertTrue(result instanceof MacroCommand);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "error")
-    public void testGetAddNodeCommandWhenGetValueWithNodeException() throws IOException {
+    public void testGetAddNodeCommandWhenGetValueWithNodeException() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doThrow(new IllegalArgumentException("error")).when(mockNodesConfigUtil).getValueWithNode(TEST_NODE);
 
-        spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, mockConfig);
+        spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
     }
 
     @Test
-    public void testRemoveNode() throws IOException {
+    public void testRemoveNode() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doReturn(TEST_NODE_TYPE).when(mockNodesConfigUtil).recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
         doReturn(mockCommand).when(spyManager)
-                             .getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+                             .getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
@@ -150,9 +152,10 @@ public class TestNodeManager {
 
     @Test(expectedExceptions = NodeException.class,
             expectedExceptionsMessageRegExp = "Node 'localhost' is not found in Codenvy configuration among additional nodes")
-    public void testRemoveNonExistsNodeError() throws IOException {
+    public void testRemoveNonExistsNodeError() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doReturn(mockCommand).when(spyManager)
-                             .getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+                             .getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
         verify(mockCommand).execute();
@@ -160,15 +163,16 @@ public class TestNodeManager {
 
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "You can remove node from Multi-Server Codenvy only")
-    public void testRemoveNodeFromSingleServerCodenvyException() throws IOException {
-        doReturn(InstallType.SINGLE_SERVER).when(mockCdecArtifact).getInstalledType();
+    public void testRemoveNodeFromSingleServerCodenvyException() throws Exception {
+        prepareSingleNodeEnv(configUtil);
         spyManager.remove(TEST_NODE_DNS);
     }
 
     @Test
-    public void testGetRemoveNodeCommand() throws IOException {
+    public void testGetRemoveNodeCommand() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         Command removeNodeCommand =
-                spyManager.getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+                spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
         assertEquals(removeNodeCommand.toString(),
                      format("[" +
                             "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp " +
@@ -195,15 +199,17 @@ public class TestNodeManager {
 
     @Test(expectedExceptions = NodeException.class,
             expectedExceptionsMessageRegExp = "error")
-    public void testGetRemoveNodeCommandWhenGetValueWithNodeException() throws IOException {
-        doThrow(new IllegalArgumentException("error")).when(mockConfig)
+    public void testGetRemoveNodeCommandWhenGetValueWithNodeException() throws Exception {
+        prepareMultiNodeEnv(configUtil);
+        doThrow(new IllegalArgumentException("error")).when(config)
                                                       .getValue(NodeConfig.NodeType.API.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
 
-        spyManager.getRemoveNodeCommand(TEST_NODE, mockConfig, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
     }
 
     @Test(dataProvider = "PuppetAgentStates")
-    public void testIsPuppetAgentActive(String state, boolean expectedResult) throws AgentException, CommandException {
+    public void testIsPuppetAgentActive(String state, boolean expectedResult) throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo service puppet status", TEST_NODE);
         doReturn(state).when(mockCommand).execute();
         assertEquals(spyManager.isPuppetAgentActive(TEST_NODE), expectedResult);
@@ -219,7 +225,8 @@ public class TestNodeManager {
     }
 
     @Test
-    public void testIsPuppetAgentActiveWhenCommandError() throws AgentException, CommandException {
+    public void testIsPuppetAgentActiveWhenCommandError() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo service puppet status", TEST_NODE);
         doThrow(new CommandException("error", null)).when(mockCommand).execute();
         assertFalse(spyManager.isPuppetAgentActive(TEST_NODE));
@@ -234,37 +241,41 @@ public class TestNodeManager {
 
     @Test(expectedExceptions = NodeException.class,
             expectedExceptionsMessageRegExp = "error")
-    public void testValidateNodeCommandException() throws IOException {
+    public void testValidateNodeCommandException() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo ls", TEST_NODE);
         doThrow(new CommandException("error", null)).when(mockCommand).execute();
         spyManager.validate(TEST_NODE);
     }
 
-    @Test(expectedExceptions = NodeException.class,
-            expectedExceptionsMessageRegExp = "error")
-    public void testValidateNodeAgentException() throws AgentException, CommandException, NodeException {
+    @Test(expectedExceptions = NodeException.class, expectedExceptionsMessageRegExp = "error")
+    public void testValidateNodeAgentException() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         doThrow(new AgentException("error")).when(spyManager).getShellAgentCommand("sudo ls", TEST_NODE);
         spyManager.validate(TEST_NODE);
     }
 
     @Test
-    public void testGetCodenvyConfig() throws IOException {
-        doReturn(mockConfig).when(mockConfigUtil).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+    public void testGetCodenvyConfig() throws Exception {
+        prepareMultiNodeEnv(configUtil);
+        doReturn(config).when(configUtil).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
-        NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
-        Config config = manager.getCodenvyConfig(mockConfigUtil);
-        assertEquals(config, mockConfig);
+        NodeManager manager = new NodeManager(configUtil, mockCdecArtifact);
+        Config config = manager.getCodenvyConfig(configUtil);
+        assertEquals(config, this.config);
     }
 
     @Test
-    public void testNodesConfigUtil() throws IOException {
-        NodeManager manager = new NodeManager(mockConfigUtil, mockCdecArtifact);
-        AdditionalNodesConfigUtil config = manager.getNodesConfigUtil(mockConfig);
+    public void testNodesConfigUtil() throws Exception {
+        prepareMultiNodeEnv(configUtil);
+        NodeManager manager = new NodeManager(configUtil, mockCdecArtifact);
+        AdditionalNodesConfigUtil config = manager.getNodesConfigUtil(this.config);
         assertNotNull(config);
     }
 
     @Test
-    public void testShellAgentCommand() throws AgentException {
+    public void testShellAgentCommand() throws Exception {
+        prepareMultiNodeEnv(configUtil);
         Command command = spyManager.getShellAgentCommand("test", TEST_NODE);
         assertEquals(command.toString(), format("{'command'='test', " +
                                                 "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));

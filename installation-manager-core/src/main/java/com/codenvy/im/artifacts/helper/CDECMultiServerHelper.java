@@ -372,7 +372,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
     public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
@@ -477,7 +477,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
     public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig(original.getInstalledType());
+        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 

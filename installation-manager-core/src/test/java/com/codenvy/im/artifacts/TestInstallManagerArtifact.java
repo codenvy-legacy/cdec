@@ -19,7 +19,6 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.command.Command;
 import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -92,7 +91,9 @@ public class TestInstallManagerArtifact {
                                          + "tar -xzf /parent/child -C /home/dummy-user/codenvy-im/codenvy-cli \n"
                                          + "chmod +x /home/dummy-user/codenvy-im/codenvy-cli/bin/* \n"
                                          + "sed -i \"2iJAVA_HOME=${HOME}/codenvy-im/jre\" /home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \n"
-                                         + "sed -i \"2iJAVA_HOME=${HOME}/codenvy-im/jre\" /home/dummy-user/codenvy-im/codenvy-cli/bin/interactive-mode \n"
+                                         +
+                                         "sed -i \"2iJAVA_HOME=${HOME}/codenvy-im/jre\" " +
+                                         "/home/dummy-user/codenvy-im/codenvy-cli/bin/interactive-mode \n"
                                          + "rm -f /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh \n"
                                          + "' > /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; ', 'agent'='LocalAgent'}, "
                                          + "{'command'='chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; ', 'agent'='LocalAgent'}"
@@ -100,7 +101,7 @@ public class TestInstallManagerArtifact {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Step number 1000 is out of range")
+            expectedExceptionsMessageRegExp = "Step number 1000 is out of range")
     public void testGetUpdateCommandError() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setStep(1000);
@@ -116,11 +117,6 @@ public class TestInstallManagerArtifact {
     @Test
     public void testGetInstalledPath() throws Exception {
         assertEquals(imArtifact.getInstalledPath(), testExecutionPath);
-    }
-
-    @Test
-    public void testGetInstalledType() throws IOException {
-        assertEquals(imArtifact.getInstalledType(), InstallType.UNKNOWN);
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)

@@ -37,7 +37,6 @@ import java.util.List;
 
 import static com.codenvy.im.command.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
-import static com.codenvy.im.command.ReadMasterHostNameCommand.fetchMasterHostName;
 import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static java.lang.String.format;
 
@@ -54,11 +53,12 @@ public class NodeManager {
     }
 
     /**
-     * @throws IllegalArgumentException if node type isn't supported, or if there is adding node in the list of additional nodes
      * @param dns
+     * @throws IllegalArgumentException
+     *         if node type isn't supported, or if there is adding node in the list of additional nodes
      */
     public NodeConfig add(String dns) throws IOException, IllegalArgumentException {
-        if (!InstallType.MULTI_SERVER.equals(cdecArtifact.getInstalledType())) {
+        if (configUtil.detectInstallationType() != InstallType.MULTI_SERVER) {
             throw new IllegalStateException("You can add node to Multi-Server Codenvy only");
         }
 
@@ -85,7 +85,10 @@ public class NodeManager {
     /**
      * @return commands to add node into puppet master config and wait until node becomes alive
      */
-    protected Command getAddNodeCommand(Version currentCodenvyVersion, String property, AdditionalNodesConfigUtil nodesConfigUtil, NodeConfig node, Config config) throws NodeException {
+    protected Command getAddNodeCommand(Version currentCodenvyVersion,
+                                        String property,
+                                        AdditionalNodesConfigUtil nodesConfigUtil,
+                                        NodeConfig node, Config config) throws NodeException {
         List<Command> commands = new ArrayList<>();
 
         String value = nodesConfigUtil.getValueWithNode(node);
@@ -103,7 +106,7 @@ public class NodeManager {
             commands.add(createCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
                                               node.getHost())));
 
-            String puppetMasterNodeDns = fetchMasterHostName();
+            String puppetMasterNodeDns = configUtil.fetchMasterHostName();
 
             // install puppet agents on adding node
             commands.add(createCommand("yum list installed | grep puppetlabs-release.noarch; "
@@ -169,10 +172,11 @@ public class NodeManager {
     }
 
     /**
-     * @throws IllegalArgumentException if node type isn't supported, or if there is no removing node in the list of additional nodes
+     * @throws IllegalArgumentException
+     *         if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
     public NodeConfig remove(String dns) throws IOException, IllegalArgumentException {
-        if (!InstallType.MULTI_SERVER.equals(cdecArtifact.getInstalledType())) {
+        if (configUtil.detectInstallationType() != InstallType.MULTI_SERVER) {
             throw new IllegalStateException("You can remove node from Multi-Server Codenvy only");
         }
 
@@ -199,42 +203,42 @@ public class NodeManager {
     }
 
     protected Command getRemoveNodeCommand(NodeConfig node,
-                                          Config config,
-                                          AdditionalNodesConfigUtil nodesConfigUtil,
-                                          Version currentCodenvyVersion,
-                                          String property) throws NodeException {
+                                           Config config,
+                                           AdditionalNodesConfigUtil nodesConfigUtil,
+                                           Version currentCodenvyVersion,
+                                           String property) throws NodeException {
         try {
             String value = nodesConfigUtil.getValueWithoutNode(node);
             String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
             NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
 
             return new MacroCommand(ImmutableList.of(
-                // modify puppet master config
-                createFileBackupCommand(puppetMasterConfigFilePath),
-                createPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                             "$" + property,
-                                             value),
+                    // modify puppet master config
+                    createFileBackupCommand(puppetMasterConfigFilePath),
+                    createPropertyReplaceCommand(puppetMasterConfigFilePath,
+                                                 "$" + property,
+                                                 value),
 
-                // wait until there node is removed from configuration on API server
-                createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                     "while true; do " +
-                                     "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
-                                     "    sleep 5; " +  // sleep 5 sec
-                                     "done; " +
-                                     "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
-                              apiNode),
+                    // wait until there node is removed from configuration on API server
+                    createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                         "while true; do " +
+                                         "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
+                                         "    sleep 5; " +  // sleep 5 sec
+                                         "done; " +
+                                         "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
+                                  apiNode),
 
-                // wait until API server restarts
-                new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
+                    // wait until API server restarts
+                    new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
 
-                // remove out-date puppet agent's certificate
-                createCommand(format("sudo puppet cert clean %s", node.getHost())),
-                createCommand("sudo service puppetmaster restart"),
+                    // remove out-date puppet agent's certificate
+                    createCommand(format("sudo puppet cert clean %s", node.getHost())),
+                    createCommand("sudo service puppetmaster restart"),
 
-                // stop puppet agent on removing node and remove out-date certificate
-                createCommand("sudo service puppet stop", node),
-                createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
-            ), "Remove node commands");
+                    // stop puppet agent on removing node and remove out-date certificate
+                    createCommand("sudo service puppet stop", node),
+                    createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
+                                                    ), "Remove node commands");
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }

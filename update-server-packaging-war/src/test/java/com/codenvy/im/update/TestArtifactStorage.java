@@ -18,7 +18,6 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.google.common.io.InputSupplier;
 
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.BeforeTest;
@@ -27,7 +26,6 @@ import org.testng.annotations.Test;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -41,7 +39,6 @@ import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
-import static com.google.common.io.Files.copy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
