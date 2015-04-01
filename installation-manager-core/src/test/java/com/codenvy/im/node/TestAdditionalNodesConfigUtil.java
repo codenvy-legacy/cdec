@@ -19,6 +19,7 @@ package com.codenvy.im.node;
 
 import com.codenvy.im.config.Config;
 import com.google.common.collect.ImmutableList;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -89,7 +90,7 @@ public class TestAdditionalNodesConfigUtil {
     public static Object[][] GetValueWithNode() {
         return new Object[][]{
             {new ArrayList(), "test", "http://test:8080/runner/internal/runner"},
-            {new ArrayList<String>(ImmutableList.of("test1")), "test2", "test1,http://test2:8080/runner/internal/runner"}
+            {new ArrayList<>(ImmutableList.of("test1")), "test2", "test1,http://test2:8080/runner/internal/runner"}
         };
     }
 
@@ -122,22 +123,22 @@ public class TestAdditionalNodesConfigUtil {
     @DataProvider(name = "GetValueWithoutNode")
     public static Object[][] GetValueWithoutNode() {
         return new Object[][]{
-            {new ArrayList<String>(ImmutableList.of("http://test:8080/runner/internal/runner")), "test", ""},
-            {new ArrayList<String>(ImmutableList.of(
+                {new ArrayList<>(ImmutableList.of("http://test:8080/runner/internal/runner")), "test", ""},
+                {new ArrayList<>(ImmutableList.of(
                                       "http://test1:8080/runner/internal/runner",
                                       "http://test2:8080/runner/internal/runner",
                                       "http://test3:8080/runner/internal/runner"
                                   )),
                                   "test1",
                                   "http://test2:8080/runner/internal/runner,http://test3:8080/runner/internal/runner"},
-            {new ArrayList<String>(ImmutableList.of(
+                {new ArrayList<>(ImmutableList.of(
                                       "http://test1:8080/runner/internal/runner",
                                       "http://test2:8080/runner/internal/runner",
                                       "http://test3:8080/runner/internal/runner"
                                   )),
                                   "test2",
                                   "http://test1:8080/runner/internal/runner,http://test3:8080/runner/internal/runner"},
-            {new ArrayList<String>(ImmutableList.of(
+                {new ArrayList<>(ImmutableList.of(
                                 "http://test1:8080/runner/internal/runner",
                                 "http://test2:8080/runner/internal/runner",
                                 "http://test3:8080/runner/internal/runner"
@@ -200,7 +201,8 @@ public class TestAdditionalNodesConfigUtil {
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Illegal DNS name 'runner2.another.com' of additional node. Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '.*'")
     public void testRecognizeNodeConfigFromDnsWhenDnsDoesnotComplyBaseNodeDomain() {
-        doReturn("builder1.some.com").when(mockConfig).getValue(NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
+        doReturn("builder1.some.com").when(mockConfig).getValue(
+                NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
         doReturn("runner1.some.com").when(mockConfig).getValue(NodeConfig.NodeType.RUNNER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
         spyConfigUtil.recognizeNodeConfigFromDns("runner2.another.com");
     }

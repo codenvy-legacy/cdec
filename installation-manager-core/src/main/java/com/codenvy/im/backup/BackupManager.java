@@ -130,7 +130,7 @@ public class BackupManager {
         }
 
         String backedUpArtifactVersion = storedBackupConfig.getArtifactVersion();
-        Version restoringArtifactVersion = null;
+        Version restoringArtifactVersion;
         String nullVersionErrorMessage = format("It is impossible to get version of restoring artifact '%s'", restoringArtifactName);
         try {
             restoringArtifactVersion = restoringArtifact.getInstalledVersion();

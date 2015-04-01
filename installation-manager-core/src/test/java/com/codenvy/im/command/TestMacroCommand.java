@@ -32,7 +32,6 @@ import static java.lang.String.format;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -87,9 +86,9 @@ public class TestMacroCommand {
         String command = "command";
         String description = "description";
         List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
-            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
-        );
+                new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+                new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+                                                 );
 
         String user = System.getProperty("user.name");
         String expectedCommand = format("[" +
@@ -104,15 +103,17 @@ public class TestMacroCommand {
     @Test
     public void testCreateShellCommandForNodeList() throws AgentException {
         String expectedCommandString = format("[" +
-                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/" +
+                                              ".ssh/id_rsa]'}'}, " +
+                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/" +
+                                              ".ssh/id_rsa]'}'}" +
                                               "]",
                                               SYSTEM_USER_NAME);
 
         List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "localhost"),
-            new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
-        );
+                new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+                new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
+                                                 );
 
         Command testCommand = MacroCommand.createCommand("testCommand", nodes);
         assertEquals(testCommand.toString(), expectedCommandString);

@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
-import static org.apache.commons.io.IOUtils.copy;
 
 /**
  * This command unpacks archives of "tar.gz" type into the directory to uncompress.

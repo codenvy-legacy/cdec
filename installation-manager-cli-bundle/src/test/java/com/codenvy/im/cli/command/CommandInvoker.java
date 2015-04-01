@@ -238,7 +238,7 @@ public class CommandInvoker {
         }
 
         protected String getContent(ByteArrayOutputStream stream) {
-            String content = null;
+            String content;
             try {
                 content = stream.toString("UTF-8");
             } catch (UnsupportedEncodingException e) {

@@ -113,6 +113,7 @@ public class BackupConfig {
         return this;
     }
 
+    @Override
     public BackupConfig clone() {
         return new BackupConfig().setArtifactName(artifactName)
                                  .setArtifactVersion(artifactVersion)
