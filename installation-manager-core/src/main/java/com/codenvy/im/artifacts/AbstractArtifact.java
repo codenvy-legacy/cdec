@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -115,17 +114,6 @@ public abstract class AbstractArtifact implements Artifact {
         return null;
     }
 
-    /** Initialize SSH agent */
-//    protected Agent initSshAgent() throws IOException {
-//        AgentConfig config = configFactory.loadOrCreateAgentConfig();
-//        return new SecureShellAgent(config.getHost(),
-//                                    config.getPort(),
-//                                    config.getUser(),
-//                                    config.getPrivateKeyFileAbsolutePath(),
-//                                    null
-//        );
-//    }
-
     /** {@inheritDoc} */
     @Override
     @Nullable
@@ -218,10 +206,5 @@ public abstract class AbstractArtifact implements Artifact {
     protected Version getLatestVersion(String updateEndpoint, HttpTransport transport) throws IOException {
         Map m = getLatestVersionProperties(updateEndpoint, transport);
         return valueOf(m.get(VERSION_PROPERTY).toString());
-    }
-
-    /** {@inheritDoc} */
-    public InstallType getInstalledType() throws IOException {
-        return InstallType.UNKNOWN;
     }
 }

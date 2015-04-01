@@ -22,7 +22,6 @@ import com.codenvy.im.command.Command;
 import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -247,11 +246,6 @@ public class TestAbstractArtifact {
         spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT, mockTransport);
     }
 
-    @Test
-    public void testGetInstalledType() throws IOException {
-        assertEquals(spyTestArtifact.getInstalledType(), InstallType.UNKNOWN);
-    }
-
     private static class TestedAbstractArtifact extends AbstractArtifact {
         public TestedAbstractArtifact(String name) {
             super(name);
@@ -288,11 +282,13 @@ public class TestAbstractArtifact {
             return null;
         }
 
-        @Override public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        @Override
+        public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
             return null;
         }
 
-        @Override public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        @Override
+        public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
             return null;
         }
     }
