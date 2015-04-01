@@ -288,8 +288,8 @@ public class ConfigUtil {
     public InstallType detectInstallationType() throws UnknownInstallationTypeException {
         try {
             IniFile iniFile = new IniFile(puppetConfFile.toFile());
-            return isSingleTypeConfig(iniFile) ? InstallType.CODENVY_SINGLE_SERVER
-                                               : InstallType.CODENVY_MULTI_SERVER;
+            return isSingleTypeConfig(iniFile) ? InstallType.SINGLE_SERVER
+                                               : InstallType.MULTI_SERVER;
         } catch (BackingStoreException e) {
             throw new UnknownInstallationTypeException(e);
         }

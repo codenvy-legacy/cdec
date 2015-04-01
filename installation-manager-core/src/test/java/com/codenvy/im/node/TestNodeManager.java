@@ -258,7 +258,7 @@ public class TestNodeManager extends BaseTest {
     @Test
     public void testGetCodenvyConfig() throws Exception {
         prepareMultiNodeEnv(configUtil);
-        doReturn(config).when(configUtil).loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        doReturn(config).when(configUtil).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         NodeManager manager = new NodeManager(configUtil, mockCdecArtifact);
         Config config = manager.getCodenvyConfig(configUtil);

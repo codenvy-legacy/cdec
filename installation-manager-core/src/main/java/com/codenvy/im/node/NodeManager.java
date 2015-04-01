@@ -58,7 +58,7 @@ public class NodeManager {
      *         if node type isn't supported, or if there is adding node in the list of additional nodes
      */
     public NodeConfig add(String dns) throws IOException, IllegalArgumentException {
-        if (configUtil.detectInstallationType() != InstallType.CODENVY_MULTI_SERVER) {
+        if (configUtil.detectInstallationType() != InstallType.MULTI_SERVER) {
             throw new IllegalStateException("You can add node to Multi-Server Codenvy only");
         }
 
@@ -176,7 +176,7 @@ public class NodeManager {
      *         if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
     public NodeConfig remove(String dns) throws IOException, IllegalArgumentException {
-        if (configUtil.detectInstallationType() != InstallType.CODENVY_MULTI_SERVER) {
+        if (configUtil.detectInstallationType() != InstallType.MULTI_SERVER) {
             throw new IllegalStateException("You can remove node from Multi-Server Codenvy only");
         }
 
@@ -275,7 +275,7 @@ public class NodeManager {
     }
 
     protected Config getCodenvyConfig(ConfigUtil configUtil) throws IOException {
-        return configUtil.loadInstalledCodenvyConfig(InstallType.CODENVY_MULTI_SERVER);
+        return configUtil.loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
     }
 
     /** for testing propose */

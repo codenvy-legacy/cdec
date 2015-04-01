@@ -114,9 +114,9 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         if (multi) {
-            installType = InstallType.CODENVY_MULTI_SERVER;
+            installType = InstallType.MULTI_SERVER;
         } else {
-            installType = InstallType.CODENVY_SINGLE_SERVER;
+            installType = InstallType.SINGLE_SERVER;
         }
 
         final Request request = initRequest(artifactName, version);
@@ -288,7 +288,7 @@ public class InstallCommand extends AbstractIMCommand {
                                                       configUtil.loadCodenvyDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
 
-                        if (installType == InstallType.CODENVY_MULTI_SERVER) {
+                        if (installType == InstallType.MULTI_SERVER) {
                             properties.put("puppet_master_host_name", configUtil.fetchMasterHostName());  // restore host name of puppet master
                         }
                     }

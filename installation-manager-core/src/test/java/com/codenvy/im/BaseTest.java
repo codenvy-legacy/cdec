@@ -71,7 +71,7 @@ public class BaseTest {
         Map<String, String> properties = ImmutableMap.of("host_url", "hostname");
 
         createSingleNodeConf();
-        doReturn(InstallType.CODENVY_SINGLE_SERVER).when(configUtil).detectInstallationType();
+        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
         doReturn(new Config(properties)).when(configUtil).loadInstalledCodenvyConfig();
     }
 
@@ -89,7 +89,7 @@ public class BaseTest {
                 );
 
         createMultiNodeConf();
-        doReturn(InstallType.CODENVY_MULTI_SERVER).when(configUtil).detectInstallationType();
+        doReturn(InstallType.MULTI_SERVER).when(configUtil).detectInstallationType();
         doReturn(new Config(properties)).when(configUtil).loadInstalledCodenvyConfig();
     }
 }

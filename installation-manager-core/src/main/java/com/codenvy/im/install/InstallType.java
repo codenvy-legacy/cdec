@@ -19,6 +19,6 @@ package com.codenvy.im.install;
 
 /** Installation types for {@link com.codenvy.im.artifacts.CDECArtifact} */
 public enum InstallType {
-    CODENVY_SINGLE_SERVER,
-    CODENVY_MULTI_SERVER
+    SINGLE_SERVER,
+    MULTI_SERVER
 }

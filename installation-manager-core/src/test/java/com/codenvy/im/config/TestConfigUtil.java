@@ -275,13 +275,13 @@ public class TestConfigUtil extends BaseTest {
     @Test
     public void testDetectInstallationMultiType() throws Exception {
         createMultiNodeConf();
-        assertEquals(configUtil.detectInstallationType(), InstallType.CODENVY_MULTI_SERVER);
+        assertEquals(configUtil.detectInstallationType(), InstallType.MULTI_SERVER);
     }
 
     @Test
     public void testDetectInstallationSingleType() throws Exception {
         createSingleNodeConf();
-        assertEquals(configUtil.detectInstallationType(), InstallType.CODENVY_SINGLE_SERVER);
+        assertEquals(configUtil.detectInstallationType(), InstallType.SINGLE_SERVER);
     }
 
     @Test(expectedExceptions = IOException.class)

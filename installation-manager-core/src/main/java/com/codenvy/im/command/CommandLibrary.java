@@ -21,7 +21,6 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.node.NodeConfig;
-import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nullable;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.command.SimpleCommand.createCommand;
-import static com.codenvy.im.utils.Commons.getVersionsList;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 
@@ -106,8 +104,7 @@ public class CommandLibrary {
     }
 
     public static Command createPatchCommand(Path patchDir, PatchType patchType, InstallOptions installOptions) throws IOException {
-        List<Command> commands;
-        commands = new ArrayList<>();
+        List<Command> commands = new ArrayList<>();
 
         Path relativePatchFilePath = getRelativePatchFilePath(patchType, installOptions.getInstallType());
         Path patchFile = patchDir.resolve(relativePatchFilePath);
