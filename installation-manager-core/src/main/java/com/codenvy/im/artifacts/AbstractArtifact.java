@@ -184,7 +184,6 @@ public abstract class AbstractArtifact implements Artifact {
             throw new IOException(e);
         }
 
-        validateProperties(m);
         return m;
     }
 
@@ -199,20 +198,7 @@ public abstract class AbstractArtifact implements Artifact {
             throw new IOException(e);
         }
 
-        validateProperties(m);
         return m;
-    }
-
-    protected void validateProperties(Map properties) throws IOException {
-        if (properties == null) {
-            throw new IOException("Can't get artifact properties.");
-        }
-
-        for (String p : ArtifactProperties.PUBLIC_PROPERTIES) {
-            if (!properties.containsKey(p)) {
-                throw new IOException("Can't get artifact property: " + p);
-            }
-        }
     }
 
     protected Version getLatestVersion(String updateEndpoint, HttpTransport transport) throws IOException {

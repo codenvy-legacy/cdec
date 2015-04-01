@@ -85,7 +85,6 @@ public class TestAbstractArtifact {
 
     @Test
     public void testGetArtifactProperties() throws Exception {
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
 
         Map m = spyTestArtifact.getProperties(TEST_VERSION, UPDATE_ENDPOINT, mockTransport);
@@ -97,7 +96,6 @@ public class TestAbstractArtifact {
 
     @Test
     public void testGetLatestVersion() throws IOException {
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
             .when(mockTransport)
             .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
@@ -111,9 +109,8 @@ public class TestAbstractArtifact {
         Version newVersion = Version.valueOf("2.0.0");
 
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
-        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // possible previous version of new artifact is unknown
-        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + newVersion));  // possible previous version of new artifact is unknown
+        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // allowed previous version of new artifact is unknown
+        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + newVersion));  // allowed previous version of new artifact is unknown
 
         assertFalse(spyTestArtifact.isInstallable(TEST_VERSION, UPDATE_ENDPOINT, mockTransport));
         assertTrue(spyTestArtifact.isInstallable(newVersion, UPDATE_ENDPOINT, mockTransport));
@@ -122,7 +119,6 @@ public class TestAbstractArtifact {
     @Test
     public void testIsInstallableWhenThereIsNoInstalledArtifact() throws IOException {
         doReturn(null).when(spyTestArtifact).getInstalledVersion();
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + Version.valueOf("2.0.0")));
 
         assertTrue(spyTestArtifact.isInstallable(TEST_VERSION, UPDATE_ENDPOINT, mockTransport));
@@ -133,7 +129,6 @@ public class TestAbstractArtifact {
     public void testIsInstallableBaseOnPreviousVersion() throws IOException {
         String versionToInstall = "2.0.0";
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
 
         doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + versionToInstall));
         assertTrue(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall), UPDATE_ENDPOINT, mockTransport));
@@ -147,7 +142,6 @@ public class TestAbstractArtifact {
         String newVersion = "1.0.1";
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"version\":\"" + newVersion + "\"}")
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
@@ -166,7 +160,6 @@ public class TestAbstractArtifact {
     public void testGetNullLatestInstallableVersion() throws Exception {
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
         doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
@@ -180,43 +173,11 @@ public class TestAbstractArtifact {
     }
 
     @Test
-    public void testValidateProperties() throws Exception {
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
-
-        String artifactProperties =
-            "{\"version\":\"1.0.0\", \"previous-version\":\"0.0.1\", \"file\":\"file1\", \"md5\":\"a\", \"build-time\":\"01.01.01\", \"artifact\":\"" + TEST_ARTIFACT_NAME +
-            "\", \"size\":456, \"authentication-required\":false}";
-
-        doReturn(artifactProperties)
-                .when(mockTransport)
-                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
-
-        doReturn(artifactProperties)
-            .when(mockTransport)
-            .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
-
-        Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
-        assertNull(version);
-    }
-
-    @Test(expectedExceptions = IOException.class,
-            expectedExceptionsMessageRegExp = "Can't get artifact property: previous-version")
-    public void testValidatePropertiesFail() throws Exception {
-        doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
-                .when(mockTransport)
-                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
-
-        spyTestArtifact.getProperties(TEST_VERSION, UPDATE_ENDPOINT, mockTransport);
-    }
-
-    @Test
     public void testGetDownloadedVersions() throws IOException {
         doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(mockTransport)
                                                                                       .doGet(endsWith(TEST_ARTIFACT_NAME + "/1.0.1"));
         doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(mockTransport)
                                                                                       .doGet(endsWith(TEST_ARTIFACT_NAME + "/1.0.2"));
-
-        doNothing().when(spyTestArtifact).validateProperties(anyMap());
 
         Path file1 = Paths.get("target", "download", spyTestArtifact.getName(), "1.0.1", "file1");
         Path file2 = Paths.get("target", "download", spyTestArtifact.getName(), "1.0.2", "file2");
