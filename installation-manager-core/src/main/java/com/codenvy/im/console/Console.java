@@ -156,15 +156,7 @@ public class Console {
     }
 
     public void printErrorAndExit(Exception ex) {
-        String errorMessage;
-
-        if (isConnectionException(ex)) {
-            errorMessage = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, " +
-                           "please retry a bit later.";
-        } else {
-            errorMessage = Response.valueOf(ex).toJson();
-        }
-
+        String errorMessage = Response.valueOf(ex).toJson();
         LOG.log(Level.SEVERE, ex.getMessage(), ex);
 
         printError(errorMessage);
@@ -267,11 +259,6 @@ public class Console {
     private void printCodenvyPrompt() {
         final String lightBlue = '\u001b' + "[94m";
         print(ansi().a(lightBlue + CODENVY_PREFIX).reset()); // light blue
-    }
-
-    private boolean isConnectionException(Exception e) {
-        Throwable cause = e.getCause();
-        return cause != null && cause.getClass().getCanonicalName().equals(ConnectException.class.getCanonicalName());
     }
 
     private String doReadLine(@Nullable Character mask) throws IOException {

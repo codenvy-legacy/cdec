@@ -18,8 +18,6 @@
 package com.codenvy.im.utils;
 
 import org.eclipse.che.dto.server.DtoFactory;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
@@ -190,24 +188,12 @@ public class HttpTransport {
                 in = conn.getInputStream();
             }
 
-            throw new HttpException(responseCode, getErrorMessageIfPossible(readAndCloseQuietly(in)));
+            throw new HttpException(responseCode, readAndCloseQuietly(in));
         }
 
         final String contentType = conn.getContentType();
         if (contentType != null && !contentType.equalsIgnoreCase(expectedContentType)) {
             throw new IOException("Unsupported type of response from remote server.");
-        }
-    }
-
-    /** Checks if a response has the specific error message and take it if possible. */
-    private String getErrorMessageIfPossible(String json) {
-        try {
-            JSONObject jsonResponse = new JSONObject(json);
-            String message = (String)jsonResponse.get(MESSAGE);
-
-            return message != null ? message : json;
-        } catch (JSONException e) {
-            return json;
         }
     }
 

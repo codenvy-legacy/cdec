@@ -23,12 +23,10 @@ import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
-import org.json.JSONException;
 
 import static java.lang.Thread.sleep;
 
@@ -64,7 +62,7 @@ public class DownloadCommand extends AbstractIMCommand {
         }
     }
 
-    private void doDownload() throws InterruptedException, JsonParseException, JSONException {
+    private void doDownload() throws InterruptedException, JsonParseException {
         console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
         Request request = initRequest(artifactName, version);

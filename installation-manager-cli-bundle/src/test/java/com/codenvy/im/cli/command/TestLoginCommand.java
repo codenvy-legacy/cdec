@@ -27,12 +27,10 @@ import org.apache.felix.service.command.CommandSession;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.net.ConnectException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -207,7 +205,7 @@ public class TestLoginCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
             .when(service).getUpdateServerEndpoint();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -248,21 +246,6 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
-        verify(service, never()).addTrialSubscription(any(Request.class));
-    }
-
-    @Test
-    public void testLoginWhenServiceThrowsConnectionExceptionError() throws Exception {
-        String expectedOutput = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
-                                + "please retry a bit later.";
-        doThrow(new ResourceException(new ConnectException()))
-            .when(service).getUpdateServerEndpoint();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput + "\n");
         verify(service, never()).addTrialSubscription(any(Request.class));
     }
 

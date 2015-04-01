@@ -108,7 +108,7 @@ public class TestHttpTransport {
         }
     }
 
-    @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "Not Found")
+    @Test(expectedExceptions = HttpException.class, expectedExceptionsMessageRegExp = "[{]message:Not Found[}]")
     public void testFailDownload(ITestContext context) throws Exception {
         java.nio.file.Path destDir = Paths.get("target", "download");
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);

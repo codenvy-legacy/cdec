@@ -32,12 +32,10 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
-import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.List;
@@ -104,7 +102,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
     }
 
-    protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException, InterruptedException {
+    protected Void doExecuteInstall() throws IOException, JsonParseException, InterruptedException {
         if (artifactName == null) {
             artifactName = CDECArtifact.NAME;
         }
@@ -186,7 +184,7 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    protected Void doExecuteListInstalledArtifacts() throws IOException, JSONException, JsonParseException {
+    protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
         String response = service.getInstalledVersions(initRequest(artifactName, version));
         console.printResponse(response);
         return null;

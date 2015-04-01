@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableSortedMap;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -361,7 +360,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
                 .when(service)
                 .getInstalledVersions(any(Request.class));
 

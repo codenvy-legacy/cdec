@@ -25,7 +25,6 @@ import com.codenvy.im.utils.AccountUtils;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -103,7 +102,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
                 .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(request));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
