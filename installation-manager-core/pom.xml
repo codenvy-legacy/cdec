@@ -63,14 +63,15 @@
             <version>${com.jcraft.version}</version>
         </dependency>
         <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.10</version>
+            <!-- TODO -->
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${commons-compress.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jvnet.hudson.plugins.mercurial</groupId>
-            <artifactId>ini4j</artifactId>
-            <version>0.2.6</version>
         </dependency>
         <dependency>
             <groupId>org.restlet.jse</groupId>

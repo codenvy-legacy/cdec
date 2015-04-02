@@ -290,6 +290,12 @@ public class TestConfigUtil extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
+    public void testFetchMasterHostNameErrorIfFileEmpty() throws Exception {
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "");
+        configUtil.fetchMasterHostName();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfPropertyAbsent() throws Exception {
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
         configUtil.fetchMasterHostName();
@@ -310,12 +316,22 @@ public class TestConfigUtil extends BaseTest {
     }
 
     @Test
-    public void testFetchMasterHostName() throws Exception {
+    public void testFetchMasterHostNameUseCase1() throws Exception {
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "certname=master.dev.com\n" +
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n" +
                                                             "[agent]\n" +
                                                             "certname=la-la.com");
+        assertEquals(configUtil.fetchMasterHostName(), "master.dev.com");
+    }
+
+    @Test
+    public void testFetchMasterHostNameUseCase2() throws Exception {
+        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[agent]\n" +
+                                                            "certname=la-la.com\n" +
+                                                            "[main]\n" +
+                                                            "certname= master.dev.com\n" +
+                                                            "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n");
         assertEquals(configUtil.fetchMasterHostName(), "master.dev.com");
     }
 }
