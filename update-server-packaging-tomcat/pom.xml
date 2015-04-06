@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.8.2-SNAPSHOT</version>
+        <version>3.8.2</version>
     </parent>
     <artifactId>update-server-packaging-tomcat</artifactId>
     <packaging>pom</packaging>
