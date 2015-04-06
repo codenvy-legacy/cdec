@@ -212,7 +212,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test
     public void getInstalledVersionShouldReturnNullIfRequestThrowException() throws Exception {
         prepareSingleNodeEnv(configUtil, transport);
-        doThrow(IOException.class).when(transport).doOption("http://hostname/api/", null);
+        doThrow(IOException.class).when(transport).doOption("http://localhost/api/", null);
 
         assertNull(spyCdecArtifact.getInstalledVersion());
     }
@@ -227,7 +227,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test
     public void getInstalledVersionShouldReturnNullIfRequestEmpty() throws Exception {
         prepareSingleNodeEnv(configUtil, transport);
-        doReturn("").when(transport).doOption("http://hostname/api/", null);
+        doReturn("").when(transport).doOption("http://localhost/api/", null);
 
         assertNull(spyCdecArtifact.getInstalledVersion());
     }
@@ -235,7 +235,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test
     public void getInstalledVersionShouldReturn310CodenvyVersion() throws Exception {
         prepareSingleNodeEnv(configUtil, transport);
-        when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"implementationVersion\":\"0.26.0\"}");
+        when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"implementationVersion\":\"0.26.0\"}");
 
         assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.1.0"));
     }

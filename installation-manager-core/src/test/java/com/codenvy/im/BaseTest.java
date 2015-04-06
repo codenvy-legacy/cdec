@@ -64,7 +64,7 @@ public class BaseTest {
 
     protected void prepareSingleNodeEnv(ConfigUtil configUtil, HttpTransport transport) throws Exception {
         prepareSingleNodeEnv(configUtil);
-        when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
+        when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
     }
 
     protected void prepareSingleNodeEnv(ConfigUtil configUtil) throws Exception {
