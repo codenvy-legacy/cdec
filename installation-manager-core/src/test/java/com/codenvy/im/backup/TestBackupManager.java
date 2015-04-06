@@ -61,11 +61,10 @@ public class TestBackupManager {
 
     private BackupManager spyManager;
 
-    private static final Path   ORIGIN_DEFAULT_BACKUP_DIRECTORY = BackupConfig.DEFAULT_BACKUP_DIRECTORY;
-    private static final Path   ORIGIN_BASE_TMP_DIRECTORY       = BackupConfig.BASE_TMP_DIRECTORY;
-    private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT  = BackupConfig.BACKUP_NAME_TIME_FORMAT;
+    private static final Path   ORIGIN_BASE_TMP_DIRECTORY      = BackupConfig.BASE_TMP_DIRECTORY;
+    private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT = BackupConfig.BACKUP_NAME_TIME_FORMAT;
 
-    private static final Path   TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backup");
+    private static final Path   TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backups");
     private static final Path   TEST_BASE_TMP_DIRECTORY       = Paths.get("target/tmp_backup");
     private static final String TEST_BACKUP_NAME_TIME_FORMAT  = "dd-MMM-yyyy";
 
@@ -78,11 +77,10 @@ public class TestBackupManager {
         FileUtils.deleteDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toFile());
         FileUtils.deleteDirectory(TEST_BASE_TMP_DIRECTORY.toFile());
 
-        BackupConfig.DEFAULT_BACKUP_DIRECTORY = TEST_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = TEST_BACKUP_NAME_TIME_FORMAT;
 
-        spyManager = spy(new BackupManager(mockConfigUtil));
+        spyManager = spy(new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString(), mockConfigUtil));
         doReturn(mockCdecArtifact).when(spyManager).getArtifact(CDECArtifact.NAME);
 
         doReturn(CDECArtifact.NAME).when(mockCdecArtifact).getName();
@@ -91,14 +89,15 @@ public class TestBackupManager {
 
     @AfterMethod
     public void tearDown() throws IOException {
-        BackupConfig.DEFAULT_BACKUP_DIRECTORY = ORIGIN_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = ORIGIN_BACKUP_NAME_TIME_FORMAT;
     }
 
     @Test
     public void testBackupCodenvy() throws IOException {
-        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
+        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY);
+
         BackupConfig expectedBackupConfig = initialBackupConfig.clone()
                                                                .setBackupFile(initialBackupConfig.generateBackupFilePath())
                                                                .setArtifactVersion(TEST_VERSION);
@@ -120,7 +119,9 @@ public class TestBackupManager {
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "error")
     public void testBackupException() throws IOException {
-        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
+        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY);
+
         BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath())
                                                                .setArtifactVersion(TEST_VERSION);
 
@@ -234,7 +235,7 @@ public class TestBackupManager {
 
     @Test
     public void testGetArtifact() throws IOException {
-        BackupManager manager = new BackupManager(mockConfigUtil);
+        BackupManager manager = new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString(), mockConfigUtil);
         Artifact result = manager.getArtifact("codenvy");
         assertEquals(result.getName(), "codenvy");
     }

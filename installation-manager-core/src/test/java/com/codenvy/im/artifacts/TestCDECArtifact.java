@@ -350,7 +350,9 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetBackupSingleServerCommand() throws Exception {
         prepareSingleNodeEnv(configUtil, transport);
 
-        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupDirectory(Paths.get("some_dir"));
+        
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
 
         assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configUtil));
@@ -360,7 +362,8 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetBackupMultiServerCommand() throws Exception {
         prepareMultiNodeEnv(configUtil, transport);
 
-        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupDirectory(Paths.get("some_dir"));
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
 
         assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configUtil));

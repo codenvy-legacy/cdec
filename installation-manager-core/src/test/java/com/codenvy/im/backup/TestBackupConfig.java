@@ -44,10 +44,9 @@ import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov  */
 public class TestBackupConfig {
-    private static final Path ORIGIN_DEFAULT_BACKUP_DIRECTORY = BackupConfig.DEFAULT_BACKUP_DIRECTORY;
     private static final Path ORIGIN_BASE_TMP_DIRECTORY       = BackupConfig.BASE_TMP_DIRECTORY;
 
-    private static final Path TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backup/codenvy");
+    private static final Path TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backups/codenvy");
     private static final Path TEST_BASE_TMP_DIRECTORY       = Paths.get("target/tmp_backup/codenvy");
 
     private static final String TEST_VERSION = "1.0.0";
@@ -57,13 +56,11 @@ public class TestBackupConfig {
         FileUtils.deleteDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toFile());
         FileUtils.deleteDirectory(TEST_BASE_TMP_DIRECTORY.toFile());
 
-        BackupConfig.DEFAULT_BACKUP_DIRECTORY = TEST_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
     }
 
     @AfterMethod
     public void tearDown() {
-        BackupConfig.DEFAULT_BACKUP_DIRECTORY = ORIGIN_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
     }
 
@@ -72,11 +69,11 @@ public class TestBackupConfig {
         BackupConfig testConfig = new BackupConfig();
         assertEquals(testConfig.toString(), "{'artifactName':'null', " +
                                             "'artifactVersion':'null', " +
-                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupDirectory':'null', " +
                                             "'backupFile':'null'}");
 
         assertNull(testConfig.getArtifactName());
-        assertEquals(testConfig.getBackupDirectory(), Paths.get("target/backup/codenvy"));
+        assertNull(testConfig.getBackupDirectory());
         assertNull(testConfig.getBackupFile());
     }
 
@@ -85,6 +82,10 @@ public class TestBackupConfig {
         BackupConfig backupConfig = new BackupConfig();
         BackupConfig anotherBackupConfig = new BackupConfig();
 
+        assertTrue(backupConfig.equals(anotherBackupConfig));
+
+        backupConfig.setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY);
+        anotherBackupConfig.setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY);
         assertTrue(backupConfig.equals(anotherBackupConfig));
 
         Path backupFile = backupConfig.generateBackupFilePath();
@@ -100,7 +101,7 @@ public class TestBackupConfig {
         BackupConfig testConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME);
         assertEquals(testConfig.toString(), "{'artifactName':'codenvy', " +
                                             "'artifactVersion':'null', " +
-                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupDirectory':'null', " +
                                             "'backupFile':'null'}");
 
         assertTrue(testConfig.hashCode() != 0);
@@ -124,7 +125,7 @@ public class TestBackupConfig {
                                                     .setBackupFile(Paths.get("testFile"));
         assertEquals(testConfig.toString(), "{'artifactName':'codenvy', " +
                                             "'artifactVersion':'null', " +
-                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupDirectory':'null', " +
                                             "'backupFile':'testFile'}");
 
         assertTrue(testConfig.hashCode() != 0);
@@ -138,7 +139,6 @@ public class TestBackupConfig {
 
     @Test
     public void testDefaultFields() {
-        assertNotNull(ORIGIN_DEFAULT_BACKUP_DIRECTORY);
         assertNotNull(ORIGIN_BASE_TMP_DIRECTORY);
         assertTrue(Files.exists(ORIGIN_BASE_TMP_DIRECTORY.getParent()));
     }
@@ -174,9 +174,9 @@ public class TestBackupConfig {
         DateFormat df = new SimpleDateFormat(BackupConfig.BACKUP_NAME_TIME_FORMAT);
         Date date = new Date(1278139510000L); // == '07/03/2010 9:45:10'
 
-        BackupConfig spyTestConfig = spy(new BackupConfig());
+        BackupConfig spyTestConfig = spy(new BackupConfig().setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY));
         doReturn(date).when(spyTestConfig).getCurrentDate();
-        assertEquals(spyTestConfig.generateBackupFilePath(), Paths.get("target/backup/codenvy/backup_" + df.format(date) + ".tar"));
+        assertEquals(spyTestConfig.generateBackupFilePath(), Paths.get("target/backups/codenvy/backup_" + df.format(date) + ".tar"));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class TestBackupConfig {
 
     @Test
     public void testExtractConfigFromBackup() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backup/backup.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/backup.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                     .setArtifactVersion("1.0.0")
                                                     .setBackupFile(Paths.get(testingBackup));
@@ -242,7 +242,7 @@ public class TestBackupConfig {
         assertEquals(testConfig.toString(), "{" +
                                             "'artifactName':'codenvy', " +
                                             "'artifactVersion':'1.0.0', " +
-                                            "'backupDirectory':'target/backup/codenvy', " +
+                                            "'backupDirectory':'null', " +
                                             "'backupFile':'null'" +
                                             "}");
     }
@@ -250,7 +250,7 @@ public class TestBackupConfig {
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_without_config.tar.test/backup.config.json'")
     public void testExtractAbsenceConfigFromBackupError() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backup/backup_without_config.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/backup_without_config.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                       .setArtifactVersion("1.0.0")
                                                       .setBackupFile(Paths.get(testingBackup));
@@ -261,7 +261,7 @@ public class TestBackupConfig {
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_empty_config.tar.test/backup.config.json'")
     public void testExtractEmptyConfigFromBackupError() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backup/backup_empty_config.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/backup_empty_config.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                       .setArtifactVersion("1.0.0")
                                                       .setBackupFile(Paths.get(testingBackup));

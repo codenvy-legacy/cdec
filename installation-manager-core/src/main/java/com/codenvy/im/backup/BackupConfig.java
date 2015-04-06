@@ -65,12 +65,11 @@ public class BackupConfig {
     }
 
     protected static String BACKUP_NAME_TIME_FORMAT  = "dd-MMM-yyyy_HH-mm-ss";
-    protected static Path   DEFAULT_BACKUP_DIRECTORY = Paths.get(System.getenv("HOME")).resolve(".codenvy").resolve("backups");
     protected static Path   BASE_TMP_DIRECTORY       = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
     private String artifactName;
     private String artifactVersion;
-    private Path backupDirectory = DEFAULT_BACKUP_DIRECTORY;
+    private Path backupDirectory;
     private Path backupFile;
 
     public String getArtifactName() {

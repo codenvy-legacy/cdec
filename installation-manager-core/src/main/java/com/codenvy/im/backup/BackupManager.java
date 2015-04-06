@@ -26,9 +26,11 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.backup.BackupConfig.removeGzipExtension;
@@ -39,9 +41,12 @@ import static java.lang.String.format;
 public class BackupManager {
 
     private ConfigUtil configUtil;
+    private String defaultBackupDir;
 
     @Inject
-    public BackupManager(ConfigUtil configUtil) throws IOException {
+    public BackupManager(@Named("installation-manager.backup_dir") String defaultBackupDir,
+                         ConfigUtil configUtil) throws IOException {
+        this.defaultBackupDir = defaultBackupDir;
         this.configUtil = configUtil;
     }
 
@@ -52,6 +57,10 @@ public class BackupManager {
      */
     public BackupConfig backup(BackupConfig initialConfig) throws IOException, IllegalStateException {
         BackupConfig backupConfig = initialConfig.clone();
+        if (backupConfig.getBackupDirectory() == null) {
+            backupConfig.setBackupDirectory(Paths.get(defaultBackupDir));
+        }
+
         Artifact artifact = getArtifact(backupConfig.getArtifactName());
         Files.createDirectories(backupConfig.getBackupDirectory());
 
