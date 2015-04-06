@@ -19,8 +19,8 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -41,16 +41,16 @@ public class TestRestoreCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
 
     private UserCredentials credentials;
 
     private BackupConfig testBackupConfig;
 
-    private Path   testBackupFile      = Paths.get("test/backup/directory/backup.tar.gz");
-    private String testArtifact        = CDECArtifact.NAME;
+    private Path   testBackupFile = Paths.get("test/backup/directory/backup.tar.gz");
+    private String testArtifact   = CDECArtifact.NAME;
 
     @BeforeMethod
     public void initMocks() throws IOException {

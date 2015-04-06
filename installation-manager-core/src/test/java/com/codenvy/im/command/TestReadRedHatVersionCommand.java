@@ -43,7 +43,7 @@ public class TestReadRedHatVersionCommand {
 
     @Test(dataProvider = "GetTestedVersions")
     public void shouldReturnHostNameNoWhiteSpacesInLine(String str, String expectedVersion) throws Exception {
-        FileUtils.write(RELEASE_FILE.toFile(), str);
+        FileUtils.writeStringToFile(RELEASE_FILE.toFile(), str);
         assertEquals(fetchRedHatVersion(), expectedVersion, "'" + str + "'");
     }
 

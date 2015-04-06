@@ -19,7 +19,7 @@ package com.codenvy.im.request;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nonnull;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
 /**
- * Aggregated request to {@link com.codenvy.im.service.InstallationManagerService} from CLI.
+ * Aggregated request to {@link com.codenvy.im.facade.InstallationManagerFacade} from CLI.
  * Artifact name and version are user's entered options.
  *
  * @author Anatoliy Bazko

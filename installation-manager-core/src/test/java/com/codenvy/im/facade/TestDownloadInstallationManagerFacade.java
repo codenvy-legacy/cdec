@@ -15,13 +15,14 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
@@ -56,10 +57,10 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestDownloadInstallationManagerServiceImpl {
+public class TestDownloadInstallationManagerFacade {
     private static final String TEST_TOKEN = "auth token";
 
-    private InstallationManagerService installationManagerService;
+    private InstallationManagerFacade installationManagerService;
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       mockTransport;
@@ -74,7 +75,7 @@ public class TestDownloadInstallationManagerServiceImpl {
     public void init() throws Exception {
         mockInstallationManager = mock(InstallationManager.class);
         mockTransport = mock(HttpTransport.class);
-        installationManagerService = new InstallationManagerServiceImpl("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
         MockitoAnnotations.initMocks(this);
 
         this.pathCDEC = Paths.get("./target/cdec.zip");

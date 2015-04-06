@@ -15,9 +15,10 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
 import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
@@ -37,10 +38,10 @@ import static org.testng.AssertJUnit.assertNull;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestGetAccountIdServiceImpl {
+public class TestGetAccountIdFacade {
     public static final String TEST_ACCOUNT_ID = "accountId";
     public static final String ACCOUNT_NAME    = "accountName";
-    private InstallationManagerService installationManagerService;
+    private InstallationManagerFacade installationManagerService;
     private final UserCredentials testCredentials = new UserCredentials("auth token", null);
     private String  accountApiEndpoint;
     private Request request;
@@ -54,7 +55,7 @@ public class TestGetAccountIdServiceImpl {
     @BeforeMethod
     public void init() {
         MockitoAnnotations.initMocks(this);
-        installationManagerService = new InstallationManagerServiceImpl("update/endpoint", "api/endpoint", mockInstallationManager, transport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, transport);
         accountApiEndpoint = combinePaths("api/endpoint", "account");
         request = new Request().setUserCredentials(testCredentials);
     }
@@ -62,10 +63,10 @@ public class TestGetAccountIdServiceImpl {
     @Test
     public void testGetAccountReference() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
-                .thenReturn("[{"
-                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
-                            + "}]");
+            .thenReturn("[{"
+                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                        + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
 
         String okResult = "{\n"
@@ -88,9 +89,9 @@ public class TestGetAccountIdServiceImpl {
     @Test
     public void testGetAccountReferenceFromSeveral() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
-                .thenReturn("[{"
-                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+            .thenReturn("[{"
+                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"another-account-id\"}"
                             + "}]");

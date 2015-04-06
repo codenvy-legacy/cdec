@@ -26,6 +26,7 @@
         <version>3.8.1-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-core</artifactId>
+    <packaging>jar</packaging>
     <name>Codenvy :: IM :: Installation Manager Core</name>
     <properties>
         <com.jcraft.version>0.1.51</com.jcraft.version>
@@ -41,6 +42,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${ch.qos.logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.commons</groupId>
+            <artifactId>codenvy-commons-inject</artifactId>
+            <version>${codenvy.commons.version}</version>
         </dependency>
         <dependency>
             <groupId>com.codenvy.platform-api</groupId>
@@ -78,14 +84,24 @@
             <version>${com.jcraft.version}</version>
         </dependency>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>${javax.ws.rs.version}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.9</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${commons-compress.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.everrest</groupId>
+            <artifactId>everrest-core</artifactId>
+            <version>${org.everrest.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jvnet.hudson.plugins.mercurial</groupId>

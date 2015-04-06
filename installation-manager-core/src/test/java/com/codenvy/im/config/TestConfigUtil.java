@@ -65,7 +65,7 @@ public class TestConfigUtil extends BaseTest {
     @Test
     public void testConfigProperties() throws Exception {
         Path conf = Paths.get("target", "conf.properties");
-        FileUtils.write(conf.toFile(), "user=1\npwd=2\n");
+        FileUtils.writeStringToFile(conf.toFile(), "user=1\npwd=2\n");
 
         Map<String, String> m = configUtil.loadConfigProperties(conf);
         assertEquals(m.size(), 2);
@@ -87,7 +87,7 @@ public class TestConfigUtil extends BaseTest {
     @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Can't load properties: error")
     public void testLoadConfigFileWhichCantBeLoad() throws IOException {
         Path confFile = Paths.get("target", "conf.properties");
-        FileUtils.write(confFile.toFile(), "user=1\npwd=2\n");
+        FileUtils.writeStringToFile(confFile.toFile(), "user=1\npwd=2\n");
 
         doThrow(new IOException("error")).when(configUtil).doLoad(any(InputStream.class));
         configUtil.loadConfigProperties(confFile);
@@ -96,7 +96,7 @@ public class TestConfigUtil extends BaseTest {
     @Test
     public void testLoadDefaultSingleServerCdecConfig() throws Exception {
         Path properties = Paths.get("target/test.properties");
-        FileUtils.write(properties.toFile(), "a=1\n" +
+        FileUtils.writeStringToFile(properties.toFile(), "a=1\n" +
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
@@ -109,7 +109,7 @@ public class TestConfigUtil extends BaseTest {
     @Test
     public void testLoadDefaultMultiServerCdecConfig() throws Exception {
         Path properties = Paths.get("target/test.properties");
-        FileUtils.write(properties.toFile(), "a=1\n" +
+        FileUtils.writeStringToFile(properties.toFile(), "a=1\n" +
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
@@ -131,7 +131,7 @@ public class TestConfigUtil extends BaseTest {
           expectedExceptionsMessageRegExp = "Can't load properties: error")
     public void testLoadDefaultCdecConfigLoadError() throws Exception {
         Path properties = Paths.get("target/test.properties");
-        FileUtils.write(properties.toFile(), "a=1\n" +
+        FileUtils.writeStringToFile(properties.toFile(), "a=1\n" +
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
@@ -187,7 +187,7 @@ public class TestConfigUtil extends BaseTest {
     @Test
     public void testLoadInstalledCodenvyProperties() throws Exception {
         Path properties = Paths.get("target/test.properties");
-        FileUtils.write(properties.toFile(), "#\n" +
+        FileUtils.writeStringToFile(properties.toFile(), "#\n" +
                                              "# Please finalize configurations by entering required values below:\n" +
                                              "#\n" +
                                              "# replace test.com placeholder with dns name of your single server installation.\n" +
@@ -291,27 +291,27 @@ public class TestConfigUtil extends BaseTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfPropertyAbsent() throws Exception {
-        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
+        FileUtils.writeStringToFile(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
         configUtil.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfValueEmpty() throws Exception {
-        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.writeStringToFile(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "   certname = ");
         configUtil.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfBadFormat() throws Exception {
-        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.writeStringToFile(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "    certname  bla.bla.com\n");
         configUtil.fetchMasterHostName();
     }
 
     @Test
     public void testFetchMasterHostName() throws Exception {
-        FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
+        FileUtils.writeStringToFile(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "certname=master.dev.com\n" +
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n" +
                                                             "[agent]\n" +

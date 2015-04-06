@@ -21,7 +21,7 @@ package com.codenvy.im.request;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.utils.Version;
 
 import org.testng.Assert;

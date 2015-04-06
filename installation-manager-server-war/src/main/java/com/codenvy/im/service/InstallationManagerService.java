@@ -18,8 +18,10 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
+import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
@@ -35,87 +37,113 @@ import java.io.IOException;
 /**
  * @author Dmytro Nochevnov
  */
-@Path("/im")
-@RolesAllowed({"system/admin", "system/manager"})
-public interface InstallationManagerService {
+@Path("/")
+//@RolesAllowed({"system/admin"})  // TODO [ndp] uncomment on real server when HAProxy is configured
+public class InstallationManagerService {
+
+    protected final InstallationManagerFacade facade;
+
+    @Inject
+    public InstallationManagerService(InstallationManagerFacade facade) {
+        this.facade = facade;
+    }
 
     /** Starts downloading */
     @POST
     @Path("download/start")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String startDownload(Request request);
+    public String startDownload(Request request) {
+        return facade.startDownload(request);
+    }
 
     /** Interrupts downloading */
     @POST
     @Path("download/stop")
     @Produces(MediaType.APPLICATION_JSON)
-    String stopDownload();
+    public String stopDownload() {
+        return facade.stopDownload();
+    }
 
     /** @return the current status of downloading process */
     @POST
     @Path("download/status")
     @Produces(MediaType.APPLICATION_JSON)
-    String getDownloadStatus();
+    public String getDownloadStatus() {
+        return facade.getDownloadStatus();
+    }
 
     /** @return update list from the server */
     @POST
     @Path("download/check")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String getUpdates(Request request);
+    public String getUpdates(Request request) {
+        return facade.getUpdates(request);
+    }
 
-    /** @retrun the list of downloaded artifacts */
+    /** @return the list of downloaded artifacts */
     @POST
     @Path("download/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String getDownloads(Request request);
+    public String getDownloads(Request request) {
+        return facade.getDownloads(request);
+    }
 
     /** @return the list of installed artifacts ant theirs versions */
     @POST
     @Path("install/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String getInstalledVersions(Request request) throws IOException;
+    public String getInstalledVersions(Request request) throws IOException {
+        return facade.getInstalledVersions(request);
+    }
 
     /** Installs artifact */
-    @POST
-    @Path("install")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    String install(InstallOptions installOptions, Request request) throws IOException;
+//    @POST
+//    @Path("install")
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+    public String install(InstallOptions installOptions, Request request) throws IOException {
+        return facade.install(installOptions, request);
+    }
 
     /** @return installation info */
-    @POST
-    @Path("install/info")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    String getInstallInfo(InstallOptions installOptions, Request request) throws IOException;
-
-    /** @return update server url */
-    String getUpdateServerEndpoint();
+//    @POST
+//    @Path("install/info")
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+    public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
+        return facade.getInstallInfo(installOptions, request);
+    }
 
     /** Adds trial subscription for user being logged in */
     @POST
     @Path("subscription/add-trial")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String addTrialSubscription(Request request) throws IOException;
+    public String addTrialSubscription(Request request) throws IOException {
+        return facade.addTrialSubscription(request);
+    }
 
     /** Check user's subscription. */
     @POST
     @Path("subscription/{id}/check")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String checkSubscription(@PathParam(value = "id") String subscription, Request request) throws IOException;
+    public String checkSubscription(@PathParam(value = "id") String subscription, Request request) throws IOException {
+        return facade.checkSubscription(subscription, request);
+    }
 
     /** @return the version of the artifact that can be installed */
     @POST
     @Path("install/{step}/version")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String getVersionToInstall(Request request, @PathParam(value = "step") int installStep) throws IOException;
+    public String getVersionToInstall(Request request, @PathParam(value = "step") int installStep) throws IOException {
+        return facade.getVersionToInstall(request, installStep);
+    }
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
@@ -123,37 +151,49 @@ public interface InstallationManagerService {
     @Path("acount/{accountName}/owner")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String getAccountReferenceWhereUserIsOwner(@Nullable @PathParam(value = "accountName") String accountName, Request request) throws IOException;
+    public String getAccountReferenceWhereUserIsOwner(@Nullable @PathParam(value = "accountName") String accountName, Request request) throws IOException {
+        return facade.getAccountReferenceWhereUserIsOwner(accountName, request);
+    }
 
     /** @return the configuration of the Installation Manager */
     @POST
     @Path("config/get")
     @Produces(MediaType.APPLICATION_JSON)
-    String getConfig();
+    public String getConfig() {
+        return facade.getConfig();
+    }
 
     /** Add node to multi-server Codenvy */
     @POST
     @Path("node/add")
     @Produces(MediaType.APPLICATION_JSON)
-    String addNode(@QueryParam(value = "dns") String dns);
+    public String addNode(@QueryParam(value = "dns") String dns) {
+        return facade.addNode(dns);
+    }
 
     /** Remove node from multi-server Codenvy */
     @POST
     @Path("node/remove")
     @Produces(MediaType.APPLICATION_JSON)
-    String removeNode(@QueryParam(value = "dns") String dns);
+    public String removeNode(@QueryParam(value = "dns") String dns) {
+        return facade.removeNode(dns);
+    }
 
     /** Perform backup according to certain backup config */
     @POST
     @Path("backup")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String backup(BackupConfig config) throws IOException;
+    public String backup(BackupConfig config) throws IOException {
+        return facade.backup(config);
+    }
 
     /** Perform restore according to certain backup config */
     @POST
     @Path("restore")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String restore(BackupConfig config) throws IOException;
+    public String restore(BackupConfig config) throws IOException {
+        return facade.restore(config);
+    }
 }

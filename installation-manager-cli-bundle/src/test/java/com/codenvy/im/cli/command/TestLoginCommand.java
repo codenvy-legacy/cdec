@@ -20,7 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
@@ -61,13 +61,13 @@ public class TestLoginCommand extends AbstractTestCommand {
     private TestedLoginCommand spyCommand;
 
     @Mock
-    private InstallationManagerService service;
+    private InstallationManagerFacade service;
     @Mock
-    private PreferencesStorage         mockPreferencesStorage;
+    private PreferencesStorage        mockPreferencesStorage;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
     @Mock
-    private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
+    private MultiRemoteCodenvy        mockMultiRemoteCodenvy;
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -100,7 +100,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         doReturn("{\"status\":\"OK\"}").when(service).addTrialSubscription(any(Request.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
-                .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
+            .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

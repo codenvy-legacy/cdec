@@ -15,10 +15,11 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.utils.Version;

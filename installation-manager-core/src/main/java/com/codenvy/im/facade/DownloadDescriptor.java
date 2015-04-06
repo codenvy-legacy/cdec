@@ -15,8 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.utils.Version;

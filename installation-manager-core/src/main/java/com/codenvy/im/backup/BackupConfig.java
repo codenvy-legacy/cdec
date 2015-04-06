@@ -228,7 +228,7 @@ public class BackupConfig {
         Files.createDirectories(tempDir);
 
         Path configFile = tempDir.resolve(BACKUP_CONFIG_FILE);
-        FileUtils.write(configFile.toFile(), configJson);
+        FileUtils.writeStringToFile(configFile.toFile(), configJson);
 
         TarUtils.packFile(configFile, backupFile);
 

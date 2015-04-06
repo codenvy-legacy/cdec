@@ -15,11 +15,12 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
@@ -44,8 +45,8 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestInstallationManagerServiceImpl {
-    private InstallationManagerServiceImpl installationManagerService;
+public class TestInstallationManagerFacade {
+    private InstallationManagerFacade installationManagerService;
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       mockTransport;
@@ -57,7 +58,7 @@ public class TestInstallationManagerServiceImpl {
         mockInstallationManager = mock(InstallationManager.class);
         mockTransport = mock(HttpTransport.class);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
-        installationManagerService = new InstallationManagerServiceImpl("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
         testCredentials = new UserCredentials("auth token");
     }
 

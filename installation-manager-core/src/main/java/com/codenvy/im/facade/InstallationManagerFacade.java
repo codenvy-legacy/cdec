@@ -15,8 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.install.InstallOptions;
@@ -35,7 +36,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 
 import javax.annotation.Nullable;
@@ -52,7 +52,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
-import static com.codenvy.im.service.DownloadDescriptor.createDescriptor;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -66,8 +65,8 @@ import static java.nio.file.Files.size;
  * @author Anatoliy Bazko
  */
 @Singleton
-public class InstallationManagerServiceImpl implements InstallationManagerService {
-    private static final Logger LOG = Logger.getLogger(InstallationManagerServiceImpl.class.getSimpleName());
+public class InstallationManagerFacade {
+    private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
 
     protected final InstallationManager manager;
     protected final HttpTransport       transport;
@@ -78,28 +77,25 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
     private DownloadDescriptor downloadDescriptor;
 
     @Inject
-    public InstallationManagerServiceImpl(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
-                                          @Named("api.endpoint") String apiEndpoint,
-                                          InstallationManager manager,
-                                          HttpTransport transport) {
+    public InstallationManagerFacade(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
+                                     @Named("api.endpoint") String apiEndpoint,
+                                     InstallationManager manager,
+                                     HttpTransport transport) {
         this.manager = manager;
         this.transport = transport;
         this.updateServerEndpoint = updateServerEndpoint;
         this.apiEndpoint = apiEndpoint;
     }
 
-    /** {@inheritDoc} */
-    @Override
     public String getUpdateServerEndpoint() {
         return updateServerEndpoint;
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** Adds trial subscription for user being logged in */
     public String addTrialSubscription(Request request) throws IOException {
         try {
             transport
-                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
+                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
@@ -110,9 +106,9 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String checkSubscription(String subscription, Request request) throws IOException {
+    /** Check user's subscription. */
+    public String checkSubscription(String subscription,
+                                    Request request) throws IOException {
         try {
             boolean subscriptionValidated = hasValidSubscription(transport,
                                                                  apiEndpoint,
@@ -140,8 +136,8 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+
+    /** Starts downloading */
     public String startDownload(final Request request) {
         try {
             manager.checkIfConnectionIsAvailable();
@@ -149,7 +145,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
             final CountDownLatch latcher = new CountDownLatch(1);
 
             Thread downloadThread = new Thread("download thread") {
-                @Override
+
                 public void run() {
                     download(request, latcher, this);
                 }
@@ -179,7 +175,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
 
             infos = new ArrayList<>(updatesToDownload.size());
 
-            downloadDescriptor = createDescriptor(updatesToDownload, manager, currentThread);
+            downloadDescriptor = DownloadDescriptor.createDescriptor(updatesToDownload, manager, currentThread);
             manager.checkEnoughDiskSpace(downloadDescriptor.getTotalSize());
 
             latcher.countDown();
@@ -226,8 +222,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         return manager.download(userCredentials, artifact, version);
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return the current status of downloading process */
     public String getDownloadStatus() {
         try {
             if (downloadDescriptor == null) {
@@ -256,7 +251,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** @return the size of downloaded artifacts */
+    // @return the size of downloaded artifacts
     private long getDownloadedSize(DownloadDescriptor descriptor) throws IOException {
         long downloadedSize = 0;
         for (Path path : descriptor.getArtifactPaths()) {
@@ -267,9 +262,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         return downloadedSize;
     }
 
-
-    /** {@inheritDoc} */
-    @Override
+    /** Interrupts downloading */
     public String stopDownload() {
         try {
             if (downloadDescriptor == null) {
@@ -284,8 +277,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @retrun the list of downloaded artifacts */
     public String getDownloads(Request request) {
         try {
             try {
@@ -338,8 +330,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         return info;
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return update list from the server */
     public String getUpdates(Request request) {
         try {
             Map<Artifact, Version> updates = manager.getUpdates(request.getAccessToken());
@@ -362,15 +353,13 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return the list of installed artifacts ant theirs versions */
     public String getInstalledVersions(Request request) throws IOException {
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(request.getAccessToken());
         return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts).toJson();
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return installation info */
     public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
         Version version = doGetVersionToInstall(request, installOptions.getStep());
         try {
@@ -382,8 +371,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** Installs artifact */
     public String install(InstallOptions installOptions, Request request) throws IOException {
         try {
             Version version = doGetVersionToInstall(request, installOptions.getStep());
@@ -403,8 +391,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return the version of the artifact that can be installed */
     public String getVersionToInstall(Request request, int installStep) throws IOException {
         return doGetVersionToInstall(request, installStep).toString();
     }
@@ -431,11 +418,9 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
-    public String getAccountReferenceWhereUserIsOwner(@Nullable String accountName,
-                                                      Request request) throws IOException {
+    public String getAccountReferenceWhereUserIsOwner(@Nullable String accountName, Request request) throws IOException {
 
         AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport,
                                                                                              apiEndpoint,
@@ -444,14 +429,12 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         return accountReference == null ? null : toJson(accountReference);
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** @return the configuration of the Installation Manager */
     public String getConfig() {
         return new Response().setStatus(ResponseCode.OK).setConfig(manager.getConfig()).toJson();
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** Add node to multi-server Codenvy */
     public String addNode(String dns) {
         try {
             NodeConfig node = manager.addNode(dns);
@@ -464,8 +447,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** Remove node from multi-server Codenvy */
     public String removeNode(String dns) {
         try {
             NodeConfig node = manager.removeNode(dns);
@@ -478,8 +460,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** Perform backup according to certain backup config */
     public String backup(BackupConfig config) throws IOException {
         try {
             BackupConfig updatedConfig = manager.backup(config);
@@ -494,8 +475,7 @@ public class InstallationManagerServiceImpl implements InstallationManagerServic
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /** Perform restore according to certain backup config */
     public String restore(BackupConfig config) throws IOException {
         try {
             manager.restore(config);

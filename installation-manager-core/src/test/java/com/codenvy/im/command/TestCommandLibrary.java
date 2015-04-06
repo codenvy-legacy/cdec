@@ -145,7 +145,7 @@ public class TestCommandLibrary {
 
         Path patchDir = Paths.get("target/patches");
         createDirectories(patchDir);
-        FileUtils.write(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_before_update.sh").toFile(), "echo -n \"$test_property1\"");
+        FileUtils.writeStringToFile(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_before_update.sh").toFile(), "echo -n \"$test_property1\"");
 
         Command command = CommandLibrary.createPatchCommand(patchDir, CommandLibrary.PatchType.BEFORE_UPDATE, installOptions);
         assertEquals(command.toString(), "[" +

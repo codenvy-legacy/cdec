@@ -15,9 +15,11 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
 import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.InstallationManager;
+import com.codenvy.im.InstallationManagerImpl;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.utils.HttpTransport;
 
@@ -43,8 +45,8 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestCheckSubscriptionInstallationManagerServiceImpl {
-    private InstallationManagerService installationManagerService;
+public class TestCheckSubscriptionFacade {
+    private InstallationManagerFacade installationManagerService;
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       transport;
@@ -53,7 +55,7 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
     @BeforeMethod
     public void init() {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl("update/endpoint", "api/endpoint", mockInstallationManager, transport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, transport);
         request = new Request().setUserCredentials(new UserCredentials("auth token", "accountId"));
     }
 
@@ -74,11 +76,11 @@ public class TestCheckSubscriptionInstallationManagerServiceImpl {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("account"), eq("auth token")))
-                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+            .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
+            .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
         when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+            .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
 
         String response = installationManagerService.checkSubscription("OnPremises", request);
         assertEquals(response, "{\n" +

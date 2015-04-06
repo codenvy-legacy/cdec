@@ -24,8 +24,8 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -62,10 +62,10 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
-    private InstallationManagerService service;
-    private ConfigUtil      mockConfigUtil;
-    private CommandSession  commandSession;
-    private UserCredentials userCredentials;
+    private InstallationManagerFacade service;
+    private ConfigUtil                mockConfigUtil;
+    private CommandSession            commandSession;
+    private UserCredentials           userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
                                        + "    \"artifact\" : \"codenvy\",\n"
@@ -86,14 +86,14 @@ public class TestInstallCommand extends AbstractTestCommand {
         mockConfigUtil = mock(ConfigUtil.class);
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigUtil).loadCodenvyDefaultProperties("1.0.1",
                                                                                                                      InstallType
-                                                                                                                             .SINGLE_SERVER);
+                                                                                                                         .SINGLE_SERVER);
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigUtil)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
-        service = mock(InstallationManagerService.class);
+        service = mock(InstallationManagerFacade.class);
         doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-                .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+            .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand(mockConfigUtil));

@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactProperties;
@@ -24,6 +24,8 @@ import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.backup.BackupManager;
 import com.codenvy.im.config.ConfigUtil;
+import com.codenvy.im.InstallationManagerImpl;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.install.Installer;
@@ -72,7 +74,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Anatoliy Bazko
  */
-public class TestInstallationManagerImpl {
+public class TestInstallationManager {
 
     public static final String UPDATE_ENDPOINT = "http://update.com/endpoint";
     public static final String DOWNLOAD_DIR    = "target/download";
@@ -101,13 +103,13 @@ public class TestInstallationManagerImpl {
         cdecArtifact = spy(new CDECArtifact(transport, configUtil));
 
         manager = spy(new InstallationManagerImpl(
-                UPDATE_ENDPOINT,
-                DOWNLOAD_DIR,
-                transport,
-                installer,
-                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
-                mockNodeManager,
-                mockBackupManager));
+            UPDATE_ENDPOINT,
+            DOWNLOAD_DIR,
+            transport,
+            installer,
+            new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
+            mockNodeManager,
+            mockBackupManager));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -128,7 +130,7 @@ public class TestInstallationManagerImpl {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
+          expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         final Version version2101 = Version.valueOf("2.10.1");
 

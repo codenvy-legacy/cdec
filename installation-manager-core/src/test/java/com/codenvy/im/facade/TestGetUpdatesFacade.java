@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.service;
+package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
@@ -23,6 +23,8 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.InstallationManager;
+import com.codenvy.im.InstallationManagerImpl;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -44,8 +46,8 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestGetUpdatesInstallationManagerServiceImpl {
-    private InstallationManagerService installationManagerService;
+public class TestGetUpdatesFacade {
+    private InstallationManagerFacade installationManagerService;
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       transport;
@@ -56,7 +58,7 @@ public class TestGetUpdatesInstallationManagerServiceImpl {
     @BeforeMethod
     public void init() throws ArtifactNotFoundException {
         initMocks();
-        installationManagerService = new InstallationManagerServiceImpl("update/endpoint", "api/endpoint", mockInstallationManager, transport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, transport);
         request = new Request().setUserCredentials(new UserCredentials("auth token", "accountId"));
     }
 

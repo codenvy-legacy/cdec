@@ -39,6 +39,7 @@
         <module>installation-manager-cli-assembly</module>
         <module>installation-manager-cli-bundle</module>
         <module>installation-manager-cli-features</module>
+        <module>installation-manager-server-war</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>
