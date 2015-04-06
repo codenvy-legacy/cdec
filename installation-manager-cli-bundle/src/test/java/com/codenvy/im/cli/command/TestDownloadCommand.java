@@ -82,7 +82,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new DownloadCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
 
         performBaseMocks(spyCommand, true);
 

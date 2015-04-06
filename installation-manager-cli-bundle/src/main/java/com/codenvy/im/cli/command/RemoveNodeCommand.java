@@ -34,7 +34,7 @@ public class RemoveNodeCommand extends AbstractIMCommand {
         if (dns != null && !dns.isEmpty()) {
             try {
                 console.showProgressor();
-                console.printResponse(service.removeNode(dns));
+                console.printResponse(facade.removeNode(dns));
             } finally {
                 console.hideProgressor();
             }

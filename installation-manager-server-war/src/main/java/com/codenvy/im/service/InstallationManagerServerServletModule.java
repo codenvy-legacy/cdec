@@ -24,7 +24,7 @@ import com.google.inject.servlet.ServletModule;
 import org.eclipse.che.inject.DynaModule;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
 
-/** @author Anatoliy Bazko */
+/** @author Dmytro Nochevnov */
 @DynaModule
 public class InstallationManagerServerServletModule extends ServletModule {
 

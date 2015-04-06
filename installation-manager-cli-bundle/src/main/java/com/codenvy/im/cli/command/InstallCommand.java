@@ -108,7 +108,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         if (version == null) {
-            version = service.getVersionToInstall(initRequest(artifactName, null), getFirstInstallStep());
+            version = facade.getVersionToInstall(initRequest(artifactName, null), getFirstInstallStep());
         }
 
         if (multi) {
@@ -127,7 +127,7 @@ public class InstallCommand extends AbstractIMCommand {
             confirmOrReenterOptions(installOptions);
         }
 
-        String response = service.getInstallInfo(installOptions, request);
+        String response = facade.getInstallInfo(request.setInstallOptions(installOptions));
         Response responseObj = Response.fromJson(response);
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
@@ -155,7 +155,7 @@ public class InstallCommand extends AbstractIMCommand {
             try {
                 installOptions.setStep(step);
 
-                response = service.install(installOptions, request);
+                response = facade.install(request.setInstallOptions(installOptions));
                 responseObj = Response.fromJson(response);
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
@@ -185,7 +185,7 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        String response = service.getInstalledVersions(initRequest(artifactName, version));
+        String response = facade.getInstalledVersions(initRequest(artifactName, version));
         console.printResponse(response);
         return null;
     }

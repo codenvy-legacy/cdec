@@ -85,7 +85,7 @@ public class TestAbstractIMCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new TestedAbstractIMCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
         doReturn(true).when(spyCommand).isInteractive();
         doNothing().when(spyCommand).initConsole();
 

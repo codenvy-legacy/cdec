@@ -44,7 +44,7 @@ public class BackupCommand extends AbstractIMCommand {
 
         try {
             console.showProgressor();
-            console.printResponse(service.backup(config));
+            console.printResponse(facade.backup(config));
         } finally {
             console.hideProgressor();
         }

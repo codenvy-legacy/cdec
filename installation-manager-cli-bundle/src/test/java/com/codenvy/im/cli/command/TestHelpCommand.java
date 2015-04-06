@@ -48,7 +48,7 @@ public class TestHelpCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new HelpCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
         doReturn(multiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
         doReturn("").when(multiRemoteCodenvy).listRemotes();
 

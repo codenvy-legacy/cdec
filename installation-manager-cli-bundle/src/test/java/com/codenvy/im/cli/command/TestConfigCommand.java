@@ -45,7 +45,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new ConfigCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
 
         performBaseMocks(spyCommand, true);
     }

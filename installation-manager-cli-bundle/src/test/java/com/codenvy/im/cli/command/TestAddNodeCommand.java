@@ -48,7 +48,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new AddNodeCommand());
-        spyCommand.service = mockInstallationManagerProxy;
+        spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
 

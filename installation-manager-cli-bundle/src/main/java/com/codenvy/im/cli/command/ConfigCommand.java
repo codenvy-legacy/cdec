@@ -26,6 +26,6 @@ public class ConfigCommand extends AbstractIMCommand {
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        console.printResponse(service.getConfig());
+        console.printResponse(facade.getConfig());
     }
 }

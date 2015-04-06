@@ -20,6 +20,7 @@ package com.codenvy.im.request;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nonnull;
@@ -37,6 +38,7 @@ public class Request {
     private UserCredentials userCredentials;
     private String          artifactName;
     private String          version;
+    private InstallOptions  installOptions;
 
     public Request() {
     }
@@ -90,6 +92,19 @@ public class Request {
         return this;
     }
 
+    /**
+     * @return {@link com.codenvy.im.install.InstallOptions} or null
+     */
+    @Nullable
+    public InstallOptions getInstallOptions() {
+        return installOptions;
+    }
+
+    public Request setInstallOptions(InstallOptions installOptions) {
+        this.installOptions = installOptions;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -100,6 +115,7 @@ public class Request {
         if (artifactName != null ? !artifactName.equals(request.artifactName) : request.artifactName != null) return false;
         if (!userCredentials.equals(request.userCredentials)) return false;
         if (version != null ? !version.equals(request.version) : request.version != null) return false;
+        if (installOptions != null ? !installOptions.equals(request.installOptions) : request.installOptions != null) return false;
 
         return true;
     }
@@ -109,6 +125,7 @@ public class Request {
         int result = userCredentials.hashCode();
         result = 31 * result + (artifactName != null ? artifactName.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (installOptions != null ? installOptions.hashCode() : 0);
         return result;
     }
 }

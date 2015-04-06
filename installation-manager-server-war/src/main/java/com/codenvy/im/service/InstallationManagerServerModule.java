@@ -26,9 +26,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import org.eclipse.che.inject.DynaModule;
 
-/**
- * @author Anatoliy Bazko
- */
+/** @author Dmytro Nochevnov */
 @DynaModule
 public class InstallationManagerServerModule extends AbstractModule {
 

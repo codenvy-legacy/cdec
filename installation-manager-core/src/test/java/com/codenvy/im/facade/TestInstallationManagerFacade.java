@@ -64,15 +64,17 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testInstall() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
         InstallOptions installOptions = new InstallOptions();
+        Request request = new Request().setUserCredentials(testCredentials)
+                                       .setArtifactName(cdecArtifact.getName())
+                                       .setInstallOptions(installOptions);
         Version version = Version.valueOf("2.10.5");
 
         doReturn(version).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doNothing().when(mockInstallationManager).install(testCredentials.getToken(), cdecArtifact, version, installOptions);
 
 
-        String response = installationManagerService.install(installOptions, request);
+        String response = installationManagerService.install(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"codenvy\",\n" +
@@ -85,14 +87,17 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testInstallError() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName()).setVersion("1.0.1");
         InstallOptions installOptions = new InstallOptions();
+        Request request = new Request().setUserCredentials(testCredentials)
+                                       .setArtifactName(cdecArtifact.getName())
+                                       .setVersion("1.0.1")
+                                       .setInstallOptions(installOptions);
 
         doThrow(new IOException("I/O error")).when(mockInstallationManager)
                                              .install(testCredentials.getToken(), cdecArtifact, Version.valueOf("1.0.1"), installOptions);
 
 
-        String response = installationManagerService.install(installOptions, request);
+        String response = installationManagerService.install(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"codenvy\",\n" +

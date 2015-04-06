@@ -78,7 +78,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
 
         spyCommand = spy(new TestedLoginCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
         performBaseMocks(spyCommand, true);

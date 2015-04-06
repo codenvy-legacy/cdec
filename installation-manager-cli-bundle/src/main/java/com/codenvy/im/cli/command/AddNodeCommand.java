@@ -34,7 +34,7 @@ public class AddNodeCommand extends AbstractIMCommand {
         if (dns != null && !dns.isEmpty()) {
             try {
                 console.showProgressor();
-                console.printResponse(service.addNode(dns));
+                console.printResponse(facade.addNode(dns));
             } finally {
                 console.hideProgressor();
             }

@@ -42,7 +42,7 @@ public class RestoreCommand extends AbstractIMCommand {
 
         try {
             console.showProgressor();
-            console.printResponse(service.restore(config));
+            console.printResponse(facade.restore(config));
         } finally {
             console.hideProgressor();
         }

@@ -24,7 +24,6 @@ import com.codenvy.im.request.Request;
 import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -101,21 +100,21 @@ public class InstallationManagerService {
     }
 
     /** Installs artifact */
-//    @POST
-//    @Path("install")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-    public String install(InstallOptions installOptions, Request request) throws IOException {
-        return facade.install(installOptions, request);
+    @POST
+    @Path("install")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String install(Request request) throws IOException {
+        return facade.install(request);
     }
 
     /** @return installation info */
-//    @POST
-//    @Path("install/info")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-    public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
-        return facade.getInstallInfo(installOptions, request);
+    @POST
+    @Path("install/info")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getInstallInfo(Request request) throws IOException {
+        return facade.getInstallInfo(request);
     }
 
     /** Adds trial subscription for user being logged in */

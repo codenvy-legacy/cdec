@@ -34,6 +34,6 @@ public class SubscriptionCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         String subscription2check = subscription != null ? subscription : AccountUtils.ON_PREMISES;
-        console.printResponse(service.checkSubscription(subscription2check, initRequest()));
+        console.printResponse(facade.checkSubscription(subscription2check, initRequest()));
     }
 }

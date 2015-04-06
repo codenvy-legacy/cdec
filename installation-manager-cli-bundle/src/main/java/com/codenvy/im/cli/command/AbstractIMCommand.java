@@ -46,14 +46,14 @@ import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    protected InstallationManagerFacade service;
+    protected InstallationManagerFacade facade;
     protected PreferencesStorage        preferencesStorage;
     protected Console                   console;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
 
     public AbstractIMCommand() {
-        service = INJECTOR.getInstance(InstallationManagerFacade.class);
+        facade = INJECTOR.getInstance(InstallationManagerFacade.class);
     }
 
     @Override
@@ -151,13 +151,13 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected String getUpdateServerEndpoint() {
-        return service.getUpdateServerEndpoint();
+        return facade.getUpdateServerEndpoint();
     }
 
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
         Request request = new Request().setUserCredentials(getCredentials());
-        String json = service.getAccountReferenceWhereUserIsOwner(accountName, request);
+        String json = facade.getAccountReferenceWhereUserIsOwner(accountName, request);
         return json == null ? null : createDtoFromJson(json, AccountReference.class);
     }
 

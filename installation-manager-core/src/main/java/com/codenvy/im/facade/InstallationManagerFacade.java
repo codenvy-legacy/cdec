@@ -360,9 +360,11 @@ public class InstallationManagerFacade {
     }
 
     /** @return installation info */
-    public String getInstallInfo(InstallOptions installOptions, Request request) throws IOException {
-        Version version = doGetVersionToInstall(request, installOptions.getStep());
+    public String getInstallInfo(Request request) throws IOException {
         try {
+            InstallOptions installOptions = request.getInstallOptions();
+            Version version = doGetVersionToInstall(request, installOptions.getStep());
+
             List<String> infos = manager.getInstallInfo(request.getArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
@@ -372,8 +374,9 @@ public class InstallationManagerFacade {
     }
 
     /** Installs artifact */
-    public String install(InstallOptions installOptions, Request request) throws IOException {
+    public String install(Request request) throws IOException {
         try {
+            InstallOptions installOptions = request.getInstallOptions();
             Version version = doGetVersionToInstall(request, installOptions.getStep());
 
             try {
