@@ -23,6 +23,10 @@ package com.codenvy.im.exceptions;
 public class UnknownInstallationTypeException extends RuntimeException {
     public static final String ERROR_MESSAGE = "Unknown Codenvy installation type";
 
+    public UnknownInstallationTypeException() {
+        super(ERROR_MESSAGE);
+    }
+
     public UnknownInstallationTypeException(Throwable cause) {
         super(ERROR_MESSAGE, cause);
     }

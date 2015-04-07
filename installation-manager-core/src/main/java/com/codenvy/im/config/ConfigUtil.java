@@ -25,8 +25,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.ini4j.IniFile;
-import org.ini4j.InvalidIniFormatException;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalINIConfiguration;
+import org.apache.commons.configuration.SubnodeConfiguration;
 
 import javax.annotation.Nonnull;
 import javax.inject.Named;
@@ -41,7 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.prefs.BackingStoreException;
+import java.util.Set;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
@@ -287,19 +288,32 @@ public class ConfigUtil {
     @Nonnull
     public InstallType detectInstallationType() throws UnknownInstallationTypeException {
         try {
-            IniFile iniFile = new IniFile(puppetConfFile.toFile());
-            return isSingleTypeConfig(iniFile) ? InstallType.SINGLE_SERVER
-                                               : InstallType.MULTI_SERVER;
-        } catch (BackingStoreException e) {
+            HierarchicalINIConfiguration iniFile = new HierarchicalINIConfiguration();
+            iniFile.load(puppetConfFile.toFile());
+
+            if (isSingleTypeConfig(iniFile)) {
+                return InstallType.SINGLE_SERVER;
+            } else if (isMultiTypeConfig(iniFile)) {
+                return InstallType.MULTI_SERVER;
+            }
+            throw new UnknownInstallationTypeException();
+        } catch (ConfigurationException e) {
             throw new UnknownInstallationTypeException(e);
         }
     }
 
-    private boolean isSingleTypeConfig(IniFile iniFile) throws BackingStoreException {
-        return iniFile.nodeExists("agent")
-               && !iniFile.node("agent").get("certname", "").isEmpty()
-               && iniFile.nodeExists("master")
-               && !iniFile.node("master").get("certname", "").isEmpty();
+    private boolean isSingleTypeConfig(HierarchicalINIConfiguration iniFile) {
+        Set<String> sections = iniFile.getSections();
+        return sections.contains("agent")
+               && !iniFile.getSection("agent").getString("certname", "").isEmpty()
+               && sections.contains("master")
+               && !iniFile.getSection("master").getString("certname", "").isEmpty();
+    }
+
+    private boolean isMultiTypeConfig(HierarchicalINIConfiguration iniFile) {
+        Set<String> sections = iniFile.getSections();
+        return sections.contains("main")
+               && !iniFile.getSection("main").getString("certname", "").isEmpty();
     }
 
     /**
@@ -315,20 +329,21 @@ public class ConfigUtil {
      *
      * @throws java.io.IOException
      *         if any I/O errors occur
+     * @throws java.lang.IllegalStateException
+     *         if host name is not set
      */
     @Nonnull
     public String fetchMasterHostName() throws IOException {
         try {
-            IniFile iniFile = new IniFile(puppetConfFile.toFile());
-            String hostName = iniFile.node("main").get("certname", "");
-            if (hostName.isEmpty()) {
+            HierarchicalINIConfiguration iniFile = new HierarchicalINIConfiguration();
+            iniFile.load(puppetConfFile.toFile());
+
+            SubnodeConfiguration section = iniFile.getSection("main");
+            if (section.getString("certname", "").isEmpty()) {
                 throw new IllegalStateException("There is no puppet master host name in the configuration");
             }
-            return hostName;
-        } catch (BackingStoreException e) {
-            if (e.getCause() instanceof InvalidIniFormatException) {
-                throw new IllegalStateException("Bad 'certname' property format");
-            }
+            return section.getString("certname");
+        } catch (ConfigurationException e) {
             throw new IOException(e);
         }
     }

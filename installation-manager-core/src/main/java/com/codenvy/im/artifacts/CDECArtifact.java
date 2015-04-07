@@ -72,8 +72,13 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public Version getInstalledVersion() throws IOException {
         try {
-            Config config = configUtil.loadInstalledCodenvyConfig();
-            return getInstalledVersion(config.getHostUrl());
+            if (configUtil.detectInstallationType() == InstallType.SINGLE_SERVER) {
+                // in single-node installation it's not required to modify '/etc/hosts' on the server where Codenvy is being installed
+                return getInstalledVersion("localhost");
+            } else {
+                Config config = configUtil.loadInstalledCodenvyConfig();
+                return getInstalledVersion(config.getHostUrl());
+            }
         } catch (UnknownInstallationTypeException | IOException e) {
             return null;
         }

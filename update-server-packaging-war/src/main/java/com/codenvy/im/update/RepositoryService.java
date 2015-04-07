@@ -23,7 +23,6 @@ import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
-import com.mongodb.MongoException;
 
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
@@ -72,7 +71,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
@@ -190,19 +188,6 @@ public class RepositoryService {
             }
         }
         return m;
-    }
-
-    private boolean isArtifactName(String entity) {
-        if (entity.equalsIgnoreCase("install-codenvy")) {
-            return true;
-        }
-
-        try {
-            createArtifact(entity);
-            return true;
-        } catch (ArtifactNotFoundException e) {
-            return false;
-        }
     }
 
     /**

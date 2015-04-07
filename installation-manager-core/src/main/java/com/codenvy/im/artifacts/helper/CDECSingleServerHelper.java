@@ -238,6 +238,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return createCommand("sudo rm -rf /etc/puppet/files; " +
                                      "sudo rm -rf /etc/puppet/modules; " +
                                      "sudo rm -rf /etc/puppet/manifests; " +
+                                     "sudo rm -rf /etc/puppet/patches; " +
                                      "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
