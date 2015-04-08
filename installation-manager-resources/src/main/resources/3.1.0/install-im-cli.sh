@@ -4,6 +4,13 @@
 set -e
 
 DIR="${HOME}/codenvy-im"
+ARTIFACT="installation-manager-cli"
+
+if [ -z $1 ]; then
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+else
+    VERSION=$1
+fi
 
 checkOS() {
     if [ -f /etc/redhat-release ]; then
@@ -36,7 +43,7 @@ installJava() {
 installIm() {
     printPrompt; echo "Downloading Installation Manager"
 
-    IM_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
+    IM_URL="https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION}"
     IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
 
     curl -s -o ${IM_FILE} -L ${IM_URL}
@@ -92,7 +99,7 @@ doInstallStep2() {
     installPackageIfNeed wget
     installPackageIfNeed unzip
     installJava
-    printPrompt; echo "COMPLETED STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
+    printPrompt; echo "COMPLETED STEP 2: INмфпSTALL JAVA AND OTHER REQUIRED PACKAGES"
 }
 
 doInstallStep3() {

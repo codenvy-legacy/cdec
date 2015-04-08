@@ -318,15 +318,15 @@ printPreInstallInfo_multi() {
         printPrompt; echo "Codenvy user name    : "${CODENVY_USER}
         printPrompt; echo "Codenvy password     : ******"
         printPrompt; echo
-        printPrompt; echo "Codenvy DNS hostname : "${HOST_NAME}
+        printPrompt; echo "Codenvy DNS hostname                    : "${HOST_NAME}
         printPrompt; echo "Codenvy Puppet Master node DNS hostname : "${PUPPET_MASTER_HOST_NAME}
-        printPrompt; echo "Codenvy Data node DNS hostname : "${DATA_HOST_NAME}
-        printPrompt; echo "Codenvy API node DNS hostname : "${API_HOST_NAME}
-        printPrompt; echo "Codenvy Builder node DNS hostname : "${BUILDER_HOST_NAME}
-        printPrompt; echo "Codenvy Runner node DNS hostname : "${RUNNER_HOST_NAME}
-        printPrompt; echo "Codenvy Datasource node DNS hostname : "${DATASOURCE_HOST_NAME}
-        printPrompt; echo "Codenvy Analytics node DNS hostname : "${ANALYTICS_HOST_NAME}
-        printPrompt; echo "Codenvy Site node DNS hostname : "${SITE_HOST_NAME}
+        printPrompt; echo "Codenvy Data node DNS hostname          : "${DATA_HOST_NAME}
+        printPrompt; echo "Codenvy API node DNS hostname           : "${API_HOST_NAME}
+        printPrompt; echo "Codenvy Builder node DNS hostname       : "${BUILDER_HOST_NAME}
+        printPrompt; echo "Codenvy Runner node DNS hostname        : "${RUNNER_HOST_NAME}
+        printPrompt; echo "Codenvy Datasource node DNS hostname    : "${DATASOURCE_HOST_NAME}
+        printPrompt; echo "Codenvy Analytics node DNS hostname     : "${ANALYTICS_HOST_NAME}
+        printPrompt; echo "Codenvy Site node DNS hostname          : "${SITE_HOST_NAME}
         printPrompt; echo
         printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
         printPrompt; echo
