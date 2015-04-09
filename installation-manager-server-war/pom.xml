@@ -55,6 +55,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.codenvy.im</groupId>
+            <artifactId>installation-manager-server-api-docs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
             <version>${javax.ws.rs.version}</version>
@@ -106,7 +111,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -134,5 +138,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

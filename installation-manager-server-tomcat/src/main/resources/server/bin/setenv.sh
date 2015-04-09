@@ -31,8 +31,8 @@ JMX_OPTS="-Dcom.sun.management.jmxremote.authenticate=true \
           -Dcom.sun.management.jmxremote.access.file=${CATALINA_HOME}/conf/jmxremote.access \
           -Dcom.sun.management.jmxremote.ssl=false"
 
-REMOTE_DEBUG="-Xdebug -Xrunjdwp:transport=dt_socket,address=8001,server=y,suspend=n"
-#REMOTE_DEBUG=
+#REMOTE_DEBUG="-Xdebug -Xrunjdwp:transport=dt_socket,address=8001,server=y,suspend=n"
+REMOTE_DEBUG=
 
 export CATALINA_HOME
 export CATALINA_TMPDIR

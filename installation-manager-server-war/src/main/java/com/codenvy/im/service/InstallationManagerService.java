@@ -21,7 +21,10 @@ import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.Response;
 import com.google.inject.Inject;
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
@@ -39,6 +42,8 @@ import java.io.IOException;
  */
 @Path("/")
 @RolesAllowed({"system/admin"})
+@Api(value = "/im",
+     description = "Installation manager")
 public class InstallationManagerService {
 
     protected final InstallationManagerFacade facade;
@@ -68,6 +73,9 @@ public class InstallationManagerService {
     /** @return the current status of downloading process */
     @POST
     @Path("download/status")
+    @ApiOperation(value = "Get download status.",
+                  notes = "Get download status.",
+                  response = Response.class)
     @Produces(MediaType.APPLICATION_JSON)
     public String getDownloadStatus() {
         return facade.getDownloadStatus();
@@ -114,6 +122,9 @@ public class InstallationManagerService {
     @Path("install/info")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get list of steps.",
+                  notes = "Get list of steps.",
+                  response = Response.class)
     public String getInstallInfo(Request request) throws IOException {
         return facade.getInstallInfo(request);
     }
