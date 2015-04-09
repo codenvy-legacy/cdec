@@ -176,7 +176,7 @@
                                             <fileset dir="${project.build.directory}/packager-conf/jar" />
                                         </copy>
                                         <move file="${project.build.directory}/installation-manager-server-tomcat/endorsed/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" tofile="${project.build.directory}/installation-manager-server-tomcat/lib/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" />
-                                        <move file="${project.build.directory}/packager-conf/war/installation-manager-server-war.war" tofile="${project.build.directory}/installation-manager-server-tomcat/webapps/installation-manager.war" />
+                                        <move file="${project.build.directory}/packager-conf/war/installation-manager-server-war.war" tofile="${project.build.directory}/installation-manager-server-tomcat/webapps/im.war" />
                                         <chmod file="${project.build.directory}/installation-manager-server-tomcat/bin/*.sh" perm="+x" />
                                     </target>
                                 </configuration>

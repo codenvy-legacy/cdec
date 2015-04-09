@@ -24,6 +24,7 @@ import com.codenvy.im.request.Request;
 import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -37,7 +38,7 @@ import java.io.IOException;
  * @author Dmytro Nochevnov
  */
 @Path("/")
-//@RolesAllowed({"system/admin"})  // TODO [ndp] uncomment on real server when HAProxy is configured
+@RolesAllowed({"system/admin"})
 public class InstallationManagerService {
 
     protected final InstallationManagerFacade facade;

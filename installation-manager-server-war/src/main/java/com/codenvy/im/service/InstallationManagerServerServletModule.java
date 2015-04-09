@@ -41,7 +41,7 @@ public class InstallationManagerServerServletModule extends ServletModule {
         bind(com.codenvy.auth.sso.client.filter.RequestFilter.class).to(com.codenvy.auth.sso.client.filter.RegexpRequestFilter.class);
         bind(com.codenvy.auth.sso.client.TokenHandler.class).to(com.codenvy.auth.sso.client.RecoverableTokenHandler.class);
 
-//        filterRegex("/(?!_sso/).*$").through(LoginFilter.class);  // TODO [ndp] uncomment on real server when HAProxy is configured
+        filterRegex("/(?!_sso/).*$").through(LoginFilter.class);
         serve("/*").with(GuiceEverrestServlet.class);
         install(new SsoClientServletModule());
     }

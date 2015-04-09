@@ -78,7 +78,7 @@ public class InstallationManagerFacade {
 
     @Inject
     public InstallationManagerFacade(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
-                                     @Named("api.endpoint") String apiEndpoint,
+                                     @Named("saas.api.endpoint") String apiEndpoint,
                                      InstallationManager manager,
                                      HttpTransport transport) {
         this.manager = manager;
