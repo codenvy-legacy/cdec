@@ -117,7 +117,7 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.doGetVersionToInstall(request, 0);
+        Version version = installationManagerService.doGetVersionToInstall(request);
         assertEquals(Version.valueOf("1.0.1"), version);
     }
 
@@ -129,19 +129,24 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.doGetVersionToInstall(request, 0);
+        Version version = installationManagerService.doGetVersionToInstall(request);
         assertEquals(Version.valueOf("1.0.2"), version);
     }
 
     @Test
     public void testGetVersionToInstallInstallInProgress() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+        InstallOptions installOptionsWithStep1 = new InstallOptions();
+        installOptionsWithStep1.setStep(1);
+
+        Request request = new Request().setUserCredentials(testCredentials)
+                                       .setArtifactName(cdecArtifact.getName())
+                                       .setInstallOptions(installOptionsWithStep1);
 
         doReturn(Version.valueOf("1.0.4")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.doGetVersionToInstall(request, 1);
+        Version version = installationManagerService.doGetVersionToInstall(request);
         assertEquals(Version.valueOf("1.0.3"), version);
     }
 
@@ -153,17 +158,22 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        installationManagerService.doGetVersionToInstall(request, 0);
+        installationManagerService.doGetVersionToInstall(request);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testGetVersionToInstallErrorInstallInProgress() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+        InstallOptions installOptionsWithStep1 = new InstallOptions();
+        installOptionsWithStep1.setStep(1);
+
+        Request request = new Request().setUserCredentials(testCredentials)
+                                       .setArtifactName(cdecArtifact.getName())
+                                       .setInstallOptions(installOptionsWithStep1);
 
         doReturn(Version.valueOf("1.0.4")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of()).when(mockInstallationManager).getDownloadedVersions(cdecArtifact);
 
-        installationManagerService.doGetVersionToInstall(request, 1);
+        installationManagerService.doGetVersionToInstall(request);
     }
 
     @Test

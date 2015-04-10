@@ -107,8 +107,10 @@ public class InstallCommand extends AbstractIMCommand {
             artifactName = CDECArtifact.NAME;
         }
 
+        final InstallOptions installOptions = new InstallOptions();
         if (version == null) {
-            version = facade.getVersionToInstall(initRequest(artifactName, null), getFirstInstallStep());
+            installOptions.setStep(getFirstInstallStep());
+            version = facade.getVersionToInstall(initRequest(artifactName, null).setInstallOptions(installOptions));
         }
 
         if (multi) {
@@ -119,7 +121,6 @@ public class InstallCommand extends AbstractIMCommand {
 
         final Request request = initRequest(artifactName, version);
 
-        final InstallOptions installOptions = new InstallOptions();
         setOptionsFromConfig(installOptions);
 
         if (!installOptions.checkValid()) {

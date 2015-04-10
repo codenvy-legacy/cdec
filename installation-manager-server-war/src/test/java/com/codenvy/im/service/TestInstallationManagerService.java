@@ -125,8 +125,8 @@ public class TestInstallationManagerService {
 
     @Test
     public void testGetVersionToInstall() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getVersionToInstall(mockRequest, 1);
-        String result = service.getVersionToInstall(mockRequest, 1);
+        doReturn(mockResponse).when(mockFacade).getVersionToInstall(mockRequest);
+        String result = service.getVersionToInstall(mockRequest);
         assertEquals(result, mockResponse);
     }
 

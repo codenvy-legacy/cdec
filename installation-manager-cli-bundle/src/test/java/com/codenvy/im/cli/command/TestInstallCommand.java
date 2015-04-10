@@ -43,7 +43,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
@@ -91,7 +90,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(InstallationManagerFacade.class);
-        doReturn("1.0.1").when(facade).getVersionToInstall(any(Request.class), anyInt());
+        doReturn("1.0.1").when(facade).getVersionToInstall(any(Request.class));
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
             .when(facade).getInstallInfo(any(Request.class));
         commandSession = mock(CommandSession.class);
@@ -189,7 +188,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
-        doReturn("1.0.2").when(facade).getVersionToInstall(any(Request.class), anyInt());
+        doReturn("1.0.2").when(facade).getVersionToInstall(any(Request.class));
         doReturn(false).when(spyCommand).isInstall();
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 

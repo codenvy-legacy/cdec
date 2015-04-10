@@ -363,7 +363,7 @@ public class InstallationManagerFacade {
     public String getInstallInfo(Request request) throws IOException {
         try {
             InstallOptions installOptions = request.getInstallOptions();
-            Version version = doGetVersionToInstall(request, installOptions.getStep());
+            Version version = doGetVersionToInstall(request);
 
             List<String> infos = manager.getInstallInfo(request.createArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
@@ -377,7 +377,7 @@ public class InstallationManagerFacade {
     public String install(Request request) throws IOException {
         try {
             InstallOptions installOptions = request.getInstallOptions();
-            Version version = doGetVersionToInstall(request, installOptions.getStep());
+            Version version = doGetVersionToInstall(request);
 
             try {
                 manager.install(request.getAccessToken(), request.createArtifact(), version, installOptions);
@@ -395,11 +395,21 @@ public class InstallationManagerFacade {
     }
 
     /** @return the version of the artifact that can be installed */
-    public String getVersionToInstall(Request request, int installStep) throws IOException {
-        return doGetVersionToInstall(request, installStep).toString();
+    public String getVersionToInstall(Request request) throws IOException {
+        try {
+            return doGetVersionToInstall(request).toString();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
+        }
     }
 
-    protected Version doGetVersionToInstall(Request request, int installStep) throws IOException {
+    protected Version doGetVersionToInstall(Request request) throws IOException {
+        int installStep = 0;
+        if (request.getInstallOptions() != null) {
+            installStep = request.getInstallOptions().getStep();
+        }
+
         if (request.createVersion() != null) {
             return request.createVersion();
 

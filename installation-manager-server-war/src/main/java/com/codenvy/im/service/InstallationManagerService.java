@@ -19,7 +19,6 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.google.inject.Inject;
@@ -173,14 +172,14 @@ public class InstallationManagerService {
 
     /** @return the version of the artifact that can be installed */
     @POST
-    @Path("install/{step}/version")
+    @Path("install/version")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get version of the artifact that can be installed.",
                   notes = "",
                   response = Response.class)
-    public String getVersionToInstall(Request request, @PathParam(value = "step") int installStep) throws IOException {
-        return facade.getVersionToInstall(request, installStep);
+    public String getVersionToInstall(Request request) throws IOException {
+        return facade.getVersionToInstall(request);
     }
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
