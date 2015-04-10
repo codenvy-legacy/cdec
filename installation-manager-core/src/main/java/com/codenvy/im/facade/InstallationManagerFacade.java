@@ -169,8 +169,8 @@ public class InstallationManagerFacade {
         downloadDescriptor = null;
         List<ArtifactInfo> infos = null;
         try {
-            Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.getArtifact(),
-                                                                                    request.getVersion(),
+            Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.createArtifact(),
+                                                                                    request.createVersion(),
                                                                                     request.getAccessToken());
 
             infos = new ArrayList<>(updatesToDownload.size());
@@ -283,23 +283,23 @@ public class InstallationManagerFacade {
             try {
                 List<ArtifactInfo> infos = new ArrayList<>();
 
-                if (request.getArtifact() == null) {
+                if (request.createArtifact() == null) {
                     Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
                     for (Map.Entry<Artifact, SortedMap<Version, Path>> e : downloadedArtifacts.entrySet()) {
                         infos.addAll(getDownloadedArtifactsInfo(request.getAccessToken(), e.getKey(), e.getValue()));
                     }
                 } else {
-                    SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.getArtifact());
+                    SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.createArtifact());
 
                     if ((downloadedVersions != null) && !downloadedVersions.isEmpty()) {
-                        Version version = request.getVersion();
+                        Version version = request.createVersion();
                         if ((version != null) && downloadedVersions.containsKey(version)) {
                             final Path path = downloadedVersions.get(version);
                             downloadedVersions = ImmutableSortedMap.of(version, path);
                         }
 
-                        infos = getDownloadedArtifactsInfo(request.getAccessToken(), request.getArtifact(), downloadedVersions);
+                        infos = getDownloadedArtifactsInfo(request.getAccessToken(), request.createArtifact(), downloadedVersions);
                     }
                 }
 
@@ -365,7 +365,7 @@ public class InstallationManagerFacade {
             InstallOptions installOptions = request.getInstallOptions();
             Version version = doGetVersionToInstall(request, installOptions.getStep());
 
-            List<String> infos = manager.getInstallInfo(request.getArtifact(), version, installOptions);
+            List<String> infos = manager.getInstallInfo(request.createArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
@@ -380,12 +380,12 @@ public class InstallationManagerFacade {
             Version version = doGetVersionToInstall(request, installOptions.getStep());
 
             try {
-                manager.install(request.getAccessToken(), request.getArtifact(), version, installOptions);
-                ArtifactInfo info = new ArtifactInfo(request.getArtifact(), version, Status.SUCCESS);
+                manager.install(request.getAccessToken(), request.createArtifact(), version, installOptions);
+                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, e.getMessage(), e);
-                ArtifactInfo info = new ArtifactInfo(request.getArtifact(), version, Status.FAILURE);
+                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.FAILURE);
                 return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
             }
         } catch (Exception e) {
@@ -400,22 +400,22 @@ public class InstallationManagerFacade {
     }
 
     protected Version doGetVersionToInstall(Request request, int installStep) throws IOException {
-        if (request.getVersion() != null) {
-            return request.getVersion();
+        if (request.createVersion() != null) {
+            return request.createVersion();
 
         } else if (installStep == 0) {
-            Version version = manager.getLatestInstallableVersion(request.getUserCredentials().getToken(), request.getArtifact());
+            Version version = manager.getLatestInstallableVersion(request.getUserCredentials().getToken(), request.createArtifact());
 
             if (version == null) {
-                throw new IllegalStateException(format("There is no newer version to install '%s'.", request.getArtifact()));
+                throw new IllegalStateException(format("There is no newer version to install '%s'.", request.createArtifact()));
             }
 
             return version;
 
         } else {
-            SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.getArtifact());
+            SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.createArtifact());
             if (downloadedVersions.isEmpty()) {
-                throw new IllegalStateException(format("Installation in progress but binaries for '%s' not found.", request.getArtifact()));
+                throw new IllegalStateException(format("Installation in progress but binaries for '%s' not found.", request.createArtifact()));
             }
             return downloadedVersions.keySet().iterator().next();
         }

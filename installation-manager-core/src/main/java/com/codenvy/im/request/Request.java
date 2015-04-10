@@ -18,6 +18,7 @@
 package com.codenvy.im.request;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
@@ -29,8 +30,6 @@ import com.wordnik.swagger.annotations.ApiModelProperty;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-
 /**
  * Aggregated request to {@link com.codenvy.im.facade.InstallationManagerFacade}.
  *
@@ -40,7 +39,6 @@ public class Request {
     @ApiModelProperty(notes = "Is needed for getting and downloading 'codenvy' artifact.")
     private UserCredentials userCredentials;
 
-    @ApiModelProperty(notes = "Default artifact name = 'codenvy'", allowableValues = CDECArtifact.NAME + "," + InstallManagerArtifact.NAME)
     private String artifactName;
     private String version;
 
@@ -76,13 +74,18 @@ public class Request {
      *         if artifact name is wrong
      */
     @Nullable
-    public Artifact getArtifact() throws ArtifactNotFoundException {
-        return artifactName == null ? null : createArtifact(artifactName);
+    public Artifact createArtifact() throws ArtifactNotFoundException {
+        return artifactName == null ? null : ArtifactFactory.createArtifact(artifactName);
     }
 
+    @ApiModelProperty(notes = "Default artifact name = 'codenvy'", allowableValues = CDECArtifact.NAME + "," + InstallManagerArtifact.NAME)
     public Request setArtifactName(String artifactName) {
         this.artifactName = artifactName;
         return this;
+    }
+
+    public String getArtifactName() {
+        return artifactName;
     }
 
     /**
@@ -90,13 +93,18 @@ public class Request {
      * @throws java.lang.IllegalArgumentException
      */
     @Nullable
-    public Version getVersion() {
+    public Version createVersion() {
         return version == null ? null : Version.valueOf(version);
     }
 
+    @ApiModelProperty(notes = "Default version could be the installed artifact version.")
     public Request setVersion(String version) {
         this.version = version;
         return this;
+    }
+
+    public String getVersion() {
+        return version;
     }
 
     /**

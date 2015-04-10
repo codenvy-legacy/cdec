@@ -20,15 +20,32 @@ package com.codenvy.im.facade;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 /** @author Dmytro Nochevnov */
 public class TestUserCredentials {
 
     @Test
-    public void testInstantiation() {
+    public void testInstantiationWithTokenAndAccountId() {
         UserCredentials credentials = new UserCredentials("token", "id");
 
         assertEquals(credentials.getToken(), "token");
         assertEquals(credentials.getAccountId(), "id");
+    }
+
+    @Test
+    public void testInstantiationWithToken() {
+        UserCredentials credentials = new UserCredentials("token");
+
+        assertEquals(credentials.getToken(), "token");
+        assertNull(credentials.getAccountId());
+    }
+
+    @Test
+    public void testNoArgInstantiation() {
+        UserCredentials credentials = new UserCredentials();
+
+        assertNull(credentials.getToken());
+        assertNull(credentials.getAccountId());
     }
 }
