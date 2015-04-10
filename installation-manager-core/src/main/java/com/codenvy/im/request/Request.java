@@ -18,10 +18,13 @@
 package com.codenvy.im.request;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
+import com.wordnik.swagger.annotations.ApiModelProperty;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,16 +32,20 @@ import javax.annotation.Nullable;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
 /**
- * Aggregated request to {@link com.codenvy.im.facade.InstallationManagerFacade} from CLI.
- * Artifact name and version are user's entered options.
+ * Aggregated request to {@link com.codenvy.im.facade.InstallationManagerFacade}.
  *
  * @author Anatoliy Bazko
  */
 public class Request {
+    @ApiModelProperty(notes = "Is needed for getting and downloading 'codenvy' artifact.")
     private UserCredentials userCredentials;
-    private String          artifactName;
-    private String          version;
-    private InstallOptions  installOptions;
+
+    @ApiModelProperty(notes = "Default artifact name = 'codenvy'", allowableValues = CDECArtifact.NAME + "," + InstallManagerArtifact.NAME)
+    private String artifactName;
+    private String version;
+
+    @ApiModelProperty(notes = "Required for all install commands")
+    private InstallOptions installOptions;
 
     public Request() {
     }
@@ -107,7 +114,8 @@ public class Request {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o)
+            return true;
         if (!(o instanceof Request)) return false;
 
         Request request = (Request)o;

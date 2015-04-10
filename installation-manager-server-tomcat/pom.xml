@@ -46,6 +46,12 @@
             <type>war</type>
         </dependency>
         <dependency>
+            <groupId>com.codenvy.platform-api</groupId>
+            <artifactId>codenvy-api-docs-ui</artifactId>
+            <version>${codenvy.api-docs-ui.version}</version>
+            <type>war</type>
+        </dependency>
+        <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
             <version>${javax.mail.version}</version>
@@ -178,6 +184,14 @@
                                         <move file="${project.build.directory}/installation-manager-server-tomcat/endorsed/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" tofile="${project.build.directory}/installation-manager-server-tomcat/lib/tomcat-catalina-jmx-remote-${org.apache.tomcat.version}.jar" />
                                         <move file="${project.build.directory}/packager-conf/war/installation-manager-server-war.war" tofile="${project.build.directory}/installation-manager-server-tomcat/webapps/im.war" />
                                         <chmod file="${project.build.directory}/installation-manager-server-tomcat/bin/*.sh" perm="+x" />
+
+                                        <!-- Patching Docs service address in the codenvy-api-docs-ui.war/index.html file -->
+                                        <unzip src="${project.build.directory}/packager-conf/war/codenvy-api-docs-ui.war" dest="${project.build.directory}/packager-conf/war/im-api-docs-ui" />
+                                        <replace file="${project.build.directory}/packager-conf/war/im-api-docs-ui/index.html">
+                                            <replacetoken>'/api/docs'</replacetoken>
+                                            <replacevalue>'/im/docs'</replacevalue>
+                                        </replace>
+                                        <move file="${project.build.directory}/packager-conf/war/im-api-docs-ui" tofile="${project.build.directory}/installation-manager-server-tomcat/webapps/im-api-docs-ui" />
                                     </target>
                                 </configuration>
                             </execution>

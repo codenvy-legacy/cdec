@@ -32,8 +32,6 @@ import com.wordnik.swagger.reader.ClassReaders;
 import org.eclipse.che.inject.DynaModule;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
@@ -91,22 +89,20 @@ public class DocsModule extends AbstractModule {
     }
 
     static class SwaggerBootstrap {
-//        @Inject
-//        @Named("api.endpoint")
-        String baseApiUrl = "http://test.com/im";   // TODO [ndp]
+        final String BASE_SERVER_URL = "/im";
 
         @PostConstruct
         public void init() {
             final SwaggerConfig config = ConfigFactory.config();
-            config.setBasePath(baseApiUrl);
-            config.setApiVersion("1.0.0");
+            config.setBasePath(BASE_SERVER_URL);
+            config.setApiVersion("1.0");
             final com.wordnik.swagger.model.ApiInfo apiInfo = new com.wordnik.swagger.model.ApiInfo(
-                    "Installation-manager REST API", // title
-                    "", // description
-                    "", // termsOfServiceUrl
-                    "", // contacts
-                    "Eclipse Public License v1.0", // license
-                    "http://www.eclipse.org/legal/epl-v10.html"  // license URL
+                "Installation-manager REST API", // title
+                "", // description
+                "", // termsOfServiceUrl
+                "", // contacts
+                "Eclipse Public License v1.0", // license
+                "http://www.eclipse.org/legal/epl-v10.html"  // license URL
             );
             config.setApiInfo(apiInfo);
             ScannerFactory.setScanner(new DefaultJaxrsScanner());

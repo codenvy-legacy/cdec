@@ -58,6 +58,9 @@ public class InstallationManagerService {
     @Path("download/start")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Starts downloading artifact from Update Server.",
+                  notes = "",
+                  response = Response.class)
     public String startDownload(Request request) {
         return facade.startDownload(request);
     }
@@ -66,6 +69,9 @@ public class InstallationManagerService {
     @POST
     @Path("download/stop")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Interrupts downloading artifact from Update Server.",
+                  notes = "",
+                  response = Response.class)
     public String stopDownload() {
         return facade.stopDownload();
     }
@@ -73,19 +79,22 @@ public class InstallationManagerService {
     /** @return the current status of downloading process */
     @POST
     @Path("download/status")
-    @ApiOperation(value = "Get download status.",
-                  notes = "Get download status.",
+    @ApiOperation(value = "Get download artifact status.",
+                  notes = "Get already started download status.",
                   response = Response.class)
     @Produces(MediaType.APPLICATION_JSON)
     public String getDownloadStatus() {
         return facade.getDownloadStatus();
     }
 
-    /** @return update list from the server */
+    /** @return list of updates from update server */
     @POST
     @Path("download/check")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get list of actual updates from Update Server.",
+                  notes = "",
+                  response = Response.class)
     public String getUpdates(Request request) {
         return facade.getUpdates(request);
     }
@@ -95,15 +104,21 @@ public class InstallationManagerService {
     @Path("download/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get list of downloaded artifacts, which are presence in the upload directory of Installation Manager Server.",
+                  notes = "",
+                  response = Response.class)
     public String getDownloads(Request request) {
         return facade.getDownloads(request);
     }
 
-    /** @return the list of installed artifacts ant theirs versions */
+    /** @return the list of installed artifacts and theirs versions */
     @POST
     @Path("install/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get list of installed artifacts.",
+                  notes = "",
+                  response = Response.class)
     public String getInstalledVersions(Request request) throws IOException {
         return facade.getInstalledVersions(request);
     }
@@ -113,6 +128,9 @@ public class InstallationManagerService {
     @Path("install")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Install artifact.",
+                  notes = "",
+                  response = Response.class)
     public String install(Request request) throws IOException {
         return facade.install(request);
     }
@@ -122,8 +140,8 @@ public class InstallationManagerService {
     @Path("install/info")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get list of steps.",
-                  notes = "Get list of steps.",
+    @ApiOperation(value = "Get list of installation steps.",
+                  notes = "",
                   response = Response.class)
     public String getInstallInfo(Request request) throws IOException {
         return facade.getInstallInfo(request);
@@ -134,6 +152,9 @@ public class InstallationManagerService {
     @Path("subscription/add-trial")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Adds trial subscription for user being logged into SaaS Codenvy.",
+                  notes = "",
+                  response = Response.class)
     public String addTrialSubscription(Request request) throws IOException {
         return facade.addTrialSubscription(request);
     }
@@ -143,6 +164,9 @@ public class InstallationManagerService {
     @Path("subscription/{id}/check")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Check user's subscription at the SaaS Codenvy.",
+                  notes = "",
+                  response = Response.class)
     public String checkSubscription(@PathParam(value = "id") String subscription, Request request) throws IOException {
         return facade.checkSubscription(subscription, request);
     }
@@ -152,6 +176,9 @@ public class InstallationManagerService {
     @Path("install/{step}/version")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get version of the artifact that can be installed.",
+                  notes = "",
+                  response = Response.class)
     public String getVersionToInstall(Request request, @PathParam(value = "step") int installStep) throws IOException {
         return facade.getVersionToInstall(request, installStep);
     }
@@ -159,9 +186,12 @@ public class InstallationManagerService {
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
     @POST
-    @Path("acount/{accountName}/owner")
+    @Path("account/{accountName}/owner")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get account reference of first valid account of user based on his/her auth token.",
+                  notes = "Get account reference of first valid account of user at the SaaS Codenvy based on his/her auth token passed into service within the body of request.",
+                  response = Response.class)
     public String getAccountReferenceWhereUserIsOwner(@Nullable @PathParam(value = "accountName") String accountName, Request request) throws IOException {
         return facade.getAccountReferenceWhereUserIsOwner(accountName, request);
     }
@@ -170,6 +200,9 @@ public class InstallationManagerService {
     @POST
     @Path("config/get")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get configuration of Installation Manager.",
+                  notes = "",
+                  response = Response.class)
     public String getConfig() {
         return facade.getConfig();
     }
@@ -178,6 +211,9 @@ public class InstallationManagerService {
     @POST
     @Path("node/add")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Add node to multi-server Codenvy.",
+                  notes = "",
+                  response = Response.class)
     public String addNode(@QueryParam(value = "dns") String dns) {
         return facade.addNode(dns);
     }
@@ -186,6 +222,9 @@ public class InstallationManagerService {
     @POST
     @Path("node/remove")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Remove node from multi-server Codenvy",
+                  notes = "",
+                  response = Response.class)
     public String removeNode(@QueryParam(value = "dns") String dns) {
         return facade.removeNode(dns);
     }
@@ -195,6 +234,9 @@ public class InstallationManagerService {
     @Path("backup")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Backup on-prem Codenvy.",
+                  notes = "",
+                  response = Response.class)
     public String backup(BackupConfig config) throws IOException {
         return facade.backup(config);
     }
@@ -204,6 +246,9 @@ public class InstallationManagerService {
     @Path("restore")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Restore on-prem Codenvy.",
+                  notes = "",
+                  response = Response.class)
     public String restore(BackupConfig config) throws IOException {
         return facade.restore(config);
     }
