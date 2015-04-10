@@ -49,7 +49,7 @@ public class TestBackupCommand  extends AbstractTestCommand {
 
     private BackupConfig testBackupConfig;
 
-    private Path   testBackupDirectory = Paths.get("test/backup/directory");
+    private String testBackupDirectory = "test/backup/directory";
     private String testArtifact        = CDECArtifact.NAME;
 
     @BeforeMethod
@@ -112,7 +112,7 @@ public class TestBackupCommand  extends AbstractTestCommand {
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).backup(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("directory", testBackupDirectory.toString());
+        commandInvoker.argument("directory", testBackupDirectory);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

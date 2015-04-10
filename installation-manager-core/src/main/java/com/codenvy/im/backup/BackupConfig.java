@@ -73,10 +73,10 @@ public class BackupConfig {
     private String artifactName;
 
     private String artifactVersion;
-    private Path   backupDirectory;
+    private String backupDirectory;
 
     @ApiModelProperty(notes = "Required for restore")
-    private Path backupFile;
+    private String backupFile;
 
     public String getArtifactName() {
         return artifactName;
@@ -97,11 +97,11 @@ public class BackupConfig {
     }
 
     @Nonnull
-    public Path getBackupDirectory() {
+    public String getBackupDirectory() {
         return backupDirectory;
     }
 
-    public BackupConfig setBackupDirectory(Path backupDirectory) {
+    public BackupConfig setBackupDirectory(String backupDirectory) {
         this.backupDirectory = backupDirectory;
         return this;
     }
@@ -109,11 +109,11 @@ public class BackupConfig {
     /**
      * @return path to backup file
      */
-    public Path getBackupFile() {
+    public String getBackupFile() {
         return backupFile;
     }
 
-    public BackupConfig setBackupFile(Path backupFile) {
+    public BackupConfig setBackupFile(String backupFile) {
         this.backupFile = backupFile;
         return this;
     }
@@ -161,7 +161,7 @@ public class BackupConfig {
             fileName = format("backup_%s.tar", currentTime);
         }
 
-        return getBackupDirectory().resolve(fileName);
+        return Paths.get(getBackupDirectory()).resolve(fileName);
     }
 
     protected Date getCurrentDate() {
@@ -235,7 +235,7 @@ public class BackupConfig {
         Path configFile = tempDir.resolve(BACKUP_CONFIG_FILE);
         FileUtils.writeStringToFile(configFile.toFile(), configJson);
 
-        TarUtils.packFile(configFile, backupFile);
+        TarUtils.packFile(configFile, Paths.get(backupFile));
 
         // cleanup
         Files.deleteIfExists(configFile);
@@ -249,7 +249,7 @@ public class BackupConfig {
         Path tempDir = BASE_TMP_DIRECTORY;
         Files.createDirectories(tempDir);
 
-        TarUtils.unpackFile(backupFile, tempDir, Paths.get(BACKUP_CONFIG_FILE));
+        TarUtils.unpackFile(Paths.get(backupFile), tempDir, Paths.get(BACKUP_CONFIG_FILE));
         Path storedConfigFile = tempDir.resolve(BACKUP_CONFIG_FILE);
 
         BackupConfig storedConfig;
@@ -260,7 +260,9 @@ public class BackupConfig {
                 throw new IOException();
             }
         } catch (JsonParseException | IOException e) {
-            throw new BackupException(format("There was a problem with config of backup which should be placed in file '%s/%s'", backupFile.getFileName(), BACKUP_CONFIG_FILE));
+            throw new BackupException(format("There was a problem with config of backup which should be placed in file '%s/%s'",
+                                             Paths.get(backupFile).getFileName(),
+                                             BACKUP_CONFIG_FILE));
         }
 
         // cleanup

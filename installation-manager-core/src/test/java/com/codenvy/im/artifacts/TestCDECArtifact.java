@@ -351,9 +351,9 @@ public class TestCDECArtifact extends BaseTest {
         prepareSingleNodeEnv(configUtil, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupDirectory(Paths.get("some_dir"));
+                                                      .setBackupDirectory("some_dir");
         
-        backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
+        backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
 
         assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configUtil));
     }
@@ -363,8 +363,8 @@ public class TestCDECArtifact extends BaseTest {
         prepareMultiNodeEnv(configUtil, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupDirectory(Paths.get("some_dir"));
-        backupConfig.setBackupFile(backupConfig.generateBackupFilePath());
+                                                      .setBackupDirectory("some_dir");
+        backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
 
         assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configUtil));
     }
@@ -374,8 +374,8 @@ public class TestCDECArtifact extends BaseTest {
         prepareSingleNodeEnv(configUtil, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupFile(Paths.get("dummyFile"))
-                                                      .setBackupDirectory(Paths.get("dummyDirectory"));
+                                                      .setBackupFile("dummyFile")
+                                                      .setBackupDirectory("dummyDirectory");
 
         assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configUtil));
     }
@@ -385,8 +385,8 @@ public class TestCDECArtifact extends BaseTest {
         prepareMultiNodeEnv(configUtil, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupFile(Paths.get("dummyFile"))
-                                                      .setBackupDirectory(Paths.get("dummyDirectory"));
+                                                      .setBackupFile("dummyFile")
+                                                      .setBackupDirectory("dummyDirectory");
 
         assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configUtil));
     }

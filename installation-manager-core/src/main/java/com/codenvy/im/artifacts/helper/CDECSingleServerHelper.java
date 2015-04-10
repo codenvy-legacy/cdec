@@ -279,7 +279,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         List<Command> commands = new ArrayList<>();
         Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
-        Path backupFile = backupConfig.getBackupFile();
+        Path backupFile = Paths.get(backupConfig.getBackupFile());
 
         // create temp dir
         commands.add(createCommand(format("mkdir -p %s", tempDir)));
@@ -347,7 +347,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         List<Command> commands = new ArrayList<>();
         Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
-        Path backupFile = backupConfig.getBackupFile();
+        Path backupFile = Paths.get(backupConfig.getBackupFile());
 
         // unpack backupFile into the tempDir
         commands.add(createUnpackCommand(backupFile, tempDir));

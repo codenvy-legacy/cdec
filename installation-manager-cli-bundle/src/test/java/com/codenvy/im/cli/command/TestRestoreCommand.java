@@ -28,8 +28,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -49,7 +47,7 @@ public class TestRestoreCommand extends AbstractTestCommand {
 
     private BackupConfig testBackupConfig;
 
-    private Path   testBackupFile = Paths.get("test/backup/directory/backup.tar.gz");
+    private String testBackupFile = "test/backup/directory/backup.tar.gz";
     private String testArtifact   = CDECArtifact.NAME;
 
     @BeforeMethod
@@ -78,7 +76,7 @@ public class TestRestoreCommand extends AbstractTestCommand {
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("backup", testBackupFile.toString());
+        commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -99,7 +97,7 @@ public class TestRestoreCommand extends AbstractTestCommand {
             .when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("backup", testBackupFile.toString());
+        commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

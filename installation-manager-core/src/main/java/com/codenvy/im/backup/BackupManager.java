@@ -58,18 +58,15 @@ public class BackupManager {
     public BackupConfig backup(BackupConfig initialConfig) throws IOException, IllegalStateException {
         BackupConfig backupConfig = initialConfig.clone();
         if (backupConfig.getBackupDirectory() == null) {
-            backupConfig.setBackupDirectory(Paths.get(defaultBackupDir));
+            backupConfig.setBackupDirectory(defaultBackupDir);
         }
 
         Artifact artifact = getArtifact(backupConfig.getArtifactName());
-        Files.createDirectories(backupConfig.getBackupDirectory());
+        Files.createDirectories(Paths.get(backupConfig.getBackupDirectory()));
 
         try {
-            Path backupFile = backupConfig.getBackupFile();
-            if (backupFile == null) {
-                backupFile = backupConfig.generateBackupFilePath();
-                backupConfig.setBackupFile(backupFile);
-            }
+            Path backupFile = backupConfig.generateBackupFilePath();
+            backupConfig.setBackupFile(backupFile.toString());
 
             Version artifactVersion = artifact.getInstalledVersion();
             if (artifactVersion == null) {
@@ -85,7 +82,7 @@ public class BackupManager {
             TarUtils.compressFile(backupFile, compressedBackupFile);
 
             Files.deleteIfExists(backupFile);
-            backupConfig.setBackupFile(compressedBackupFile);
+            backupConfig.setBackupFile(compressedBackupFile.toString());
         } catch(Exception e) {
             throw new BackupException(e.getMessage(), e);
         }
@@ -96,12 +93,11 @@ public class BackupManager {
     /** Restore due to config */
     public void restore(BackupConfig initialConfig) throws IOException, IllegalArgumentException {
         BackupConfig backupConfig = initialConfig.clone();
-        Path compressedBackupFile = backupConfig.getBackupFile();
-
-        if (compressedBackupFile == null) {
+        if (backupConfig.getBackupFile() == null) {
             throw new IllegalArgumentException("Backup file is unknown.");
         }
 
+        Path compressedBackupFile = Paths.get(backupConfig.getBackupFile());
         if (!Files.exists(compressedBackupFile)) {
             throw new IllegalArgumentException(format("Backup file '%s' doesn't exist.", compressedBackupFile));
         }
@@ -114,8 +110,8 @@ public class BackupManager {
 
             String backupFileName = removeGzipExtension(compressedBackupFile).getFileName().toString();
             Path backupFile = tempDir.resolve(backupFileName);
-            backupConfig.setBackupFile(backupFile);
-            backupConfig.setBackupDirectory(tempDir);
+            backupConfig.setBackupFile(backupFile.toString());
+            backupConfig.setBackupDirectory(tempDir.toString());
 
             BackupConfig storedBackupConfig = backupConfig.extractConfigFromBackup();
             checkBackup(artifact, storedBackupConfig);

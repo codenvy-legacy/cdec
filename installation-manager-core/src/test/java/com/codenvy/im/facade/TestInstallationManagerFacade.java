@@ -222,9 +222,11 @@ public class TestInstallationManagerFacade {
         Path testBackupDirectory = Paths.get("test/backup/directory");
         Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                          .setBackupDirectory(testBackupDirectory);
+                                                          .setBackupDirectory(testBackupDirectory.toString());
 
-        doReturn(testBackupConfig.setBackupFile(testBackupFile).setArtifactVersion("1.0.0")).when(mockInstallationManager).backup(testBackupConfig);
+        doReturn(testBackupConfig.setBackupFile(testBackupFile.toString())
+                                 .setArtifactVersion("1.0.0"))
+            .when(mockInstallationManager).backup(testBackupConfig);
         assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
                                                                           + "  \"backup\" : {\n"
                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
@@ -241,7 +243,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testBackupException() throws IOException {
-        Path testBackupDirectory = Paths.get("test/backup/directory");
+        String testBackupDirectory = "test/backup/directory";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupDirectory(testBackupDirectory);
 
@@ -261,8 +263,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testRestore() throws IOException {
-        Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
+        String testBackupFile = "test/backup/directory/backup.tar.gz";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 
@@ -281,8 +282,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testRestoreException() throws IOException {
-        Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
+        String testBackupFile = "test/backup/directory/backup.tar.gz";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 

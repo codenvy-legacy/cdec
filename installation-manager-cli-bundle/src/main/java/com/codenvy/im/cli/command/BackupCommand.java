@@ -39,7 +39,7 @@ public class BackupCommand extends AbstractIMCommand {
         BackupConfig config = new BackupConfig().setArtifactName(artifactToBackup);
 
         if (backupDirectory != null && !backupDirectory.isEmpty()) {
-            config.setBackupDirectory(Paths.get(backupDirectory));
+            config.setBackupDirectory(backupDirectory);
         }
 
         try {

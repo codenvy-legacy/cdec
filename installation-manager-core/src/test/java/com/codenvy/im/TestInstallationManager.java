@@ -24,7 +24,6 @@ import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.backup.BackupManager;
 import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.InstallationManagerImpl;
 import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
@@ -35,7 +34,6 @@ import com.codenvy.im.utils.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -505,7 +503,7 @@ public class TestInstallationManager {
 
     @Test
     public void testBackup() throws IOException {
-        Path testBackupDirectory = Paths.get("test/backup/directory");
+        String testBackupDirectory = "test/backup/directory";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupDirectory(testBackupDirectory);
 
@@ -528,8 +526,7 @@ public class TestInstallationManager {
 
     @Test
     public void testRestore() throws IOException {
-        Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
+        String testBackupFile = "test/backup/directory/backup.tar.gz";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 
@@ -540,8 +537,7 @@ public class TestInstallationManager {
     @Test(expectedExceptions = IOException.class,
             expectedExceptionsMessageRegExp = "error")
     public void testRestoreException() throws IOException {
-        Path testBackupDirectory = Paths.get("test/backup/directory");
-        Path testBackupFile = testBackupDirectory.resolve("backup.tar.gz");
+        String testBackupFile = "test/backup/directory/backup.tar.gz";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 

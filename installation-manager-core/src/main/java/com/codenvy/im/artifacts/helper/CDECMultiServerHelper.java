@@ -379,7 +379,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         Path localTempDir = backupConfig.obtainArtifactTempDirectory();
         Path remoteTempDir = Paths.get("/tmp/codenvy");
-        Path backupFile = backupConfig.getBackupFile();
+        Path backupFile = Paths.get(backupConfig.getBackupFile());
 
         // create local temp dir
         commands.add(createCommand(format("mkdir -p %s", localTempDir)));
@@ -396,7 +396,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("slapd", dataNode));
 
         // copy backup file into api node, pack filesystem data of API node to the {backup_file}/fs folder into backup file, and then copy it to local temp dir
-        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
+        String backupFilename = Paths.get(backupConfig.getBackupFile()).getFileName().toString();
+        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupFilename);
         commands.add(createCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
         commands.add(createCopyFromLocalToRemoteCommand(backupFile,
                                                         tempApiNodeBackupFile,
@@ -484,7 +485,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         Path localTempDir = backupConfig.obtainArtifactTempDirectory();
         Path remoteTempDir = Paths.get("/tmp/codenvy");
-        Path backupFile = backupConfig.getBackupFile();
+        Path backupFile = Paths.get(backupConfig.getBackupFile());
 
         // unpack backupFile into the tempDir
         commands.add(createUnpackCommand(backupFile, localTempDir));
@@ -501,7 +502,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("slapd", dataNode));
 
         // restore filesystem data at the API node from {backup_file}/fs folder
-        Path apiNodeTempBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
+        String backupFileName = Paths.get(backupConfig.getBackupFile()).getFileName().toString();
+        Path apiNodeTempBackupFile = remoteTempDir.resolve(backupFileName);
         commands.add(createCommand(format("mkdir -p %s", apiNodeTempBackupFile.getParent()), apiNode));
         commands.add(createCopyFromLocalToRemoteCommand(backupFile,
                                                         apiNodeTempBackupFile,

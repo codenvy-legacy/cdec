@@ -38,7 +38,7 @@ public class RestoreCommand extends AbstractIMCommand {
         String artifactToBackup = CDECArtifact.NAME;
         BackupConfig config = new BackupConfig().setArtifactName(artifactToBackup);
 
-        config.setBackupFile(Paths.get(backup));
+        config.setBackupFile(backup);
 
         try {
             console.showProgressor();

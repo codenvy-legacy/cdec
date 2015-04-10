@@ -96,10 +96,10 @@ public class TestBackupManager {
     @Test
     public void testBackupCodenvy() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY);
+                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toString());
 
         BackupConfig expectedBackupConfig = initialBackupConfig.clone()
-                                                               .setBackupFile(initialBackupConfig.generateBackupFilePath())
+                                                               .setBackupFile(initialBackupConfig.generateBackupFilePath().toString())
                                                                .setArtifactVersion(TEST_VERSION);
 
         doAnswer(new Answer() {
@@ -111,18 +111,18 @@ public class TestBackupManager {
 
         BackupConfig result = spyManager.backup(initialBackupConfig);
 
-        expectedBackupConfig.setBackupFile(BackupConfig.addGzipExtension(expectedBackupConfig.getBackupFile()));  // expect backup file name with added gzip extension
+        expectedBackupConfig.setBackupFile(BackupConfig.addGzipExtension(Paths.get(expectedBackupConfig.getBackupFile())).toString());  // expect backup file name with added gzip extension
         assertEquals(result, expectedBackupConfig);
-        assertTrue(Files.exists(result.getBackupFile()));
+        assertTrue(Files.exists(Paths.get(result.getBackupFile())));
     }
 
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "error")
     public void testBackupException() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY);
+                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toString());
 
-        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath())
+        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath().toString())
                                                                .setArtifactVersion(TEST_VERSION);
 
         doThrow(new IOException("error")).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigUtil);
@@ -144,15 +144,15 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(backupFile);
 
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile);
+                                                             .setBackupFile(compressedBackupFile.toString());
 
         BackupConfig expectedBackupConfig = new BackupConfig().setArtifactName("codenvy");
 
         Path expectedBackupDirectory = expectedBackupConfig.obtainArtifactTempDirectory();
-        expectedBackupConfig.setBackupDirectory(expectedBackupDirectory);
+        expectedBackupConfig.setBackupDirectory(expectedBackupDirectory.toString());
 
         Path tempBackupFile = expectedBackupDirectory.resolve(backupFile.getFileName().toString());
-        expectedBackupConfig.setBackupFile(tempBackupFile);
+        expectedBackupConfig.setBackupFile(tempBackupFile.toString());
 
         doReturn(mockCommand).when(mockCdecArtifact).getRestoreCommand(expectedBackupConfig,
                                                                        mockConfigUtil);
@@ -172,7 +172,7 @@ public class TestBackupManager {
           expectedExceptionsMessageRegExp = "Backup file 'non-exists' doesn't exist.")
     public void testRestoreNonExistsBackup() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(Paths.get("non-exists"));
+                                                             .setBackupFile("non-exists");
 
         spyManager.restore(initialBackupConfig);
     }
@@ -182,7 +182,7 @@ public class TestBackupManager {
     public void testRestoreIOException() throws IOException {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile);
+                                                             .setBackupFile(compressedBackupFile.toString());
 
         doThrow(new IOException("error")).when(mockCdecArtifact).getRestoreCommand(any(BackupConfig.class), any(ConfigUtil.class));
         spyManager.restore(initialBackupConfig);
@@ -195,7 +195,7 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
 
         BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile));
+                                                             .setBackupFile(compressedBackupFile.toString()));
 
         doReturn(spyBackupConfig).when(spyBackupConfig).clone();
         doThrow(new BackupException("error")).when(spyBackupConfig).extractConfigFromBackup();
@@ -209,7 +209,7 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
 
         BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile));
+                                                             .setBackupFile(compressedBackupFile.toString()));
 
         doReturn(spyBackupConfig).when(spyBackupConfig).clone();
         doReturn(spyBackupConfig).when(spyBackupConfig).extractConfigFromBackup();
@@ -224,7 +224,7 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
 
         BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile));
+                                                             .setBackupFile(compressedBackupFile.toString()));
 
         doReturn(spyBackupConfig).when(spyBackupConfig).clone();
         doReturn(spyBackupConfig).when(spyBackupConfig).extractConfigFromBackup();
