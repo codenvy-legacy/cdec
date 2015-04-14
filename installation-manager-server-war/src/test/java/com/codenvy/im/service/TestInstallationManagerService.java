@@ -20,14 +20,20 @@ package com.codenvy.im.service;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.ResponseCode;
+import com.fasterxml.jackson.core.JsonParseException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.core.Response;
+
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -45,7 +51,10 @@ public class TestInstallationManagerService {
     @Mock
     private InstallationManagerFacade mockFacade;
 
-    private String mockResponse = "{}";
+    private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
+
+    private com.codenvy.im.response.Response mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR)
+                                                                                                             .setMessage("error");
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -55,120 +64,211 @@ public class TestInstallationManagerService {
 
     @Test
     public void testStartDownload() throws Exception {
-        doReturn(mockResponse).when(mockFacade).startDownload(mockRequest);
-        String result = service.startDownload(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(mockRequest);
+        Response result = service.startDownload(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(mockRequest);
+        result = service.startDownload(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testStopDownload() throws Exception {
-        doReturn(mockResponse).when(mockFacade).stopDownload();
-        String result = service.stopDownload();
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).stopDownload();
+        Response result = service.stopDownload();
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).stopDownload();
+        result = service.stopDownload();
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetDownloadStatus() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getDownloadStatus();
-        String result = service.getDownloadStatus();
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloadStatus();
+        Response result = service.getDownloadStatus();
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloadStatus();
+        result = service.getDownloadStatus();
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetUpdates() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getUpdates(mockRequest);
-        String result = service.getUpdates(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates(mockRequest);
+        Response result = service.getUpdates(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates(mockRequest);
+        result = service.getUpdates(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetDownloads() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getDownloads(mockRequest);
-        String result = service.getDownloads(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(mockRequest);
+        Response result = service.getDownloads(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(mockRequest);
+        result = service.getDownloads(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetInstalledVersions() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getInstalledVersions(mockRequest);
-        String result = service.getInstalledVersions(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstalledVersions(mockRequest);
+        Response result = service.getInstalledVersions(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstalledVersions(mockRequest);
+        result = service.getInstalledVersions(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testInstall() throws Exception {
-        doReturn(mockResponse).when(mockFacade).install(mockRequest);
-        String result = service.install(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(mockRequest);
+        Response result = service.install(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(mockRequest);
+        result = service.install(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetInstallInfo() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getInstallInfo(mockRequest);
-        String result = service.getInstallInfo(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(mockRequest);
+        Response result = service.getInstallInfo(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(mockRequest);
+        result = service.getInstallInfo(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testAddTrialSubscription() throws Exception {
-        doReturn(mockResponse).when(mockFacade).addTrialSubscription(mockRequest);
-        String result = service.addTrialSubscription(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(mockRequest);
+        Response result = service.addTrialSubscription(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(mockRequest);
+        result = service.addTrialSubscription(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testCheckSubscription() throws Exception {
-        doReturn(mockResponse).when(mockFacade).checkSubscription("id", mockRequest);
-        String result = service.checkSubscription("id", mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription("id", mockRequest);
+        Response result = service.checkSubscription("id", mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription("id", mockRequest);
+        result = service.checkSubscription("id", mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetVersionToInstall() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getVersionToInstall(mockRequest);
-        String result = service.getVersionToInstall(mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getVersionToInstall(mockRequest);
+        Response result = service.getVersionToInstall(mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getVersionToInstall(mockRequest);
+        result = service.getVersionToInstall(mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetAccountReferenceWhereUserIsOwner() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getAccountReferenceWhereUserIsOwner("account", mockRequest);
-        String result = service.getAccountReferenceWhereUserIsOwner("account", mockRequest);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getAccountReferenceWhereUserIsOwner("account", mockRequest);
+        Response result = service.getAccountReferenceWhereUserIsOwner("account", mockRequest);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getAccountReferenceWhereUserIsOwner("account", mockRequest);
+        result = service.getAccountReferenceWhereUserIsOwner("account", mockRequest);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testGetConfig() throws Exception {
-        doReturn(mockResponse).when(mockFacade).getConfig();
-        String result = service.getConfig();
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getConfig();
+        Response result = service.getConfig();
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getConfig();
+        result = service.getConfig();
+        checkErrorResponse(result);
     }
 
     @Test
     public void testAddNode() throws Exception {
-        doReturn(mockResponse).when(mockFacade).addNode("dns");
-        String result = service.addNode("dns");
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addNode("dns");
+        Response result = service.addNode("dns");
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addNode("dns");
+        result = service.addNode("dns");
+        checkErrorResponse(result);
     }
 
     @Test
     public void testRemoveNode() throws Exception {
-        doReturn(mockResponse).when(mockFacade).removeNode("dns");
-        String result = service.removeNode("dns");
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).removeNode("dns");
+        Response result = service.removeNode("dns");
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).removeNode("dns");
+        result = service.removeNode("dns");
+        checkErrorResponse(result);
     }
 
     @Test
     public void testBackup() throws Exception {
-        doReturn(mockResponse).when(mockFacade).backup(mockBackupConfig);
-        String result = service.backup(mockBackupConfig);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).backup(mockBackupConfig);
+        Response result = service.backup(mockBackupConfig);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).backup(mockBackupConfig);
+        result = service.backup(mockBackupConfig);
+        checkErrorResponse(result);
     }
 
     @Test
     public void testRestore() throws Exception {
-        doReturn(mockResponse).when(mockFacade).restore(mockBackupConfig);
-        String result = service.restore(mockBackupConfig);
-        assertEquals(result, mockResponse);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).restore(mockBackupConfig);
+        Response result = service.restore(mockBackupConfig);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(mockBackupConfig);
+        result = service.restore(mockBackupConfig);
+        checkErrorResponse(result);
+    }
+
+    @Test
+    public void testHandleIncorrectRFacadeResponse() throws Exception {
+        doReturn("{").when(mockFacade).startDownload(mockRequest);
+        Response result = service.startDownload(mockRequest);
+
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        String facadeResponse = (String) result.getEntity();
+        assertTrue(facadeResponse.contains("org.eclipse.che.commons.json.JsonParseException: com.fasterxml.jackson.core.JsonParseException: " +
+                                           "Unexpected end-of-input: expected close marker for OBJECT"));
+    }
+
+    private void checkOkResponse(Response result) {
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        com.codenvy.im.response.Response facadeResponse = (com.codenvy.im.response.Response)result.getEntity();
+        assertEquals(facadeResponse.toJson(), mockFacadeOkResponse.toJson());
+    }
+
+    private void checkErrorResponse(Response result) {
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        com.codenvy.im.response.Response facadeResponse = (com.codenvy.im.response.Response)result.getEntity();
+        assertEquals(facadeResponse.toJson(), mockFacadeErrorResponse.toJson());
     }
 }

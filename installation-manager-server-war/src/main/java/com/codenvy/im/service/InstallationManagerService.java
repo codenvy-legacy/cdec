@@ -21,9 +21,11 @@ import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.google.inject.Inject;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
@@ -35,6 +37,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Dmytro Nochevnov
@@ -44,6 +48,8 @@ import java.io.IOException;
 @Api(value = "/im",
      description = "Installation manager")
 public class InstallationManagerService {
+
+    private static final Logger LOG = Logger.getLogger(InstallationManagerService.class.getSimpleName());
 
     protected final InstallationManagerFacade facade;
 
@@ -60,8 +66,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Starts downloading artifact from Update Server.",
                   notes = "",
                   response = Response.class)
-    public String startDownload(Request request) {
-        return facade.startDownload(request);
+    public javax.ws.rs.core.Response startDownload(Request request) {
+        return handleInstallationManagerResponse(facade.startDownload(request));
     }
 
     /** Interrupts downloading */
@@ -71,8 +77,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Interrupts downloading artifact from Update Server.",
                   notes = "",
                   response = Response.class)
-    public String stopDownload() {
-        return facade.stopDownload();
+    public javax.ws.rs.core.Response stopDownload() {
+        return handleInstallationManagerResponse(facade.stopDownload());
     }
 
     /** @return the current status of downloading process */
@@ -82,8 +88,8 @@ public class InstallationManagerService {
                   notes = "Get already started download status.",
                   response = Response.class)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getDownloadStatus() {
-        return facade.getDownloadStatus();
+    public javax.ws.rs.core.Response getDownloadStatus() {
+        return handleInstallationManagerResponse(facade.getDownloadStatus());
     }
 
     /** @return list of updates from update server */
@@ -94,8 +100,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get list of actual updates from Update Server.",
                   notes = "",
                   response = Response.class)
-    public String getUpdates(Request request) {
-        return facade.getUpdates(request);
+    public javax.ws.rs.core.Response getUpdates(Request request) {
+        return handleInstallationManagerResponse(facade.getUpdates(request));
     }
 
     /** @return the list of downloaded artifacts */
@@ -106,8 +112,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get list of downloaded artifacts, which are presence in the upload directory of Installation Manager Server.",
                   notes = "",
                   response = Response.class)
-    public String getDownloads(Request request) {
-        return facade.getDownloads(request);
+    public javax.ws.rs.core.Response getDownloads(Request request) {
+        return handleInstallationManagerResponse(facade.getDownloads(request));
     }
 
     /** @return the list of installed artifacts and theirs versions */
@@ -118,8 +124,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get list of installed artifacts.",
                   notes = "",
                   response = Response.class)
-    public String getInstalledVersions(Request request) throws IOException {
-        return facade.getInstalledVersions(request);
+    public javax.ws.rs.core.Response getInstalledVersions(Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.getInstalledVersions(request));
     }
 
     /** Installs artifact */
@@ -130,8 +136,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Install artifact.",
                   notes = "",
                   response = Response.class)
-    public String install(Request request) throws IOException {
-        return facade.install(request);
+    public javax.ws.rs.core.Response install(Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.install(request));
     }
 
     /** @return installation info */
@@ -142,8 +148,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get list of installation steps.",
                   notes = "",
                   response = Response.class)
-    public String getInstallInfo(Request request) throws IOException {
-        return facade.getInstallInfo(request);
+    public javax.ws.rs.core.Response getInstallInfo(Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.getInstallInfo(request));
     }
 
     /** Adds trial subscription for user being logged in */
@@ -154,8 +160,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Adds trial subscription for user being logged into SaaS Codenvy.",
                   notes = "",
                   response = Response.class)
-    public String addTrialSubscription(Request request) throws IOException {
-        return facade.addTrialSubscription(request);
+    public javax.ws.rs.core.Response addTrialSubscription(Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.addTrialSubscription(request));
     }
 
     /** Check user's subscription. */
@@ -166,8 +172,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Check user's subscription at the SaaS Codenvy.",
                   notes = "",
                   response = Response.class)
-    public String checkSubscription(@PathParam(value = "id") String subscription, Request request) throws IOException {
-        return facade.checkSubscription(subscription, request);
+    public javax.ws.rs.core.Response checkSubscription(@PathParam(value = "id") String subscription, Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.checkSubscription(subscription, request));
     }
 
     /** @return the version of the artifact that can be installed */
@@ -178,8 +184,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get version of the artifact that can be installed.",
                   notes = "",
                   response = Response.class)
-    public String getVersionToInstall(Request request) throws IOException {
-        return facade.getVersionToInstall(request);
+    public javax.ws.rs.core.Response getVersionToInstall(Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.getVersionToInstall(request));
     }
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
@@ -191,8 +197,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get account reference of first valid account of user based on his/her auth token.",
                   notes = "Get account reference of first valid account of user at the SaaS Codenvy based on his/her auth token passed into service within the body of request.",
                   response = Response.class)
-    public String getAccountReferenceWhereUserIsOwner(@Nullable @PathParam(value = "accountName") String accountName, Request request) throws IOException {
-        return facade.getAccountReferenceWhereUserIsOwner(accountName, request);
+    public javax.ws.rs.core.Response getAccountReferenceWhereUserIsOwner(@Nullable @PathParam(value = "accountName") String accountName, Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.getAccountReferenceWhereUserIsOwner(accountName, request));
     }
 
     /** @return the configuration of the Installation Manager */
@@ -202,8 +208,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get configuration of Installation Manager.",
                   notes = "",
                   response = Response.class)
-    public String getConfig() {
-        return facade.getConfig();
+    public javax.ws.rs.core.Response getConfig() {
+        return handleInstallationManagerResponse(facade.getConfig());
     }
 
     /** Add node to multi-server Codenvy */
@@ -213,8 +219,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Add node to multi-server Codenvy.",
                   notes = "",
                   response = Response.class)
-    public String addNode(@QueryParam(value = "dns") String dns) {
-        return facade.addNode(dns);
+    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") String dns) {
+        return handleInstallationManagerResponse(facade.addNode(dns));
     }
 
     /** Remove node from multi-server Codenvy */
@@ -224,8 +230,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Remove node from multi-server Codenvy",
                   notes = "",
                   response = Response.class)
-    public String removeNode(@QueryParam(value = "dns") String dns) {
-        return facade.removeNode(dns);
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") String dns) {
+        return handleInstallationManagerResponse(facade.removeNode(dns));
     }
 
     /** Perform backup according to certain backup config */
@@ -236,8 +242,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Backup on-prem Codenvy.",
                   notes = "",
                   response = Response.class)
-    public String backup(BackupConfig config) throws IOException {
-        return facade.backup(config);
+    public javax.ws.rs.core.Response backup(BackupConfig config) throws IOException {
+        return handleInstallationManagerResponse(facade.backup(config));
     }
 
     /** Perform restore according to certain backup config */
@@ -248,7 +254,21 @@ public class InstallationManagerService {
     @ApiOperation(value = "Restore on-prem Codenvy.",
                   notes = "",
                   response = Response.class)
-    public String restore(BackupConfig config) throws IOException {
-        return facade.restore(config);
+    public javax.ws.rs.core.Response restore(BackupConfig config) throws IOException {
+        return handleInstallationManagerResponse(facade.restore(config));
+    }
+
+    private javax.ws.rs.core.Response handleInstallationManagerResponse(String facadeResponseString) {
+        try {
+            Response facadeResponse = Response.fromJson(facadeResponseString);
+            if (facadeResponse.getStatus() == ResponseCode.OK) {
+                return javax.ws.rs.core.Response.ok(facadeResponse, MediaType.APPLICATION_JSON_TYPE).build();
+            } else {
+                return javax.ws.rs.core.Response.serverError().entity(facadeResponse).build();
+            }
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return javax.ws.rs.core.Response.serverError().entity(e.toString()).build();
+        }
     }
 }
