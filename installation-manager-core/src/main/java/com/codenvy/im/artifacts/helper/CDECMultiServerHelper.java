@@ -176,9 +176,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                       + "  sudo service firewalld start; "
                                       + "fi; "
 
-                                      // open firewall port 8140 permanently
                                       // http://stackoverflow.com/questions/24729024/centos-7-open-firewall-port
-                                      + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; "
+                                      + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; " // open firewall port 8140 for puppet agent access permanently
+                                      + "sudo firewall-cmd --zone=public --add-port=8082/tcp --permanent; " // open firewall port 8082 for the installation manager server permanently
                                       + "sudo firewall-cmd --reload; "));
                 }}, "Install puppet binaries");
 
