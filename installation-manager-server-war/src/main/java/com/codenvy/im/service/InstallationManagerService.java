@@ -25,9 +25,8 @@ import com.codenvy.im.response.ResponseCode;
 import com.google.inject.Inject;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
-import org.eclipse.che.commons.json.JsonParseException;
+import com.wordnik.swagger.annotations.ApiParam;
 
-import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -64,7 +63,6 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Starts downloading artifact from Update Server.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response startDownload(Request request) {
         return handleInstallationManagerResponse(facade.startDownload(request));
@@ -75,7 +73,6 @@ public class InstallationManagerService {
     @Path("download/stop")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Interrupts downloading artifact from Update Server.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response stopDownload() {
         return handleInstallationManagerResponse(facade.stopDownload());
@@ -98,7 +95,6 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get list of actual updates from Update Server.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response getUpdates(Request request) {
         return handleInstallationManagerResponse(facade.getUpdates(request));
@@ -110,7 +106,6 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get list of downloaded artifacts, which are presence in the upload directory of Installation Manager Server.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response getDownloads(Request request) {
         return handleInstallationManagerResponse(facade.getDownloads(request));
@@ -122,7 +117,6 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get list of installed artifacts.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response getInstalledVersions(Request request) throws IOException {
         return handleInstallationManagerResponse(facade.getInstalledVersions(request));
@@ -134,7 +128,6 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Install artifact.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response install(Request request) throws IOException {
         return handleInstallationManagerResponse(facade.install(request));
@@ -146,7 +139,6 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get list of installation steps.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response getInstallInfo(Request request) throws IOException {
         return handleInstallationManagerResponse(facade.getInstallInfo(request));
@@ -158,47 +150,21 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription for user being logged into SaaS Codenvy.",
-                  notes = "",
                   response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(Request request) throws IOException {
+    public javax.ws.rs.core.Response addTrialSubscription(@ApiParam(required = true, value = "userCredentials are required") Request request) throws IOException {
         return handleInstallationManagerResponse(facade.addTrialSubscription(request));
     }
 
     /** Check user's subscription. */
     @POST
-    @Path("subscription/{id}/check")
+    @Path("subscription/{subscription_type}/check")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Check user's subscription at the SaaS Codenvy.",
-                  notes = "",
+    @ApiOperation(value = "Check user has a subscription of certain type at the SaaS Codenvy.",
                   response = Response.class)
-    public javax.ws.rs.core.Response checkSubscription(@PathParam(value = "id") String subscription, Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.checkSubscription(subscription, request));
-    }
-
-    /** @return the version of the artifact that can be installed */
-    @POST
-    @Path("install/version")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get version of the artifact that can be installed.",
-                  notes = "",
-                  response = Response.class)
-    public javax.ws.rs.core.Response getVersionToInstall(Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.getVersionToInstall(request));
-    }
-
-    /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
-    @Nullable
-    @POST
-    @Path("account/{accountName}/owner")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get account reference of first valid account of user based on his/her auth token.",
-                  notes = "Get account reference of first valid account of user at the SaaS Codenvy based on his/her auth token passed into service within the body of request.",
-                  response = Response.class)
-    public javax.ws.rs.core.Response getAccountReferenceWhereUserIsOwner(@Nullable @PathParam(value = "accountName") String accountName, Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.getAccountReferenceWhereUserIsOwner(accountName, request));
+    public javax.ws.rs.core.Response checkSubscription(@PathParam(value = "subscription_type") @ApiParam(required = false, value = "default value is 'OnPremises'") String subscriptionType,
+                                                       @ApiParam(required = true, value = "userCredentials are required") Request request) throws IOException {
+        return handleInstallationManagerResponse(facade.checkSubscription(subscriptionType, request));
     }
 
     /** @return the configuration of the Installation Manager */
@@ -206,7 +172,6 @@ public class InstallationManagerService {
     @Path("config/get")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get configuration of Installation Manager.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response getConfig() {
         return handleInstallationManagerResponse(facade.getConfig());
@@ -217,7 +182,6 @@ public class InstallationManagerService {
     @Path("node/add")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Add node to multi-server Codenvy.",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") String dns) {
         return handleInstallationManagerResponse(facade.addNode(dns));
@@ -228,7 +192,6 @@ public class InstallationManagerService {
     @Path("node/remove")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Remove node from multi-server Codenvy",
-                  notes = "",
                   response = Response.class)
     public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") String dns) {
         return handleInstallationManagerResponse(facade.removeNode(dns));
@@ -240,9 +203,8 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Backup on-prem Codenvy.",
-                  notes = "",
                   response = Response.class)
-    public javax.ws.rs.core.Response backup(BackupConfig config) throws IOException {
+    public javax.ws.rs.core.Response backup(@ApiParam(required = true, value = "artifactName is required") BackupConfig config) throws IOException {
         return handleInstallationManagerResponse(facade.backup(config));
     }
 
@@ -252,9 +214,8 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Restore on-prem Codenvy.",
-                  notes = "",
                   response = Response.class)
-    public javax.ws.rs.core.Response restore(BackupConfig config) throws IOException {
+    public javax.ws.rs.core.Response restore(@ApiParam(required = true, value = "artifactName and backupFile are required") BackupConfig config) throws IOException {
         return handleInstallationManagerResponse(facade.restore(config));
     }
 

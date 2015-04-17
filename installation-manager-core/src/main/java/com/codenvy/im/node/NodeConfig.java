@@ -44,9 +44,10 @@ public class NodeConfig {
     private String privateKeyFile = "~/.ssh/id_rsa";  // there should be absolute path to file
     private NodeType type;
 
-    public NodeConfig(NodeType type, String host) {
+    public NodeConfig(NodeType type, String host, @Nullable String user) {
         this.type = type;
         this.host = host;
+        this.user = user;
     }
 
     public String getHost() {
@@ -133,8 +134,9 @@ public class NodeConfig {
     public static NodeConfig extractConfigFrom(Config config, NodeType type) {
         String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
         String nodeHost = config.getValue(nodeHostPropertyName);
+        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
         if (nodeHost != null && !nodeHost.isEmpty()) {
-            return new NodeConfig(type, nodeHost);
+            return new NodeConfig(type, nodeHost, nodeSshUser);
         }
 
         return null;

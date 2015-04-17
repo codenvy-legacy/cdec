@@ -22,12 +22,16 @@ import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
 import com.fasterxml.jackson.core.JsonParseException;
+import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
+
+import java.util.List;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -169,28 +173,6 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription("id", mockRequest);
         result = service.checkSubscription("id", mockRequest);
-        checkErrorResponse(result);
-    }
-
-    @Test
-    public void testGetVersionToInstall() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getVersionToInstall(mockRequest);
-        Response result = service.getVersionToInstall(mockRequest);
-        checkOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getVersionToInstall(mockRequest);
-        result = service.getVersionToInstall(mockRequest);
-        checkErrorResponse(result);
-    }
-
-    @Test
-    public void testGetAccountReferenceWhereUserIsOwner() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getAccountReferenceWhereUserIsOwner("account", mockRequest);
-        Response result = service.getAccountReferenceWhereUserIsOwner("account", mockRequest);
-        checkOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getAccountReferenceWhereUserIsOwner("account", mockRequest);
-        result = service.getAccountReferenceWhereUserIsOwner("account", mockRequest);
         checkErrorResponse(result);
     }
 

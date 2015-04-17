@@ -43,8 +43,8 @@ import static org.testng.Assert.assertTrue;
 /** @author Dmytro Nochevnov */
 public class TestCommandLibrary {
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
-    public static final NodeConfig TEST_API_NODE = new NodeConfig(NodeConfig.NodeType.API, "localhost");
-    public static final NodeConfig TEST_DATA_NODE = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1");
+    public static final NodeConfig TEST_API_NODE = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
+    public static final NodeConfig TEST_DATA_NODE = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
 
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
@@ -96,7 +96,7 @@ public class TestCommandLibrary {
                                               "]",
                                               SYSTEM_USER_NAME);
 
-        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
+        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
 
         Command testCommand = createFileRestoreOrBackupCommand("testFile", node);
         assertEquals(testCommand.toString(), expectedCommandString);
@@ -232,7 +232,7 @@ public class TestCommandLibrary {
     public void testCreateCopyFromLocalToRemoteCommand() {
         Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), TEST_API_NODE);
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no local/path localhost:remote/path', " +
+                                             "'command'='scp -r -q -o StrictHostKeyChecking=no local/path localhost:remote/path', " +
                                              "'agent'='LocalAgent'" +
                                              "}");
     }
@@ -241,7 +241,7 @@ public class TestCommandLibrary {
     public void testCreateCopyFromRemoteToLocalCommand() {
         Command testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), TEST_API_NODE);
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no localhost:remote/path local/path', " +
+                                             "'command'='scp -r -q -o StrictHostKeyChecking=no localhost:remote/path local/path', " +
                                              "'agent'='LocalAgent'" +
                                              "}");
     }

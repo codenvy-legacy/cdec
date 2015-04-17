@@ -64,22 +64,25 @@ public class NodeManager {
 
         Config config = getCodenvyConfig(configUtil);
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
-        NodeConfig node = nodesConfigUtil.recognizeNodeConfigFromDns(dns);
+        NodeConfig addingNode = nodesConfigUtil.recognizeNodeConfigFromDns(dns);
+
+        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
+        addingNode.setUser(nodeSshUser);
 
         // check if Codenvy is alive
         Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
 
-        String property = nodesConfigUtil.getPropertyNameBy(node.getType());
+        String property = nodesConfigUtil.getPropertyNameBy(addingNode.getType());
         if (property == null) {
             throw new IllegalArgumentException("This type of node isn't supported");
         }
 
-        validate(node);
+        validate(addingNode);
 
-        Command addNodeCommand = getAddNodeCommand(currentCodenvyVersion, property, nodesConfigUtil, node, config);
+        Command addNodeCommand = getAddNodeCommand(currentCodenvyVersion, property, nodesConfigUtil, addingNode, config);
         addNodeCommand.execute();
 
-        return node;
+        return addingNode;
     }
 
     /**
@@ -196,10 +199,13 @@ public class NodeManager {
             throw new IllegalArgumentException(format("Node type '%s' isn't supported", nodeType));
         }
 
-        Command command = getRemoveNodeCommand(new NodeConfig(nodeType, dns), config, nodesConfigUtil, currentCodenvyVersion, property);
+        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
+        NodeConfig removingNode = new NodeConfig(nodeType, dns, nodeSshUser);
+
+        Command command = getRemoveNodeCommand(removingNode, config, nodesConfigUtil, currentCodenvyVersion, property);
         command.execute();
 
-        return new NodeConfig(nodeType, dns);
+        return removingNode;
     }
 
     protected Command getRemoveNodeCommand(NodeConfig node,

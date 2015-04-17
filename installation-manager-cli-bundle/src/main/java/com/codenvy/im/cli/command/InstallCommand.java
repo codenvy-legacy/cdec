@@ -32,12 +32,16 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
+import com.google.common.base.Charsets;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -289,6 +293,8 @@ public class InstallCommand extends AbstractIMCommand {
 
                         if (installType == InstallType.MULTI_SERVER) {
                             properties.put("puppet_master_host_name", configUtil.fetchMasterHostName());  // restore host name of puppet master
+                            properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, System.getProperty("user.name"));  // setup name of user to access the nodes
+                            properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, readDefaultSshPrivateKey());  // setup private key of ssh user
                         }
                     }
                 }
@@ -362,6 +368,24 @@ public class InstallCommand extends AbstractIMCommand {
             }
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
+        }
+    }
+
+
+    /**
+     * @return content of default ssh private key stored in /{user.home}/.ssh/id_rsa
+     */
+    private String readDefaultSshPrivateKey() {
+        String userHome = System.getProperty("user.home");
+        Path pathToIdRsa = Paths.get(userHome).resolve(".ssh").resolve("id_rsa");
+        if (!Files.exists(pathToIdRsa)) {
+            throw new RuntimeException("Ssh private key doesn't found");
+        }
+
+        try {
+            return com.google.common.io.Files.toString(pathToIdRsa.toFile(), Charsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("It is impossible to read ssh private key: " + e.getMessage(), e);
         }
     }
 }

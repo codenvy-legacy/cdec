@@ -453,7 +453,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
 
         // remove local temp dir
-        commands.add(createCommand(format("sudo rm -rf %s", localTempDir)));
+        commands.add(createCommand(format("rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Backup data commands");
     }
@@ -553,7 +553,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
 
         // remove local temp dir
-        commands.add(createCommand(format("sudo rm -rf %s", localTempDir)));
+        commands.add(createCommand(format("rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Restore data commands");
     }

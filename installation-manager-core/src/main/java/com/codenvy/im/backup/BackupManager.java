@@ -57,7 +57,8 @@ public class BackupManager {
      */
     public BackupConfig backup(BackupConfig initialConfig) throws IOException, IllegalStateException {
         BackupConfig backupConfig = initialConfig.clone();
-        if (backupConfig.getBackupDirectory() == null) {
+        if (backupConfig.getBackupDirectory() == null
+            || backupConfig.getBackupDirectory().isEmpty()) {
             backupConfig.setBackupDirectory(defaultBackupDir);
         }
 
@@ -93,7 +94,8 @@ public class BackupManager {
     /** Restore due to config */
     public void restore(BackupConfig initialConfig) throws IOException, IllegalArgumentException {
         BackupConfig backupConfig = initialConfig.clone();
-        if (backupConfig.getBackupFile() == null) {
+        if (backupConfig.getBackupFile() == null
+            || backupConfig.getBackupFile().isEmpty()) {
             throw new IllegalArgumentException("Backup file is unknown.");
         }
 

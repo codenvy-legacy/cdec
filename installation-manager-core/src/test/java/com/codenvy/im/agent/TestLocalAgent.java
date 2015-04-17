@@ -67,7 +67,7 @@ public class TestLocalAgent {
 
     private String outputOfMockConsole;
 
-    LocalAgentTested spyTestAgent;
+    LocalAgent spyTestAgent;
 
     @BeforeMethod
     public void setupTestAgent() throws IOException, InterruptedException {
@@ -76,7 +76,11 @@ public class TestLocalAgent {
         errorStreamOfSpyProcess = new ByteArrayInputStream(new byte[0]);
 
         spyProcess = spy(new ProcessTested());
-        spyTestAgent = spy(new LocalAgentTested());
+        spyTestAgent = spy(new LocalAgent());
+
+        doReturn(spyProcess).when(spyTestAgent).getProcess(anyString());
+        doReturn(mockConsole).when(spyTestAgent).getConsole();
+        doReturn(true).when(spyTestAgent).isConsoleAccessible();
     }
 
     @BeforeMethod
@@ -143,11 +147,18 @@ public class TestLocalAgent {
         assertEquals(outputOfMockConsole, expectedConsoleOutput);
     }
 
+    @Test
+    public void testSudoCommandWithPassingPasswordWhenConsoleInaccessible() throws Exception {
+        doReturn(false).when(spyTestAgent).isConsoleAccessible();
+        spyTestAgent.execute("sudo true;");
+        assertEquals(outputOfMockConsole, "");
+    }
+
     @Test(expectedExceptions = AgentException.class,
             expectedExceptionsMessageRegExp = "Can't execute command '" + COMMAND_WITH_SUDO + "'. Output: mock output; Error: mock error.")
     public void testSudoCommandWithPassingPasswordError() throws Exception {
         doReturn(TEST_PASSWORD.toCharArray()).when(spyTestAgent).obtainPassword();
-        doReturn(true).when(spyTestAgent).isPasswordRequired(COMMAND_WITH_SUDO);
+        doReturn(true).when(spyTestAgent).isPasswordInputRequired(COMMAND_WITH_SUDO);
         doReturn(-1).when(spyProcess).waitFor();
         inputStreamOfSpyProcess = new ByteArrayInputStream("mock output".getBytes());
         errorStreamOfSpyProcess = new ByteArrayInputStream("mock error".getBytes());
@@ -155,28 +166,28 @@ public class TestLocalAgent {
     }
 
     @Test
-    public void testIsPasswordRequiredOnCommandWithoutSudo() {
-        assertFalse(spyTestAgent.isPasswordRequired(COMMAND_WITHOUT_SUDO));
+    public void testIsPasswordRequiredOnCommandWithoutSudo() throws IOException {
+        assertFalse(spyTestAgent.isPasswordInputRequired(COMMAND_WITHOUT_SUDO));
         verify(spyTestAgent, never()).getProcess(LocalAgent.CHECK_PASSWORD_NECESSITY_COMMAND);
     }
 
     @Test
-    public void testIsPasswordRequiredOnCommandWithSudoWhenProcessReturnsEmptyResult() {
-        assertFalse(spyTestAgent.isPasswordRequired(COMMAND_WITH_SUDO));
+    public void testIsPasswordRequiredOnCommandWithSudoWhenProcessReturnsEmptyResult() throws IOException {
+        assertFalse(spyTestAgent.isPasswordInputRequired(COMMAND_WITH_SUDO));
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_PASSWORD_NECESSITY_COMMAND);
     }
 
     @Test
-    public void testIsPasswordRequiredOnCommandWithSudoWhenProcessReturnsCorrectStatus() {
+    public void testIsPasswordRequiredOnCommandWithSudoWhenProcessReturnsCorrectStatus() throws IOException {
         inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_STATUS.getBytes());
-        assertTrue(spyTestAgent.isPasswordRequired(COMMAND_WITH_SUDO));
+        assertTrue(spyTestAgent.isPasswordInputRequired(COMMAND_WITH_SUDO));
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_PASSWORD_NECESSITY_COMMAND);
     }
 
     @Test
-    public void testIsPasswordRequiredOnCommandWithSudoWhenProcessThrowsException() throws InterruptedException {
+    public void testIsPasswordRequiredOnCommandWithSudoWhenProcessThrowsException() throws InterruptedException, IOException {
         doThrow(InterruptedException.class).when(spyProcess).waitFor();
-        assertFalse(spyTestAgent.isPasswordRequired(COMMAND_WITH_SUDO));
+        assertFalse(spyTestAgent.isPasswordInputRequired(COMMAND_WITH_SUDO));
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_PASSWORD_NECESSITY_COMMAND);
     }
 
@@ -280,16 +291,18 @@ public class TestLocalAgent {
         fail("Here should be AgentException.");
     }
 
-    class LocalAgentTested extends LocalAgent {
-        @Override
-        protected Process getProcess(String command) {
-            return spyProcess;
-        }
+    @Test
+    public void testIsConsoleAccessible() throws AgentException {
+        LocalAgent testAgent = spy(new LocalAgent());
+        doReturn(null).when(testAgent).getConsole();
+        assertTrue(testAgent.isConsoleAccessible());   // mockConsole is accessible because of mockConsole returning by spyTestAgent.getConsole() method
+    }
 
-        @Override
-        protected Console getConsole() throws AgentException {
-            return mockConsole;
-        }
+    @Test
+    public void testIsConsoleInAccessible() throws AgentException {
+        LocalAgent testAgent = spy(new LocalAgent());
+        doThrow(new AgentException("error")).when(testAgent).getConsole();
+        assertFalse(testAgent.isConsoleAccessible());
     }
 
     class ProcessTested extends Process {

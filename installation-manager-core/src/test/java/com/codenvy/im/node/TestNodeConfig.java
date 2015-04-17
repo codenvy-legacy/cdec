@@ -38,7 +38,7 @@ public class TestNodeConfig {
 
     @Test
     public void testInstantiate() throws Exception {
-        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         assertEquals(config.getHost(), TEST_HOST);
         assertEquals(config.getType(), TEST_TYPE);
 
@@ -51,7 +51,7 @@ public class TestNodeConfig {
 
     @Test
     public void testPort() throws Exception {
-        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         assertEquals(config.getPort(), 22);
 
         config.setPort(TEST_PORT);
@@ -61,13 +61,13 @@ public class TestNodeConfig {
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Port number must be greater than zero")
     public void testIllegalPortArgument() throws Exception {
-        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         config.setPort(0);
     }
 
     @Test
     public void testUser() throws Exception {
-        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         assertNull(config.getUser());
 
         config.setUser(TEST_USER);
@@ -76,12 +76,12 @@ public class TestNodeConfig {
 
     @Test
     public void testEqualsAndHashCode() {
-        NodeConfig config1 = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config1 = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         config1.setUser(TEST_USER);
         config1.setPort(TEST_PORT);
         config1.setPrivateKeyFile(TEST_KEY_PATH);
 
-        NodeConfig config2 = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config2 = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         config2.setUser(TEST_USER);
         config2.setPort(TEST_PORT);
         config2.setPrivateKeyFile(TEST_KEY_PATH);
@@ -117,7 +117,7 @@ public class TestNodeConfig {
 
     @Test
     public void testPrivateKeyFileAbsolutePath() throws Exception {
-        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST);
+        NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         assertEquals(config.getPrivateKeyFile(), "~/.ssh/id_rsa");
 
         config.setPrivateKeyFile(TEST_KEY_PATH);

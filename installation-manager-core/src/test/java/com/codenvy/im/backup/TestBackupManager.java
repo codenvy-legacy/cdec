@@ -162,8 +162,17 @@ public class TestBackupManager {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Backup file is unknown.")
-    public void testRestoreUnknownBackup() throws IOException {
+    public void testRestoreNullBackupFilename() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
+
+        spyManager.restore(initialBackupConfig);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Backup file is unknown.")
+    public void testRestoreEmptyBackupFileName() throws IOException {
+        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupFile("");
 
         spyManager.restore(initialBackupConfig);
     }

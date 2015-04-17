@@ -59,7 +59,7 @@ public class TestNodeInfo {
 
     @Test
     public void testCreateSuccessInfo() throws Exception {
-        NodeInfo info = NodeInfo.createSuccessInfo(new NodeConfig(TEST_TYPE, TEST_HOST));
+        NodeInfo info = NodeInfo.createSuccessInfo(new NodeConfig(TEST_TYPE, TEST_HOST, null));
         assertEquals(info.getType(), TEST_TYPE);
         assertEquals(info.getHost(), TEST_HOST);
         assertEquals(info.getStatus(), Status.SUCCESS);

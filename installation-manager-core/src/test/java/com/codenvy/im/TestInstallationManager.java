@@ -472,7 +472,7 @@ public class TestInstallationManager {
 
     @Test
     public void testAddNode() throws IOException {
-        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
+        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null);
         doReturn(TEST_BUILDER_NODE).when(mockNodeManager).add("builder.node.com");
         NodeConfig result = manager.addNode("builder.node.com");
         assertEquals(result, TEST_BUILDER_NODE);
@@ -487,7 +487,7 @@ public class TestInstallationManager {
 
     @Test
     public void testRemoveNode() throws IOException {
-        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com");
+        final NodeConfig TEST_BUILDER_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null);
         doReturn(TEST_BUILDER_NODE).when(mockNodeManager).remove("builder.node.com");
         NodeConfig result = manager.removeNode("builder.node.com");
         assertEquals(result, TEST_BUILDER_NODE);

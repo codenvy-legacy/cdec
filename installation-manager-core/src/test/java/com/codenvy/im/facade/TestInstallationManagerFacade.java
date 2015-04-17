@@ -178,7 +178,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testAddNode() throws IOException {
-        doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com")).when(mockInstallationManager).addNode("builder.node.com");
+        doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null)).when(mockInstallationManager).addNode("builder.node.com");
         assertEquals(installationManagerService.addNode("builder.node.com"), "{\n"
                                                                              + "  \"node\" : {\n"
                                                                              + "    \"type\" : \"BUILDER\",\n"
@@ -203,7 +203,7 @@ public class TestInstallationManagerFacade {
     @Test
     public void testRemoveNode() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
-        final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS);
+        final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS, null);
         doReturn(TEST_NODE).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
         assertEquals(installationManagerService.removeNode(TEST_NODE_DNS), "{\n"
