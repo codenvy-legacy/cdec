@@ -163,7 +163,7 @@ public class LocalAgent extends AbstractAgent {
         Console console;
         try {
             console = Console.getInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new AgentException("Can't obtain correct password", e);
         }
         return console;

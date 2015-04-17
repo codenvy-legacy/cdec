@@ -183,7 +183,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Add node to multi-server Codenvy.",
                   response = Response.class)
-    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") String dns) {
+    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
         return handleInstallationManagerResponse(facade.addNode(dns));
     }
 
@@ -193,7 +193,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Remove node from multi-server Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") String dns) {
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
         return handleInstallationManagerResponse(facade.removeNode(dns));
     }
 

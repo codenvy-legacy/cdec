@@ -441,7 +441,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));  // cleanup data node
 
         // add dumps to the local backup file
-        commands.add(createPackCommand(localTempDir, backupFile, "."));
+        commands.add(createPackCommand(localTempDir, backupFile, ".", false));
 
         // start services
         commands.add(createStartServiceCommand("puppet", dataNode));

@@ -172,8 +172,8 @@ public class CommandLibrary {
      *
      * Don't gzip to be able to update pack in future.
      */
-    public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
-        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, false));
+    public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean isSudoNeeded) {
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, isSudoNeeded));
     }
 
     /**
@@ -186,8 +186,8 @@ public class CommandLibrary {
         return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, true), node);
     }
 
-    private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean isNeedSudo) {
-        if (isNeedSudo) {
+    private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean isSudoNeeded) {
+        if (isSudoNeeded) {
             return format("if sudo test -f %2$s; then " +
                           "   sudo tar -C %1$s -rf %2$s %3$s;" +
                           "else " +
@@ -208,8 +208,8 @@ public class CommandLibrary {
         }
     }
 
-    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
-        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, false));
+    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, boolean isSudoNeeded) {
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, isSudoNeeded));
     }
 
     public static Command createUnpackCommand(Path packFile, Path toDir) {
@@ -220,7 +220,7 @@ public class CommandLibrary {
         return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, true), node);
     }
 
-    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack, boolean isNeedSudo) {
+    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack, boolean isSudoNeeded) {
         String command;
         if (pathWithinThePack == null) {
             command = format("tar -xf %s -C %s",
@@ -233,7 +233,7 @@ public class CommandLibrary {
                           pathWithinThePack);
         }
 
-        if (isNeedSudo) {
+        if (isSudoNeeded) {
             command = "sudo " + command;
         }
 

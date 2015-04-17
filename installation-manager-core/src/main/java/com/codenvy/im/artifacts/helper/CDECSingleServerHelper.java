@@ -306,10 +306,10 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("rm -rf %s", adminDatabaseBackup)));  // remove useless 'admin' database
 
         // puck dumps into backup file
-        commands.add(createPackCommand(tempDir, backupFile, "."));
+        commands.add(createPackCommand(tempDir, backupFile, ".", false));
 
         // pack filesystem data into the {backup_file}/fs folder
-        commands.add(createPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/."));
+        commands.add(createPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/.", true));
 
         // start services
         commands.add(createStartServiceCommand("puppet"));
@@ -320,7 +320,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         }
 
         // remove temp dir
-        commands.add(createCommand(format("sudo rm -rf %s", tempDir)));
+        commands.add(createCommand(format("rm -rf %s", tempDir)));
 
         return new MacroCommand(commands, "Backup data commands");
     }
@@ -375,7 +375,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
         // restore filesystem data from {backup_file}/fs folder
         commands.add(createCommand("sudo rm -rf /home/codenvy/codenvy-data/fs"));
-        commands.add(CommandLibrary.createUnpackCommand(backupFile, Paths.get("/home/codenvy/codenvy-data"), "fs"));
+        commands.add(CommandLibrary.createUnpackCommand(backupFile, Paths.get("/home/codenvy/codenvy-data"), "fs", true));
 
         // start services
         commands.add(createStartServiceCommand("puppet"));
@@ -386,7 +386,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         }
 
         // remove temp dir
-        commands.add(createCommand(format("sudo rm -rf %s", tempDir)));
+        commands.add(createCommand(format("rm -rf %s", tempDir)));
 
         return new MacroCommand(commands, "Restore data commands");
     }
