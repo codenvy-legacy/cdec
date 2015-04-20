@@ -107,6 +107,7 @@ public class LocalAgent extends AbstractAgent {
             return false;
         }
 
+        // REST request then
         if (!isConsoleAccessible()) {
             return false;
         }

@@ -34,7 +34,7 @@ public class InstallOptions {
     @ApiModelProperty(required = true)
     private Map<String, String> configProperties;
 
-    @ApiModelProperty(notes = "Is needed only for updating installation-manager artifact.")
+    @ApiModelProperty(notes = "It is needed only for updating installation-manager artifact.")
     private String cliUserHomeDir;
 
     /** Getter for {@link #installType} */

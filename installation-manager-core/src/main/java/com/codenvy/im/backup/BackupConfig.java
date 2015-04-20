@@ -21,8 +21,8 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.TarUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
-
 import com.wordnik.swagger.annotations.ApiModelProperty;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
 
@@ -75,7 +75,7 @@ public class BackupConfig {
     private String artifactVersion;
     private String backupDirectory;
 
-    @ApiModelProperty(notes = "Required for restore")
+    @ApiModelProperty(notes = "Required for restoring")
     private String backupFile;
 
     public String getArtifactName() {

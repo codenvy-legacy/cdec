@@ -33,6 +33,7 @@ import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -114,7 +115,9 @@ public class InstallCommand extends AbstractIMCommand {
         final InstallOptions installOptions = new InstallOptions();
         if (version == null) {
             installOptions.setStep(getFirstInstallStep());
-            version = facade.getVersionToInstall(initRequest(artifactName, null).setInstallOptions(installOptions));
+            Request request = initRequest(artifactName, null);
+            request.setInstallOptions(installOptions);
+            version = facade.getVersionToInstall(request);
         }
 
         if (multi) {

@@ -29,9 +29,9 @@ import com.wordnik.swagger.annotations.ApiParam;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -44,17 +44,16 @@ import java.util.logging.Logger;
  */
 @Path("/")
 @RolesAllowed({"system/admin"})
-@Api(value = "/im",
-     description = "Installation manager")
+@Api(value = "/im", description = "Installation manager")
 public class InstallationManagerService {
 
     private static final Logger LOG = Logger.getLogger(InstallationManagerService.class.getSimpleName());
 
-    protected final InstallationManagerFacade facade;
+    protected final InstallationManagerFacade delegate;
 
     @Inject
-    public InstallationManagerService(InstallationManagerFacade facade) {
-        this.facade = facade;
+    public InstallationManagerService(InstallationManagerFacade delegate) {
+        this.delegate = delegate;
     }
 
     /** Starts downloading */
@@ -62,170 +61,134 @@ public class InstallationManagerService {
     @Path("download/start")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Starts downloading artifact from Update Server.",
-                  response = Response.class)
+    @ApiOperation(value = "Starts downloading artifact from Update Server.", response = Response.class)
     public javax.ws.rs.core.Response startDownload(Request request) {
-        return handleInstallationManagerResponse(facade.startDownload(request));
+        return handleInstallationManagerResponse(delegate.startDownload(request));
     }
 
     /** Interrupts downloading */
     @POST
     @Path("download/stop")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Interrupts downloading artifact from Update Server.",
-                  response = Response.class)
+    @ApiOperation(value = "Interrupts downloading artifact from Update Server.", response = Response.class)
     public javax.ws.rs.core.Response stopDownload() {
-        return handleInstallationManagerResponse(facade.stopDownload());
+        return handleInstallationManagerResponse(delegate.stopDownload());
     }
 
-    /** @return the current status of downloading process */
+    /** Gets already started download status */
     @POST
     @Path("download/status")
-    @ApiOperation(value = "Get download artifact status.",
-                  notes = "Get already started download status.",
-                  response = Response.class)
+    @ApiOperation(value = "Gets already started download status", response = Response.class)
     @Produces(MediaType.APPLICATION_JSON)
     public javax.ws.rs.core.Response getDownloadStatus() {
-        return handleInstallationManagerResponse(facade.getDownloadStatus());
+        return handleInstallationManagerResponse(delegate.getDownloadStatus());
     }
 
-    /** @return list of updates from update server */
+    /** Get the list of actual updates from Update Server */
     @POST
     @Path("download/check")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get list of actual updates from Update Server.",
-                  response = Response.class)
+    @ApiOperation(value = "Get the list of actual updates from Update Server", response = Response.class)
     public javax.ws.rs.core.Response getUpdates(Request request) {
-        return handleInstallationManagerResponse(facade.getUpdates(request));
+        return handleInstallationManagerResponse(delegate.getUpdates(request));
     }
 
-    /** @return the list of downloaded artifacts */
+    /** Gets the list of downloaded artifacts" */
     @POST
     @Path("download/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get list of downloaded artifacts, which are presence in the upload directory of Installation Manager Server.",
-                  response = Response.class)
+    @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
     public javax.ws.rs.core.Response getDownloads(Request request) {
-        return handleInstallationManagerResponse(facade.getDownloads(request));
+        return handleInstallationManagerResponse(delegate.getDownloads(request));
     }
 
-    /** @return the list of installed artifacts and theirs versions */
+    /** Gets the list of installed artifacts. */
     @POST
     @Path("install/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get list of installed artifacts.",
-                  response = Response.class)
+    @ApiOperation(value = "Gets the list of installed artifacts.", response = Response.class)
     public javax.ws.rs.core.Response getInstalledVersions(Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.getInstalledVersions(request));
+        return handleInstallationManagerResponse(delegate.getInstalledVersions(request));
     }
 
-    /** Installs artifact */
+    /** Installs or updates artifact */
     @POST
     @Path("install")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Install artifact.",
-                  response = Response.class)
+    @ApiOperation(value = "Installs or updates artifact", response = Response.class)
     public javax.ws.rs.core.Response install(Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.install(request));
+        return handleInstallationManagerResponse(delegate.install(request));
     }
 
-    /** @return installation info */
+    /** Get the list of installation steps */
     @POST
     @Path("install/info")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get list of installation steps.",
-                  response = Response.class)
+    @ApiOperation(value = "Get the list of installation steps", response = Response.class)
     public javax.ws.rs.core.Response getInstallInfo(Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.getInstallInfo(request));
+        return handleInstallationManagerResponse(delegate.getInstallInfo(request));
     }
 
-    /** Adds trial subscription for user being logged in */
+    /** Gets Installation Manager configuration */
     @POST
-    @Path("subscription/add-trial")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("config")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Adds trial subscription for user being logged into SaaS Codenvy.",
-                  response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(@ApiParam(required = true, value = "userCredentials are required") Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.addTrialSubscription(request));
-    }
-
-    /** Check user's subscription. */
-    @POST
-    @Path("subscription/{subscription_type}/check")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Check user has a subscription of certain type at the SaaS Codenvy.",
-                  response = Response.class)
-    public javax.ws.rs.core.Response checkSubscription(@PathParam(value = "subscription_type") @ApiParam(required = false, value = "default value is 'OnPremises'") String subscriptionType,
-                                                       @ApiParam(required = true, value = "userCredentials are required") Request request) throws IOException {
-        return handleInstallationManagerResponse(facade.checkSubscription(subscriptionType, request));
-    }
-
-    /** @return the configuration of the Installation Manager */
-    @POST
-    @Path("config/get")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get configuration of Installation Manager.",
-                  response = Response.class)
+    @ApiOperation(value = "Gets Installation Manager configuration", response = Response.class)
     public javax.ws.rs.core.Response getConfig() {
-        return handleInstallationManagerResponse(facade.getConfig());
+        return handleInstallationManagerResponse(delegate.getConfig());
     }
 
-    /** Add node to multi-server Codenvy */
+    /** Adds Codenvy node in the multi-node environment */
     @POST
     @Path("node/add")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Add node to multi-server Codenvy.",
-                  response = Response.class)
+    @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = Response.class)
     public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
-        return handleInstallationManagerResponse(facade.addNode(dns));
+        return handleInstallationManagerResponse(delegate.addNode(dns));
     }
 
-    /** Remove node from multi-server Codenvy */
-    @POST
+    /** Removes Codenvy node in the multi-node environment */
+    @DELETE
     @Path("node/remove")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Remove node from multi-server Codenvy",
-                  response = Response.class)
-    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
-        return handleInstallationManagerResponse(facade.removeNode(dns));
+    @ApiOperation(value = "Removes Codenvy node in the multi-node environment ", response = Response.class)
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "DNS") @ApiParam(required = true) String dns) {
+        return handleInstallationManagerResponse(delegate.removeNode(dns));
     }
 
-    /** Perform backup according to certain backup config */
+    /** Performs Codenvy backup according to given backup config */
     @POST
     @Path("backup")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Backup on-prem Codenvy.",
-                  response = Response.class)
-    public javax.ws.rs.core.Response backup(@ApiParam(required = true, value = "artifactName is required") BackupConfig config) throws IOException {
-        return handleInstallationManagerResponse(facade.backup(config));
+    @ApiOperation(value = "Performs Codenvy backup according to given backup config", response = Response.class)
+    public javax.ws.rs.core.Response backup(@ApiParam(required = true, value = "backup config") BackupConfig config) throws IOException {
+        return handleInstallationManagerResponse(delegate.backup(config));
     }
 
-    /** Perform restore according to certain backup config */
+    /** Performs Codenvy restore according to given backup config */
     @POST
     @Path("restore")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Restore on-prem Codenvy.",
-                  response = Response.class)
-    public javax.ws.rs.core.Response restore(@ApiParam(required = true, value = "artifactName and backupFile are required") BackupConfig config) throws IOException {
-        return handleInstallationManagerResponse(facade.restore(config));
+    @ApiOperation(value = "Performs Codenvy restore according to given backup config", response = Response.class)
+    public javax.ws.rs.core.Response restore(@ApiParam(required = true, value = "backup config") BackupConfig config)
+            throws IOException {
+        return handleInstallationManagerResponse(delegate.restore(config));
     }
 
-    private javax.ws.rs.core.Response handleInstallationManagerResponse(String facadeResponseString) {
+    private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
         try {
-            Response facadeResponse = Response.fromJson(facadeResponseString);
-            if (facadeResponse.getStatus() == ResponseCode.OK) {
-                return javax.ws.rs.core.Response.ok(facadeResponse, MediaType.APPLICATION_JSON_TYPE).build();
+            Response response = Response.fromJson(responseString);
+            if (response.getStatus() == ResponseCode.OK) {
+                return javax.ws.rs.core.Response.ok(response, MediaType.APPLICATION_JSON_TYPE).build();
             } else {
-                return javax.ws.rs.core.Response.serverError().entity(facadeResponse).build();
+                return javax.ws.rs.core.Response.serverError().entity(response).build();
             }
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);

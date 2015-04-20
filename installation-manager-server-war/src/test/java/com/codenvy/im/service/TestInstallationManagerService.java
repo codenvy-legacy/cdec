@@ -21,9 +21,7 @@ import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
-import com.fasterxml.jackson.core.JsonParseException;
-import org.eclipse.che.api.account.shared.dto.AccountReference;
-import org.eclipse.che.api.core.rest.shared.dto.Link;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -31,10 +29,7 @@ import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
 
-import java.util.List;
-
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -155,28 +150,6 @@ public class TestInstallationManagerService {
     }
 
     @Test
-    public void testAddTrialSubscription() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(mockRequest);
-        Response result = service.addTrialSubscription(mockRequest);
-        checkOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(mockRequest);
-        result = service.addTrialSubscription(mockRequest);
-        checkErrorResponse(result);
-    }
-
-    @Test
-    public void testCheckSubscription() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription("id", mockRequest);
-        Response result = service.checkSubscription("id", mockRequest);
-        checkOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription("id", mockRequest);
-        result = service.checkSubscription("id", mockRequest);
-        checkErrorResponse(result);
-    }
-
-    @Test
     public void testGetConfig() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getConfig();
         Response result = service.getConfig();
@@ -237,7 +210,7 @@ public class TestInstallationManagerService {
         Response result = service.startDownload(mockRequest);
 
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        String facadeResponse = (String) result.getEntity();
+        String facadeResponse = (String)result.getEntity();
         assertTrue(facadeResponse.contains("org.eclipse.che.commons.json.JsonParseException: com.fasterxml.jackson.core.JsonParseException: " +
                                            "Unexpected end-of-input: expected close marker for OBJECT"));
     }

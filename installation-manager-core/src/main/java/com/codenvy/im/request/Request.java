@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
  * @author Anatoliy Bazko
  */
 public class Request {
-    @ApiModelProperty(notes = "Is needed for getting and downloading 'codenvy' artifact.")
+    @ApiModelProperty(notes = "It is needed for getting and downloading 'codenvy' artifact.")
     private UserCredentials userCredentials;
 
     private String artifactName;

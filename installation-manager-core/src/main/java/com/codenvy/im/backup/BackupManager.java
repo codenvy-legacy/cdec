@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.backup.BackupConfig.removeGzipExtension;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -57,8 +58,7 @@ public class BackupManager {
      */
     public BackupConfig backup(BackupConfig initialConfig) throws IOException, IllegalStateException {
         BackupConfig backupConfig = initialConfig.clone();
-        if (backupConfig.getBackupDirectory() == null
-            || backupConfig.getBackupDirectory().isEmpty()) {
+        if (isNullOrEmpty(backupConfig.getBackupDirectory())) {
             backupConfig.setBackupDirectory(defaultBackupDir);
         }
 

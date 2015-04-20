@@ -49,6 +49,5 @@
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="SMTP"/>
-        <appender-ref ref="SYSLOG"/>
     </root>
 </configuration>
