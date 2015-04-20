@@ -78,10 +78,8 @@ public class TestAccountUtils {
                                                                        ACCOUNT_ID + "\"}"
                                                                        + "}]");
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
-
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
         assertTrue(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
@@ -171,9 +169,8 @@ public class TestAccountUtils {
                                                                        + "}]");
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         assertTrue(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
@@ -212,10 +209,8 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
-
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
         assertTrue(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
@@ -230,9 +225,8 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         assertFalse(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
@@ -248,9 +242,8 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         assertFalse(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
@@ -263,9 +256,8 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",endDate:\"" + endDate + "\"}]");
 
         AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
@@ -278,9 +270,8 @@ public class TestAccountUtils {
         String startDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\"}]");
 
         AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
@@ -299,9 +290,8 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
@@ -320,9 +310,8 @@ public class TestAccountUtils {
         String endDate = subscriptionDateWrongFormat.format(cal.getTime());
 
         when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID + "}]");
-        when(mockTransport.doGet("/account/subscriptions/" + SUBSCRIPTION_ID + "/attributes", ACCESS_TOKEN))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                            + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }

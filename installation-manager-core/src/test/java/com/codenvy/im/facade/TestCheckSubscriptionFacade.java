@@ -17,9 +17,9 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.InstallationManager;
 import com.codenvy.im.InstallationManagerImpl;
+import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.utils.HttpTransport;
 
@@ -78,9 +78,7 @@ public class TestCheckSubscriptionFacade {
         when(transport.doGet(endsWith("account"), eq("auth token")))
             .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
-            .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
-            .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         String response = installationManagerService.checkSubscription("OnPremises", request);
         assertEquals(response, "{\n" +
@@ -161,9 +159,7 @@ public class TestCheckSubscriptionFacade {
         when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
-                .thenReturn("{startDate:\"2014.11.21\",endDate:\"21/11/2015\"}");
+                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"2014.11.21\",endDate:\"21/11/2015\"}]");
 
         String response = installationManagerService.checkSubscription("OnPremises", request);
         assertEquals(response, "{\n" +
@@ -178,9 +174,7 @@ public class TestCheckSubscriptionFacade {
         when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
-                .thenReturn("{startDate:\"11/21/2014\",endDate:\"2015.11.21\"}");
+                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"11/21/2014\",endDate:\"2015.11.21\"}]");
 
         String response = installationManagerService.checkSubscription("OnPremises", request);
         assertEquals(response, "{\n" +

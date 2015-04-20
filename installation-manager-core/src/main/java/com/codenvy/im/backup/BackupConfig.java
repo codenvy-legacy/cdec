@@ -66,8 +66,8 @@ public class BackupConfig {
         }
     }
 
-    protected static String BACKUP_NAME_TIME_FORMAT  = "dd-MMM-yyyy_HH-mm-ss";
-    protected static Path   BASE_TMP_DIRECTORY       = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+    protected static String BACKUP_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
+    protected static Path   BASE_TMP_DIRECTORY      = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
     @ApiModelProperty(required = true, allowableValues = CDECArtifact.NAME)
     private String artifactName;
@@ -204,7 +204,8 @@ public class BackupConfig {
         return result;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return format("{'artifactName':'%s', 'artifactVersion':'%s', 'backupDirectory':'%s', 'backupFile':'%s'}",
                       artifactName,
                       artifactVersion,

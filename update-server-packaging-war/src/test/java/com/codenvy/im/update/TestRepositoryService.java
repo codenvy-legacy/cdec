@@ -48,7 +48,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -208,10 +207,7 @@ public class TestRepositoryService extends BaseTest {
         .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
         when(httpTransport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
-        .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-
-        when(httpTransport.doGet("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
-        .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
+                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
@@ -407,7 +403,7 @@ public class TestRepositoryService extends BaseTest {
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy-1.01.1/1.01.1");
 
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode());
     }
 
     @Test
@@ -432,9 +428,7 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]")
                 .when(httpTransport).doGet(endsWith("/account"), eq("token"));
-        doReturn("{startDate:\"01/01/2014\", endDate:\"01/01/2020\"}")
-                .when(httpTransport).doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("token"));
-        doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId}]")
+        doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId,startDate:\"01/01/2014\", endDate:\"01/01/2020\"}]")
                 .when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
         doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
 

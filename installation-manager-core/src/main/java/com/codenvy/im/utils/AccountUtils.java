@@ -19,7 +19,6 @@ package com.codenvy.im.utils;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
-import org.eclipse.che.api.account.shared.dto.SubscriptionAttributesDescriptor;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 
 import javax.annotation.Nullable;
@@ -32,7 +31,6 @@ import java.util.Date;
 import java.util.List;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static com.codenvy.im.utils.Commons.createListDtoFromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
 import static java.lang.String.format;
@@ -66,10 +64,9 @@ public class AccountUtils {
                                                                           apiEndpoint,
                                                                           accessToken,
                                                                           accountId);
-            for (SubscriptionDescriptor s : subscriptions) {
-                if (s.getServiceId().equalsIgnoreCase(requiredSubscription)) {
-                    SubscriptionAttributesDescriptor attributes = getSubscriptionAttributes(s.getId(), transport, apiEndpoint, accessToken);
-                    return isSubscriptionUseAvailableByDate(attributes);
+            for (SubscriptionDescriptor subscriptionDescriptor : subscriptions) {
+                if (subscriptionDescriptor.getServiceId().equalsIgnoreCase(requiredSubscription)) {
+                    return isSubscriptionUseAvailableByDate(subscriptionDescriptor);
                 }
             }
 
@@ -79,10 +76,10 @@ public class AccountUtils {
         }
     }
 
-    private static boolean isSubscriptionUseAvailableByDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalArgumentException {
+    private static boolean isSubscriptionUseAvailableByDate(SubscriptionDescriptor subscriptionDescriptor) throws IllegalArgumentException {
         try {
-            Date startDate = getSubscriptionStartDate(subscriptionAttributes);
-            Date endDate = getSubscriptionEndDate(subscriptionAttributes);
+            Date startDate = getSubscriptionStartDate(subscriptionDescriptor);
+            Date endDate = getSubscriptionEndDate(subscriptionDescriptor);
 
             Date currentDate = Calendar.getInstance().getTime();
 
@@ -93,13 +90,13 @@ public class AccountUtils {
     }
 
     /** @return the subscription start date */
-    public static Date getSubscriptionEndDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalArgumentException {
-        return getAttributeAsDate(subscriptionAttributes.getEndDate(), "End date");
+    public static Date getSubscriptionEndDate(SubscriptionDescriptor subscriptionDescriptor) throws IllegalArgumentException {
+        return getAttributeAsDate(subscriptionDescriptor.getEndDate(), "End date");
     }
 
     /** @return the subscription end date */
-    public static Date getSubscriptionStartDate(SubscriptionAttributesDescriptor subscriptionAttributes) throws IllegalArgumentException {
-        return getAttributeAsDate(subscriptionAttributes.getStartDate(), "Start date");
+    public static Date getSubscriptionStartDate(SubscriptionDescriptor subscriptionDescriptor) throws IllegalArgumentException {
+        return getAttributeAsDate(subscriptionDescriptor.getStartDate(), "Start date");
     }
 
     private static Date getAttributeAsDate(String attributeValue, String attributeName) throws IllegalArgumentException {
@@ -131,15 +128,6 @@ public class AccountUtils {
                                                                  String accountId) throws IOException {
         String requestUrl = combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions");
         return createListDtoFromJson(transport.doGet(requestUrl, accessToken), SubscriptionDescriptor.class);
-    }
-
-    /** @return subscription attributes */
-    public static SubscriptionAttributesDescriptor getSubscriptionAttributes(String subscriptionId,
-                                                                             HttpTransport transport,
-                                                                             String apiEndpoint,
-                                                                             String accessToken) throws IOException {
-        String requestUrl = combinePaths(apiEndpoint, "account/subscriptions/" + subscriptionId + "/attributes");
-        return createDtoFromJson(transport.doGet(requestUrl, accessToken), SubscriptionAttributesDescriptor.class);
     }
 
 
