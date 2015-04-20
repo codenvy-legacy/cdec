@@ -178,7 +178,7 @@ public class TestNodeManager extends BaseTest {
                             "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp " +
                             "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', " +
                             "'agent'='LocalAgent'}, " +
-                            "{'command'='sudo sed -i 's/$additional_runners = .*/$additional_runners = \"null\"/g' " +
+                            "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"null\"|g' " +
                             "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', " +
                             "'agent'='LocalAgent'}, " +
                             "{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep " +

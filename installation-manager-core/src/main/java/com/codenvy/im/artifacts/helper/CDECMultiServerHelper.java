@@ -71,7 +71,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
     public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
         return ImmutableList.of(
             "Disable SELinux on nodes",
-            "Install puppet master on master node and puppet agents on other nodes",
+            "Install puppet master and agents on nodes",
             "Unzip Codenvy binaries",
             "Configure puppet master",
             "Configure puppet agents for each node",
@@ -140,6 +140,21 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                       ".wants/puppetmaster.service'" +
                                       "; fi"));
                     add(createCommand("sudo systemctl enable puppetmaster"));
+
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
+
+                    // install puppet agent
+                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
+                                      " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user" +
+                                      ".target" +
+                                      ".wants/puppetmaster.service'" +
+                                      "; fi"));
+                    add(createCommand("sudo systemctl enable puppetmaster"));
+                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
+                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
+                                      ".wants/puppet.service'" +
+                                      "; fi"));
+                    add(createCommand("sudo systemctl enable puppet"));
 
                     // install puppet agents on each node
                     add(createCommand(
@@ -226,9 +241,14 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                          config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
 
                 // remove "[agent]" section
-                commands.add(createReplaceCommand("/etc/puppet/puppet.conf",
-                                                  "\\[agent\\].*",
-                                                  ""));
+                commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                     "  show_diff = true\\n" +
+                                     "  pluginsync = true\\n" +
+                                     "  report = true\\n" +
+                                     "  default_schedules = false\\n" +
+                                     "  certname = %s\\n" +
+                                     "  runinterval = 300\\n" +
+                                     "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())));
 
                 // make it possible to sign up nodes' certificates automatically
                 String autosignFileContent = "";
@@ -238,7 +258,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 commands.add(createCommand(format("sudo sh -c \"echo -e '%s' > /etc/puppet/autosign.conf\"",
                                                   autosignFileContent)));
 
-                return new MacroCommand(commands, "Configure puppet master");
+                return new MacroCommand(commands, "Configure puppet master and agent on puppet master node");
             }
 
             case 4: {
@@ -260,7 +280,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                       "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
                 }
 
-                return new MacroCommand(commands, "Configure puppet agent");
+                return new MacroCommand(commands, "Configure puppet agents on each node");
             }
 
             case 5:
