@@ -57,9 +57,9 @@ public class CommandLibrary {
     }
 
     public static Command createReplaceCommand(String file, String replacingToken, String replacement) {
-        return createCommand(format("sudo sed -i 's/%s/%s/g' %s",
-                                    replacingToken.replace("/", "\\/"),
-                                    replacement.replace("/", "\\/"),
+        return createCommand(format("sudo sed -i 's|%s|%s|g' %s",
+                                    replacingToken.replace("\n", "\\n"),
+                                    replacement.replace("\n", "\\n"),
                                     file));
     }
 

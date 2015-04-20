@@ -293,13 +293,15 @@ public class InstallCommand extends AbstractIMCommand {
                         properties = configUtil.merge(configUtil.loadInstalledCodenvyProperties(installType),
                                                       configUtil.loadCodenvyDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
-
                         if (installType == InstallType.MULTI_SERVER) {
-                            properties.put("puppet_master_host_name", configUtil.fetchMasterHostName());  // restore host name of puppet master
-                            properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, System.getProperty("user.name"));  // setup name of user to access the nodes
-                            properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, readDefaultSshPrivateKey());  // setup private key of ssh user
+                            properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, configUtil.fetchMasterHostName());  // restore host name of puppet master
                         }
                     }
+                }
+
+                if (installType == InstallType.MULTI_SERVER) {
+                    properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, System.getProperty("user.name"));  // setup name of user to access the nodes
+                    properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, readDefaultSshPrivateKey());  // setup private key of ssh user
                 }
 
                 options.setConfigProperties(properties);

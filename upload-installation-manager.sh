@@ -126,11 +126,11 @@ for VERSION in 3.1.0; do
     uploadCodenvyServerInstallScript ${VERSION}
 done
 
-for VERSION in 3.1.0 3.3.0 3.5.0 3.6.0 3.7.3; do
+for VERSION in 3.1.0 3.3.0 3.5.0 3.6.0 3.7.3 3.8.0; do
     uploadCodenvySingleServerInstallProperties ${VERSION}
 done
 
-for VERSION in 3.5.0 3.6.0 3.7.3; do
+for VERSION in 3.5.0 3.6.0 3.7.3 3.8.0; do
     uploadCodenvyMultiServerInstallProperties ${VERSION}
 done
 

@@ -49,14 +49,14 @@ public class TestCommandLibrary {
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
         Command testCommand = createPropertyReplaceCommand("testFile", "property", "newValue");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/property = .*/property = \"newValue\"/g' testFile', " +
+        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's|property = .*|property = \"newValue\"|g' testFile', " +
                                              "'agent'='LocalAgent'}");
     }
 
     @Test
     public void testCreateLocalReplaceCommand() {
-        Command testCommand = createReplaceCommand("testFile", "old", "new");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's/old/new/g' testFile', " +
+        Command testCommand = createReplaceCommand("testFile", "old\n/", "new\n/");
+        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's|old\\n/|new\\n/|g' testFile', " +
                                              "'agent'='LocalAgent'}");
     }
 
@@ -149,7 +149,7 @@ public class TestCommandLibrary {
 
         Command command = CommandLibrary.createPatchCommand(patchDir, CommandLibrary.PatchType.BEFORE_UPDATE, installOptions);
         assertEquals(command.toString(), "[" +
-                                         "{'command'='sudo sed -i 's/$test_property1/property1/g' target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo sed -i 's|$test_property1|property1|g' target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
                                          "{'command'='bash target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}" +
                                          "]");
     }
