@@ -21,7 +21,7 @@ package com.codenvy.im.request;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.utils.Version;
 
 import org.testng.Assert;
@@ -40,8 +40,10 @@ public class TestRequest {
                 .setVersion("1.0.1")
                 .setUserCredentials(new UserCredentials("test token", "test account id"));
 
-        assertEquals(testRequest.getArtifact(), ArtifactFactory.createArtifact(CDECArtifact.NAME));
-        assertEquals(testRequest.getVersion(), Version.valueOf("1.0.1"));
+        assertEquals(testRequest.getArtifactName(), CDECArtifact.NAME);
+        assertEquals(testRequest.createArtifact(), ArtifactFactory.createArtifact(CDECArtifact.NAME));
+        assertEquals(testRequest.getVersion(), "1.0.1");
+        assertEquals(testRequest.createVersion(), Version.valueOf("1.0.1"));
         Assert.assertNotNull(testRequest.getUserCredentials());
         assertEquals(testRequest.getAccessToken(), "test token");
         assertEquals(testRequest.getAccountId(), "test account id");
@@ -53,7 +55,7 @@ public class TestRequest {
                 .setArtifactName("cdecxxx")
                 .setVersion("1.0.1");
 
-        testRequest.getArtifact();
+        testRequest.createArtifact();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -62,7 +64,7 @@ public class TestRequest {
                 .setArtifactName("codenvy")
                 .setVersion("00.1.1");
 
-        testRequest.getVersion();
+        testRequest.createVersion();
     }
 
     @Test

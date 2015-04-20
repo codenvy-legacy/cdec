@@ -17,12 +17,11 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -38,9 +37,9 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
 
     private UserCredentials credentials;
 
@@ -49,7 +48,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new AddNodeCommand());
-        spyCommand.service = mockInstallationManagerProxy;
+        spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
 
@@ -80,7 +79,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         String TEST_DNS_NAME = "some";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
             .when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

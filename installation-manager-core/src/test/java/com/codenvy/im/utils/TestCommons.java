@@ -156,7 +156,7 @@ public class TestCommons {
         Path outFile = Paths.get("target", "outFile");
         FileOutputStream out = new FileOutputStream(outFile.toFile());
 
-        FileUtils.write(inFile.toFile(), context);
+        FileUtils.writeStringToFile(inFile.toFile(), context);
 
         Commons.copyInterruptable(new FileInputStream(inFile.toFile()), out);
         String output = FileUtils.readFileToString(outFile.toFile());

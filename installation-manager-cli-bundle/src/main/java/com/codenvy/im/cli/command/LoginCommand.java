@@ -93,7 +93,7 @@ public class LoginCommand extends AbstractIMCommand {
             preferencesStorage.setAccountId(accountReference.getId());
             console.printSuccess("Login success.");
 
-            String response = service.addTrialSubscription(initRequest());
+            String response = facade.addTrialSubscription(initRequest());
             if (Response.isError(response)) {
                 console.printErrorAndExit(response);
             }

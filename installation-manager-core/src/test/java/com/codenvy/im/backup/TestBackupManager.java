@@ -61,11 +61,10 @@ public class TestBackupManager {
 
     private BackupManager spyManager;
 
-    private static final Path   ORIGIN_DEFAULT_BACKUP_DIRECTORY = BackupConfig.DEFAULT_BACKUP_DIRECTORY;
-    private static final Path   ORIGIN_BASE_TMP_DIRECTORY       = BackupConfig.BASE_TMP_DIRECTORY;
-    private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT  = BackupConfig.BACKUP_NAME_TIME_FORMAT;
+    private static final Path   ORIGIN_BASE_TMP_DIRECTORY      = BackupConfig.BASE_TMP_DIRECTORY;
+    private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT = BackupConfig.BACKUP_NAME_TIME_FORMAT;
 
-    private static final Path   TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backup");
+    private static final Path   TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backups");
     private static final Path   TEST_BASE_TMP_DIRECTORY       = Paths.get("target/tmp_backup");
     private static final String TEST_BACKUP_NAME_TIME_FORMAT  = "dd-MMM-yyyy";
 
@@ -78,11 +77,10 @@ public class TestBackupManager {
         FileUtils.deleteDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toFile());
         FileUtils.deleteDirectory(TEST_BASE_TMP_DIRECTORY.toFile());
 
-        BackupConfig.DEFAULT_BACKUP_DIRECTORY = TEST_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = TEST_BACKUP_NAME_TIME_FORMAT;
 
-        spyManager = spy(new BackupManager(mockConfigUtil));
+        spyManager = spy(new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString(), mockConfigUtil));
         doReturn(mockCdecArtifact).when(spyManager).getArtifact(CDECArtifact.NAME);
 
         doReturn(CDECArtifact.NAME).when(mockCdecArtifact).getName();
@@ -91,16 +89,17 @@ public class TestBackupManager {
 
     @AfterMethod
     public void tearDown() throws IOException {
-        BackupConfig.DEFAULT_BACKUP_DIRECTORY = ORIGIN_DEFAULT_BACKUP_DIRECTORY;
         BackupConfig.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = ORIGIN_BACKUP_NAME_TIME_FORMAT;
     }
 
     @Test
     public void testBackupCodenvy() throws IOException {
-        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
+        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toString());
+
         BackupConfig expectedBackupConfig = initialBackupConfig.clone()
-                                                               .setBackupFile(initialBackupConfig.generateBackupFilePath())
+                                                               .setBackupFile(initialBackupConfig.generateBackupFilePath().toString())
                                                                .setArtifactVersion(TEST_VERSION);
 
         doAnswer(new Answer() {
@@ -112,16 +111,18 @@ public class TestBackupManager {
 
         BackupConfig result = spyManager.backup(initialBackupConfig);
 
-        expectedBackupConfig.setBackupFile(BackupConfig.addGzipExtension(expectedBackupConfig.getBackupFile()));  // expect backup file name with added gzip extension
+        expectedBackupConfig.setBackupFile(BackupConfig.addGzipExtension(Paths.get(expectedBackupConfig.getBackupFile())).toString());  // expect backup file name with added gzip extension
         assertEquals(result, expectedBackupConfig);
-        assertTrue(Files.exists(result.getBackupFile()));
+        assertTrue(Files.exists(Paths.get(result.getBackupFile())));
     }
 
     @Test(expectedExceptions = BackupException.class,
           expectedExceptionsMessageRegExp = "error")
     public void testBackupException() throws IOException {
-        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
-        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath())
+        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toString());
+
+        BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath().toString())
                                                                .setArtifactVersion(TEST_VERSION);
 
         doThrow(new IOException("error")).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigUtil);
@@ -143,15 +144,15 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(backupFile);
 
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile);
+                                                             .setBackupFile(compressedBackupFile.toString());
 
         BackupConfig expectedBackupConfig = new BackupConfig().setArtifactName("codenvy");
 
         Path expectedBackupDirectory = expectedBackupConfig.obtainArtifactTempDirectory();
-        expectedBackupConfig.setBackupDirectory(expectedBackupDirectory);
+        expectedBackupConfig.setBackupDirectory(expectedBackupDirectory.toString());
 
         Path tempBackupFile = expectedBackupDirectory.resolve(backupFile.getFileName().toString());
-        expectedBackupConfig.setBackupFile(tempBackupFile);
+        expectedBackupConfig.setBackupFile(tempBackupFile.toString());
 
         doReturn(mockCommand).when(mockCdecArtifact).getRestoreCommand(expectedBackupConfig,
                                                                        mockConfigUtil);
@@ -161,8 +162,17 @@ public class TestBackupManager {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Backup file is unknown.")
-    public void testRestoreUnknownBackup() throws IOException {
+    public void testRestoreNullBackupFilename() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy");
+
+        spyManager.restore(initialBackupConfig);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "Backup file is unknown.")
+    public void testRestoreEmptyBackupFileName() throws IOException {
+        BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
+                                                             .setBackupFile("");
 
         spyManager.restore(initialBackupConfig);
     }
@@ -171,7 +181,7 @@ public class TestBackupManager {
           expectedExceptionsMessageRegExp = "Backup file 'non-exists' doesn't exist.")
     public void testRestoreNonExistsBackup() throws IOException {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(Paths.get("non-exists"));
+                                                             .setBackupFile("non-exists");
 
         spyManager.restore(initialBackupConfig);
     }
@@ -181,7 +191,7 @@ public class TestBackupManager {
     public void testRestoreIOException() throws IOException {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile);
+                                                             .setBackupFile(compressedBackupFile.toString());
 
         doThrow(new IOException("error")).when(mockCdecArtifact).getRestoreCommand(any(BackupConfig.class), any(ConfigUtil.class));
         spyManager.restore(initialBackupConfig);
@@ -194,7 +204,7 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
 
         BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile));
+                                                             .setBackupFile(compressedBackupFile.toString()));
 
         doReturn(spyBackupConfig).when(spyBackupConfig).clone();
         doThrow(new BackupException("error")).when(spyBackupConfig).extractConfigFromBackup();
@@ -208,7 +218,7 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
 
         BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile));
+                                                             .setBackupFile(compressedBackupFile.toString()));
 
         doReturn(spyBackupConfig).when(spyBackupConfig).clone();
         doReturn(spyBackupConfig).when(spyBackupConfig).extractConfigFromBackup();
@@ -223,7 +233,7 @@ public class TestBackupManager {
         Path compressedBackupFile = prepareCompressedBackup(TEST_DEFAULT_BACKUP_DIRECTORY.resolve("testBackup.tar"));
 
         BackupConfig spyBackupConfig = spy(new BackupConfig().setArtifactName("codenvy")
-                                                             .setBackupFile(compressedBackupFile));
+                                                             .setBackupFile(compressedBackupFile.toString()));
 
         doReturn(spyBackupConfig).when(spyBackupConfig).clone();
         doReturn(spyBackupConfig).when(spyBackupConfig).extractConfigFromBackup();
@@ -234,7 +244,7 @@ public class TestBackupManager {
 
     @Test
     public void testGetArtifact() throws IOException {
-        BackupManager manager = new BackupManager(mockConfigUtil);
+        BackupManager manager = new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString(), mockConfigUtil);
         Artifact result = manager.getArtifact("codenvy");
         assertEquals(result.getName(), "codenvy");
     }

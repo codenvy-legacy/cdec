@@ -31,9 +31,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
 import org.eclipse.che.commons.json.JsonParseException;
-import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.ext.json.JsonRepresentation;
-import org.restlet.representation.Representation;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -141,12 +138,6 @@ public class TestResponse {
         // check real-life scenario of parsing JSON using Commons.fromJson()
         Response restoredResponse = Commons.fromJson(json, Response.class);
 
-        assertNotNull(restoredResponse);
-        assertEquals(Commons.toJson(restoredResponse), expectedJson);
-
-        // check real-life scenario of parsing JSON using JacksonRepresentation.getObject() to recognize errors like "Unrecognized field"
-        Representation rep = new JsonRepresentation(json);
-        restoredResponse = new JacksonRepresentation<>(rep, Response.class).getObject();
         assertNotNull(restoredResponse);
         assertEquals(Commons.toJson(restoredResponse), expectedJson);
     }

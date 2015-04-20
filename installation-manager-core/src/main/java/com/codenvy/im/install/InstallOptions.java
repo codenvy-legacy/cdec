@@ -18,6 +18,7 @@
 package com.codenvy.im.install;
 
 import com.codenvy.im.config.Config;
+import com.wordnik.swagger.annotations.ApiModelProperty;
 
 import java.util.Map;
 
@@ -25,10 +26,15 @@ import java.util.Map;
  * @author Anatoliy Bazko
  */
 public class InstallOptions {
-
     private int                 step;
+
+    @ApiModelProperty(required = true)
     private InstallType         installType;
+
+    @ApiModelProperty(required = true)
     private Map<String, String> configProperties;
+
+    @ApiModelProperty(notes = "Is needed only for updating installation-manager artifact.")
     private String cliUserHomeDir;
 
     /** Getter for {@link #installType} */

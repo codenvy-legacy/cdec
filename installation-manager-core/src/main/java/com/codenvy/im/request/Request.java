@@ -18,25 +18,32 @@
 package com.codenvy.im.request;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.utils.Version;
+import com.wordnik.swagger.annotations.ApiModelProperty;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-
 /**
- * Aggregated request to {@link com.codenvy.im.service.InstallationManagerService} from CLI.
- * Artifact name and version are user's entered options.
+ * Aggregated request to {@link com.codenvy.im.facade.InstallationManagerFacade}.
  *
  * @author Anatoliy Bazko
  */
 public class Request {
+    @ApiModelProperty(notes = "Is needed for getting and downloading 'codenvy' artifact.")
     private UserCredentials userCredentials;
-    private String          artifactName;
-    private String          version;
+
+    private String artifactName;
+    private String version;
+
+    @ApiModelProperty(notes = "Required for all install commands")
+    private InstallOptions installOptions;
 
     public Request() {
     }
@@ -67,13 +74,18 @@ public class Request {
      *         if artifact name is wrong
      */
     @Nullable
-    public Artifact getArtifact() throws ArtifactNotFoundException {
-        return artifactName == null ? null : createArtifact(artifactName);
+    public Artifact createArtifact() throws ArtifactNotFoundException {
+        return artifactName == null ? null : ArtifactFactory.createArtifact(artifactName);
     }
 
+    @ApiModelProperty(notes = "Default artifact name = 'codenvy'", allowableValues = CDECArtifact.NAME + "," + InstallManagerArtifact.NAME)
     public Request setArtifactName(String artifactName) {
         this.artifactName = artifactName;
         return this;
+    }
+
+    public String getArtifactName() {
+        return artifactName;
     }
 
     /**
@@ -81,18 +93,37 @@ public class Request {
      * @throws java.lang.IllegalArgumentException
      */
     @Nullable
-    public Version getVersion() {
+    public Version createVersion() {
         return version == null ? null : Version.valueOf(version);
     }
 
+    @ApiModelProperty(notes = "Default version could be the installed artifact version.")
     public Request setVersion(String version) {
         this.version = version;
         return this;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * @return {@link com.codenvy.im.install.InstallOptions} or null
+     */
+    @Nullable
+    public InstallOptions getInstallOptions() {
+        return installOptions;
+    }
+
+    public Request setInstallOptions(InstallOptions installOptions) {
+        this.installOptions = installOptions;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o)
+            return true;
         if (!(o instanceof Request)) return false;
 
         Request request = (Request)o;
@@ -100,6 +131,7 @@ public class Request {
         if (artifactName != null ? !artifactName.equals(request.artifactName) : request.artifactName != null) return false;
         if (!userCredentials.equals(request.userCredentials)) return false;
         if (version != null ? !version.equals(request.version) : request.version != null) return false;
+        if (installOptions != null ? !installOptions.equals(request.installOptions) : request.installOptions != null) return false;
 
         return true;
     }
@@ -109,6 +141,7 @@ public class Request {
         int result = userCredentials.hashCode();
         result = 31 * result + (artifactName != null ? artifactName.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (installOptions != null ? installOptions.hashCode() : 0);
         return result;
     }
 }

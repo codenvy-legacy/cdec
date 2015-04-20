@@ -17,10 +17,12 @@
  */
 package com.codenvy.im.backup;
 
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.TarUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import com.wordnik.swagger.annotations.ApiModelProperty;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
 
@@ -65,13 +67,16 @@ public class BackupConfig {
     }
 
     protected static String BACKUP_NAME_TIME_FORMAT  = "dd-MMM-yyyy_HH-mm-ss";
-    protected static Path   DEFAULT_BACKUP_DIRECTORY = Paths.get(System.getenv("HOME")).resolve(".codenvy").resolve("backups");
     protected static Path   BASE_TMP_DIRECTORY       = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
+    @ApiModelProperty(required = true, allowableValues = CDECArtifact.NAME)
     private String artifactName;
+
     private String artifactVersion;
-    private Path backupDirectory = DEFAULT_BACKUP_DIRECTORY;
-    private Path backupFile;
+    private String backupDirectory;
+
+    @ApiModelProperty(notes = "Required for restore")
+    private String backupFile;
 
     public String getArtifactName() {
         return artifactName;
@@ -92,11 +97,11 @@ public class BackupConfig {
     }
 
     @Nonnull
-    public Path getBackupDirectory() {
+    public String getBackupDirectory() {
         return backupDirectory;
     }
 
-    public BackupConfig setBackupDirectory(Path backupDirectory) {
+    public BackupConfig setBackupDirectory(String backupDirectory) {
         this.backupDirectory = backupDirectory;
         return this;
     }
@@ -104,11 +109,11 @@ public class BackupConfig {
     /**
      * @return path to backup file
      */
-    public Path getBackupFile() {
+    public String getBackupFile() {
         return backupFile;
     }
 
-    public BackupConfig setBackupFile(Path backupFile) {
+    public BackupConfig setBackupFile(String backupFile) {
         this.backupFile = backupFile;
         return this;
     }
@@ -156,7 +161,7 @@ public class BackupConfig {
             fileName = format("backup_%s.tar", currentTime);
         }
 
-        return getBackupDirectory().resolve(fileName);
+        return Paths.get(getBackupDirectory()).resolve(fileName);
     }
 
     protected Date getCurrentDate() {
@@ -228,9 +233,9 @@ public class BackupConfig {
         Files.createDirectories(tempDir);
 
         Path configFile = tempDir.resolve(BACKUP_CONFIG_FILE);
-        FileUtils.write(configFile.toFile(), configJson);
+        FileUtils.writeStringToFile(configFile.toFile(), configJson);
 
-        TarUtils.packFile(configFile, backupFile);
+        TarUtils.packFile(configFile, Paths.get(backupFile));
 
         // cleanup
         Files.deleteIfExists(configFile);
@@ -244,7 +249,7 @@ public class BackupConfig {
         Path tempDir = BASE_TMP_DIRECTORY;
         Files.createDirectories(tempDir);
 
-        TarUtils.unpackFile(backupFile, tempDir, Paths.get(BACKUP_CONFIG_FILE));
+        TarUtils.unpackFile(Paths.get(backupFile), tempDir, Paths.get(BACKUP_CONFIG_FILE));
         Path storedConfigFile = tempDir.resolve(BACKUP_CONFIG_FILE);
 
         BackupConfig storedConfig;
@@ -255,7 +260,9 @@ public class BackupConfig {
                 throw new IOException();
             }
         } catch (JsonParseException | IOException e) {
-            throw new BackupException(format("There was a problem with config of backup which should be placed in file '%s/%s'", backupFile.getFileName(), BACKUP_CONFIG_FILE));
+            throw new BackupException(format("There was a problem with config of backup which should be placed in file '%s/%s'",
+                                             Paths.get(backupFile).getFileName(),
+                                             BACKUP_CONFIG_FILE));
         }
 
         // cleanup

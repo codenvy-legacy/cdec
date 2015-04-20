@@ -47,7 +47,7 @@ public class LocalAgent extends AbstractAgent {
     /** {@inheritDoc} */
     @Override
     public String execute(String command) throws AgentException {
-        if (isPasswordRequired(command)) {
+        if (isPasswordInputRequired(command)) {
             return executeWithPassword(command);
         } else {
             return executeWithoutPassword(command);
@@ -102,8 +102,12 @@ public class LocalAgent extends AbstractAgent {
         stdIn.flush();
     }
 
-    protected boolean isPasswordRequired(String command) {
+    protected boolean isPasswordInputRequired(String command) {
         if (!command.contains("sudo ")) {
+            return false;
+        }
+
+        if (!isConsoleAccessible()) {
             return false;
         }
 
@@ -159,7 +163,7 @@ public class LocalAgent extends AbstractAgent {
         Console console;
         try {
             console = Console.getInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new AgentException("Can't obtain correct password", e);
         }
         return console;
@@ -191,5 +195,18 @@ public class LocalAgent extends AbstractAgent {
     @Override
     public String toString() {
         return this.getClass().getSimpleName();
+    }
+
+    /**
+     * @return true if org/fusesource/jansi/Ansi is found, or false otherwise
+     */
+    protected boolean isConsoleAccessible() {
+        try {
+            getConsole();
+        } catch(AgentException e) {
+            return false;
+        }
+
+        return true;
     }
 }

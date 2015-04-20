@@ -17,9 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-
-import com.codenvy.im.service.InstallationManagerService;
-
+import com.codenvy.im.facade.InstallationManagerFacade;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -38,16 +36,16 @@ public class TestConfigCommand extends AbstractTestCommand {
     private String okStatus = "{\"status\": \"OK\"}";
 
     @Mock
-    private InstallationManagerService service;
+    private InstallationManagerFacade service;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
 
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new ConfigCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
 
         performBaseMocks(spyCommand, true);
     }

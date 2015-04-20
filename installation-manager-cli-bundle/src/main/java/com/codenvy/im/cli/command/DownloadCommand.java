@@ -23,12 +23,10 @@ import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
-import org.json.JSONException;
 
 import static java.lang.Thread.sleep;
 
@@ -64,11 +62,11 @@ public class DownloadCommand extends AbstractIMCommand {
         }
     }
 
-    private void doDownload() throws InterruptedException, JsonParseException, JSONException {
+    private void doDownload() throws InterruptedException, JsonParseException {
         console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
         Request request = initRequest(artifactName, version);
-        String startResponse = service.startDownload(request);
+        String startResponse = facade.startDownload(request);
 
         Response responseObj = Response.fromJson(startResponse);
         if (responseObj.getStatus() != ResponseCode.OK) {
@@ -79,7 +77,7 @@ public class DownloadCommand extends AbstractIMCommand {
         boolean isCanceled = false;
 
         for (; ; ) {
-            String response = service.getDownloadStatus();
+            String response = facade.getDownloadStatus();
             if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
                 console.cleanCurrentLine();
                 console.printErrorAndExit(response);
@@ -95,7 +93,7 @@ public class DownloadCommand extends AbstractIMCommand {
             try {
                 sleep(1000);
             } catch (InterruptedException ie) {
-                service.stopDownload();
+                facade.stopDownload();
                 console.cleanLineAbove();
                 isCanceled = true;
             }
@@ -115,11 +113,11 @@ public class DownloadCommand extends AbstractIMCommand {
 
     private void doCheck() throws JsonParseException {
         Request request = initRequest(artifactName, version);
-        console.printResponse(service.getUpdates(request));
+        console.printResponse(facade.getUpdates(request));
     }
 
     private void doList() throws JsonParseException {
         Request request = initRequest(artifactName, version);
-        console.printResponse(service.getDownloads(request));
+        console.printResponse(facade.getDownloads(request));
     }
 }

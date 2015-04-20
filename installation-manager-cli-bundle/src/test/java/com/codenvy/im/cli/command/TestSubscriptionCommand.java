@@ -18,14 +18,13 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.request.Request;
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.utils.AccountUtils;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -43,9 +42,9 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
 
     private UserCredentials credentials;
     private Request         request;
@@ -55,7 +54,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new SubscriptionCommand());
-        spyCommand.service = mockInstallationManagerProxy;
+        spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
 
@@ -103,7 +102,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
                 .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(request));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

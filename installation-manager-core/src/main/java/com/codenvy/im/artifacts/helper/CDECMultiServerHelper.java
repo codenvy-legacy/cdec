@@ -176,9 +176,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                       + "  sudo service firewalld start; "
                                       + "fi; "
 
-                                      // open firewall port 8140 permanently
                                       // http://stackoverflow.com/questions/24729024/centos-7-open-firewall-port
-                                      + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; "
+                                      + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; " // open firewall port 8140 for puppet agent access permanently
+                                      + "sudo firewall-cmd --zone=public --add-port=8082/tcp --permanent; " // open firewall port 8082 for the installation manager server permanently
                                       + "sudo firewall-cmd --reload; "));
                 }}, "Install puppet binaries");
 
@@ -379,7 +379,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         Path localTempDir = backupConfig.obtainArtifactTempDirectory();
         Path remoteTempDir = Paths.get("/tmp/codenvy");
-        Path backupFile = backupConfig.getBackupFile();
+        Path backupFile = Paths.get(backupConfig.getBackupFile());
 
         // create local temp dir
         commands.add(createCommand(format("mkdir -p %s", localTempDir)));
@@ -396,7 +396,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("slapd", dataNode));
 
         // copy backup file into api node, pack filesystem data of API node to the {backup_file}/fs folder into backup file, and then copy it to local temp dir
-        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
+        String backupFilename = Paths.get(backupConfig.getBackupFile()).getFileName().toString();
+        Path tempApiNodeBackupFile = remoteTempDir.resolve(backupFilename);
         commands.add(createCommand(format("mkdir -p %s", tempApiNodeBackupFile.getParent()), apiNode));
         commands.add(createCopyFromLocalToRemoteCommand(backupFile,
                                                         tempApiNodeBackupFile,
@@ -440,7 +441,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));  // cleanup data node
 
         // add dumps to the local backup file
-        commands.add(createPackCommand(localTempDir, backupFile, "."));
+        commands.add(createPackCommand(localTempDir, backupFile, ".", false));
 
         // start services
         commands.add(createStartServiceCommand("puppet", dataNode));
@@ -452,7 +453,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
 
         // remove local temp dir
-        commands.add(createCommand(format("sudo rm -rf %s", localTempDir)));
+        commands.add(createCommand(format("rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Backup data commands");
     }
@@ -484,7 +485,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         Path localTempDir = backupConfig.obtainArtifactTempDirectory();
         Path remoteTempDir = Paths.get("/tmp/codenvy");
-        Path backupFile = backupConfig.getBackupFile();
+        Path backupFile = Paths.get(backupConfig.getBackupFile());
 
         // unpack backupFile into the tempDir
         commands.add(createUnpackCommand(backupFile, localTempDir));
@@ -501,7 +502,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("slapd", dataNode));
 
         // restore filesystem data at the API node from {backup_file}/fs folder
-        Path apiNodeTempBackupFile = remoteTempDir.resolve(backupConfig.getBackupFile().getFileName().toString());
+        String backupFileName = Paths.get(backupConfig.getBackupFile()).getFileName().toString();
+        Path apiNodeTempBackupFile = remoteTempDir.resolve(backupFileName);
         commands.add(createCommand(format("mkdir -p %s", apiNodeTempBackupFile.getParent()), apiNode));
         commands.add(createCopyFromLocalToRemoteCommand(backupFile,
                                                         apiNodeTempBackupFile,
@@ -551,7 +553,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
 
         // remove local temp dir
-        commands.add(createCommand(format("sudo rm -rf %s", localTempDir)));
+        commands.add(createCommand(format("rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Restore data commands");
     }

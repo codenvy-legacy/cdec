@@ -243,10 +243,10 @@ public class TestConfigUtil extends BaseTest {
     @Test
     public void testGetPuppetNodesConfigReplacement() {
         List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "api.dev.com"),
-            new NodeConfig(NodeConfig.NodeType.DATA, "data.dev.com"),
-            new NodeConfig(NodeConfig.NodeType.BUILDER, "builder2.dev.com"),
-            new NodeConfig(NodeConfig.NodeType.RUNNER, "runner23.runner89.com")
+            new NodeConfig(NodeConfig.NodeType.API, "api.dev.com", null),
+            new NodeConfig(NodeConfig.NodeType.DATA, "data.dev.com", null),
+            new NodeConfig(NodeConfig.NodeType.BUILDER, "builder2.dev.com", null),
+            new NodeConfig(NodeConfig.NodeType.RUNNER, "runner23.runner89.com", null)
         );
 
         Map<String, String> expected = ImmutableMap.of("builder.*example.com", "builder\\\\d+\\\\.dev.com",
@@ -316,7 +316,7 @@ public class TestConfigUtil extends BaseTest {
     }
 
     @Test
-    public void testFetchMasterHostNameUseCase1() throws Exception {
+    public void testFetchMasterHostName() throws Exception {
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "certname=master.dev.com\n" +
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n" +

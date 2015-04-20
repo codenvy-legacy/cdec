@@ -18,16 +18,13 @@
 
 package com.codenvy.im.console;
 
-import jline.console.ConsoleReader;
-
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-
+import jline.console.ConsoleReader;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
 import org.mockito.Mock;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -35,7 +32,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.ConnectException;
 
 import static java.lang.Thread.sleep;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -409,23 +405,6 @@ public class TestConsole {
 
         spyConsole = createNonInteractiveConsole();
         spyConsole.printErrorAndExit(exception);
-        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + expectedResult + "\u001B[m");
-        verify(spyConsole).exit(1);
-    }
-
-    @Test
-    public void testPrintConnectionException() throws IOException {
-        Exception exceptionCausedConnectException = new ResourceException(new ConnectException());
-        String expectedResult = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
-                                + "please retry a bit later.\n";
-
-        Console spyConsole = createInteractiveConsole();
-        spyConsole.printErrorAndExit(exceptionCausedConnectException);
-        assertEquals(getOutputContent(), "\u001B[31m" + expectedResult + "\u001B[m");
-        verify(spyConsole, never()).exit(1);
-
-        spyConsole = createNonInteractiveConsole();
-        spyConsole.printErrorAndExit(exceptionCausedConnectException);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + expectedResult + "\u001B[m");
         verify(spyConsole).exit(1);
     }

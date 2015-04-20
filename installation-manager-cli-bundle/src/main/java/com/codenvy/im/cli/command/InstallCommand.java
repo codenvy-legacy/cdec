@@ -32,14 +32,16 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-
+import com.google.common.base.Charsets;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
-import org.json.JSONException;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -104,13 +106,15 @@ public class InstallCommand extends AbstractIMCommand {
         }
     }
 
-    protected Void doExecuteInstall() throws JSONException, IOException, JsonParseException, InterruptedException {
+    protected Void doExecuteInstall() throws IOException, JsonParseException, InterruptedException {
         if (artifactName == null) {
             artifactName = CDECArtifact.NAME;
         }
 
+        final InstallOptions installOptions = new InstallOptions();
         if (version == null) {
-            version = service.getVersionToInstall(initRequest(artifactName, null), getFirstInstallStep());
+            installOptions.setStep(getFirstInstallStep());
+            version = facade.getVersionToInstall(initRequest(artifactName, null).setInstallOptions(installOptions));
         }
 
         if (multi) {
@@ -121,7 +125,6 @@ public class InstallCommand extends AbstractIMCommand {
 
         final Request request = initRequest(artifactName, version);
 
-        final InstallOptions installOptions = new InstallOptions();
         setOptionsFromConfig(installOptions);
 
         if (!installOptions.checkValid()) {
@@ -129,7 +132,7 @@ public class InstallCommand extends AbstractIMCommand {
             confirmOrReenterOptions(installOptions);
         }
 
-        String response = service.getInstallInfo(installOptions, request);
+        String response = facade.getInstallInfo(request.setInstallOptions(installOptions));
         Response responseObj = Response.fromJson(response);
 
         if (responseObj.getStatus() == ResponseCode.ERROR) {
@@ -157,7 +160,7 @@ public class InstallCommand extends AbstractIMCommand {
             try {
                 installOptions.setStep(step);
 
-                response = service.install(installOptions, request);
+                response = facade.install(request.setInstallOptions(installOptions));
                 responseObj = Response.fromJson(response);
 
                 if (responseObj.getStatus() == ResponseCode.ERROR) {
@@ -186,8 +189,8 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    protected Void doExecuteListInstalledArtifacts() throws IOException, JSONException, JsonParseException {
-        String response = service.getInstalledVersions(initRequest(artifactName, version));
+    protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
+        String response = facade.getInstalledVersions(initRequest(artifactName, version));
         console.printResponse(response);
         return null;
     }
@@ -290,6 +293,8 @@ public class InstallCommand extends AbstractIMCommand {
 
                         if (installType == InstallType.MULTI_SERVER) {
                             properties.put("puppet_master_host_name", configUtil.fetchMasterHostName());  // restore host name of puppet master
+                            properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, System.getProperty("user.name"));  // setup name of user to access the nodes
+                            properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, readDefaultSshPrivateKey());  // setup private key of ssh user
                         }
                     }
                 }
@@ -363,6 +368,24 @@ public class InstallCommand extends AbstractIMCommand {
             }
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
+        }
+    }
+
+
+    /**
+     * @return content of default ssh private key stored in /{user.home}/.ssh/id_rsa
+     */
+    private String readDefaultSshPrivateKey() {
+        String userHome = System.getProperty("user.home");
+        Path pathToIdRsa = Paths.get(userHome).resolve(".ssh").resolve("id_rsa");
+        if (!Files.exists(pathToIdRsa)) {
+            throw new RuntimeException("Ssh private key doesn't found");
+        }
+
+        try {
+            return com.google.common.io.Files.toString(pathToIdRsa.toFile(), Charsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("It is impossible to read ssh private key: " + e.getMessage(), e);
         }
     }
 }

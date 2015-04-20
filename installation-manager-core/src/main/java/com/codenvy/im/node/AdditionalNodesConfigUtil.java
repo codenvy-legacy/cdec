@@ -98,7 +98,7 @@ public class AdditionalNodesConfigUtil {
                                   base_node_domain);
 
             if (dns != null && dns.toLowerCase().matches(regex)) {
-                return new NodeConfig(type, dns);
+                return new NodeConfig(type, dns, null);
             }
         }
 

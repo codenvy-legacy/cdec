@@ -172,8 +172,8 @@ public class CommandLibrary {
      *
      * Don't gzip to be able to update pack in future.
      */
-    public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
-        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack));
+    public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean needSudo) {
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, needSudo));
     }
 
     /**
@@ -183,43 +183,61 @@ public class CommandLibrary {
      * Don't gzip to be able to update pack in future.
      */
     public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack), node);
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, true), node);
     }
 
-    private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack) {
-        return format("if sudo test -f %2$s; then " +
-                      "   sudo tar -C %1$s -rf %2$s %3$s;" +
-                      "else " +
-                      "   sudo tar -C %1$s -cf %2$s %3$s;" +
-                      "fi;",
-                      fromDir,
-                      packFile,
-                      pathWithinThePack);
+    private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean needSudo) {
+        if (needSudo) {
+            return format("if sudo test -f %2$s; then " +
+                          "   sudo tar -C %1$s -rf %2$s %3$s;" +
+                          "else " +
+                          "   sudo tar -C %1$s -cf %2$s %3$s;" +
+                          "fi;",
+                          fromDir,
+                          packFile,
+                          pathWithinThePack);
+        } else {
+            return format("if test -f %2$s; then " +
+                          "   tar -C %1$s -rf %2$s %3$s;" +
+                          "else " +
+                          "   tar -C %1$s -cf %2$s %3$s;" +
+                          "fi;",
+                          fromDir,
+                          packFile,
+                          pathWithinThePack);
+        }
     }
 
-    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
-        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack));
+    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, boolean needSudo) {
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, needSudo));
     }
 
     public static Command createUnpackCommand(Path packFile, Path toDir) {
-        return createCommand(getUnpackCommand(packFile, toDir, null));
+        return createCommand(getUnpackCommand(packFile, toDir, null, false));
     }
 
     public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack), node);
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, true), node);
     }
 
-    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack) {
+    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack, boolean needSudo) {
+        String command;
         if (pathWithinThePack == null) {
-            return format("sudo tar -xf %s -C %s",
+            command = format("tar -xf %s -C %s",
                           packFile,
                           toDir);
         } else {
-            return format("sudo tar -xf %s -C %s %s",
+            command = format("tar -xf %s -C %s %s",
                           packFile,
                           toDir,
                           pathWithinThePack);
         }
+
+        if (needSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
     }
 
     public static Command createCopyFromRemoteToLocalCommand(Path fromPath, Path toPath, NodeConfig remote) {
@@ -233,7 +251,7 @@ public class CommandLibrary {
     }
 
     private static String getScpCommand(String fromPath, String toPath) {
-        return format("scp -r -q -o LogLevel=QUIET -o StrictHostKeyChecking=no %s %s", fromPath, toPath);
+        return format("scp -r -q -o StrictHostKeyChecking=no %s %s", fromPath, toPath);
     }
 
     public static Command createWaitServiceActiveCommand(String service) {

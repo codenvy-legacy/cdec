@@ -19,18 +19,15 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -42,23 +39,23 @@ public class TestRestoreCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService mockInstallationManagerProxy;
+    private InstallationManagerFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
 
     private UserCredentials credentials;
 
     private BackupConfig testBackupConfig;
 
-    private Path   testBackupFile      = Paths.get("test/backup/directory/backup.tar.gz");
-    private String testArtifact        = CDECArtifact.NAME;
+    private String testBackupFile = "test/backup/directory/backup.tar.gz";
+    private String testArtifact   = CDECArtifact.NAME;
 
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new RestoreCommand());
-        spyCommand.service = mockInstallationManagerProxy;
+        spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
 
@@ -79,7 +76,7 @@ public class TestRestoreCommand extends AbstractTestCommand {
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("backup", testBackupFile.toString());
+        commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -96,11 +93,11 @@ public class TestRestoreCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
 
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
             .when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("backup", testBackupFile.toString());
+        commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

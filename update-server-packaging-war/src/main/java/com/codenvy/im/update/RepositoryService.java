@@ -106,7 +106,7 @@ public class RepositoryService {
     private final MailUtil      mailUtil;
 
     @Inject
-    public RepositoryService(@Named("api.endpoint") String apiEndpoint,
+    public RepositoryService(@Named("saas.api.endpoint") String apiEndpoint,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              MongoStorage mongoStorage,

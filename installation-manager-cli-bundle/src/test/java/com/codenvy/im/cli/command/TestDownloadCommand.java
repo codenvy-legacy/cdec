@@ -19,13 +19,12 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,9 +41,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService service;
+    private InstallationManagerFacade service;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
 
     private UserCredentials testCredentials = new UserCredentials("token", "accountId");
     private String          okResponse      = "{\n" +
@@ -83,7 +82,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new DownloadCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
 
         performBaseMocks(spyCommand, true);
 
@@ -181,7 +180,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
                 .when(service).startDownload(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -227,7 +226,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
                 .when(service).getUpdates(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

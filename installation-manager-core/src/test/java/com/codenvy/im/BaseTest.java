@@ -49,14 +49,14 @@ public class BaseTest {
     }
 
     protected void createSingleNodeConf() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[master]\n" +
+        FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[master]\n" +
                                                    "    certname = hostname\n" +
                                                    "[agent]\n" +
                                                    "    certname = hostname\n");
     }
 
     protected void createMultiNodeConf() throws Exception {
-        FileUtils.write(PUPPET_CONF_FILE.toFile(), "[master]\n" +
+        FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[master]\n" +
                                                    "\n" +
                                                    "[main]\n" +
                                                    "    certname = hostname\n");

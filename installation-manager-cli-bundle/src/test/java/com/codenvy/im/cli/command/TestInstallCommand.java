@@ -24,8 +24,8 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.service.InstallationManagerService;
-import com.codenvy.im.service.UserCredentials;
+import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableSortedMap;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -44,7 +43,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
@@ -63,10 +61,10 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
-    private InstallationManagerService service;
-    private ConfigUtil      mockConfigUtil;
-    private CommandSession  commandSession;
-    private UserCredentials userCredentials;
+    private InstallationManagerFacade facade;
+    private ConfigUtil                mockConfigUtil;
+    private CommandSession            commandSession;
+    private UserCredentials           userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
                                        + "    \"artifact\" : \"codenvy\",\n"
@@ -87,18 +85,18 @@ public class TestInstallCommand extends AbstractTestCommand {
         mockConfigUtil = mock(ConfigUtil.class);
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigUtil).loadCodenvyDefaultProperties("1.0.1",
                                                                                                                      InstallType
-                                                                                                                             .SINGLE_SERVER);
+                                                                                                                         .SINGLE_SERVER);
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigUtil)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
-        service = mock(InstallationManagerService.class);
-        doReturn("1.0.1").when(service).getVersionToInstall(any(Request.class), anyInt());
+        facade = mock(InstallationManagerFacade.class);
+        doReturn("1.0.1").when(facade).getVersionToInstall(any(Request.class));
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-                .when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+            .when(facade).getInstallInfo(any(Request.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand(mockConfigUtil));
-        spyCommand.service = service;
+        spyCommand.facade = facade;
 
         performBaseMocks(spyCommand, true);
 
@@ -139,11 +137,12 @@ public class TestInstallCommand extends AbstractTestCommand {
         doAnswer(new Answer<String>() {
             @Override
             public String answer(InvocationOnMock invocation) throws Throwable {
-                InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
+                Request request = (Request)invocation.getArguments()[0];
+                InstallOptions installOptions = request.getInstallOptions();
                 assertEquals(installOptions.getInstallType(), InstallType.SINGLE_SERVER);
                 return okServiceResponse;
             }
-        }).when(service).install(any(InstallOptions.class), any(Request.class));
+        }).when(facade).install(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -171,11 +170,12 @@ public class TestInstallCommand extends AbstractTestCommand {
         doAnswer(new Answer<String>() {
             @Override
             public String answer(InvocationOnMock invocation) throws Throwable {
-                InstallOptions installOptions = (InstallOptions)invocation.getArguments()[0];
+                Request request = (Request)invocation.getArguments()[0];
+                InstallOptions installOptions = request.getInstallOptions();
                 assertEquals(installOptions.getInstallType(), InstallType.MULTI_SERVER);
                 return okServiceResponse;
             }
-        }).when(service).install(any(InstallOptions.class), any(Request.class));
+        }).when(facade).install(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -188,7 +188,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
-        doReturn("1.0.2").when(service).getVersionToInstall(any(Request.class), anyInt());
+        doReturn("1.0.2").when(facade).getVersionToInstall(any(Request.class));
         doReturn(false).when(spyCommand).isInstall();
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 
@@ -202,7 +202,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand.console).readLine();
 
         // no installation info provided
-        doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+        doReturn("{\"infos\":[]}").when(facade).getInstallInfo(any(Request.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {
@@ -267,7 +267,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       "  \"status\" : \"OK\"\n" +
                                       "}\n";
 
-        doReturn(okServiceResponse).when(service).install(any(InstallOptions.class), any(Request.class));
+        doReturn(okServiceResponse).when(facade).install(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -287,7 +287,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                             + "  \"status\" : \"ERROR\"\n"
                                             + "}";
 
-        doReturn(serviceErrorResponse).when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+        doReturn(serviceErrorResponse).when(facade).getInstallInfo(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", "any");
@@ -309,7 +309,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn("{\n"
                  + "  \"message\" : \"step failed\",\n"
                  + "  \"status\" : \"ERROR\"\n"
-                 + "}").when(service).install(any(InstallOptions.class), any(Request.class));
+                 + "}").when(facade).install(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -327,7 +327,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                       + "  \"message\" : \"Property is missed\",\n"
                                       + "  \"status\" : \"ERROR\"\n"
                                       + "}";
-        doReturn(expectedOutput).when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+        doReturn(expectedOutput).when(facade).getInstallInfo(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -340,7 +340,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifacts() throws Exception {
-        doReturn(okServiceResponse).when(service).getInstalledVersions(any(Request.class));
+        doReturn(okServiceResponse).when(facade).getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -361,8 +361,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
 
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
-                .when(service)
+        doThrow(new RuntimeException("Server Error Exception"))
+                .when(facade)
                 .getInstalledVersions(any(Request.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -389,7 +389,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand.console).readLine();
 
         // no installation info provided
-        doReturn("{\"infos\":[]}").when(service).getInstallInfo(any(InstallOptions.class), any(Request.class));
+        doReturn("{\"infos\":[]}").when(facade).getInstallInfo(any(Request.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {

@@ -18,8 +18,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-import com.codenvy.im.service.InstallationManagerService;
 
+import com.codenvy.im.facade.InstallationManagerFacade;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -37,18 +37,18 @@ public class TestHelpCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerService service;
+    private InstallationManagerFacade service;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
     @Mock
-    private MultiRemoteCodenvy         multiRemoteCodenvy;
+    private MultiRemoteCodenvy        multiRemoteCodenvy;
 
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new HelpCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
         doReturn(multiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
         doReturn("").when(multiRemoteCodenvy).listRemotes();
 

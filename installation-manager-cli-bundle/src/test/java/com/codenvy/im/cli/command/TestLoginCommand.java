@@ -20,19 +20,17 @@ package com.codenvy.im.cli.command;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.service.InstallationManagerService;
+import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.restlet.resource.ResourceException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.net.ConnectException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -63,13 +61,13 @@ public class TestLoginCommand extends AbstractTestCommand {
     private TestedLoginCommand spyCommand;
 
     @Mock
-    private InstallationManagerService service;
+    private InstallationManagerFacade service;
     @Mock
-    private PreferencesStorage         mockPreferencesStorage;
+    private PreferencesStorage        mockPreferencesStorage;
     @Mock
-    private CommandSession             commandSession;
+    private CommandSession            commandSession;
     @Mock
-    private MultiRemoteCodenvy         mockMultiRemoteCodenvy;
+    private MultiRemoteCodenvy        mockMultiRemoteCodenvy;
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -80,7 +78,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
 
         spyCommand = spy(new TestedLoginCommand());
-        spyCommand.service = service;
+        spyCommand.facade = service;
         spyCommand.preferencesStorage = mockPreferencesStorage;
 
         performBaseMocks(spyCommand, true);
@@ -102,7 +100,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         doReturn("{\"status\":\"OK\"}").when(service).addTrialSubscription(any(Request.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
-                .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
+            .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -207,7 +205,7 @@ public class TestLoginCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new ResourceException(500, "Server Error Exception", "Description", "localhost"))
+        doThrow(new RuntimeException("Server Error Exception"))
             .when(service).getUpdateServerEndpoint();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -248,21 +246,6 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
-        verify(service, never()).addTrialSubscription(any(Request.class));
-    }
-
-    @Test
-    public void testLoginWhenServiceThrowsConnectionExceptionError() throws Exception {
-        String expectedOutput = "It is impossible to connect to Installation Manager Service. It might be stopped or it is starting up right now, "
-                                + "please retry a bit later.";
-        doThrow(new ResourceException(new ConnectException()))
-            .when(service).getUpdateServerEndpoint();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput + "\n");
         verify(service, never()).addTrialSubscription(any(Request.class));
     }
 

@@ -42,9 +42,9 @@ public class TestAdditionalNodesConfigUtil {
 
     private static final String              TEST_NODE_DNS  = "localhost";
     private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
-    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
+    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS, null);
 
-    private static final String  ADDITIONAL_RUNNERS_PROPERTY_NAME  = "additional_runners";
+    private static final String ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
 
     private AdditionalNodesConfigUtil spyConfigUtil;
 
@@ -80,7 +80,7 @@ public class TestAdditionalNodesConfigUtil {
     @Test(dataProvider = "GetValueWithNode")
     public void testGetValueWithNode(List<String> additionalNodes, String addingNodeDns, String expectedResult) {
         doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
-        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.RUNNER, addingNodeDns);
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.RUNNER, addingNodeDns, null);
 
         String result = spyConfigUtil.getValueWithNode(testNode);
         assertEquals(result, expectedResult);
@@ -114,7 +114,7 @@ public class TestAdditionalNodesConfigUtil {
     @Test(dataProvider = "GetValueWithoutNode")
     public void testGetValueWithoutNode(List<String> additionalNodes, String removingNodeDns, String expectedResult) {
         doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
-        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.RUNNER, removingNodeDns);
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.RUNNER, removingNodeDns, null);
 
         String result = spyConfigUtil.getValueWithoutNode(testNode);
         assertEquals(result, expectedResult);
@@ -171,9 +171,9 @@ public class TestAdditionalNodesConfigUtil {
     @DataProvider(name = "GetAdditionalNodeUrl")
     public static Object[][] GetAdditionalNodeUrl() {
         return new Object[][]{
-            {new NodeConfig(NodeConfig.NodeType.RUNNER, TEST_NODE_DNS), "http://localhost:8080/runner/internal/runner"},
-            {new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS), "http://localhost:8080/builder/internal/builder"},
-            {new NodeConfig(NodeConfig.NodeType.SITE, TEST_NODE_DNS), "http://localhost:8080/site/internal/site"},
+            {new NodeConfig(NodeConfig.NodeType.RUNNER, TEST_NODE_DNS, null), "http://localhost:8080/runner/internal/runner"},
+            {new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS, null), "http://localhost:8080/builder/internal/builder"},
+            {new NodeConfig(NodeConfig.NodeType.SITE, TEST_NODE_DNS, null), "http://localhost:8080/site/internal/site"},
         };
     }
 
@@ -187,8 +187,8 @@ public class TestAdditionalNodesConfigUtil {
     @DataProvider(name = "RecognizeNodeConfigFromDns")
     public static Object[][] RecognizeNodeConfigFromDns() {
         return new Object[][]{
-            {"runner123.dev.com", "runner1.dev.com", new NodeConfig(NodeConfig.NodeType.RUNNER, "runner123.dev.com")},
-            {"builder123.com", "builder1.com", new NodeConfig(NodeConfig.NodeType.BUILDER, "builder123.com")}
+            {"runner123.dev.com", "runner1.dev.com", new NodeConfig(NodeConfig.NodeType.RUNNER, "runner123.dev.com", null)},
+            {"builder123.com", "builder1.com", new NodeConfig(NodeConfig.NodeType.BUILDER, "builder123.com", null)}
         };
     }
 
