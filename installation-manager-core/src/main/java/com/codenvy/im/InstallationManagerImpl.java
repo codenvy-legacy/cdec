@@ -135,7 +135,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Map<Artifact, Version> getInstalledArtifacts(String authToken) throws IOException {
+    public Map<Artifact, Version> getInstalledArtifacts() throws IOException {
         Map<Artifact, Version> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {

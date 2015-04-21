@@ -45,8 +45,15 @@ public class TestRequest {
         assertEquals(testRequest.getVersion(), "1.0.1");
         assertEquals(testRequest.createVersion(), Version.valueOf("1.0.1"));
         Assert.assertNotNull(testRequest.getUserCredentials());
-        assertEquals(testRequest.getAccessToken(), "test token");
-        assertEquals(testRequest.getAccountId(), "test account id");
+        assertEquals(testRequest.obtainAccessToken(), "test token");
+        assertEquals(testRequest.obtainAccountId(), "test account id");
+    }
+
+    @Test
+    public void testRequestWhenUserCredentialsUndefined() throws Exception {
+        Request testRequest = new Request();
+        assertEquals(testRequest.obtainAccessToken(), "");
+        assertEquals(testRequest.obtainAccountId(), "");
     }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class)

@@ -340,7 +340,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifacts() throws Exception {
-        doReturn(okServiceResponse).when(facade).getInstalledVersions(any(Request.class));
+        doReturn(okServiceResponse).when(facade).getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -363,7 +363,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         doThrow(new RuntimeException("Server Error Exception"))
                 .when(facade)
-                .getInstalledVersions(any(Request.class));
+                .getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);

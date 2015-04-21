@@ -53,14 +53,28 @@ public class Request {
         return this;
     }
 
+    /**
+     * @return userCredentials.getToken(), or "" if userCredentials == null
+     */
     @Nonnull
-    public String getAccessToken() {
-        return userCredentials.getToken();
+    public String obtainAccessToken() {
+        if (userCredentials == null) {
+            return "";
+        } else {
+            return userCredentials.getToken();
+        }
     }
 
+    /**
+     * @return userCredentials.getAccountId(), or "" if userCredentials == null
+     */
     @Nonnull
-    public String getAccountId() {
-        return userCredentials.getAccountId();
+    public String obtainAccountId() {
+        if (userCredentials == null) {
+            return "";
+        } else {
+            return userCredentials.getAccountId();
+        }
     }
 
     @Nonnull
@@ -128,8 +142,8 @@ public class Request {
 
         Request request = (Request)o;
 
+        if (userCredentials != null ? !userCredentials.equals(request.userCredentials) : request.userCredentials != null) return false;
         if (artifactName != null ? !artifactName.equals(request.artifactName) : request.artifactName != null) return false;
-        if (!userCredentials.equals(request.userCredentials)) return false;
         if (version != null ? !version.equals(request.version) : request.version != null) return false;
         if (installOptions != null ? !installOptions.equals(request.installOptions) : request.installOptions != null) return false;
 
@@ -138,7 +152,7 @@ public class Request {
 
     @Override
     public int hashCode() {
-        int result = userCredentials.hashCode();
+        int result = userCredentials != null ? userCredentials.hashCode() : 0;
         result = 31 * result + (artifactName != null ? artifactName.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (installOptions != null ? installOptions.hashCode() : 0);

@@ -50,12 +50,10 @@ public interface InstallationManager {
     /**
      * Scans all installed artifacts and returns their versions.
      *
-     * @param authToken
-     *         the authentication token
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Map<Artifact, Version> getInstalledArtifacts(String authToken) throws IOException;
+    Map<Artifact, Version> getInstalledArtifacts() throws IOException;
 
     /**
      * @return downloaded artifacts from the local repository

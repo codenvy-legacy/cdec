@@ -186,7 +186,7 @@ public class TestCheckSubscriptionFacade {
 
     @Test
     public void testAddTrialSubscription() throws Exception {
-        doReturn("").when(transport).doPost(endsWith("subscription/" + request.getAccountId()), isNull(), eq(request.getAccessToken()));
+        doReturn("").when(transport).doPost(endsWith("subscription/" + request.obtainAccountId()), isNull(), eq(request.obtainAccessToken()));
         String response = installationManagerService.addTrialSubscription(request);
         assertEquals(response, "{\n" +
                                "  \"subscription\" : \"OnPremises\",\n" +
@@ -197,7 +197,7 @@ public class TestCheckSubscriptionFacade {
 
     @Test
     public void testAddTrialSubscriptionFailedWhenRequestFailed() throws Exception {
-        doThrow(IOException.class).when(transport).doPost(endsWith("subscription/" + request.getAccountId()), isNull(), eq(request.getAccessToken()));
+        doThrow(IOException.class).when(transport).doPost(endsWith("subscription/" + request.obtainAccountId()), isNull(), eq(request.obtainAccessToken()));
         String response = installationManagerService.addTrialSubscription(request);
         assertEquals(response, "{\n" +
                                "  \"status\" : \"ERROR\"\n" +

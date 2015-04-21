@@ -30,6 +30,7 @@ import com.wordnik.swagger.annotations.ApiParam;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -63,6 +64,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Starts downloading artifact from Update Server.", response = Response.class)
     public javax.ws.rs.core.Response startDownload(Request request) {
+        request = handleInstallationManagerRequest(request);
         return handleInstallationManagerResponse(delegate.startDownload(request));
     }
 
@@ -76,7 +78,7 @@ public class InstallationManagerService {
     }
 
     /** Gets already started download status */
-    @POST
+    @GET
     @Path("download/status")
     @ApiOperation(value = "Gets already started download status", response = Response.class)
     @Produces(MediaType.APPLICATION_JSON)
@@ -91,6 +93,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the list of actual updates from Update Server", response = Response.class)
     public javax.ws.rs.core.Response getUpdates(Request request) {
+        request = handleInstallationManagerRequest(request);
         return handleInstallationManagerResponse(delegate.getUpdates(request));
     }
 
@@ -101,17 +104,18 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
     public javax.ws.rs.core.Response getDownloads(Request request) {
+        request = handleInstallationManagerRequest(request);
         return handleInstallationManagerResponse(delegate.getDownloads(request));
     }
 
     /** Gets the list of installed artifacts. */
-    @POST
+    @GET
     @Path("install/list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of installed artifacts.", response = Response.class)
     public javax.ws.rs.core.Response getInstalledVersions(Request request) throws IOException {
-        return handleInstallationManagerResponse(delegate.getInstalledVersions(request));
+        return handleInstallationManagerResponse(delegate.getInstalledVersions());
     }
 
     /** Installs or updates artifact */
@@ -135,7 +139,7 @@ public class InstallationManagerService {
     }
 
     /** Gets Installation Manager configuration */
-    @POST
+    @GET
     @Path("config")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets Installation Manager configuration", response = Response.class)
@@ -194,5 +198,16 @@ public class InstallationManagerService {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return javax.ws.rs.core.Response.serverError().entity(e.toString()).build();
         }
+    }
+
+    /**
+     * @return empty request if request = null
+     */
+    private Request handleInstallationManagerRequest(Request request) {
+        if (request == null) {
+            return new Request();
+        }
+
+        return request;
     }
 }

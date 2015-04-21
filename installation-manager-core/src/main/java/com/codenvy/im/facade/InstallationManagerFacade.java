@@ -38,6 +38,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
@@ -92,10 +93,10 @@ public class InstallationManagerFacade {
     }
 
     /** Adds trial subscription for user being logged in */
-    public String addTrialSubscription(Request request) throws IOException {
+    public String addTrialSubscription(@Nonnull Request request) throws IOException {
         try {
             transport
-                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.getAccountId()), null, request.getAccessToken());
+                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null, request.obtainAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
@@ -108,13 +109,13 @@ public class InstallationManagerFacade {
 
     /** Check user's subscription. */
     public String checkSubscription(String subscription,
-                                    Request request) throws IOException {
+                                    @Nonnull Request request) throws IOException {
         try {
             boolean subscriptionValidated = hasValidSubscription(transport,
                                                                  apiEndpoint,
                                                                  subscription,
-                                                                 request.getAccessToken(),
-                                                                 request.getAccountId());
+                                                                 request.obtainAccessToken(),
+                                                                 request.obtainAccountId());
 
             if (subscriptionValidated) {
                 return new Response().setStatus(ResponseCode.OK)
@@ -138,7 +139,7 @@ public class InstallationManagerFacade {
 
 
     /** Starts downloading */
-    public String startDownload(final Request request) {
+    public String startDownload(@Nonnull final Request request) {
         try {
             manager.checkIfConnectionIsAvailable();
 
@@ -171,7 +172,7 @@ public class InstallationManagerFacade {
         try {
             Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.createArtifact(),
                                                                                     request.createVersion(),
-                                                                                    request.getAccessToken());
+                                                                                    request.obtainAccessToken());
 
             infos = new ArrayList<>(updatesToDownload.size());
 
@@ -278,7 +279,7 @@ public class InstallationManagerFacade {
     }
 
     /** @retrun the list of downloaded artifacts */
-    public String getDownloads(Request request) {
+    public String getDownloads(@Nonnull Request request) {
         try {
             try {
                 List<ArtifactInfo> infos = new ArrayList<>();
@@ -287,7 +288,7 @@ public class InstallationManagerFacade {
                     Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
                     for (Map.Entry<Artifact, SortedMap<Version, Path>> e : downloadedArtifacts.entrySet()) {
-                        infos.addAll(getDownloadedArtifactsInfo(request.getAccessToken(), e.getKey(), e.getValue()));
+                        infos.addAll(getDownloadedArtifactsInfo(request.obtainAccessToken(), e.getKey(), e.getValue()));
                     }
                 } else {
                     SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.createArtifact());
@@ -299,7 +300,7 @@ public class InstallationManagerFacade {
                             downloadedVersions = ImmutableSortedMap.of(version, path);
                         }
 
-                        infos = getDownloadedArtifactsInfo(request.getAccessToken(), request.createArtifact(), downloadedVersions);
+                        infos = getDownloadedArtifactsInfo(request.obtainAccessToken(), request.createArtifact(), downloadedVersions);
                     }
                 }
 
@@ -331,9 +332,9 @@ public class InstallationManagerFacade {
     }
 
     /** @return update list from the server */
-    public String getUpdates(Request request) {
+    public String getUpdates(@Nonnull Request request) {
         try {
-            Map<Artifact, Version> updates = manager.getUpdates(request.getAccessToken());
+            Map<Artifact, Version> updates = manager.getUpdates(request.obtainAccessToken());
             List<ArtifactInfo> infos = new ArrayList<>(updates.size());
             for (Map.Entry<Artifact, Version> e : updates.entrySet()) {
                 Artifact artifact = e.getKey();
@@ -354,13 +355,13 @@ public class InstallationManagerFacade {
     }
 
     /** @return the list of installed artifacts ant theirs versions */
-    public String getInstalledVersions(Request request) throws IOException {
-        Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(request.getAccessToken());
+    public String getInstalledVersions() throws IOException {
+        Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts();
         return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts).toJson();
     }
 
     /** @return installation info */
-    public String getInstallInfo(Request request) throws IOException {
+    public String getInstallInfo(@Nonnull Request request) throws IOException {
         try {
             InstallOptions installOptions = request.getInstallOptions();
             Version version = doGetVersionToInstall(request);
@@ -374,13 +375,13 @@ public class InstallationManagerFacade {
     }
 
     /** Installs artifact */
-    public String install(Request request) throws IOException {
+    public String install(@Nonnull Request request) throws IOException {
         try {
             InstallOptions installOptions = request.getInstallOptions();
             Version version = doGetVersionToInstall(request);
 
             try {
-                manager.install(request.getAccessToken(), request.createArtifact(), version, installOptions);
+                manager.install(request.obtainAccessToken(), request.createArtifact(), version, installOptions);
                 ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
@@ -395,7 +396,7 @@ public class InstallationManagerFacade {
     }
 
     /** @return the version of the artifact that can be installed */
-    public String getVersionToInstall(Request request) throws IOException {
+    public String getVersionToInstall(@Nonnull Request request) throws IOException {
         try {
             return doGetVersionToInstall(request).toString();
         } catch (Exception e) {
@@ -404,7 +405,7 @@ public class InstallationManagerFacade {
         }
     }
 
-    protected Version doGetVersionToInstall(Request request) throws IOException {
+    protected Version doGetVersionToInstall(@Nonnull Request request) throws IOException {
         int installStep = 0;
         if (request.getInstallOptions() != null) {
             installStep = request.getInstallOptions().getStep();
@@ -433,11 +434,11 @@ public class InstallationManagerFacade {
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
-    public String getAccountReferenceWhereUserIsOwner(@Nullable String accountName, Request request) throws IOException {
+    public String getAccountReferenceWhereUserIsOwner(@Nullable String accountName, @Nonnull Request request) throws IOException {
 
         AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport,
                                                                                              apiEndpoint,
-                                                                                             request.getAccessToken(),
+                                                                                             request.obtainAccessToken(),
                                                                                              accountName);
         return accountReference == null ? null : toJson(accountReference);
     }
@@ -448,7 +449,7 @@ public class InstallationManagerFacade {
     }
 
     /** Add node to multi-server Codenvy */
-    public String addNode(String dns) {
+    public String addNode(@Nonnull String dns) {
         try {
             NodeConfig node = manager.addNode(dns);
             return new Response().setNode(NodeInfo.createSuccessInfo(node))
@@ -461,7 +462,7 @@ public class InstallationManagerFacade {
     }
 
     /** Remove node from multi-server Codenvy */
-    public String removeNode(String dns) {
+    public String removeNode(@Nonnull String dns) {
         try {
             NodeConfig node = manager.removeNode(dns);
             return new Response().setNode(NodeInfo.createSuccessInfo(node))
@@ -474,7 +475,7 @@ public class InstallationManagerFacade {
     }
 
     /** Perform backup according to certain backup config */
-    public String backup(BackupConfig config) throws IOException {
+    public String backup(@Nonnull BackupConfig config) throws IOException {
         try {
             BackupConfig updatedConfig = manager.backup(config);
             return new Response().setBackup(BackupInfo.createSuccessInfo(updatedConfig))
@@ -489,7 +490,7 @@ public class InstallationManagerFacade {
     }
 
     /** Perform restore according to certain backup config */
-    public String restore(BackupConfig config) throws IOException {
+    public String restore(@Nonnull BackupConfig config) throws IOException {
         try {
             manager.restore(config);
             return new Response().setBackup(BackupInfo.createSuccessInfo(config))

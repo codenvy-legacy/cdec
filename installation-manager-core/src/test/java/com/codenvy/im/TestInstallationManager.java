@@ -286,7 +286,7 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
 
-        doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts(testCredentials.getToken());
+        doReturn(Collections.emptyMap()).when(manager).getInstalledArtifacts();
 
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
 
@@ -339,7 +339,7 @@ public class TestInstallationManager {
         doReturn(version100).when(cdecArtifact).getInstalledVersion();
         doReturn(version200).when(installManagerArtifact).getInstalledVersion();
 
-        Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts(testCredentials.getToken());
+        Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts();
 
         assertEquals(installedArtifacts.size(), 2);
         assertEquals(installedArtifacts.toString(), "{codenvy=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
