@@ -84,7 +84,7 @@ public class BackupManager {
 
             Files.deleteIfExists(backupFile);
             backupConfig.setBackupFile(compressedBackupFile.toString());
-        } catch(Exception e) {
+        } catch(Throwable e) {
             throw new BackupException(e.getMessage(), e);
         }
 

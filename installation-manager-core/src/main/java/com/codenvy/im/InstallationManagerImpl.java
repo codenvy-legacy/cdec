@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.backup.BackupManager;
-import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
@@ -153,14 +152,14 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Path download(UserCredentials userCredentials, Artifact artifact, Version version) throws IOException, IllegalStateException {
+    public Path download(String accessToken, Artifact artifact, Version version) throws IOException, IllegalStateException {
         try {
             boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version.toString(), transport, updateEndpoint);
 
             String requestUrl;
             if (isAuthenticationRequired) {
                 requestUrl = combinePaths(updateEndpoint,
-                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + userCredentials.getAccountId());
+                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + accessToken);
             } else {
                 requestUrl = combinePaths(updateEndpoint,
                                           "/repository/public/download/" + artifact.getName() + "/" + version);
@@ -169,7 +168,7 @@ public class InstallationManagerImpl implements InstallationManager {
             Path artifactDownloadDir = getDownloadDirectory(artifact, version);
             deleteDirectory(artifactDownloadDir.toFile());
 
-            return transport.download(requestUrl, artifactDownloadDir, userCredentials.getToken());
+            return transport.download(requestUrl, artifactDownloadDir, accessToken);
         } catch (IOException e) {
             throw getProperException(e, artifact);
         } catch (JsonParseException e) {
@@ -245,13 +244,13 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Map<Artifact, Version> getUpdates(String authToken) throws IOException {
+    public Map<Artifact, Version> getUpdates() throws IOException {
         Map<Artifact, Version> newVersions = new LinkedHashMap<>();
 
         Version newVersion;
         for (Artifact artifact : artifacts) {
             try {
-                newVersion = artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
+                newVersion = artifact.getLatestInstallableVersion(updateEndpoint, transport);
             } catch (HttpException e) {
                 // ignore update server error when there is no version of certain artifact there
                 if (e.getStatus() == javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode()) {
@@ -271,7 +270,7 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public Version getLatestInstallableVersion(String authToken, Artifact artifact) throws IOException {
-        return artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
+        return artifact.getLatestInstallableVersion(updateEndpoint, transport);
     }
 
     private Path getDownloadDirectory(Artifact artifact, Version version) {
@@ -282,7 +281,7 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version, String authToken) throws IOException {
         if (artifact == null) {
-            Map<Artifact, Version> latestVersions = getUpdates(authToken);
+            Map<Artifact, Version> latestVersions = getUpdates();
             Map<Artifact, Version> updates = new TreeMap<>(latestVersions);
             for (Map.Entry<Artifact, Version> e : latestVersions.entrySet()) {
 
@@ -304,7 +303,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 return ImmutableMap.of(artifact, version);
             }
 
-            final Version versionToUpdate = artifact.getLatestInstallableVersion(authToken, updateEndpoint, transport);
+            final Version versionToUpdate = artifact.getLatestInstallableVersion(updateEndpoint, transport);
             if (versionToUpdate == null) {
                 return Collections.emptyMap();
             }

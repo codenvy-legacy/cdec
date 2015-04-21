@@ -70,13 +70,11 @@ public interface InstallationManager {
     SortedMap<Version, Path> getDownloadedVersions(Artifact artifact) throws IOException;
 
     /**
-     * @param authToken
-     *         the authentication token
      * @return the list of the artifacts to update.
      * @throws java.io.IOException
      *         if an I/O error occurred
      */
-    Map<Artifact, Version> getUpdates(String authToken) throws IOException;
+    Map<Artifact, Version> getUpdates() throws IOException;
 
     /**
      * @param authToken
@@ -97,7 +95,7 @@ public interface InstallationManager {
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    Path download(UserCredentials userCredentials, Artifact artifact, Version version) throws
+    Path download(String accessToken, Artifact artifact, Version version) throws
                                                                                        IOException,
                                                                                        IllegalStateException;
 

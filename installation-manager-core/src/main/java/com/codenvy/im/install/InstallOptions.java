@@ -54,8 +54,9 @@ public class InstallOptions {
     }
 
     /** Setter for {@link #step} */
-    public void setStep(int step) {
+    public InstallOptions setStep(int step) {
         this.step = step;
+        return this;
     }
 
     /** Getter for {@link #configProperties} */
@@ -90,5 +91,41 @@ public class InstallOptions {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        InstallOptions that = (InstallOptions)o;
+
+        if (step != that.step) {
+            return false;
+        }
+        if (cliUserHomeDir != null ? !cliUserHomeDir.equals(that.cliUserHomeDir) : that.cliUserHomeDir != null) {
+            return false;
+        }
+        if (configProperties != null ? !configProperties.equals(that.configProperties) : that.configProperties != null) {
+            return false;
+        }
+        if (installType != that.installType) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = step;
+        result = 31 * result + (installType != null ? installType.hashCode() : 0);
+        result = 31 * result + (configProperties != null ? configProperties.hashCode() : 0);
+        result = 31 * result + (cliUserHomeDir != null ? cliUserHomeDir.hashCode() : 0);
+        return result;
     }
 }

@@ -312,7 +312,7 @@ public class TestInstallationManager {
         when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version100.toString())))
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
-        manager.download(testCredentials, cdecArtifact, version100);
+        manager.download(testCredentials.getToken(), cdecArtifact, version100);
     }
 
     @Test
@@ -321,12 +321,12 @@ public class TestInstallationManager {
         final Version version200 = Version.valueOf("2.0.0");
 
         doReturn(version100).when(cdecArtifact)
-                            .getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+                            .getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
 
         doReturn(version200).when(installManagerArtifact)
-                            .getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+                            .getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
 
-        Map<Artifact, Version> updates = manager.getUpdates(testCredentials.getToken());
+        Map<Artifact, Version> updates = manager.getUpdates();
         assertEquals(updates.size(), 2);
         assertEquals(updates.toString(), "{codenvy=1.0.0, " + InstallManagerArtifact.NAME + "=2.0.0}");
     }
@@ -353,7 +353,7 @@ public class TestInstallationManager {
         doReturn(new TreeMap<Artifact, Version>() {{
             put(cdecArtifact, version100);
             put(installManagerArtifact, version200);
-        }}).when(manager).getUpdates(testCredentials.getToken());
+        }}).when(manager).getUpdates();
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
         assertEquals(artifactsToDownload.size(), 2);
@@ -364,7 +364,7 @@ public class TestInstallationManager {
     public void testGetUpdatesToDownloadForSpecificArtifact() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
 
-        doReturn(version100).when(cdecArtifact).getLatestInstallableVersion(testCredentials.getToken(), UPDATE_ENDPOINT, transport);
+        doReturn(version100).when(cdecArtifact).getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(cdecArtifact, null, testCredentials.getToken());
         assertEquals(artifactsToDownload.size(), 1);
@@ -379,7 +379,7 @@ public class TestInstallationManager {
         doReturn(new TreeMap<Artifact, Version>() {{
             put(cdecArtifact, version200);
             put(installManagerArtifact, version100);
-        }}).when(manager).getUpdates(testCredentials.getToken());
+        }}).when(manager).getUpdates();
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, null);

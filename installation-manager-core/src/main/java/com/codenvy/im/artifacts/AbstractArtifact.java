@@ -117,7 +117,7 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     @Nullable
-    public Version getLatestInstallableVersion(String authToken, String updateEndpoint, HttpTransport transport) throws IOException {
+    public Version getLatestInstallableVersion(String updateEndpoint, HttpTransport transport) throws IOException {
         Version version = getLatestVersion(updateEndpoint, transport);
 
         if (version != null && isInstallable(version, updateEndpoint, transport)) {

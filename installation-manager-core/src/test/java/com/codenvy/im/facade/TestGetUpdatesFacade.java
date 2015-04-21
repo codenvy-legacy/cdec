@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -72,7 +71,7 @@ public class TestGetUpdatesFacade {
     @Test
     public void testGetUpdates() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
-        when(mockInstallationManager.getUpdates(anyString())).thenReturn(new LinkedHashMap<Artifact, Version>() {
+        when(mockInstallationManager.getUpdates()).thenReturn(new LinkedHashMap<Artifact, Version>() {
             {
                 put(installManagerArtifact, version100);
                 put(cdecArtifact, Version.valueOf("2.10.5"));
@@ -85,7 +84,7 @@ public class TestGetUpdatesFacade {
 
         when(mockInstallationManager.getDownloadedVersions(cdecArtifact)).thenReturn(new TreeMap<Version, Path>());
 
-        String response = installationManagerService.getUpdates(request);
+        String response = installationManagerService.getUpdates();
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
@@ -101,11 +100,11 @@ public class TestGetUpdatesFacade {
 
     @Test
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new AuthenticationException());
+        when(mockInstallationManager.getUpdates()).thenThrow(new AuthenticationException());
 
         Request request = new Request().setUserCredentials(new UserCredentials("incorrect-token", "accountId"));
 
-        String response = installationManagerService.getUpdates(request);
+        String response = installationManagerService.getUpdates();
         assertEquals(response, "{\n" +
                                "  \"message\" : \"Authentication error. Authentication token might be expired or invalid.\",\n" +
                                "  \"status\" : \"ERROR\"\n" +
@@ -114,9 +113,9 @@ public class TestGetUpdatesFacade {
 
     @Test
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new ArtifactNotFoundException(cdecArtifact));
+        when(mockInstallationManager.getUpdates()).thenThrow(new ArtifactNotFoundException(cdecArtifact));
 
-        String response = installationManagerService.getUpdates(request);
+        String response = installationManagerService.getUpdates();
 
         assertEquals(response, "{\n" +
                                "  \"message\" : \"Artifact 'codenvy' not found\",\n" +
@@ -126,11 +125,11 @@ public class TestGetUpdatesFacade {
 
     @Test
     public void testGetUpdatesCatchesException() throws Exception {
-        when(mockInstallationManager.getUpdates(anyString())).thenThrow(new IOException("Error"));
+        when(mockInstallationManager.getUpdates()).thenThrow(new IOException("Error"));
 
         Request request = new Request().setUserCredentials(new UserCredentials("incorrect-token", "accountId"));
 
-        String response = installationManagerService.getUpdates(request);
+        String response = installationManagerService.getUpdates();
 
         assertEquals(response, "{\n" +
                                "  \"message\" : \"Error\",\n" +

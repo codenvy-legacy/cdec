@@ -69,16 +69,22 @@ public class UserCredentials {
 
         UserCredentials that = (UserCredentials)o;
 
-        if (!accountId.equals(that.accountId)) return false;
-        if (!token.equals(that.token)) return false;
+        if (accountId != null ? !accountId.equals(that.accountId) : that.accountId!= null) {
+            return false;
+        }
+
+        if (token != null ? !token.equals(that.token) : that.token!= null) {
+            return false;
+        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = token.hashCode();
-        result = 31 * result + accountId.hashCode();
+        int result = token != null ? token.hashCode() : 0;
+        result = 31 * result + (accountId!= null ? accountId.hashCode() : 0);
+
         return result;
     }
 }

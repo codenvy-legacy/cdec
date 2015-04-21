@@ -69,7 +69,7 @@ public interface Artifact extends Comparable<Artifact> {
 
     /** @return version at the update server which is could be used to update already installed version */
     @Nullable
-    Version getLatestInstallableVersion(String authToken, String updateEndpoint, HttpTransport transport) throws IOException;
+    Version getLatestInstallableVersion(String updateEndpoint, HttpTransport transport) throws IOException;
 
     /** @return the list of downloaded versions */
     SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;

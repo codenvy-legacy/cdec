@@ -52,7 +52,7 @@ public class Response {
     public Response() {
     }
 
-    public static Response valueOf(Exception e) {
+    public static Response valueOf(Throwable e) {
         return new Response().setStatus(ResponseCode.ERROR)
                              .setMessage(e.getMessage());
     }

@@ -42,11 +42,9 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.endsWith;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -149,7 +147,7 @@ public class TestAbstractArtifact {
             .when(mockTransport)
             .doGet(contains("repository/properties/" + TEST_ARTIFACT_NAME + "/" + newVersion));
 
-        Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion(UPDATE_ENDPOINT, mockTransport);
 
         assertNotNull(version);
         assertEquals(version.toString(), newVersion);
@@ -167,7 +165,7 @@ public class TestAbstractArtifact {
             .when(mockTransport)
             .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
 
-        Version version = spyTestArtifact.getLatestInstallableVersion(TEST_TOKEN, UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion(UPDATE_ENDPOINT, mockTransport);
         assertNull(version);
     }
 

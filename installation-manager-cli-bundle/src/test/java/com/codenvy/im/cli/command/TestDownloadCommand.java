@@ -193,7 +193,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Test
     public void testCheckUpdates() throws Exception {
         Request request = new Request().setUserCredentials(testCredentials);
-        doReturn(okResponse).when(service).getUpdates(request);
+        doReturn(okResponse).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
@@ -210,7 +210,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                       + "\"status\": \"ERROR\""
                                       + "}";
         Request request = new Request().setUserCredentials(testCredentials);
-        doReturn(serviceErrorResponse).when(service).getUpdates(request);
+        doReturn(serviceErrorResponse).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
@@ -227,7 +227,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-                .when(service).getUpdates(any(Request.class));
+                .when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);

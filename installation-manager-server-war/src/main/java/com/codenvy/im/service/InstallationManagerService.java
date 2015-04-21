@@ -19,6 +19,9 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -33,10 +36,12 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,12 +64,20 @@ public class InstallationManagerService {
 
     /** Starts downloading */
     @POST
-    @Path("download/start")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("download/start/{artifact}/{version}")
+    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Starts downloading artifact from Update Server.", response = Response.class)
-    public javax.ws.rs.core.Response startDownload(Request request) {
-        request = handleInstallationManagerRequest(request);
+    public javax.ws.rs.core.Response startDownload(@PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
+                                                   @PathParam(value = "version")
+                                                   @ApiParam(value="default version is the latest one which is newer than installed one") String artifactVersion,
+                                                   @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication") String accessToken) {
+        UserCredentials userCredentials = new UserCredentials(accessToken);
+
+        Request request = new Request().setArtifactName(artifactName)
+                                       .setVersion(artifactVersion)
+                                       .setUserCredentials(userCredentials);
+
         return handleInstallationManagerResponse(delegate.startDownload(request));
     }
 
@@ -87,54 +100,69 @@ public class InstallationManagerService {
     }
 
     /** Get the list of actual updates from Update Server */
-    @POST
+    @GET
     @Path("download/check")
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the list of actual updates from Update Server", response = Response.class)
-    public javax.ws.rs.core.Response getUpdates(Request request) {
-        request = handleInstallationManagerRequest(request);
-        return handleInstallationManagerResponse(delegate.getUpdates(request));
+    public javax.ws.rs.core.Response getUpdates() {
+        return handleInstallationManagerResponse(delegate.getUpdates());
     }
 
     /** Gets the list of downloaded artifacts" */
-    @POST
-    @Path("download/list")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @GET
+    @Path("download/list/{artifact}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
-    public javax.ws.rs.core.Response getDownloads(Request request) {
-        request = handleInstallationManagerRequest(request);
+    public javax.ws.rs.core.Response getDownloads(@PathParam(value = "artifact") @ApiParam(value="default is all artifacts") String artifactName) {
+        Request request = new Request().setArtifactName(artifactName);
         return handleInstallationManagerResponse(delegate.getDownloads(request));
     }
 
     /** Gets the list of installed artifacts. */
     @GET
     @Path("install/list")
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of installed artifacts.", response = Response.class)
-    public javax.ws.rs.core.Response getInstalledVersions(Request request) throws IOException {
+    @ApiOperation(value = "Gets the list of installed artifacts", response = Response.class)
+    public javax.ws.rs.core.Response getInstalledVersions() throws IOException {
         return handleInstallationManagerResponse(delegate.getInstalledVersions());
     }
 
     /** Installs or updates artifact */
     @POST
-    @Path("install")
+    @Path("install/{type}/{step}/{artifact}/{version}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Installs or updates artifact", response = Response.class)
-    public javax.ws.rs.core.Response install(Request request) throws IOException {
+    public javax.ws.rs.core.Response install(@PathParam(value = "type") @ApiParam(required = true) InstallType installType,
+                                             @PathParam(value = "step") @ApiParam(value="default step is 0") int step,
+                                             @PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
+                                             @PathParam(value = "version") @ApiParam(value="default version is the latest one newer than installed one") String artifactVersion,
+                                             Map<String, String> configProperties) throws IOException {
+        InstallOptions installOptions = new InstallOptions().setInstallType(installType)
+                                                            .setStep(step)
+                                                            .setConfigProperties(configProperties);
+
+        Request request = new Request().setArtifactName(artifactName)
+                                       .setVersion(artifactVersion)
+                                       .setInstallOptions(installOptions);
+
         return handleInstallationManagerResponse(delegate.install(request));
     }
 
     /** Get the list of installation steps */
-    @POST
-    @Path("install/info")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @GET
+    @Path("install/info/{type}/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the list of installation steps", response = Response.class)
-    public javax.ws.rs.core.Response getInstallInfo(Request request) throws IOException {
+    public javax.ws.rs.core.Response getInstallInfo(@PathParam(value = "type") @ApiParam(required = true, value="could be SINGLE_SERVER, or MULTI_SERVER") InstallType installType,
+                                                    @PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
+                                                    @PathParam(value = "version") @ApiParam(value="default version is the latest one newer than installed one") String artifactVersion) throws IOException {
+        InstallOptions installOptions = new InstallOptions().setInstallType(installType);
+
+        Request request = new Request().setArtifactName(artifactName)
+                                       .setVersion(artifactVersion)
+                                       .setInstallOptions(installOptions);
+
         return handleInstallationManagerResponse(delegate.getInstallInfo(request));
     }
 
@@ -160,29 +188,36 @@ public class InstallationManagerService {
     @DELETE
     @Path("node/remove")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Removes Codenvy node in the multi-node environment ", response = Response.class)
-    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "DNS") @ApiParam(required = true) String dns) {
+    @ApiOperation(value = "Removes Codenvy node in the multi-node environment", response = Response.class)
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
         return handleInstallationManagerResponse(delegate.removeNode(dns));
     }
 
     /** Performs Codenvy backup according to given backup config */
     @POST
-    @Path("backup")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("backup/{artifact}")
+    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Performs Codenvy backup according to given backup config", response = Response.class)
-    public javax.ws.rs.core.Response backup(@ApiParam(required = true, value = "backup config") BackupConfig config) throws IOException {
+    @ApiOperation(value = "Performs backup of given artifact", response = Response.class)
+    public javax.ws.rs.core.Response backup(@PathParam(value = "artifact") @ApiParam(required = true) String artifactName,
+                                            String backupDirectoryPath) throws IOException {
+        BackupConfig config = new BackupConfig().setArtifactName(artifactName)
+                                                .setBackupDirectory(backupDirectoryPath);
+
         return handleInstallationManagerResponse(delegate.backup(config));
     }
 
     /** Performs Codenvy restore according to given backup config */
     @POST
-    @Path("restore")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("restore/{artifact}")
+    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Performs Codenvy restore according to given backup config", response = Response.class)
-    public javax.ws.rs.core.Response restore(@ApiParam(required = true, value = "backup config") BackupConfig config)
-            throws IOException {
+    @ApiOperation(value = "Performs restore of given artifact from the given backup file", response = Response.class)
+    public javax.ws.rs.core.Response restore(@PathParam(value = "artifact") @ApiParam(required = true) String artifactName,
+                                             String backupFilePath) throws IOException {
+        BackupConfig config = new BackupConfig().setArtifactName(artifactName)
+                                                .setBackupFile(backupFilePath);
+
         return handleInstallationManagerResponse(delegate.restore(config));
     }
 
@@ -194,20 +229,9 @@ public class InstallationManagerService {
             } else {
                 return javax.ws.rs.core.Response.serverError().entity(response).build();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return javax.ws.rs.core.Response.serverError().entity(e.toString()).build();
         }
-    }
-
-    /**
-     * @return empty request if request = null
-     */
-    private Request handleInstallationManagerRequest(Request request) {
-        if (request == null) {
-            return new Request();
-        }
-
-        return request;
     }
 }

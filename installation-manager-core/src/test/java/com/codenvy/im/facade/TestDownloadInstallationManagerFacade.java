@@ -111,7 +111,7 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(mockInstallationManager).download(testCredentials, cdecArtifact, version200);
+        }).when(mockInstallationManager).download(testCredentials.getToken(), cdecArtifact, version200);
 
         doAnswer(new Answer() {
             @Override
@@ -119,7 +119,7 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathIM.toFile(), new byte[50]);
                 return pathIM;
             }
-        }).when(mockInstallationManager).download(testCredentials, installManagerArtifact, version100);
+        }).when(mockInstallationManager).download(testCredentials.getToken(), installManagerArtifact, version100);
 
         doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
         doReturn(pathIM).when(mockInstallationManager).getPathToBinaries(installManagerArtifact, version100);
@@ -170,7 +170,7 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(mockInstallationManager).download(testCredentials, cdecArtifact, version200);
+        }).when(mockInstallationManager).download(testCredentials.getToken(), cdecArtifact, version200);
 
         doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
         doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
@@ -212,7 +212,7 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(mockInstallationManager).download(testCredentials, cdecArtifact, version200);
+        }).when(mockInstallationManager).download(testCredentials.getToken(), cdecArtifact, version200);
 
         doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
         doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
@@ -311,7 +311,7 @@ public class TestDownloadInstallationManagerFacade {
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
                 .when(mockInstallationManager)
-                .download(testCredentials, cdecArtifact, version200);
+                .download(testCredentials.getToken(), cdecArtifact, version200);
 
         Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);
@@ -364,7 +364,7 @@ public class TestDownloadInstallationManagerFacade {
 
         doThrow(new AuthenticationException()).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
         doThrow(new AuthenticationException()).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
-        doThrow(new AuthenticationException()).when(mockInstallationManager).download(testCredentials, cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(mockInstallationManager).download(testCredentials.getToken(), cdecArtifact, version200);
 
         Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);

@@ -113,7 +113,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
     private void doCheck() throws JsonParseException {
         Request request = initRequest(artifactName, version);
-        console.printResponse(facade.getUpdates(request));
+        console.printResponse(facade.getUpdates());
     }
 
     private void doList() throws JsonParseException {

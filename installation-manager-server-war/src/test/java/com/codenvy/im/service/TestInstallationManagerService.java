@@ -19,19 +19,22 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -40,14 +43,9 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstallationManagerService {
 
+    public static final String TEST_ARTIFACT = "codenvy";
+    public static final String TEST_VERSION = "1.0.0";
     private InstallationManagerService service;
-
-    private Request testRequest = new Request().setArtifactName("codenvy");
-
-    private Request emptyRequest = new Request();
-
-    @Mock
-    private BackupConfig mockBackupConfig;
 
     @Mock
     private InstallationManagerFacade mockFacade;
@@ -65,17 +63,16 @@ public class TestInstallationManagerService {
 
     @Test
     public void testStartDownload() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        Response result = service.startDownload(testRequest);
-        checkOkResponse(result);
+        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
+                                           .setVersion(TEST_VERSION)
+                                           .setUserCredentials(new UserCredentials("accessToken"));
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(emptyRequest);
-        result = service.startDownload(null);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
+        Response result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, "accessToken");
         checkOkResponse(result);
-        verify(mockFacade).startDownload(emptyRequest);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        result = service.startDownload(testRequest);
+        result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, "accessToken");
         checkErrorResponse(result);
     }
 
@@ -103,74 +100,77 @@ public class TestInstallationManagerService {
 
     @Test
     public void testGetUpdates() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates(testRequest);
-        Response result = service.getUpdates(testRequest);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates();
+        Response result = service.getUpdates();
         checkOkResponse(result);
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates(emptyRequest);
-        result = service.getUpdates(null);
-        checkOkResponse(result);
-        verify(mockFacade).getUpdates(emptyRequest);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates(testRequest);
-        result = service.getUpdates(testRequest);
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates();
+        result = service.getUpdates();
         checkErrorResponse(result);
     }
 
     @Test
     public void testGetDownloads() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        Response result = service.getDownloads(testRequest);
-        checkOkResponse(result);
+        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT);
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(emptyRequest);
-        result = service.getDownloads(null);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
+        Response result = service.getDownloads(TEST_ARTIFACT);
         checkOkResponse(result);
-        verify(mockFacade).getDownloads(emptyRequest);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        result = service.getDownloads(testRequest);
+        result = service.getDownloads(TEST_ARTIFACT);
         checkErrorResponse(result);
     }
 
     @Test
     public void testGetInstalledVersions() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstalledVersions();
-        Response result = service.getInstalledVersions(testRequest);
+        Response result = service.getInstalledVersions();
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstalledVersions();
-        result = service.getInstalledVersions(testRequest);
+        result = service.getInstalledVersions();
         checkErrorResponse(result);
     }
 
     @Test
     public void testInstall() throws Exception {
+        Map<String, String> testConfigProperties = new HashMap<>();
+        testConfigProperties.put("property1", "value1");
+        testConfigProperties.put("property2", "value2");
+
+        int testStep = 1;
+        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
+                                                                .setConfigProperties(testConfigProperties)
+                                                                .setStep(testStep);
+
+        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
+                                           .setVersion(TEST_VERSION)
+                                           .setInstallOptions(testInstallOptions);
+
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.install(testRequest);
+        Response result = service.install(InstallType.SINGLE_SERVER, testStep, TEST_ARTIFACT, TEST_VERSION, testConfigProperties);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.install(testRequest);
-        checkErrorResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(null);
-        service.install(null);
+        result = service.install(InstallType.SINGLE_SERVER, testStep, TEST_ARTIFACT, TEST_VERSION, testConfigProperties);
         checkErrorResponse(result);
     }
 
     @Test
     public void testGetInstallInfo() throws Exception {
+        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
+
+        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
+                                           .setVersion(TEST_VERSION)
+                                           .setInstallOptions(testInstallOptions);
+
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        Response result = service.getInstallInfo(testRequest);
+        Response result = service.getInstallInfo(InstallType.SINGLE_SERVER, TEST_ARTIFACT, TEST_VERSION);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        result = service.getInstallInfo(testRequest);
-        checkErrorResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(null);
-        service.getInstallInfo(null);
+        result = service.getInstallInfo(InstallType.SINGLE_SERVER, TEST_ARTIFACT, TEST_VERSION);
         checkErrorResponse(result);
     }
 
@@ -209,30 +209,38 @@ public class TestInstallationManagerService {
 
     @Test
     public void testBackup() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).backup(mockBackupConfig);
-        Response result = service.backup(mockBackupConfig);
+        String testBackupDirectoryPath = "test/path";
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(TEST_ARTIFACT)
+                                                          .setBackupDirectory(testBackupDirectoryPath);
+
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).backup(testBackupConfig);
+        Response result = service.backup(TEST_ARTIFACT, testBackupDirectoryPath);
         checkOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).backup(mockBackupConfig);
-        result = service.backup(mockBackupConfig);
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).backup(testBackupConfig);
+        result = service.backup(TEST_ARTIFACT, testBackupDirectoryPath);
         checkErrorResponse(result);
     }
 
     @Test
     public void testRestore() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).restore(mockBackupConfig);
-        Response result = service.restore(mockBackupConfig);
+        String testBackupFilePath = "test/path/backup";
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(TEST_ARTIFACT)
+                                                          .setBackupFile(testBackupFilePath);
+
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).restore(testBackupConfig);
+        Response result = service.restore(TEST_ARTIFACT, testBackupFilePath);
         checkOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(mockBackupConfig);
-        result = service.restore(mockBackupConfig);
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(testBackupConfig);
+        result = service.restore(TEST_ARTIFACT, testBackupFilePath);
         checkErrorResponse(result);
     }
 
     @Test
     public void testHandleIncorrectFacadeResponse() throws Exception {
-        doReturn("{").when(mockFacade).startDownload(testRequest);
-        Response result = service.startDownload(testRequest);
+        doReturn("{").when(mockFacade).getConfig();
+        Response result = service.getConfig();
 
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         String facadeResponse = (String)result.getEntity();
