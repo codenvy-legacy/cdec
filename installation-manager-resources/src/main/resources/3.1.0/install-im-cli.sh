@@ -99,7 +99,7 @@ doInstallStep2() {
     installPackageIfNeed wget
     installPackageIfNeed unzip
     installJava
-    printPrompt; echo "COMPLETED STEP 2: INмфпSTALL JAVA AND OTHER REQUIRED PACKAGES"
+    printPrompt; echo "COMPLETED STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
 }
 
 doInstallStep3() {
