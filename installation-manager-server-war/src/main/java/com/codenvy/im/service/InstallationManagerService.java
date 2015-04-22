@@ -71,8 +71,8 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response startDownload(@PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
                                                    @PathParam(value = "version")
                                                    @ApiParam(value="default version is the latest one which is newer than installed one") String artifactVersion,
-                                                   @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication") String accessToken) {
-        UserCredentials userCredentials = new UserCredentials(accessToken);
+                                                   @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication") String saasAccessToken) {
+        UserCredentials userCredentials = new UserCredentials(saasAccessToken);
 
         Request request = new Request().setArtifactName(artifactName)
                                        .setVersion(artifactVersion)
@@ -219,6 +219,37 @@ public class InstallationManagerService {
                                                 .setBackupFile(backupFilePath);
 
         return handleInstallationManagerResponse(delegate.restore(config));
+    }
+
+    /** Adds trial subscription to account */
+    @POST
+    @Path("subscription/{accountId}/add-trial")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Adds trial subscription tor account",
+                  response = Response.class)
+    public javax.ws.rs.core.Response addTrialSubscription(@PathParam(value = "accountId") String accountId,
+                                                          @ApiParam(required = true, value = "SaaS Codenvy access token") String accessToken) throws IOException {
+        UserCredentials userCredentials = new UserCredentials(accountId, accessToken);
+        Request request = new Request().setUserCredentials(userCredentials);
+
+        return handleInstallationManagerResponse(delegate.addTrialSubscription(request));
+    }
+
+    /** Check user's subscription. */
+    @POST
+    @Path("subscription/{accountId}/check/{subscriptionName}/")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Check user has a subscription of certain type at the SaaS Codenvy.",
+                  response = Response.class)
+    public javax.ws.rs.core.Response checkSubscription(@PathParam(value = "subscriptionName") @ApiParam(value = "default value is 'OnPremises'") String subscriptionName,
+                                                       @PathParam(value = "accountId") @ApiParam(required = true, value = "SaaS Codenvy account id") String accountId,
+                                                       @ApiParam(required = true, value = "SaaS Codenvy access token") String accessToken) throws IOException {
+        UserCredentials userCredentials = new UserCredentials(accountId, accessToken);
+        Request request = new Request().setUserCredentials(userCredentials);
+
+        return handleInstallationManagerResponse(delegate.checkSubscription(subscriptionName, request));
     }
 
     private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {

@@ -45,6 +45,9 @@ public class TestInstallationManagerService {
 
     public static final String TEST_ARTIFACT = "codenvy";
     public static final String TEST_VERSION = "1.0.0";
+    public static final String TEST_ACCESS_TOKEN = "accessToken";
+    public static final String TEST_ACCOUNT_ID = "accountId";
+    public static final String TEST_SUBSCRIPTION_ID = "subscriptionId";
     private InstallationManagerService service;
 
     @Mock
@@ -65,14 +68,14 @@ public class TestInstallationManagerService {
     public void testStartDownload() throws Exception {
         Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
                                            .setVersion(TEST_VERSION)
-                                           .setUserCredentials(new UserCredentials("accessToken"));
+                                           .setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        Response result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, "accessToken");
+        Response result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, TEST_ACCESS_TOKEN);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, "accessToken");
+        result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, TEST_ACCESS_TOKEN);
         checkErrorResponse(result);
     }
 
@@ -234,6 +237,35 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(testBackupConfig);
         result = service.restore(TEST_ARTIFACT, testBackupFilePath);
+        checkErrorResponse(result);
+    }
+
+
+    @Test
+    public void testAddTrialSubscription() throws Exception {
+        UserCredentials testUserCredentials = new UserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        Request testRequest = new Request().setUserCredentials(testUserCredentials);
+
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
+        Response result = service.addTrialSubscription(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
+        result = service.addTrialSubscription(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        checkErrorResponse(result);
+    }
+
+    @Test
+    public void testCheckSubscription() throws Exception {
+        UserCredentials testUserCredentials = new UserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        Request testRequest = new Request().setUserCredentials(testUserCredentials);
+
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
+        Response result = service.checkSubscription(TEST_SUBSCRIPTION_ID, TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
+        result = service.checkSubscription(TEST_SUBSCRIPTION_ID, TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
         checkErrorResponse(result);
     }
 

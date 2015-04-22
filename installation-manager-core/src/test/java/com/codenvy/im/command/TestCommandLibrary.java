@@ -24,6 +24,7 @@ import com.codenvy.im.node.NodeConfig;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
@@ -43,8 +44,14 @@ import static org.testng.Assert.assertTrue;
 /** @author Dmytro Nochevnov */
 public class TestCommandLibrary {
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
-    public static final NodeConfig TEST_API_NODE = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
-    public static final NodeConfig TEST_DATA_NODE = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
+    public static NodeConfig testApiNode    = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
+    public static NodeConfig testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
+
+    @BeforeMethod
+    public void setup() {
+        testApiNode = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
+        testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
+    }
 
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
@@ -123,8 +130,8 @@ public class TestCommandLibrary {
                                               SYSTEM_USER_NAME);
 
         List<NodeConfig> nodes = ImmutableList.of(
-            TEST_API_NODE,
-            TEST_DATA_NODE
+            testApiNode,
+            testDataNode
         );
 
         Command testCommand = CommandLibrary.createFileRestoreOrBackupCommand("testFile", nodes);
@@ -191,14 +198,14 @@ public class TestCommandLibrary {
                                              "'agent'='LocalAgent'" +
                                              "}");
 
-        testCommand = CommandLibrary.createStopServiceCommand("test-service", TEST_API_NODE);
+        testCommand = CommandLibrary.createStopServiceCommand("test-service", testApiNode);
         assertEquals(testCommand.toString(), format("{" +
-                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
-                                             "if [ $? -eq 0 ]; then" +
-                                             "   sudo service test-service stop; " +
-                                             "fi; ', " +
-                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                             "}", SYSTEM_USER_NAME));
+                                                    "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
+                                                    "if [ $? -eq 0 ]; then" +
+                                                    "   sudo service test-service stop; " +
+                                                    "fi; ', " +
+                                                    "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                                    "}", SYSTEM_USER_NAME));
     }
 
     @Test
@@ -212,14 +219,14 @@ public class TestCommandLibrary {
                                              "'agent'='LocalAgent'" +
                                              "}");
 
-        testCommand = CommandLibrary.createStartServiceCommand("test-service", TEST_API_NODE);
+        testCommand = CommandLibrary.createStartServiceCommand("test-service", testApiNode);
         assertEquals(testCommand.toString(), format("{" +
-                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
-                                             "if [ $? -ne 0 ]; then" +
-                                             "   sudo service test-service start; " +
-                                             "fi; ', " +
-                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                             "}", SYSTEM_USER_NAME));
+                                                    "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
+                                                    "if [ $? -ne 0 ]; then" +
+                                                    "   sudo service test-service start; " +
+                                                    "fi; ', " +
+                                                    "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                                    "}", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -230,18 +237,42 @@ public class TestCommandLibrary {
 
     @Test
     public void testCreateCopyFromLocalToRemoteCommand() {
-        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), TEST_API_NODE);
+        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testApiNode.setUser(SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(), format("{" +
+                                                    "'command'='scp -r -q -o StrictHostKeyChecking=no local/path %s@localhost:remote/path', " +
+                                                    "'agent'='LocalAgent'" +
+                                                    "}", SYSTEM_USER_NAME));
+
+        testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testDataNode.setUser(null));
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o StrictHostKeyChecking=no local/path localhost:remote/path', " +
+                                             "'command'='scp -r -q -o StrictHostKeyChecking=no local/path 127.0.0.1:remote/path', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+
+        testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testDataNode.setUser(""));
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='scp -r -q -o StrictHostKeyChecking=no local/path 127.0.0.1:remote/path', " +
                                              "'agent'='LocalAgent'" +
                                              "}");
     }
 
     @Test
     public void testCreateCopyFromRemoteToLocalCommand() {
-        Command testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), TEST_API_NODE);
+        Command testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), testApiNode.setUser(SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(), format("{" +
+                                                    "'command'='scp -r -q -o StrictHostKeyChecking=no %s@localhost:remote/path local/path', " +
+                                                    "'agent'='LocalAgent'" +
+                                                    "}", SYSTEM_USER_NAME));
+
+        testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), testDataNode.setUser(null));
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o StrictHostKeyChecking=no localhost:remote/path local/path', " +
+                                             "'command'='scp -r -q -o StrictHostKeyChecking=no 127.0.0.1:remote/path local/path', " +
+                                             "'agent'='LocalAgent'" +
+                                             "}");
+
+        testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), testDataNode.setUser(""));
+        assertEquals(testCommand.toString(), "{" +
+                                             "'command'='scp -r -q -o StrictHostKeyChecking=no 127.0.0.1:remote/path local/path', " +
                                              "'agent'='LocalAgent'" +
                                              "}");
     }
@@ -260,7 +291,7 @@ public class TestCommandLibrary {
                                              "'agent'='LocalAgent'" +
                                              "}");
 
-        testCommand = CommandLibrary.createWaitServiceActiveCommand("test-service", TEST_API_NODE);
+        testCommand = CommandLibrary.createWaitServiceActiveCommand("test-service", testApiNode);
         assertEquals(testCommand.toString(), format("{" +
                                              "'command'='doneState=\"Checking\"; " +
                                              "while [ \"${doneState}\" != \"Done\" ]; do" +

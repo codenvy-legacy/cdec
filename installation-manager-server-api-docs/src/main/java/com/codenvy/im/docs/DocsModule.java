@@ -97,7 +97,7 @@ public class DocsModule extends AbstractModule {
             config.setBasePath(BASE_SERVER_URL);
             config.setApiVersion("1.0");
             final com.wordnik.swagger.model.ApiInfo apiInfo = new com.wordnik.swagger.model.ApiInfo(
-                "Installation-manager REST API", // title
+                "Installation Manager REST API", // title
                 "", // description
                 "", // termsOfServiceUrl
                 "", // contacts

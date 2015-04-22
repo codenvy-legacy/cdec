@@ -241,12 +241,24 @@ public class CommandLibrary {
     }
 
     public static Command createCopyFromRemoteToLocalCommand(Path fromPath, Path toPath, NodeConfig remote) {
-        String fromRemotePath = format("%s:%s", remote.getHost(), fromPath);
+        String userNamePrefix = "";
+        if (remote.getUser() != null
+                && !remote.getUser().isEmpty()) {
+            userNamePrefix = format("%s@", remote.getUser());
+        }
+
+        String fromRemotePath = format("%s%s:%s", userNamePrefix, remote.getHost(), fromPath);
         return createCommand(getScpCommand(fromRemotePath, toPath.toString()));
     }
 
     public static Command createCopyFromLocalToRemoteCommand(Path fromPath, Path toPath, NodeConfig remote) {
-        String toRemotePath = format("%s:%s", remote.getHost(), toPath);
+        String userNamePrefix = "";
+        if (remote.getUser() != null
+            && !remote.getUser().isEmpty()) {
+            userNamePrefix = format("%s@", remote.getUser());
+        }
+
+        String toRemotePath = format("%s%s:%s", userNamePrefix, remote.getHost(), toPath);
         return createCommand(getScpCommand(fromPath.toString(), toRemotePath));
     }
 

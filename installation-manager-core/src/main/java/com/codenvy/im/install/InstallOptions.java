@@ -104,16 +104,19 @@ public class InstallOptions {
 
         InstallOptions that = (InstallOptions)o;
 
-        if (step != that.step) {
-            return false;
-        }
-        if (cliUserHomeDir != null ? !cliUserHomeDir.equals(that.cliUserHomeDir) : that.cliUserHomeDir != null) {
-            return false;
-        }
         if (configProperties != null ? !configProperties.equals(that.configProperties) : that.configProperties != null) {
             return false;
         }
+
+        if (step != that.step) {
+            return false;
+        }
+
         if (installType != that.installType) {
+            return false;
+        }
+
+        if (cliUserHomeDir != null ? !cliUserHomeDir.equals(that.cliUserHomeDir) : that.cliUserHomeDir != null) {
             return false;
         }
 
