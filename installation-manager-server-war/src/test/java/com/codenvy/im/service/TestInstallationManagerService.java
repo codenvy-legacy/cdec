@@ -148,15 +148,14 @@ public class TestInstallationManagerService {
                                                                 .setStep(testStep);
 
         Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
-                                           .setVersion(TEST_VERSION)
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.install(InstallType.SINGLE_SERVER, testStep, TEST_ARTIFACT, TEST_VERSION, testConfigProperties);
+        Response result = service.install(TEST_ARTIFACT, InstallType.SINGLE_SERVER, testStep, testConfigProperties);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.install(InstallType.SINGLE_SERVER, testStep, TEST_ARTIFACT, TEST_VERSION, testConfigProperties);
+        result = service.install(TEST_ARTIFACT, InstallType.SINGLE_SERVER, testStep, testConfigProperties);
         checkErrorResponse(result);
     }
 
@@ -164,16 +163,14 @@ public class TestInstallationManagerService {
     public void testGetInstallInfo() throws Exception {
         InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
-        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
-                                           .setVersion(TEST_VERSION)
-                                           .setInstallOptions(testInstallOptions);
+        Request testRequest = new Request().setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        Response result = service.getInstallInfo(InstallType.SINGLE_SERVER, TEST_ARTIFACT, TEST_VERSION);
+        Response result = service.getInstallInfo(InstallType.SINGLE_SERVER);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        result = service.getInstallInfo(InstallType.SINGLE_SERVER, TEST_ARTIFACT, TEST_VERSION);
+        result = service.getInstallInfo(InstallType.SINGLE_SERVER);
         checkErrorResponse(result);
     }
 

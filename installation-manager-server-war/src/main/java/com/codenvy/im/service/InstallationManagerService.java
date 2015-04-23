@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.service;
 
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
@@ -33,6 +34,7 @@ import com.wordnik.swagger.annotations.ApiParam;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -41,6 +43,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,15 +67,17 @@ public class InstallationManagerService {
 
     /** Starts downloading */
     @POST
-    @Path("download/start/{artifact}/{version}")
+    @Path("download/start")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Starts downloading artifact from Update Server.", response = Response.class)
-    public javax.ws.rs.core.Response startDownload(@PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
-                                                   @PathParam(value = "version")
-                                                   @ApiParam(value="default version is the latest one which is newer than installed one") String artifactVersion,
-                                                   @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication") String saasAccessToken) {
-        UserCredentials userCredentials = new UserCredentials(saasAccessToken);
+    @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response = Response.class)
+    public javax.ws.rs.core.Response startDownload(
+        @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
+        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one") String artifactVersion,
+        @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication at Saa")
+        String accessToken) {
+
+        UserCredentials userCredentials = new UserCredentials(accessToken);
 
         Request request = new Request().setArtifactName(artifactName)
                                        .setVersion(artifactVersion)
@@ -85,7 +90,7 @@ public class InstallationManagerService {
     @POST
     @Path("download/stop")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Interrupts downloading artifact from Update Server.", response = Response.class)
+    @ApiOperation(value = "Interrupts downloading artifact from Update Server", response = Response.class)
     public javax.ws.rs.core.Response stopDownload() {
         return handleInstallationManagerResponse(delegate.stopDownload());
     }
@@ -110,10 +115,10 @@ public class InstallationManagerService {
 
     /** Gets the list of downloaded artifacts" */
     @GET
-    @Path("download/list/{artifact}")
+    @Path("download/list")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
-    public javax.ws.rs.core.Response getDownloads(@PathParam(value = "artifact") @ApiParam(value="default is all artifacts") String artifactName) {
+    public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") @ApiParam(value="default is all artifacts") String artifactName) {
         Request request = new Request().setArtifactName(artifactName);
         return handleInstallationManagerResponse(delegate.getDownloads(request));
     }
@@ -129,21 +134,25 @@ public class InstallationManagerService {
 
     /** Installs or updates artifact */
     @POST
-    @Path("install/{type}/{step}/{artifact}/{version}")
+    @Path("install")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Installs or updates artifact", response = Response.class)
-    public javax.ws.rs.core.Response install(@PathParam(value = "type") @ApiParam(required = true) InstallType installType,
-                                             @PathParam(value = "step") @ApiParam(value="default step is 0") int step,
-                                             @PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
-                                             @PathParam(value = "version") @ApiParam(value="default version is the latest one newer than installed one") String artifactVersion,
-                                             Map<String, String> configProperties) throws IOException {
+    @ApiOperation(value = "Installs or updates artifact", notes = "Ready to install updates downloaded from Update Server re used. Use request body to pass install configuration properties", response = Response.class)
+    public javax.ws.rs.core.Response install(
+        @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " + CDECArtifact.NAME) String artifactName,
+        @QueryParam(value = "type") @ApiParam(value = "is needed for " + CDECArtifact.NAME + " artifact and could be 'SINGLE_SERVER', or 'MULTI_SERVER'") InstallType installType,
+        @QueryParam(value = "step") @ApiParam(value = "default step is 0") int step,
+        Map<String, String> configProperties) throws IOException {
+
+        if (configProperties == null) {
+            configProperties = new HashMap<>();   // init install config properties
+        }
+
         InstallOptions installOptions = new InstallOptions().setInstallType(installType)
                                                             .setStep(step)
                                                             .setConfigProperties(configProperties);
 
         Request request = new Request().setArtifactName(artifactName)
-                                       .setVersion(artifactVersion)
                                        .setInstallOptions(installOptions);
 
         return handleInstallationManagerResponse(delegate.install(request));
@@ -151,16 +160,14 @@ public class InstallationManagerService {
 
     /** Get the list of installation steps */
     @GET
-    @Path("install/info/{type}/{artifact}/{version}")
+    @Path("install/info")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the list of installation steps", response = Response.class)
-    public javax.ws.rs.core.Response getInstallInfo(@PathParam(value = "type") @ApiParam(required = true, value="could be SINGLE_SERVER, or MULTI_SERVER") InstallType installType,
-                                                    @PathParam(value = "artifact") @ApiParam(value="default name is codenvy") String artifactName,
-                                                    @PathParam(value = "version") @ApiParam(value="default version is the latest one newer than installed one") String artifactVersion) throws IOException {
+    @ApiOperation(value = "Get the list of installation steps of " + CDECArtifact.NAME + " artifact", response = Response.class)
+    public javax.ws.rs.core.Response getInstallInfo(
+        @QueryParam(value = "type") @ApiParam(required = true, value = "could be 'SINGLE_SERVER', or 'MULTI_SERVER'") InstallType installType) throws IOException {
         InstallOptions installOptions = new InstallOptions().setInstallType(installType);
 
-        Request request = new Request().setArtifactName(artifactName)
-                                       .setVersion(artifactVersion)
+        Request request = new Request().setArtifactName(CDECArtifact.NAME)
                                        .setInstallOptions(installOptions);
 
         return handleInstallationManagerResponse(delegate.getInstallInfo(request));
@@ -180,7 +187,7 @@ public class InstallationManagerService {
     @Path("node/add")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = Response.class)
-    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
+    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns name of adding node") @ApiParam(required = true) String dns) {
         return handleInstallationManagerResponse(delegate.addNode(dns));
     }
 
@@ -189,18 +196,20 @@ public class InstallationManagerService {
     @Path("node/remove")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Removes Codenvy node in the multi-node environment", response = Response.class)
-    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true) String dns) {
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns name of removing node") @ApiParam(required = true) String dns) {
         return handleInstallationManagerResponse(delegate.removeNode(dns));
     }
 
     /** Performs Codenvy backup according to given backup config */
     @POST
-    @Path("backup/{artifact}")
+    @Path("backup")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Performs backup of given artifact", response = Response.class)
-    public javax.ws.rs.core.Response backup(@PathParam(value = "artifact") @ApiParam(required = true) String artifactName,
-                                            String backupDirectoryPath) throws IOException {
+    public javax.ws.rs.core.Response backup(
+        @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " + CDECArtifact.NAME) String artifactName,
+        @QueryParam(value = "backupDir") @ApiParam(value = "path to backup directory") String backupDirectoryPath) throws IOException {
+
         BackupConfig config = new BackupConfig().setArtifactName(artifactName)
                                                 .setBackupDirectory(backupDirectoryPath);
 
@@ -209,12 +218,14 @@ public class InstallationManagerService {
 
     /** Performs Codenvy restore according to given backup config */
     @POST
-    @Path("restore/{artifact}")
+    @Path("restore")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Performs restore of given artifact from the given backup file", response = Response.class)
-    public javax.ws.rs.core.Response restore(@PathParam(value = "artifact") @ApiParam(required = true) String artifactName,
-                                             String backupFilePath) throws IOException {
+    public javax.ws.rs.core.Response restore(
+        @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " + CDECArtifact.NAME) String artifactName,
+        @QueryParam(value = "backupFile") @ApiParam(value = "path to backup file", required = true) String backupFilePath) throws IOException {
+
         BackupConfig config = new BackupConfig().setArtifactName(artifactName)
                                                 .setBackupFile(backupFilePath);
 
@@ -226,10 +237,12 @@ public class InstallationManagerService {
     @Path("subscription/{accountId}/add-trial")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Adds trial subscription tor account",
+    @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(@PathParam(value = "accountId") String accountId,
-                                                          @ApiParam(required = true, value = "SaaS Codenvy access token") String accessToken) throws IOException {
+    public javax.ws.rs.core.Response addTrialSubscription(
+        @PathParam(value = "accountId") @ApiParam(required = true, value = "SaaS Codenvy account id") String accountId,
+        @ApiParam(required = true, value = "Token to access SaaS Codenvy server") String accessToken) throws IOException {
+
         UserCredentials userCredentials = new UserCredentials(accountId, accessToken);
         Request request = new Request().setUserCredentials(userCredentials);
 
@@ -238,14 +251,16 @@ public class InstallationManagerService {
 
     /** Check user's subscription. */
     @POST
-    @Path("subscription/{accountId}/check/{subscriptionName}/")
+    @Path("subscription/{accountId}/check")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Check user has a subscription of certain type at the SaaS Codenvy.",
+    @ApiOperation(value = "Check if user has a subscription of certain type at the SaaS Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response checkSubscription(@PathParam(value = "subscriptionName") @ApiParam(value = "default value is 'OnPremises'") String subscriptionName,
-                                                       @PathParam(value = "accountId") @ApiParam(required = true, value = "SaaS Codenvy account id") String accountId,
-                                                       @ApiParam(required = true, value = "SaaS Codenvy access token") String accessToken) throws IOException {
+    public javax.ws.rs.core.Response checkSubscription(
+        @QueryParam(value = "subscriptionName") @ApiParam(value = "default subscription name is 'OnPremises'") String subscriptionName,
+        @PathParam(value = "accountId") @ApiParam(required = true, value = "SaaS Codenvy account id") String accountId,
+        @ApiParam(required = true, value = "Token to access SaaS Codenvy server") String accessToken) throws IOException {
+
         UserCredentials userCredentials = new UserCredentials(accountId, accessToken);
         Request request = new Request().setUserCredentials(userCredentials);
 
@@ -260,7 +275,7 @@ public class InstallationManagerService {
             } else {
                 return javax.ws.rs.core.Response.serverError().entity(response).build();
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return javax.ws.rs.core.Response.serverError().entity(e.toString()).build();
         }

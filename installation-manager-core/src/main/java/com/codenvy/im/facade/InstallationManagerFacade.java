@@ -101,7 +101,7 @@ public class InstallationManagerFacade {
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
                                  .toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -128,7 +128,7 @@ public class InstallationManagerFacade {
                                      .setMessage("Subscription not found or outdated")
                                      .toJson();
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR)
                                  .setSubscription(subscription)
@@ -157,7 +157,7 @@ public class InstallationManagerFacade {
             latcher.await();
 
             return new Response().setStatus(ResponseCode.OK).toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -188,7 +188,7 @@ public class InstallationManagerFacade {
                 try {
                     Path pathToBinaries = doDownload(request.obtainAccessToken(), artToDownload, verToDownload);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
-                } catch (Throwable exp) {
+                } catch (Exception exp) {
                     LOG.log(Level.SEVERE, exp.getMessage(), exp);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
                     downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
@@ -199,7 +199,7 @@ public class InstallationManagerFacade {
             }
 
             downloadDescriptor.setDownloadResult(new Response().setStatus(ResponseCode.OK).setArtifacts(infos));
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
 
             if (downloadDescriptor == null) {
@@ -246,7 +246,7 @@ public class InstallationManagerFacade {
                 DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
                 return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -272,7 +272,7 @@ public class InstallationManagerFacade {
 
             downloadDescriptor.getDownloadThread().interrupt();
             return new Response().setStatus(ResponseCode.OK).toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -305,11 +305,11 @@ public class InstallationManagerFacade {
                 }
 
                 return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 LOG.log(Level.SEVERE, e.getMessage(), e);
                 return Response.valueOf(e).toJson();
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
@@ -348,7 +348,7 @@ public class InstallationManagerFacade {
             }
 
             return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -368,7 +368,7 @@ public class InstallationManagerFacade {
 
             List<String> infos = manager.getInstallInfo(request.createArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
@@ -384,12 +384,12 @@ public class InstallationManagerFacade {
                 manager.install(request.obtainAccessToken(), request.createArtifact(), version, installOptions);
                 ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 LOG.log(Level.SEVERE, e.getMessage(), e);
                 ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.FAILURE);
                 return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
@@ -399,7 +399,7 @@ public class InstallationManagerFacade {
     public String getVersionToInstall(@Nonnull Request request) throws IOException {
         try {
             return doGetVersionToInstall(request).toString();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
         }
@@ -455,7 +455,7 @@ public class InstallationManagerFacade {
             return new Response().setNode(NodeInfo.createSuccessInfo(node))
                                  .setStatus(ResponseCode.OK)
                                  .toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -468,7 +468,7 @@ public class InstallationManagerFacade {
             return new Response().setNode(NodeInfo.createSuccessInfo(node))
                                  .setStatus(ResponseCode.OK)
                                  .toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
         }
@@ -481,7 +481,7 @@ public class InstallationManagerFacade {
             return new Response().setBackup(BackupInfo.createSuccessInfo(updatedConfig))
                                  .setStatus(ResponseCode.OK)
                                  .toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e)
                            .setBackup(BackupInfo.createFailureInfo(config))
@@ -496,7 +496,7 @@ public class InstallationManagerFacade {
             return new Response().setBackup(BackupInfo.createSuccessInfo(config))
                                  .setStatus(ResponseCode.OK)
                                  .toJson();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e)
                            .setBackup(BackupInfo.createFailureInfo(config))

@@ -78,6 +78,7 @@ public class TestInstallOptions {
         InstallOptions options = new InstallOptions().setStep(1);
         assertTrue(options.equals(options));
         assertFalse(options.equals(null));
+        assertFalse(options.equals("string"));
     }
 
     @Test(dataProvider = "testEqualsAndHashCodeData")
@@ -88,7 +89,7 @@ public class TestInstallOptions {
         InstallOptions options2 = new InstallOptions().setStep(step2).setInstallType(type2).setConfigProperties(properties2).setCliUserHomeDir(cliUserHomeDir2);
 
         assertEquals(options1.equals(options2), expectedEquality);
-        assertTrue(options1.hashCode() >= 0);
+        options1.hashCode();
     }
 
     @DataProvider(name = "testEqualsAndHashCodeData")
