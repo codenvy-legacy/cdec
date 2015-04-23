@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.service;
 
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
@@ -43,11 +45,11 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstallationManagerService {
 
-    public static final String TEST_ARTIFACT = "codenvy";
-    public static final String TEST_VERSION = "1.0.0";
-    public static final String TEST_ACCESS_TOKEN = "accessToken";
-    public static final String TEST_ACCOUNT_ID = "accountId";
-    public static final String TEST_SUBSCRIPTION_ID = "subscriptionId";
+    public static final String CODENVY_ARTIFACT_NAME = "codenvy";
+    public static final String TEST_VERSION          = "1.0.0";
+    public static final String TEST_ACCESS_TOKEN     = "accessToken";
+    public static final String TEST_ACCOUNT_ID       = "accountId";
+    public static final String TEST_SUBSCRIPTION_ID  = "subscriptionId";
     private InstallationManagerService service;
 
     @Mock
@@ -66,16 +68,16 @@ public class TestInstallationManagerService {
 
     @Test
     public void testStartDownload() throws Exception {
-        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
+        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
                                            .setVersion(TEST_VERSION)
                                            .setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        Response result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, TEST_ACCESS_TOKEN);
+        Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION, TEST_ACCESS_TOKEN);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        result = service.startDownload(TEST_ARTIFACT, TEST_VERSION, TEST_ACCESS_TOKEN);
+        result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION, TEST_ACCESS_TOKEN);
         checkErrorResponse(result);
     }
 
@@ -114,14 +116,14 @@ public class TestInstallationManagerService {
 
     @Test
     public void testGetDownloads() throws Exception {
-        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT);
+        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        Response result = service.getDownloads(TEST_ARTIFACT);
+        Response result = service.getDownloads(CODENVY_ARTIFACT_NAME);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        result = service.getDownloads(TEST_ARTIFACT);
+        result = service.getDownloads(CODENVY_ARTIFACT_NAME);
         checkErrorResponse(result);
     }
 
@@ -137,7 +139,7 @@ public class TestInstallationManagerService {
     }
 
     @Test
-    public void testInstall() throws Exception {
+    public void testUpdateCodenvy() throws Exception {
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
         testConfigProperties.put("property2", "value2");
@@ -147,30 +149,48 @@ public class TestInstallationManagerService {
                                                                 .setConfigProperties(testConfigProperties)
                                                                 .setStep(testStep);
 
-        Request testRequest = new Request().setArtifactName(TEST_ARTIFACT)
+        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.install(TEST_ARTIFACT, InstallType.SINGLE_SERVER, testStep, testConfigProperties);
+        Response result = service.updateCodenvy(InstallType.SINGLE_SERVER, testStep, testConfigProperties);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.install(TEST_ARTIFACT, InstallType.SINGLE_SERVER, testStep, testConfigProperties);
+        result = service.updateCodenvy(InstallType.SINGLE_SERVER, testStep, testConfigProperties);
         checkErrorResponse(result);
     }
 
     @Test
-    public void testGetInstallInfo() throws Exception {
+    public void testUpdateImCliClient() throws Exception {
+        String cliUserHomeDir = "/home/test";
+        InstallOptions testInstallOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
+
+        Request testRequest = new Request().setArtifactName(InstallManagerArtifact.NAME)
+                                           .setInstallOptions(testInstallOptions);
+
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
+        Response result = service.updateImCliClient(cliUserHomeDir);
+        checkOkResponse(result);
+
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
+        result = service.updateImCliClient(cliUserHomeDir);
+        checkErrorResponse(result);
+    }
+
+    @Test
+    public void testGetUpdateCodenvyInfo() throws Exception {
         InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
-        Request testRequest = new Request().setInstallOptions(testInstallOptions);
+        Request testRequest = new Request().setArtifactName(CDECArtifact.NAME)
+                                           .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        Response result = service.getInstallInfo(InstallType.SINGLE_SERVER);
+        Response result = service.getUpdateCodenvyInfo(InstallType.SINGLE_SERVER);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        result = service.getInstallInfo(InstallType.SINGLE_SERVER);
+        result = service.getUpdateCodenvyInfo(InstallType.SINGLE_SERVER);
         checkErrorResponse(result);
     }
 
@@ -210,30 +230,30 @@ public class TestInstallationManagerService {
     @Test
     public void testBackup() throws Exception {
         String testBackupDirectoryPath = "test/path";
-        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(TEST_ARTIFACT)
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CODENVY_ARTIFACT_NAME)
                                                           .setBackupDirectory(testBackupDirectoryPath);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).backup(testBackupConfig);
-        Response result = service.backup(TEST_ARTIFACT, testBackupDirectoryPath);
+        Response result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).backup(testBackupConfig);
-        result = service.backup(TEST_ARTIFACT, testBackupDirectoryPath);
+        result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
         checkErrorResponse(result);
     }
 
     @Test
     public void testRestore() throws Exception {
         String testBackupFilePath = "test/path/backup";
-        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(TEST_ARTIFACT)
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CODENVY_ARTIFACT_NAME)
                                                           .setBackupFile(testBackupFilePath);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).restore(testBackupConfig);
-        Response result = service.restore(TEST_ARTIFACT, testBackupFilePath);
+        Response result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(testBackupConfig);
-        result = service.restore(TEST_ARTIFACT, testBackupFilePath);
+        result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
         checkErrorResponse(result);
     }
 

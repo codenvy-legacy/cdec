@@ -18,7 +18,9 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
@@ -108,7 +110,7 @@ public class InstallationManagerService {
     @GET
     @Path("download/check")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the list of actual updates from Update Server", response = Response.class)
+    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = Response.class)
     public javax.ws.rs.core.Response getUpdates() {
         return handleInstallationManagerResponse(delegate.getUpdates());
     }
@@ -132,15 +134,17 @@ public class InstallationManagerService {
         return handleInstallationManagerResponse(delegate.getInstalledVersions());
     }
 
-    /** Installs or updates artifact */
+    /** Updates codenvy */
     @POST
-    @Path("install")
+    @Path("update/" + CDECArtifact.NAME)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Installs or updates artifact", notes = "Ready to install updates downloaded from Update Server re used. Use request body to pass install configuration properties", response = Response.class)
-    public javax.ws.rs.core.Response install(
-        @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " + CDECArtifact.NAME) String artifactName,
-        @QueryParam(value = "type") @ApiParam(value = "is needed for " + CDECArtifact.NAME + " artifact and could be 'SINGLE_SERVER', or 'MULTI_SERVER'") InstallType installType,
+    @ApiOperation(value = "Updates " + CDECArtifact.NAME,
+                  notes = "Install " + CDECArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
+                          "Use request body to pass install configuration properties",
+                  response = Response.class)
+    public javax.ws.rs.core.Response updateCodenvy(
+        @QueryParam(value = "type") @ApiParam(value = "type of updating Codenvy: 'SINGLE_SERVER' or 'MULTI_SERVER'") InstallType installType,
         @QueryParam(value = "step") @ApiParam(value = "default step is 0") int step,
         Map<String, String> configProperties) throws IOException {
 
@@ -152,18 +156,37 @@ public class InstallationManagerService {
                                                             .setStep(step)
                                                             .setConfigProperties(configProperties);
 
-        Request request = new Request().setArtifactName(artifactName)
+        Request request = new Request().setArtifactName(CDECArtifact.NAME)
                                        .setInstallOptions(installOptions);
 
         return handleInstallationManagerResponse(delegate.install(request));
     }
 
-    /** Get the list of installation steps */
-    @GET
-    @Path("install/info")
+    /** Updates installation-manager CLI client */
+    @POST
+    @Path("update/" + InstallManagerArtifact.NAME)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the list of installation steps of " + CDECArtifact.NAME + " artifact", response = Response.class)
-    public javax.ws.rs.core.Response getInstallInfo(
+    @ApiOperation(value = "Updates " + InstallManagerArtifact.NAME,
+                  notes = "Install " + InstallManagerArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
+                          "User should launch IM CLI client after all to complete update.",
+                  response = Response.class)
+    public javax.ws.rs.core.Response updateImCliClient(
+        @QueryParam(value = "cliClientUserHomeDir") @ApiParam(value = "path to home directory of system user who installed IM CLI client") String cliUserHomeDir) throws IOException {
+
+        InstallOptions installOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
+
+        Request request = new Request().setArtifactName(InstallManagerArtifact.NAME)
+                                       .setInstallOptions(installOptions);
+
+        return handleInstallationManagerResponse(delegate.install(request));
+    }
+
+    /** Gets the list of installation steps */
+    @GET
+    @Path("update/" + CDECArtifact.NAME + "/info")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Gets the list of installation steps of " + CDECArtifact.NAME + " artifact", response = Response.class)
+    public javax.ws.rs.core.Response getUpdateCodenvyInfo(
         @QueryParam(value = "type") @ApiParam(required = true, value = "could be 'SINGLE_SERVER', or 'MULTI_SERVER'") InstallType installType) throws IOException {
         InstallOptions installOptions = new InstallOptions().setInstallType(installType);
 
@@ -254,7 +277,7 @@ public class InstallationManagerService {
     @Path("subscription/{accountId}/check")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Check if user has a subscription of certain type at the SaaS Codenvy",
+    @ApiOperation(value = "Checks if user has a subscription of certain type in the SaaS Codenvy",
                   response = Response.class)
     public javax.ws.rs.core.Response checkSubscription(
         @QueryParam(value = "subscriptionName") @ApiParam(value = "default subscription name is 'OnPremises'") String subscriptionName,

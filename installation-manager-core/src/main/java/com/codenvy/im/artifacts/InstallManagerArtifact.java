@@ -52,7 +52,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     private static final String CODENVY_CLI_DIR_NAME   = "codenvy-cli";
     private static final String UPDATE_CLI_SCRIPT_NAME = "codenvy-cli-update-script.sh";
     private static final String IM_ROOT_DIRECTORY_NAME = "codenvy-im";
-    private static final String PATH_TO_JAVA           = IM_ROOT_DIRECTORY_NAME + "/jre";
+    private static final String RELATIVE_PATH_TO_JAVA  = IM_ROOT_DIRECTORY_NAME + "/jre";
 
     @Inject
     public InstallManagerArtifact() {
@@ -116,28 +116,40 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                   .resolve(IM_ROOT_DIRECTORY_NAME)
                                                   .resolve(UPDATE_CLI_SCRIPT_NAME);
 
+                final Path newPlacementOfUpdateBinaries = Paths.get(installOptions.getCliUserHomeDir())
+                                                               .resolve(IM_ROOT_DIRECTORY_NAME)
+                                                               .resolve(pathToBinaries.getFileName());
+
+                final Path absolutePathToJava = Paths.get(installOptions.getCliUserHomeDir())
+                                                     .resolve(RELATIVE_PATH_TO_JAVA);
+
+
                 final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
                                                                "rm -rf %1$s/* \n" +          // remove content of cli client dir
                                                                "tar -xzf %2$s -C %1$s \n" +  // unpack update into the cli client dir
                                                                "chmod +x %1$s/bin/* \n" +    // set permissions to execute CLI client scripts
-                                                               "sed -i \"2iJAVA_HOME=${HOME}/%3$s\" %1$s/bin/codenvy \n" +
+                                                               "sed -i \"2iJAVA_HOME=%3$s\" %1$s/bin/codenvy \n" +
                                                                // setup java home path
-                                                               "sed -i \"2iJAVA_HOME=${HOME}/%3$s\" %1$s/bin/interactive-mode \n" +
+                                                               "sed -i \"2iJAVA_HOME=%3$s\" %1$s/bin/interactive-mode \n" +
                                                                // setup java home path
                                                                "rm -f %4$s \n" +             // remove update script
-                                                               "",
+                                                               "rm -f %2$s \n",              // remove update binaries
                                                                cliClientDir.toAbsolutePath(),
-                                                               pathToBinaries.toAbsolutePath(),
-                                                               PATH_TO_JAVA,
+                                                               newPlacementOfUpdateBinaries,
+                                                               absolutePathToJava,
                                                                updateCliScript.toAbsolutePath());
 
                 return new MacroCommand(ImmutableList.<Command>of(
-                        new SimpleCommand(format("echo '%s' > %s ; ", contentOfUpdateCliScript, updateCliScript.toAbsolutePath()),
+                        new SimpleCommand(format("sudo sh -c \" echo '%s' > %s\"", contentOfUpdateCliScript, updateCliScript.toAbsolutePath()),
                                           syncAgent, "Create script to update cli client"),
 
-                        new SimpleCommand(format("chmod 775 %s ; ", updateCliScript.toAbsolutePath()),
-                                          syncAgent, "Set permissions to execute update script")),
-                                        "Update installation manager CLI client");
+                        new SimpleCommand(format("sudo chmod 775 %s", updateCliScript.toAbsolutePath()),
+                                          syncAgent, "Set permissions to execute update script"),
+
+                        new SimpleCommand(format("sudo cp %s %s", pathToBinaries.toAbsolutePath(), newPlacementOfUpdateBinaries),
+                                          syncAgent, "Copy update binaries to the user home directory")),
+                                          "Update installation manager CLI client");
+
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of range", step));
         }

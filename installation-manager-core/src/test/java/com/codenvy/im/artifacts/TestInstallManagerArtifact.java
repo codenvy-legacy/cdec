@@ -86,17 +86,17 @@ public class TestInstallManagerArtifact {
         options.setStep(0);
         Command command = imArtifact.getUpdateCommand(Version.valueOf("1.0.0"), PATH_TO_BINARIES, options);
         assertEquals(command.toString(), "["
-                                         + "{'command'='echo '#!/bin/bash \n"
+                                         + "{'command'='sudo sh -c \" echo '#!/bin/bash \n"
                                          + "rm -rf /home/dummy-user/codenvy-im/codenvy-cli/* \n"
-                                         + "tar -xzf /parent/child -C /home/dummy-user/codenvy-im/codenvy-cli \n"
+                                         + "tar -xzf /home/dummy-user/codenvy-im/child -C /home/dummy-user/codenvy-im/codenvy-cli \n"
                                          + "chmod +x /home/dummy-user/codenvy-im/codenvy-cli/bin/* \n"
-                                         + "sed -i \"2iJAVA_HOME=${HOME}/codenvy-im/jre\" /home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \n"
-                                         +
-                                         "sed -i \"2iJAVA_HOME=${HOME}/codenvy-im/jre\" " +
-                                         "/home/dummy-user/codenvy-im/codenvy-cli/bin/interactive-mode \n"
+                                         + "sed -i \"2iJAVA_HOME=/home/dummy-user/codenvy-im/jre\" /home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \n"
+                                         + "sed -i \"2iJAVA_HOME=/home/dummy-user/codenvy-im/jre\" /home/dummy-user/codenvy-im/codenvy-cli/bin/interactive-mode \n"
                                          + "rm -f /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh \n"
-                                         + "' > /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; ', 'agent'='LocalAgent'}, "
-                                         + "{'command'='chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh ; ', 'agent'='LocalAgent'}"
+                                         + "rm -f /home/dummy-user/codenvy-im/child \n"
+                                         + "' > /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh\"', 'agent'='LocalAgent'}, "
+                                         + "{'command'='sudo chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh', 'agent'='LocalAgent'}, "
+                                         + "{'command'='sudo cp /parent/child /home/dummy-user/codenvy-im/child', 'agent'='LocalAgent'}"
                                          + "]");
     }
 
