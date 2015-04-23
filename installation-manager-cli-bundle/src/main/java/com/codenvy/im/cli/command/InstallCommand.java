@@ -185,7 +185,7 @@ public class InstallCommand extends AbstractIMCommand {
 
             if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
                 console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
-                exit(0);
+                console.exit(0);
             }
         }
 

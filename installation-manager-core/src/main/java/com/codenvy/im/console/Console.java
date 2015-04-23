@@ -27,7 +27,6 @@ import org.fusesource.jansi.Ansi;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -197,6 +196,7 @@ public class Console {
     }
 
     public void exit(int status) {
+        reset();
         System.exit(status);
     }
 
