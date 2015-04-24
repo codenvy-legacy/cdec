@@ -20,6 +20,7 @@ package com.codenvy.im.service;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
@@ -55,6 +56,9 @@ public class TestInstallationManagerService {
     @Mock
     private InstallationManagerFacade mockFacade;
 
+    @Mock
+    private ConfigUtil configUtil;
+
     private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
 
     private com.codenvy.im.response.Response mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR)
@@ -63,7 +67,7 @@ public class TestInstallationManagerService {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        service = spy(new InstallationManagerService(mockFacade));
+        service = spy(new InstallationManagerService(mockFacade, configUtil));
     }
 
     @Test
@@ -140,6 +144,8 @@ public class TestInstallationManagerService {
 
     @Test
     public void testUpdateCodenvy() throws Exception {
+        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
         testConfigProperties.put("property2", "value2");
@@ -153,44 +159,48 @@ public class TestInstallationManagerService {
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(InstallType.SINGLE_SERVER, testStep, testConfigProperties);
+        Response result = service.updateCodenvy(testStep, testConfigProperties);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateCodenvy(InstallType.SINGLE_SERVER, testStep, testConfigProperties);
+        result = service.updateCodenvy(testStep, testConfigProperties);
         checkErrorResponse(result);
     }
 
     @Test
     public void testUpdateImCliClient() throws Exception {
         String cliUserHomeDir = "/home/test";
+        doReturn("/home/test").when(configUtil).calculationCliUserHomeDir();
+
         InstallOptions testInstallOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
 
         Request testRequest = new Request().setArtifactName(InstallManagerArtifact.NAME)
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateImCliClient(cliUserHomeDir);
+        Response result = service.updateImCliClient();
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateImCliClient(cliUserHomeDir);
+        result = service.updateImCliClient();
         checkErrorResponse(result);
     }
 
     @Test
     public void testGetUpdateCodenvyInfo() throws Exception {
+        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+
         InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         Request testRequest = new Request().setArtifactName(CDECArtifact.NAME)
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        Response result = service.getUpdateCodenvyInfo(InstallType.SINGLE_SERVER);
+        Response result = service.getUpdateCodenvyInfo();
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        result = service.getUpdateCodenvyInfo(InstallType.SINGLE_SERVER);
+        result = service.getUpdateCodenvyInfo();
         checkErrorResponse(result);
     }
 

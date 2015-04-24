@@ -52,10 +52,11 @@ import static java.nio.file.Files.newInputStream;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigUtil {
+    public static final String ROOT_USER = "root";
     private final HttpTransport transport;
-    private final String        updateEndpoint;
+    private final String updateEndpoint;
     private final String puppetBaseDir;
-    private final Path puppetConfFile;
+    private final Path   puppetConfFile;
 
     @Inject
     public ConfigUtil(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -346,5 +347,23 @@ public class ConfigUtil {
         } catch (ConfigurationException e) {
             throw new IOException(e);
         }
+    }
+
+    /** Calculate cli user home dir basing on information about ssh node user name from codenvy configuration.
+     * @return "/home/user" when Config.NODE_SSH_USER_NAME_PROPERTY == "user",
+     * or "/root" when Config.NODE_SSH_USER_NAME_PROPERTY == "root"
+     * */
+    public String calculationCliUserHomeDir() throws IOException {
+        Config config = loadInstalledCodenvyConfig();
+        String imCliUserName = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
+        if (imCliUserName == null) {
+            throw new IOException("There is no name im cli user in the codenvy config");
+        }
+
+        if (imCliUserName.equals(ROOT_USER)) {
+            return "/root";
+        }
+
+        return format("/home/%s", imCliUserName);
     }
 }

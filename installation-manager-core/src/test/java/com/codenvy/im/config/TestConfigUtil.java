@@ -334,5 +334,35 @@ public class TestConfigUtil extends BaseTest {
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n");
         assertEquals(configUtil.fetchMasterHostName(), "master.dev.com");
     }
+
+    @Test
+    public void testCalculationCliUserHomeDir() throws Exception {
+        createMultiNodeConf();
+        Map<String, String> properties = ImmutableMap.of(Config.NODE_SSH_USER_NAME_PROPERTY, "test");
+        doReturn(properties).when(configUtil).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+
+        String result = configUtil.calculationCliUserHomeDir();
+        assertEquals(result, "/home/test");
+    }
+
+    @Test
+    public void testCalculationCliRootUserHomeDir() throws Exception {
+        createMultiNodeConf();
+        Map<String, String> properties = ImmutableMap.of(Config.NODE_SSH_USER_NAME_PROPERTY, "root");
+        doReturn(properties).when(configUtil).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+
+        String result = configUtil.calculationCliUserHomeDir();
+        assertEquals(result, "/root");
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "There is no name im cli user in the codenvy config")
+    public void testCalculationCliUserHomeDirWhenConfigIsIncomplete() throws Exception {
+        createMultiNodeConf();
+        Map<String, String> properties = ImmutableMap.of();
+        doReturn(properties).when(configUtil).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+
+        configUtil.calculationCliUserHomeDir();
+    }
 }
 

@@ -62,9 +62,12 @@ public class InstallationManagerService {
 
     protected final InstallationManagerFacade delegate;
 
+    protected ConfigUtil configUtil;
+
     @Inject
-    public InstallationManagerService(InstallationManagerFacade delegate) {
+    public InstallationManagerService(InstallationManagerFacade delegate, ConfigUtil configUtil) {
         this.delegate = delegate;
+        this.configUtil = configUtil;
     }
 
     /** Starts downloading */
@@ -144,7 +147,6 @@ public class InstallationManagerService {
                           "Use request body to pass install configuration properties",
                   response = Response.class)
     public javax.ws.rs.core.Response updateCodenvy(
-        @QueryParam(value = "type") @ApiParam(value = "type of updating Codenvy: 'SINGLE_SERVER' or 'MULTI_SERVER'") InstallType installType,
         @QueryParam(value = "step") @ApiParam(value = "default step is 0") int step,
         Map<String, String> configProperties) throws IOException {
 
@@ -152,6 +154,7 @@ public class InstallationManagerService {
             configProperties = new HashMap<>();   // init install config properties
         }
 
+        InstallType installType = configUtil.detectInstallationType();
         InstallOptions installOptions = new InstallOptions().setInstallType(installType)
                                                             .setStep(step)
                                                             .setConfigProperties(configProperties);
@@ -170,9 +173,8 @@ public class InstallationManagerService {
                   notes = "Install " + InstallManagerArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
                           "User should launch IM CLI client after all to complete update.",
                   response = Response.class)
-    public javax.ws.rs.core.Response updateImCliClient(
-        @QueryParam(value = "cliClientUserHomeDir") @ApiParam(value = "path to home directory of system user who installed IM CLI client") String cliUserHomeDir) throws IOException {
-
+    public javax.ws.rs.core.Response updateImCliClient() throws IOException {
+        String cliUserHomeDir = configUtil.calculationCliUserHomeDir();
         InstallOptions installOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
 
         Request request = new Request().setArtifactName(InstallManagerArtifact.NAME)
@@ -186,8 +188,8 @@ public class InstallationManagerService {
     @Path("update/" + CDECArtifact.NAME + "/info")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of installation steps of " + CDECArtifact.NAME + " artifact", response = Response.class)
-    public javax.ws.rs.core.Response getUpdateCodenvyInfo(
-        @QueryParam(value = "type") @ApiParam(required = true, value = "could be 'SINGLE_SERVER', or 'MULTI_SERVER'") InstallType installType) throws IOException {
+    public javax.ws.rs.core.Response getUpdateCodenvyInfo() throws IOException {
+        InstallType installType = configUtil.detectInstallationType();
         InstallOptions installOptions = new InstallOptions().setInstallType(installType);
 
         Request request = new Request().setArtifactName(CDECArtifact.NAME)
