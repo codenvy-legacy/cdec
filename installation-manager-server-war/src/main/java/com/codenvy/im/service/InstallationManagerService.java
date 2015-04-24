@@ -76,7 +76,7 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response startDownload(
         @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
         @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one") String artifactVersion,
-        @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication at Saa")
+        @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication at SaaS Codenvy")
         String accessToken) {
 
         UserCredentials userCredentials = new UserCredentials(accessToken);
