@@ -257,7 +257,7 @@ public class InstallationManagerService {
 
     /** Adds trial subscription to account */
     @POST
-    @Path("subscription/{accountId}/add-trial")
+    @Path("subscription/{accountId}/add/trial")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
