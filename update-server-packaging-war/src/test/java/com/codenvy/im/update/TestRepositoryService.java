@@ -19,13 +19,10 @@ package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.AccountUtils;
-import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
 import com.jayway.restassured.response.Response;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -58,19 +55,15 @@ import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
-import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -88,7 +81,6 @@ public class TestRepositoryService extends BaseTest {
     private RepositoryService repositoryService;
     private HttpTransport     httpTransport;
     private UserManager       userManager;
-    private MongoStorage      mongoStorage;
     private MailUtil mailUtil;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
@@ -101,7 +93,6 @@ public class TestRepositoryService extends BaseTest {
     @Override
     @BeforeMethod
     public void setUp() throws Exception {
-        mongoStorage = spy(new MongoStorage("mongodb://localhost:12000/update", true, "target", 2000));
         httpTransport = mock(HttpTransport.class);
         userManager = mock(UserManager.class);
         mailUtil = mock(MailUtil.class);
@@ -109,21 +100,11 @@ public class TestRepositoryService extends BaseTest {
         repositoryService = new RepositoryService("",
                                                   userManager,
                                                   artifactStorage,
-                                                  mongoStorage,
                                                   httpTransport,
                                                   mailUtil);
 
         when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
-        initStorage();
         super.setUp();
-    }
-
-    private void initStorage() {
-        DBCollection collection = mongoStorage.getDb().getCollection(MongoStorage.DOWNLOAD_STATISTICS);
-        collection.remove(new BasicDBObject());
-
-        collection = mongoStorage.getDb().getCollection(MongoStorage.SUBSCRIPTIONS);
-        collection.remove(new BasicDBObject());
     }
 
     @Test
@@ -194,7 +175,7 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicWithSubscription() throws Exception {
-        SimpleDateFormat  subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
         Calendar cal = getInstance();
         cal.add(Calendar.DATE, -1);
         String startDate = subscriptionDateFormat.format(cal.getTime());
@@ -204,7 +185,7 @@ public class TestRepositoryService extends BaseTest {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
-        .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
         when(httpTransport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
@@ -251,9 +232,9 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testDownloadPrivateErrorWhenUserWithoutSubscription() throws Exception {
         when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
-                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(httpTransport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
-                 .thenReturn("[]");
+                .thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
@@ -407,21 +388,6 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByRepositoryService() throws Exception {
-        doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                 + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn(Boolean.TRUE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
-
-        Response response = given()
-                .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-                .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NO_CONTENT.getStatusCode());
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
-    }
-
-    @Test
     public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByManager() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
@@ -430,13 +396,11 @@ public class TestRepositoryService extends BaseTest {
                 .when(httpTransport).doGet(endsWith("/account"), eq("token"));
         doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId,startDate:\"01/01/2014\", endDate:\"01/01/2020\"}]")
                 .when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.NO_CONTENT.getStatusCode());
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }
 
     @Test
@@ -446,7 +410,6 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -454,7 +417,6 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertEquals(response.getBody().asString(),
                      "Unexpected error. Can't add trial subscription. User 'id' is not owner of the account 'accountId'.");
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }
 
     @Test
@@ -464,7 +426,6 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("anotherAccountId", AccountUtils.ON_PREMISES);
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -472,7 +433,6 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertEquals(response.getBody().asString(),
                      "Unexpected error. Can't add trial subscription. User 'id' is not owner of the account 'accountId'.");
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }
 
     @Test
@@ -482,7 +442,6 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
         doThrow(new IOException("Unexpected error.")).when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -490,7 +449,6 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
         assertEquals(response.getBody().asString(), "Unexpected error. Can't add subscription. Unexpected error.");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }
 
     @Test
@@ -500,7 +458,6 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
         doReturn("{\"message\":\"Error.\"}").when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -508,7 +465,6 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
         assertEquals(response.getBody().asString(), "Unexpected error. Can't add subscription. " + RepositoryService.CAN_NOT_ADD_TRIAL_SUBSCRIPTION);
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }
 
     @Test
@@ -518,7 +474,6 @@ public class TestRepositoryService extends BaseTest {
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
-        doReturn(Boolean.FALSE).when(mongoStorage).hasSubscription("accountId", AccountUtils.ON_PREMISES);
         doReturn("{}").when(httpTransport).doPost(endsWith("/account/subscriptions"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -526,7 +481,6 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
         assertEquals(response.getBody().asString(), "Unexpected error. Can't add subscription. Malformed response. 'id' key is missed.");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        verify(mongoStorage, never()).addSubscriptionInfo(anyString(), any(SubscriptionInfo.class));
     }
 
     @Test
@@ -541,7 +495,7 @@ public class TestRepositoryService extends BaseTest {
         doThrow(MessagingException.class).when(mailUtil).sendNotificationLetter("accountId", "userEmail");
 
         Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
-            .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
+                                   .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
     }
 
@@ -560,8 +514,6 @@ public class TestRepositoryService extends BaseTest {
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
 
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
-        verify(mongoStorage).addSubscriptionInfo(eq("id"), any(SubscriptionInfo.class));
-        assertTrue(mongoStorage.hasSubscription("accountId", ON_PREMISES));
         verify(mailUtil).sendNotificationLetter("accountId", "userEmail");
     }
 

@@ -19,7 +19,6 @@ package com.codenvy.im.update;
 
 
 import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.utils.AccountUtils.SubscriptionInfo;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
@@ -31,6 +30,8 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.api.account.server.dto.DtoServerImpls;
+import org.eclipse.che.api.account.shared.dto.NewSubscription;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;
@@ -62,9 +63,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +71,6 @@ import java.util.regex.Pattern;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
 import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
-import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
 import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
 import static com.codenvy.im.utils.Commons.asMap;
@@ -100,7 +97,6 @@ public class RepositoryService {
 
     private final String        apiEndpoint;
     private final ArtifactStorage artifactStorage;
-    private final MongoStorage    mongoStorage;
     private final HttpTransport httpTransport;
     private final UserManager   userManager;
     private final MailUtil      mailUtil;
@@ -109,11 +105,9 @@ public class RepositoryService {
     public RepositoryService(@Named("saas.api.endpoint") String apiEndpoint,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
-                             MongoStorage mongoStorage,
                              HttpTransport httpTransport,
                              MailUtil mailUtil) {
         this.artifactStorage = artifactStorage;
-        this.mongoStorage = mongoStorage;
         this.httpTransport = httpTransport;
         this.apiEndpoint = apiEndpoint;
         this.userManager = userManager;
@@ -436,18 +430,11 @@ public class RepositoryService {
                                               userId, accountId)).build();
             }
 
-            if (mongoStorage.hasSubscription(accountId, ON_PREMISES)) {
-                return Response.status(Response.Status.NO_CONTENT).build();
-            }
-
             if (hasValidSubscription(httpTransport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-
-            SubscriptionInfo subscriptionInfo = doAddTrialSubscription(userId, accountId, accessToken);
-            mongoStorage.addSubscriptionInfo(userId, subscriptionInfo);
-
+            doAddTrialSubscription(userId, accountId, accessToken);
             sendNotificationLetter(accountId, userManager.getCurrentUser());
 
             return Response.status(Response.Status.OK).build();
@@ -457,37 +444,18 @@ public class RepositoryService {
         }
     }
 
-    protected SubscriptionInfo doAddTrialSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
+    protected void doAddTrialSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
         try {
             final String planId = "opm-com-25u-y";
-            final DateFormat df = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
             final int trialDuration = 30;
-            final Calendar startDate = Calendar.getInstance();
-            final Calendar endDate = Calendar.getInstance();
-            endDate.add(Calendar.DAY_OF_MONTH, trialDuration);
 
-            Map<String, Object> billing = new HashMap<>();
-            billing.put("usePaymentSystem", "true");
-            billing.put("contractTerm", "12");
-            billing.put("startDate", df.format(startDate.getTime()));
-            billing.put("endDate", df.format(endDate.getTime()));
-            billing.put("cycle", "1");
-            billing.put("cycleType", "3");
-            billing.put("paymentToken", "trial");
+            NewSubscription newSubscription = new DtoServerImpls.NewSubscriptionImpl();
+            newSubscription.setAccountId(accountId);
+            newSubscription.setPlanId(planId);
+            newSubscription.setTrialDuration(trialDuration);
+            newSubscription.setUsePaymentSystem(true);
 
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("billing", new JsonStringMapImpl<>(billing));
-            attributes.put("startDate", df.format(startDate.getTime()));
-            attributes.put("endDate", df.format(endDate.getTime()));
-            attributes.put("trialDuration", Integer.toString(trialDuration));
-            attributes.put("description", ON_PREMISES);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("accountId", accountId);
-            body.put("planId", planId);
-            body.put("subscriptionAttributes", new JsonStringMapImpl<>(attributes));
-
-            Map m = asMap(httpTransport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), new JsonStringMapImpl<>(body), accessToken));
+            Map m = asMap(httpTransport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), newSubscription, accessToken));
             if (!m.containsKey("id")) {
                 if (m.containsKey("message")) {
                     throw new IOException(CAN_NOT_ADD_TRIAL_SUBSCRIPTION);
@@ -495,20 +463,10 @@ public class RepositoryService {
                     throw new IOException("Malformed response. 'id' key is missed.");
                 }
             }
-            String subscriptionId = String.valueOf(m.get("id"));
-            LOG.info("Trial subscription added. " + body.toString());
-
-            LOG.info("EVENT#im-subscription-added# TIME#{}# USER#{}# PLAN#{}# STOP-TIME#{}#",
-                     startDate.getTimeInMillis(),
+            LOG.info("EVENT#im-subscription-added# TIME#{}# USER#{}# PLAN#{}#",
+                     System.currentTimeMillis(),
                      userId,
-                     planId,
-                     endDate.getTimeInMillis());
-
-            return new SubscriptionInfo(accountId,
-                                        subscriptionId,
-                                        ON_PREMISES,
-                                        startDate,
-                                        endDate);
+                     planId);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
         }

@@ -179,40 +179,4 @@ public class AccountUtils {
         List<String> roles = member.getRoles();
         return roles != null && roles.contains(role);
     }
-
-    public static class SubscriptionInfo {
-        private final String   accountId;
-        private final String   subscriptionId;
-        private final String   serviceId;
-        private final Calendar startDate;
-        private final Calendar endDate;
-
-        public SubscriptionInfo(String accountId, String subscriptionId, String serviceId, Calendar startDate, Calendar endDate) {
-            this.subscriptionId = subscriptionId;
-            this.accountId = accountId;
-            this.serviceId = serviceId;
-            this.startDate = startDate;
-            this.endDate = endDate;
-        }
-
-        public String getAccountId() {
-            return accountId;
-        }
-
-        public String getSubscriptionId() {
-            return subscriptionId;
-        }
-
-        public String getServiceId() {
-            return serviceId;
-        }
-
-        public Calendar getStartDate() {
-            return startDate;
-        }
-
-        public Calendar getEndDate() {
-            return endDate;
-        }
-    }
 }

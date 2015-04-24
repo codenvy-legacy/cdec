@@ -335,25 +335,6 @@ public class TestAccountUtils {
     }
 
     @Test
-    public void testSubscriptionDescriptor() throws Exception {
-        Calendar startDate = Calendar.getInstance();
-        Calendar endDate = Calendar.getInstance();
-        endDate.add(Calendar.DAY_OF_MONTH, 1);
-
-        AccountUtils.SubscriptionInfo desc = new AccountUtils.SubscriptionInfo("accountId",
-                                                                               "subscriptionId",
-                                                                               "serviceId",
-                                                                               startDate,
-                                                                               endDate);
-
-        assertEquals(desc.getAccountId(), "accountId");
-        assertEquals(desc.getSubscriptionId(), "subscriptionId");
-        assertEquals(desc.getServiceId(), "serviceId");
-        assertEquals(desc.getStartDate(), startDate);
-        assertEquals(desc.getEndDate(), endDate);
-    }
-
-    @Test
     public void testDeleteSubscription() throws Exception {
         doNothing().when(mockTransport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
         AccountUtils.deleteSubscription(mockTransport, "", ACCESS_TOKEN, "subscriptionId");
