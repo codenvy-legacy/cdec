@@ -73,15 +73,14 @@ public class TestInstallationManagerService {
     @Test
     public void testStartDownload() throws Exception {
         Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
-                                           .setVersion(TEST_VERSION)
-                                           .setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+                                           .setVersion(TEST_VERSION);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION, TEST_ACCESS_TOKEN);
+        Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
-        result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION, TEST_ACCESS_TOKEN);
+        result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
         checkErrorResponse(result);
     }
 

@@ -152,23 +152,17 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Path download(String accessToken, Artifact artifact, Version version) throws IOException, IllegalStateException {
+    public Path download(Artifact artifact, Version version) throws IOException, IllegalStateException {
         try {
             boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version.toString(), transport, updateEndpoint);
 
             String requestUrl;
-            if (isAuthenticationRequired) {
-                requestUrl = combinePaths(updateEndpoint,
-                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + accessToken);
-            } else {
-                requestUrl = combinePaths(updateEndpoint,
-                                          "/repository/public/download/" + artifact.getName() + "/" + version);
-            }
+            requestUrl = combinePaths(updateEndpoint, "/repository/public/download/" + artifact.getName() + "/" + version);
 
             Path artifactDownloadDir = getDownloadDirectory(artifact, version);
             deleteDirectory(artifactDownloadDir.toFile());
 
-            return transport.download(requestUrl, artifactDownloadDir, accessToken);
+            return transport.download(requestUrl, artifactDownloadDir);
         } catch (IOException e) {
             throw getProperException(e, artifact);
         } catch (JsonParseException e) {
@@ -279,7 +273,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** Filters what need to download, either all updates or a specific one. */
     @Override
-    public Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version, String authToken) throws IOException {
+    public Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version) throws IOException {
         if (artifact == null) {
             Map<Artifact, Version> latestVersions = getUpdates();
             Map<Artifact, Version> updates = new TreeMap<>(latestVersions);
@@ -319,7 +313,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
+    public boolean isInstallable(Artifact artifact, Version version) throws IOException {
         return artifact.isInstallable(version, updateEndpoint, transport);
     }
 

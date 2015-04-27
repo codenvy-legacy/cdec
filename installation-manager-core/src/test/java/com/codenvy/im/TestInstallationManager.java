@@ -312,7 +312,7 @@ public class TestInstallationManager {
         when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version100.toString())))
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
-        manager.download(testCredentials.getToken(), cdecArtifact, version100);
+        manager.download(cdecArtifact, version100);
     }
 
     @Test
@@ -355,7 +355,7 @@ public class TestInstallationManager {
             put(installManagerArtifact, version200);
         }}).when(manager).getUpdates();
 
-        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
+        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null);
         assertEquals(artifactsToDownload.size(), 2);
         assertEquals(artifactsToDownload.toString(), "{" + InstallManagerArtifact.NAME + "=2.0.0, codenvy=1.0.0}");
     }
@@ -366,7 +366,7 @@ public class TestInstallationManager {
 
         doReturn(version100).when(cdecArtifact).getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
 
-        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(cdecArtifact, null, testCredentials.getToken());
+        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(cdecArtifact, null);
         assertEquals(artifactsToDownload.size(), 1);
         assertEquals(artifactsToDownload.toString(), "{codenvy=1.0.0}");
     }
@@ -389,7 +389,7 @@ public class TestInstallationManager {
             put(version100, null);
         }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
 
-        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null, testCredentials.getToken());
+        Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null);
         assertEquals(artifactsToDownload.size(), 0);
     }
 
@@ -445,10 +445,10 @@ public class TestInstallationManager {
         final Version version201 = Version.valueOf("2.0.1");
 
         doReturn(true).when(installManagerArtifact).isInstallable(version200, UPDATE_ENDPOINT, transport);
-        assertTrue(manager.isInstallable(installManagerArtifact, version200, testCredentials.getToken()));
+        assertTrue(manager.isInstallable(installManagerArtifact, version200));
 
         doReturn(false).when(installManagerArtifact).isInstallable(version201, UPDATE_ENDPOINT, transport);
-        assertFalse(manager.isInstallable(installManagerArtifact, version201, testCredentials.getToken()));
+        assertFalse(manager.isInstallable(installManagerArtifact, version201));
     }
 
     @Test

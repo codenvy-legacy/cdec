@@ -41,8 +41,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private UserCredentials credentials;
-
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
@@ -51,9 +49,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
         spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
-
-        credentials = new UserCredentials("token", "accountId");
-        doReturn(credentials).when(spyCommand).getCredentials();
     }
 
     @Test

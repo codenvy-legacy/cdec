@@ -90,7 +90,7 @@ insertProperty() {
 
 askPassword() {
     printPrompt
-    echo -n "Codenvy password: "
+    echo -n "Codenvy admin password (it cannot be changed easily after install): "
 
     unset PASSWORD
     unset PROMPT
@@ -113,7 +113,7 @@ askPassword() {
     done
     echo
 
-    insertProperty "codenvy_password" ${PASSWORD}
+    insertProperty "admin_ldap_password" ${PASSWORD}
 }
 
 askDNS_single() {
@@ -143,7 +143,7 @@ prepareConfig_single() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
-    askProperty "Codenvy user name (your email address)" "codenvy_user_name"
+    askProperty "Codenvy admin name (it cannot be changed easily after install)" "admin_ldap_user_name"
     askPassword
     askDNS_single
 }
@@ -153,7 +153,7 @@ prepareConfig_multi() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
-    askProperty "Codenvy user name (your email address)" "codenvy_user_name"
+    askProperty "Codenvy admin name (it cannot be changed easily after install)" "admin_ldap_user_name"
     askPassword
     askDNS_multi "Please set the DNS hostname to be used by Codenvy" "host_url"
     askDNS_multi "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
@@ -217,9 +217,9 @@ printPreInstallInfo_single() {
     if [ ! -f ${CONFIG} ]; then
         printPrompt; echo "Configuration file : not detected - will download template"
         printPrompt; echo
-        printPrompt; echo "Codenvy user name    : undetected - will prompt for entry"
-        printPrompt; echo "Codenvy password     : undetected - will prompt for entry"
-        printPrompt; echo "Codenvy DNS hostname : not set - will prompt for entry"
+        printPrompt; echo "Codenvy admin name     : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy admin password : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy DNS hostname   : not set - will prompt for entry"
         printPrompt; echo
         printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
         printPrompt; echo
@@ -230,13 +230,13 @@ printPreInstallInfo_single() {
         printPrompt; echo
     else
         HOSTNAME=`grep [aio_]*host_url=.* ${CONFIG} | cut -f2 -d '='`
-        CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
+        CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
 
         printPrompt; echo "Configuration file : "${CONFIG}
         printPrompt; echo
-        printPrompt; echo "Codenvy user name    : "${CODENVY_USER}
-        printPrompt; echo "Codenvy password     : ******"
-        printPrompt; echo "Codenvy DNS hostname : "${HOSTNAME}
+        printPrompt; echo "Codenvy admin name     : "${CODENVY_ADMIN_NAME}
+        printPrompt; echo "Codenvy admin password : ******"
+        printPrompt; echo "Codenvy DNS hostname   : "${HOSTNAME}
         printPrompt; echo
         printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
         printPrompt; echo
@@ -290,8 +290,8 @@ printPreInstallInfo_multi() {
     if [ ! -f ${CONFIG} ]; then
         printPrompt; echo "Configuration file : not detected - will download template"
         printPrompt; echo
-        printPrompt; echo "Codenvy user name            : undetected - will prompt for entry"
-        printPrompt; echo "Codenvy password             : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy admin name           : undetected - will prompt for entry"
+        printPrompt; echo "Codenvy admin password       : undetected - will prompt for entry"
         printPrompt; echo "Codenvy nodes' DNS hostnames : not set - will prompt for entry"
         printPrompt; echo
         printPrompt; echo "Create account or retrieve password: https://codenvy.com/site/create-account"
@@ -302,7 +302,7 @@ printPreInstallInfo_multi() {
         prepareConfig_multi
         printPrompt; echo
     else
-        CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
+        CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
         HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
         PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -315,7 +315,7 @@ printPreInstallInfo_multi() {
 
         printPrompt; echo "Configuration file : "${CONFIG}
         printPrompt; echo
-        printPrompt; echo "Codenvy user name    : "${CODENVY_USER}
+        printPrompt; echo "Codenvy user name    : "${CODENVY_ADMIN_NAME}
         printPrompt; echo "Codenvy password     : ******"
         printPrompt; echo
         printPrompt; echo "Codenvy DNS hostname                    : "${HOST_NAME}
@@ -369,10 +369,8 @@ doInstallStep4() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 4: DOWNLOAD CODENVY"
 
-    CODENVY_USER=`grep codenvy_user_name= ${CONFIG} | cut -d '=' -f2`
-    CODENVY_PWD=`grep codenvy_password ${CONFIG} | cut -d '=' -f2`
-
-    executeIMCommand "Login to Codenvy Updater service" login ${CODENVY_USER} ${CODENVY_PWD}
+    CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+    CODENVY_ADMIN_PWD=`grep admin_ldap_password ${CONFIG} | cut -d '=' -f2`
     executeIMCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
     executeIMCommand "Checking the list of downloaded binaries" im-download --list-local
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"

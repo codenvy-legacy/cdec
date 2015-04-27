@@ -43,8 +43,6 @@ public class TestRestoreCommand extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private UserCredentials credentials;
-
     private BackupConfig testBackupConfig;
 
     private String testBackupFile = "test/backup/directory/backup.tar.gz";
@@ -58,9 +56,6 @@ public class TestRestoreCommand extends AbstractTestCommand {
         spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
-
-        credentials = new UserCredentials("token", "accountId");
-        doReturn(credentials).when(spyCommand).getCredentials();
     }
 
 

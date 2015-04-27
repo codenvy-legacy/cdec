@@ -95,9 +95,7 @@ public interface InstallationManager {
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    Path download(String accessToken, Artifact artifact, Version version) throws
-                                                                                       IOException,
-                                                                                       IllegalStateException;
+    Path download(Artifact artifact, Version version) throws IOException, IllegalStateException;
 
     /** Checks if FS has enough free space, for instance to download artifacts */
     void checkEnoughDiskSpace(long size) throws IOException;
@@ -123,9 +121,9 @@ public interface InstallationManager {
     Long getBinariesSize(Artifact artifact, Version version) throws IOException;
 
     /** Filters what need to download, either all updates or a specific one. */
-    Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version, String authToken) throws IOException;
+    Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version) throws IOException;
 
-    boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException;
+    boolean isInstallable(Artifact artifact, Version version) throws IOException;
 
     /** Add node to multi-server Codenvy */
     NodeConfig addNode(String dns) throws IOException;

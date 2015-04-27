@@ -115,7 +115,7 @@ public class InstallCommand extends AbstractIMCommand {
         final InstallOptions installOptions = new InstallOptions();
         if (version == null) {
             installOptions.setStep(getFirstInstallStep());
-            Request request = initRequest(artifactName, null);
+            Request request = createRequest(artifactName, null);
             request.setInstallOptions(installOptions);
             version = facade.getVersionToInstall(request);
         }
@@ -126,7 +126,7 @@ public class InstallCommand extends AbstractIMCommand {
             installType = InstallType.SINGLE_SERVER;
         }
 
-        final Request request = initRequest(artifactName, version);
+        final Request request = createRequest(artifactName, version);
 
         setOptionsFromConfig(installOptions);
 

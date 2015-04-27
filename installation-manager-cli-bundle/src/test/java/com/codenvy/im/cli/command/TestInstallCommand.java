@@ -64,7 +64,6 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallationManagerFacade facade;
     private ConfigUtil                mockConfigUtil;
     private CommandSession            commandSession;
-    private UserCredentials           userCredentials;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
                                        + "    \"artifact\" : \"codenvy\",\n"
@@ -99,9 +98,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         spyCommand.facade = facade;
 
         performBaseMocks(spyCommand, true);
-
-        userCredentials = new UserCredentials("token", "accountId");
-        doReturn(userCredentials).when(spyCommand).getCredentials();
     }
 
     @BeforeMethod
