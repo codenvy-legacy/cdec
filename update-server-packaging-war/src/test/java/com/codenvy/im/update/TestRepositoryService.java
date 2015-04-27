@@ -271,9 +271,6 @@ public class TestRepositoryService extends BaseTest {
         when(httpTransport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
 
-        when(httpTransport.doGet("/account/subscriptions/subscriptionId/attributes", userManager.getCurrentUser().getToken()))
-                .thenReturn("{startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}");
-
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given()

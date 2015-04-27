@@ -126,8 +126,6 @@ public class TestCheckSubscriptionFacade {
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
-                .thenReturn("{endDate:\"" + endDate + "\"}");
 
         String response = installationManagerService.checkSubscription("OnPremises", request);
         assertEquals(response, "{\n" +
@@ -143,8 +141,6 @@ public class TestCheckSubscriptionFacade {
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
-        when(transport.doGet(endsWith("/account/subscriptions/subscriptionId/attributes"), eq("auth token")))
-                .thenReturn("{}");
 
         String response = installationManagerService.checkSubscription("OnPremises", request);
         assertEquals(response, "{\n" +
