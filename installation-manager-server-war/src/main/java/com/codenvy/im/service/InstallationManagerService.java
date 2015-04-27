@@ -171,10 +171,12 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Updates " + InstallManagerArtifact.NAME,
                   notes = "Install " + InstallManagerArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
-                          "User should launch IM CLI client after all to complete update.",
+                          "User should launch Installation Manager CLI client after all to complete update.",
                   response = Response.class)
-    public javax.ws.rs.core.Response updateImCliClient() throws IOException {
-        String cliUserHomeDir = configUtil.calculationCliUserHomeDir();
+    public javax.ws.rs.core.Response updateImCliClient(
+        @QueryParam(value = "cliClientUserHomeDir")
+        @ApiParam(value = "path to home directory of system user who installed Installation Manager CLI client") String cliUserHomeDir) throws IOException {
+        
         InstallOptions installOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
 
         Request request = new Request().setArtifactName(InstallManagerArtifact.NAME)

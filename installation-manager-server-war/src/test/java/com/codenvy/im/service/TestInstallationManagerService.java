@@ -167,22 +167,21 @@ public class TestInstallationManagerService {
         checkErrorResponse(result);
     }
 
+
     @Test
     public void testUpdateImCliClient() throws Exception {
         String cliUserHomeDir = "/home/test";
-        doReturn("/home/test").when(configUtil).calculationCliUserHomeDir();
-
         InstallOptions testInstallOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
 
         Request testRequest = new Request().setArtifactName(InstallManagerArtifact.NAME)
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateImCliClient();
+        Response result = service.updateImCliClient(cliUserHomeDir);
         checkOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateImCliClient();
+        result = service.updateImCliClient(cliUserHomeDir);
         checkErrorResponse(result);
     }
 
