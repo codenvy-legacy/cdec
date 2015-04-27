@@ -158,25 +158,6 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                     </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>unpack-shared-resources</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>unpack-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                                    <includeArtifactIds>installation-manager-core</includeArtifactIds>
-                                    <includeGroupIds>${project.groupId}</includeGroupIds>
-                                    <excludeTransitive>true</excludeTransitive>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -187,25 +168,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>unpack-shared-resources</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>unpack-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                                    <includeArtifactIds>installation-manager-core</includeArtifactIds>
-                                    <includeGroupIds>${project.groupId}</includeGroupIds>
-                                    <excludeTransitive>true</excludeTransitive>
-                                </configuration>
-                            </execution>
-                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -220,6 +182,10 @@
                                 <configuration>
                                     <target>
                                         <replaceregexp byline="true" file="${project.build.directory}/classes/codenvy/update-server.properties" match="mail.notification.recipients=.*" replace="mail.notification.recipients=cdec.im.test@gmail.com,cdec.im.test1@gmail.com" />
+                                        <replace file="${project.build.directory}/classes/codenvy/update-server.properties">
+                                            <replacetoken>codenvy.com</replacetoken>
+                                            <replacevalue>codenvy-stg.com</replacevalue>
+                                        </replace>
                                         <tstamp>
                                             <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                         </tstamp>
