@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.8.4-SNAPSHOT</version>
+        <version>3.9.0</version>
     </parent>
     <artifactId>installation-manager-server-tomcat</artifactId>
     <packaging>pom</packaging>
@@ -185,8 +185,7 @@
                                         <move file="${project.build.directory}/packager-conf/war/installation-manager-server-war.war" tofile="${project.build.directory}/installation-manager-server-tomcat/webapps/im.war" />
                                         <chmod file="${project.build.directory}/installation-manager-server-tomcat/bin/*.sh" perm="+x" />
                                         <!-- Patching Docs service address in the codenvy-api-docs-ui.war/index.html file -->
-                                        <unzip dest="${project.build.directory}/packager-conf/war/im-api-docs-ui"
-                                               src="${project.build.directory}/packager-conf/war/codenvy-api-docs-ui.war"/>
+                                        <unzip dest="${project.build.directory}/packager-conf/war/im-api-docs-ui" src="${project.build.directory}/packager-conf/war/codenvy-api-docs-ui.war" />
                                         <replace file="${project.build.directory}/packager-conf/war/im-api-docs-ui/index.html">
                                             <replacetoken>'/api/docs'</replacetoken>
                                             <replacevalue>'/im/docs'</replacevalue>
