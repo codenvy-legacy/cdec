@@ -36,6 +36,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 
 import javax.annotation.Nonnull;
@@ -186,7 +187,7 @@ public class InstallationManagerFacade {
                 Version verToDownload = e.getValue();
 
                 try {
-                    Path pathToBinaries = doDownload(request.obtainAccessToken(), artToDownload, verToDownload);
+                    Path pathToBinaries = doDownload(request.getUserCredentials(), artToDownload, verToDownload);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
                 } catch (Exception exp) {
                     LOG.log(Level.SEVERE, exp.getMessage(), exp);
@@ -217,10 +218,10 @@ public class InstallationManagerFacade {
         }
     }
 
-    protected Path doDownload(String accessToken,
+    protected Path doDownload(UserCredentials credentials,
                               Artifact artifact,
                               Version version) throws IOException, IllegalStateException {
-        return manager.download(accessToken, artifact, version);
+        return manager.download(credentials, artifact, version);
     }
 
     /** @return the current status of downloading process */

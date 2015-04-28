@@ -95,7 +95,7 @@ public interface InstallationManager {
      * @throws java.lang.IllegalStateException
      *         if the subscription is invalid or expired
      */
-    Path download(String accessToken, Artifact artifact, Version version) throws
+    Path download(UserCredentials credentials, Artifact artifact, Version version) throws
                                                                                        IOException,
                                                                                        IllegalStateException;
 

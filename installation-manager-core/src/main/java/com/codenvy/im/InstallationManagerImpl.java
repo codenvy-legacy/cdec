@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.backup.BackupManager;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
@@ -152,14 +153,16 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Path download(String accessToken, Artifact artifact, Version version) throws IOException, IllegalStateException {
+    public Path download(UserCredentials credentials, Artifact artifact, Version version) throws IOException, IllegalStateException {
         try {
-            boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version.toString(), transport, updateEndpoint);
+            final boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version.toString(), transport, updateEndpoint);
+            final String accessToken = credentials.getToken();
+            final String accountId = credentials.getAccountId();
 
             String requestUrl;
             if (isAuthenticationRequired) {
                 requestUrl = combinePaths(updateEndpoint,
-                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + accessToken);
+                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + accountId);
             } else {
                 requestUrl = combinePaths(updateEndpoint,
                                           "/repository/public/download/" + artifact.getName() + "/" + version);
