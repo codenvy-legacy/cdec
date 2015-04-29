@@ -114,23 +114,15 @@ public class HttpTransport {
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_OCTET_STREAM}
      */
     public Path download(String path, Path destinationDir) throws IOException {
-        return download(path, destinationDir, null);
-    }
-
-    /**
-     * Performs GET request and store response into file.
-     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_OCTET_STREAM}
-     */
-    public Path download(String path, Path destinationDir, String accessToken) throws IOException {
         if (!Files.exists(destinationDir)) {
             Files.createDirectories(destinationDir);
         }
 
-        return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir, accessToken);
+        return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir);
     }
 
-    private Path download(String path, String method, String expectedContentType, Path destinationDir, String accessToken) throws IOException {
-        final HttpURLConnection conn = openConnection(path, accessToken);
+    private Path download(String path, String method, String expectedContentType, Path destinationDir) throws IOException {
+        final HttpURLConnection conn = openConnection(path, null);
 
         try {
             request(method, null, expectedContentType, conn);

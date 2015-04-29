@@ -20,7 +20,6 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.facade.UserCredentials;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -45,7 +44,6 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private UserCredentials testCredentials = new UserCredentials("token", "accountId");
     private String          okResponse      = "{\n" +
                                               "  \"status\" : \"OK\"\n" +
                                               "}";
@@ -85,13 +83,11 @@ public class TestDownloadCommand extends AbstractTestCommand {
         spyCommand.facade = service;
 
         performBaseMocks(spyCommand, true);
-
-        doReturn(testCredentials).when(spyCommand).getCredentials();
     }
 
     @Test
     public void testDownload() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request();
         doReturn(okResponse).when(service).startDownload(request);
         doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
 
@@ -105,7 +101,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testDownloadArtifact() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
+        Request request = new Request().setArtifactName(CDECArtifact.NAME);
         doReturn(okResponse).when(service).startDownload(request);
         doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
 
@@ -120,7 +116,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testDownloadArtifactVersion() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("3.0.0");
+        Request request = new Request().setArtifactName(CDECArtifact.NAME).setVersion("3.0.0");
         doReturn(okResponse).when(service).startDownload(request);
         doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
 
@@ -162,7 +158,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                       "  \"message\" : \"There is no any version of artifact 'codenvy'\",\n" +
                                       "  \"status\" : \"ERROR\"\n" +
                                       "}";
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request();
         doReturn(okResponse).when(service).startDownload(request);
         doReturn(downloadStatusResponse).when(service).getDownloadStatus();
 
@@ -192,7 +188,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdates() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request();
         doReturn(okResponse).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -209,7 +205,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                       + "\"message\": \"Some error\","
                                       + "\"status\": \"ERROR\""
                                       + "}";
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request();
         doReturn(serviceErrorResponse).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -243,7 +239,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                           + "  \"status\": \"OK\"\n"
                           + "}";
 
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request();
         doReturn(ok).when(service).getDownloads(request);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

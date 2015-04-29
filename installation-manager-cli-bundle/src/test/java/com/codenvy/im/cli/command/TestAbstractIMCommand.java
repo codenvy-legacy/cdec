@@ -160,6 +160,7 @@ public class TestAbstractIMCommand {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
+        spyCommand.validateIfUserLoggedIn();
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -168,6 +169,7 @@ public class TestAbstractIMCommand {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
+        spyCommand.validateIfUserLoggedIn();
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -176,6 +178,7 @@ public class TestAbstractIMCommand {
         globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
+        spyCommand.validateIfUserLoggedIn();
     }
 
     @Test

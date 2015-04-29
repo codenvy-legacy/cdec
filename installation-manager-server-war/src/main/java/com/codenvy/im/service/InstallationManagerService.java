@@ -78,15 +78,10 @@ public class InstallationManagerService {
     @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response = Response.class)
     public javax.ws.rs.core.Response startDownload(
         @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
-        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one") String artifactVersion,
-        @ApiParam(value = "Token to access SaaS Codenvy server. It's needed to download artifacts which require authentication at SaaS Codenvy")
-        String accessToken) {
-
-        UserCredentials userCredentials = new UserCredentials(accessToken);
+        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one") String artifactVersion) {
 
         Request request = new Request().setArtifactName(artifactName)
-                                       .setVersion(artifactVersion)
-                                       .setUserCredentials(userCredentials);
+                                       .setVersion(artifactVersion);
 
         return handleInstallationManagerResponse(delegate.startDownload(request));
     }
@@ -176,7 +171,7 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response updateImCliClient(
         @QueryParam(value = "cliClientUserHomeDir")
         @ApiParam(value = "path to home directory of system user who installed Installation Manager CLI client") String cliUserHomeDir) throws IOException {
-        
+
         InstallOptions installOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
 
         Request request = new Request().setArtifactName(InstallManagerArtifact.NAME)

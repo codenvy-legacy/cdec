@@ -80,7 +80,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
         initConsole();
         initDtoFactory();
         initPreferencesStorage();
-        validateIfUserLoggedIn();
     }
 
     protected void initPreferencesStorage() {
@@ -216,14 +215,13 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return super.isInteractive();
     }
 
-    protected Request initRequest(String artifactName, String version) {
+    protected Request createRequest(String artifactName, String version) {
         return new Request()
                 .setArtifactName(artifactName)
-                .setVersion(version)
-                .setUserCredentials(getCredentials());
+                .setVersion(version);
     }
 
-    protected Request initRequest() {
+    protected Request createRequestWithUserCredentials() {
         return new Request().setUserCredentials(getCredentials());
     }
 

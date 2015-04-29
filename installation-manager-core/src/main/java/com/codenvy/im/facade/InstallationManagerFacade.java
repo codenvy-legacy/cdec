@@ -36,7 +36,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 
 import javax.annotation.Nonnull;
@@ -147,7 +146,6 @@ public class InstallationManagerFacade {
             final CountDownLatch latcher = new CountDownLatch(1);
 
             Thread downloadThread = new Thread("download thread") {
-
                 public void run() {
                     download(request, latcher, this);
                 }
@@ -171,9 +169,7 @@ public class InstallationManagerFacade {
         downloadDescriptor = null;
         List<ArtifactInfo> infos = null;
         try {
-            Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.createArtifact(),
-                                                                                    request.createVersion(),
-                                                                                    request.obtainAccessToken());
+            Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.createArtifact(), request.createVersion());
 
             infos = new ArrayList<>(updatesToDownload.size());
 
@@ -187,7 +183,7 @@ public class InstallationManagerFacade {
                 Version verToDownload = e.getValue();
 
                 try {
-                    Path pathToBinaries = doDownload(request.getUserCredentials(), artToDownload, verToDownload);
+                    Path pathToBinaries = doDownload(request.obtainAccessToken(), artToDownload, verToDownload);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
                 } catch (Exception exp) {
                     LOG.log(Level.SEVERE, exp.getMessage(), exp);
@@ -218,10 +214,10 @@ public class InstallationManagerFacade {
         }
     }
 
-    protected Path doDownload(UserCredentials credentials,
+    protected Path doDownload(String accessToken,
                               Artifact artifact,
                               Version version) throws IOException, IllegalStateException {
-        return manager.download(credentials, artifact, version);
+        return manager.download(artifact, version);
     }
 
     /** @return the current status of downloading process */
@@ -289,7 +285,7 @@ public class InstallationManagerFacade {
                     Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
 
                     for (Map.Entry<Artifact, SortedMap<Version, Path>> e : downloadedArtifacts.entrySet()) {
-                        infos.addAll(getDownloadedArtifactsInfo(request.obtainAccessToken(), e.getKey(), e.getValue()));
+                        infos.addAll(getDownloadedArtifactsInfo(e.getKey(), e.getValue()));
                     }
                 } else {
                     SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.createArtifact());
@@ -301,7 +297,7 @@ public class InstallationManagerFacade {
                             downloadedVersions = ImmutableSortedMap.of(version, path);
                         }
 
-                        infos = getDownloadedArtifactsInfo(request.obtainAccessToken(), request.createArtifact(), downloadedVersions);
+                        infos = getDownloadedArtifactsInfo(request.createArtifact(), downloadedVersions);
                     }
                 }
 
@@ -316,15 +312,13 @@ public class InstallationManagerFacade {
         }
     }
 
-    private List<ArtifactInfo> getDownloadedArtifactsInfo(String token,
-                                                          Artifact artifact,
-                                                          SortedMap<Version, Path> downloadedVersions) throws IOException {
+    private List<ArtifactInfo> getDownloadedArtifactsInfo(Artifact artifact, SortedMap<Version, Path> downloadedVersions) throws IOException {
         List<ArtifactInfo> info = new ArrayList<>();
 
         for (Map.Entry<Version, Path> e : downloadedVersions.entrySet()) {
             Version version = e.getKey();
             Path pathToBinaries = e.getValue();
-            Status status = manager.isInstallable(artifact, version, token) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+            Status status = manager.isInstallable(artifact, version) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
             info.add(new ArtifactInfo(artifact, version, pathToBinaries, status));
         }

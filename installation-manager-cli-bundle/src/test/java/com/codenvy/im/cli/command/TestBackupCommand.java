@@ -45,8 +45,6 @@ public class TestBackupCommand  extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private UserCredentials credentials;
-
     private BackupConfig testBackupConfig;
 
     private String testBackupDirectory = "test/backup/directory";
@@ -60,9 +58,6 @@ public class TestBackupCommand  extends AbstractTestCommand {
         spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
-
-        credentials = new UserCredentials("token", "accountId");
-        doReturn(credentials).when(spyCommand).getCredentials();
     }
 
 

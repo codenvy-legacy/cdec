@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.backup.BackupManager;
-import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
@@ -153,29 +152,16 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public Path download(UserCredentials credentials, Artifact artifact, Version version) throws IOException, IllegalStateException {
+    public Path download(Artifact artifact, Version version) throws IOException, IllegalStateException {
         try {
-            final boolean isAuthenticationRequired = isAuthenticationRequired(artifact.getName(), version.toString(), transport, updateEndpoint);
-            final String accessToken = credentials.getToken();
-            final String accountId = credentials.getAccountId();
-
-            String requestUrl;
-            if (isAuthenticationRequired) {
-                requestUrl = combinePaths(updateEndpoint,
-                                          "/repository/download/" + artifact.getName() + "/" + version + "/" + accountId);
-            } else {
-                requestUrl = combinePaths(updateEndpoint,
-                                          "/repository/public/download/" + artifact.getName() + "/" + version);
-            }
+            String requestUrl = combinePaths(updateEndpoint, "/repository/public/download/" + artifact.getName() + "/" + version);
 
             Path artifactDownloadDir = getDownloadDirectory(artifact, version);
             deleteDirectory(artifactDownloadDir.toFile());
 
-            return transport.download(requestUrl, artifactDownloadDir, accessToken);
+            return transport.download(requestUrl, artifactDownloadDir);
         } catch (IOException e) {
             throw getProperException(e, artifact);
-        } catch (JsonParseException e) {
-            throw new IOException(e);
         }
     }
 
@@ -282,7 +268,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** Filters what need to download, either all updates or a specific one. */
     @Override
-    public Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version, String authToken) throws IOException {
+    public Map<Artifact, Version> getUpdatesToDownload(Artifact artifact, Version version) throws IOException {
         if (artifact == null) {
             Map<Artifact, Version> latestVersions = getUpdates();
             Map<Artifact, Version> updates = new TreeMap<>(latestVersions);
@@ -322,7 +308,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     /** {@inheritDoc} */
     @Override
-    public boolean isInstallable(Artifact artifact, Version version, String authToken) throws IOException {
+    public boolean isInstallable(Artifact artifact, Version version) throws IOException {
         return artifact.isInstallable(version, updateEndpoint, transport);
     }
 

@@ -65,7 +65,7 @@ public class DownloadCommand extends AbstractIMCommand {
     private void doDownload() throws InterruptedException, JsonParseException {
         console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
-        Request request = initRequest(artifactName, version);
+        Request request = createRequest(artifactName, version);
         String startResponse = facade.startDownload(request);
 
         Response responseObj = Response.fromJson(startResponse);
@@ -112,12 +112,11 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException {
-        Request request = initRequest(artifactName, version);
         console.printResponse(facade.getUpdates());
     }
 
     private void doList() throws JsonParseException {
-        Request request = initRequest(artifactName, version);
+        Request request = createRequest(artifactName, version);
         console.printResponse(facade.getDownloads(request));
     }
 }

@@ -44,8 +44,6 @@ public class TestRemoveNodeCommand extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private UserCredentials credentials;
-
     private final static String TEST_DNS = "builder.node.com";
 
     @BeforeMethod
@@ -56,9 +54,6 @@ public class TestRemoveNodeCommand extends AbstractTestCommand {
         spyCommand.facade = mockInstallationManagerProxy;
 
         performBaseMocks(spyCommand, true);
-
-        credentials = new UserCredentials("token", "accountId");
-        doReturn(credentials).when(spyCommand).getCredentials();
     }
 
     @Test
