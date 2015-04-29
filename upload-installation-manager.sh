@@ -17,12 +17,12 @@
 
 #!/bin/bash
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
-#    SSH_KEY_NAME=$2
-#    SSH_AS_USER_NAME=codenvy
-#    AS_IP=updater.codenvycorp.com
+    SSH_KEY_NAME=$2
+    SSH_AS_USER_NAME=codenvy
+    AS_IP=updater.codenvycorp.com
     echo "=========> Uploading on production"
 elif [ "$1" == "stg" ]; then
-    SSH_KEY_NAME=~/.ssh/id_dnochevnov_at
+    SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater.codenvy-stg.com
     echo "=========> Uploading on staging"
