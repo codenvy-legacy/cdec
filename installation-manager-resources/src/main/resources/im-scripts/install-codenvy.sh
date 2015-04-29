@@ -143,7 +143,7 @@ prepareConfig_single() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
-    askProperty "Codenvy admin name (it cannot be changed easily after install)" "admin_ldap_user_name"
+    askProperty "Codenvy admin name (it cannot be changed easily after install)" "system_ldap_password"
     askPassword
     askDNS_single
 }
@@ -153,7 +153,7 @@ prepareConfig_multi() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
-    askProperty "Codenvy admin name (it cannot be changed easily after install)" "admin_ldap_user_name"
+    askProperty "Codenvy admin name (it cannot be changed easily after install)" "system_ldap_password"
     askPassword
     askDNS_multi "Please set the DNS hostname to be used by Codenvy" "host_url"
     askDNS_multi "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
@@ -230,7 +230,7 @@ printPreInstallInfo_single() {
         printPrompt; echo
     else
         HOSTNAME=`grep [aio_]*host_url=.* ${CONFIG} | cut -f2 -d '='`
-        CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+        CODENVY_ADMIN_NAME=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
 
         printPrompt; echo "Configuration file : "${CONFIG}
         printPrompt; echo
@@ -302,7 +302,7 @@ printPreInstallInfo_multi() {
         prepareConfig_multi
         printPrompt; echo
     else
-        CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+        CODENVY_ADMIN_NAME=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
         HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
         PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -369,7 +369,7 @@ doInstallStep4() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 4: DOWNLOAD CODENVY"
 
-    CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+    CODENVY_ADMIN_NAME=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
     CODENVY_ADMIN_PWD=`grep admin_ldap_password ${CONFIG} | cut -d '=' -f2`
     executeIMCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
     executeIMCommand "Checking the list of downloaded binaries" im-download --list-local
