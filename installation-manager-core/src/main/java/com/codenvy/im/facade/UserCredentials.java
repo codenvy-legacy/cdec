@@ -17,8 +17,6 @@
  */
 package com.codenvy.im.facade;
 
-import javax.annotation.Nonnull;
-
 /**
  * AccountID refers to the account where user has account/owner role.
  *
@@ -41,7 +39,6 @@ public class UserCredentials {
     }
 
     /** Getter for #token */
-    @Nonnull
     public String getToken() {
         return token;
     }
@@ -52,7 +49,6 @@ public class UserCredentials {
     }
 
     /** Getter for #accountId */
-    @Nonnull
     public String getAccountId() {
         return accountId;
     }
@@ -69,11 +65,11 @@ public class UserCredentials {
 
         UserCredentials that = (UserCredentials)o;
 
-        if (accountId != null ? !accountId.equals(that.accountId) : that.accountId!= null) {
+        if (accountId != null ? !accountId.equals(that.accountId) : that.accountId != null) {
             return false;
         }
 
-        if (token != null ? !token.equals(that.token) : that.token!= null) {
+        if (token != null ? !token.equals(that.token) : that.token != null) {
             return false;
         }
 
@@ -83,7 +79,7 @@ public class UserCredentials {
     @Override
     public int hashCode() {
         int result = token != null ? token.hashCode() : 0;
-        result = 31 * result + (accountId!= null ? accountId.hashCode() : 0);
+        result = 31 * result + (accountId != null ? accountId.hashCode() : 0);
 
         return result;
     }

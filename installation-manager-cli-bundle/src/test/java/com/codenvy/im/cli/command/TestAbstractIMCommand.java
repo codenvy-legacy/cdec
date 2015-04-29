@@ -23,9 +23,9 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.request.Request;
 import com.google.common.io.Files;
 
 import org.apache.felix.service.command.CommandSession;
@@ -155,7 +155,7 @@ public class TestAbstractIMCommand {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "Please log in into 'update-server' remote.")
     public void testInitWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -164,7 +164,7 @@ public class TestAbstractIMCommand {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "Please log in into 'update-server' remote.")
     public void testInitWhenUserDidNotLogin() {
         globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -173,7 +173,7 @@ public class TestAbstractIMCommand {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "To use installation manager commands you have to login into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "Please log in into 'update-server' remote.")
     public void testInitWhenUserDidNotObtainAccountId() {
         globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);

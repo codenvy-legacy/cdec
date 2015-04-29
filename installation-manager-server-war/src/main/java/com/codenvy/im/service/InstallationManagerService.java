@@ -78,7 +78,8 @@ public class InstallationManagerService {
     @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response = Response.class)
     public javax.ws.rs.core.Response startDownload(
         @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
-        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one") String artifactVersion) {
+        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one")
+        String artifactVersion) {
 
         Request request = new Request().setArtifactName(artifactName)
                                        .setVersion(artifactVersion);

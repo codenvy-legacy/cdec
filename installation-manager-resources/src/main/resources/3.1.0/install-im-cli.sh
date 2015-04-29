@@ -7,7 +7,7 @@ DIR="${HOME}/codenvy-im"
 ARTIFACT="installation-manager-cli"
 
 if [ -z $1 ]; then
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\|[0-9.]*-SNAPSHOT\)".*/\1/'`
 else
     VERSION=$1
 fi
