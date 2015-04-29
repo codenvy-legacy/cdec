@@ -46,7 +46,6 @@ import static org.eclipse.che.commons.lang.IoUtil.readAndCloseQuietly;
 @Singleton
 public class HttpTransport {
     private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
-    private static final String  MESSAGE   = "message";
 
     /**
      * Performs OPTION request.

@@ -17,9 +17,9 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.request.Request;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.request.Request;
 import com.codenvy.im.utils.AccountUtils;
 
 import org.apache.felix.service.command.CommandSession;
@@ -32,6 +32,7 @@ import java.io.IOException;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -39,7 +40,7 @@ import static org.testng.Assert.assertEquals;
 
 /** @author Anatoliy Bazko */
 public class TestSubscriptionCommand extends AbstractTestCommand {
-    private AbstractIMCommand spyCommand;
+    private SubscriptionCommand spyCommand;
 
     @Mock
     private InstallationManagerFacade mockInstallationManagerProxy;
@@ -71,6 +72,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                    + "  \"subscription\" : \"OnPremises\"\n"
                                    + "}";
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(AccountUtils.ON_PREMISES, request);
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -87,6 +89,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                    + "  \"subscription\": \"AnotherSubscription\"\n"
                                    + "}";
         doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription("AnotherSubscription", request);
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check", "AnotherSubscription");
@@ -104,6 +107,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
                 .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(request));
+        doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

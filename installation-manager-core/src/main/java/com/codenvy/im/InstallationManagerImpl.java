@@ -32,8 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.commons.json.JsonParseException;
-
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -49,7 +47,6 @@ import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
-import static com.codenvy.im.utils.ArtifactPropertiesUtils.isAuthenticationRequired;
 import static com.codenvy.im.utils.Commons.ArtifactsSet;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.extractServerUrl;

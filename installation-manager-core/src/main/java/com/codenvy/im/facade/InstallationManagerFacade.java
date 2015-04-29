@@ -36,6 +36,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 
 import javax.annotation.Nonnull;
@@ -96,7 +97,8 @@ public class InstallationManagerFacade {
     public String addTrialSubscription(@Nonnull Request request) throws IOException {
         try {
             transport
-                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null, request.obtainAccessToken());
+                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
+                            request.obtainAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
@@ -183,7 +185,7 @@ public class InstallationManagerFacade {
                 Version verToDownload = e.getValue();
 
                 try {
-                    Path pathToBinaries = doDownload(request.obtainAccessToken(), artToDownload, verToDownload);
+                    Path pathToBinaries = doDownload(artToDownload, verToDownload);
                     infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
                 } catch (Exception exp) {
                     LOG.log(Level.SEVERE, exp.getMessage(), exp);
@@ -214,9 +216,7 @@ public class InstallationManagerFacade {
         }
     }
 
-    protected Path doDownload(String accessToken,
-                              Artifact artifact,
-                              Version version) throws IOException, IllegalStateException {
+    protected Path doDownload(Artifact artifact, Version version) throws IOException, IllegalStateException {
         return manager.download(artifact, version);
     }
 

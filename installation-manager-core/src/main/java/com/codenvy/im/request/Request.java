@@ -58,11 +58,7 @@ public class Request {
      */
     @Nonnull
     public String obtainAccessToken() {
-        if (userCredentials == null) {
-            return "";
-        } else {
-            return userCredentials.getToken();
-        }
+        return userCredentials == null ? "" : userCredentials.getToken();
     }
 
     /**
@@ -70,14 +66,10 @@ public class Request {
      */
     @Nonnull
     public String obtainAccountId() {
-        if (userCredentials == null) {
-            return "";
-        } else {
-            return userCredentials.getAccountId();
-        }
+        return userCredentials == null ? "" : userCredentials.getAccountId();
     }
 
-    @Nonnull
+    @Nullable
     public UserCredentials getUserCredentials() {
         return userCredentials;
     }
@@ -98,6 +90,7 @@ public class Request {
         return this;
     }
 
+    @Nullable
     public String getArtifactName() {
         return artifactName;
     }

@@ -24,9 +24,9 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.facade.UserCredentials;
+import com.codenvy.im.request.Request;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -113,7 +113,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
-            throw new IllegalStateException("To use installation manager commands you have to login into '" + remoteName + "' remote.");
+            throw new IllegalStateException("Please log in into '" + remoteName + "' remote.");
         }
 
         if (preferencesStorage == null
@@ -121,7 +121,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             || preferencesStorage.getAccountId() == null
             || preferencesStorage.getAuthToken().isEmpty()
             || preferencesStorage.getAccountId().isEmpty()) {
-            throw new IllegalStateException("To use installation manager commands you have to login into '" + remoteName + "' remote.");
+            throw new IllegalStateException("Please log in into '" + remoteName + "' remote.");
         }
     }
 
@@ -222,10 +222,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected Request createRequestWithUserCredentials() {
+        validateIfUserLoggedIn();
         return new Request().setUserCredentials(getCredentials());
-    }
-
-    protected void exit(int status) {
-        System.exit(status);
     }
 }
