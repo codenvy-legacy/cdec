@@ -325,10 +325,10 @@ public class TestCommandLibrary {
     @Test
     public void testCreateForcePuppetAgentCommand() throws AgentException {
         Command testCommand = CommandLibrary.createForcePuppetAgentCommand(testApiNode);
-        assertEquals(testCommand.toString(), "{" +
+        assertEquals(testCommand.toString(), format("{" +
                                              "'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then" +
                                              "    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " +
                                              "fi;', " +
-                                             "'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}");
+                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 }
