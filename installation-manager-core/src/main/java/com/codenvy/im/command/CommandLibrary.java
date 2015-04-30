@@ -224,13 +224,13 @@ public class CommandLibrary {
         String command;
         if (pathWithinThePack == null) {
             command = format("tar -xf %s -C %s",
-                          packFile,
-                          toDir);
+                             packFile,
+                             toDir);
         } else {
             command = format("tar -xf %s -C %s %s",
-                          packFile,
-                          toDir,
-                          pathWithinThePack);
+                             packFile,
+                             toDir,
+                             pathWithinThePack);
         }
 
         if (needSudo) {
@@ -243,7 +243,7 @@ public class CommandLibrary {
     public static Command createCopyFromRemoteToLocalCommand(Path fromPath, Path toPath, NodeConfig remote) {
         String userNamePrefix = "";
         if (remote.getUser() != null
-                && !remote.getUser().isEmpty()) {
+            && !remote.getUser().isEmpty()) {
             userNamePrefix = format("%s@", remote.getUser());
         }
 
@@ -296,5 +296,22 @@ public class CommandLibrary {
                       "    else sleep 5; " +
                       "    fi; " +
                       "done", service, operator);
+    }
+
+    /**
+     * @return command to execute "sudo puppet agent -t" at the node only if there is no "/var/lib/puppet/state/agent_catalog_run.lock" file at the node,
+     * that is run of Puppet configuration client isn't already in progress.
+     */
+    public static Command createForcePuppetAgentCommand(NodeConfig node) throws AgentException {
+        return createCommand(getForcePuppetAgentCommand(), node);
+    }
+
+    /**
+     * @return command to execute "sudo puppet agent -t" only if there is no /var/lib/puppet/state/agent_catalog_run.lock file
+     */
+    private static String getForcePuppetAgentCommand() {
+        return "if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then " +
+               "   sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " +  // make sure there is no "--detailed-exitcodes" option
+               "fi;";
     }
 }

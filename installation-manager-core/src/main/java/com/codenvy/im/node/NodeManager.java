@@ -37,6 +37,7 @@ import java.util.List;
 
 import static com.codenvy.im.command.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.command.CommandLibrary.createForcePuppetAgentCommand;
 import static com.codenvy.im.command.SimpleCommand.createCommand;
 import static java.lang.String.format;
 
@@ -156,6 +157,9 @@ public class NodeManager {
                                        "done",
                                        node));
 
+            // force applying updated puppet config on puppet agent of API node
+            commands.add(createForcePuppetAgentCommand(apiNode));
+
             // wait until there is a changed configuration on API server
             commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
                                               "while true; do " +
@@ -219,32 +223,35 @@ public class NodeManager {
             NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
 
             return new MacroCommand(ImmutableList.of(
-                    // modify puppet master config
-                    createFileBackupCommand(puppetMasterConfigFilePath),
-                    createPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                                 "$" + property,
-                                                 value),
+                // modify puppet master config
+                createFileBackupCommand(puppetMasterConfigFilePath),
+                createPropertyReplaceCommand(puppetMasterConfigFilePath,
+                                             "$" + property,
+                                             value),
 
-                    // wait until there node is removed from configuration on API server
-                    createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                         "while true; do " +
-                                         "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
-                                         "    sleep 5; " +  // sleep 5 sec
-                                         "done; " +
-                                         "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
-                                  apiNode),
+                // force applying updated puppet config for puppet agent on API node
+                createForcePuppetAgentCommand(apiNode),
 
-                    // wait until API server restarts
-                    new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
+                // wait until there node is removed from configuration on API server
+                createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                     "while true; do " +
+                                     "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
+                                     "    sleep 5; " +  // sleep 5 sec
+                                     "done; " +
+                                     "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
+                              apiNode),
 
-                    // remove out-date puppet agent's certificate
-                    createCommand(format("sudo puppet cert clean %s", node.getHost())),
-                    createCommand("sudo service puppetmaster restart"),
+                // wait until API server restarts
+                new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
 
-                    // stop puppet agent on removing node and remove out-date certificate
-                    createCommand("sudo service puppet stop", node),
-                    createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
-                                                    ), "Remove node commands");
+                // remove out-date puppet agent's certificate
+                createCommand(format("sudo puppet cert clean %s", node.getHost())),
+                createCommand("sudo service puppetmaster restart"),
+
+                // stop puppet agent on removing node and remove out-date certificate
+                createCommand("sudo service puppet stop", node),
+                createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
+            ), "Remove node commands");
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
