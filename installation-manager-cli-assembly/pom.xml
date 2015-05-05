@@ -130,7 +130,7 @@
                                     <replacetoken>codenvy:$COMMAND "$*"</replacetoken>
                                     <replacevalue>codenvy:$COMMAND $(for arg in "$@"; do echo "\"$arg\""; done)</replacevalue>
                                 </replace>
-                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/interactive-mode">
+                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
                                     <replacevalue>CURRENT_DIR=$(pwd)
                                         cd ~/codenvy-im

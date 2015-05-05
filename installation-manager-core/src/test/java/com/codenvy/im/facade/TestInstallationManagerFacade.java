@@ -17,10 +17,10 @@
  */
 package com.codenvy.im.facade;
 
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
@@ -46,7 +46,7 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class TestInstallationManagerFacade {
-    private InstallationManagerFacade installationManagerService;
+    private InstallationManagerFacade installationManagerFacade;
 
     private InstallationManager mockInstallationManager;
     private HttpTransport       mockTransport;
@@ -58,7 +58,7 @@ public class TestInstallationManagerFacade {
         mockInstallationManager = mock(InstallationManager.class);
         mockTransport = mock(HttpTransport.class);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
-        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
+        installationManagerFacade = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
         testCredentials = new UserCredentials("auth token");
     }
 
@@ -74,7 +74,7 @@ public class TestInstallationManagerFacade {
         doNothing().when(mockInstallationManager).install(testCredentials.getToken(), cdecArtifact, version, installOptions);
 
 
-        String response = installationManagerService.install(request);
+        String response = installationManagerFacade.install(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"codenvy\",\n" +
@@ -97,7 +97,7 @@ public class TestInstallationManagerFacade {
                                              .install(testCredentials.getToken(), cdecArtifact, Version.valueOf("1.0.1"), installOptions);
 
 
-        String response = installationManagerService.install(request);
+        String response = installationManagerFacade.install(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
                                "    \"artifact\" : \"codenvy\",\n" +
@@ -117,7 +117,7 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.doGetVersionToInstall(request);
+        Version version = installationManagerFacade.doGetVersionToInstall(request);
         assertEquals(Version.valueOf("1.0.1"), version);
     }
 
@@ -129,7 +129,7 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.doGetVersionToInstall(request);
+        Version version = installationManagerFacade.doGetVersionToInstall(request);
         assertEquals(Version.valueOf("1.0.2"), version);
     }
 
@@ -146,7 +146,7 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerService.doGetVersionToInstall(request);
+        Version version = installationManagerFacade.doGetVersionToInstall(request);
         assertEquals(Version.valueOf("1.0.3"), version);
     }
 
@@ -158,7 +158,7 @@ public class TestInstallationManagerFacade {
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
                                                                                          .getDownloadedVersions(cdecArtifact);
 
-        installationManagerService.doGetVersionToInstall(request);
+        installationManagerFacade.doGetVersionToInstall(request);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -173,13 +173,13 @@ public class TestInstallationManagerFacade {
         doReturn(Version.valueOf("1.0.4")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of()).when(mockInstallationManager).getDownloadedVersions(cdecArtifact);
 
-        installationManagerService.doGetVersionToInstall(request);
+        installationManagerFacade.doGetVersionToInstall(request);
     }
 
     @Test
     public void testAddNode() throws IOException {
         doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null)).when(mockInstallationManager).addNode("builder.node.com");
-        assertEquals(installationManagerService.addNode("builder.node.com"), "{\n"
+        assertEquals(installationManagerFacade.addNode("builder.node.com"), "{\n"
                                                                              + "  \"node\" : {\n"
                                                                              + "    \"type\" : \"BUILDER\",\n"
                                                                              + "    \"host\" : \"builder.node.com\",\n"
@@ -194,7 +194,7 @@ public class TestInstallationManagerFacade {
     public void testAddNodeException() throws IOException {
         doThrow(new IOException("error")).when(mockInstallationManager).addNode("builder.node.com");
 
-        assertEquals(installationManagerService.addNode("builder.node.com"), "{\n"
+        assertEquals(installationManagerFacade.addNode("builder.node.com"), "{\n"
                                                                              + "  \"message\" : \"error\",\n"
                                                                              + "  \"status\" : \"ERROR\"\n"
                                                                              + "}");
@@ -206,7 +206,7 @@ public class TestInstallationManagerFacade {
         final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS, null);
         doReturn(TEST_NODE).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
-        assertEquals(installationManagerService.removeNode(TEST_NODE_DNS), "{\n"
+        assertEquals(installationManagerFacade.removeNode(TEST_NODE_DNS), "{\n"
                                                                            + "  \"node\" : {\n"
                                                                            + "    \"type\" : \"BUILDER\",\n"
                                                                            + "    \"host\" : \"builder.node.com\",\n"
@@ -221,7 +221,7 @@ public class TestInstallationManagerFacade {
         final String TEST_NODE_DNS = "builder.node.com";
         doThrow(new IOException("error")).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
-        assertEquals(installationManagerService.removeNode(TEST_NODE_DNS), "{\n"
+        assertEquals(installationManagerFacade.removeNode(TEST_NODE_DNS), "{\n"
                                                                            + "  \"message\" : \"error\",\n"
                                                                            + "  \"status\" : \"ERROR\"\n"
                                                                            + "}");
@@ -237,7 +237,7 @@ public class TestInstallationManagerFacade {
         doReturn(testBackupConfig.setBackupFile(testBackupFile.toString())
                                  .setArtifactVersion("1.0.0"))
             .when(mockInstallationManager).backup(testBackupConfig);
-        assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
+        assertEquals(installationManagerFacade.backup(testBackupConfig), "{\n"
                                                                           + "  \"backup\" : {\n"
                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
                                                                           + "    \"artifactInfo\" : {\n"
@@ -259,7 +259,7 @@ public class TestInstallationManagerFacade {
 
         doThrow(new IOException("error")).when(mockInstallationManager).backup(testBackupConfig);
 
-        assertEquals(installationManagerService.backup(testBackupConfig), "{\n"
+        assertEquals(installationManagerFacade.backup(testBackupConfig), "{\n"
                                                                           + "  \"backup\" : {\n"
                                                                           + "    \"artifactInfo\" : {\n"
                                                                           + "      \"artifact\" : \"codenvy\"\n"
@@ -277,7 +277,7 @@ public class TestInstallationManagerFacade {
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 
-        assertEquals(installationManagerService.restore(testBackupConfig), "{\n"
+        assertEquals(installationManagerFacade.restore(testBackupConfig), "{\n"
                                                                            + "  \"backup\" : {\n"
                                                                            + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
                                                                            + "    \"artifactInfo\" : {\n"
@@ -298,7 +298,7 @@ public class TestInstallationManagerFacade {
 
         doThrow(new IOException("error")).when(mockInstallationManager).restore(testBackupConfig);
 
-        assertEquals(installationManagerService.restore(testBackupConfig), "{\n"
+        assertEquals(installationManagerFacade.restore(testBackupConfig), "{\n"
                                                                            + "  \"backup\" : {\n"
                                                                            + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
                                                                            + "    \"artifactInfo\" : {\n"
@@ -309,5 +309,23 @@ public class TestInstallationManagerFacade {
                                                                            + "  \"message\" : \"error\",\n"
                                                                            + "  \"status\" : \"ERROR\"\n"
                                                                            + "}");
+    }
+
+    @Test
+    public void testChangeAdminPassword() throws Exception {
+        byte[] pwd = "password".getBytes("UTF-8");
+        assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
+                                                                         "  \"status\" : \"OK\"\n" +
+                                                                         "}");
+    }
+
+    @Test
+    public void testChangeAdminPasswordError() throws Exception {
+        byte[] pwd = "password".getBytes("UTF-8");
+        doThrow(IOException.class).when(mockInstallationManager).changeAdminPassword(pwd);
+
+        assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
+                                                                         "  \"status\" : \"ERROR\"\n" +
+                                                                         "}");
     }
 }

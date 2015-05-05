@@ -250,21 +250,12 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        Response response = given().when().get("repository/download/codenvy/1.0.1/accountId");
+        Response response = given().when().get("/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 
     @Test
     public void testDownloadPrivateArtifactWithSubscription() throws Exception {
-        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
-        Calendar cal = getInstance();
-        cal.add(Calendar.DATE, -1);
-        String startDate = subscriptionDateFormat.format(cal.getTime());
-
-        cal = getInstance();
-        cal.add(Calendar.DATE, 1);
-        String endDate = subscriptionDateFormat.format(cal.getTime());
-
         when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
@@ -282,11 +273,14 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateArtifactWithSubscriptionErrorIfAccountWrong() throws Exception {
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
+
         doReturn("[{"
                  + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"unknownAccountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        Response response = given().when().get("repository/download/codenvy/1.0.1/accountId");
+        Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
+                                   .when().get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 

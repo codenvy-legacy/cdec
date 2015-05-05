@@ -498,4 +498,15 @@ public class InstallationManagerFacade {
                            .toJson();
         }
     }
+
+    /** Perform restore according to certain backup config */
+    public String changeAdminPassword(byte[] newPassword) throws IOException {
+        try {
+            manager.changeAdminPassword(newPassword);
+            return new Response().setStatus(ResponseCode.OK).toJson();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e).toJson();
+        }
+    }
 }

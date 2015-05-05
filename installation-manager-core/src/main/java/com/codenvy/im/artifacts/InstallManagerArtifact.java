@@ -130,8 +130,6 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                                "chmod +x %1$s/bin/* \n" +    // set permissions to execute CLI client scripts
                                                                "sed -i \"2iJAVA_HOME=%3$s\" %1$s/bin/codenvy \n" +
                                                                // setup java home path
-                                                               "sed -i \"2iJAVA_HOME=%3$s\" %1$s/bin/interactive-mode \n" +
-                                                               // setup java home path
                                                                "rm -f %4$s \n" +             // remove update script
                                                                "rm -f %2$s \n",              // remove update binaries
                                                                cliClientDir.toAbsolutePath(),
