@@ -30,7 +30,9 @@ import com.codenvy.im.install.InstallType;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
+
 import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.system.PasswordManager;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
@@ -84,15 +86,17 @@ public class TestInstallationManager {
     private UserCredentials         testCredentials;
 
     @Mock
-    private HttpTransport transport;
+    private HttpTransport   transport;
     @Mock
-    private Installer     installer;
+    private Installer       installer;
     @Mock
-    private NodeManager   mockNodeManager;
+    private NodeManager     mockNodeManager;
     @Mock
-    private BackupManager mockBackupManager;
+    private BackupManager   mockBackupManager;
     @Mock
-    private ConfigUtil    configUtil;
+    private PasswordManager passwordManager;
+    @Mock
+    private ConfigUtil      configUtil;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -102,13 +106,14 @@ public class TestInstallationManager {
         cdecArtifact = spy(new CDECArtifact(transport, configUtil));
 
         manager = spy(new InstallationManagerImpl(
-            UPDATE_ENDPOINT,
-            DOWNLOAD_DIR,
-            transport,
-            installer,
-            new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
-            mockNodeManager,
-            mockBackupManager));
+                UPDATE_ENDPOINT,
+                DOWNLOAD_DIR,
+                transport,
+                installer,
+                new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
+                mockNodeManager,
+                mockBackupManager,
+                passwordManager));
 
         testCredentials = new UserCredentials("auth token", "accountId");
     }
@@ -120,16 +125,16 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, Collections.<Artifact>emptySet(), null, null);
+        new InstallationManagerImpl("", "/home/bla-bla", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, Collections.<Artifact>emptySet(), null, null);
+        new InstallationManagerImpl("", "/root", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
+            expectedExceptionsMessageRegExp = "Can not install the artifact '" + InstallManagerArtifact.NAME + "' version '2.10.1'.")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         final Version version2101 = Version.valueOf("2.10.1");
 
@@ -544,5 +549,13 @@ public class TestInstallationManager {
 
         doThrow(new IOException("error")).when(mockBackupManager).restore(testBackupConfig);
         mockBackupManager.restore(testBackupConfig);
+    }
+
+    @Test
+    public void testChangeAdminPassword() throws Exception {
+        byte[] pwd = "password".getBytes("UTF-8");
+
+        manager.changeAdminPassword(pwd);
+        verify(passwordManager).changeAdminPassword(pwd);
     }
 }

@@ -17,10 +17,10 @@
  */
 package com.codenvy.im.facade;
 
+import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.request.Request;
@@ -381,5 +381,23 @@ public class TestInstallationManagerFacade {
         doThrow(new HttpException(500, "error")).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
 
         installationManagerFacade.login(testSaasUsernameAndPassword);
+    }
+
+    @Test
+    public void testChangeAdminPassword() throws Exception {
+        byte[] pwd = "password".getBytes("UTF-8");
+        assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
+                                                                         "  \"status\" : \"OK\"\n" +
+                                                                         "}");
+    }
+
+    @Test
+    public void testChangeAdminPasswordError() throws Exception {
+        byte[] pwd = "password".getBytes("UTF-8");
+        doThrow(IOException.class).when(mockInstallationManager).changeAdminPassword(pwd);
+
+        assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
+                                                                         "  \"status\" : \"ERROR\"\n" +
+                                                                         "}");
     }
 }

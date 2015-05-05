@@ -25,6 +25,7 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
+import com.codenvy.im.system.PasswordManager;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -62,13 +63,14 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
  */
 @Singleton
 public class InstallationManagerImpl implements InstallationManager {
-    private final String        updateEndpoint;
-    private final Installer     installer;
-    private final HttpTransport transport;
-    private final Set<Artifact> artifacts;
-    private final NodeManager   nodeManager;
-    private final BackupManager backupManager;
-    private final Path downloadDir;
+    private final String          updateEndpoint;
+    private final Installer       installer;
+    private final HttpTransport   transport;
+    private final Set<Artifact>   artifacts;
+    private final NodeManager     nodeManager;
+    private final BackupManager   backupManager;
+    private final PasswordManager passwordManager;
+    private final Path            downloadDir;
 
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -77,10 +79,12 @@ public class InstallationManagerImpl implements InstallationManager {
                                    Installer installer,
                                    Set<Artifact> artifacts,
                                    NodeManager nodeManager,
-                                   BackupManager backupManager) throws IOException {
+                                   BackupManager backupManager,
+                                   PasswordManager passwordManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transport = transport;
         this.installer = installer;
+        this.passwordManager = passwordManager;
         this.artifacts = new ArtifactsSet(artifacts); // keep order
 
         this.downloadDir = Paths.get(downloadDir);
@@ -309,18 +313,13 @@ public class InstallationManagerImpl implements InstallationManager {
         return artifact.isInstallable(version, updateEndpoint, transport);
     }
 
-    /** {@inheritDoc}
-     * @throws IllegalArgumentException if node's type isn't supported
-     */
+    /** {@inheritDoc} */
     @Override
     public NodeConfig addNode(String dns) throws IOException, IllegalArgumentException {
         return nodeManager.add(dns);
     }
 
-    /**
-     * {@inheritDoc}
-     * @throws IllegalArgumentException if node's type isn't supported
-     */
+    /** {@inheritDoc} */
     @Override
     public NodeConfig removeNode(String dns) throws IOException, IllegalArgumentException {
         return nodeManager.remove(dns);
@@ -336,5 +335,11 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public void restore(BackupConfig config) throws IOException {
         backupManager.restore(config);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void changeAdminPassword(byte[] newPassword) throws IOException {
+        passwordManager.changeAdminPassword(newPassword);
     }
 }

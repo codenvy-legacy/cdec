@@ -209,7 +209,7 @@ public class RepositoryService {
                                              apiEndpoint,
                                              accessToken,
                                              accountId)) {
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                return Response.status(Response.Status.FORBIDDEN)
                                .entity(format("Unexpected error. Can't download artifact. User '%s' is not owner of the account '%s'.",
                                               userId, accountId)).build();
             }

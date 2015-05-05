@@ -24,3 +24,4 @@ com.codenvy.im.cli.command.AddNodeCommand
 com.codenvy.im.cli.command.RemoveNodeCommand
 com.codenvy.im.cli.command.BackupCommand
 com.codenvy.im.cli.command.RestoreCommand
+com.codenvy.im.cli.command.ChangeAdminPasswordCommand

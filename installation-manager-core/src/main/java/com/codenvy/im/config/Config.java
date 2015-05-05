@@ -17,15 +17,14 @@
  */
 package com.codenvy.im.config;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.codenvy.im.utils.OSUtils.getVersion;
-import static com.google.common.base.Splitter.on;
 import static java.util.Collections.unmodifiableMap;
 
 /** @author Dmytro Nochevnov */
@@ -119,11 +118,15 @@ public class Config {
             value = getValue(property);
         }
 
-        List<String> unmodifiableList = on(',')
-            .trimResults()
-            .omitEmptyStrings()
-            .splitToList(value);
-        return new ArrayList<>(unmodifiableList);
+        List<String> result = new LinkedList<>();
+        for (String item : value.split(",")) {
+            item = item.trim();
+            if (!item.isEmpty()) {
+                result.add(item);
+            }
+        }
+
+        return result;
     }
 
 
