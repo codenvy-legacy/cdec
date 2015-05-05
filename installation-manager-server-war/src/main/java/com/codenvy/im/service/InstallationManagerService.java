@@ -28,10 +28,18 @@ import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.utils.HttpException;
+import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.utils.che.CodenvyUtils;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
+import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.auth.shared.dto.Credentials;
+import org.eclipse.che.api.auth.shared.dto.Token;
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -43,16 +51,24 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.codenvy.im.utils.Commons.createDtoFromJson;
+import static java.lang.String.format;
+
 /**
  * @author Dmytro Nochevnov
+ * We deny concurrent access to the services by marking this class as Singleton
+ * so as there are operations which couldn't execute simulteniously: addNode, removeNode, backup, restore
  */
+@Singleton
 @Path("/")
 @RolesAllowed({"system/admin"})
 @Api(value = "/im", description = "Installation manager")
@@ -64,8 +80,12 @@ public class InstallationManagerService {
 
     protected ConfigUtil configUtil;
 
+    // map <on-prem user name, saas user credentials>
+    protected Map<String, UserCredentials> credentials = new HashMap<>();
+
     @Inject
-    public InstallationManagerService(InstallationManagerFacade delegate, ConfigUtil configUtil) {
+    public InstallationManagerService(InstallationManagerFacade delegate,
+                                      ConfigUtil configUtil) {
         this.delegate = delegate;
         this.configUtil = configUtil;
     }
@@ -290,17 +310,76 @@ public class InstallationManagerService {
         return handleInstallationManagerResponse(delegate.checkSubscription(subscriptionName, request));
     }
 
-    private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
+    @POST
+    @Path("login")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Login to SaaS Codenvy",
+                  notes = "After successful login service requests id of account where user is owner " +
+                          "and then stores SaaS Codenvy auth token and account id as linked to On-Prem Codenvy user name. " +
+                          "They will be used to work around SaaS Codenvy subscription.",
+                  response = Response.class)
+    public javax.ws.rs.core.Response loginToSaas(Credentials saasUsernameAndPassword,
+                                                 @Context SecurityContext context) throws IOException {
         try {
-            Response response = Response.fromJson(responseString);
-            if (response.getStatus() == ResponseCode.OK) {
-                return javax.ws.rs.core.Response.ok(response, MediaType.APPLICATION_JSON_TYPE).build();
-            } else {
-                return javax.ws.rs.core.Response.serverError().entity(response).build();
+            // get SaaS auth token
+            String json = delegate.login(saasUsernameAndPassword);
+            Token authToken = createDtoFromJson(json, Token.class);
+            if (authToken == null) {
+                throw new RuntimeException(CodenvyUtils.CANNOT_LOGIN);
             }
+            UserCredentials saasUserCredentials = new UserCredentials(authToken.getValue());
+
+            // get SaaS account id where user is owner
+            json = delegate.getAccountReferenceWhereUserIsOwner(null, new Request().setUserCredentials(saasUserCredentials));
+            AccountReference accountReference = createDtoFromJson(json, AccountReference.class);
+            if (accountReference == null) {
+                throw new RuntimeException(AccountUtils.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+            }
+            saasUserCredentials.setAccountId(accountReference.getId());
+
+            // save SaaS user credentials into the state of service
+            credentials.put(context.getUserPrincipal().getName(), saasUserCredentials);
+
+            String useAccountMessage = format(AccountUtils.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName());
+            String response = new Response().setStatus(ResponseCode.OK)
+                                            .setMessage(useAccountMessage)
+                                            .toJson();
+            return javax.ws.rs.core.Response.ok(response).build();
         } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return javax.ws.rs.core.Response.serverError().entity(e.toString()).build();
+            return handleException(e);
         }
     }
+
+    private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
+        try {
+            if (!Response.isError(responseString)) {
+                return javax.ws.rs.core.Response.ok(responseString, MediaType.APPLICATION_JSON_TYPE).build();
+            } else {
+                return javax.ws.rs.core.Response.serverError().entity(responseString).build();
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    private javax.ws.rs.core.Response handleException(Exception e) {
+        String errorMessage = e.getMessage();
+        LOG.log(Level.SEVERE, errorMessage, e);
+
+        if (e instanceof HttpException) {
+            // work around error message like "{"message":"Authentication failed. Please check username and password."}"
+            try {
+                Response response = Response.fromJson(errorMessage);
+                errorMessage = response.getMessage();
+            } catch (JsonParseException jpe) {
+                // ignore so as there is old message in errorMessage variable
+            }
+        }
+
+        Response response = new Response().setMessage(errorMessage)
+                                          .setStatus(ResponseCode.ERROR);
+        return javax.ws.rs.core.Response.serverError().entity(response.toJson()).build();
+    }
+
 }

@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.che.AccountUtils;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;

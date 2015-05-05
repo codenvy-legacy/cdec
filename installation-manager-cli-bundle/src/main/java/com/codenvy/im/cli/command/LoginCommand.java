@@ -19,20 +19,19 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.response.Response;
 
+import com.codenvy.im.utils.che.AccountUtils;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
+
+import static java.lang.String.format;
 
 /**
  * Installation manager Login command.
  */
 @Command(scope = "codenvy", name = "login", description = "Login to remote Codenvy cloud")
 public class LoginCommand extends AbstractIMCommand {
-
-    public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
-            "You are logged as a user which does not have an account/owner role in any account. " +
-            "This likely means that you used the wrong credentials to access Codenvy.";
 
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
     private String username;
@@ -54,24 +53,24 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (username == null) {
-                console.print(String.format("Codenvy user name for remote '%s': ", remoteName));
+                console.print(format("Codenvy user name for remote '%s': ", remoteName));
                 username = console.readLine();
             }
 
             if (password == null) {
-                console.print(String.format("Password for %s: ", username));
+                console.print(format("Password for %s: ", username));
                 password = console.readPassword();
             }
 
             if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                console.printErrorAndExit(String.format("Login failed on remote '%s'.", remoteName));
+                console.printErrorAndExit(format("Login failed on remote '%s'.", remoteName));
                 return;
             }
 
             if (!isRemoteForUpdateServer(remoteName)) {
-                console.printSuccess(String.format("Login success on remote '%s' [%s].",
-                                                   remoteName,
-                                                   getRemoteUrlByName(remoteName)));
+                console.printSuccess(format("Login success on remote '%s' [%s].",
+                                            remoteName,
+                                            getRemoteUrlByName(remoteName)));
                 return;
             }
 
@@ -79,7 +78,7 @@ public class LoginCommand extends AbstractIMCommand {
             if (accountReference == null) {
                 preferencesStorage.invalidate();
                 if (accountName == null) {
-                    console.printErrorAndExit(CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                    console.printErrorAndExit(AccountUtils.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
                 } else {
                     console.printErrorAndExit("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
@@ -87,7 +86,7 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (accountName == null) {
-                console.printSuccess("Your Codenvy account '" + accountReference.getName() + "' will be used to verify on-premises subscription.");
+                console.printSuccess(format(AccountUtils.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName()));
             }
 
             preferencesStorage.setAccountId(accountReference.getId());

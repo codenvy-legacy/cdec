@@ -28,16 +28,24 @@ import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
 
+import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.HttpException;
+import org.eclipse.che.api.auth.shared.dto.Credentials;
+import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import java.io.IOException;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -52,6 +60,23 @@ public class TestInstallationManagerService {
     public static final String TEST_ACCESS_TOKEN     = "accessToken";
     public static final String TEST_ACCOUNT_ID       = "accountId";
     public static final String TEST_SUBSCRIPTION_ID  = "subscriptionId";
+    public static final String TEST_ACCOUNT_NAME     = "account";
+    public static final String TEST_USER_NAME        = "user";
+    public static final String TEST_USER_PASSWORD    = "password";
+
+    public static final String TEST_SYSTEM_ADMIN_NAME = "admin";
+
+    private static final String TEST_USER_ACCOUNT_REFERENCE_JSON = "{" +
+                                                                   "  \"name\":\"" + TEST_ACCOUNT_NAME + "\"," +
+                                                                   "  \"id\":\"" + TEST_ACCOUNT_ID + "\"," +
+                                                                   "  \"links\":[]" +
+                                                                   "}";
+    private static final String TEST_ACCESS_TOKEN_JSON = "{\"value\":\"" + TEST_ACCESS_TOKEN + "\"}";
+    private static final String TEST_CREDENTIALS_JSON = "{\n"
+                                                        + "  \"username\": \"" + TEST_USER_NAME + "\",\n"
+                                                        + "  \"password\": \"" + TEST_USER_PASSWORD + "\"\n"
+                                                        + "}";
+
     private InstallationManagerService service;
 
     @Mock
@@ -59,6 +84,12 @@ public class TestInstallationManagerService {
 
     @Mock
     private ConfigUtil configUtil;
+
+    @Mock
+    private Principal mockPrincipal;
+
+    @Mock
+    private SecurityContext mockSecurityContext;
 
     private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
 
@@ -69,6 +100,9 @@ public class TestInstallationManagerService {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         service = spy(new InstallationManagerService(mockFacade, configUtil));
+
+        doReturn(mockPrincipal).when(mockSecurityContext).getUserPrincipal();
+        doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
     }
 
     @Test
@@ -78,7 +112,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
         Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
         result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
@@ -89,7 +123,7 @@ public class TestInstallationManagerService {
     public void testStopDownload() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).stopDownload();
         Response result = service.stopDownload();
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).stopDownload();
         result = service.stopDownload();
@@ -100,7 +134,7 @@ public class TestInstallationManagerService {
     public void testGetDownloadStatus() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloadStatus();
         Response result = service.getDownloadStatus();
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloadStatus();
         result = service.getDownloadStatus();
@@ -111,7 +145,7 @@ public class TestInstallationManagerService {
     public void testGetUpdates() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates();
         Response result = service.getUpdates();
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates();
         result = service.getUpdates();
@@ -124,7 +158,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
         Response result = service.getDownloads(CODENVY_ARTIFACT_NAME);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
         result = service.getDownloads(CODENVY_ARTIFACT_NAME);
@@ -135,7 +169,7 @@ public class TestInstallationManagerService {
     public void testGetInstalledVersions() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstalledVersions();
         Response result = service.getInstalledVersions();
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstalledVersions();
         result = service.getInstalledVersions();
@@ -160,7 +194,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
         Response result = service.updateCodenvy(testStep, testConfigProperties);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
         result = service.updateCodenvy(testStep, testConfigProperties);
@@ -178,7 +212,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
         Response result = service.updateImCliClient(cliUserHomeDir);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
         result = service.updateImCliClient(cliUserHomeDir);
@@ -196,7 +230,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
         Response result = service.getUpdateCodenvyInfo();
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
         result = service.getUpdateCodenvyInfo();
@@ -207,7 +241,7 @@ public class TestInstallationManagerService {
     public void testGetConfig() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getConfig();
         Response result = service.getConfig();
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getConfig();
         result = service.getConfig();
@@ -218,7 +252,7 @@ public class TestInstallationManagerService {
     public void testAddNode() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addNode("dns");
         Response result = service.addNode("dns");
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addNode("dns");
         result = service.addNode("dns");
@@ -229,7 +263,7 @@ public class TestInstallationManagerService {
     public void testRemoveNode() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).removeNode("dns");
         Response result = service.removeNode("dns");
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).removeNode("dns");
         result = service.removeNode("dns");
@@ -244,7 +278,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).backup(testBackupConfig);
         Response result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).backup(testBackupConfig);
         result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
@@ -259,13 +293,12 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).restore(testBackupConfig);
         Response result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(testBackupConfig);
         result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
         checkErrorResponse(result);
     }
-
 
     @Test
     public void testAddTrialSubscription() throws Exception {
@@ -274,7 +307,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
         Response result = service.addTrialSubscription(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
         result = service.addTrialSubscription(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
@@ -288,7 +321,7 @@ public class TestInstallationManagerService {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
         Response result = service.checkSubscription(TEST_SUBSCRIPTION_ID, TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
-        checkOkResponse(result);
+        checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
         result = service.checkSubscription(TEST_SUBSCRIPTION_ID, TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
@@ -302,19 +335,98 @@ public class TestInstallationManagerService {
 
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         String facadeResponse = (String)result.getEntity();
-        assertTrue(facadeResponse.contains("org.eclipse.che.commons.json.JsonParseException: com.fasterxml.jackson.core.JsonParseException: " +
+        assertTrue(facadeResponse.contains("com.fasterxml.jackson.core.JsonParseException: " +
                                            "Unexpected end-of-input: expected close marker for OBJECT"));
     }
 
-    private void checkOkResponse(Response result) {
+    @Test
+    public void testLoginToSaas() throws IOException, JsonParseException {
+        Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
+        Request testRequest = new Request().setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
+        doReturn(TEST_USER_ACCOUNT_REFERENCE_JSON).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
+
+        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"Your Codenvy account 'account' will be used to verify on-premises subscription.\",\n"
+                                         + "  \"status\" : \"OK\"\n"
+                                         + "}");
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
-        com.codenvy.im.response.Response facadeResponse = (com.codenvy.im.response.Response)result.getEntity();
-        assertEquals(facadeResponse.toJson(), mockFacadeOkResponse.toJson());
+
+        assertEquals(service.credentials.size(), 1);
+        assertTrue(service.credentials.containsKey(TEST_SYSTEM_ADMIN_NAME));
+
+        UserCredentials testSaasUserCredentials = service.credentials.get(TEST_SYSTEM_ADMIN_NAME);
+        assertEquals(testSaasUserCredentials.getAccountId(), TEST_ACCOUNT_ID);
+        assertEquals(testSaasUserCredentials.getToken(), TEST_ACCESS_TOKEN);
+    }
+
+    @Test
+    public void testLoginToSaasWhenHttpException() throws IOException, JsonParseException {
+        Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
+        Request testRequest = new Request().setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+
+        doThrow(new HttpException(500, "Login error")).when(mockFacade).login(testSaasUsernameAndPassword);
+        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"Login error\",\n"
+                                         + "  \"status\" : \"ERROR\"\n"
+                                         + "}");
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(service.credentials.size(), 0);
+
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
+        doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
+        result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"Login error\",\n"
+                                         + "  \"status\" : \"ERROR\"\n"
+                                         + "}");
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(service.credentials.size(), 0);
+    }
+
+    @Test
+    public void testLoginToSaasWhenNullToken() throws IOException, JsonParseException {
+        Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
+
+        doReturn(null).when(mockFacade).login(testSaasUsernameAndPassword);
+        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"Login impossible.\",\n"
+                                         + "  \"status\" : \"ERROR\"\n"
+                                         + "}");
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(service.credentials.size(), 0);
+    }
+
+    @Test
+    public void testLoginToSaasWhenNullAccountReference() throws IOException, JsonParseException {
+        Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
+        Request testRequest = new Request().setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
+        doReturn(null).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
+
+        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"You are logged as a user which does not have an account/owner role in any account. This likely means that you used the wrong credentials to access Codenvy.\",\n"
+                                         + "  \"status\" : \"ERROR\"\n"
+                                         + "}");
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(service.credentials.size(), 0);
+    }
+
+    private void checkEmptyOkResponse(Response result) {
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        String facadeResponse = (String) result.getEntity();
+        assertEquals(facadeResponse, mockFacadeOkResponse.toJson());
     }
 
     private void checkErrorResponse(Response result) {
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        com.codenvy.im.response.Response facadeResponse = (com.codenvy.im.response.Response)result.getEntity();
-        assertEquals(facadeResponse.toJson(), mockFacadeErrorResponse.toJson());
+        String facadeResponse = (String) result.getEntity();
+        assertEquals(facadeResponse, mockFacadeErrorResponse.toJson());
     }
 }

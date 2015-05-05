@@ -74,6 +74,18 @@
             <version>${che.core.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-auth</artifactId>
+            <version>${che.core.version}</version>
+            <!-- exclude to solve conflict with 'org.everrest:everrest-assured' artifact-->
+            <exclusions>
+                <exclusion>
+                    <artifactId>httpcore</artifactId>
+                    <groupId>org.apache.httpcomponents</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.everrest</groupId>
             <artifactId>everrest-core</artifactId>
             <version>${org.everrest.version}</version>

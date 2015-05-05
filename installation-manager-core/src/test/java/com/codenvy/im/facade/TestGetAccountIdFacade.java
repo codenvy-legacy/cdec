@@ -20,7 +20,7 @@ package com.codenvy.im.facade;
 import com.codenvy.im.exceptions.AuthenticationException;
 import com.codenvy.im.InstallationManager;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.che.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 
 import org.mockito.Mock;

@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.im.utils.che.UserUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;

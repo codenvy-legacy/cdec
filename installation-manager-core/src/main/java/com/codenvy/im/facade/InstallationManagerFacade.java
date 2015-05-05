@@ -30,7 +30,9 @@ import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.utils.che.CodenvyUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
@@ -38,6 +40,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.auth.shared.dto.Credentials;
+import org.eclipse.che.api.auth.shared.dto.Token;
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -54,10 +59,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
-import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
-import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
+import static com.codenvy.im.utils.che.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.toJson;
+import static com.codenvy.im.utils.che.AccountUtils.hasValidSubscription;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.size;
@@ -497,5 +502,11 @@ public class InstallationManagerFacade {
                            .setBackup(BackupInfo.createFailureInfo(config))
                            .toJson();
         }
+    }
+
+    /** Login into SaaS Codenvy and return authToken */
+    public String login(@Nonnull Credentials codenvyCredentials) throws IOException, JsonParseException {
+        Token authToken = CodenvyUtils.login(transport, apiEndpoint, codenvyCredentials);
+        return authToken == null ? null : toJson(authToken);
     }
 }

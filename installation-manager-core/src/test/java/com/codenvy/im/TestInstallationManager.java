@@ -30,7 +30,7 @@ import com.codenvy.im.install.InstallType;
 import com.codenvy.im.install.Installer;
 import com.codenvy.im.node.NodeConfig;
 import com.codenvy.im.node.NodeManager;
-import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.che.AccountUtils;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;

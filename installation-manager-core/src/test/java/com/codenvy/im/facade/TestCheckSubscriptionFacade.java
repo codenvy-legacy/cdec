@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
+import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;

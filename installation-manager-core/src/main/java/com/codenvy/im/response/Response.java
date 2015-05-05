@@ -18,12 +18,14 @@
 package com.codenvy.im.response;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "backup", "message", "status"})
+@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "backup", "authToken", "message", "status"})
 @JsonIgnoreProperties({"CLI client version"})
 public class Response {
     private List<ArtifactInfo>            artifacts;

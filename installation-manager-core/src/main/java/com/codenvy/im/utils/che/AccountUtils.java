@@ -15,8 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.utils;
+package com.codenvy.im.utils.che;
 
+import com.codenvy.im.utils.HttpTransport;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
@@ -40,9 +41,15 @@ import static java.lang.String.format;
  * @author Dmytro Nochevnov
  */
 public class AccountUtils {
-    public final static String ON_PREMISES = "OnPremises";
+    public final static String ON_PREMISES              = "OnPremises";
     public static final String ACCOUNT_OWNER_ROLE       = "account/owner";
     public static final String SUBSCRIPTION_DATE_FORMAT = "MM/dd/yy";
+
+    public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
+        "You are logged as a user which does not have an account/owner role in any account. " +
+        "This likely means that you used the wrong credentials to access Codenvy.";
+
+    public static final String USE_ACCOUNT_MESSAGE_TEMPLATE = "Your Codenvy account '%s' will be used to verify on-premises subscription.";
 
     /** Utility class so there is no public constructor. */
     private AccountUtils() {

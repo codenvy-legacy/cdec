@@ -18,7 +18,7 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.utils.AccountUtils;
+import com.codenvy.im.utils.che.AccountUtils;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
@@ -55,7 +55,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
-import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
+import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;

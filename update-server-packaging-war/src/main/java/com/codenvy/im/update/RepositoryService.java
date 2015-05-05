@@ -22,7 +22,6 @@ import com.codenvy.im.exceptions.ArtifactNotFoundException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
-
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -70,12 +69,12 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
-import static com.codenvy.im.utils.AccountUtils.ON_PREMISES;
-import static com.codenvy.im.utils.AccountUtils.checkIfUserIsOwnerOfAccount;
-import static com.codenvy.im.utils.AccountUtils.hasValidSubscription;
+import static com.codenvy.im.utils.che.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.UserUtils.getUserEmail;
+import static com.codenvy.im.utils.che.UserUtils.getUserEmail;
+import static com.codenvy.im.utils.che.AccountUtils.checkIfUserIsOwnerOfAccount;
+import static com.codenvy.im.utils.che.AccountUtils.hasValidSubscription;
 import static java.lang.String.format;
 
 

@@ -19,6 +19,7 @@ package com.codenvy.im.utils;
 
 import com.codenvy.im.exceptions.AuthenticationException;
 
+import com.codenvy.im.utils.che.AccountUtils;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,7 +28,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import static com.codenvy.im.utils.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
+import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
