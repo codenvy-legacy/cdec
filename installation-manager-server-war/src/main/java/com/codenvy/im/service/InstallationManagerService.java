@@ -81,7 +81,7 @@ public class InstallationManagerService {
     protected ConfigUtil configUtil;
 
     // map <on-prem user name, saas user credentials>
-    protected Map<String, UserCredentials> credentials = new HashMap<>();
+    protected Map<String, UserCredentials> usersCredentials = new HashMap<>();
 
     @Inject
     public InstallationManagerService(InstallationManagerFacade delegate,
@@ -139,7 +139,7 @@ public class InstallationManagerService {
     @Path("download/list")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
-    public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") @ApiParam(value="default is all artifacts") String artifactName) {
+    public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") @ApiParam(value = "default is all artifacts") String artifactName) {
         Request request = new Request().setArtifactName(artifactName);
         return handleInstallationManagerResponse(delegate.getDownloads(request));
     }
@@ -277,16 +277,21 @@ public class InstallationManagerService {
 
     /** Adds trial subscription to account */
     @POST
-    @Path("subscription/{accountId}/add/trial")
+    @Path("subscription/add/trial")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
                   response = Response.class)
     public javax.ws.rs.core.Response addTrialSubscription(
-        @PathParam(value = "accountId") @ApiParam(required = true, value = "SaaS Codenvy account id") String accountId,
-        @ApiParam(required = true, value = "Token to access SaaS Codenvy server") String accessToken) throws IOException {
+        @Context SecurityContext context) throws IOException {
 
-        UserCredentials userCredentials = new UserCredentials(accountId, accessToken);
+        String callerName = context.getUserPrincipal().getName();
+        if (!usersCredentials.containsKey(callerName)) {
+            return handleException(new RuntimeException("User not authenticated"));
+        }
+
+        UserCredentials credentials = usersCredentials.get(callerName);
+        UserCredentials userCredentials = new UserCredentials(credentials.getToken(), credentials.getAccountId());
         Request request = new Request().setUserCredentials(userCredentials);
 
         return handleInstallationManagerResponse(delegate.addTrialSubscription(request));
@@ -294,20 +299,27 @@ public class InstallationManagerService {
 
     /** Check user's subscription. */
     @POST
-    @Path("subscription/{accountId}/check")
+    @Path("subscription/check")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Checks if user has a subscription of certain type in the SaaS Codenvy",
                   response = Response.class)
     public javax.ws.rs.core.Response checkSubscription(
         @QueryParam(value = "subscriptionName") @ApiParam(value = "default subscription name is 'OnPremises'") String subscriptionName,
-        @PathParam(value = "accountId") @ApiParam(required = true, value = "SaaS Codenvy account id") String accountId,
-        @ApiParam(required = true, value = "Token to access SaaS Codenvy server") String accessToken) throws IOException {
+        @Context SecurityContext context) throws IOException {
 
-        UserCredentials userCredentials = new UserCredentials(accountId, accessToken);
+        String callerName = context.getUserPrincipal().getName();
+        if (!usersCredentials.containsKey(callerName)) {
+            return handleException(new RuntimeException("User not authenticated"));
+        }
+
+        String subscription2check = subscriptionName != null ? subscriptionName : AccountUtils.ON_PREMISES;
+
+        UserCredentials credentials = usersCredentials.get(callerName);
+        UserCredentials userCredentials = new UserCredentials(credentials.getToken(), credentials.getAccountId());
         Request request = new Request().setUserCredentials(userCredentials);
 
-        return handleInstallationManagerResponse(delegate.checkSubscription(subscriptionName, request));
+        return handleInstallationManagerResponse(delegate.checkSubscription(subscription2check, request));
     }
 
     @POST
@@ -339,7 +351,7 @@ public class InstallationManagerService {
             saasUserCredentials.setAccountId(accountReference.getId());
 
             // save SaaS user credentials into the state of service
-            credentials.put(context.getUserPrincipal().getName(), saasUserCredentials);
+            usersCredentials.put(context.getUserPrincipal().getName(), saasUserCredentials);
 
             String useAccountMessage = format(AccountUtils.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName());
             String response = new Response().setStatus(ResponseCode.OK)

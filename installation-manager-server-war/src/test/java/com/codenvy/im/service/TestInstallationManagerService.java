@@ -201,6 +201,22 @@ public class TestInstallationManagerService {
         checkErrorResponse(result);
     }
 
+    @Test
+    public void testUpdateCodenvyWhenConfigNull() throws Exception {
+        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+
+        int testStep = 1;
+        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
+                                                                .setConfigProperties(new HashMap<String, String>())
+                                                                .setStep(testStep);
+
+        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
+                                           .setInstallOptions(testInstallOptions);
+
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
+        Response result = service.updateCodenvy(testStep, null);
+        checkEmptyOkResponse(result);
+    }
 
     @Test
     public void testUpdateImCliClient() throws Exception {
@@ -302,15 +318,18 @@ public class TestInstallationManagerService {
 
     @Test
     public void testAddTrialSubscription() throws Exception {
-        UserCredentials testUserCredentials = new UserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        UserCredentials testUserCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
         Request testRequest = new Request().setUserCredentials(testUserCredentials);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
-        Response result = service.addTrialSubscription(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+
+        service.usersCredentials.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
+
+        Response result = service.addTrialSubscription(mockSecurityContext);
         checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
-        result = service.addTrialSubscription(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        result = service.addTrialSubscription(mockSecurityContext);
         checkErrorResponse(result);
     }
 
@@ -320,11 +339,14 @@ public class TestInstallationManagerService {
         Request testRequest = new Request().setUserCredentials(testUserCredentials);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
-        Response result = service.checkSubscription(TEST_SUBSCRIPTION_ID, TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+
+        service.usersCredentials.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
+
+        Response result = service.checkSubscription(TEST_SUBSCRIPTION_ID, mockSecurityContext);
         checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
-        result = service.checkSubscription(TEST_SUBSCRIPTION_ID, TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        result = service.checkSubscription(TEST_SUBSCRIPTION_ID, mockSecurityContext);
         checkErrorResponse(result);
     }
 
@@ -354,10 +376,10 @@ public class TestInstallationManagerService {
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
 
-        assertEquals(service.credentials.size(), 1);
-        assertTrue(service.credentials.containsKey(TEST_SYSTEM_ADMIN_NAME));
+        assertEquals(service.usersCredentials.size(), 1);
+        assertTrue(service.usersCredentials.containsKey(TEST_SYSTEM_ADMIN_NAME));
 
-        UserCredentials testSaasUserCredentials = service.credentials.get(TEST_SYSTEM_ADMIN_NAME);
+        UserCredentials testSaasUserCredentials = service.usersCredentials.get(TEST_SYSTEM_ADMIN_NAME);
         assertEquals(testSaasUserCredentials.getAccountId(), TEST_ACCOUNT_ID);
         assertEquals(testSaasUserCredentials.getToken(), TEST_ACCESS_TOKEN);
     }
@@ -374,7 +396,7 @@ public class TestInstallationManagerService {
                                          + "  \"status\" : \"ERROR\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.credentials.size(), 0);
+        assertEquals(service.usersCredentials.size(), 0);
 
         doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
         doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
@@ -384,7 +406,16 @@ public class TestInstallationManagerService {
                                          + "  \"status\" : \"ERROR\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.credentials.size(), 0);
+        assertEquals(service.usersCredentials.size(), 0);
+
+        doThrow(new HttpException(500, "{ \"message\" : \"Login error\"}")).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
+        result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"Login error\",\n"
+                                         + "  \"status\" : \"ERROR\"\n"
+                                         + "}");
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(service.usersCredentials.size(), 0);
     }
 
     @Test
@@ -398,7 +429,7 @@ public class TestInstallationManagerService {
                                          + "  \"status\" : \"ERROR\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.credentials.size(), 0);
+        assertEquals(service.usersCredentials.size(), 0);
     }
 
     @Test
@@ -415,7 +446,7 @@ public class TestInstallationManagerService {
                                          + "  \"status\" : \"ERROR\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.credentials.size(), 0);
+        assertEquals(service.usersCredentials.size(), 0);
     }
 
     private void checkEmptyOkResponse(Response result) {
