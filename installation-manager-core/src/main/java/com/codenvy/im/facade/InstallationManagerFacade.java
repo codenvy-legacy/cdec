@@ -30,7 +30,6 @@ import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.che.AccountUtils;
 import com.codenvy.im.utils.che.CodenvyUtils;
 import com.codenvy.im.utils.HttpTransport;
@@ -40,6 +39,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.commons.json.JsonParseException;
@@ -62,6 +62,7 @@ import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.che.AccountUtils.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.toJson;
+import static com.codenvy.im.utils.che.AccountUtils.getSubscription;
 import static com.codenvy.im.utils.che.AccountUtils.hasValidSubscription;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -102,8 +103,8 @@ public class InstallationManagerFacade {
     public String addTrialSubscription(@Nonnull Request request) throws IOException {
         try {
             transport
-                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
-                            request.obtainAccessToken());
+                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
+                        request.obtainAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
@@ -132,7 +133,7 @@ public class InstallationManagerFacade {
             } else {
                 return new Response().setStatus(ERROR)
                                      .setSubscription(subscription)
-                                     .setMessage("Subscription not found or outdated")
+                                     .setMessage(AccountUtils.SUBSCRIPTION_NOT_FOUND_OR_OUTDATED)
                                      .toJson();
             }
         } catch (Exception e) {
@@ -143,7 +144,6 @@ public class InstallationManagerFacade {
                                  .toJson();
         }
     }
-
 
     /** Starts downloading */
     public String startDownload(@Nonnull final Request request) {
@@ -504,11 +504,23 @@ public class InstallationManagerFacade {
         }
     }
 
-
     /** Login into SaaS Codenvy and return authToken */
     public String login(@Nonnull Credentials codenvyCredentials) throws IOException, JsonParseException {
         Token authToken = CodenvyUtils.login(transport, apiEndpoint, codenvyCredentials);
         return authToken == null ? null : toJson(authToken);
+    }
+
+
+    /** Get user's certain subscription descriptor */
+    @Nullable
+    public String getSubscriptionDescriptor(String subscriptionName,
+                                            @Nonnull Request request) throws IOException {
+        SubscriptionDescriptor descriptor = getSubscription(transport,
+                                                            apiEndpoint,
+                                                            subscriptionName,
+                                                            request.obtainAccessToken(),
+                                                            request.obtainAccountId());
+        return descriptor == null ? null : toJson(descriptor);
     }
 
     /** Perform restore according to certain backup config */

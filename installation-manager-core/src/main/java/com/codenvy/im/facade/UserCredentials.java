@@ -83,4 +83,8 @@ public class UserCredentials {
 
         return result;
     }
+
+    public UserCredentials clone() {
+        return new UserCredentials(getToken(), getAccountId());
+    }
 }

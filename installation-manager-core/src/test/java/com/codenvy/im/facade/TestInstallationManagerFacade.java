@@ -28,6 +28,7 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.codenvy.im.utils.che.AccountUtils;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 
@@ -40,12 +41,16 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -381,6 +386,69 @@ public class TestInstallationManagerFacade {
         doThrow(new HttpException(500, "error")).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
 
         installationManagerFacade.login(testSaasUsernameAndPassword);
+    }
+
+    @Test
+    public void testGetSubscriptionDescriptor() throws IOException, JsonParseException {
+        final String TEST_ACCOUNT_ID = "accountId";
+        final String TEST_ACCESS_TOKEN = "accessToken";
+
+        UserCredentials userCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request request = new Request().setUserCredentials(userCredentials);
+
+        final String SUBSCRIPTION_ID = "subscription_id1";
+        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        String startDate = subscriptionDateFormat.format(cal.getTime());
+
+        cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, 1);
+        String endDate = subscriptionDateFormat.format(cal.getTime());
+
+        String testDescriptorJson = "{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                                    +",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
+        when(mockTransport.doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN))
+            .thenReturn("[" + testDescriptorJson + "]");
+
+        String result = installationManagerFacade.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
+        assertEquals(result, "{\n"
+                             + "  \"endDate\" : \"" + endDate + "\",\n"
+                             + "  \"startDate\" : \"" + startDate + "\",\n"
+                             + "  \"links\" : [ ],\n"
+                             + "  \"serviceId\" : \"OnPremises\",\n"
+                             + "  \"properties\" : { },\n"
+                             + "  \"id\" : \"subscription_id1\"\n"
+                             + "}");
+    }
+
+    @Test
+    public void testGetSubscriptionDescriptorWhenDescriptorNull() throws IOException {
+        final String TEST_ACCOUNT_ID = "accountId";
+        final String TEST_ACCESS_TOKEN = "accessToken";
+
+        UserCredentials userCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request request = new Request().setUserCredentials(userCredentials);
+
+        when(mockTransport.doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN))
+            .thenReturn("[]");
+
+        String result = installationManagerFacade.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
+        assertNull(result);
+    }
+
+    @Test(expectedExceptions = HttpException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testGetSubscriptionDescriptorWhenException() throws IOException {
+        final String TEST_ACCOUNT_ID = "accountId";
+        final String TEST_ACCESS_TOKEN = "accessToken";
+
+        UserCredentials userCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request request = new Request().setUserCredentials(userCredentials);
+
+        doThrow(new HttpException(500, "error")).when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
+        installationManagerFacade.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
     }
 
     @Test

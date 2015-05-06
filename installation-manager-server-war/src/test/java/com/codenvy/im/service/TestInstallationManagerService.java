@@ -27,9 +27,9 @@ import com.codenvy.im.install.InstallOptions;
 import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
-
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
+import com.codenvy.im.utils.che.AccountUtils;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
@@ -325,28 +325,61 @@ public class TestInstallationManagerService {
 
         service.usersCredentials.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
-        Response result = service.addTrialSubscription(mockSecurityContext);
+        Response result = service.addSaasTrialSubscription(mockSecurityContext);
         checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
-        result = service.addTrialSubscription(mockSecurityContext);
+        result = service.addSaasTrialSubscription(mockSecurityContext);
         checkErrorResponse(result);
     }
 
     @Test
-    public void testCheckSubscription() throws Exception {
+    public void testGetSubscription() throws Exception {
         UserCredentials testUserCredentials = new UserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
         Request testRequest = new Request().setUserCredentials(testUserCredentials);
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
+        String testSubscriptionDescriptorJson = "{\n"
+                                                + "  \"description\": \"On-Prem Commercial 25 Users\",\n"
+                                                + "  \"endDate\": \"05/05/2016\",\n"
+                                                + "  \"startDate\": \"05/05/2015\",\n"
+                                                + "  \"links\": [\n"
+                                                + "    {\n"
+                                                + "      \"href\": \"https://codenvy-stg.com/api/account/subscriptions/subscriptionoxmrh93dw3ceuegk\",\n"
+                                                + "      \"rel\": \"get subscription by id\",\n"
+                                                + "      \"produces\": \"application/json\",\n"
+                                                + "      \"parameters\": [],\n"
+                                                + "      \"method\": \"GET\"\n"
+                                                + "    }\n"
+                                                + "  ],\n"
+                                                + "  \"properties\": {\n"
+                                                + "    \"Users\": \"25\",\n"
+                                                + "    \"Package\": \"Commercial\"\n"
+                                                + "  },\n"
+                                                + "  \"id\": \"subscriptionoxmrh93dw3ceuegk\",\n"
+                                                + "  \"state\": \"ACTIVE\"\n"
+                                                + "}";
+
+        doReturn(testSubscriptionDescriptorJson).when(mockFacade).getSubscriptionDescriptor(AccountUtils.ON_PREMISES, testRequest);
 
         service.usersCredentials.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
-        Response result = service.checkSubscription(TEST_SUBSCRIPTION_ID, mockSecurityContext);
-        checkEmptyOkResponse(result);
+        Response result = service.getSaasSubscription(mockSecurityContext);
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals((String)result.getEntity(), "{\n"
+                                                 + "  \"description\" : \"On-Prem Commercial 25 Users\",\n"
+                                                 + "  \"endDate\" : \"05/05/2016\",\n"
+                                                 + "  \"startDate\" : \"05/05/2015\",\n"
+                                                 + "  \"links\" : [ ],\n"
+                                                 + "  \"properties\" : {\n"
+                                                 + "    \"Users\" : \"25\",\n"
+                                                 + "    \"Package\" : \"Commercial\"\n"
+                                                 + "  },\n"
+                                                 + "  \"id\" : \"subscriptionoxmrh93dw3ceuegk\",\n"
+                                                 + "  \"state\" : \"ACTIVE\"\n"
+                                                 + "}");
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
-        result = service.checkSubscription(TEST_SUBSCRIPTION_ID, mockSecurityContext);
+        doThrow(new HttpException(500, "error")).when(mockFacade).getSubscriptionDescriptor(AccountUtils.ON_PREMISES, testRequest);
+        result = service.getSaasSubscription(mockSecurityContext);
         checkErrorResponse(result);
     }
 

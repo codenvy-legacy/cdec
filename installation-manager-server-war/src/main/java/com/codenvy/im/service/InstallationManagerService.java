@@ -28,6 +28,7 @@ import com.codenvy.im.install.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.che.AccountUtils;
 import com.codenvy.im.utils.che.CodenvyUtils;
@@ -37,6 +38,7 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.commons.json.JsonParseException;
@@ -48,7 +50,6 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -277,12 +278,11 @@ public class InstallationManagerService {
 
     /** Adds trial subscription to account */
     @POST
-    @Path("subscription/add/trial")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Path("subscription")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(
+    public javax.ws.rs.core.Response addSaasTrialSubscription(
         @Context SecurityContext context) throws IOException {
 
         String callerName = context.getUserPrincipal().getName();
@@ -291,35 +291,40 @@ public class InstallationManagerService {
         }
 
         UserCredentials credentials = usersCredentials.get(callerName);
-        UserCredentials userCredentials = new UserCredentials(credentials.getToken(), credentials.getAccountId());
-        Request request = new Request().setUserCredentials(userCredentials);
+        Request request = new Request().setUserCredentials(credentials.clone());
 
         return handleInstallationManagerResponse(delegate.addTrialSubscription(request));
     }
 
-    /** Check user's subscription. */
-    @POST
-    @Path("subscription/check")
-    @Consumes(MediaType.TEXT_PLAIN)
+    /** Get details of OnPremises subscription */
+    @GET
+    @Path("subscription")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Checks if user has a subscription of certain type in the SaaS Codenvy",
-                  response = Response.class)
-    public javax.ws.rs.core.Response checkSubscription(
-        @QueryParam(value = "subscriptionName") @ApiParam(value = "default subscription name is 'OnPremises'") String subscriptionName,
-        @Context SecurityContext context) throws IOException {
-
+    @ApiOperation(value = "Get description of OnPremises subscription of account of user which has already logged into SaaS Codenvy",
+                  response = SubscriptionDescriptor.class)
+    public javax.ws.rs.core.Response getSaasSubscription(@Context SecurityContext context) throws IOException {
         String callerName = context.getUserPrincipal().getName();
         if (!usersCredentials.containsKey(callerName)) {
             return handleException(new RuntimeException("User not authenticated"));
         }
 
-        String subscription2check = subscriptionName != null ? subscriptionName : AccountUtils.ON_PREMISES;
-
         UserCredentials credentials = usersCredentials.get(callerName);
-        UserCredentials userCredentials = new UserCredentials(credentials.getToken(), credentials.getAccountId());
-        Request request = new Request().setUserCredentials(userCredentials);
+        Request request = new Request().setUserCredentials(credentials.clone());
 
-        return handleInstallationManagerResponse(delegate.checkSubscription(subscription2check, request));
+        try {
+            String descriptorJson = delegate.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
+            SubscriptionDescriptor descriptor = createDtoFromJson(descriptorJson, SubscriptionDescriptor.class);
+            if (descriptor == null) {
+                throw new RuntimeException();
+            }
+
+            // remove useless info
+            descriptor.setLinks(null);
+
+            return javax.ws.rs.core.Response.ok(Commons.toJson(descriptor)).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     @POST

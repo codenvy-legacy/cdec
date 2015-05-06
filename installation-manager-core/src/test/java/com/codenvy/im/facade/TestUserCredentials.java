@@ -48,4 +48,17 @@ public class TestUserCredentials {
         assertNull(credentials.getToken());
         assertNull(credentials.getAccountId());
     }
+
+    @Test
+    public void testClone() {
+        UserCredentials credentials = new UserCredentials("token", "id");
+
+        UserCredentials clone = credentials.clone();
+
+        credentials.setToken("another");
+        credentials.setAccountId("another");
+
+        assertEquals(clone.getToken(), "token");
+        assertEquals(clone.getAccountId(), "id");
+    }
 }

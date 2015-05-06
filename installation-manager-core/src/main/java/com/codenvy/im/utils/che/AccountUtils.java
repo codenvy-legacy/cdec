@@ -50,6 +50,7 @@ public class AccountUtils {
         "This likely means that you used the wrong credentials to access Codenvy.";
 
     public static final String USE_ACCOUNT_MESSAGE_TEMPLATE = "Your Codenvy account '%s' will be used to verify on-premises subscription.";
+    public static final String SUBSCRIPTION_NOT_FOUND_OR_OUTDATED = "Subscription not found or outdated";
 
     /** Utility class so there is no public constructor. */
     private AccountUtils() {
@@ -129,6 +130,24 @@ public class AccountUtils {
         transport.doDelete(requestUrl, accessToken);
     }
 
+    @Nullable
+    /** Get certain subscription descriptor **/
+    public static SubscriptionDescriptor getSubscription(HttpTransport transport,
+                                                         String apiEndpoint,
+                                                         String subscriptionName,
+                                                         String accessToken,
+                                                         String accountId) throws IOException {
+
+        List<SubscriptionDescriptor> subscriptions = getSubscriptions(transport, apiEndpoint, accessToken, accountId);
+        for (SubscriptionDescriptor subscriptionDescriptor : subscriptions) {
+            if (subscriptionDescriptor.getServiceId().equalsIgnoreCase(subscriptionName)) {
+                return subscriptionDescriptor;
+            }
+        }
+
+        return null;
+    }
+
     private static List<SubscriptionDescriptor> getSubscriptions(HttpTransport transport,
                                                                  String apiEndpoint,
                                                                  String accessToken,
@@ -136,7 +155,6 @@ public class AccountUtils {
         String requestUrl = combinePaths(apiEndpoint, "account/" + accountId + "/subscriptions");
         return createListDtoFromJson(transport.doGet(requestUrl, accessToken), SubscriptionDescriptor.class);
     }
-
 
     /**
      * @return the specific account where user has {@link #ACCOUNT_OWNER_ROLE} role or the first one if accountName parameter is null.
