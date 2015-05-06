@@ -17,10 +17,11 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.managers.NodeConfig;
+
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Dmytro Nochevnov

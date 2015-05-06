@@ -19,23 +19,24 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.facade.UserCredentials;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
-import com.codenvy.im.utils.che.AccountUtils;
-import com.codenvy.im.utils.che.CodenvyUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
@@ -48,7 +49,6 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -56,6 +56,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,8 +66,8 @@ import static java.lang.String.format;
 
 /**
  * @author Dmytro Nochevnov
- * We deny concurrent access to the services by marking this class as Singleton
- * so as there are operations which couldn't execute simulteniously: addNode, removeNode, backup, restore
+ *         We deny concurrent access to the services by marking this class as Singleton
+ *         so as there are operations which couldn't execute simulteniously: addNode, removeNode, backup, restore
  */
 @Singleton
 @Path("/")
@@ -74,20 +75,29 @@ import static java.lang.String.format;
 @Api(value = "/im", description = "Installation manager")
 public class InstallationManagerService {
 
-    private static final Logger LOG = Logger.getLogger(InstallationManagerService.class.getSimpleName());
+    private static final Logger LOG       = Logger.getLogger(InstallationManagerService.class.getSimpleName());
+    private static final int    MAX_USERS = 10;
 
     protected final InstallationManagerFacade delegate;
+    protected final ConfigManager configManager;
 
-    protected ConfigUtil configUtil;
-
-    // map <on-prem user name, saas user credentials>
-    protected Map<String, UserCredentials> usersCredentials = new HashMap<>();
+    /**
+     * Cached users' credentials.
+     */
+    protected final Map<String, SaasUserCredentials> users;
 
     @Inject
     public InstallationManagerService(InstallationManagerFacade delegate,
-                                      ConfigUtil configUtil) {
+                                      ConfigManager configManager) {
         this.delegate = delegate;
-        this.configUtil = configUtil;
+        this.configManager = configManager;
+
+        this.users = new LinkedHashMap<String, SaasUserCredentials>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > MAX_USERS;
+            }
+        };
     }
 
     /** Starts downloading */
@@ -95,11 +105,12 @@ public class InstallationManagerService {
     @Path("download/start")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response = Response.class)
+    @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response =
+            Response.class)
     public javax.ws.rs.core.Response startDownload(
-        @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
-        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one")
-        String artifactVersion) {
+            @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
+            @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one")
+            String artifactVersion) {
 
         Request request = new Request().setArtifactName(artifactName)
                                        .setVersion(artifactVersion);
@@ -159,18 +170,18 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Updates " + CDECArtifact.NAME,
-                  notes = "Install " + CDECArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
-                          "Use request body to pass install configuration properties",
-                  response = Response.class)
+            notes = "Install " + CDECArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
+                    "Use request body to pass install configuration properties",
+            response = Response.class)
     public javax.ws.rs.core.Response updateCodenvy(
-        @QueryParam(value = "step") @ApiParam(value = "default step is 0") int step,
-        Map<String, String> configProperties) throws IOException {
+            @QueryParam(value = "step") @ApiParam(value = "default step is 0") int step,
+            Map<String, String> configProperties) throws IOException {
 
         if (configProperties == null) {
             configProperties = new HashMap<>();   // init install config properties
         }
 
-        InstallType installType = configUtil.detectInstallationType();
+        InstallType installType = configManager.detectInstallationType();
         InstallOptions installOptions = new InstallOptions().setInstallType(installType)
                                                             .setStep(step)
                                                             .setConfigProperties(configProperties);
@@ -186,12 +197,14 @@ public class InstallationManagerService {
     @Path("update/" + InstallManagerArtifact.NAME)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Updates " + InstallManagerArtifact.NAME,
-                  notes = "Install " + InstallManagerArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
-                          "User should launch Installation Manager CLI client after all to complete update.",
-                  response = Response.class)
+            notes = "Install " + InstallManagerArtifact.NAME +
+                    " update which has already been downloaded from Update Server and is ready to install. " +
+                    "User should launch Installation Manager CLI client after all to complete update.",
+            response = Response.class)
     public javax.ws.rs.core.Response updateImCliClient(
-        @QueryParam(value = "cliClientUserHomeDir")
-        @ApiParam(value = "path to home directory of system user who installed Installation Manager CLI client") String cliUserHomeDir) throws IOException {
+            @QueryParam(value = "cliClientUserHomeDir")
+            @ApiParam(value = "path to home directory of system user who installed Installation Manager CLI client") String cliUserHomeDir)
+            throws IOException {
 
         InstallOptions installOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
 
@@ -207,7 +220,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of installation steps of " + CDECArtifact.NAME + " artifact", response = Response.class)
     public javax.ws.rs.core.Response getUpdateCodenvyInfo() throws IOException {
-        InstallType installType = configUtil.detectInstallationType();
+        InstallType installType = configManager.detectInstallationType();
         InstallOptions installOptions = new InstallOptions().setInstallType(installType);
 
         Request request = new Request().setArtifactName(CDECArtifact.NAME)
@@ -250,8 +263,9 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Performs backup of given artifact", response = Response.class)
     public javax.ws.rs.core.Response backup(
-        @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " + CDECArtifact.NAME) String artifactName,
-        @QueryParam(value = "backupDir") @ApiParam(value = "path to backup directory") String backupDirectoryPath) throws IOException {
+            @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " +
+                                                                                               CDECArtifact.NAME) String artifactName,
+            @QueryParam(value = "backupDir") @ApiParam(value = "path to backup directory") String backupDirectoryPath) throws IOException {
 
         BackupConfig config = new BackupConfig().setArtifactName(artifactName)
                                                 .setBackupDirectory(backupDirectoryPath);
@@ -282,17 +296,14 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(
-        @Context SecurityContext context) throws IOException {
-
+    public javax.ws.rs.core.Response addTrialSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
         String callerName = context.getUserPrincipal().getName();
-        if (!usersCredentials.containsKey(callerName)) {
+        if (!users.containsKey(callerName)) {
             return handleException(new RuntimeException("User not authenticated"));
         }
 
-        UserCredentials credentials = usersCredentials.get(callerName);
-        UserCredentials userCredentials = new UserCredentials(credentials.getToken(), credentials.getAccountId());
-        Request request = new Request().setUserCredentials(userCredentials);
+        SaasUserCredentials saasUserCredentials = users.get(callerName);
+        Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
 
         return handleInstallationManagerResponse(delegate.addTrialSubscription(request));
     }
@@ -306,18 +317,17 @@ public class InstallationManagerService {
                   response = Response.class)
     public javax.ws.rs.core.Response checkSubscription(
         @QueryParam(value = "subscriptionName") @ApiParam(value = "default subscription name is 'OnPremises'") String subscriptionName,
-        @Context SecurityContext context) throws IOException {
+        @Context SecurityContext context) throws IOException, CloneNotSupportedException {
 
         String callerName = context.getUserPrincipal().getName();
-        if (!usersCredentials.containsKey(callerName)) {
+        if (!users.containsKey(callerName)) {
             return handleException(new RuntimeException("User not authenticated"));
         }
 
-        String subscription2check = subscriptionName != null ? subscriptionName : AccountUtils.ON_PREMISES;
+        String subscription2check = subscriptionName != null ? subscriptionName : SaasAccountServiceProxy.ON_PREMISES;
 
-        UserCredentials credentials = usersCredentials.get(callerName);
-        UserCredentials userCredentials = new UserCredentials(credentials.getToken(), credentials.getAccountId());
-        Request request = new Request().setUserCredentials(userCredentials);
+        SaasUserCredentials saasUserCredentials = users.get(callerName);
+        Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
 
         return handleInstallationManagerResponse(delegate.checkSubscription(subscription2check, request));
     }
@@ -326,34 +336,30 @@ public class InstallationManagerService {
     @Path("login")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Login to SaaS Codenvy",
-                  notes = "After successful login service requests id of account where user is owner " +
-                          "and then stores SaaS Codenvy auth token and account id as linked to On-Prem Codenvy user name. " +
-                          "They will be used to work around SaaS Codenvy subscription.",
-                  response = Response.class)
-    public javax.ws.rs.core.Response loginToSaas(Credentials saasUsernameAndPassword,
-                                                 @Context SecurityContext context) throws IOException {
+    @ApiOperation(value = "Login to Codenvy SaaS",
+            notes = "After login is successful SaaS user credentials will be cached.",
+            response = Response.class)
+    public javax.ws.rs.core.Response loginToCodenvySaas(Credentials credentials, @Context SecurityContext context) throws IOException {
         try {
-            // get SaaS auth token
-            String json = delegate.login(saasUsernameAndPassword);
-            Token authToken = createDtoFromJson(json, Token.class);
-            if (authToken == null) {
-                throw new RuntimeException(CodenvyUtils.CANNOT_LOGIN);
+            String json = delegate.loginToCodenvySaaS(credentials);
+            if (json == null) {
+                return javax.ws.rs.core.Response.serverError().entity(SaasAuthServiceProxy.CANNOT_LOGIN).build();
             }
-            UserCredentials saasUserCredentials = new UserCredentials(authToken.getValue());
+            Token authToken = createDtoFromJson(json, Token.class);
+            SaasUserCredentials saasUserCredentials = new SaasUserCredentials(authToken.getValue());
 
             // get SaaS account id where user is owner
-            json = delegate.getAccountReferenceWhereUserIsOwner(null, new Request().setUserCredentials(saasUserCredentials));
-            AccountReference accountReference = createDtoFromJson(json, AccountReference.class);
-            if (accountReference == null) {
-                throw new RuntimeException(AccountUtils.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+            json = delegate.getAccountReferenceWhereUserIsOwner(null, new Request().setSaasUserCredentials(saasUserCredentials));
+            if (json == null) {
+                return javax.ws.rs.core.Response.serverError().entity(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG).build();
             }
+            AccountReference accountReference = createDtoFromJson(json, AccountReference.class);
             saasUserCredentials.setAccountId(accountReference.getId());
 
-            // save SaaS user credentials into the state of service
-            usersCredentials.put(context.getUserPrincipal().getName(), saasUserCredentials);
+            // cache SaaS user credentials into the state of service
+            users.put(context.getUserPrincipal().getName(), saasUserCredentials);
 
-            String useAccountMessage = format(AccountUtils.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName());
+            String useAccountMessage = format(SaasAccountServiceProxy.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName());
             String response = new Response().setStatus(ResponseCode.OK)
                                             .setMessage(useAccountMessage)
                                             .toJson();

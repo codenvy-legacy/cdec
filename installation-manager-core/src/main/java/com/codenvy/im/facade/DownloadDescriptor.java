@@ -17,8 +17,8 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.utils.Version;
 

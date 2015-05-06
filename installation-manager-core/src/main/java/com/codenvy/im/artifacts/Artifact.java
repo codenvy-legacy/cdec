@@ -17,10 +17,10 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -75,8 +75,8 @@ public interface Artifact extends Comparable<Artifact> {
     SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
 
     /** @return command to collect backup data at the certain backup directory */
-    Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
+    Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
 
     /** @return command to restore data from backup */
-    Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
+    Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
 }

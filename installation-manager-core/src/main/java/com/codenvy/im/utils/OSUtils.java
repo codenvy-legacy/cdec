@@ -17,13 +17,13 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.im.command.CommandException;
+import com.codenvy.im.commands.CommandException;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.command.ReadRedHatVersionCommand.fetchRedHatVersion;
+import static com.codenvy.im.commands.ReadRedHatVersionCommand.fetchRedHatVersion;
 import static java.lang.String.format;
 
 /** @author Anatoliy Bazko */

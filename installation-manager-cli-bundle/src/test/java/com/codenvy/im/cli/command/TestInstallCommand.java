@@ -18,11 +18,11 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.google.common.collect.ImmutableList;
@@ -61,7 +61,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
     private InstallationManagerFacade facade;
-    private ConfigUtil                mockConfigUtil;
+    private ConfigManager mockConfigManager;
     private CommandSession            commandSession;
     private String okServiceResponse = "{\n"
                                        + "  \"artifacts\" : [ {\n"
@@ -80,20 +80,20 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws Exception {
-        mockConfigUtil = mock(ConfigUtil.class);
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigUtil).loadCodenvyDefaultProperties("1.0.1",
-                                                                                                                     InstallType
-                                                                                                                         .SINGLE_SERVER);
-        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigUtil)
+        mockConfigManager = mock(ConfigManager.class);
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties("1.0.1",
+                                                                                                                        InstallType
+                                                                                                                                .SINGLE_SERVER);
+        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(InstallationManagerFacade.class);
         doReturn("1.0.1").when(facade).getVersionToInstall(any(Request.class));
         doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-            .when(facade).getInstallInfo(any(Request.class));
+                .when(facade).getInstallInfo(any(Request.class));
         commandSession = mock(CommandSession.class);
 
-        spyCommand = spy(new InstallCommand(mockConfigUtil));
+        spyCommand = spy(new InstallCommand(mockConfigManager));
         spyCommand.facade = facade;
 
         performBaseMocks(spyCommand, true);
@@ -185,7 +185,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn("1.0.2").when(facade).getVersionToInstall(any(Request.class));
         doReturn(false).when(spyCommand).isInstall();
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).merge(anyMap(), anyMap());
 
         // user always enter "some value" as property value
         doAnswer(new Answer() {
@@ -354,7 +354,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigUtil).merge(anyMap(), anyMap());
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).merge(anyMap(), anyMap());
 
         doThrow(new RuntimeException("Server Error Exception"))
                 .when(facade)

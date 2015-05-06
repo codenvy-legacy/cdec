@@ -19,17 +19,17 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.config.ConfigUtil;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.facade.UserCredentials;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
-
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
+
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
@@ -71,25 +71,22 @@ public class TestInstallationManagerService {
                                                                    "  \"id\":\"" + TEST_ACCOUNT_ID + "\"," +
                                                                    "  \"links\":[]" +
                                                                    "}";
-    private static final String TEST_ACCESS_TOKEN_JSON = "{\"value\":\"" + TEST_ACCESS_TOKEN + "\"}";
-    private static final String TEST_CREDENTIALS_JSON = "{\n"
-                                                        + "  \"username\": \"" + TEST_USER_NAME + "\",\n"
-                                                        + "  \"password\": \"" + TEST_USER_PASSWORD + "\"\n"
-                                                        + "}";
+    private static final String TEST_ACCESS_TOKEN_JSON           = "{\"value\":\"" + TEST_ACCESS_TOKEN + "\"}";
+    private static final String TEST_CREDENTIALS_JSON            = "{\n"
+                                                                   + "  \"username\": \"" + TEST_USER_NAME + "\",\n"
+                                                                   + "  \"password\": \"" + TEST_USER_PASSWORD + "\"\n"
+                                                                   + "}";
 
     private InstallationManagerService service;
 
     @Mock
     private InstallationManagerFacade mockFacade;
-
     @Mock
-    private ConfigUtil configUtil;
-
+    private ConfigManager             configManager;
     @Mock
-    private Principal mockPrincipal;
-
+    private Principal                 mockPrincipal;
     @Mock
-    private SecurityContext mockSecurityContext;
+    private SecurityContext           mockSecurityContext;
 
     private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
 
@@ -99,7 +96,7 @@ public class TestInstallationManagerService {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        service = spy(new InstallationManagerService(mockFacade, configUtil));
+        service = spy(new InstallationManagerService(mockFacade, configManager));
 
         doReturn(mockPrincipal).when(mockSecurityContext).getUserPrincipal();
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
@@ -178,7 +175,7 @@ public class TestInstallationManagerService {
 
     @Test
     public void testUpdateCodenvy() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
 
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
@@ -203,7 +200,7 @@ public class TestInstallationManagerService {
 
     @Test
     public void testUpdateCodenvyWhenConfigNull() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
 
         int testStep = 1;
         InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
@@ -237,7 +234,7 @@ public class TestInstallationManagerService {
 
     @Test
     public void testGetUpdateCodenvyInfo() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
 
         InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
@@ -318,12 +315,12 @@ public class TestInstallationManagerService {
 
     @Test
     public void testAddTrialSubscription() throws Exception {
-        UserCredentials testUserCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request testRequest = new Request().setUserCredentials(testUserCredentials);
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request testRequest = new Request().setSaasUserCredentials(testUserCredentials);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
 
-        service.usersCredentials.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
+        service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
         Response result = service.addTrialSubscription(mockSecurityContext);
         checkEmptyOkResponse(result);
@@ -335,12 +332,12 @@ public class TestInstallationManagerService {
 
     @Test
     public void testCheckSubscription() throws Exception {
-        UserCredentials testUserCredentials = new UserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
-        Request testRequest = new Request().setUserCredentials(testUserCredentials);
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
+        Request testRequest = new Request().setSaasUserCredentials(testUserCredentials);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).checkSubscription(TEST_SUBSCRIPTION_ID, testRequest);
 
-        service.usersCredentials.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
+        service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
         Response result = service.checkSubscription(TEST_SUBSCRIPTION_ID, mockSecurityContext);
         checkEmptyOkResponse(result);
@@ -364,89 +361,75 @@ public class TestInstallationManagerService {
     @Test
     public void testLoginToSaas() throws IOException, JsonParseException {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
-        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doReturn(TEST_USER_ACCOUNT_REFERENCE_JSON).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
 
-        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        Response result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"message\" : \"Your Codenvy account 'account' will be used to verify on-premises subscription.\",\n"
                                          + "  \"status\" : \"OK\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
 
-        assertEquals(service.usersCredentials.size(), 1);
-        assertTrue(service.usersCredentials.containsKey(TEST_SYSTEM_ADMIN_NAME));
+        assertEquals(service.users.size(), 1);
+        assertTrue(service.users.containsKey(TEST_SYSTEM_ADMIN_NAME));
 
-        UserCredentials testSaasUserCredentials = service.usersCredentials.get(TEST_SYSTEM_ADMIN_NAME);
-        assertEquals(testSaasUserCredentials.getAccountId(), TEST_ACCOUNT_ID);
-        assertEquals(testSaasUserCredentials.getToken(), TEST_ACCESS_TOKEN);
+        SaasUserCredentials testSaasSaasUserCredentials = service.users.get(TEST_SYSTEM_ADMIN_NAME);
+        assertEquals(testSaasSaasUserCredentials.getAccountId(), TEST_ACCOUNT_ID);
+        assertEquals(testSaasSaasUserCredentials.getToken(), TEST_ACCESS_TOKEN);
     }
 
     @Test
     public void testLoginToSaasWhenHttpException() throws IOException, JsonParseException {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
-        doThrow(new HttpException(500, "Login error")).when(mockFacade).login(testSaasUsernameAndPassword);
-        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        doThrow(new HttpException(500, "Login error")).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
+        Response result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"message\" : \"Login error\",\n"
                                          + "  \"status\" : \"ERROR\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.usersCredentials.size(), 0);
+        assertEquals(service.users.size(), 0);
 
-        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
-        result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
+        result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"message\" : \"Login error\",\n"
                                          + "  \"status\" : \"ERROR\"\n"
                                          + "}");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.usersCredentials.size(), 0);
-
-        doThrow(new HttpException(500, "{ \"message\" : \"Login error\"}")).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
-        result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
-        assertEquals(result.getEntity(), "{\n"
-                                         + "  \"message\" : \"Login error\",\n"
-                                         + "  \"status\" : \"ERROR\"\n"
-                                         + "}");
-        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.usersCredentials.size(), 0);
+        assertEquals(service.users.size(), 0);
     }
 
     @Test
     public void testLoginToSaasWhenNullToken() throws IOException, JsonParseException {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
 
-        doReturn(null).when(mockFacade).login(testSaasUsernameAndPassword);
-        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
-        assertEquals(result.getEntity(), "{\n"
-                                         + "  \"message\" : \"Login impossible.\",\n"
-                                         + "  \"status\" : \"ERROR\"\n"
-                                         + "}");
+        doReturn(null).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
+        Response result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "Login impossible.");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.usersCredentials.size(), 0);
+        assertEquals(service.users.size(), 0);
     }
 
     @Test
     public void testLoginToSaasWhenNullAccountReference() throws IOException, JsonParseException {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setUserCredentials(new UserCredentials(TEST_ACCESS_TOKEN));
+        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
-        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).login(testSaasUsernameAndPassword);
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doReturn(null).when(mockFacade).getAccountReferenceWhereUserIsOwner(null, testRequest);
 
-        Response result = service.loginToSaas(testSaasUsernameAndPassword, mockSecurityContext);
-        assertEquals(result.getEntity(), "{\n"
-                                         + "  \"message\" : \"You are logged as a user which does not have an account/owner role in any account. This likely means that you used the wrong credentials to access Codenvy.\",\n"
-                                         + "  \"status\" : \"ERROR\"\n"
-                                         + "}");
+        Response result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
+        assertEquals(result.getEntity(), "You are logged as a user which does not have an account/owner role in any account. This" +
+                                         " likely means that you used the wrong credentials to access Codenvy.");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(service.usersCredentials.size(), 0);
+        assertEquals(service.users.size(), 0);
     }
 
     private void checkEmptyOkResponse(Response result) {

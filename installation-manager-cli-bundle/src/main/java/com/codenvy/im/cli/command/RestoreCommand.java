@@ -18,11 +18,10 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.managers.BackupConfig;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-
-import java.nio.file.Paths;
 
 /**
  * @author Dmytro Nochevnov

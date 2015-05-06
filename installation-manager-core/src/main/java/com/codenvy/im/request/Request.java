@@ -19,11 +19,11 @@ package com.codenvy.im.request;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.facade.UserCredentials;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Version;
 import com.wordnik.swagger.annotations.ApiModelProperty;
 
@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  */
 public class Request {
     @ApiModelProperty(notes = "It is needed for getting and downloading 'codenvy' artifact.")
-    private UserCredentials userCredentials;
+    private SaasUserCredentials saasUserCredentials;
 
     private String artifactName;
     private String version;
@@ -48,8 +48,8 @@ public class Request {
     public Request() {
     }
 
-    public Request setUserCredentials(UserCredentials userCredentials) {
-        this.userCredentials = userCredentials;
+    public Request setSaasUserCredentials(SaasUserCredentials saasUserCredentials) {
+        this.saasUserCredentials = saasUserCredentials;
         return this;
     }
 
@@ -58,7 +58,7 @@ public class Request {
      */
     @Nonnull
     public String obtainAccessToken() {
-        return userCredentials == null ? "" : userCredentials.getToken();
+        return saasUserCredentials == null ? "" : saasUserCredentials.getToken();
     }
 
     /**
@@ -66,12 +66,12 @@ public class Request {
      */
     @Nonnull
     public String obtainAccountId() {
-        return userCredentials == null ? "" : userCredentials.getAccountId();
+        return saasUserCredentials == null ? "" : saasUserCredentials.getAccountId();
     }
 
     @Nullable
-    public UserCredentials getUserCredentials() {
-        return userCredentials;
+    public SaasUserCredentials getSaasUserCredentials() {
+        return saasUserCredentials;
     }
 
     /**
@@ -115,7 +115,7 @@ public class Request {
     }
 
     /**
-     * @return {@link com.codenvy.im.install.InstallOptions} or null
+     * @return {@link com.codenvy.im.managers.InstallOptions} or null
      */
     @Nullable
     public InstallOptions getInstallOptions() {
@@ -135,7 +135,8 @@ public class Request {
 
         Request request = (Request)o;
 
-        if (userCredentials != null ? !userCredentials.equals(request.userCredentials) : request.userCredentials != null) return false;
+        if (saasUserCredentials != null ? !saasUserCredentials.equals(request.saasUserCredentials) : request.saasUserCredentials != null)
+            return false;
         if (artifactName != null ? !artifactName.equals(request.artifactName) : request.artifactName != null) return false;
         if (version != null ? !version.equals(request.version) : request.version != null) return false;
         if (installOptions != null ? !installOptions.equals(request.installOptions) : request.installOptions != null) return false;
@@ -145,7 +146,7 @@ public class Request {
 
     @Override
     public int hashCode() {
-        int result = userCredentials != null ? userCredentials.hashCode() : 0;
+        int result = saasUserCredentials != null ? saasUserCredentials.hashCode() : 0;
         result = 31 * result + (artifactName != null ? artifactName.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (installOptions != null ? installOptions.hashCode() : 0);

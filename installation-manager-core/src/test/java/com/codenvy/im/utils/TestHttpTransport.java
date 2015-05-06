@@ -87,6 +87,17 @@ public class TestHttpTransport {
     }
 
     @Test
+    public void testDoPostWithoutToken(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
+        Map value = Commons.asMap(httpTransport.doPost("http://0.0.0.0:" + port + "/rest/test/post", body));
+
+        assertNotNull(value);
+        assertEquals(value.size(), 1);
+        assertEquals(value.get("a"), "b");
+    }
+
+    @Test
     public void testDoPostEmptyResponse(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));

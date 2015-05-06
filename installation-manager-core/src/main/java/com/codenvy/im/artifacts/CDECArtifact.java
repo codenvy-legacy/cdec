@@ -20,13 +20,13 @@ package com.codenvy.im.artifacts;
 import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
 import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.exceptions.UnknownInstallationTypeException;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -52,31 +52,31 @@ import static java.lang.String.format;
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of(
-        InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this),
-        InstallType.MULTI_SERVER, new CDECMultiServerHelper(this)
-    );
+            InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this),
+            InstallType.MULTI_SERVER, new CDECMultiServerHelper(this)
+                                                                                );
 
     public static final String NAME = "codenvy";
 
     private final HttpTransport transport;
-    private final ConfigUtil    configUtil;
+    private final ConfigManager configManager;
 
     @Inject
-    public CDECArtifact(HttpTransport transport, ConfigUtil configUtil) {
+    public CDECArtifact(HttpTransport transport, ConfigManager configManager) {
         super(NAME);
         this.transport = transport;
-        this.configUtil = configUtil;
+        this.configManager = configManager;
     }
 
     /** {@inheritDoc} */
     @Override
     public Version getInstalledVersion() throws IOException {
         try {
-            if (configUtil.detectInstallationType() == InstallType.SINGLE_SERVER) {
+            if (configManager.detectInstallationType() == InstallType.SINGLE_SERVER) {
                 // in single-node installation it's not required to modify '/etc/hosts' on the server where Codenvy is being installed
                 return getInstalledVersion("localhost");
             } else {
-                Config config = configUtil.loadInstalledCodenvyConfig();
+                Config config = configManager.loadInstalledCodenvyConfig();
                 return getInstalledVersion(config.getHostUrl());
             }
         } catch (UnknownInstallationTypeException | IOException e) {
@@ -117,7 +117,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
-        if (installOptions.getInstallType() != configUtil.detectInstallationType()) {
+        if (installOptions.getInstallType() != configManager.detectInstallationType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
@@ -135,7 +135,7 @@ public class CDECArtifact extends AbstractArtifact {
     public Command getUpdateCommand(Version versionToUpdate,
                                     Path pathToBinaries,
                                     InstallOptions installOptions) throws IOException, IllegalArgumentException {
-        if (installOptions.getInstallType() != configUtil.detectInstallationType()) {
+        if (installOptions.getInstallType() != configManager.detectInstallationType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
@@ -159,16 +159,16 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
-        CDECArtifactHelper helper = getHelper(configUtil.detectInstallationType());
-        return helper.getBackupCommand(backupConfig, codenvyConfigUtil);
+    public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+        CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
+        return helper.getBackupCommand(backupConfig, codenvyConfigManager);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
-        CDECArtifactHelper helper = getHelper(configUtil.detectInstallationType());
-        return helper.getRestoreCommand(backupConfig, codenvyConfigUtil);
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+        CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
+        return helper.getRestoreCommand(backupConfig, codenvyConfigManager);
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {

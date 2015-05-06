@@ -17,8 +17,8 @@
  */
 package com.codenvy.im.utils;
 
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
 
 import org.eclipse.che.commons.json.JsonParseException;
 

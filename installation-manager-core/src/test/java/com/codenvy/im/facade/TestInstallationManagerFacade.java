@@ -17,13 +17,16 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
@@ -34,6 +37,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
+import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -45,7 +49,7 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -54,25 +58,34 @@ import static org.testng.Assert.assertNull;
  */
 public class TestInstallationManagerFacade {
     private InstallationManagerFacade installationManagerFacade;
+    private SaasAuthServiceProxy saasAuthServiceProxy;
+    private SaasUserCredentials  testCredentials;
+    private Artifact             cdecArtifact;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
-    private Artifact            cdecArtifact;
-    private UserCredentials     testCredentials;
+    @Mock
+    private InstallationManager     mockInstallationManager;
+    @Mock
+    private HttpTransport           mockTransport;
+    @Mock
+    private SaasAccountServiceProxy saasAccountServiceProxy;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        mockInstallationManager = mock(InstallationManager.class);
-        mockTransport = mock(HttpTransport.class);
+        initMocks(this);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
-        installationManagerFacade = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
-        testCredentials = new UserCredentials("auth token");
+        saasAuthServiceProxy = new SaasAuthServiceProxy("api/endpoint", mockTransport);
+        installationManagerFacade = new InstallationManagerFacade("update/endpoint",
+                                                                  mockInstallationManager,
+                                                                  mockTransport,
+                                                                  saasAuthServiceProxy,
+                                                                  saasAccountServiceProxy);
+        testCredentials = new SaasUserCredentials("auth token");
     }
 
     @Test
     public void testInstall() throws Exception {
         InstallOptions installOptions = new InstallOptions();
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setInstallOptions(installOptions);
         Version version = Version.valueOf("2.10.5");
@@ -95,7 +108,7 @@ public class TestInstallationManagerFacade {
     @Test
     public void testInstallError() throws Exception {
         InstallOptions installOptions = new InstallOptions();
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setVersion("1.0.1")
                                        .setInstallOptions(installOptions);
@@ -118,7 +131,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testGetVersionToInstallVersionSetExplicitly() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName()).setVersion("1.0.1");
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName()).setVersion("1.0.1");
 
         doReturn(Version.valueOf("1.0.2")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
@@ -130,7 +143,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testGetVersionToInstallFirstInstallStep() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
 
         doReturn(Version.valueOf("1.0.2")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
@@ -145,7 +158,7 @@ public class TestInstallationManagerFacade {
         InstallOptions installOptionsWithStep1 = new InstallOptions();
         installOptionsWithStep1.setStep(1);
 
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setInstallOptions(installOptionsWithStep1);
 
@@ -159,7 +172,7 @@ public class TestInstallationManagerFacade {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testGetVersionToInstallErrorFirstInstallStep() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
 
         doReturn(null).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
@@ -173,7 +186,7 @@ public class TestInstallationManagerFacade {
         InstallOptions installOptionsWithStep1 = new InstallOptions();
         installOptionsWithStep1.setStep(1);
 
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setInstallOptions(installOptionsWithStep1);
 
@@ -332,12 +345,9 @@ public class TestInstallationManagerFacade {
 
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
 
-        Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", TEST_USER_NAME,
-                                                              "password", TEST_USER_PASSWORD));
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockTransport).doPost("api/endpoint/auth/login", testSaasUsernameAndPassword);
 
-        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
-
-        String result = installationManagerFacade.login(testSaasUsernameAndPassword);
+        String result = installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result, "{\n"
                              + "  \"value\" : \"accessToken\"\n"
                              + "}");
@@ -357,9 +367,9 @@ public class TestInstallationManagerFacade {
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", TEST_USER_NAME,
                                                               "password", TEST_USER_PASSWORD));
 
-        doReturn(null).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
+        doReturn(null).when(mockTransport).doPost("api/endpoint/auth/login", body);
 
-        String result = installationManagerFacade.login(testSaasUsernameAndPassword);
+        String result = installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertNull(result);
     }
 
@@ -374,13 +384,9 @@ public class TestInstallationManagerFacade {
                                              + "}";
 
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
+        doThrow(new HttpException(500, "error")).when(mockTransport).doPost("api/endpoint/auth/login", testSaasUsernameAndPassword);
 
-        Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", TEST_USER_NAME,
-                                                              "password", TEST_USER_PASSWORD));
-
-        doThrow(new HttpException(500, "error")).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
-
-        installationManagerFacade.login(testSaasUsernameAndPassword);
+        installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
     }
 
     @Test

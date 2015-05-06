@@ -19,11 +19,11 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.request.Request;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.utils.Commons;
 
-import com.codenvy.im.utils.che.AccountUtils;
 import org.apache.felix.service.command.CommandSession;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.mockito.Mock;
@@ -160,7 +160,7 @@ public class TestLoginCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, AccountUtils.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG + "\n");
+        assertEquals(output, SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG + "\n");
         verify(service, never()).addTrialSubscription(any(Request.class));
     }
 

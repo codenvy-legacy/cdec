@@ -19,12 +19,12 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.agent.Agent;
 import com.codenvy.im.agent.LocalAgent;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.command.SimpleCommand;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.SimpleCommand;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -161,13 +161,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+    public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
         throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
-    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
         throw new UnsupportedOperationException();
     }
 }

@@ -17,7 +17,8 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.im.utils.che.UserUtils;
+import com.codenvy.im.saas.SaasUserServiceProxy;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -32,17 +33,20 @@ import static org.testng.Assert.assertEquals;
 
 public class TestUserUtils {
     @Mock
-    private HttpTransport mockHttpTransport;
+    private HttpTransport transport;
+
+    private SaasUserServiceProxy saasUserServiceProxy;
 
     @BeforeMethod
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        saasUserServiceProxy = new SaasUserServiceProxy("", transport);
     }
 
     @Test
     public void testGetUserEmail() throws IOException {
-        doReturn("{\"email\": \"userEmail\"}").when(mockHttpTransport).doGet(endsWith("/user"), eq("token"));
+        doReturn("{\"email\": \"userEmail\"}").when(transport).doGet(endsWith("/user"), eq("token"));
 
-        assertEquals(UserUtils.getUserEmail(mockHttpTransport, "", "token"), "userEmail");
+        assertEquals(saasUserServiceProxy.getUserEmail("token"), "userEmail");
     }
 }

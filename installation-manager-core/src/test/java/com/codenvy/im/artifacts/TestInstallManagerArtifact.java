@@ -17,8 +17,8 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.command.Command;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 

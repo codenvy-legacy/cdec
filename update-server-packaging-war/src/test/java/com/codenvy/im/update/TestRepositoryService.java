@@ -18,7 +18,8 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
@@ -55,7 +56,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
-import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
+import static com.codenvy.im.saas.SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;
@@ -89,6 +90,8 @@ public class TestRepositoryService extends BaseTest {
     private final Properties subscriptionProperties           = new Properties() {{
         put(SUBSCRIPTION_PROPERTY, "OnPremises");
     }};
+    private SaasUserServiceProxy    saasUserServiceProxy;
+    private SaasAccountServiceProxy saasAccountServiceProxy;
 
     @Override
     @BeforeMethod
@@ -96,12 +99,16 @@ public class TestRepositoryService extends BaseTest {
         httpTransport = mock(HttpTransport.class);
         userManager = mock(UserManager.class);
         mailUtil = mock(MailUtil.class);
+        saasAccountServiceProxy = new SaasAccountServiceProxy("", httpTransport);
+        saasUserServiceProxy = new SaasUserServiceProxy("", httpTransport);
         artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
         repositoryService = new RepositoryService("",
                                                   userManager,
                                                   artifactStorage,
                                                   httpTransport,
-                                                  mailUtil);
+                                                  mailUtil,
+                                                  saasUserServiceProxy,
+                                                  saasAccountServiceProxy);
 
         when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         super.setUp();
@@ -247,7 +254,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testDownloadPrivateErrorIfNoRolesAllowed() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         Response response = given().when().get("/repository/download/codenvy/1.0.1/accountId");
@@ -276,7 +283,7 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
 
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"unknownAccountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
@@ -381,11 +388,11 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByManager() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]")
                 .when(httpTransport).doGet(endsWith("/account"), eq("token"));
-        doReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:subscriptionId,startDate:\"01/01/2014\", endDate:\"01/01/2020\"}]")
+        doReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:subscriptionId,startDate:\"01/01/2014\", endDate:\"01/01/2020\"}]")
                 .when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
 
         Response response = given()
@@ -413,7 +420,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddTrialSubscriptionFailedIfWrongAccount() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
@@ -429,7 +436,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase1() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
@@ -445,7 +452,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase2() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
@@ -461,7 +468,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase3() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
@@ -477,7 +484,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddSubscriptionWhenSendSubscriptionInfoThrowsMessagingException() throws IOException, MessagingException {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
@@ -493,7 +500,7 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testAddSubscription() throws Exception {
         doReturn("[{"
-                 + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));

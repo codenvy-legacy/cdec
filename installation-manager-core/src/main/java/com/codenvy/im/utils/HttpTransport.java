@@ -87,6 +87,14 @@ public class HttpTransport {
         return request(path, "POST", body, MediaType.APPLICATION_JSON, accessToken);
     }
 
+    /**
+     * Performs POST request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     */
+    public String doPost(String path, Object body) throws IOException {
+        return request(path, "POST", body, MediaType.APPLICATION_JSON, null);
+    }
+
     private String request(String path,
                            String method,
                            @Nullable Object body,

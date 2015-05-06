@@ -18,13 +18,13 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.BaseTest;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.exceptions.UnknownInstallationTypeException;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
@@ -60,14 +60,14 @@ public class TestCDECArtifact extends BaseTest {
     @Mock
     private HttpTransport transport;
     @Mock
-    private ConfigUtil    configUtil;
+    private ConfigManager configManager;
     @Mock
     private Config        config;
 
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact(transport, configUtil));
+        spyCdecArtifact = spy(new CDECArtifact(transport, configManager));
     }
 
     @AfterMethod
@@ -197,21 +197,21 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void getInstalledVersionShouldReturnNullIfPuppetConfigAbsent() throws Exception {
-        doThrow(UnknownInstallationTypeException.class).when(configUtil).loadInstalledCodenvyConfig();
+        doThrow(UnknownInstallationTypeException.class).when(configManager).loadInstalledCodenvyConfig();
         assertNull(spyCdecArtifact.getInstalledVersion());
     }
 
     @Test
     public void getInstalledVersionShouldReturnNullIfConfigAbsent() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
-        doThrow(IOException.class).when(configUtil).loadInstalledCodenvyConfig();
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doThrow(IOException.class).when(configManager).loadInstalledCodenvyConfig();
 
         assertNull(spyCdecArtifact.getInstalledVersion());
     }
 
     @Test
     public void getInstalledVersionShouldReturnNullIfRequestThrowException() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
         doThrow(IOException.class).when(transport).doOption("http://localhost/api/", null);
 
         assertNull(spyCdecArtifact.getInstalledVersion());
@@ -219,14 +219,14 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void getInstalledVersionShouldReturnVersion() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.3.0"));
     }
 
     @Test
     public void getInstalledVersionShouldReturnNullIfRequestEmpty() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
         doReturn("").when(transport).doOption("http://localhost/api/", null);
 
         assertNull(spyCdecArtifact.getInstalledVersion());
@@ -234,7 +234,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void getInstalledVersionShouldReturn310CodenvyVersion() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
         when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"implementationVersion\":\"0.26.0\"}");
 
         assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.1.0"));
@@ -242,7 +242,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetUpdateSingleServerCommand() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
@@ -258,7 +258,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetUpdateMultiServerCommand() throws Exception {
-        prepareMultiNodeEnv(configUtil, transport);
+        prepareMultiNodeEnv(configManager, transport);
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
@@ -274,7 +274,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Step number .* is out of update range")
     public void testGetUpdateCommandUnexistedStepError() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         OSUtils.VERSION = "7";
 
@@ -289,7 +289,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromSingleToMultiServerError() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         OSUtils.VERSION = "7";
 
@@ -304,7 +304,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromMultiToSingleServerError() throws Exception {
-        prepareMultiNodeEnv(configUtil, transport);
+        prepareMultiNodeEnv(configManager, transport);
 
         OSUtils.VERSION = "7";
 
@@ -319,7 +319,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromSingleToMultiServerError() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         OSUtils.VERSION = "7";
 
@@ -334,7 +334,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromMultiToSingleServerError() throws Exception {
-        prepareMultiNodeEnv(configUtil, transport);
+        prepareMultiNodeEnv(configManager, transport);
 
         OSUtils.VERSION = "7";
 
@@ -348,47 +348,47 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetBackupSingleServerCommand() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupDirectory("some_dir");
         
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
 
-        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configUtil));
+        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configManager));
     }
 
     @Test
     public void testGetBackupMultiServerCommand() throws Exception {
-        prepareMultiNodeEnv(configUtil, transport);
+        prepareMultiNodeEnv(configManager, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupDirectory("some_dir");
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
 
-        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configUtil));
+        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configManager));
     }
 
     @Test
     public void testGetRestoreSingleServerCommand() throws Exception {
-        prepareSingleNodeEnv(configUtil, transport);
+        prepareSingleNodeEnv(configManager, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupFile("dummyFile")
                                                       .setBackupDirectory("dummyDirectory");
 
-        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configUtil));
+        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configManager));
     }
 
     @Test
     public void testGetRestoreMultiServerCommand() throws Exception {
-        prepareMultiNodeEnv(configUtil, transport);
+        prepareMultiNodeEnv(configManager, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupFile("dummyFile")
                                                       .setBackupDirectory("dummyDirectory");
 
-        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configUtil));
+        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configManager));
     }
 
 }

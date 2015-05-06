@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.update;
 
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -62,7 +62,7 @@ public class ArtifactStorage {
 
     /**
      * @return the latest available version of the artifact in the repository
-     * @throws com.codenvy.im.exceptions.ArtifactNotFoundException
+     * @throws com.codenvy.im.artifacts.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
@@ -99,7 +99,7 @@ public class ArtifactStorage {
     /**
      * Downloads artifact from the repository.
      *
-     * @throws com.codenvy.im.exceptions.ArtifactNotFoundException
+     * @throws com.codenvy.im.artifacts.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs

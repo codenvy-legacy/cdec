@@ -17,11 +17,11 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
@@ -30,9 +30,8 @@ import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
-import com.codenvy.im.utils.Commons;
-import com.codenvy.im.utils.che.AccountUtils;
-import com.codenvy.im.utils.che.CodenvyUtils;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
@@ -59,10 +58,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
-import static com.codenvy.im.utils.che.AccountUtils.ON_PREMISES;
+import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.toJson;
-import static com.codenvy.im.utils.che.AccountUtils.hasValidSubscription;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.size;
@@ -75,23 +73,26 @@ import static java.nio.file.Files.size;
 public class InstallationManagerFacade {
     private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
 
-    protected final InstallationManager manager;
-    protected final HttpTransport       transport;
+    protected final InstallationManager     manager;
+    protected final HttpTransport           transport;
+    protected final SaasAuthServiceProxy    saasAuthServiceProxy;
+    protected final SaasAccountServiceProxy saasAccountServiceProxy;
 
     private final String updateServerEndpoint;
-    private final String apiEndpoint;
 
     private DownloadDescriptor downloadDescriptor;
 
     @Inject
     public InstallationManagerFacade(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
-                                     @Named("saas.api.endpoint") String apiEndpoint,
                                      InstallationManager manager,
-                                     HttpTransport transport) {
+                                     HttpTransport transport,
+                                     SaasAuthServiceProxy saasAuthServiceProxy,
+                                     SaasAccountServiceProxy saasAccountServiceProxy) {
         this.manager = manager;
         this.transport = transport;
         this.updateServerEndpoint = updateServerEndpoint;
-        this.apiEndpoint = apiEndpoint;
+        this.saasAuthServiceProxy = saasAuthServiceProxy;
+        this.saasAccountServiceProxy = saasAccountServiceProxy;
     }
 
     public String getUpdateServerEndpoint() {
@@ -118,11 +119,9 @@ public class InstallationManagerFacade {
     public String checkSubscription(String subscription,
                                     @Nonnull Request request) throws IOException {
         try {
-            boolean subscriptionValidated = hasValidSubscription(transport,
-                                                                 apiEndpoint,
-                                                                 subscription,
-                                                                 request.obtainAccessToken(),
-                                                                 request.obtainAccountId());
+            boolean subscriptionValidated = saasAccountServiceProxy.hasValidSubscription(subscription,
+                                                                                         request.obtainAccessToken(),
+                                                                                         request.obtainAccountId());
 
             if (subscriptionValidated) {
                 return new Response().setStatus(ResponseCode.OK)
@@ -435,11 +434,8 @@ public class InstallationManagerFacade {
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
     public String getAccountReferenceWhereUserIsOwner(@Nullable String accountName, @Nonnull Request request) throws IOException {
-
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(transport,
-                                                                                             apiEndpoint,
-                                                                                             request.obtainAccessToken(),
-                                                                                             accountName);
+        AccountReference accountReference = saasAccountServiceProxy.getAccountReferenceWhereUserIsOwner(request.obtainAccessToken(),
+                                                                                                        accountName);
         return accountReference == null ? null : toJson(accountReference);
     }
 
@@ -506,8 +502,8 @@ public class InstallationManagerFacade {
 
 
     /** Login into SaaS Codenvy and return authToken */
-    public String login(@Nonnull Credentials codenvyCredentials) throws IOException, JsonParseException {
-        Token authToken = CodenvyUtils.login(transport, apiEndpoint, codenvyCredentials);
+    public String loginToCodenvySaaS(@Nonnull Credentials credentials) throws IOException, JsonParseException {
+        Token authToken = saasAuthServiceProxy.login(credentials);
         return authToken == null ? null : toJson(authToken);
     }
 
