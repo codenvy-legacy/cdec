@@ -141,7 +141,7 @@ public class InstallationManagerService {
 
     /** Get the list of actual updates from Update Server */
     @GET
-    @Path("download/check")
+    @Path("update")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of actual updates from Update Server", response = Response.class)
     public javax.ws.rs.core.Response getUpdates() {
@@ -150,7 +150,7 @@ public class InstallationManagerService {
 
     /** Gets the list of downloaded artifacts" */
     @GET
-    @Path("download/list")
+    @Path("download")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
     public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") @ApiParam(value = "default is all artifacts") String artifactName) {
@@ -160,7 +160,7 @@ public class InstallationManagerService {
 
     /** Gets the list of installed artifacts. */
     @GET
-    @Path("install/list")
+    @Path("installation")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of installed artifacts", response = Response.class)
     public javax.ws.rs.core.Response getInstalledVersions() throws IOException {
@@ -243,7 +243,7 @@ public class InstallationManagerService {
 
     /** Adds Codenvy node in the multi-node environment */
     @POST
-    @Path("node/add")
+    @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = Response.class)
     public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns name of adding node") @ApiParam(required = true) String dns) {
@@ -252,7 +252,7 @@ public class InstallationManagerService {
 
     /** Removes Codenvy node in the multi-node environment */
     @DELETE
-    @Path("node/remove")
+    @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Removes Codenvy node in the multi-node environment", response = Response.class)
     public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns name of removing node") @ApiParam(required = true) String dns) {
@@ -299,7 +299,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
+    public javax.ws.rs.core.Response addTrialSaasSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
         String callerName = context.getUserPrincipal().getName();
         if (!users.containsKey(callerName)) {
             return handleException(new RuntimeException("User not authenticated"));
@@ -308,7 +308,7 @@ public class InstallationManagerService {
         SaasUserCredentials saasUserCredentials = users.get(callerName);
         Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
 
-        return handleInstallationManagerResponse(delegate.addTrialSubscription(request));
+        return handleInstallationManagerResponse(delegate.addTrialSaasSubscription(request));
     }
 
     /** Get details of OnPremises subscription */

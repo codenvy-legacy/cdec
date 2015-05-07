@@ -101,7 +101,7 @@ public class InstallationManagerFacade {
     }
 
     /** Adds trial subscription for user being logged in */
-    public String addTrialSubscription(@Nonnull Request request) throws IOException {
+    public String addTrialSaasSubscription(@Nonnull Request request) throws IOException {
         try {
             transport
                 .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,

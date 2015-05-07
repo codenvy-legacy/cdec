@@ -321,15 +321,15 @@ public class TestInstallationManagerService {
         SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
         Request testRequest = new Request().setSaasUserCredentials(testUserCredentials);
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
+        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
 
         service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
-        Response result = service.addTrialSubscription(mockSecurityContext);
+        Response result = service.addTrialSaasSubscription(mockSecurityContext);
         checkEmptyOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSubscription(testRequest);
-        result = service.addTrialSubscription(mockSecurityContext);
+        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
+        result = service.addTrialSaasSubscription(mockSecurityContext);
         checkErrorResponse(result);
     }
 

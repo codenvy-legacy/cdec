@@ -187,7 +187,7 @@ public class TestCheckSubscriptionFacade extends BaseTest {
     @Test
     public void testAddTrialSubscription() throws Exception {
         doReturn("").when(transport).doPost(endsWith("subscription/" + request.obtainAccountId()), isNull(), eq(request.obtainAccessToken()));
-        String response = installationManagerService.addTrialSubscription(request);
+        String response = installationManagerService.addTrialSaasSubscription(request);
         assertEquals(response, "{\n" +
                                "  \"subscription\" : \"OnPremises\",\n" +
                                "  \"message\" : \"Subscription has been added\",\n" +
@@ -199,7 +199,7 @@ public class TestCheckSubscriptionFacade extends BaseTest {
     public void testAddTrialSubscriptionFailedWhenRequestFailed() throws Exception {
         doThrow(IOException.class).when(transport)
                                   .doPost(endsWith("subscription/" + request.obtainAccountId()), isNull(), eq(request.obtainAccessToken()));
-        String response = installationManagerService.addTrialSubscription(request);
+        String response = installationManagerService.addTrialSaasSubscription(request);
         assertEquals(response, "{\n" +
                                "  \"status\" : \"ERROR\"\n" +
                                "}");
