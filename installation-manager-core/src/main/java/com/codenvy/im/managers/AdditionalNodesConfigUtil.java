@@ -20,8 +20,12 @@ package com.codenvy.im.managers;
 import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Joiner.on;
 import static java.lang.String.format;
@@ -176,6 +180,26 @@ public class AdditionalNodesConfigUtil {
     }
 
     /**
+     * @return for given additional node type: Map[{additionalNodesPropertyName}, {List<String> of additionalNodesDns}]
+     */
+    public Map<String, List<String>> extractAdditionalNodesDns(NodeConfig.NodeType nodeType) {
+        String additionalNodesProperty = getPropertyNameBy(nodeType);
+        List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        List<String> nodesDns = new ArrayList<>();
+        for (String nodeUrl: nodesUrls) {
+            String nodeDns = getAdditionalNodeDns(nodeUrl);
+            if (nodeDns != null) {
+                nodesDns.add(nodeDns);
+            }
+        }
+
+        Map<String, List<String>> result = new HashMap<>();
+        result.put(additionalNodesProperty, nodesDns);
+
+        return result;
+    }
+
+    /**
      * @return link like "http://builder3.example.com:8080/builder/internal/builder", or "http://runner3.example.com:8080/runner/internal/runner"
      * For example: given:
      * node = new NodeConfig(BUILDER, "builder2.example.com")
@@ -186,5 +210,24 @@ public class AdditionalNodesConfigUtil {
                       node.getHost(),
                       node.getType().toString().toLowerCase()
                      );
+    }
+
+    /**
+     * @return dns name like "builder3.example.com"
+     * For example: given:
+     * nodeUrl = "http://builder2.example.com:8080/builder/internal/builder"
+     * Result = builder2.example.com
+     */
+    @Nullable
+    private String getAdditionalNodeDns(String nodeUrl) {
+        String regex = "^http(|s)://([^:/]+)";
+        Pattern p = Pattern.compile(regex);
+
+        Matcher m = p.matcher(nodeUrl);
+        if (m.find()) {
+            return m.group().replaceAll("^http(|s)://", "");
+        }
+
+        return null;
     }
 }

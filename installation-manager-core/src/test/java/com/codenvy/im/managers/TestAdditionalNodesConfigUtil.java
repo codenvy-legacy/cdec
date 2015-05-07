@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -204,5 +205,20 @@ public class TestAdditionalNodesConfigUtil {
                 NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
         doReturn("runner1.some.com").when(mockConfig).getValue(NodeConfig.NodeType.RUNNER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
         spyConfigUtil.recognizeNodeConfigFromDns("runner2.another.com");
+    }
+
+    @Test
+    public void testExtractAdditionalNodesDns() {
+        ArrayList additionalNodes = new ArrayList<>(ImmutableList.of(
+            "http://test1.dev.com/runner/internal/runner",
+            "http://test-2.dev.com:8080/runner/internal/runner",
+            "https://test3.dev.com:8080/runner/internal/runner",
+            "wrong_address"
+        ));
+
+        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+
+        Map<String, List<String>> result = spyConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
+        assertEquals(result.toString(), "{additional_runners=[test1.dev.com, test-2.dev.com, test3.dev.com]}");
     }
 }

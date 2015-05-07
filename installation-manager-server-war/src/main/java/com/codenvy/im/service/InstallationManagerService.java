@@ -20,10 +20,13 @@ package com.codenvy.im.service;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -57,8 +60,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -236,9 +241,37 @@ public class InstallationManagerService {
     @GET
     @Path("config")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets Installation Manager configuration", response = Response.class)
-    public javax.ws.rs.core.Response getConfig() {
+    @ApiOperation(value = "Gets Installation Manager Server configuration", response = Response.class)
+    public javax.ws.rs.core.Response getInstallationManagerServerConfig() {
         return handleInstallationManagerResponse(delegate.getConfig());
+    }
+
+    /** Gets Codenvy on-prem configuration */
+    @GET
+    @Path("config/codenvy")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Gets Codenvy on-prem configuration", response = Response.class)
+    public javax.ws.rs.core.Response getCodenvyConfig() {
+        try {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            Map<String, Object> selectedProperties = new HashMap<>();
+
+            // filter node dns
+            List<NodeConfig> nodes = NodeConfig.extractConfigsFrom(config);
+            for (NodeConfig node: nodes) {
+                String nodeHostPropertyName = node.getType().toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
+                selectedProperties.put(nodeHostPropertyName, node.getHost());
+            }
+
+            // get additional nodes dns lists
+            AdditionalNodesConfigUtil additionalNodesConfigUtil = new AdditionalNodesConfigUtil(config);
+            selectedProperties.putAll(additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER));
+            selectedProperties.putAll(additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER));
+
+            return javax.ws.rs.core.Response.ok(Commons.toJson(selectedProperties)).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     /** Adds Codenvy node in the multi-node environment */

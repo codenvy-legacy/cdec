@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
@@ -31,6 +32,7 @@ import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 
+import com.google.common.collect.ImmutableMap;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
@@ -45,6 +47,7 @@ import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.mockito.Mockito.doReturn;
@@ -90,6 +93,8 @@ public class TestInstallationManagerService {
     private Principal                 mockPrincipal;
     @Mock
     private SecurityContext           mockSecurityContext;
+    @Mock
+    private Config mockConfig;
 
     private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
 
@@ -256,11 +261,11 @@ public class TestInstallationManagerService {
     @Test
     public void testGetConfig() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getConfig();
-        Response result = service.getConfig();
+        Response result = service.getInstallationManagerServerConfig();
         checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getConfig();
-        result = service.getConfig();
+        result = service.getInstallationManagerServerConfig();
         checkErrorResponse(result);
     }
 
@@ -393,7 +398,7 @@ public class TestInstallationManagerService {
     @Test
     public void testHandleIncorrectFacadeResponse() throws Exception {
         doReturn("{").when(mockFacade).getConfig();
-        Response result = service.getConfig();
+        Response result = service.getInstallationManagerServerConfig();
 
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         String facadeResponse = (String)result.getEntity();
@@ -473,6 +478,40 @@ public class TestInstallationManagerService {
                                          " likely means that you used the wrong credentials to access Codenvy.");
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertEquals(service.users.size(), 0);
+    }
+
+    @Test
+    public void testGetCodenvyConfig() throws IOException {
+        Config testConfig = new Config(new LinkedHashMap<>(ImmutableMap.of(
+            "builder_host_name", "builder1.dev.com",
+            "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
+            "analytics_host_name", "analytics.dev.com",
+            "additional_builders", "",
+            "data_host_name", "data.dev.com"
+        )));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        Response result = service.getCodenvyConfig();
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"builder_host_name\" : \"builder1.dev.com\",\n"
+                                         + "  \"additional_runners\" : [ \"runner1.dev.com\", \"runner2.dev.com\" ],\n"
+                                         + "  \"analytics_host_name\" : \"analytics.dev.com\",\n"
+                                         + "  \"additional_builders\" : [ ],\n"
+                                         + "  \"data_host_name\" : \"data.dev.com\"\n"
+                                         + "}");
+    }
+
+    @Test
+    public void testGetCodenvyConfigError() throws IOException {
+        doThrow(new RuntimeException("error")).when(configManager).loadInstalledCodenvyConfig();
+
+        Response result = service.getCodenvyConfig();
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(result.getEntity(), "{\n"
+                                         + "  \"message\" : \"error\",\n"
+                                         + "  \"status\" : \"ERROR\"\n"
+                                         + "}");
     }
 
     private void checkEmptyOkResponse(Response result) {
