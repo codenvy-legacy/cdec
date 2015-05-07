@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.update;
 
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.BeforeTest;

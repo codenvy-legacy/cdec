@@ -18,9 +18,9 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -47,8 +47,8 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private UserCredentials credentials;
-    private Request         request;
+    private SaasUserCredentials credentials;
+    private Request             request;
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -59,8 +59,8 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
 
         performBaseMocks(spyCommand, true);
 
-        credentials = new UserCredentials("token", "accountId");
-        request = new Request().setUserCredentials(credentials);
+        credentials = new SaasUserCredentials("token", "accountId");
+        request = new Request().setSaasUserCredentials(credentials);
         doReturn(credentials).when(spyCommand).getCredentials();
     }
 
@@ -71,7 +71,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                    + "  \"status\" : \"OK\",\n"
                                    + "  \"subscription\" : \"OnPremises\"\n"
                                    + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(AccountUtils.ON_PREMISES, request);
+        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

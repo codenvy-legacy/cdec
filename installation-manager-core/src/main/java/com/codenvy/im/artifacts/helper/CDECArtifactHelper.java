@@ -18,10 +18,10 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
@@ -56,10 +56,10 @@ public abstract class CDECArtifactHelper {
     /**
      * @return list of commands to backup codenvy due to given backup config and codenvy config
      */
-    public abstract Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
+    public abstract Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
 
     /**
      * @return list of commands to restore codenvy due to given backup config and codenvy config
      */
-    public abstract Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException;
+    public abstract Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
 }

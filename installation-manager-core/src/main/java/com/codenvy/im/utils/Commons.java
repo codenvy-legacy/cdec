@@ -18,8 +18,7 @@
 package com.codenvy.im.utils;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -66,23 +65,33 @@ import static java.nio.file.Files.newInputStream;
 public class Commons {
 
     /** Simplifies the way to combine paths. Takes care about normalization. */
-    public static String combinePaths(String apiEndpoint, String path) {
-        if (apiEndpoint.endsWith("/")) {
-            if (path.startsWith("/")) {
-                return apiEndpoint + path.substring(1);
-            } else {
-                return apiEndpoint + path;
+    public static String combinePaths(String... items) {
+        if (items.length == 0) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder(items[0]);
+        for (int i = 1; i < items.length; i++) {
+            if (!items[i - 1].endsWith("/")) {
+                sb.append("/");
             }
-        } else {
-            if (path.startsWith("/")) {
-                return apiEndpoint + path;
+
+            if (items[i].startsWith("/")) {
+                sb.append(items[i].substring(1));
             } else {
-                return apiEndpoint + "/" + path;
+                sb.append(items[i]);
             }
         }
+
+        return sb.toString();
     }
 
-    /** Copies input stream to output stream, and stop copying if current thread was interrupted. */
+    /**
+     * Copies input stream to output stream, and stop copying if current thread was interrupted.
+     *
+     * @throws com.codenvy.im.utils.CopyStreamInterruptedException
+     *         if current thread was interrupted
+     */
     public static void copyInterruptable(InputStream in, OutputStream out) throws CopyStreamInterruptedException, IOException {
         byte[] buffer = new byte[8196];
         int length;
@@ -274,7 +283,7 @@ public class Commons {
 
         /** include only non null fields into json; write pretty printed json. */
         private static final ObjectWriter jsonWriter =
-            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
+                new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
 
         /** Translates JSON to the list of DTO objects. */
         public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
@@ -320,7 +329,8 @@ public class Commons {
                     jg.writeRaw(getIndentationOfLength(indentations.get(index++)) + " : ");
                 }
 
-                @Override public DefaultPrettyPrinter createInstance() {
+                @Override
+                public DefaultPrettyPrinter createInstance() {
                     return this;
                 }
 
@@ -336,7 +346,7 @@ public class Commons {
         private static List<Integer> getIndentationsForEntryAlignment(Map<String, String> map) {
             int longestKeyName = getLongestKeyName(map);
             List<Integer> indentations = new ArrayList<>(map.size());
-            for (String key: map.keySet()) {
+            for (String key : map.keySet()) {
                 int indentation = longestKeyName - key.length();
                 indentations.add(indentation);
             }
@@ -347,7 +357,8 @@ public class Commons {
         private static int getLongestKeyName(Map<String, String> map) {
             List<String> keys = new ArrayList(map.keySet());
             Collections.sort(keys, new Comparator<String>() {
-                @Override public int compare(String s1, String s2) {
+                @Override
+                public int compare(String s1, String s2) {
                     return s2.length() - s1.length();  // order from the longest key to the shortest
                 }
             });
@@ -357,7 +368,7 @@ public class Commons {
 
         private static void removeNullValues(Map<String, String> map) {
             Map<String, String> temp = new HashMap<>(map);
-            for (Map.Entry<String, String> entry: temp.entrySet()) {
+            for (Map.Entry<String, String> entry : temp.entrySet()) {
                 if (entry.getValue() == null) {
                     map.remove(entry.getKey());
                 }

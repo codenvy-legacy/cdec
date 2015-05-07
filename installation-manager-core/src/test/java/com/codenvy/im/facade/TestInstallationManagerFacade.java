@@ -17,24 +17,27 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-import com.codenvy.im.utils.che.AccountUtils;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
+import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -45,12 +48,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -59,25 +60,35 @@ import static org.testng.Assert.assertNull;
  */
 public class TestInstallationManagerFacade {
     private InstallationManagerFacade installationManagerFacade;
+    private SaasAuthServiceProxy saasAuthServiceProxy;
+    private SaasUserCredentials  testCredentials;
+    private Artifact             cdecArtifact;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
-    private Artifact            cdecArtifact;
-    private UserCredentials     testCredentials;
+    @Mock
+    private InstallationManager     mockInstallationManager;
+    @Mock
+    private HttpTransport           mockTransport;
+    @Mock
+    private SaasAccountServiceProxy saasAccountServiceProxy;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        mockInstallationManager = mock(InstallationManager.class);
-        mockTransport = mock(HttpTransport.class);
+        initMocks(this);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
-        installationManagerFacade = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
-        testCredentials = new UserCredentials("auth token");
+        saasAuthServiceProxy = new SaasAuthServiceProxy("api/endpoint", mockTransport);
+        saasAccountServiceProxy = new SaasAccountServiceProxy("api/endpoint", mockTransport);
+        installationManagerFacade = new InstallationManagerFacade("update/endpoint",
+                                                                  mockInstallationManager,
+                                                                  mockTransport,
+                                                                  saasAuthServiceProxy,
+                                                                  saasAccountServiceProxy);
+        testCredentials = new SaasUserCredentials("auth token");
     }
 
     @Test
     public void testInstall() throws Exception {
         InstallOptions installOptions = new InstallOptions();
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setInstallOptions(installOptions);
         Version version = Version.valueOf("2.10.5");
@@ -96,11 +107,10 @@ public class TestInstallationManagerFacade {
                                "  \"status\" : \"OK\"\n" +
                                "}");
     }
-
     @Test
     public void testInstallError() throws Exception {
         InstallOptions installOptions = new InstallOptions();
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setVersion("1.0.1")
                                        .setInstallOptions(installOptions);
@@ -123,7 +133,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testGetVersionToInstallVersionSetExplicitly() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName()).setVersion("1.0.1");
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName()).setVersion("1.0.1");
 
         doReturn(Version.valueOf("1.0.2")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
@@ -135,7 +145,7 @@ public class TestInstallationManagerFacade {
 
     @Test
     public void testGetVersionToInstallFirstInstallStep() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
 
         doReturn(Version.valueOf("1.0.2")).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
@@ -150,7 +160,7 @@ public class TestInstallationManagerFacade {
         InstallOptions installOptionsWithStep1 = new InstallOptions();
         installOptionsWithStep1.setStep(1);
 
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setInstallOptions(installOptionsWithStep1);
 
@@ -164,7 +174,7 @@ public class TestInstallationManagerFacade {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testGetVersionToInstallErrorFirstInstallStep() throws Exception {
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
 
         doReturn(null).when(mockInstallationManager).getLatestInstallableVersion(testCredentials.getToken(), cdecArtifact);
         doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(mockInstallationManager)
@@ -178,7 +188,7 @@ public class TestInstallationManagerFacade {
         InstallOptions installOptionsWithStep1 = new InstallOptions();
         installOptionsWithStep1.setStep(1);
 
-        Request request = new Request().setUserCredentials(testCredentials)
+        Request request = new Request().setSaasUserCredentials(testCredentials)
                                        .setArtifactName(cdecArtifact.getName())
                                        .setInstallOptions(installOptionsWithStep1);
 
@@ -192,13 +202,13 @@ public class TestInstallationManagerFacade {
     public void testAddNode() throws IOException {
         doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null)).when(mockInstallationManager).addNode("builder.node.com");
         assertEquals(installationManagerFacade.addNode("builder.node.com"), "{\n"
-                                                                             + "  \"node\" : {\n"
-                                                                             + "    \"type\" : \"BUILDER\",\n"
-                                                                             + "    \"host\" : \"builder.node.com\",\n"
-                                                                             + "    \"status\" : \"SUCCESS\"\n"
-                                                                             + "  },\n"
-                                                                             + "  \"status\" : \"OK\"\n"
-                                                                             + "}");
+                                                                            + "  \"node\" : {\n"
+                                                                            + "    \"type\" : \"BUILDER\",\n"
+                                                                            + "    \"host\" : \"builder.node.com\",\n"
+                                                                            + "    \"status\" : \"SUCCESS\"\n"
+                                                                            + "  },\n"
+                                                                            + "  \"status\" : \"OK\"\n"
+                                                                            + "}");
     }
 
 
@@ -207,9 +217,9 @@ public class TestInstallationManagerFacade {
         doThrow(new IOException("error")).when(mockInstallationManager).addNode("builder.node.com");
 
         assertEquals(installationManagerFacade.addNode("builder.node.com"), "{\n"
-                                                                             + "  \"message\" : \"error\",\n"
-                                                                             + "  \"status\" : \"ERROR\"\n"
-                                                                             + "}");
+                                                                            + "  \"message\" : \"error\",\n"
+                                                                            + "  \"status\" : \"ERROR\"\n"
+                                                                            + "}");
     }
 
     @Test
@@ -311,16 +321,16 @@ public class TestInstallationManagerFacade {
         doThrow(new IOException("error")).when(mockInstallationManager).restore(testBackupConfig);
 
         assertEquals(installationManagerFacade.restore(testBackupConfig), "{\n"
-                                                                           + "  \"backup\" : {\n"
-                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                           + "    \"artifactInfo\" : {\n"
-                                                                           + "      \"artifact\" : \"codenvy\"\n"
-                                                                           + "    },\n"
-                                                                           + "    \"status\" : \"FAILURE\"\n"
-                                                                           + "  },\n"
-                                                                           + "  \"message\" : \"error\",\n"
-                                                                           + "  \"status\" : \"ERROR\"\n"
-                                                                           + "}");
+                                                                          + "  \"backup\" : {\n"
+                                                                          + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                          + "    \"artifactInfo\" : {\n"
+                                                                          + "      \"artifact\" : \"codenvy\"\n"
+                                                                          + "    },\n"
+                                                                          + "    \"status\" : \"FAILURE\"\n"
+                                                                          + "  },\n"
+                                                                          + "  \"message\" : \"error\",\n"
+                                                                          + "  \"status\" : \"ERROR\"\n"
+                                                                          + "}");
     }
 
     @Test
@@ -336,13 +346,12 @@ public class TestInstallationManagerFacade {
                                              + "}";
 
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", TEST_USER_NAME,
                                                               "password", TEST_USER_PASSWORD));
 
-        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
+        doReturn(TEST_ACCESS_TOKEN_JSON).when(mockTransport).doPost("api/endpoint/auth/login", body);
 
-        String result = installationManagerFacade.login(testSaasUsernameAndPassword);
+        String result = installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result, "{\n"
                              + "  \"value\" : \"accessToken\"\n"
                              + "}");
@@ -362,9 +371,9 @@ public class TestInstallationManagerFacade {
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", TEST_USER_NAME,
                                                               "password", TEST_USER_PASSWORD));
 
-        doReturn(null).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
+        doReturn(null).when(mockTransport).doPost("api/endpoint/auth/login", body);
 
-        String result = installationManagerFacade.login(testSaasUsernameAndPassword);
+        String result = installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertNull(result);
     }
 
@@ -379,13 +388,12 @@ public class TestInstallationManagerFacade {
                                              + "}";
 
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", TEST_USER_NAME,
                                                               "password", TEST_USER_PASSWORD));
 
-        doThrow(new HttpException(500, "error")).when(mockTransport).doPost("api/endpoint/auth/login", body, null);
+        doThrow(new HttpException(500, "error")).when(mockTransport).doPost("api/endpoint/auth/login", body);
 
-        installationManagerFacade.login(testSaasUsernameAndPassword);
+        installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
     }
 
     @Test
@@ -393,11 +401,11 @@ public class TestInstallationManagerFacade {
         final String TEST_ACCOUNT_ID = "accountId";
         final String TEST_ACCESS_TOKEN = "accessToken";
 
-        UserCredentials userCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request request = new Request().setUserCredentials(userCredentials);
+        SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request request = new Request().setSaasUserCredentials(userCredentials);
 
         final String SUBSCRIPTION_ID = "subscription_id1";
-        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT);
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
@@ -407,15 +415,14 @@ public class TestInstallationManagerFacade {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        String testDescriptorJson = "{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        String testDescriptorJson = "{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                                     +",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
-        when(mockTransport.doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN))
-            .thenReturn("[" + testDescriptorJson + "]");
+        doReturn("[" + testDescriptorJson + "]").when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
-        String result = installationManagerFacade.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
+        String result = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
         assertEquals(result, "{\n"
-                             + "  \"endDate\" : \"" + endDate + "\",\n"
                              + "  \"startDate\" : \"" + startDate + "\",\n"
+                             + "  \"endDate\" : \"" + endDate + "\",\n"
                              + "  \"links\" : [ ],\n"
                              + "  \"serviceId\" : \"OnPremises\",\n"
                              + "  \"properties\" : { },\n"
@@ -428,13 +435,12 @@ public class TestInstallationManagerFacade {
         final String TEST_ACCOUNT_ID = "accountId";
         final String TEST_ACCESS_TOKEN = "accessToken";
 
-        UserCredentials userCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request request = new Request().setUserCredentials(userCredentials);
+        SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request request = new Request().setSaasUserCredentials(userCredentials);
 
-        when(mockTransport.doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN))
-            .thenReturn("[]");
+        doReturn("[]").when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
-        String result = installationManagerFacade.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
+        String result = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
         assertNull(result);
     }
 
@@ -444,13 +450,13 @@ public class TestInstallationManagerFacade {
         final String TEST_ACCOUNT_ID = "accountId";
         final String TEST_ACCESS_TOKEN = "accessToken";
 
-        UserCredentials userCredentials = new UserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request request = new Request().setUserCredentials(userCredentials);
+        SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        Request request = new Request().setSaasUserCredentials(userCredentials);
 
         doThrow(new HttpException(500, "error")).when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
-        installationManagerFacade.getSubscriptionDescriptor(AccountUtils.ON_PREMISES, request);
+        installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
     }
-
+    
     @Test
     public void testChangeAdminPassword() throws Exception {
         byte[] pwd = "password".getBytes("UTF-8");

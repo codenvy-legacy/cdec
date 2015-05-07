@@ -18,15 +18,15 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.CheckInstalledVersionCommand;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.command.CommandLibrary;
-import com.codenvy.im.command.MacroCommand;
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.commands.CheckInstalledVersionCommand;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandLibrary;
+import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -38,23 +38,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.im.backup.BackupConfig.Component.LDAP;
-import static com.codenvy.im.backup.BackupConfig.Component.MONGO;
-import static com.codenvy.im.backup.BackupConfig.getComponentTempPath;
-import static com.codenvy.im.command.CommandLibrary.createCopyFromLocalToRemoteCommand;
-import static com.codenvy.im.command.CommandLibrary.createCopyFromRemoteToLocalCommand;
-import static com.codenvy.im.command.CommandLibrary.createFileRestoreOrBackupCommand;
-import static com.codenvy.im.command.CommandLibrary.createPackCommand;
-import static com.codenvy.im.command.CommandLibrary.createPatchCommand;
-import static com.codenvy.im.command.CommandLibrary.createPropertyReplaceCommand;
-import static com.codenvy.im.command.CommandLibrary.createReplaceCommand;
-import static com.codenvy.im.command.CommandLibrary.createStartServiceCommand;
-import static com.codenvy.im.command.CommandLibrary.createStopServiceCommand;
-import static com.codenvy.im.command.CommandLibrary.createUnpackCommand;
-import static com.codenvy.im.command.MacroCommand.createCommand;
-import static com.codenvy.im.command.SimpleCommand.createCommand;
-import static com.codenvy.im.node.NodeConfig.extractConfigFrom;
-import static com.codenvy.im.node.NodeConfig.extractConfigsFrom;
+import static com.codenvy.im.commands.CommandLibrary.createCopyFromLocalToRemoteCommand;
+import static com.codenvy.im.commands.CommandLibrary.createCopyFromRemoteToLocalCommand;
+import static com.codenvy.im.commands.CommandLibrary.createFileRestoreOrBackupCommand;
+import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
+import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
+import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createStartServiceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createStopServiceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createUnpackCommand;
+import static com.codenvy.im.commands.MacroCommand.createCommand;
+import static com.codenvy.im.commands.SimpleCommand.createCommand;
+import static com.codenvy.im.managers.BackupConfig.Component.LDAP;
+import static com.codenvy.im.managers.BackupConfig.Component.MONGO;
+import static com.codenvy.im.managers.BackupConfig.getComponentTempPath;
+import static com.codenvy.im.managers.NodeConfig.extractConfigFrom;
+import static com.codenvy.im.managers.NodeConfig.extractConfigsFrom;
 import static java.lang.String.format;
 
 /**
@@ -216,7 +216,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     commands.add(createPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
 
-                for (Map.Entry<String, String> e : ConfigUtil.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
+                for (Map.Entry<String, String> e : ConfigManager.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
                     String replacingToken = e.getKey();
                     String replacement = e.getValue();
 
@@ -335,7 +335,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 }
 
                 final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
-                for (Map.Entry<String, String> e : ConfigUtil.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
+                for (Map.Entry<String, String> e : ConfigManager.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
                     String replacingToken = e.getKey();
                     String replacement = e.getValue();
 
@@ -390,10 +390,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * @return MacroCommand which holds all commands
      */
     @Override
-    public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+    public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
+        Config codenvyConfig = codenvyConfigManager.loadInstalledCodenvyConfig();
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
@@ -496,10 +496,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * @return MacroCommand which holds all commands
      */
     @Override
-    public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+    public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config codenvyConfig = codenvyConfigUtil.loadInstalledCodenvyConfig();
+        Config codenvyConfig = codenvyConfigManager.loadInstalledCodenvyConfig();
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 

@@ -18,8 +18,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.backup.BackupConfig;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.managers.BackupConfig;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;

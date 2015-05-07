@@ -17,14 +17,16 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.InstallationManager;
-import com.codenvy.im.InstallationManagerImpl;
-import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.BaseTest;
+import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
+import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpTransport;
 
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -32,7 +34,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
+import static com.codenvy.im.saas.SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
@@ -40,28 +42,35 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 
 /**
  * @author Dmytro Nochevnov
  */
-public class TestCheckSubscriptionFacade {
-    private InstallationManagerFacade installationManagerService;
+public class TestCheckSubscriptionFacade extends BaseTest {
+    @Mock
+    private InstallationManager  installationManager;
+    @Mock
+    private SaasAuthServiceProxy saasAuthServiceProxy;
+    @Mock
+    private HttpTransport        transport;
+    @Mock
+    private Request              request;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       transport;
-    private Request             request;
+    private InstallationManagerFacade installationManagerService;
+    private SaasAccountServiceProxy saasAccountServiceProxy;
 
     @BeforeMethod
     public void init() {
-        initMocks();
-        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, transport);
-        request = new Request().setUserCredentials(new UserCredentials("auth token", "accountId"));
-    }
-
-    public void initMocks() {
-        mockInstallationManager = PowerMockito.mock(InstallationManagerImpl.class);
-        transport = Mockito.mock(HttpTransport.class);
+        initMocks(this);
+        saasAccountServiceProxy = new SaasAccountServiceProxy("update/endpoint", transport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint",
+                                                                   installationManager,
+                                                                   transport,
+                                                                   saasAuthServiceProxy,
+                                                                   saasAccountServiceProxy);
+        request = new Request().setSaasUserCredentials(new SaasUserCredentials("auth token", "accountId"));
     }
 
     @Test
@@ -76,7 +85,7 @@ public class TestCheckSubscriptionFacade {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("account"), eq("auth token")))
-            .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
@@ -117,11 +126,6 @@ public class TestCheckSubscriptionFacade {
 
     @Test
     public void testCheckSubscriptionErrorIfStartDateIsAbsent() throws Exception {
-        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
-        Calendar cal = getInstance();
-        cal.add(Calendar.DATE, 1);
-        String endDate = subscriptionDateFormat.format(cal.getTime());
-
         when(transport.doGet(endsWith("account"), eq("auth token")))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
         when(transport.doGet(endsWith("account/accountId/subscriptions"), eq("auth token")))
@@ -193,7 +197,8 @@ public class TestCheckSubscriptionFacade {
 
     @Test
     public void testAddTrialSubscriptionFailedWhenRequestFailed() throws Exception {
-        doThrow(IOException.class).when(transport).doPost(endsWith("subscription/" + request.obtainAccountId()), isNull(), eq(request.obtainAccessToken()));
+        doThrow(IOException.class).when(transport)
+                                  .doPost(endsWith("subscription/" + request.obtainAccountId()), isNull(), eq(request.obtainAccessToken()));
         String response = installationManagerService.addTrialSubscription(request);
         assertEquals(response, "{\n" +
                                "  \"status\" : \"ERROR\"\n" +

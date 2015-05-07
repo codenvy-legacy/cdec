@@ -25,8 +25,8 @@ import com.codenvy.client.Codenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.saas.SaasUserCredentials;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -155,14 +155,14 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
-        Request request = new Request().setUserCredentials(getCredentials());
+        Request request = new Request().setSaasUserCredentials(getCredentials());
         String json = facade.getAccountReferenceWhereUserIsOwner(accountName, request);
         return json == null ? null : createDtoFromJson(json, AccountReference.class);
     }
 
 
-    protected UserCredentials getCredentials() {
-        return new UserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
+    protected SaasUserCredentials getCredentials() {
+        return new SaasUserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
     }
 
     @Nonnull
@@ -223,6 +223,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected Request createRequestWithUserCredentials() {
         validateIfUserLoggedIn();
-        return new Request().setUserCredentials(getCredentials());
+        return new Request().setSaasUserCredentials(getCredentials());
     }
 }

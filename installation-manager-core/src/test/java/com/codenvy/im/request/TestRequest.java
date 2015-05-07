@@ -19,11 +19,12 @@ package com.codenvy.im.request;
 
 
 import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.facade.UserCredentials;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Version;
+
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -40,13 +41,13 @@ public class TestRequest {
         Request testRequest = new Request()
                 .setArtifactName("codenvy")
                 .setVersion("1.0.1")
-                .setUserCredentials(new UserCredentials("test token", "test account id"));
+                .setSaasUserCredentials(new SaasUserCredentials("test token", "test account id"));
 
         assertEquals(testRequest.getArtifactName(), CDECArtifact.NAME);
         assertEquals(testRequest.createArtifact(), ArtifactFactory.createArtifact(CDECArtifact.NAME));
         assertEquals(testRequest.getVersion(), "1.0.1");
         assertEquals(testRequest.createVersion(), Version.valueOf("1.0.1"));
-        Assert.assertNotNull(testRequest.getUserCredentials());
+        Assert.assertNotNull(testRequest.getSaasUserCredentials());
         assertEquals(testRequest.obtainAccessToken(), "test token");
         assertEquals(testRequest.obtainAccountId(), "test account id");
     }
@@ -81,12 +82,12 @@ public class TestRequest {
         Request request1 = new Request()
                 .setArtifactName("codenvy")
                 .setVersion("1.0.1")
-                .setUserCredentials(new UserCredentials("test token", "test account id"));
+                .setSaasUserCredentials(new SaasUserCredentials("test token", "test account id"));
 
         Request request2 = new Request()
                 .setArtifactName("codenvy")
                 .setVersion("1.0.1")
-                .setUserCredentials(new UserCredentials("test token", "test account id"));
+                .setSaasUserCredentials(new SaasUserCredentials("test token", "test account id"));
 
         assertTrue(request1.equals(request2));
         assertEquals(request1.hashCode(), request2.hashCode());
@@ -100,11 +101,13 @@ public class TestRequest {
     }
 
     @Test(dataProvider = "testEqualsAndHashCodeData")
-    public void testEqualsAndHashCode(UserCredentials credentials1, String artifact1, String version1, InstallOptions options1,
-                                      UserCredentials credentials2, String artifact2, String version2, InstallOptions options2,
+    public void testEqualsAndHashCode(SaasUserCredentials credentials1, String artifact1, String version1, InstallOptions options1,
+                                      SaasUserCredentials credentials2, String artifact2, String version2, InstallOptions options2,
                                       boolean expectedEquality) throws Exception {
-        Request request1 = new Request().setUserCredentials(credentials1).setArtifactName(artifact1).setVersion(version1).setInstallOptions(options1);
-        Request request2 = new Request().setUserCredentials(credentials2).setArtifactName(artifact2).setVersion(version2).setInstallOptions(options2);
+        Request request1 =
+                new Request().setSaasUserCredentials(credentials1).setArtifactName(artifact1).setVersion(version1).setInstallOptions(options1);
+        Request request2 =
+                new Request().setSaasUserCredentials(credentials2).setArtifactName(artifact2).setVersion(version2).setInstallOptions(options2);
 
         assertEquals(request1.equals(request2), expectedEquality);
         request1.hashCode();
@@ -117,48 +120,48 @@ public class TestRequest {
              null, null, null, null,
              true},
 
-            {new UserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
-             new UserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
+            {new SaasUserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
+             new SaasUserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
              true},
 
-            {new UserCredentials("token1"), null, null, null,
+            {new SaasUserCredentials("token1"), null, null, null,
              null, null, null, null,
              false},
-            {new UserCredentials("token1"), null, null, null,
-             new UserCredentials("token2"), null, null, null,
+            {new SaasUserCredentials("token1"), null, null, null,
+             new SaasUserCredentials("token2"), null, null, null,
              false},
             {null, null, null, null,
-             new UserCredentials("token2"), null, null, null,
+             new SaasUserCredentials("token2"), null, null, null,
              false},
 
-            {new UserCredentials("token1"), "artifact1", null, null,
-             new UserCredentials("token1"), null, null, null,
+            {new SaasUserCredentials("token1"), "artifact1", null, null,
+             new SaasUserCredentials("token1"), null, null, null,
              false},
-            {new UserCredentials("token1"), "artifact1", null, null,
-             new UserCredentials("token1"), "artifact2", null, null,
+            {new SaasUserCredentials("token1"), "artifact1", null, null,
+             new SaasUserCredentials("token1"), "artifact2", null, null,
              false},
-            {new UserCredentials("token1"), null, null, null,
-             new UserCredentials("token1"), "artifact2", null, null,
-             false},
-
-            {new UserCredentials("token1"), "artifact1", "1.0.0", null,
-             new UserCredentials("token1"), "artifact1", null, null,
-             false},
-            {new UserCredentials("token1"), "artifact1", "1.0.0", null,
-             new UserCredentials("token1"), "artifact1", "1.0.1", null,
-             false},
-            {new UserCredentials("token1"), "artifact1", null, null,
-             new UserCredentials("token1"), "artifact1", "1.0.1", null,
+            {new SaasUserCredentials("token1"), null, null, null,
+             new SaasUserCredentials("token1"), "artifact2", null, null,
              false},
 
-            {new UserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
-             new UserCredentials("token1"), "artifact1", "1.0.0", null,
+            {new SaasUserCredentials("token1"), "artifact1", "1.0.0", null,
+             new SaasUserCredentials("token1"), "artifact1", null, null,
              false},
-            {new UserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
-             new UserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(2),
+            {new SaasUserCredentials("token1"), "artifact1", "1.0.0", null,
+             new SaasUserCredentials("token1"), "artifact1", "1.0.1", null,
              false},
-            {new UserCredentials("token1"), "artifact1", "1.0.0", null,
-             new UserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(2),
+            {new SaasUserCredentials("token1"), "artifact1", null, null,
+             new SaasUserCredentials("token1"), "artifact1", "1.0.1", null,
+             false},
+
+            {new SaasUserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
+             new SaasUserCredentials("token1"), "artifact1", "1.0.0", null,
+             false},
+            {new SaasUserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(1),
+             new SaasUserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(2),
+             false},
+            {new SaasUserCredentials("token1"), "artifact1", "1.0.0", null,
+             new SaasUserCredentials("token1"), "artifact1", "1.0.0", new InstallOptions().setStep(2),
              false},
         };
     }

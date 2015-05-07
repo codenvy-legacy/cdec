@@ -17,13 +17,14 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.im.InstallationManager;
-import com.codenvy.im.InstallationManagerImpl;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.InstallationManagerImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+
 import org.eclipse.che.inject.DynaModule;
 
 /** @author Dmytro Nochevnov */

@@ -24,8 +24,8 @@ import com.codenvy.cli.preferences.PreferencesAPI;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.facade.UserCredentials;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.google.common.io.Files;
 
 import org.apache.felix.service.command.CommandSession;
@@ -106,7 +106,7 @@ public class TestAbstractIMCommand {
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
-        Request request = new Request().setUserCredentials(spyCommand.getCredentials());
+        Request request = new Request().setSaasUserCredentials(spyCommand.getCredentials());
         doReturn(TEST_ACCOUNT_REFERENCE).when(service).getAccountReferenceWhereUserIsOwner("accountName", request);
 
         AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner("accountName");
@@ -189,7 +189,7 @@ public class TestAbstractIMCommand {
 
         spyCommand.preferencesStorage.setAccountId("testAccountId");
 
-        UserCredentials credentials = spyCommand.getCredentials();
+        SaasUserCredentials credentials = spyCommand.getCredentials();
 
         assertEquals(credentials.getToken(), TEST_TOKEN);
         assertEquals(credentials.getAccountId(), "testAccountId");

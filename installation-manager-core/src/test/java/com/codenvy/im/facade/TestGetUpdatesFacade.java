@@ -19,18 +19,18 @@ package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.exceptions.AuthenticationException;
-import com.codenvy.im.InstallationManager;
-import com.codenvy.im.InstallationManagerImpl;
-import com.codenvy.im.request.Request;
+import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -46,24 +46,28 @@ import static org.testng.Assert.assertEquals;
  * @author Dmytro Nochevnov
  */
 public class TestGetUpdatesFacade {
-    private InstallationManagerFacade installationManagerService;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       transport;
-    private Artifact            installManagerArtifact;
-    private Artifact            cdecArtifact;
-    private Request             request;
+    @Mock
+    private InstallationManager     mockInstallationManager;
+    @Mock
+    private HttpTransport           transport;
+    @Mock
+    private SaasAuthServiceProxy    saasAuthServiceProxy;
+    @Mock
+    private SaasAccountServiceProxy saasAccountServiceProxy;
+
+    private InstallationManagerFacade installationManagerService;
+    private Artifact                  installManagerArtifact;
+    private Artifact                  cdecArtifact;
 
     @BeforeMethod
     public void init() throws ArtifactNotFoundException {
-        initMocks();
-        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, transport);
-        request = new Request().setUserCredentials(new UserCredentials("auth token", "accountId"));
-    }
-
-    public void initMocks() throws ArtifactNotFoundException {
-        mockInstallationManager = PowerMockito.mock(InstallationManagerImpl.class);
-        transport = Mockito.mock(HttpTransport.class);
+        MockitoAnnotations.initMocks(this);
+        installationManagerService = new InstallationManagerFacade("update/endpoint",
+                                                                   mockInstallationManager,
+                                                                   transport,
+                                                                   saasAuthServiceProxy,
+                                                                   saasAccountServiceProxy);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }
@@ -102,8 +106,6 @@ public class TestGetUpdatesFacade {
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
         when(mockInstallationManager.getUpdates()).thenThrow(new AuthenticationException());
 
-        Request request = new Request().setUserCredentials(new UserCredentials("incorrect-token", "accountId"));
-
         String response = installationManagerService.getUpdates();
         assertEquals(response, "{\n" +
                                "  \"message\" : \"Authentication error. Authentication token might be expired or invalid.\",\n" +
@@ -126,8 +128,6 @@ public class TestGetUpdatesFacade {
     @Test
     public void testGetUpdatesCatchesException() throws Exception {
         when(mockInstallationManager.getUpdates()).thenThrow(new IOException("Error"));
-
-        Request request = new Request().setUserCredentials(new UserCredentials("incorrect-token", "accountId"));
 
         String response = installationManagerService.getUpdates();
 

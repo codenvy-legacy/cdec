@@ -18,10 +18,13 @@
 package com.codenvy.im.update;
 
 
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
+
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -69,12 +72,9 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
-import static com.codenvy.im.utils.che.AccountUtils.ON_PREMISES;
+import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.che.UserUtils.getUserEmail;
-import static com.codenvy.im.utils.che.AccountUtils.checkIfUserIsOwnerOfAccount;
-import static com.codenvy.im.utils.che.AccountUtils.hasValidSubscription;
 import static java.lang.String.format;
 
 
@@ -94,23 +94,29 @@ public class RepositoryService {
             "You do not have a valid subscription to install Codenvy. You previously had a 30 day trial subscription, but it has " +
             "also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase.";
 
-    private final String        apiEndpoint;
-    private final ArtifactStorage artifactStorage;
-    private final HttpTransport httpTransport;
-    private final UserManager   userManager;
-    private final MailUtil      mailUtil;
+    private final String                  saasApiEndpoint;
+    private final ArtifactStorage         artifactStorage;
+    private final HttpTransport           httpTransport;
+    private final UserManager             userManager;
+    private final MailUtil                mailUtil;
+    private final SaasUserServiceProxy    saasUserServiceProxy;
+    private final SaasAccountServiceProxy saasAccountServiceProxy;
 
     @Inject
-    public RepositoryService(@Named("saas.api.endpoint") String apiEndpoint,
+    public RepositoryService(@Named("saas.api.endpoint") String saasApiEndpoint,
                              UserManager userManager,
                              ArtifactStorage artifactStorage,
                              HttpTransport httpTransport,
-                             MailUtil mailUtil) {
+                             MailUtil mailUtil,
+                             SaasUserServiceProxy saasUserServiceProxy,
+                             SaasAccountServiceProxy saasAccountServiceProxy) {
         this.artifactStorage = artifactStorage;
         this.httpTransport = httpTransport;
-        this.apiEndpoint = apiEndpoint;
+        this.saasApiEndpoint = saasApiEndpoint;
         this.userManager = userManager;
         this.mailUtil = mailUtil;
+        this.saasUserServiceProxy = saasUserServiceProxy;
+        this.saasAccountServiceProxy = saasAccountServiceProxy;
     }
 
     /**
@@ -205,21 +211,16 @@ public class RepositoryService {
             String accessToken = userManager.getCurrentUser().getToken();
             String userId = userManager.getCurrentUser().getId();
 
-            if (!checkIfUserIsOwnerOfAccount(httpTransport,
-                                             apiEndpoint,
-                                             accessToken,
-                                             accountId)) {
+            if (!saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(accessToken, accountId)) {
                 return Response.status(Response.Status.FORBIDDEN)
                                .entity(format("Unexpected error. Can't download artifact. User '%s' is not owner of the account '%s'.",
                                               userId, accountId)).build();
             }
 
 
-            if (requiredSubscription != null && !hasValidSubscription(httpTransport,
-                                                                      apiEndpoint,
-                                                                      requiredSubscription,
-                                                                      accessToken,
-                                                                      accountId)) {
+            if (requiredSubscription != null && !saasAccountServiceProxy.hasValidSubscription(requiredSubscription,
+                                                                                              accessToken,
+                                                                                              accountId)) {
 
                 return Response.status(Response.Status.FORBIDDEN)
                                .entity("You do not have a valid subscription. You are not permitted to download '" + artifact +
@@ -420,16 +421,13 @@ public class RepositoryService {
         final String accessToken = userManager.getCurrentUser().getToken();
 
         try {
-            if (!checkIfUserIsOwnerOfAccount(httpTransport,
-                                             apiEndpoint,
-                                             accessToken,
-                                             accountId)) {
+            if (!saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(accessToken, accountId)) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account '%s'.",
                                               userId, accountId)).build();
             }
 
-            if (hasValidSubscription(httpTransport, apiEndpoint, ON_PREMISES, accessToken, accountId)) {
+            if (saasAccountServiceProxy.hasValidSubscription(ON_PREMISES, accessToken, accountId)) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
@@ -454,7 +452,7 @@ public class RepositoryService {
             newSubscription.setTrialDuration(trialDuration);
             newSubscription.setUsePaymentSystem(true);
 
-            Map m = asMap(httpTransport.doPost(combinePaths(apiEndpoint, "/account/subscriptions"), newSubscription, accessToken));
+            Map m = asMap(httpTransport.doPost(combinePaths(saasApiEndpoint, "/account/subscriptions"), newSubscription, accessToken));
             if (!m.containsKey("id")) {
                 if (m.containsKey("message")) {
                     throw new IOException(CAN_NOT_ADD_TRIAL_SUBSCRIPTION);
@@ -475,7 +473,7 @@ public class RepositoryService {
         try {
             String userEmail = VALID_EMAIL_ADDRESS_RFC822.matcher(user.getName()).matches()
                                ? user.getName()
-                               : getUserEmail(httpTransport, apiEndpoint, user.getToken());
+                               : saasUserServiceProxy.getUserEmail(user.getToken());
 
             mailUtil.sendNotificationLetter(accountId, userEmail);
             LOG.info(format("Subscription for %s was provisioned and notification mail was sent", userEmail));

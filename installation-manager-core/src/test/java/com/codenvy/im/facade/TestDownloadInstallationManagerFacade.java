@@ -17,20 +17,23 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.InstallationManager;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
+import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.io.FileUtils;
-import org.mockito.MockitoAnnotations;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
@@ -50,8 +53,8 @@ import static java.lang.Thread.sleep;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -62,26 +65,33 @@ public class TestDownloadInstallationManagerFacade {
 
     private InstallationManagerFacade installationManagerService;
 
-    private InstallationManager mockInstallationManager;
-    private HttpTransport       mockTransport;
+    @Mock
+    private InstallationManager     installationManager;
+    @Mock
+    private SaasAuthServiceProxy    saasAuthServiceProxy;
+    @Mock
+    private SaasAccountServiceProxy saasAccountServiceProxy;
+    @Mock
+    private HttpTransport           transport;
 
-    private Artifact        installManagerArtifact;
-    private Artifact        cdecArtifact;
-    private UserCredentials testCredentials;
-    private Path            pathCDEC;
-    private Path            pathIM;
+    private Artifact            installManagerArtifact;
+    private Artifact            cdecArtifact;
+    private SaasUserCredentials testCredentials;
+    private Path                pathCDEC;
+    private Path                pathIM;
 
     @BeforeMethod
     public void init() throws Exception {
-        mockInstallationManager = mock(InstallationManager.class);
-        mockTransport = mock(HttpTransport.class);
-        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, mockTransport);
-        MockitoAnnotations.initMocks(this);
-
+        initMocks(this);
+        installationManagerService = new InstallationManagerFacade("update/endpoint",
+                                                                   installationManager,
+                                                                   transport,
+                                                                   saasAuthServiceProxy,
+                                                                   saasAccountServiceProxy);
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
 
-        testCredentials = new UserCredentials(TEST_TOKEN, "accountId");
+        testCredentials = new SaasUserCredentials(TEST_TOKEN, "accountId");
 
         installManagerArtifact = createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
@@ -103,7 +113,7 @@ public class TestDownloadInstallationManagerFacade {
                 put(cdecArtifact, version200);
                 put(installManagerArtifact, version100);
             }
-        }).when(mockInstallationManager).getUpdatesToDownload(null, null);
+        }).when(installationManager).getUpdatesToDownload(null, null);
 
         doAnswer(new Answer() {
             @Override
@@ -111,7 +121,7 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(mockInstallationManager).download(cdecArtifact, version200);
+        }).when(installationManager).download(cdecArtifact, version200);
 
         doAnswer(new Answer() {
             @Override
@@ -119,15 +129,15 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathIM.toFile(), new byte[50]);
                 return pathIM;
             }
-        }).when(mockInstallationManager).download(installManagerArtifact, version100);
+        }).when(installationManager).download(installManagerArtifact, version100);
 
-        doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
-        doReturn(pathIM).when(mockInstallationManager).getPathToBinaries(installManagerArtifact, version100);
+        doReturn(pathCDEC).when(installationManager).getPathToBinaries(cdecArtifact, version200);
+        doReturn(pathIM).when(installationManager).getPathToBinaries(installManagerArtifact, version100);
 
-        doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
-        doReturn(50L).when(mockInstallationManager).getBinariesSize(installManagerArtifact, version100);
+        doReturn(100L).when(installationManager).getBinariesSize(cdecArtifact, version200);
+        doReturn(50L).when(installationManager).getBinariesSize(installManagerArtifact, version100);
 
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request().setSaasUserCredentials(testCredentials);
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -162,7 +172,7 @@ public class TestDownloadInstallationManagerFacade {
             {
                 put(cdecArtifact, version200);
             }
-        }).when(mockInstallationManager).getUpdatesToDownload(cdecArtifact, null);
+        }).when(installationManager).getUpdatesToDownload(cdecArtifact, null);
 
         doAnswer(new Answer() {
             @Override
@@ -170,12 +180,12 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(mockInstallationManager).download(cdecArtifact, version200);
+        }).when(installationManager).download(cdecArtifact, version200);
 
-        doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
-        doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
+        doReturn(pathCDEC).when(installationManager).getPathToBinaries(cdecArtifact, version200);
+        doReturn(100L).when(installationManager).getBinariesSize(cdecArtifact, version200);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -204,7 +214,7 @@ public class TestDownloadInstallationManagerFacade {
             {
                 put(cdecArtifact, version200);
             }
-        }).when(mockInstallationManager).getUpdatesToDownload(cdecArtifact, version200);
+        }).when(installationManager).getUpdatesToDownload(cdecArtifact, version200);
 
         doAnswer(new Answer() {
             @Override
@@ -212,12 +222,12 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(mockInstallationManager).download(cdecArtifact, version200);
+        }).when(installationManager).download(cdecArtifact, version200);
 
-        doReturn(pathCDEC).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
-        doReturn(100L).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
+        doReturn(pathCDEC).when(installationManager).getPathToBinaries(cdecArtifact, version200);
+        doReturn(100L).when(installationManager).getBinariesSize(cdecArtifact, version200);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -241,9 +251,9 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testDownloadErrorIfUpdatesAbsent() throws Exception {
-        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdatesToDownload(null, null);
+        doReturn(Collections.emptyMap()).when(installationManager).getUpdatesToDownload(null, null);
 
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request().setSaasUserCredentials(testCredentials);
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -260,7 +270,7 @@ public class TestDownloadInstallationManagerFacade {
                                                         "}");
 
         /* -------------- */
-        doReturn(Collections.emptyMap()).when(mockInstallationManager).getUpdatesToDownload(cdecArtifact, null);
+        doReturn(Collections.emptyMap()).when(installationManager).getUpdatesToDownload(cdecArtifact, null);
 
         request.setArtifactName(CDECArtifact.NAME);
         installationManagerService.startDownload(request);
@@ -297,23 +307,23 @@ public class TestDownloadInstallationManagerFacade {
     @Test
     public void testDownloadErrorIfSpecificVersionArtifactAbsent() throws Exception {
         Version version200 = Version.valueOf("2.0.0");
-        doThrow(new ArtifactNotFoundException(cdecArtifact, version200)).when(mockInstallationManager)
+        doThrow(new ArtifactNotFoundException(cdecArtifact, version200)).when(installationManager)
                                                                         .getUpdatesToDownload(cdecArtifact, version200
                                                                         );
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
-                .when(mockInstallationManager)
+                .when(installationManager)
                 .getPathToBinaries(cdecArtifact, version200);
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
-                .when(mockInstallationManager)
+                .when(installationManager)
                 .getBinariesSize(cdecArtifact, version200);
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
-                .when(mockInstallationManager)
+                .when(installationManager)
                 .download(cdecArtifact, version200);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -332,9 +342,9 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testDownloadErrorIfAuthenticationFailedOnGetUpdates() throws Exception {
-        when(mockInstallationManager.getUpdatesToDownload(null, null)).thenThrow(new AuthenticationException());
+        when(installationManager.getUpdatesToDownload(null, null)).thenThrow(new AuthenticationException());
 
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request().setSaasUserCredentials(testCredentials);
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -360,13 +370,13 @@ public class TestDownloadInstallationManagerFacade {
             {
                 put(cdecArtifact, version200);
             }
-        }).when(mockInstallationManager).getUpdatesToDownload(cdecArtifact, version200);
+        }).when(installationManager).getUpdatesToDownload(cdecArtifact, version200);
 
-        doThrow(new AuthenticationException()).when(mockInstallationManager).getPathToBinaries(cdecArtifact, version200);
-        doThrow(new AuthenticationException()).when(mockInstallationManager).getBinariesSize(cdecArtifact, version200);
-        doThrow(new AuthenticationException()).when(mockInstallationManager).download(cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(installationManager).getPathToBinaries(cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(installationManager).getBinariesSize(cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(installationManager).download(cdecArtifact, version200);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -386,11 +396,11 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
-        when(mockInstallationManager.getUpdatesToDownload(cdecArtifact, null))
+        when(installationManager.getUpdatesToDownload(cdecArtifact, null))
                 .thenThrow(new IllegalStateException("Valid subscription is required to download cdec"));
 
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
         installationManagerService.startDownload(request);
 
         DownloadStatusInfo info;
@@ -414,9 +424,9 @@ public class TestDownloadInstallationManagerFacade {
         final Version version101 = Version.valueOf("1.0.1");
         final Version version200 = Version.valueOf("2.0.0");
 
-        doReturn(false).when(mockInstallationManager).isInstallable(cdecArtifact, version100);
-        doReturn(true).when(mockInstallationManager).isInstallable(cdecArtifact, version101);
-        doReturn(true).when(mockInstallationManager).isInstallable(installManagerArtifact, version200);
+        doReturn(false).when(installationManager).isInstallable(cdecArtifact, version100);
+        doReturn(true).when(installationManager).isInstallable(cdecArtifact, version101);
+        doReturn(true).when(installationManager).isInstallable(installManagerArtifact, version200);
 
         doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
@@ -426,9 +436,9 @@ public class TestDownloadInstallationManagerFacade {
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
             }});
-        }}).when(mockInstallationManager).getDownloadedArtifacts();
+        }}).when(installationManager).getDownloadedArtifacts();
 
-        Request request = new Request().setUserCredentials(testCredentials);
+        Request request = new Request().setSaasUserCredentials(testCredentials);
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -459,12 +469,12 @@ public class TestDownloadInstallationManagerFacade {
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, Paths.get("target/file1"));
             put(version201, Paths.get("target/file2"));
-        }}).when(mockInstallationManager).getDownloadedVersions(installManagerArtifact);
+        }}).when(installationManager).getDownloadedVersions(installManagerArtifact);
 
-        doReturn(false).when(mockInstallationManager).isInstallable(installManagerArtifact, version200);
-        doReturn(true).when(mockInstallationManager).isInstallable(installManagerArtifact, version201);
+        doReturn(false).when(installationManager).isInstallable(installManagerArtifact, version200);
+        doReturn(true).when(installationManager).isInstallable(installManagerArtifact, version201);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -487,11 +497,11 @@ public class TestDownloadInstallationManagerFacade {
         final Version version200 = Version.valueOf("2.0.0");
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, Paths.get("target/file1"));
-        }}).when(mockInstallationManager).getDownloadedVersions(cdecArtifact);
+        }}).when(installationManager).getDownloadedVersions(cdecArtifact);
 
-        doReturn(true).when(mockInstallationManager).isInstallable(cdecArtifact, version200);
+        doReturn(true).when(installationManager).isInstallable(cdecArtifact, version200);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ {\n" +
@@ -506,9 +516,9 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
-        doReturn(new TreeMap<>()).when(mockInstallationManager).getDownloadedVersions(installManagerArtifact);
+        doReturn(new TreeMap<>()).when(installationManager).getDownloadedVersions(installManagerArtifact);
 
-        Request request = new Request().setUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
+        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
         String response = installationManagerService.getDownloads(request);
         assertEquals(response, "{\n" +
                                "  \"artifacts\" : [ ],\n" +

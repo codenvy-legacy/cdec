@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.im.backup.BackupConfig;
+import com.codenvy.im.managers.BackupConfig;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /** @author Dmytro Nochevnov */

@@ -17,8 +17,6 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 
 /** @author Anatoliy Bazko */

@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.im.node.NodeConfig;
+import com.codenvy.im.managers.NodeConfig;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /** @author Dmytro Nochevnov */

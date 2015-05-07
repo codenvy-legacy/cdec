@@ -17,9 +17,9 @@
  */
 package com.codenvy.im;
 
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableMap;
 
@@ -62,25 +62,25 @@ public class BaseTest {
                                                    "    certname = hostname\n");
     }
 
-    protected void prepareSingleNodeEnv(ConfigUtil configUtil, HttpTransport transport) throws Exception {
-        prepareSingleNodeEnv(configUtil);
+    protected void prepareSingleNodeEnv(ConfigManager configManager, HttpTransport transport) throws Exception {
+        prepareSingleNodeEnv(configManager);
         when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
     }
 
-    protected void prepareSingleNodeEnv(ConfigUtil configUtil) throws Exception {
+    protected void prepareSingleNodeEnv(ConfigManager configManager) throws Exception {
         Map<String, String> properties = ImmutableMap.of("host_url", "hostname");
 
         createSingleNodeConf();
-        doReturn(InstallType.SINGLE_SERVER).when(configUtil).detectInstallationType();
-        doReturn(new Config(properties)).when(configUtil).loadInstalledCodenvyConfig();
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
     }
 
-    protected void prepareMultiNodeEnv(ConfigUtil configUtil, HttpTransport transport) throws Exception {
-        prepareMultiNodeEnv(configUtil);
+    protected void prepareMultiNodeEnv(ConfigManager configManager, HttpTransport transport) throws Exception {
+        prepareMultiNodeEnv(configManager);
         when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
     }
 
-    protected void prepareMultiNodeEnv(ConfigUtil configUtil) throws Exception {
+    protected void prepareMultiNodeEnv(ConfigManager configManager) throws Exception {
         Map<String, String> properties = ImmutableMap.of
                 (
                         "api_host_name", "api.example.com",
@@ -89,7 +89,7 @@ public class BaseTest {
                 );
 
         createMultiNodeConf();
-        doReturn(InstallType.MULTI_SERVER).when(configUtil).detectInstallationType();
-        doReturn(new Config(properties)).when(configUtil).loadInstalledCodenvyConfig();
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
     }
 }

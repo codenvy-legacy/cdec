@@ -17,14 +17,15 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.exceptions.AuthenticationException;
-import com.codenvy.im.InstallationManager;
+import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
+import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpTransport;
 
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -32,6 +33,7 @@ import java.io.IOException;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -41,32 +43,42 @@ import static org.testng.AssertJUnit.assertNull;
 public class TestGetAccountIdFacade {
     public static final String TEST_ACCOUNT_ID = "accountId";
     public static final String ACCOUNT_NAME    = "accountName";
+
+    private SaasUserCredentials testCredentials;
+    private String              accountApiEndpoint;
+    private Request             request;
+
+    @Mock
+    private HttpTransport        transport;
+    @Mock
+    private InstallationManager  installationManager;
+    @Mock
+    private SaasAuthServiceProxy saasAuthServiceProxy;
+
     private InstallationManagerFacade installationManagerService;
-    private final UserCredentials testCredentials = new UserCredentials("auth token", null);
-    private String  accountApiEndpoint;
-    private Request request;
-
-    @Mock
-    private HttpTransport transport;
-
-    @Mock
-    private InstallationManager mockInstallationManager;
+    private SaasAccountServiceProxy   saasAccountServiceProxy;
 
     @BeforeMethod
     public void init() {
-        MockitoAnnotations.initMocks(this);
-        installationManagerService = new InstallationManagerFacade("update/endpoint", "api/endpoint", mockInstallationManager, transport);
+        initMocks(this);
+        saasAccountServiceProxy = new SaasAccountServiceProxy("api/endpoint", transport);
+        installationManagerService = new InstallationManagerFacade("update/endpoint",
+                                                                   installationManager,
+                                                                   transport,
+                                                                   saasAuthServiceProxy,
+                                                                   saasAccountServiceProxy);
         accountApiEndpoint = combinePaths("api/endpoint", "account");
-        request = new Request().setUserCredentials(testCredentials);
+        testCredentials = new SaasUserCredentials("auth token", null);
+        request = new Request().setSaasUserCredentials(testCredentials).setSaasUserCredentials(testCredentials);
     }
 
     @Test
     public void testGetAccountReference() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
-            .thenReturn("[{"
-                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                        + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
-                        + "}]");
+                .thenReturn("[{"
+                            + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                            + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
 
         String okResult = "{\n"
@@ -90,9 +102,9 @@ public class TestGetAccountIdFacade {
     public void testGetAccountReferenceFromSeveral() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
             .thenReturn("[{"
-                        + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                        + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                         + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
-                            + "},{roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                        + "},{roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"another-account-id\"}"
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(null, request);
@@ -137,7 +149,7 @@ public class TestGetAccountIdFacade {
     public void testGetAccountReferenceWithSpecificName() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
                 .thenReturn("[{"
-                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner(ACCOUNT_NAME, request);
@@ -163,7 +175,7 @@ public class TestGetAccountIdFacade {
     public void testGetAccountReferenceWithSpecificNameReturnNullIfAccountWasNotFound() throws Exception {
         when(transport.doGet(accountApiEndpoint, testCredentials.getToken()))
                 .thenReturn("[{"
-                            + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                            + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                             + "accountReference:{id:\"" + TEST_ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
                             + "}]");
         String response = installationManagerService.getAccountReferenceWhereUserIsOwner("some name", request);

@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.utils.che.AccountUtils;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -34,7 +34,7 @@ public class SubscriptionCommand extends AbstractIMCommand {
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        String subscription2check = subscription != null ? subscription : AccountUtils.ON_PREMISES;
+        String subscription2check = subscription != null ? subscription : SaasAccountServiceProxy.ON_PREMISES;
         console.printResponse(facade.checkSubscription(subscription2check, createRequestWithUserCredentials()));
     }
 }

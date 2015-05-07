@@ -3,20 +3,21 @@
 # bash <(curl -L -s https://start.codenvy.com/install-single)
 set -e
 
-ARTIFACT="codenvy"
-CODENVY_TYPE='single'
-
-if [ -z $1 ]; then
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
-elif [ "$1" == "-multi" ]; then
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
-    CODENVY_TYPE='multi'
-else
-    VERSION=$1
-fi
-
-CONFIG="codenvy-${CODENVY_TYPE}-server.properties"
 DIR="${HOME}/codenvy-im"
+ARTIFACT="codenvy"
+CODENVY_TYPE="single"
+HEADLESS=false
+VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+for var in "$@"; do
+    if [[ "$var" == "--multi" ]]; then
+        CODENVY_TYPE="multi"
+    elif [[ "$var" == "--headless" ]]; then
+        HEADLESS=true
+    elif [[ "$var" =~ --version=.* ]]; then
+        VERSION=`echo "$var" | sed -e "s/--version=//g"`
+    fi
+done
+CONFIG="codenvy-${CODENVY_TYPE}-server.properties"
 
 checkOS() {
     if [ -f /etc/redhat-release ]; then
@@ -175,6 +176,30 @@ preconfigureSystem() {
     installPackageIfNeed curl
 }
 
+pressAnyKeyToContinueAndClearConsole() {
+    if [[ ${HEADLESS} == false ]]; then
+        printPrompt; echo "Press any key to continue"
+        read -n1 -s
+        clear
+    fi
+}
+
+pressAnyKeyToContinue() {
+    if [[ ${HEADLESS} == false ]]; then
+        printPrompt; echo "Press any key to continue"
+        read -n1 -s
+    fi
+}
+
+pressYKeyToContinue() {
+    if [[ ${HEADLESS} == false ]]; then
+        printPrompt; echo -n "Continue installation [y/N]: "
+        read ANSWER
+        if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
+    fi
+}
+
+
 printPreInstallInfo_single() {
     checkOS
 
@@ -182,7 +207,7 @@ printPreInstallInfo_single() {
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    printPrompt; echo "Welcome.  This program installs a single node version of Codenvy On-Prem."
+    printPrompt; echo "Welcome. This program installs a single node version of Codenvy On-Prem."
     printPrompt; echo
     printPrompt; echo "This program will:"
     printPrompt; echo "1. Configure the system"
@@ -193,9 +218,7 @@ printPreInstallInfo_single() {
     printPrompt; echo "6. Boot Codenvy"
     printPrompt; echo
     printPrompt; echo
-    printPrompt; echo "Press any key to continue"
-    read -n1 -s
-    clear
+    pressAnyKeyToContinueAndClearConsole
 
     printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
@@ -207,20 +230,16 @@ printPreInstallInfo_single() {
     printPrompt; echo
     printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
     printPrompt; echo
-    printPrompt; echo "Press any key to continue"
-    read -n1 -s
-    clear
+    pressAnyKeyToContinueAndClearConsole
 
-    if [ ! -f ${CONFIG} ]; then
+    if [[ ! -f ${CONFIG} ]]; then
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
         printPrompt; echo "System admin user name : undetected - will prompt for entry"
         printPrompt; echo "System admin password  : undetected - will prompt for entry"
         printPrompt; echo "Codenvy DNS hostname   : not set - will prompt for entry"
         printPrompt; echo
-        printPrompt; echo "Press any key to continue"
-        printPrompt; echo
-        read -n1 -s
+        pressAnyKeyToContinue
         prepareConfig_single
         printPrompt; echo
     else
@@ -235,9 +254,7 @@ printPreInstallInfo_single() {
         printPrompt; echo
     fi
 
-    printPrompt; echo -n "Continue installation [y/N]: "
-    read ANSWER
-    if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
+    pressYKeyToContinue
 }
 
 printPreInstallInfo_multi() {
@@ -258,9 +275,7 @@ printPreInstallInfo_multi() {
     printPrompt; echo "6. Boot Codenvy"
     printPrompt; echo
     printPrompt; echo
-    printPrompt; echo "Press any key to continue"
-    read -n1 -s
-    clear
+    pressAnyKeyToContinue
 
     printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
@@ -277,16 +292,14 @@ printPreInstallInfo_multi() {
     printPrompt; echo
     printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
 
-    if [ ! -f ${CONFIG} ]; then
+    if [[ ! -f ${CONFIG} ]]; then
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
         printPrompt; echo "System admin user name       : undetected - will prompt for entry"
         printPrompt; echo "System admin password        : undetected - will prompt for entry"
         printPrompt; echo "Codenvy nodes' DNS hostnames : not set - will prompt for entry"
         printPrompt; echo
-        printPrompt; echo "Press any key to continue"
-        printPrompt; echo
-        read -n1 -s
+        pressAnyKeyToContinueAndClearConsole
         prepareConfig_multi
         printPrompt; echo
     else
@@ -318,9 +331,7 @@ printPreInstallInfo_multi() {
         printPrompt; echo
     fi
 
-    printPrompt; echo -n "Continue installation [y/N]: "
-    read ANSWER
-    if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
+    pressYKeyToContinue
 }
 
 doInstallStep1() {

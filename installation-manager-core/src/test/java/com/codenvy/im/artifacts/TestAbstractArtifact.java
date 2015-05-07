@@ -17,11 +17,10 @@
  */
 package com.codenvy.im.artifacts;
 
-import com.codenvy.im.backup.BackupConfig;
-import com.codenvy.im.command.Command;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.install.InstallOptions;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -242,12 +241,12 @@ public class TestAbstractArtifact {
         }
 
         @Override
-        public Command getBackupCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
             return null;
         }
 
         @Override
-        public Command getRestoreCommand(BackupConfig backupConfig, ConfigUtil codenvyConfigUtil) throws IOException {
+        public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
             return null;
         }
     }

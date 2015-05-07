@@ -17,10 +17,10 @@
  */
 package com.codenvy.im.utils;
 
-import com.codenvy.im.exceptions.AuthenticationException;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
 
-import com.codenvy.im.utils.che.AccountUtils;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -28,14 +28,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import static com.codenvy.im.utils.che.AccountUtils.SUBSCRIPTION_DATE_FORMAT;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -51,13 +50,17 @@ public class TestAccountUtils {
     private final static String ACCESS_TOKEN    = "accessToken";
     private final static String ACCOUNT_ID      = "accountId";
 
-    private HttpTransport mockTransport;
+    @Mock
+    private HttpTransport           transport;
+    private SaasAccountServiceProxy saasAccountServiceProxy;
+
     private SimpleDateFormat subscriptionDateFormat;
 
     @BeforeMethod
     public void setup() {
-        mockTransport = mock(HttpTransport.class);
-        subscriptionDateFormat = new SimpleDateFormat(SUBSCRIPTION_DATE_FORMAT);
+        initMocks(this);
+        saasAccountServiceProxy = new SaasAccountServiceProxy("", transport);
+        subscriptionDateFormat = new SimpleDateFormat(SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT);
     }
 
     @Test
@@ -70,33 +73,33 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                       + "accountReference:{id:\"another-id\"}"
-                                                                       + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
-                                                                       + "accountReference:{id:\"" +
-                                                                       ACCOUNT_ID + "\"}"
-                                                                       + "}]");
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "accountReference:{id:\"another-id\"}"
+                                                                   + "},{"
+                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "accountReference:{id:\"" +
+                                                                   ACCOUNT_ID + "\"}"
+                                                                   + "}]");
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
-        assertTrue(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
     public void testGetAccountIdWhereUserIsOwner() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"member-id\"}"
                                                                        + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                        + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", ACCESS_TOKEN, null);
+        AccountReference accountReference = saasAccountServiceProxy.getAccountReferenceWhereUserIsOwner(ACCESS_TOKEN, null);
         assertNotNull(accountReference);
         assertEquals(accountReference.getId(), "id1");
         assertEquals(accountReference.getName(), "name1");
@@ -104,7 +107,7 @@ public class TestAccountUtils {
 
     @Test
     public void testGetAccountIdWhereUserIsOwnerReturnNull() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"member-id\"}"
                                                                        + "},{"
@@ -114,23 +117,23 @@ public class TestAccountUtils {
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", ACCESS_TOKEN, null);
+        AccountReference accountReference = saasAccountServiceProxy.getAccountReferenceWhereUserIsOwner(ACCESS_TOKEN, null);
         assertNull(accountReference);
     }
 
     @Test
     public void testGetAccountIdWhereUserIsOwnerSpecificAccountName() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"member-id\"}"
                                                                        + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                        + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", ACCESS_TOKEN, "name2");
+        AccountReference accountReference = saasAccountServiceProxy.getAccountReferenceWhereUserIsOwner(ACCESS_TOKEN, "name2");
         assertNotNull(accountReference);
         assertEquals(accountReference.getId(), "id2");
         assertEquals(accountReference.getName(), "name2");
@@ -138,17 +141,17 @@ public class TestAccountUtils {
 
     @Test
     public void testGetAccountIdWhereUserIsOwnerSpecificAccountNameReturnNullIfAccountWasNotFound() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"member-id\"}"
                                                                        + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                        + "},{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = AccountUtils.getAccountReferenceWhereUserIsOwner(mockTransport, "", ACCESS_TOKEN, "name3");
+        AccountReference accountReference = saasAccountServiceProxy.getAccountReferenceWhereUserIsOwner(ACCESS_TOKEN, "name3");
         assertNull(accountReference);
     }
 
@@ -162,41 +165,41 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
                                                                        + "links:[{\"rel\":\"subscriptions\",\"href\":\"/account/"
                                                                        + ACCOUNT_ID
                                                                        + "/subscriptions\"}],"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"]"
+                                                                       + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"]"
                                                                        + "}]");
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        assertTrue(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
     public void testInvalidSubscription() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"" + ACCOUNT_ID +
                                                                        "\"}"
                                                                        + "}]");
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
                 .thenReturn("[{serviceId:invalid}]");
 
-        assertFalse(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test(expectedExceptions = AuthenticationException.class,
             expectedExceptionsMessageRegExp = "Authentication error. Authentication token might be expired or invalid.")
     public void testInvalidAuthentication() throws IOException {
         doThrow(new HttpException(403, "auth error"))
-                .when(mockTransport)
+                .when(transport)
                 .doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN);
 
-        AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test
@@ -209,10 +212,10 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
-        assertTrue(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -225,11 +228,11 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, -1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        assertFalse(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -242,11 +245,11 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 2);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        assertFalse(AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -256,11 +259,11 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",endDate:\"" + endDate + "\"}]");
 
-        AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -270,11 +273,11 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, -1);
         String startDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\"}]");
 
-        AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -290,11 +293,11 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 2);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -310,36 +313,36 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 2);
         String endDate = subscriptionDateWrongFormat.format(cal.getTime());
 
-        when(mockTransport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
-                .thenReturn("[{serviceId:" + AccountUtils.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+                .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        AccountUtils.hasValidSubscription(mockTransport, "", AccountUtils.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test
     public void checkIfUserIsOwnerOfAccountShouldReturnTrue() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
-                                                                       + "roles:[\"" + AccountUtils.ACCOUNT_OWNER_ROLE + "\"],"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                        + "}]");
-        assertTrue(AccountUtils.checkIfUserIsOwnerOfAccount(mockTransport, "", ACCESS_TOKEN, "id1"));
+        assertTrue(saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(ACCESS_TOKEN, "id1"));
     }
 
     @Test
     public void checkIfUserIsOwnerOfAccountReturnFalse() throws IOException {
-        when(mockTransport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
+        when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                        + "}]");
-        assertFalse(AccountUtils.checkIfUserIsOwnerOfAccount(mockTransport, "", ACCESS_TOKEN, "id1"));
+        assertFalse(saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(ACCESS_TOKEN, "id1"));
     }
 
     @Test
     public void testDeleteSubscription() throws Exception {
-        doNothing().when(mockTransport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
-        AccountUtils.deleteSubscription(mockTransport, "", ACCESS_TOKEN, "subscriptionId");
+        doNothing().when(transport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
+        saasAccountServiceProxy.deleteSubscription(ACCESS_TOKEN, "subscriptionId");
 
-        verify(mockTransport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
+        verify(transport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
     }
 }

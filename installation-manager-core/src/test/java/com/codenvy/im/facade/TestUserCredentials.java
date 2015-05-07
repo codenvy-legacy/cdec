@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.facade;
 
+import com.codenvy.im.saas.SaasUserCredentials;
+
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -27,7 +29,7 @@ public class TestUserCredentials {
 
     @Test
     public void testInstantiationWithTokenAndAccountId() {
-        UserCredentials credentials = new UserCredentials("token", "id");
+        SaasUserCredentials credentials = new SaasUserCredentials("token", "id");
 
         assertEquals(credentials.getToken(), "token");
         assertEquals(credentials.getAccountId(), "id");
@@ -35,7 +37,7 @@ public class TestUserCredentials {
 
     @Test
     public void testInstantiationWithToken() {
-        UserCredentials credentials = new UserCredentials("token");
+        SaasUserCredentials credentials = new SaasUserCredentials("token");
 
         assertEquals(credentials.getToken(), "token");
         assertNull(credentials.getAccountId());
@@ -43,17 +45,17 @@ public class TestUserCredentials {
 
     @Test
     public void testNoArgInstantiation() {
-        UserCredentials credentials = new UserCredentials();
+        SaasUserCredentials credentials = new SaasUserCredentials();
 
         assertNull(credentials.getToken());
         assertNull(credentials.getAccountId());
     }
 
     @Test
-    public void testClone() {
-        UserCredentials credentials = new UserCredentials("token", "id");
+    public void testClone() throws CloneNotSupportedException {
+        SaasUserCredentials credentials = new SaasUserCredentials("token", "id");
 
-        UserCredentials clone = credentials.clone();
+        SaasUserCredentials clone = credentials.clone();
 
         credentials.setToken("another");
         credentials.setAccountId("another");

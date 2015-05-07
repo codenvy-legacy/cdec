@@ -18,8 +18,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.response.Response;
+import com.codenvy.im.saas.SaasAccountServiceProxy;
 
-import com.codenvy.im.utils.che.AccountUtils;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -78,7 +78,7 @@ public class LoginCommand extends AbstractIMCommand {
             if (accountReference == null) {
                 preferencesStorage.invalidate();
                 if (accountName == null) {
-                    console.printErrorAndExit(AccountUtils.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
+                    console.printErrorAndExit(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
                 } else {
                     console.printErrorAndExit("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
                 }
@@ -86,7 +86,7 @@ public class LoginCommand extends AbstractIMCommand {
             }
 
             if (accountName == null) {
-                console.printSuccess(format(AccountUtils.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName()));
+                console.printSuccess(format(SaasAccountServiceProxy.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName()));
             }
 
             preferencesStorage.setAccountId(accountReference.getId());

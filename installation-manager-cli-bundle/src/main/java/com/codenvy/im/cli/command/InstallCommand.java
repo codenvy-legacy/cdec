@@ -18,13 +18,13 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.config.Config;
-import com.codenvy.im.config.ConfigUtil;
-import com.codenvy.im.exceptions.ArtifactNotFoundException;
-import com.codenvy.im.install.InstallOptions;
-import com.codenvy.im.install.InstallType;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
@@ -34,6 +34,8 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
 
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -49,9 +51,9 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.config.Config.isEmpty;
-import static com.codenvy.im.config.Config.isMandatory;
-import static com.codenvy.im.config.Config.isValidForMandatoryProperty;
+import static com.codenvy.im.managers.Config.isEmpty;
+import static com.codenvy.im.managers.Config.isMandatory;
+import static com.codenvy.im.managers.Config.isValidForMandatoryProperty;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -67,8 +69,8 @@ public class InstallCommand extends AbstractIMCommand {
 
     private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
-    private final ConfigUtil  configUtil;
-    private       InstallType installType;
+    private final ConfigManager configManager;
+    private       InstallType   installType;
 
     @Argument(index = 0, name = "artifact", description = "The name of the specific artifact to install.", required = false, multiValued = false)
     protected String artifactName;
@@ -89,13 +91,13 @@ public class InstallCommand extends AbstractIMCommand {
     private String installStep;
 
     public InstallCommand() {
-        this.configUtil = INJECTOR.getInstance(ConfigUtil.class);
+        this.configManager = INJECTOR.getInstance(ConfigManager.class);
     }
 
     /** For testing purpose only */
     @Deprecated
-    InstallCommand(ConfigUtil configUtil) {
-        this.configUtil = configUtil;
+    InstallCommand(ConfigManager configManager) {
+        this.configManager = configManager;
     }
 
     @Override
@@ -285,19 +287,23 @@ public class InstallCommand extends AbstractIMCommand {
 
                 Map<String, String> properties;
                 if (configFilePath != null) {
-                    properties = configUtil.loadConfigProperties(configFilePath);
+                    properties = configManager.loadConfigProperties(configFilePath);
                 } else {
                     if (isInstall()) {
-                        properties = configUtil.loadCodenvyDefaultProperties(version, installType);
+                        properties = configManager.loadCodenvyDefaultProperties(version, installType);
                     } else {
-                        properties = configUtil.merge(configUtil.loadInstalledCodenvyProperties(installType),
-                                                      configUtil.loadCodenvyDefaultProperties(version, installType));
+                        properties = configManager.merge(configManager.loadInstalledCodenvyProperties(installType),
+                                                         configManager.loadCodenvyDefaultProperties(version, installType));
                         properties.put(Config.VERSION, version);
                         if (installType == InstallType.MULTI_SERVER) {
-                            properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, configUtil.fetchMasterHostName());  // restore host name of puppet master
+                            properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY,
+                                           configManager.fetchMasterHostName());  // restore host name of puppet master
                         }
                     }
                 }
+
+                String saasApiEndpoint = INJECTOR.getInstance(Key.get(String.class, Names.named("saas.api.endpoint")));
+                properties.put(Config.CODENVY_SAAS_HOST_URL, saasApiEndpoint);
 
                 if (installType == InstallType.MULTI_SERVER) {
                     properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, System.getProperty("user.name"));  // setup name of user to access the nodes
