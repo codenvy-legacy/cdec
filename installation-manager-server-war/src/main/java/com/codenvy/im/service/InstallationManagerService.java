@@ -40,7 +40,6 @@ import com.google.inject.Singleton;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -60,7 +59,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -253,6 +251,11 @@ public class InstallationManagerService {
     @ApiOperation(value = "Gets Codenvy on-prem configuration", response = Response.class)
     public javax.ws.rs.core.Response getCodenvyConfig() {
         try {
+            InstallType installType = configManager.detectInstallationType();
+            if (!InstallType.MULTI_SERVER.equals(installType)) {
+                return javax.ws.rs.core.Response.ok(Commons.toJson(new HashMap())).build();
+            }
+
             Config config = configManager.loadInstalledCodenvyConfig();
             Map<String, Object> selectedProperties = new HashMap<>();
 
@@ -265,8 +268,15 @@ public class InstallationManagerService {
 
             // get additional nodes dns lists
             AdditionalNodesConfigUtil additionalNodesConfigUtil = new AdditionalNodesConfigUtil(config);
-            selectedProperties.putAll(additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER));
-            selectedProperties.putAll(additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER));
+            Map<String, List<String>> additionalRunners = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
+            if (additionalRunners != null) {
+                selectedProperties.putAll(additionalRunners);
+            }
+
+            Map<String, List<String>> additionalBuilders = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
+            if (additionalBuilders != null) {
+                selectedProperties.putAll(additionalBuilders);
+            }
 
             return javax.ws.rs.core.Response.ok(Commons.toJson(selectedProperties)).build();
         } catch (Exception e) {

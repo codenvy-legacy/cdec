@@ -490,6 +490,7 @@ public class TestInstallationManagerService {
             "data_host_name", "data.dev.com"
         )));
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
         Response result = service.getCodenvyConfig();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
@@ -503,8 +504,17 @@ public class TestInstallationManagerService {
     }
 
     @Test
+    public void testGetCodenvyConfigWhenSingleNode() throws IOException {
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+
+        Response result = service.getCodenvyConfig();
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(result.getEntity(), "{ }");
+    }
+
+    @Test
     public void testGetCodenvyConfigError() throws IOException {
-        doThrow(new RuntimeException("error")).when(configManager).loadInstalledCodenvyConfig();
+        doThrow(new RuntimeException("error")).when(configManager).detectInstallationType();
 
         Response result = service.getCodenvyConfig();
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
