@@ -169,32 +169,6 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                       ".wants/puppet.service'" +
                                       "; fi", nodeConfigs));
                     add(createCommand("sudo systemctl enable puppet", nodeConfigs));
-
-                    // open puppet master to puppet agent
-                    add(createCommand("systemctl | grep iptables.service; "  // disable 'iptables' service
-                                      + "if [ $? -eq 0 ]; "
-                                      + "then "
-                                      + "  sudo service iptables stop; "
-                                      + "fi; "
-
-                                      // install 'firewalld', if needed
-                                      + "yum list installed | grep firewalld; "
-                                      + "if [ $? -ne 0 ]; "
-                                      + "then "
-                                      + "  sudo yum -y -q install firewalld; "
-                                      + "fi; "
-
-                                      // start 'firewalld' service, if needed
-                                      + "systemctl | grep firewalld.service; "
-                                      + "if [ $? -ne 0 ]; "
-                                      + "then "
-                                      + "  sudo service firewalld start; "
-                                      + "fi; "
-
-                                      // http://stackoverflow.com/questions/24729024/centos-7-open-firewall-port
-                                      + "sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent; " // open firewall port 8140 for puppet agent access permanently
-                                      + "sudo firewall-cmd --zone=public --add-port=8082/tcp --permanent; " // open firewall port 8082 for the installation manager server permanently
-                                      + "sudo firewall-cmd --reload; "));
                 }}, "Install puppet binaries");
 
             case 2:
