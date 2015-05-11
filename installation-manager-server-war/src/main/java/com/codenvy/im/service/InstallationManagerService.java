@@ -35,7 +35,6 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
-import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -76,6 +75,7 @@ import java.util.logging.Logger;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
+import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.String.format;
 
 /**
@@ -260,8 +260,8 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response getCodenvyConfig() {
         try {
             InstallType installType = configManager.detectInstallationType();
-            if (!InstallType.MULTI_SERVER.equals(installType)) {
-                return javax.ws.rs.core.Response.ok(Commons.toJson(new HashMap())).build();
+            if (InstallType.SINGLE_SERVER.equals(installType)) {
+                return javax.ws.rs.core.Response.ok(toJson(new HashMap())).build();
             }
 
             Config config = configManager.loadInstalledCodenvyConfig();
@@ -286,7 +286,7 @@ public class InstallationManagerService {
                 selectedProperties.putAll(additionalBuilders);
             }
 
-            return javax.ws.rs.core.Response.ok(Commons.toJson(selectedProperties)).build();
+            return javax.ws.rs.core.Response.ok(toJson(selectedProperties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -387,7 +387,7 @@ public class InstallationManagerService {
             // remove useless info
             descriptor.setLinks(null);
 
-            return javax.ws.rs.core.Response.ok(Commons.toJson(descriptor)).build();
+            return javax.ws.rs.core.Response.ok(toJson(descriptor)).build();
         } catch (Exception e) {
             return handleException(e);
         }

@@ -32,8 +32,8 @@ import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
-
 import com.google.common.collect.ImmutableMap;
+
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
@@ -66,7 +66,6 @@ public class TestInstallationManagerService extends BaseTest {
     public static final String TEST_VERSION          = "1.0.0";
     public static final String TEST_ACCESS_TOKEN     = "accessToken";
     public static final String TEST_ACCOUNT_ID       = "accountId";
-    public static final String TEST_SUBSCRIPTION_ID  = "subscriptionId";
     public static final String TEST_ACCOUNT_NAME     = "account";
     public static final String TEST_USER_NAME        = "user";
     public static final String TEST_USER_PASSWORD    = "password";
@@ -95,7 +94,7 @@ public class TestInstallationManagerService extends BaseTest {
     @Mock
     private SecurityContext           mockSecurityContext;
     @Mock
-    private Config mockConfig;
+    private Config                    mockConfig;
 
     private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
 
@@ -331,11 +330,11 @@ public class TestInstallationManagerService extends BaseTest {
 
         service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
-        Response result = service.addTrialSaasSubscription(mockSecurityContext);
+        Response result = service.addTrialSubscription(mockSecurityContext);
         checkEmptyOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
-        result = service.addTrialSaasSubscription(mockSecurityContext);
+        result = service.addTrialSubscription(mockSecurityContext);
         checkErrorResponse(result);
     }
 
