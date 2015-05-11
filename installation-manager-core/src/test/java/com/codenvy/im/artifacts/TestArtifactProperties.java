@@ -33,12 +33,14 @@ public class TestArtifactProperties {
         assertEquals(ArtifactProperties.FILE_NAME_PROPERTY, "file");
         assertEquals(ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY, "authentication-required");
         assertEquals(ArtifactProperties.SUBSCRIPTION_PROPERTY , "subscription");
+        assertEquals(ArtifactProperties.DESCRIPTION_PROPERTY, "description");
         assertEquals(ArtifactProperties.MD5_PROPERTY, "md5");
         assertEquals(ArtifactProperties.SIZE_PROPERTY , "size");
     }
 
     @Test
     public void testPublicProperties() {
-        assertEquals(ArtifactProperties.PUBLIC_PROPERTIES.toString(), "[version, previous-version, artifact, build-time, authentication-required, file, md5, size]");
+        assertEquals(ArtifactProperties.PUBLIC_PROPERTIES.toString(),
+                     "[version, previous-version, artifact, build-time, authentication-required, file, md5, size, description]");
     }
 }

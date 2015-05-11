@@ -32,15 +32,16 @@ public class ArtifactProperties {
     public static final String SUBSCRIPTION_PROPERTY            = "subscription";
     public static final String MD5_PROPERTY                     = "md5";
     public static final String SIZE_PROPERTY                    = "size";
+    public static final String DESCRIPTION_PROPERTY             = "description";
 
     public static final Set<String> PUBLIC_PROPERTIES = ImmutableSet.of(
-        VERSION_PROPERTY,
-        PREVIOUS_VERSION_PROPERTY,
-        ARTIFACT_PROPERTY,
-        BUILD_TIME_PROPERTY,
-        AUTHENTICATION_REQUIRED_PROPERTY,
-        FILE_NAME_PROPERTY,
-        MD5_PROPERTY,
-        SIZE_PROPERTY
-    );
+            VERSION_PROPERTY,
+            PREVIOUS_VERSION_PROPERTY,
+            ARTIFACT_PROPERTY,
+            BUILD_TIME_PROPERTY,
+            AUTHENTICATION_REQUIRED_PROPERTY,
+            FILE_NAME_PROPERTY,
+            MD5_PROPERTY,
+            SIZE_PROPERTY,
+            DESCRIPTION_PROPERTY);
 }

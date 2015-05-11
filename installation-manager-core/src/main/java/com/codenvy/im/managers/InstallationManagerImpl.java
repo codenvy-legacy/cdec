@@ -116,7 +116,7 @@ public class InstallationManagerImpl implements InstallationManager {
                 throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
             }
 
-            if (options.getStep() != 0 || artifact.isInstallable(version, updateEndpoint, transport)) {
+            if (options.getStep() != 0 || artifact.isInstallable(version)) {
                 installerManager.install(artifact, version, pathToBinaries, options);
             } else {
                 throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
@@ -191,7 +191,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     @Override
     public Path getPathToBinaries(Artifact artifact, Version version) throws IOException {
-        Map properties = artifact.getProperties(version, updateEndpoint, transport);
+        Map properties = artifact.getProperties(version);
         String fileName = properties.get(FILE_NAME_PROPERTY).toString();
 
         return getDownloadDirectory(artifact, version).resolve(fileName);
@@ -199,7 +199,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     @Override
     public Long getBinariesSize(Artifact artifact, Version version) throws IOException, NumberFormatException {
-        Map properties = artifact.getProperties(version, updateEndpoint, transport);
+        Map properties = artifact.getProperties(version);
         String size = properties.get(SIZE_PROPERTY).toString();
 
         return Long.valueOf(size);
@@ -210,7 +210,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Map<Artifact, SortedMap<Version, Path>> downloaded = new LinkedHashMap<>(artifacts.size());
 
         for (Artifact artifact : artifacts) {
-            SortedMap<Version, Path> versions = artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport);
+            SortedMap<Version, Path> versions = artifact.getDownloadedVersions(downloadDir);
 
             if (!versions.isEmpty()) {
                 downloaded.put(artifact, versions);
@@ -222,7 +222,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
     @Override
     public SortedMap<Version, Path> getDownloadedVersions(Artifact artifact) throws IOException {
-        return artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport);
+        return artifact.getDownloadedVersions(downloadDir);
     }
 
     /** {@inheritDoc} */
@@ -233,7 +233,7 @@ public class InstallationManagerImpl implements InstallationManager {
         Version newVersion;
         for (Artifact artifact : artifacts) {
             try {
-                newVersion = artifact.getLatestInstallableVersion(updateEndpoint, transport);
+                newVersion = artifact.getLatestInstallableVersion();
             } catch (HttpException e) {
                 // ignore update server error when there is no version of certain artifact there
                 if (e.getStatus() == javax.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode()) {
@@ -253,7 +253,7 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public Version getLatestInstallableVersion(String authToken, Artifact artifact) throws IOException {
-        return artifact.getLatestInstallableVersion(updateEndpoint, transport);
+        return artifact.getLatestInstallableVersion();
     }
 
     private Path getDownloadDirectory(Artifact artifact, Version version) {
@@ -270,7 +270,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
                 Artifact eachArtifact = e.getKey();
                 Version eachVersion = e.getValue();
-                if (eachArtifact.getDownloadedVersions(downloadDir, updateEndpoint, transport).containsKey(eachVersion)) {
+                if (eachArtifact.getDownloadedVersions(downloadDir).containsKey(eachVersion)) {
                     updates.remove(eachArtifact);
                 }
             }
@@ -279,20 +279,20 @@ public class InstallationManagerImpl implements InstallationManager {
         } else {
             if (version != null) {
                 // verify if version had been already downloaded
-                if (artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport).containsKey(version)) {
+                if (artifact.getDownloadedVersions(downloadDir).containsKey(version)) {
                     return Collections.emptyMap();
                 }
 
                 return ImmutableMap.of(artifact, version);
             }
 
-            final Version versionToUpdate = artifact.getLatestInstallableVersion(updateEndpoint, transport);
+            final Version versionToUpdate = artifact.getLatestInstallableVersion();
             if (versionToUpdate == null) {
                 return Collections.emptyMap();
             }
 
             // verify if version had been already downloaded
-            if (artifact.getDownloadedVersions(downloadDir, updateEndpoint, transport).containsKey(versionToUpdate)) {
+            if (artifact.getDownloadedVersions(downloadDir).containsKey(versionToUpdate)) {
                 return Collections.emptyMap();
             }
 
@@ -303,7 +303,7 @@ public class InstallationManagerImpl implements InstallationManager {
     /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Artifact artifact, Version version) throws IOException {
-        return artifact.isInstallable(version, updateEndpoint, transport);
+        return artifact.isInstallable(version);
     }
 
     /** {@inheritDoc} */

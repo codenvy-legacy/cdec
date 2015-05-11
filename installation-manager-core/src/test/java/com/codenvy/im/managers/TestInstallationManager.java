@@ -92,8 +92,8 @@ public class TestInstallationManager {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        installManagerArtifact = spy(new InstallManagerArtifact());
-        cdecArtifact = spy(new CDECArtifact(transport, configManager));
+        installManagerArtifact = spy(new InstallManagerArtifact(UPDATE_ENDPOINT, transport));
+        cdecArtifact = spy(new CDECArtifact(UPDATE_ENDPOINT, transport, configManager));
 
         manager = spy(new InstallationManagerImpl(
                 UPDATE_ENDPOINT,
@@ -134,7 +134,7 @@ public class TestInstallationManager {
             }});
         }}).when(manager).getDownloadedArtifacts();
 
-        doReturn(false).when(installManagerArtifact).isInstallable(version2101, UPDATE_ENDPOINT, transport);
+        doReturn(false).when(installManagerArtifact).isInstallable(version2101);
 
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
 
@@ -149,15 +149,15 @@ public class TestInstallationManager {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, null);
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
-        doReturn(true).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
+        doReturn(true).when(cdecArtifact).isInstallable(version100);
 
         doNothing().when(installerManager).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, pathToBinaries);
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
         verify(installerManager).install(cdecArtifact, version100, pathToBinaries, options);
@@ -170,10 +170,10 @@ public class TestInstallationManager {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, null);
-        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class));
 
         manager.install("auth token", installManagerArtifact, Version.valueOf("2.10.1"), new InstallOptions());
-        doReturn(false).when(installManagerArtifact).isInstallable(version200, UPDATE_ENDPOINT, transport);
+        doReturn(false).when(installManagerArtifact).isInstallable(version200);
 
         manager.install(testCredentials.getToken(), installManagerArtifact, version200, null);
         verify(installerManager, never()).install(any(Artifact.class), any(Version.class), Paths.get("some path"), any(InstallOptions.class));
@@ -199,7 +199,7 @@ public class TestInstallationManager {
         }}).when(manager).getDownloadedArtifacts();
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
 
-        doReturn(false).when(installManagerArtifact).isInstallable(version2100, UPDATE_ENDPOINT, transport);
+        doReturn(false).when(installManagerArtifact).isInstallable(version2100);
 
         manager.install("auth token", installManagerArtifact, version2100, new InstallOptions());
     }
@@ -214,9 +214,9 @@ public class TestInstallationManager {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, Paths.get("some path"));
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
-        doReturn(false).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
+        doReturn(false).when(cdecArtifact).isInstallable(version100);
         doNothing().when(installerManager).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
@@ -231,9 +231,9 @@ public class TestInstallationManager {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, Paths.get("some path"));
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
-        doReturn(false).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
+        doReturn(false).when(cdecArtifact).isInstallable(version100);
         doNothing().when(installerManager).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
         manager.install(testCredentials.getToken(), cdecArtifact, version100, options);
@@ -247,9 +247,9 @@ public class TestInstallationManager {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, Paths.get("some path"));
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
-        doReturn(true).when(cdecArtifact).isInstallable(version100, UPDATE_ENDPOINT, transport);
+        doReturn(true).when(cdecArtifact).isInstallable(version100);
 
         InstallOptions testOptions = new InstallOptions();
         testOptions.setInstallType(InstallType.SINGLE_SERVER);
@@ -286,7 +286,7 @@ public class TestInstallationManager {
 
         doReturn(version2101).when(installManagerArtifact).getInstalledVersion();
 
-        doReturn(true).when(installManagerArtifact).isInstallable(version2102, UPDATE_ENDPOINT, transport);
+        doReturn(true).when(installManagerArtifact).isInstallable(version2102);
 
         doNothing().when(installerManager).install(any(Artifact.class), any(Version.class), any(Path.class), any(InstallOptions.class));
 
@@ -317,10 +317,10 @@ public class TestInstallationManager {
         final Version version200 = Version.valueOf("2.0.0");
 
         doReturn(version100).when(cdecArtifact)
-                            .getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
+                            .getLatestInstallableVersion();
 
         doReturn(version200).when(installManagerArtifact)
-                            .getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
+                            .getLatestInstallableVersion();
 
         Map<Artifact, Version> updates = manager.getUpdates();
         assertEquals(updates.size(), 2);
@@ -360,7 +360,7 @@ public class TestInstallationManager {
     public void testGetUpdatesToDownloadForSpecificArtifact() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
 
-        doReturn(version100).when(cdecArtifact).getLatestInstallableVersion(UPDATE_ENDPOINT, transport);
+        doReturn(version100).when(cdecArtifact).getLatestInstallableVersion();
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(cdecArtifact, null);
         assertEquals(artifactsToDownload.size(), 1);
@@ -379,11 +379,11 @@ public class TestInstallationManager {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, null);
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, null);
-        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class));
 
         Map<Artifact, Version> artifactsToDownload = manager.getUpdatesToDownload(null, null);
         assertEquals(artifactsToDownload.size(), 0);
@@ -394,11 +394,11 @@ public class TestInstallationManager {
         doReturn(new TreeMap<Version, Path>(new Version.ReverseOrder()) {{
             put(Version.valueOf("1.0.0"), Paths.get("file1"));
             put(Version.valueOf("1.0.1"), Paths.get("file2"));
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
 
         doReturn(new TreeMap<Version, Path>() {{
             put(Version.valueOf("2.0.0"), Paths.get("file3"));
-        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class));
 
         Map<Artifact, SortedMap<Version, Path>> artifacts = manager.getDownloadedArtifacts();
         assertEquals(artifacts.size(), 2);
@@ -416,10 +416,10 @@ public class TestInstallationManager {
     @Test
     public void testGetDownloadedArtifactsReturnsEmptyMap() throws Exception {
         doReturn(new TreeMap<Version, Path>()).when(cdecArtifact)
-                                              .getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+                                              .getDownloadedVersions(any(Path.class));
 
         doReturn(new TreeMap<Version, Path>()).when(installManagerArtifact)
-                                              .getDownloadedVersions(any(Path.class), anyString(), any(HttpTransport.class));
+                                              .getDownloadedVersions(any(Path.class));
 
         Map<Artifact, SortedMap<Version, Path>> m = manager.getDownloadedArtifacts();
         assertTrue(m.isEmpty());
@@ -440,10 +440,10 @@ public class TestInstallationManager {
         final Version version200 = Version.valueOf("2.0.0");
         final Version version201 = Version.valueOf("2.0.1");
 
-        doReturn(true).when(installManagerArtifact).isInstallable(version200, UPDATE_ENDPOINT, transport);
+        doReturn(true).when(installManagerArtifact).isInstallable(version200);
         assertTrue(manager.isInstallable(installManagerArtifact, version200));
 
-        doReturn(false).when(installManagerArtifact).isInstallable(version201, UPDATE_ENDPOINT, transport);
+        doReturn(false).when(installManagerArtifact).isInstallable(version201);
         assertFalse(manager.isInstallable(installManagerArtifact, version201));
     }
 
@@ -451,7 +451,7 @@ public class TestInstallationManager {
     public void testGetPathToBinaries() throws Exception {
         Version version = Version.valueOf("1.0.1");
         doReturn(ImmutableMap.of(ArtifactProperties.FILE_NAME_PROPERTY, "binaries")).when(cdecArtifact)
-                                                                                    .getProperties(version, UPDATE_ENDPOINT, transport);
+                                                                                    .getProperties(version);
 
         Path path = manager.getPathToBinaries(cdecArtifact, version);
         assertEquals(path, Paths.get(DOWNLOAD_DIR + "/codenvy/1.0.1/binaries"));
@@ -460,7 +460,7 @@ public class TestInstallationManager {
     @Test
     public void testGetBinariesSize() throws Exception {
         Version version = Version.valueOf("1.0.1");
-        doReturn(ImmutableMap.of(ArtifactProperties.SIZE_PROPERTY, "100")).when(cdecArtifact).getProperties(version, UPDATE_ENDPOINT, transport);
+        doReturn(ImmutableMap.of(ArtifactProperties.SIZE_PROPERTY, "100")).when(cdecArtifact).getProperties(version);
 
         Long binariesSize = manager.getBinariesSize(cdecArtifact, version);
         assertEquals(binariesSize.intValue(), 100);

@@ -37,6 +37,7 @@ import com.google.inject.Singleton;
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 
 import javax.annotation.Nullable;
+import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -62,8 +63,10 @@ public class CDECArtifact extends AbstractArtifact {
     private final ConfigManager configManager;
 
     @Inject
-    public CDECArtifact(HttpTransport transport, ConfigManager configManager) {
-        super(NAME);
+    public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
+                        HttpTransport transport,
+                        ConfigManager configManager) {
+        super(NAME, transport, updateEndpoint);
         this.transport = transport;
         this.configManager = configManager;
     }

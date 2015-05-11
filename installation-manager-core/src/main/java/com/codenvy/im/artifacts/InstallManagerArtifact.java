@@ -25,11 +25,13 @@ import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -55,8 +57,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
     private static final String RELATIVE_PATH_TO_JAVA  = IM_ROOT_DIRECTORY_NAME + "/jre";
 
     @Inject
-    public InstallManagerArtifact() {
-        super(NAME);
+    public InstallManagerArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
+                                  HttpTransport transport) {
+        super(NAME, transport, updateEndpoint);
     }
 
     /** {@inheritDoc} */

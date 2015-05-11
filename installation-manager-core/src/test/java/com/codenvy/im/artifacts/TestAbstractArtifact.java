@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
@@ -71,7 +70,7 @@ public class TestAbstractArtifact {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME));
+        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, mockTransport, ""));
     }
 
     @AfterMethod
@@ -83,7 +82,7 @@ public class TestAbstractArtifact {
     public void testGetArtifactProperties() throws Exception {
         doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
 
-        Map m = spyTestArtifact.getProperties(TEST_VERSION, UPDATE_ENDPOINT, mockTransport);
+        Map m = spyTestArtifact.getProperties(TEST_VERSION);
         assertTrue(m.containsKey("file"));
         assertTrue(m.containsKey("md5"));
         assertEquals(m.get("file"), "file1");
@@ -108,8 +107,8 @@ public class TestAbstractArtifact {
         doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // allowed previous version of new artifact is unknown
         doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + newVersion));  // allowed previous version of new artifact is unknown
 
-        assertFalse(spyTestArtifact.isInstallable(TEST_VERSION, UPDATE_ENDPOINT, mockTransport));
-        assertTrue(spyTestArtifact.isInstallable(newVersion, UPDATE_ENDPOINT, mockTransport));
+        assertFalse(spyTestArtifact.isInstallable(TEST_VERSION));
+        assertTrue(spyTestArtifact.isInstallable(newVersion));
     }
 
     @Test
@@ -117,8 +116,8 @@ public class TestAbstractArtifact {
         doReturn(null).when(spyTestArtifact).getInstalledVersion();
         doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + Version.valueOf("2.0.0")));
 
-        assertTrue(spyTestArtifact.isInstallable(TEST_VERSION, UPDATE_ENDPOINT, mockTransport));
-        assertTrue(spyTestArtifact.isInstallable(Version.valueOf("2.0.0"), UPDATE_ENDPOINT, mockTransport));
+        assertTrue(spyTestArtifact.isInstallable(TEST_VERSION));
+        assertTrue(spyTestArtifact.isInstallable(Version.valueOf("2.0.0")));
     }
 
     @Test
@@ -127,10 +126,10 @@ public class TestAbstractArtifact {
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
 
         doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + versionToInstall));
-        assertTrue(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall), UPDATE_ENDPOINT, mockTransport));
+        assertTrue(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall)));
 
         doReturn(Version.valueOf("0.0.1")).when(spyTestArtifact).getInstalledVersion();
-        assertFalse(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall), UPDATE_ENDPOINT, mockTransport));
+        assertFalse(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall)));
     }
 
     @Test
@@ -146,7 +145,7 @@ public class TestAbstractArtifact {
             .when(mockTransport)
             .doGet(contains("repository/properties/" + TEST_ARTIFACT_NAME + "/" + newVersion));
 
-        Version version = spyTestArtifact.getLatestInstallableVersion(UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion();
 
         assertNotNull(version);
         assertEquals(version.toString(), newVersion);
@@ -164,7 +163,7 @@ public class TestAbstractArtifact {
             .when(mockTransport)
             .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
 
-        Version version = spyTestArtifact.getLatestInstallableVersion(UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestInstallableVersion();
         assertNull(version);
     }
 
@@ -182,8 +181,8 @@ public class TestAbstractArtifact {
         Files.createFile(file1);
         Files.createFile(file2);
 
-        SortedMap<Version, Path> versions = spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT,
-                                                                                  mockTransport);
+        SortedMap<Version, Path> versions = spyTestArtifact.getDownloadedVersions(Paths.get("target/download")
+                                                                                 );
         assertEquals(versions.size(), 2);
         assertEquals(versions.toString(), "{1.0.2=target/download/" + TEST_ARTIFACT_NAME + "/1.0.2/file2, " +
                                           "1.0.1=target/download/" + TEST_ARTIFACT_NAME + "/1.0.1/file1" +
@@ -199,14 +198,14 @@ public class TestAbstractArtifact {
         Files.createFile(file1);
 
         doThrow(new ArtifactNotFoundException(spyTestArtifact)).when(spyTestArtifact)
-                                                               .getProperties(any(Version.class), anyString(), any(HttpTransport.class));
+                                                               .getProperties(any(Version.class));
 
-        spyTestArtifact.getDownloadedVersions(Paths.get("target/download"), UPDATE_ENDPOINT, mockTransport);
+        spyTestArtifact.getDownloadedVersions(Paths.get("target/download"));
     }
 
     private static class TestedAbstractArtifact extends AbstractArtifact {
-        public TestedAbstractArtifact(String name) {
-            super(name);
+        public TestedAbstractArtifact(String name, HttpTransport transport, String updateEndpoint) {
+            super(name, transport, updateEndpoint);
         }
 
         @Nullable

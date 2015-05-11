@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
@@ -47,10 +48,14 @@ import static java.nio.file.Files.newDirectoryStream;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractArtifact implements Artifact {
-    private final String name;
+    private final String        name;
+    private final HttpTransport transport;
+    private final String        updateEndpoint;
 
-    public AbstractArtifact(String name) {
+    public AbstractArtifact(String name, HttpTransport transport, String updateEndpoint) {
         this.name = name;
+        this.transport = transport;
+        this.updateEndpoint = updateEndpoint;
     }
 
     /** {@inheritDoc} */
@@ -90,14 +95,14 @@ public abstract class AbstractArtifact implements Artifact {
 
     /** {@inheritDoc} */
     @Override
-    public boolean isInstallable(Version versionToInstall, String updateEndpoint, HttpTransport transport) throws IOException {
+    public boolean isInstallable(Version versionToInstall) throws IOException {
         Version installedVersion = getInstalledVersion();
 
         if (installedVersion == null) {  // check if there is installed version of artifact
             return true;
         }
 
-        Version previousVersion = getAllowedPreviousVersion(versionToInstall, updateEndpoint, transport);
+        Version previousVersion = getAllowedPreviousVersion(versionToInstall);
         if (previousVersion != null) {
             return previousVersion.equals(installedVersion);
         }
@@ -105,8 +110,8 @@ public abstract class AbstractArtifact implements Artifact {
         return installedVersion.compareTo(versionToInstall) < 0;
     }
 
-    private Version getAllowedPreviousVersion(Version versionToInstall, String updateEndpoint, HttpTransport transport) throws IOException {
-        Map<String, String> properties = getProperties(versionToInstall, updateEndpoint, transport);
+    private Version getAllowedPreviousVersion(Version versionToInstall) throws IOException {
+        Map<String, String> properties = getProperties(versionToInstall);
         if (properties.containsKey(PREVIOUS_VERSION_PROPERTY)) {
             return Version.valueOf(properties.get(PREVIOUS_VERSION_PROPERTY));
         }
@@ -117,10 +122,10 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     @Nullable
-    public Version getLatestInstallableVersion(String updateEndpoint, HttpTransport transport) throws IOException {
+    public Version getLatestInstallableVersion() throws IOException {
         Version version = getLatestVersion(updateEndpoint, transport);
 
-        if (version != null && isInstallable(version, updateEndpoint, transport)) {
+        if (version != null && isInstallable(version)) {
             return version;
         } else {
             return null;
@@ -129,7 +134,7 @@ public abstract class AbstractArtifact implements Artifact {
 
     /** @return the list of downloaded list */
     @Override
-    public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException {
+    public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir) throws IOException {
         SortedMap<Version, Path> versions = new TreeMap<>(new Version.ReverseOrder());
 
         Path artifactDir = downloadDir.resolve(getName());
@@ -144,7 +149,7 @@ public abstract class AbstractArtifact implements Artifact {
                         if (isDirectory(versionDir)) {
                             Version version = valueOf(versionDir.getFileName().toString());
 
-                            Map properties = getProperties(version, updateEndpoint, transport);
+                            Map properties = getProperties(version);
                             String md5sum = properties.get(MD5_PROPERTY).toString();
                             String fileName = properties.get(FILE_NAME_PROPERTY).toString();
 
@@ -177,16 +182,14 @@ public abstract class AbstractArtifact implements Artifact {
 
     /** @return artifact properties */
     @Override
-    public Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException {
+    public Map<String, String> getProperties(Version version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName() + "/" + version.toString());
-        Map m;
         try {
-            m = asMap(transport.doGet(requestUrl));
+            Map m = asMap(transport.doGet(requestUrl));
+            return Collections.checkedMap(m, String.class, String.class);
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
-
-        return m;
     }
 
     protected Version getLatestVersion(String updateEndpoint, HttpTransport transport) throws IOException {

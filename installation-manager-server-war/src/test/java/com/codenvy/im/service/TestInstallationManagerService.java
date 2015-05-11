@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.service;
 
+import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
@@ -59,7 +60,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestInstallationManagerService {
+public class TestInstallationManagerService extends BaseTest {
 
     public static final String CODENVY_ARTIFACT_NAME = "codenvy";
     public static final String TEST_VERSION          = "1.0.0";
@@ -524,15 +525,34 @@ public class TestInstallationManagerService {
                                          + "}");
     }
 
-    private void checkEmptyOkResponse(Response result) {
+    @Test
+    public void testGetPropertiesErrorIfArtifactNotFound() throws Exception {
+        Response response = service.getArtifactProperties("artifact", "1.3.1");
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+    }
+
+    @Test
+    public void testGetPropertiesErrorIfVersionInvalid() throws Exception {
+        Response response = service.getArtifactProperties("codenvy", "version");
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+    }
+
+    @Test
+    public void testGetProperties() throws Exception {
+        Response response = service.getArtifactProperties("codenvy", "1.0.1");
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    private void checkEmptyOkResponse(Response result) throws IOException {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
-        String facadeResponse = (String) result.getEntity();
+        String facadeResponse = (String)result.getEntity();
         assertEquals(facadeResponse, mockFacadeOkResponse.toJson());
     }
 
     private void checkErrorResponse(Response result) {
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        String facadeResponse = (String) result.getEntity();
+        String facadeResponse = (String)result.getEntity();
         assertEquals(facadeResponse, mockFacadeErrorResponse.toJson());
     }
 }
+

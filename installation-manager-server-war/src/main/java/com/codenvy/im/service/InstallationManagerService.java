@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.service;
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
@@ -35,16 +37,21 @@ import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
+import com.wordnik.swagger.annotations.ApiResponse;
+import com.wordnik.swagger.annotations.ApiResponses;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.dto.server.JsonStringMapImpl;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -53,6 +60,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -66,6 +74,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
 
@@ -84,7 +93,6 @@ public class InstallationManagerService {
     private static final int    MAX_USERS = 10;
 
     protected final InstallationManagerFacade delegate;
-
     private final ConfigManager configManager;
 
     /**
@@ -342,7 +350,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
                   response = Response.class)
-    public javax.ws.rs.core.Response addTrialSaasSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
+    public javax.ws.rs.core.Response addTrialSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
         String callerName = context.getUserPrincipal().getName();
         if (!users.containsKey(callerName)) {
             return handleException(new RuntimeException("User not authenticated"));
@@ -422,6 +430,33 @@ public class InstallationManagerService {
         }
     }
 
+    /** @return the properties of the specific artifact and version */
+    @GET
+    @Path("/properties/{artifact}/{version}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 404, message = "Artifact not Found"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Gets properties of the specific artifact and version", response = Response.class)
+    public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
+                                                           @PathParam("version") final String versionNumber) {
+        try {
+            Artifact artifact = createArtifact(artifactName);
+            Version version;
+            try {
+                version = Version.valueOf(versionNumber);
+            } catch (IllegalArgumentException e) {
+                throw new ArtifactNotFoundException(artifactName, versionNumber);
+            }
+
+            Map<String, String> properties = artifact.getProperties(version);
+            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+        } catch (IOException e) {
+            return handleException(e);
+        }
+    }
+
     private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
         try {
             if (!Response.isError(responseString)) {
@@ -438,7 +473,13 @@ public class InstallationManagerService {
         String errorMessage = e.getMessage();
         LOG.log(Level.SEVERE, errorMessage, e);
 
-        if (e instanceof HttpException) {
+        if (e instanceof ArtifactNotFoundException) {
+            return javax.ws.rs.core.Response.serverError()
+                                            .status(javax.ws.rs.core.Response.Status.NOT_FOUND)
+                                            .entity(e.getMessage())
+                                            .build();
+
+        } else if (e instanceof HttpException) {
             // work around error message like "{"message":"Authentication failed. Please check username and password."}"
             try {
                 Response response = Response.fromJson(errorMessage);
@@ -448,8 +489,7 @@ public class InstallationManagerService {
             }
         }
 
-        Response response = new Response().setMessage(errorMessage)
-                                          .setStatus(ResponseCode.ERROR);
+        Response response = new Response().setMessage(errorMessage).setStatus(ResponseCode.ERROR);
         return javax.ws.rs.core.Response.serverError().entity(response.toJson()).build();
     }
 

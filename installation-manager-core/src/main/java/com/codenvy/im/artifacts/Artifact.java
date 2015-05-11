@@ -21,7 +21,6 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
-import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
@@ -62,17 +61,17 @@ public interface Artifact extends Comparable<Artifact> {
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed and
      * version of the artifact
      */
-    boolean isInstallable(Version versionToInstall, String updateEndpoint, HttpTransport transport) throws IOException;
+    boolean isInstallable(Version versionToInstall) throws IOException;
 
     /** @return properties stored at update server */
-    Map getProperties(Version version, String updateEndpoint, HttpTransport transport) throws IOException;
+    Map<String, String> getProperties(Version version) throws IOException;
 
     /** @return version at the update server which is could be used to update already installed version */
     @Nullable
-    Version getLatestInstallableVersion(String updateEndpoint, HttpTransport transport) throws IOException;
+    Version getLatestInstallableVersion() throws IOException;
 
     /** @return the list of downloaded versions */
-    SortedMap<Version, Path> getDownloadedVersions(Path downloadDir, String updateEndpoint, HttpTransport transport) throws IOException;
+    SortedMap<Version, Path> getDownloadedVersions(Path downloadDir) throws IOException;
 
     /** @return command to collect backup data at the certain backup directory */
     Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;

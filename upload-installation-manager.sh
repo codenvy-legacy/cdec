@@ -39,6 +39,7 @@ uploadInstallationManagerCli() {
     FILE="installation-manager"
     ARTIFACT=${FILE}"-cli"
 
+    DESCRIPTION="Codenvy Installation manager"
     FILENAME=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*-binary[.]tar.gz`
     VERSION=`ls ${ARTIFACT}-assembly/target | grep -G ${FILE}-.*[.]jar | grep -vE 'sources|original' | sed 's/'${FILE}'-//' | sed 's/.jar//'`
     SOURCE=${ARTIFACT}-assembly/target/${FILENAME}
@@ -49,6 +50,7 @@ uploadCodenvyServerInstallScript() {
     ARTIFACT=install-codenvy
     FILENAME=install-codenvy.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
+    DESCRIPTION="Script to install Codenvy in single-server configuration"
     doUpload
 
     if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
@@ -60,6 +62,7 @@ uploadCodenvyServerInstallMultiScript() {
     ARTIFACT=install-codenvy-multi
     FILENAME=install-codenvy-multi.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
+    DESCRIPTION="Script to install Codenvy in multi-server configuration"
     doUpload
 
     if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
@@ -71,6 +74,7 @@ uploadCodenvyServerInstallInstalationManagerScript() {
     ARTIFACT=install-im-cli
     FILENAME=install-im-cli.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
+    DESCRIPTION="Script to install Codenvy installation manager"
     doUpload
 
     if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
@@ -83,6 +87,7 @@ uploadCodenvySingleServerInstallProperties() {
     FILENAME=codenvy-single-server.properties
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/${FILENAME}
+    DESCRIPTION="Codenvy single-server installation properties"
     doUpload
 }
 
@@ -91,6 +96,7 @@ uploadCodenvyMultiServerInstallProperties() {
     FILENAME=codenvy-multi-server.properties
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/${FILENAME}
+    DESCRIPTION="Codenvy multi-server installation properties"
     doUpload
 }
 
@@ -105,6 +111,7 @@ doUpload() {
     echo "file=${FILENAME}" > .properties
     echo "artifact=${ARTIFACT}" >> .properties
     echo "version=${VERSION}" >> .properties
+    echo "description=${DESCRIPTION}" >> .properties
     echo "authentication-required=false" >> .properties
     echo "build-time="${BUILD_TIME} >> .properties
     echo "md5=${MD5}" >> .properties
