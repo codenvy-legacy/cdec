@@ -73,14 +73,17 @@ public class InjectorBootstrap {
                 bindProperties("codenvy/installation-manager.properties");
 
                 // overrides default properties
-                Iterator<Path> pathIterator = Paths.get(System.getenv("CODENVY_LOCAL_CONF_DIR")).iterator();
-                while (pathIterator.hasNext()) {
-                    Path conf = pathIterator.next();
-                    if (conf.endsWith(".properties")) {
-                        try (InputStream in = newInputStream(conf)) {
-                            doBindProperties(in);
-                        } catch (IOException e) {
-                            throw new IllegalStateException("Can't load properties", e);
+                String confDir = System.getenv("CODENVY_LOCAL_CONF_DIR");
+                if (confDir != null) {
+                    Iterator<Path> pathIterator = Paths.get(confDir).iterator();
+                    while (pathIterator.hasNext()) {
+                        Path conf = pathIterator.next();
+                        if (conf.endsWith(".properties")) {
+                            try (InputStream in = newInputStream(conf)) {
+                                doBindProperties(in);
+                            } catch (IOException e) {
+                                throw new IllegalStateException("Can't load properties", e);
+                            }
                         }
                     }
                 }

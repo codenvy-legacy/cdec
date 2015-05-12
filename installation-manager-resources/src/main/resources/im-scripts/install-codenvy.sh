@@ -6,13 +6,13 @@ set -e
 DIR="${HOME}/codenvy-im"
 ARTIFACT="codenvy"
 CODENVY_TYPE="single"
-HEADLESS=false
+SILENT=false
 VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
 for var in "$@"; do
     if [[ "$var" == "--multi" ]]; then
         CODENVY_TYPE="multi"
-    elif [[ "$var" == "--headless" ]]; then
-        HEADLESS=true
+    elif [[ "$var" == "--silent" ]]; then
+        SILENT=true
     elif [[ "$var" =~ --version=.* ]]; then
         VERSION=`echo "$var" | sed -e "s/--version=//g"`
     fi
@@ -177,7 +177,7 @@ preconfigureSystem() {
 }
 
 pressAnyKeyToContinueAndClearConsole() {
-    if [[ ${HEADLESS} == false ]]; then
+    if [[ ${SILENT} == false ]]; then
         printPrompt; echo "Press any key to continue"
         read -n1 -s
         clear
@@ -185,14 +185,14 @@ pressAnyKeyToContinueAndClearConsole() {
 }
 
 pressAnyKeyToContinue() {
-    if [[ ${HEADLESS} == false ]]; then
+    if [[ ${SILENT} == false ]]; then
         printPrompt; echo "Press any key to continue"
         read -n1 -s
     fi
 }
 
 pressYKeyToContinue() {
-    if [[ ${HEADLESS} == false ]]; then
+    if [[ ${SILENT} == false ]]; then
         printPrompt; echo -n "Continue installation [y/N]: "
         read ANSWER
         if [ ! "${ANSWER}" == "y" ]; then exit 1; fi
@@ -232,25 +232,18 @@ printPreInstallInfo_single() {
     printPrompt; echo
     pressAnyKeyToContinueAndClearConsole
 
-    if [[ ! -f ${CONFIG} ]]; then
+    if [[ ! -f ${CONFIG} ]] || [[ ${SILENT} == false ]]; then
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
-        printPrompt; echo "System admin user name : undetected - will prompt for entry"
-        printPrompt; echo "System admin password  : undetected - will prompt for entry"
+        printPrompt; echo "System admin user name : will prompt for entry"
+        printPrompt; echo "System admin password  : will prompt for entry"
         printPrompt; echo "Codenvy DNS hostname   : not set - will prompt for entry"
         printPrompt; echo
         pressAnyKeyToContinue
         prepareConfig_single
         printPrompt; echo
     else
-        HOSTNAME=`grep [aio_]*host_url=.* ${CONFIG} | cut -f2 -d '='`
-        CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
-
         printPrompt; echo "Configuration File: "${CONFIG}
-        printPrompt; echo
-        printPrompt; echo "System admin user name : "${CODENVY_ADMIN_NAME}
-        printPrompt; echo "System admin password  : ******"
-        printPrompt; echo "Codenvy DNS hostname   : "${HOSTNAME}
         printPrompt; echo
     fi
 
@@ -264,7 +257,7 @@ printPreInstallInfo_multi() {
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    printPrompt; echo "Welcome.  This program installs a multi-node version of Codenvy On-Prem."
+    printPrompt; echo "Welcome. This program installs a multi-node version of Codenvy On-Prem."
     printPrompt; echo
     printPrompt; echo "This program will:"
     printPrompt; echo "1. Configure the system"
@@ -292,18 +285,17 @@ printPreInstallInfo_multi() {
     printPrompt; echo
     printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
 
-    if [[ ! -f ${CONFIG} ]]; then
+    if [[ ! -f ${CONFIG} ]] || [[ ${SILENT} == false ]]; then
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
-        printPrompt; echo "System admin user name       : undetected - will prompt for entry"
-        printPrompt; echo "System admin password        : undetected - will prompt for entry"
+        printPrompt; echo "System admin user name       : will prompt for entry"
+        printPrompt; echo "System admin password        : will prompt for entry"
         printPrompt; echo "Codenvy nodes' DNS hostnames : not set - will prompt for entry"
         printPrompt; echo
         pressAnyKeyToContinueAndClearConsole
         prepareConfig_multi
         printPrompt; echo
     else
-        CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
         HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
         PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -315,9 +307,6 @@ printPreInstallInfo_multi() {
         SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
 
         printPrompt; echo "Configuration File: "${CONFIG}
-        printPrompt; echo
-        printPrompt; echo "System admin user name : "${CODENVY_ADMIN_NAME}
-        printPrompt; echo "System admin password  : ******"
         printPrompt; echo
         printPrompt; echo "Codenvy DNS hostname                    : "${HOST_NAME}
         printPrompt; echo "Codenvy Puppet Master node DNS hostname : "${PUPPET_MASTER_HOST_NAME}
@@ -387,15 +376,6 @@ doInstallStep6_single() {
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
-printPostInstallInfo_single() {
-    printPrompt; echo
-    HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
-    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
-    printPrompt; echo
-    printPrompt; echo "Troubleshoot Installation Problems: http://docs.codenvy.com/onpremises/installation-single-node/#install-troubleshooting"
-    printPrompt; echo "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-single-node/#upgrades"
-}
-
 doInstallStep5_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTIPLE NODES"
@@ -410,12 +390,19 @@ doInstallStep6_multi() {
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
-printPostInstallInfo_multi() {
-    printPrompt; echo
+printPostInstallInfo() {
     HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+    CODENVY_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
+
+    printPrompt; echo
     printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
     printPrompt; echo
-    printPrompt; echo "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node"
+    printPrompt; echo "System admin user name : "${CODENVY_ADMIN_NAME}
+    printPrompt; echo "System admin password  : "${CODENVY_ADMIN_PASSWORD}
+    printPrompt; echo
+    printPrompt; echo "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-${CODENVY_TYPE}-node/#install-troubleshooting"
+    printPrompt; echo "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-${CODENVY_TYPE}-node/#upgrades"
 }
 
 clear
@@ -430,4 +417,4 @@ doInstallStep4
 doInstallStep5_${CODENVY_TYPE}
 doInstallStep6_${CODENVY_TYPE}
 
-printPostInstallInfo_${CODENVY_TYPE}
+printPostInstallInfo
