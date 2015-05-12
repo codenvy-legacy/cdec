@@ -26,6 +26,7 @@ import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -69,6 +70,7 @@ public class TestInstallationManager {
 
     public static final String UPDATE_ENDPOINT = "http://update.com/endpoint";
     public static final String DOWNLOAD_DIR    = "target/download";
+    public static final String STORAGE_DIR = "target/storage";
     private Artifact cdecArtifact;
     private Artifact installManagerArtifact;
 
@@ -98,6 +100,7 @@ public class TestInstallationManager {
         manager = spy(new InstallationManagerImpl(
                 UPDATE_ENDPOINT,
                 DOWNLOAD_DIR,
+                STORAGE_DIR,
                 transport,
                 installerManager,
                 new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
@@ -110,17 +113,18 @@ public class TestInstallationManager {
 
     @AfterMethod
     public void tearDown() throws Exception {
-        deleteDirectory(Paths.get("target", "download").toFile());
+        deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());
+        deleteDirectory(Paths.get(STORAGE_DIR).toFile());
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
-        new InstallationManagerImpl("", "/home/bla-bla", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
+        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
+        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -547,5 +551,41 @@ public class TestInstallationManager {
 
         manager.changeAdminPassword(pwd);
         verify(passwordManager).changeAdminPassword(pwd);
+    }
+
+    @Test
+    public void testStoreLoadProperties() throws Exception {
+        manager.storeProperties(ImmutableMap.of("x1", "y1", "x2", "y2"));
+
+        Map<String, String> m = manager.readProperties(ImmutableSet.of("x1"));
+        assertEquals(m.size(), 1);
+        assertEquals(m.get("x1"), "y1");
+
+        manager.storeProperties(ImmutableMap.of("x1", "y2"));
+
+        m = manager.readProperties(ImmutableSet.of("x1", "x2", "x3"));
+        assertEquals(m.size(), 2);
+        assertEquals(m.get("x1"), "y2");
+        assertEquals(m.get("x2"), "y2");
+    }
+
+    @Test
+    public void testReadEmptyMapIfNoPropertiesFile() throws Exception {
+        Map<String, String> m = manager.readProperties(ImmutableSet.of("x1", "x2", "x3"));
+        assertTrue(m.isEmpty());
+    }
+
+    @Test
+    public void testReadEmptyMapIfNullPassed() throws Exception {
+        Map<String, String> m = manager.readProperties(null);
+        assertTrue(m.isEmpty());
+    }
+
+    @Test
+    public void testStoreLoadEmptyMap() throws Exception {
+        manager.storeProperties(Collections.<String, String>emptyMap());
+
+        Map<String, String> m = manager.readProperties(Collections.<String>emptySet());
+        assertTrue(m.isEmpty());
     }
 }

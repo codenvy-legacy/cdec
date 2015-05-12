@@ -457,6 +457,45 @@ public class InstallationManagerService {
         }
     }
 
+    /** Reads properties from the storage */
+    @GET
+    @Path("/property")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Reads properties from the storage", response = Response.class)
+    public javax.ws.rs.core.Response readProperty(@QueryParam(value = "name") final List<String> names) {
+        Response response = delegate.readProperties(names);
+
+        if (ResponseCode.ERROR == response.getStatus()) {
+            String errorMessage = response.getMessage();
+            return javax.ws.rs.core.Response.serverError().entity(errorMessage).build();
+        } else {
+            JsonStringMapImpl<String> properties = new JsonStringMapImpl<>(response.getConfig());
+            return javax.ws.rs.core.Response.ok().entity(properties).build();
+        }
+    }
+
+    /** Stores properties into the storage */
+    @POST
+    @Path("/property")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Stores properties into the storage", response = Response.class)
+    public javax.ws.rs.core.Response storeProperty(Map<String, String> properties) {
+        Response response = delegate.storeProperties(properties);
+
+        if (ResponseCode.ERROR == response.getStatus()) {
+            String errorMessage = response.getMessage();
+            return javax.ws.rs.core.Response.serverError().entity(errorMessage).build();
+        } else {
+            return javax.ws.rs.core.Response.ok().build();
+        }
+    }
+
     private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
         try {
             if (!Response.isError(responseString)) {

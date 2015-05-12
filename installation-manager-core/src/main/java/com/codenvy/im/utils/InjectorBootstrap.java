@@ -34,12 +34,12 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 
 /**
@@ -73,12 +73,15 @@ public class InjectorBootstrap {
                 bindProperties("codenvy/installation-manager.properties");
 
                 // overrides default properties
-                Path conf = Paths.get(System.getenv("CODENVY_LOCAL_CONF_DIR"), "installation-manager.properties");
-                if (exists(conf)) {
-                    try (InputStream in = newInputStream(conf)) {
-                        doBindProperties(in);
-                    } catch (IOException e) {
-                        throw new IllegalStateException("Can't load properties", e);
+                Iterator<Path> pathIterator = Paths.get(System.getenv("CODENVY_LOCAL_CONF_DIR")).iterator();
+                while (pathIterator.hasNext()) {
+                    Path conf = pathIterator.next();
+                    if (conf.endsWith(".properties")) {
+                        try (InputStream in = newInputStream(conf)) {
+                            doBindProperties(in);
+                        } catch (IOException e) {
+                            throw new IllegalStateException("Can't load properties", e);
+                        }
                     }
                 }
 

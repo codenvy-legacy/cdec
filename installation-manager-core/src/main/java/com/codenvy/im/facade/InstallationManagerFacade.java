@@ -50,7 +50,9 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -70,6 +72,9 @@ import static java.nio.file.Files.size;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
+// TODO [AB] return response everywhere
+// TODO [AB] no exceptions
+// TODO [AB] user readable error messages
 @Singleton
 public class InstallationManagerFacade {
     private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
@@ -104,8 +109,8 @@ public class InstallationManagerFacade {
     public String addTrialSaasSubscription(@Nonnull Request request) throws IOException {
         try {
             transport
-                .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
-                        request.obtainAccessToken());
+                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
+                            request.obtainAccessToken());
             return new Response().setStatus(ResponseCode.OK)
                                  .setSubscription(ON_PREMISES)
                                  .setMessage("Subscription has been added")
@@ -526,6 +531,36 @@ public class InstallationManagerFacade {
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return Response.valueOf(e).toJson();
+        }
+    }
+
+    /**
+     * @see com.codenvy.im.managers.InstallationManager#storeProperties(java.util.Map)
+     */
+    public Response storeProperties(Map<String, String> newProperties) {
+        try {
+            manager.storeProperties(newProperties);
+            return new Response().setStatus(ResponseCode.OK);
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e);
+        }
+    }
+
+    /**
+     * @see com.codenvy.im.managers.InstallationManager#readProperties(java.util.Collection)
+     */
+    public Response readProperties(@Nullable Collection<String> names) {
+        if (names == null) {
+            return new Response().setStatus(ResponseCode.OK);
+        }
+
+        try {
+            LinkedHashMap<String, String> properties = new LinkedHashMap<>(manager.readProperties(names));
+            return new Response().setStatus(ResponseCode.OK).setConfig(properties);
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e);
         }
     }
 }

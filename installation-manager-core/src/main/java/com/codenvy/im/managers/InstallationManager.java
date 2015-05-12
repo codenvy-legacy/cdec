@@ -22,6 +22,7 @@ import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,5 +140,26 @@ public interface InstallationManager {
 
     /** Changes Codenvy admin password */
     void changeAdminPassword(byte[] newPassword) throws IOException;
+
+    /**
+     * Stores installation related properties.
+     *
+     * @param newProperties
+     *         properties to store
+     * @throws IOException
+     *         if any I/O error occurred
+     */
+    void storeProperties(Map<String, String> newProperties) throws IOException;
+
+    /**
+     * Loads installation related properties.
+     * If there is no stored specific property then no value will be returned.
+     *
+     * @param names
+     *         properties names to load
+     * @throws IOException
+     *         if any I/O error occurred
+     */
+    Map<String, String> readProperties(Collection<String> names) throws IOException;
 
 }

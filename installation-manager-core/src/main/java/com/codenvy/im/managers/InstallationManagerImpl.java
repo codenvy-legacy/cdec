@@ -27,14 +27,22 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import javax.inject.Named;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -48,6 +56,9 @@ import static com.codenvy.im.utils.Commons.getProperException;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.delete;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
@@ -56,6 +67,8 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
  */
 @Singleton
 public class InstallationManagerImpl implements InstallationManager {
+    public static final String STORAGE_FILE_NAME = "config.properties";
+
     private final String           updateEndpoint;
     private final InstallerManager installerManager;
     private final HttpTransport    transport;
@@ -64,10 +77,13 @@ public class InstallationManagerImpl implements InstallationManager {
     private final BackupManager    backupManager;
     private final PasswordManager  passwordManager;
     private final Path             downloadDir;
+    private final Path storageDir;
+
 
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                                    @Named("installation-manager.download_dir") String downloadDir,
+                                   @Named("installation-manager.storage_dir") String storageDir,
                                    HttpTransport transport,
                                    InstallerManager installerManager,
                                    Set<Artifact> artifacts,
@@ -80,6 +96,7 @@ public class InstallationManagerImpl implements InstallationManager {
         this.passwordManager = passwordManager;
         this.artifacts = new ArtifactsSet(artifacts); // keep order
 
+        this.storageDir = Paths.get(storageDir);
         this.downloadDir = Paths.get(downloadDir);
         checkRWPermissions(this.downloadDir);
 
@@ -334,5 +351,61 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public void changeAdminPassword(byte[] newPassword) throws IOException {
         passwordManager.changeAdminPassword(newPassword);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void storeProperties(Map<String, String> newProperties) throws IOException {
+        Path storageFile = getStorageFile();
+        Properties properties = loadProperties(storageFile);
+
+        for (Map.Entry<String, String> entry : newProperties.entrySet()) {
+            properties.put(entry.getKey(), entry.getValue());
+        }
+
+        try (OutputStream out = new BufferedOutputStream(newOutputStream(storageFile))) {
+            properties.store(out, null);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, String> readProperties(final Collection<String> names) throws IOException {
+        Path storageFile = getStorageFile();
+        Properties properties = loadProperties(storageFile);
+
+        Map<String, String> result = new HashMap<>((Map)properties);
+
+        Iterator<Map.Entry<String, String>> iter = result.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, String> entry = iter.next();
+            if (!names.contains(entry.getKey())) {
+                iter.remove();
+            }
+        }
+
+        return result;
+    }
+
+    private Properties loadProperties(Path propertiesFile) throws IOException {
+        Properties properties = new Properties();
+
+        if (exists(propertiesFile)) {
+            try (InputStream in = new BufferedInputStream(newInputStream(propertiesFile))) {
+                properties.load(in);
+            }
+        }
+        return properties;
+    }
+
+    private Path getStorageFile() throws IOException {
+        Path storageFile = storageDir.resolve(STORAGE_FILE_NAME);
+        if (!exists(storageFile.getParent())) {
+            createDirectories(storageFile.getParent());
+        }
+
+        return storageFile;
     }
 }

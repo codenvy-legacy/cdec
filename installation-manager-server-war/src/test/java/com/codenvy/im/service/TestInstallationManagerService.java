@@ -47,10 +47,13 @@ import java.io.IOException;
 import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -117,44 +120,44 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
         Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
         result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testStopDownload() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).stopDownload();
         Response result = service.stopDownload();
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).stopDownload();
         result = service.stopDownload();
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testGetDownloadStatus() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloadStatus();
         Response result = service.getDownloadStatus();
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloadStatus();
         result = service.getDownloadStatus();
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testGetUpdates() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates();
         Response result = service.getUpdates();
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates();
         result = service.getUpdates();
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -163,22 +166,22 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
         Response result = service.getDownloads(CODENVY_ARTIFACT_NAME);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
         result = service.getDownloads(CODENVY_ARTIFACT_NAME);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testGetInstalledVersions() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstalledVersions();
         Response result = service.getInstalledVersions();
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstalledVersions();
         result = service.getInstalledVersions();
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -199,11 +202,11 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
         Response result = service.updateCodenvy(testStep, testConfigProperties);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
         result = service.updateCodenvy(testStep, testConfigProperties);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -220,7 +223,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
         Response result = service.updateCodenvy(testStep, null);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
     }
 
     @Test
@@ -233,11 +236,11 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
         Response result = service.updateImCliClient(cliUserHomeDir);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
         result = service.updateImCliClient(cliUserHomeDir);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -251,44 +254,44 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
         Response result = service.getUpdateCodenvyInfo();
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
         result = service.getUpdateCodenvyInfo();
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testGetConfig() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getConfig();
         Response result = service.getInstallationManagerServerConfig();
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getConfig();
         result = service.getInstallationManagerServerConfig();
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testAddNode() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addNode("dns");
         Response result = service.addNode("dns");
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addNode("dns");
         result = service.addNode("dns");
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
     public void testRemoveNode() throws Exception {
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).removeNode("dns");
         Response result = service.removeNode("dns");
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).removeNode("dns");
         result = service.removeNode("dns");
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -299,11 +302,11 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).backup(testBackupConfig);
         Response result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).backup(testBackupConfig);
         result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -314,11 +317,11 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).restore(testBackupConfig);
         Response result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).restore(testBackupConfig);
         result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -331,11 +334,11 @@ public class TestInstallationManagerService extends BaseTest {
         service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 
         Response result = service.addTrialSubscription(mockSecurityContext);
-        checkEmptyOkResponse(result);
+        assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
         result = service.addTrialSubscription(mockSecurityContext);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -356,7 +359,9 @@ public class TestInstallationManagerService extends BaseTest {
                                                 + "  \"endDate\" : \"" + endDate + "\",\n"
                                                 + "  \"links\": [\n"
                                                 + "    {\n"
-                                                + "      \"href\": \"https://codenvy-stg.com/api/account/subscriptions/subscriptionoxmrh93dw3ceuegk\",\n"
+                                                +
+                                                "      \"href\": \"https://codenvy-stg" +
+                                                ".com/api/account/subscriptions/subscriptionoxmrh93dw3ceuegk\",\n"
                                                 + "      \"rel\": \"get subscription by id\",\n"
                                                 + "      \"produces\": \"application/json\",\n"
                                                 + "      \"parameters\": [],\n"
@@ -392,7 +397,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         doThrow(new HttpException(500, "error")).when(mockFacade).getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, testRequest);
         result = service.getSaasSubscription(mockSecurityContext);
-        checkErrorResponse(result);
+        assertErrorResponse(result);
     }
 
     @Test
@@ -483,12 +488,12 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testGetCodenvyConfig() throws IOException {
         Config testConfig = new Config(new LinkedHashMap<>(ImmutableMap.of(
-            "builder_host_name", "builder1.dev.com",
-            "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
-            "analytics_host_name", "analytics.dev.com",
-            "additional_builders", "",
-            "data_host_name", "data.dev.com"
-        )));
+                "builder_host_name", "builder1.dev.com",
+                "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
+                "analytics_host_name", "analytics.dev.com",
+                "additional_builders", "",
+                "data_host_name", "data.dev.com"
+                                                                          )));
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
@@ -525,30 +530,66 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetPropertiesErrorIfArtifactNotFound() throws Exception {
+    public void testGetArtifactPropertiesErrorIfArtifactNotFound() throws Exception {
         Response response = service.getArtifactProperties("artifact", "1.3.1");
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
-    public void testGetPropertiesErrorIfVersionInvalid() throws Exception {
+    public void testGetArtifactPropertiesErrorIfVersionInvalid() throws Exception {
         Response response = service.getArtifactProperties("codenvy", "version");
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
-    public void testGetProperties() throws Exception {
+    public void testGetArtifactProperties() throws Exception {
         Response response = service.getArtifactProperties("codenvy", "1.0.1");
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
-    private void checkEmptyOkResponse(Response result) throws IOException {
+    @Test
+    public void testReadPropertyShouldReturnOkResponse() throws Exception {
+        doReturn(mockFacadeOkResponse).when(mockFacade).readProperties(anyCollection());
+
+        Response response = service.readProperty(Collections.<String>emptyList());
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testReadPropertyShouldReturnErrorResponse() throws Exception {
+        doReturn(mockFacadeErrorResponse).when(mockFacade).readProperties(anyCollection());
+
+        Response response = service.readProperty(Collections.<String>emptyList());
+
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
+    public void testLoadPropertyShouldReturnOkResponse() throws Exception {
+        doReturn(mockFacadeOkResponse).when(mockFacade).storeProperties(anyMap());
+
+        Response response = service.storeProperty(Collections.<String, String>emptyMap());
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testLoadPropertyShouldReturnErrorResponse() throws Exception {
+        doReturn(mockFacadeErrorResponse).when(mockFacade).storeProperties(anyMap());
+
+        Response response = service.storeProperty(Collections.<String, String>emptyMap());
+
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    private void assertOkResponse(Response result) throws IOException {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         String facadeResponse = (String)result.getEntity();
         assertEquals(facadeResponse, mockFacadeOkResponse.toJson());
     }
 
-    private void checkErrorResponse(Response result) {
+    private void assertErrorResponse(Response result) {
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         String facadeResponse = (String)result.getEntity();
         assertEquals(facadeResponse, mockFacadeErrorResponse.toJson());

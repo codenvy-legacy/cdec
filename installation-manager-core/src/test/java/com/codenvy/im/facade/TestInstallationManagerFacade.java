@@ -24,6 +24,8 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -32,6 +34,7 @@ import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -48,6 +51,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -107,6 +112,7 @@ public class TestInstallationManagerFacade {
                                "  \"status\" : \"OK\"\n" +
                                "}");
     }
+
     @Test
     public void testInstallError() throws Exception {
         InstallOptions installOptions = new InstallOptions();
@@ -229,13 +235,13 @@ public class TestInstallationManagerFacade {
         doReturn(TEST_NODE).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
         assertEquals(installationManagerFacade.removeNode(TEST_NODE_DNS), "{\n"
-                                                                           + "  \"node\" : {\n"
-                                                                           + "    \"type\" : \"BUILDER\",\n"
-                                                                           + "    \"host\" : \"builder.node.com\",\n"
-                                                                           + "    \"status\" : \"SUCCESS\"\n"
-                                                                           + "  },\n"
-                                                                           + "  \"status\" : \"OK\"\n"
-                                                                           + "}");
+                                                                          + "  \"node\" : {\n"
+                                                                          + "    \"type\" : \"BUILDER\",\n"
+                                                                          + "    \"host\" : \"builder.node.com\",\n"
+                                                                          + "    \"status\" : \"SUCCESS\"\n"
+                                                                          + "  },\n"
+                                                                          + "  \"status\" : \"OK\"\n"
+                                                                          + "}");
     }
 
     @Test
@@ -244,9 +250,9 @@ public class TestInstallationManagerFacade {
         doThrow(new IOException("error")).when(mockInstallationManager).removeNode(TEST_NODE_DNS);
 
         assertEquals(installationManagerFacade.removeNode(TEST_NODE_DNS), "{\n"
-                                                                           + "  \"message\" : \"error\",\n"
-                                                                           + "  \"status\" : \"ERROR\"\n"
-                                                                           + "}");
+                                                                          + "  \"message\" : \"error\",\n"
+                                                                          + "  \"status\" : \"ERROR\"\n"
+                                                                          + "}");
     }
 
     @Test
@@ -258,18 +264,18 @@ public class TestInstallationManagerFacade {
 
         doReturn(testBackupConfig.setBackupFile(testBackupFile.toString())
                                  .setArtifactVersion("1.0.0"))
-            .when(mockInstallationManager).backup(testBackupConfig);
+                .when(mockInstallationManager).backup(testBackupConfig);
         assertEquals(installationManagerFacade.backup(testBackupConfig), "{\n"
-                                                                          + "  \"backup\" : {\n"
-                                                                          + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                          + "    \"artifactInfo\" : {\n"
-                                                                          + "      \"artifact\" : \"codenvy\",\n"
-                                                                          + "      \"version\" : \"1.0.0\"\n"
-                                                                          + "    },\n"
-                                                                          + "    \"status\" : \"SUCCESS\"\n"
-                                                                          + "  },\n"
-                                                                          + "  \"status\" : \"OK\"\n"
-                                                                          + "}");
+                                                                         + "  \"backup\" : {\n"
+                                                                         + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                         + "    \"artifactInfo\" : {\n"
+                                                                         + "      \"artifact\" : \"codenvy\",\n"
+                                                                         + "      \"version\" : \"1.0.0\"\n"
+                                                                         + "    },\n"
+                                                                         + "    \"status\" : \"SUCCESS\"\n"
+                                                                         + "  },\n"
+                                                                         + "  \"status\" : \"OK\"\n"
+                                                                         + "}");
     }
 
 
@@ -282,15 +288,15 @@ public class TestInstallationManagerFacade {
         doThrow(new IOException("error")).when(mockInstallationManager).backup(testBackupConfig);
 
         assertEquals(installationManagerFacade.backup(testBackupConfig), "{\n"
-                                                                          + "  \"backup\" : {\n"
-                                                                          + "    \"artifactInfo\" : {\n"
-                                                                          + "      \"artifact\" : \"codenvy\"\n"
-                                                                          + "    },\n"
-                                                                          + "    \"status\" : \"FAILURE\"\n"
-                                                                          + "  },\n"
-                                                                          + "  \"message\" : \"error\",\n"
-                                                                          + "  \"status\" : \"ERROR\"\n"
-                                                                          + "}");
+                                                                         + "  \"backup\" : {\n"
+                                                                         + "    \"artifactInfo\" : {\n"
+                                                                         + "      \"artifact\" : \"codenvy\"\n"
+                                                                         + "    },\n"
+                                                                         + "    \"status\" : \"FAILURE\"\n"
+                                                                         + "  },\n"
+                                                                         + "  \"message\" : \"error\",\n"
+                                                                         + "  \"status\" : \"ERROR\"\n"
+                                                                         + "}");
     }
 
     @Test
@@ -300,15 +306,15 @@ public class TestInstallationManagerFacade {
                                                           .setBackupFile(testBackupFile);
 
         assertEquals(installationManagerFacade.restore(testBackupConfig), "{\n"
-                                                                           + "  \"backup\" : {\n"
-                                                                           + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                           + "    \"artifactInfo\" : {\n"
-                                                                           + "      \"artifact\" : \"codenvy\"\n"
-                                                                           + "    },\n"
-                                                                           + "    \"status\" : \"SUCCESS\"\n"
-                                                                           + "  },\n"
-                                                                           + "  \"status\" : \"OK\"\n"
-                                                                           + "}");
+                                                                          + "  \"backup\" : {\n"
+                                                                          + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                          + "    \"artifactInfo\" : {\n"
+                                                                          + "      \"artifact\" : \"codenvy\"\n"
+                                                                          + "    },\n"
+                                                                          + "    \"status\" : \"SUCCESS\"\n"
+                                                                          + "  },\n"
+                                                                          + "  \"status\" : \"OK\"\n"
+                                                                          + "}");
     }
 
 
@@ -378,7 +384,7 @@ public class TestInstallationManagerFacade {
     }
 
     @Test(expectedExceptions = HttpException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testLoginToSaasWhenException() throws IOException, JsonParseException {
         final String TEST_USER_NAME = "user";
         final String TEST_USER_PASSWORD = "password";
@@ -416,8 +422,9 @@ public class TestInstallationManagerFacade {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         String testDescriptorJson = "{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
-                                    +",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
-        doReturn("[" + testDescriptorJson + "]").when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
+                                    + ",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
+        doReturn("[" + testDescriptorJson + "]").when(mockTransport)
+                                                .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
         String result = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
         assertEquals(result, "{\n"
@@ -445,7 +452,7 @@ public class TestInstallationManagerFacade {
     }
 
     @Test(expectedExceptions = HttpException.class,
-          expectedExceptionsMessageRegExp = "error")
+            expectedExceptionsMessageRegExp = "error")
     public void testGetSubscriptionDescriptorWhenException() throws IOException {
         final String TEST_ACCOUNT_ID = "accountId";
         final String TEST_ACCESS_TOKEN = "accessToken";
@@ -453,12 +460,13 @@ public class TestInstallationManagerFacade {
         SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
         Request request = new Request().setSaasUserCredentials(userCredentials);
 
-        doThrow(new HttpException(500, "error")).when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
+        doThrow(new HttpException(500, "error")).when(mockTransport)
+                                                .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
         installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
     }
-    
+
     @Test
-    public void testChangeAdminPassword() throws Exception {
+    public void testChangeAdminPasswordShouldReturnOkResponse() throws Exception {
         byte[] pwd = "password".getBytes("UTF-8");
         assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
                                                                          "  \"status\" : \"OK\"\n" +
@@ -466,12 +474,65 @@ public class TestInstallationManagerFacade {
     }
 
     @Test
-    public void testChangeAdminPasswordError() throws Exception {
+    public void testChangeAdminPasswordShouldReturnErrorResponseIfErrorOccurred() throws Exception {
         byte[] pwd = "password".getBytes("UTF-8");
         doThrow(IOException.class).when(mockInstallationManager).changeAdminPassword(pwd);
 
         assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
                                                                          "  \"status\" : \"ERROR\"\n" +
                                                                          "}");
+    }
+
+    @Test
+    public void testStorePropertiesShouldReturnOkResponse() throws Exception {
+        doNothing().when(mockInstallationManager).storeProperties(anyMap());
+
+        Response response = installationManagerFacade.storeProperties(ImmutableMap.of("x", "y"));
+
+        assertEquals(response.getStatus(), ResponseCode.OK);
+        assertEquals(response.toJson(), "{\n" +
+                                        "  \"status\" : \"OK\"\n" +
+                                        "}");
+    }
+
+    @Test
+    public void testStorePropertiesShouldReturnErrorResponseIfErrorOccurred() throws Exception {
+        doThrow(new IOException("error")).when(mockInstallationManager).storeProperties(anyMap());
+
+        Response response = installationManagerFacade.storeProperties(ImmutableMap.of("x", "y"));
+
+        assertEquals(response.getStatus(), ResponseCode.ERROR);
+        assertEquals(response.toJson(), "{\n" +
+                                        "  \"message\" : \"error\",\n" +
+                                        "  \"status\" : \"ERROR\"\n" +
+                                        "}");
+    }
+
+    @Test
+    public void testReadPropertiesShouldReturnOkResponse() throws Exception {
+        doReturn(ImmutableMap.of("x", "y")).when(mockInstallationManager).readProperties(anySet());
+
+        Response response = installationManagerFacade.readProperties(ImmutableSet.of("x"));
+
+        assertEquals(response.getStatus(), ResponseCode.OK);
+        assertEquals(response.toJson(), "{\n" +
+                                        "  \"config\" : {\n" +
+                                        "    \"x\" : \"y\"\n" +
+                                        "  },\n" +
+                                        "  \"status\" : \"OK\"\n" +
+                                        "}");
+    }
+
+    @Test
+    public void testReadPropertiesShouldReturnShouldReturnErrorResponseIfErrorOccurred() throws Exception {
+        doThrow(new IOException("error")).when(mockInstallationManager).readProperties(anySet());
+
+        Response response = installationManagerFacade.readProperties(ImmutableSet.of("x"));
+
+        assertEquals(response.getStatus(), ResponseCode.ERROR);
+        assertEquals(response.toJson(), "{\n" +
+                                        "  \"message\" : \"error\",\n" +
+                                        "  \"status\" : \"ERROR\"\n" +
+                                        "}");
     }
 }
