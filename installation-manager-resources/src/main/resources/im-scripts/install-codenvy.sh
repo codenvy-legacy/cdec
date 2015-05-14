@@ -237,7 +237,7 @@ printPreInstallInfo_single() {
         printPrompt; echo
         printPrompt; echo "System admin user name : will prompt for entry"
         printPrompt; echo "System admin password  : will prompt for entry"
-        printPrompt; echo "Codenvy DNS hostname   : not set - will prompt for entry"
+        printPrompt; echo "Codenvy DNS hostname   : will prompt for entry"
         printPrompt; echo
         pressAnyKeyToContinue
         prepareConfig_single
@@ -268,7 +268,7 @@ printPreInstallInfo_multi() {
     printPrompt; echo "6. Boot Codenvy"
     printPrompt; echo
     printPrompt; echo
-    pressAnyKeyToContinue
+    pressAnyKeyToContinueAndClearConsole
 
     printPrompt; echo "Checking for system pre-requisites..."
     printPrompt; echo "We have detected that this node is a ${OS} distribution."
@@ -284,15 +284,17 @@ printPreInstallInfo_multi() {
     printPrompt; echo "OS          : CentOS 7"
     printPrompt; echo
     printPrompt; echo "Sizing Guide: http://docs.codenvy.com/onpremises"
+    printPrompt; echo
+    pressAnyKeyToContinueAndClearConsole
 
     if [[ ! -f ${CONFIG} ]] || [[ ${SILENT} == false ]]; then
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
         printPrompt; echo "System admin user name       : will prompt for entry"
         printPrompt; echo "System admin password        : will prompt for entry"
-        printPrompt; echo "Codenvy nodes' DNS hostnames : not set - will prompt for entry"
+        printPrompt; echo "Codenvy nodes' DNS hostnames : will prompt for entry"
         printPrompt; echo
-        pressAnyKeyToContinueAndClearConsole
+        pressAnyKeyToContinue
         prepareConfig_multi
         printPrompt; echo
     else

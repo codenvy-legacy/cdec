@@ -33,9 +33,9 @@ import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
-
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -390,7 +390,7 @@ public class InstallCommand extends AbstractIMCommand {
         String userHome = System.getProperty("user.home");
         Path pathToIdRsa = Paths.get(userHome).resolve(".ssh").resolve("id_rsa");
         if (!Files.exists(pathToIdRsa)) {
-            throw new RuntimeException("Ssh private key doesn't found");
+            throw new RuntimeException("Ssh private key wasn't found");
         }
 
         try {
