@@ -75,6 +75,7 @@ import static java.nio.file.Files.size;
 // TODO [AB] return response everywhere
 // TODO [AB] no exceptions
 // TODO [AB] user readable error messages
+// TODO [AB] get rid of
 @Singleton
 public class InstallationManagerFacade {
     private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
@@ -359,7 +360,7 @@ public class InstallationManagerFacade {
         }
     }
 
-    /** @return the list of installed artifacts ant theirs versions */
+    /** @return the list of installed artifacts and theirs versions */
     public String getInstalledVersions() throws IOException {
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts();
         return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts).toJson();
@@ -515,12 +516,11 @@ public class InstallationManagerFacade {
 
     /** Get user's certain subscription descriptor */
     @Nullable
-    public String getSubscriptionDescriptor(String subscriptionName,
-                                            @Nonnull Request request) throws IOException {
-        SubscriptionDescriptor descriptor = saasAccountServiceProxy.getSubscription(subscriptionName,
-                                                                                    request.obtainAccessToken(),
-                                                                                    request.obtainAccountId());
-        return descriptor == null ? null : toJson(descriptor);
+    public SubscriptionDescriptor getSubscriptionDescriptor(String subscriptionName,
+                                                            @Nonnull Request request) throws IOException {
+        return saasAccountServiceProxy.getSubscription(subscriptionName,
+                                                       request.obtainAccessToken(),
+                                                       request.obtainAccountId());
     }
 
     /** Perform restore according to certain backup config */

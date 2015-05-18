@@ -168,7 +168,7 @@ prepareConfig_multi() {
 
 executeIMCommand() {
     if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
-    ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8
+    ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8 $9
 }
 
 preconfigureSystem() {
@@ -398,8 +398,9 @@ printPostInstallInfo() {
     CODENVY_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
 
     printPrompt; echo
-    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}"/"
+    printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}
     printPrompt; echo
+    printPrompt; echo "Administrate your installation ready at http://"${HOSTNAME}"/site/admin"
     printPrompt; echo "System admin user name : "${CODENVY_ADMIN_NAME}
     printPrompt; echo "System admin password  : "${CODENVY_ADMIN_PASSWORD}
     printPrompt; echo

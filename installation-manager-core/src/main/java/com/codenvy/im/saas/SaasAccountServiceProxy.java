@@ -136,8 +136,8 @@ public class SaasAccountServiceProxy {
         transport.doDelete(requestUrl, accessToken);
     }
 
-    @Nullable
     /** Get certain subscription descriptor **/
+    @Nullable
     public SubscriptionDescriptor getSubscription(String subscriptionName,
                                                          String accessToken,
                                                          String accountId) throws IOException {

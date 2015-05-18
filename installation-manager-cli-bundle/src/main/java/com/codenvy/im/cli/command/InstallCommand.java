@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
@@ -32,9 +31,6 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-import com.google.common.base.Charsets;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -42,14 +38,9 @@ import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.codenvy.im.managers.Config.isEmpty;
 import static com.codenvy.im.managers.Config.isMandatory;
@@ -66,8 +57,6 @@ import static java.lang.Thread.sleep;
  */
 @Command(scope = "codenvy", name = "im-install", description = "Install, update artifact or print the list of already installed ones")
 public class InstallCommand extends AbstractIMCommand {
-
-    private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
     private final ConfigManager configManager;
     private       InstallType   installType;
@@ -130,7 +119,8 @@ public class InstallCommand extends AbstractIMCommand {
 
         final Request request = createRequest(artifactName, version);
 
-        setOptionsFromConfig(installOptions);
+        installOptions.setInstallType(installType);
+        setInstallProperties(installOptions);
 
         if (!installOptions.checkValid()) {
             enterMandatoryOptions(installOptions);
@@ -276,57 +266,18 @@ public class InstallCommand extends AbstractIMCommand {
         return options;
     }
 
-    protected void setOptionsFromConfig(InstallOptions options) throws IOException {
+    protected void setInstallProperties(InstallOptions options) throws IOException {
         switch (artifactName) {
             case InstallManagerArtifact.NAME:
                 options.setCliUserHomeDir(System.getProperty("user.home"));
                 break;
 
             case CDECArtifact.NAME:
-                options.setInstallType(installType);
-
-                Map<String, String> properties;
-                if (configFilePath != null) {
-                    properties = configManager.loadConfigProperties(configFilePath);
-                } else {
-                    if (isInstall()) {
-                        properties = configManager.loadCodenvyDefaultProperties(version, installType);
-                    } else {
-                        properties = configManager.merge(configManager.loadInstalledCodenvyProperties(installType),
-                                                         configManager.loadCodenvyDefaultProperties(version, installType));
-                        properties.put(Config.VERSION, version);
-                        if (installType == InstallType.MULTI_SERVER) {
-                            properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY,
-                                           configManager.fetchMasterHostName());  // restore host name of puppet master
-                        }
-                    }
-                }
-
-                String saasApiEndpoint = INJECTOR.getInstance(Key.get(String.class, Names.named("saas.api.endpoint")));
-                properties.put(Config.CODENVY_SAAS_HOST_URL, saasApiEndpoint);
-
-                if (installType == InstallType.MULTI_SERVER) {
-                    properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, System.getProperty("user.name"));  // setup name of user to access the nodes
-                    properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, readDefaultSshPrivateKey());  // setup private key of ssh user
-                }
-
+                Map<String, String> properties = configManager.prepareInstallProperties(configFilePath,
+                                                                                        installType,
+                                                                                        ArtifactFactory.createArtifact(artifactName),
+                                                                                        Version.valueOf(version));
                 options.setConfigProperties(properties);
-
-                // it's allowed to use ${} templates to set properties values
-                for (Map.Entry<String, String> e : options.getConfigProperties().entrySet()) {
-                    String key = e.getKey();
-                    String value = e.getValue();
-
-                    Matcher matcher = VARIABLE_TEMPLATE.matcher(value);
-                    if (matcher.find()) {
-                        String newValue = properties.get(matcher.group(1));
-                        properties.put(key, newValue);
-                    }
-                }
-
-                properties.remove(Config.CODENVY_USER_NAME);
-                properties.remove(Config.CODENVY_PASSWORD);
-
                 break;
             default:
                 throw ArtifactNotFoundException.from(artifactName);
@@ -382,21 +333,4 @@ public class InstallCommand extends AbstractIMCommand {
         }
     }
 
-
-    /**
-     * @return content of default ssh private key stored in /{user.home}/.ssh/id_rsa
-     */
-    private String readDefaultSshPrivateKey() {
-        String userHome = System.getProperty("user.home");
-        Path pathToIdRsa = Paths.get(userHome).resolve(".ssh").resolve("id_rsa");
-        if (!Files.exists(pathToIdRsa)) {
-            throw new RuntimeException("Ssh private key wasn't found");
-        }
-
-        try {
-            return com.google.common.io.Files.toString(pathToIdRsa.toFile(), Charsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException("It is impossible to read ssh private key: " + e.getMessage(), e);
-        }
-    }
 }

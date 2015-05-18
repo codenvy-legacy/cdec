@@ -39,8 +39,6 @@ public class Config {
     public static final String MULTI_SERVER_NODES_PROPERTIES = "manifests/nodes/multi_server/nodes.pp";
 
     public static final String VERSION           = "version";
-    public static final String CODENVY_USER_NAME = "codenvy_user_name";
-    public static final String CODENVY_PASSWORD  = "codenvy_password";
 
     public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
     public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
@@ -53,7 +51,6 @@ public class Config {
     public static final String MONGO_ADMIN_PASSWORD_PROPERTY      = "mongo_admin_pass";
     public static final String NODE_SSH_USER_NAME_PROPERTY        = "node_ssh_user_name";
     public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY = "node_ssh_user_private_key";
-    public static final String CODENVY_SAAS_HOST_URL              = "codenvy_saas_host_url";
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{

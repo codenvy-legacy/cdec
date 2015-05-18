@@ -50,16 +50,16 @@ public class BaseTest {
 
     protected void createSingleNodeConf() throws Exception {
         FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[master]\n" +
-                                                   "    certname = hostname\n" +
-                                                   "[agent]\n" +
-                                                   "    certname = hostname\n");
+                                                               "    certname = hostname\n" +
+                                                               "[agent]\n" +
+                                                               "    certname = hostname\n");
     }
 
     protected void createMultiNodeConf() throws Exception {
-        FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[master]\n" +
-                                                   "\n" +
-                                                   "[main]\n" +
-                                                   "    certname = hostname\n");
+        FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[main]\n" +
+                                                               "    server = hostname\n" +
+                                                               "[agent]\n" +
+                                                               "    certname = hostname\n");
     }
 
     protected void prepareSingleNodeEnv(ConfigManager configManager, HttpTransport transport) throws Exception {

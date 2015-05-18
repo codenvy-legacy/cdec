@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 
+import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
@@ -58,7 +59,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -426,15 +429,14 @@ public class TestInstallationManagerFacade {
         doReturn("[" + testDescriptorJson + "]").when(mockTransport)
                                                 .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
-        String result = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
-        assertEquals(result, "{\n"
-                             + "  \"startDate\" : \"" + startDate + "\",\n"
-                             + "  \"endDate\" : \"" + endDate + "\",\n"
-                             + "  \"links\" : [ ],\n"
-                             + "  \"serviceId\" : \"OnPremises\",\n"
-                             + "  \"properties\" : { },\n"
-                             + "  \"id\" : \"subscription_id1\"\n"
-                             + "}");
+        SubscriptionDescriptor descriptor = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
+        assertNotNull(descriptor);
+        assertEquals(descriptor.getServiceId(), "OnPremises");
+        assertEquals(descriptor.getId(), "subscription_id1");
+        assertEquals(descriptor.getStartDate(), startDate);
+        assertEquals(descriptor.getEndDate(), endDate);
+        assertTrue(descriptor.getProperties().isEmpty());
+        assertTrue(descriptor.getLinks().isEmpty());
     }
 
     @Test
@@ -447,8 +449,9 @@ public class TestInstallationManagerFacade {
 
         doReturn("[]").when(mockTransport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
-        String result = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
-        assertNull(result);
+        SubscriptionDescriptor descriptor =
+                installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
+        assertNull(descriptor);
     }
 
     @Test(expectedExceptions = HttpException.class,

@@ -17,8 +17,16 @@
  */
 package com.codenvy.im.managers;
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -27,6 +35,7 @@ import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -34,12 +43,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
@@ -49,11 +61,12 @@ import static java.nio.file.Files.newInputStream;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigManager {
+    private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
+
     private final HttpTransport transport;
     private final String        updateEndpoint;
     private final String        puppetBaseDir;
     private final Path          puppetConfFile;
-
     @Inject
     public ConfigManager(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                          @Named("puppet.base_dir") String puppetBaseDir,
@@ -83,7 +96,7 @@ public class ConfigManager {
     }
 
     /** Loads default properties. */
-    public Map<String, String> loadCodenvyDefaultProperties(String version, InstallType installType) throws IOException {
+    public Map<String, String> loadCodenvyDefaultProperties(Version version, InstallType installType) throws IOException {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
 
         String requestUrl = combinePaths(updateEndpoint, "/repository/public/download/codenvy-" +
@@ -280,10 +293,11 @@ public class ConfigManager {
      * <p/>
      * <p/>
      * MULTI-node type configuration sample:
-     * [master]
-     * ...
      * [main]
-     * certname = some_host_name
+     * server = host_name
+     * ...
+     * [agent]
+     * certname = host_name
      * ...
      *
      * @throws UnknownInstallationTypeException
@@ -317,7 +331,9 @@ public class ConfigManager {
     private boolean isMultiTypeConfig(HierarchicalINIConfiguration iniFile) {
         Set<String> sections = iniFile.getSections();
         return sections.contains("main")
-               && !iniFile.getSection("main").getString("certname", "").isEmpty();
+               && !iniFile.getSection("main").getString("server", "").isEmpty()
+               && sections.contains("agent")
+               && !iniFile.getSection("agent").getString("certname", "").isEmpty();
     }
 
     /**
@@ -350,5 +366,95 @@ public class ConfigManager {
         } catch (ConfigurationException e) {
             throw new IOException(e);
         }
+    }
+
+    /**
+     * Prepares installation properties depending on artifact and installation type.
+     *
+     * @param configFile
+     *         file to read properties from, if absent the default properties will be loaded from the update server
+     * @param installType
+     *         installation type
+     * @param artifact
+     *         artifact to load properties for
+     * @param version
+     *         version of the artifact
+     * @return installation properties
+     * @throws IOException
+     *         if any I/O error occurred
+     */
+    public Map<String, String> prepareInstallProperties(@Nullable String configFile,
+                                                        InstallType installType,
+                                                        Artifact artifact,
+                                                        Version version) throws IOException {
+        switch (artifact.getName()) {
+            case InstallManagerArtifact.NAME:
+                return Collections.emptyMap();
+
+            case CDECArtifact.NAME:
+                Map<String, String> properties;
+
+                if (isInstall(artifact, version)) {
+                    properties = configFile != null ? loadConfigProperties(configFile)
+                                                    : loadCodenvyDefaultProperties(version, installType);
+                } else { // update
+                    properties = merge(loadInstalledCodenvyProperties(installType),
+                                       configFile != null ? loadConfigProperties(configFile)
+                                                          : loadCodenvyDefaultProperties(version, installType));
+
+                    if (installType == InstallType.MULTI_SERVER) {
+                        properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, fetchMasterHostName());  // set puppet master host name
+                    }
+                }
+
+                properties.put(Config.VERSION, version.toString());
+                if (installType == InstallType.MULTI_SERVER) {
+                    setSSHAccessProperties(properties);
+                }
+                setTemplatesProperties(properties);
+
+                return properties;
+            default:
+                throw new ArtifactNotFoundException(artifact);
+        }
+    }
+
+    protected boolean isInstall(Artifact artifact, Version version) throws IOException {
+        return Commons.isInstall(artifact, version);
+    }
+
+    /**
+     * It's allowed to use ${} templates to set properties values.
+     */
+    private void setTemplatesProperties(Map<String, String> properties) {
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            String key = e.getKey();
+            String value = e.getValue();
+
+            Matcher matcher = VARIABLE_TEMPLATE.matcher(value);
+            if (matcher.find()) {
+                String newValue = properties.get(matcher.group(1));
+                properties.put(key, newValue);
+            }
+        }
+    }
+
+    /**
+     * Sets properties needed for SSH access to other nodes.
+     */
+    protected void setSSHAccessProperties(Map<String, String> properties) throws IOException {
+        String userName = System.getProperty("user.name");
+        Path pathToIdRsa = Paths.get(System.getProperty("user.home")).resolve(".ssh").resolve("id_rsa");
+        String sshKey = readSSHKey(pathToIdRsa);
+
+        properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, userName);  // set name of user to access the nodes
+        properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, sshKey);  // set private key of ssh user
+    }
+
+    protected String readSSHKey(Path pathToIdRsa) throws IOException {
+        if (!exists(pathToIdRsa)) {
+            throw new RuntimeException("SSH private key not found: " + pathToIdRsa.toString());
+        }
+        return Files.toString(pathToIdRsa.toFile(), Charsets.UTF_8);
     }
 }

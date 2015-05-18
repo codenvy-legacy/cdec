@@ -18,8 +18,8 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.BaseTest;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -32,10 +32,13 @@ import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
+import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 
+import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -52,6 +55,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Mockito.doReturn;
@@ -187,10 +191,16 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testUpdateCodenvy() throws Exception {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn("3.1.0").when(mockFacade).getVersionToInstall(any(Request.class));
 
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
         testConfigProperties.put("property2", "value2");
+
+        doReturn(testConfigProperties).when(configManager).prepareInstallProperties(null,
+                                                                                    InstallType.SINGLE_SERVER,
+                                                                                    ArtifactFactory.createArtifact(CODENVY_ARTIFACT_NAME),
+                                                                                    Version.valueOf("3.1.0"));
 
         int testStep = 1;
         InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
@@ -198,14 +208,15 @@ public class TestInstallationManagerService extends BaseTest {
                                                                 .setStep(testStep);
 
         Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
+                                           .setVersion("3.1.0")
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(testStep, testConfigProperties);
+        Response result = service.updateCodenvy(testStep);
         assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateCodenvy(testStep, testConfigProperties);
+        result = service.updateCodenvy(testStep);
         assertErrorResponse(result);
     }
 
@@ -222,25 +233,8 @@ public class TestInstallationManagerService extends BaseTest {
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(testStep, null);
+        Response result = service.updateCodenvy(testStep);
         assertOkResponse(result);
-    }
-
-    @Test
-    public void testUpdateImCliClient() throws Exception {
-        String cliUserHomeDir = "/home/test";
-        InstallOptions testInstallOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
-
-        Request testRequest = new Request().setArtifactName(InstallManagerArtifact.NAME)
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateImCliClient(cliUserHomeDir);
-        assertOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateImCliClient(cliUserHomeDir);
-        assertErrorResponse(result);
     }
 
     @Test
@@ -359,9 +353,8 @@ public class TestInstallationManagerService extends BaseTest {
                                                 + "  \"endDate\" : \"" + endDate + "\",\n"
                                                 + "  \"links\": [\n"
                                                 + "    {\n"
-                                                +
-                                                "      \"href\": \"https://codenvy-stg" +
-                                                ".com/api/account/subscriptions/subscriptionoxmrh93dw3ceuegk\",\n"
+                                                + "      \"href\": \"https://codenvy-stg"
+                                                + ".com/api/account/subscriptions/subscriptionoxmrh93dw3ceuegk\",\n"
                                                 + "      \"rel\": \"get subscription by id\",\n"
                                                 + "      \"produces\": \"application/json\",\n"
                                                 + "      \"parameters\": [],\n"
@@ -375,8 +368,8 @@ public class TestInstallationManagerService extends BaseTest {
                                                 + "  \"id\": \"subscriptionoxmrh93dw3ceuegk\",\n"
                                                 + "  \"state\": \"ACTIVE\"\n"
                                                 + "}";
-
-        doReturn(testSubscriptionDescriptorJson).when(mockFacade).getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, testRequest);
+        SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson(testSubscriptionDescriptorJson, SubscriptionDescriptor.class);
+        doReturn(descriptor).when(mockFacade).getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, testRequest);
 
         service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
 

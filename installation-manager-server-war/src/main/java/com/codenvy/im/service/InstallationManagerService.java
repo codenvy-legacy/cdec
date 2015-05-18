@@ -20,7 +20,6 @@ package com.codenvy.im.service;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
@@ -87,6 +86,7 @@ import static java.lang.String.format;
 @Path("/")
 @RolesAllowed({"system/admin"})
 @Api(value = "/im", description = "Installation manager")
+// TODO [AB] Response.class
 public class InstallationManagerService {
 
     private static final Logger LOG       = Logger.getLogger(InstallationManagerService.class.getSimpleName());
@@ -120,11 +120,11 @@ public class InstallationManagerService {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response =
-        Response.class)
+            Response.class)
     public javax.ws.rs.core.Response startDownload(
-        @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
-        @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one")
-        String artifactVersion) {
+            @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
+            @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one")
+            String artifactVersion) {
 
         Request request = new Request().setArtifactName(artifactName)
                                        .setVersion(artifactVersion);
@@ -187,43 +187,22 @@ public class InstallationManagerService {
             notes = "Install " + CDECArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
                     "Use request body to pass install configuration properties",
             response = Response.class)
-    public javax.ws.rs.core.Response updateCodenvy(
-            @QueryParam(value = "step") @ApiParam(value = "default step is 0") int step,
-            Map<String, String> configProperties) throws IOException {
+    public javax.ws.rs.core.Response updateCodenvy(@QueryParam(value = "step") @ApiParam(value = "default step is 0") int step) throws IOException {
+        final InstallOptions installOptions = new InstallOptions();
+        installOptions.setInstallType(configManager.detectInstallationType());
+        installOptions.setStep(step);
 
-        if (configProperties == null) {
-            configProperties = new HashMap<>();   // init install config properties
-        }
+        final Request request = new Request();
+        request.setArtifactName(CDECArtifact.NAME);
+        request.setInstallOptions(installOptions);
+        request.setVersion(delegate.getVersionToInstall(request));
 
-        InstallType installType = configManager.detectInstallationType();
-        InstallOptions installOptions = new InstallOptions().setInstallType(installType)
-                                                            .setStep(step)
-                                                            .setConfigProperties(configProperties);
+        Map<String, String> properties = configManager.prepareInstallProperties(null,
+                                                                                installOptions.getInstallType(),
+                                                                                request.createArtifact(),
+                                                                                request.createVersion());
 
-        Request request = new Request().setArtifactName(CDECArtifact.NAME)
-                                       .setInstallOptions(installOptions);
-
-        return handleInstallationManagerResponse(delegate.install(request));
-    }
-
-    /** Updates installation-manager CLI client */
-    @POST
-    @Path("update/" + InstallManagerArtifact.NAME)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Updates " + InstallManagerArtifact.NAME,
-            notes = "Install " + InstallManagerArtifact.NAME +
-                    " update which has already been downloaded from Update Server and is ready to install. " +
-                    "User should launch Installation Manager CLI client after all to complete update.",
-            response = Response.class)
-    public javax.ws.rs.core.Response updateImCliClient(
-            @QueryParam(value = "cliClientUserHomeDir")
-            @ApiParam(value = "path to home directory of system user who installed Installation Manager CLI client") String cliUserHomeDir)
-            throws IOException {
-
-        InstallOptions installOptions = new InstallOptions().setCliUserHomeDir(cliUserHomeDir);
-
-        Request request = new Request().setArtifactName(InstallManagerArtifact.NAME)
-                                       .setInstallOptions(installOptions);
+        installOptions.setConfigProperties(properties);
 
         return handleInstallationManagerResponse(delegate.install(request));
     }
@@ -269,7 +248,7 @@ public class InstallationManagerService {
 
             // filter node dns
             List<NodeConfig> nodes = NodeConfig.extractConfigsFrom(config);
-            for (NodeConfig node: nodes) {
+            for (NodeConfig node : nodes) {
                 String nodeHostPropertyName = node.getType().toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
                 selectedProperties.put(nodeHostPropertyName, node.getHost());
             }
@@ -334,8 +313,9 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Performs restore of given artifact from the given backup file", response = Response.class)
     public javax.ws.rs.core.Response restore(
-        @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " + CDECArtifact.NAME) String artifactName,
-        @QueryParam(value = "backupFile") @ApiParam(value = "path to backup file", required = true) String backupFilePath) throws IOException {
+            @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " +
+                                                                                               CDECArtifact.NAME) String artifactName,
+            @QueryParam(value = "backupFile") @ApiParam(value = "path to backup file", required = true) String backupFilePath) throws IOException {
 
         BackupConfig config = new BackupConfig().setArtifactName(artifactName)
                                                 .setBackupFile(backupFilePath);
@@ -349,7 +329,7 @@ public class InstallationManagerService {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
-                  response = Response.class)
+            response = Response.class)
     public javax.ws.rs.core.Response addTrialSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
         String callerName = context.getUserPrincipal().getName();
         if (!users.containsKey(callerName)) {
@@ -367,7 +347,7 @@ public class InstallationManagerService {
     @Path("subscription")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get description of OnPremises subscription of account of user which has already logged into SaaS Codenvy",
-                  response = SubscriptionDescriptor.class)
+            response = SubscriptionDescriptor.class)
     public javax.ws.rs.core.Response getSaasSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
         String callerName = context.getUserPrincipal().getName();
         if (!users.containsKey(callerName)) {
@@ -378,8 +358,7 @@ public class InstallationManagerService {
         Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
 
         try {
-            String descriptorJson = delegate.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
-            SubscriptionDescriptor descriptor = createDtoFromJson(descriptorJson, SubscriptionDescriptor.class);
+            SubscriptionDescriptor descriptor = delegate.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
             if (descriptor == null) {
                 throw new RuntimeException(SaasAccountServiceProxy.CANNOT_OBTAIN_SUBCRIPTION);
             }

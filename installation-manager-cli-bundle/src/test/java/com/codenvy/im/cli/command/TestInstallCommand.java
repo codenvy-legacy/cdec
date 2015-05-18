@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.Config;
@@ -25,6 +26,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
+import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -81,9 +83,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     @BeforeMethod
     public void initMocks() throws Exception {
         mockConfigManager = mock(ConfigManager.class);
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties("1.0.1",
-                                                                                                                        InstallType
-                                                                                                                                .SINGLE_SERVER);
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
+                                                                                                                        InstallType.SINGLE_SERVER);
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
@@ -185,8 +186,10 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn("1.0.2").when(facade).getVersionToInstall(any(Request.class));
         doReturn(false).when(spyCommand).isInstall();
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).merge(anyMap(), anyMap());
-
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+                                                                                                                              any(InstallType.class),
+                                                                                                                              any(Artifact.class),
+                                                                                                                              any(Version.class));
         // user always enter "some value" as property value
         doAnswer(new Answer() {
             @Override
@@ -220,33 +223,26 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n"
-                             + "b: some value\n"
-                             + "\n"
-                             + "Codenvy parameters list:\n"
-                             + "{\n"
-                             + "  \"a\"                     : \"2\",\n"
-                             + "  \"b\"                     : \"some value\",\n"
-                             + "  \"codenvy_saas_host_url\" : \"https://codenvy.test.com/api\",\n"
-                             + "  \"version\"               : \"1.0.2\"\n"
-                             + "}\n"
-                             + "Do you confirm parameters above? [y/N]\n"
-                             + "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
-                             + "a (value='2'): some value\n"
-                             + "b (value='some value'): some value\n"
-                             + "codenvy_saas_host_url (value='https://codenvy.test.com/api'): some value\n"
-                             + "version (value='1.0.2'): some value\n"
-                             + "\n"
-                             + "Codenvy parameters list:\n"
-                             + "{\n"
-                             + "  \"a\"                     : \"some value\",\n"
-                             + "  \"b\"                     : \"some value\",\n"
-                             + "  \"codenvy_saas_host_url\" : \"some value\",\n"
-                             + "  \"version\"               : \"some value\"\n"
-                             + "}\n"
-                             + "Do you confirm parameters above? [y/N]\n"
-                             + "{\"infos\":[]}\n"
-                             + "");
+        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n" +
+                             "b: some value\n" +
+                             "\n" +
+                             "Codenvy parameters list:\n" +
+                             "{\n" +
+                             "  \"a\" : \"2\",\n" +
+                             "  \"b\" : \"some value\"\n" +
+                             "}\n" +
+                             "Do you confirm parameters above? [y/N]\n" +
+                             "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n" +
+                             "a (value='2'): some value\n" +
+                             "b (value='some value'): some value\n" +
+                             "\n" +
+                             "Codenvy parameters list:\n" +
+                             "{\n" +
+                             "  \"a\" : \"some value\",\n" +
+                             "  \"b\" : \"some value\"\n" +
+                             "}\n" +
+                             "Do you confirm parameters above? [y/N]\n" +
+                             "{\"infos\":[]}\n");
     }
 
     @Test
@@ -376,6 +372,11 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForInstall() throws Exception {
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+                                                                                                                    any(InstallType.class),
+                                                                                                                    any(Artifact.class),
+                                                                                                                    any(Version.class));
+
         doReturn(true).when(spyCommand).isInstall();
         // user always enter "some value" as property value
         doAnswer(new Answer() {
@@ -410,27 +411,23 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n"
-                             + "a: some value\n"
-                             + "\n"
-                             + "Codenvy parameters list:\n"
-                             + "{\n"
-                             + "  \"a\"                     : \"some value\",\n"
-                             + "  \"codenvy_saas_host_url\" : \"https://codenvy.test.com/api\"\n"
-                             + "}\n"
-                             + "Do you confirm parameters above? [y/N]\n"
-                             + "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
-                             + "a (value='some value'): some value\n"
-                             + "codenvy_saas_host_url (value='https://codenvy.test.com/api'): some value\n"
-                             + "\n"
-                             + "Codenvy parameters list:\n"
-                             + "{\n"
-                             + "  \"a\"                     : \"some value\",\n"
-                             + "  \"codenvy_saas_host_url\" : \"some value\"\n"
-                             + "}\n"
-                             + "Do you confirm parameters above? [y/N]\n"
-                             + "{\"infos\":[]}\n"
-                             + "");
+        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n" +
+                             "a: some value\n" +
+                             "\n" +
+                             "Codenvy parameters list:\n" +
+                             "{\n" +
+                             "  \"a\" : \"some value\"\n" +
+                             "}\n" +
+                             "Do you confirm parameters above? [y/N]\n" +
+                             "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n" +
+                             "a (value='some value'): some value\n" +
+                             "\n" +
+                             "Codenvy parameters list:\n" +
+                             "{\n" +
+                             "  \"a\" : \"some value\"\n" +
+                             "}\n" +
+                             "Do you confirm parameters above? [y/N]\n" +
+                             "{\"infos\":[]}\n");
     }
 
     @Test

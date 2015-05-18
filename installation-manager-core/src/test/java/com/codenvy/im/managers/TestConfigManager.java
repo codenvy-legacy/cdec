@@ -18,7 +18,12 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.BaseTest;
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -32,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,12 +49,13 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
  */
-public class TestConfigUtil extends BaseTest {
+public class TestConfigManager extends BaseTest {
 
     private ConfigManager configManager;
     private HttpTransport transport;
@@ -97,7 +104,7 @@ public class TestConfigUtil extends BaseTest {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configManager.loadCodenvyDefaultProperties("3.1.0", InstallType.SINGLE_SERVER);
+        Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -110,7 +117,7 @@ public class TestConfigUtil extends BaseTest {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configManager.loadCodenvyDefaultProperties("3.1.0", InstallType.MULTI_SERVER);
+        Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
         assertEquals(m.size(), 2);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -121,7 +128,7 @@ public class TestConfigUtil extends BaseTest {
     public void testLoadDefaultCdecConfigTransportError() throws Exception {
         doThrow(new IOException("error")).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        configManager.loadCodenvyDefaultProperties("3.1.0", InstallType.MULTI_SERVER);
+        configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
 
     @Test(expectedExceptions = ConfigException.class,
@@ -134,7 +141,7 @@ public class TestConfigUtil extends BaseTest {
 
         doThrow(new IOException("error")).when(configManager).doLoad(any(InputStream.class));
 
-        configManager.loadCodenvyDefaultProperties("3.1.0", InstallType.MULTI_SERVER);
+        configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
 
     @Test
@@ -330,6 +337,123 @@ public class TestConfigUtil extends BaseTest {
                                                             "certname= master.dev.com\n" +
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n");
         assertEquals(configManager.fetchMasterHostName(), "master.dev.com");
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesIMArtifact() throws Exception {
+        Map<String, String> properties = configManager.prepareInstallProperties(null,
+                                                                                null,
+                                                                                ArtifactFactory.createArtifact(InstallManagerArtifact.NAME),
+                                                                                null);
+        assertTrue(properties.isEmpty());
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesLoadPropertiesFromConfigInstallUseCase() throws Exception {
+        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
+
+        doReturn(true).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(properties).when(configManager).loadConfigProperties("file");
+
+        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+                                                                                      InstallType.SINGLE_SERVER,
+                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      Version.valueOf("3.1.0"));
+        assertEquals(actualProperties.size(), 2);
+        assertEquals(actualProperties.get("a"), "b");
+        assertEquals(actualProperties.get("version"), "3.1.0");
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesLoadDefaultPropertiesInstallUseCase() throws Exception {
+        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
+
+        doReturn(true).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
+
+        Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+                                                                                      InstallType.SINGLE_SERVER,
+                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      Version.valueOf("3.1.0"));
+        assertEquals(actualProperties.size(), 2);
+        assertEquals(actualProperties.get("a"), "b");
+        assertEquals(actualProperties.get("version"), "3.1.0");
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesLoadPropertiesFromConfigUpdateUseCase() throws Exception {
+        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
+
+        doReturn(false).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(properties).when(configManager).loadConfigProperties("file");
+        doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+
+        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+                                                                                      InstallType.SINGLE_SERVER,
+                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      Version.valueOf("3.1.0"));
+        assertEquals(actualProperties.size(), 3);
+        assertEquals(actualProperties.get("a"), "b");
+        assertEquals(actualProperties.get("c"), "d");
+        assertEquals(actualProperties.get("version"), "3.1.0");
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateUseCase() throws Exception {
+        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
+
+        doReturn(false).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
+        doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+
+        Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+                                                                                      InstallType.SINGLE_SERVER,
+                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      Version.valueOf("3.1.0"));
+        assertEquals(actualProperties.size(), 3);
+        assertEquals(actualProperties.get("a"), "b");
+        assertEquals(actualProperties.get("c"), "d");
+        assertEquals(actualProperties.get("version"), "3.1.0");
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesLoadPropertiesUseTemplates() throws Exception {
+        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b", "c", "${a}"));
+
+        doReturn(true).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(properties).when(configManager).loadConfigProperties("file");
+
+        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+                                                                                      InstallType.SINGLE_SERVER,
+                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      Version.valueOf("3.1.0"));
+        assertEquals(actualProperties.size(), 3);
+        assertEquals(actualProperties.get("a"), "b");
+        assertEquals(actualProperties.get("c"), "b");
+        assertEquals(actualProperties.get("version"), "3.1.0");
+    }
+
+    @Test
+    public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateMultiServerUseCase() throws Exception {
+        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
+
+        doReturn(false).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
+        doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+        doReturn("master").when(configManager).fetchMasterHostName();
+        doReturn("key").when(configManager).readSSHKey(any(Path.class));
+
+        Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+                                                                                      InstallType.MULTI_SERVER,
+                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      Version.valueOf("3.1.0"));
+        assertEquals(actualProperties.size(), 6);
+        assertEquals(actualProperties.get("a"), "b");
+        assertEquals(actualProperties.get("c"), "d");
+        assertEquals(actualProperties.get("version"), "3.1.0");
+        assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY), "master");
+        assertNotNull(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY));
+        assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
 }
 
