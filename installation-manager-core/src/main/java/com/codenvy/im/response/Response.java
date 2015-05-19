@@ -39,6 +39,8 @@ import java.util.Set;
 @JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "backup", "authToken", "message", "status"})
 @JsonIgnoreProperties({"CLI client version"})
 public class Response {
+    public static Response OK = new Response().setStatus(ResponseCode.OK);
+
     private List<ArtifactInfo>            artifacts;
     private String                        message;
     private ResponseCode                  status;

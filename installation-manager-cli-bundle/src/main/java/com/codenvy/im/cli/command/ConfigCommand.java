@@ -18,14 +18,18 @@
 package com.codenvy.im.cli.command;
 
 
+import com.codenvy.im.response.Response;
+
 import org.apache.karaf.shell.commands.Command;
 
 /** @author Anatoliy Bazko */
 @Command(scope = "codenvy", name = "im-config", description = "Config installation manager")
 public class ConfigCommand extends AbstractIMCommand {
 
+    /** {@inheritDoc} */
     @Override
     protected void doExecuteCommand() throws Exception {
-        console.printResponse(facade.getConfig());
+        Response response = facade.getInstallationManagerConfig();
+        console.printResponse(response.toJson());
     }
 }

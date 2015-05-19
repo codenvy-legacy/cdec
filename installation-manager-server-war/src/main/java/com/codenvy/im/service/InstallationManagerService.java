@@ -248,17 +248,17 @@ public class InstallationManagerService {
 
     /** Gets Codenvy on-prem nodes configuration */
     @GET
-    @Path("node")
+    @Path("nodes")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets Codenvy on-prem nodes configuration", response = Response.class)
-    public javax.ws.rs.core.Response getNodeConfig() {
+    public javax.ws.rs.core.Response getNodesList() {
         try {
             InstallType installType = configManager.detectInstallationType();
             if (InstallType.SINGLE_SERVER.equals(installType)) {
                 return javax.ws.rs.core.Response.ok(toJson(new HashMap())).build();
             }
 
-            Config config = configManager.loadInstalledCodenvyConfig();
+            Config config = configManager.loadInstalledCodenvyConfig(installType);
             Map<String, Object> selectedProperties = new HashMap<>();
 
             // filter node dns

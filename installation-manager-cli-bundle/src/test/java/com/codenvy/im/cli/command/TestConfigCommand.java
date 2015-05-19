@@ -18,6 +18,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.response.Response;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,31 +35,32 @@ import static org.testng.Assert.assertEquals;
 /** @author Anatoliy Bazko */
 public class TestConfigCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
-    private String okStatus = "{\"status\": \"OK\"}";
 
     @Mock
-    private InstallationManagerFacade service;
+    private InstallationManagerFacade managerFacade;
     @Mock
     private CommandSession            commandSession;
+    private CommandInvoker commandInvoker;
 
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new ConfigCommand());
-        spyCommand.facade = service;
+        spyCommand.facade = managerFacade;
+
+        commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         performBaseMocks(spyCommand, true);
     }
 
     @Test
     public void testGetConfig() throws Exception {
-        doReturn(okStatus).when(service).getConfig();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        doReturn(Response.OK).when(managerFacade).getInstallationManagerConfig();
 
         CommandInvoker.Result result = commandInvoker.invoke();
+
         String output = result.getOutputStream();
-        assertEquals(output, okStatus + "\n");
+        assertEquals(output, Response.OK.toJson() + "\n");
     }
 }
