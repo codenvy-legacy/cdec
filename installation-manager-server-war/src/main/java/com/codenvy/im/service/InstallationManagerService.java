@@ -20,6 +20,7 @@ package com.codenvy.im.service;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
@@ -29,6 +30,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -66,6 +68,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,7 +178,19 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of installed artifacts", response = Response.class)
     public javax.ws.rs.core.Response getInstalledVersions() throws IOException {
-        return handleInstallationManagerResponse(delegate.getInstalledVersions());
+        Response response = delegate.getInstalledVersions();
+
+        if (response.getArtifacts() != null) {
+            Iterator<ArtifactInfo> iter = response.getArtifacts().iterator();
+            while (iter.hasNext()) {
+                ArtifactInfo item = iter.next();
+                if (item.getArtifact().equals(InstallManagerArtifact.NAME)) {
+                    iter.remove();
+                }
+            }
+        }
+
+        return handleInstallationManagerResponse(response.toJson());
     }
 
     /** Updates codenvy */

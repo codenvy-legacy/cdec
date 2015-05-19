@@ -18,9 +18,14 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.api.dao.authentication.SSHAPasswordEncryptor;
+import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
+import org.eclipse.che.api.auth.shared.dto.Credentials;
+
+import javax.inject.Named;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.BasicAttribute;
@@ -31,6 +36,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 
 import static com.codenvy.im.managers.NodeConfig.extractConfigFrom;
+import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -41,10 +47,16 @@ import static java.util.Objects.requireNonNull;
 public class PasswordManager {
 
     private final ConfigManager configManager;
+    private final HttpTransport httpTransport;
+    private final String        apiEndpoint;
 
     @Inject
-    public PasswordManager(ConfigManager configManager) throws IOException {
+    public PasswordManager(@Named("api.endpoint") String apiEndpoint,
+                           ConfigManager configManager,
+                           HttpTransport httpTransport) throws IOException {
         this.configManager = configManager;
+        this.httpTransport = httpTransport;
+        this.apiEndpoint = apiEndpoint;
     }
 
     /**
@@ -52,10 +64,14 @@ public class PasswordManager {
      *
      * @throws IOException
      *         if any error occurred
+     * @throws java.lang.IllegalStateException
+     *         if current password is invalid
      */
-    public void changeAdminPassword(byte[] newPassword) throws IOException {
+    public void changeAdminPassword(byte[] currentPassword, byte[] newPassword) throws IOException, IllegalStateException {
         InstallType installType = configManager.detectInstallationType();
         Config config = configManager.loadInstalledCodenvyConfig(installType);
+
+        validateCurrentPassword(currentPassword, config);
 
         try {
             InitialDirContext ldapContext = connect(installType, config);
@@ -66,6 +82,20 @@ public class PasswordManager {
             }
         } catch (Exception e) {
             throw new IOException("Password can't be modified", e);
+        }
+    }
+
+    protected void validateCurrentPassword(byte[] currentPassword, Config config) throws IOException {
+        Credentials credentials = new DtoServerImpls.CredentialsImpl();
+        credentials.setPassword(new String(currentPassword, "UTF-8"));
+        credentials.setUsername(config.getValue("admin_ldap_user_name"));
+        credentials.setRealm("sysldap");
+
+        String requestUrl = combinePaths(apiEndpoint, "/auth/login");
+        try {
+            httpTransport.doPost(requestUrl, credentials);
+        } catch (IOException e) {
+            throw new IllegalStateException("Invalid current password");
         }
     }
 

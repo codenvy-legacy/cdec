@@ -138,9 +138,6 @@ public interface InstallationManager {
     /** Perform backup according to certain backup config. */
     void restore(BackupConfig config) throws IOException;
 
-    /** Changes Codenvy admin password */
-    void changeAdminPassword(byte[] newPassword) throws IOException;
-
     /**
      * Stores installation related properties.
      *

@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
@@ -73,6 +74,8 @@ public class TestDownloadInstallationManagerFacade {
     private SaasAccountServiceProxy saasAccountServiceProxy;
     @Mock
     private HttpTransport           transport;
+    @Mock
+    private PasswordManager passwordManager;
 
     private Artifact            installManagerArtifact;
     private Artifact            cdecArtifact;
@@ -87,7 +90,8 @@ public class TestDownloadInstallationManagerFacade {
                                                                    installationManager,
                                                                    transport,
                                                                    saasAuthServiceProxy,
-                                                                   saasAccountServiceProxy);
+                                                                   saasAccountServiceProxy,
+                                                                   passwordManager);
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
 

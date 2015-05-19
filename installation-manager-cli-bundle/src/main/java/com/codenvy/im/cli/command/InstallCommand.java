@@ -185,8 +185,8 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        String response = facade.getInstalledVersions();
-        console.printResponse(response);
+        Response response = facade.getInstalledVersions();
+        console.printResponse(response.toJson());
         return null;
     }
 

@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.Config;
@@ -25,7 +26,10 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -334,7 +338,10 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifacts() throws Exception {
-        doReturn(okServiceResponse).when(facade).getInstalledVersions();
+        Response response = new Response().setStatus(ResponseCode.OK).addArtifact(new ArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                                   Version.valueOf("1.0.1"),
+                                                                                                   Status.SUCCESS));
+        doReturn(response).when(facade).getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);

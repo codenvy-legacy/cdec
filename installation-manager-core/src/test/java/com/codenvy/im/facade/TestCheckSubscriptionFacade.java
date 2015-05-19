@@ -19,6 +19,7 @@ package com.codenvy.im.facade;
 
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
@@ -57,6 +58,8 @@ public class TestCheckSubscriptionFacade extends BaseTest {
     private HttpTransport        transport;
     @Mock
     private Request              request;
+    @Mock
+    private PasswordManager passwordManager;
 
     private InstallationManagerFacade installationManagerService;
     private SaasAccountServiceProxy saasAccountServiceProxy;
@@ -69,7 +72,8 @@ public class TestCheckSubscriptionFacade extends BaseTest {
                                                                    installationManager,
                                                                    transport,
                                                                    saasAuthServiceProxy,
-                                                                   saasAccountServiceProxy);
+                                                                   saasAccountServiceProxy,
+                                                                   passwordManager);
         request = new Request().setSaasUserCredentials(new SaasUserCredentials("auth token", "accountId"));
     }
 

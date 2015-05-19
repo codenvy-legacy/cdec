@@ -51,12 +51,13 @@ public class TestChangeAdminPasswordCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testCheckDefaultSubscription() throws Exception {
+    public void test() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("password", "newPassword");
+        commandInvoker.argument("currentPassword", "currentPassword");
+        commandInvoker.argument("newPassword", "newPassword");
 
         commandInvoker.invoke();
 
-        verify(installationManagerFacade).changeAdminPassword("newPassword".getBytes("UTF-8"));
+        verify(installationManagerFacade).changeAdminPassword("currentPassword".getBytes("UTF-8"), "newPassword".getBytes("UTF-8"));
     }
 }

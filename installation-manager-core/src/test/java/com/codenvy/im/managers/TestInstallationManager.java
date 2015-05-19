@@ -105,8 +105,7 @@ public class TestInstallationManager {
                 installerManager,
                 new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
                 mockNodeManager,
-                mockBackupManager,
-                passwordManager));
+                mockBackupManager));
 
         testCredentials = new SaasUserCredentials("auth token", "accountId");
     }
@@ -119,12 +118,12 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
-        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
+        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null, passwordManager);
+        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -543,14 +542,6 @@ public class TestInstallationManager {
 
         doThrow(new IOException("error")).when(mockBackupManager).restore(testBackupConfig);
         mockBackupManager.restore(testBackupConfig);
-    }
-
-    @Test
-    public void testChangeAdminPassword() throws Exception {
-        byte[] pwd = "password".getBytes("UTF-8");
-
-        manager.changeAdminPassword(pwd);
-        verify(passwordManager).changeAdminPassword(pwd);
     }
 
     @Test

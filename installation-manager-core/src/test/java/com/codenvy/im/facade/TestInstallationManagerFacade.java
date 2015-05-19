@@ -23,6 +23,7 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -78,6 +79,8 @@ public class TestInstallationManagerFacade {
     private HttpTransport           mockTransport;
     @Mock
     private SaasAccountServiceProxy saasAccountServiceProxy;
+    @Mock
+    private PasswordManager passwordManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -89,7 +92,8 @@ public class TestInstallationManagerFacade {
                                                                   mockInstallationManager,
                                                                   mockTransport,
                                                                   saasAuthServiceProxy,
-                                                                  saasAccountServiceProxy);
+                                                                  saasAccountServiceProxy,
+                                                                  passwordManager);
         testCredentials = new SaasUserCredentials("auth token");
     }
 
@@ -471,19 +475,21 @@ public class TestInstallationManagerFacade {
     @Test
     public void testChangeAdminPasswordShouldReturnOkResponse() throws Exception {
         byte[] pwd = "password".getBytes("UTF-8");
-        assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
-                                                                         "  \"status\" : \"OK\"\n" +
-                                                                         "}");
+        doNothing().when(passwordManager).changeAdminPassword(pwd, pwd);
+
+        Response response = installationManagerFacade.changeAdminPassword(pwd, pwd);
+
+        assertEquals(response.getStatus(), ResponseCode.OK);
     }
 
     @Test
     public void testChangeAdminPasswordShouldReturnErrorResponseIfErrorOccurred() throws Exception {
         byte[] pwd = "password".getBytes("UTF-8");
-        doThrow(IOException.class).when(mockInstallationManager).changeAdminPassword(pwd);
+        doThrow(IOException.class).when(passwordManager).changeAdminPassword(pwd, pwd);
 
-        assertEquals(installationManagerFacade.changeAdminPassword(pwd), "{\n" +
-                                                                         "  \"status\" : \"ERROR\"\n" +
-                                                                         "}");
+        Response response = installationManagerFacade.changeAdminPassword(pwd, pwd);
+
+        assertEquals(response.getStatus(), ResponseCode.ERROR);
     }
 
     @Test

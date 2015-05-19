@@ -22,6 +22,7 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
@@ -75,7 +76,6 @@ import static java.nio.file.Files.size;
 // TODO [AB] return response everywhere
 // TODO [AB] no exceptions
 // TODO [AB] user readable error messages
-// TODO [AB] get rid of
 @Singleton
 public class InstallationManagerFacade {
     private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
@@ -84,6 +84,7 @@ public class InstallationManagerFacade {
     protected final HttpTransport           transport;
     protected final SaasAuthServiceProxy    saasAuthServiceProxy;
     protected final SaasAccountServiceProxy saasAccountServiceProxy;
+    protected final PasswordManager passwordManager;
 
     private final String updateServerEndpoint;
 
@@ -94,12 +95,14 @@ public class InstallationManagerFacade {
                                      InstallationManager manager,
                                      HttpTransport transport,
                                      SaasAuthServiceProxy saasAuthServiceProxy,
-                                     SaasAccountServiceProxy saasAccountServiceProxy) {
+                                     SaasAccountServiceProxy saasAccountServiceProxy,
+                                     PasswordManager passwordManager) {
         this.manager = manager;
         this.transport = transport;
         this.updateServerEndpoint = updateServerEndpoint;
         this.saasAuthServiceProxy = saasAuthServiceProxy;
         this.saasAccountServiceProxy = saasAccountServiceProxy;
+        this.passwordManager = passwordManager;
     }
 
     public String getUpdateServerEndpoint() {
@@ -361,9 +364,9 @@ public class InstallationManagerFacade {
     }
 
     /** @return the list of installed artifacts and theirs versions */
-    public String getInstalledVersions() throws IOException {
+    public Response getInstalledVersions() throws IOException {
         Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts();
-        return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts).toJson();
+        return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts);
     }
 
     /** @return installation info */
@@ -524,13 +527,13 @@ public class InstallationManagerFacade {
     }
 
     /** Perform restore according to certain backup config */
-    public String changeAdminPassword(byte[] newPassword) throws IOException {
+    public Response changeAdminPassword(byte[] currentPassword, byte[] newPassword) {
         try {
-            manager.changeAdminPassword(newPassword);
-            return new Response().setStatus(ResponseCode.OK).toJson();
+            passwordManager.changeAdminPassword(currentPassword, newPassword);
+            return new Response().setStatus(ResponseCode.OK);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.valueOf(e);
         }
     }
 

@@ -18,6 +18,7 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
@@ -35,6 +36,7 @@ import static com.codenvy.im.utils.Commons.combinePaths;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 /**
@@ -54,6 +56,8 @@ public class TestGetAccountIdFacade {
     private InstallationManager  installationManager;
     @Mock
     private SaasAuthServiceProxy saasAuthServiceProxy;
+    @Mock
+    private PasswordManager passwordManager;
 
     private InstallationManagerFacade installationManagerService;
     private SaasAccountServiceProxy   saasAccountServiceProxy;
@@ -66,7 +70,8 @@ public class TestGetAccountIdFacade {
                                                                    installationManager,
                                                                    transport,
                                                                    saasAuthServiceProxy,
-                                                                   saasAccountServiceProxy);
+                                                                   saasAccountServiceProxy,
+                                                                   passwordManager);
         accountApiEndpoint = combinePaths("api/endpoint", "account");
         testCredentials = new SaasUserCredentials("auth token", null);
         request = new Request().setSaasUserCredentials(testCredentials).setSaasUserCredentials(testCredentials);
@@ -93,6 +98,7 @@ public class TestGetAccountIdFacade {
                                           + "  \"links\" : [ ]\n"
                                           + "}";
 
+        assertNotNull(response);
         if (!response.equals(okResult)) {
             assertEquals(response, okResultWithReverseOrder);
         }
@@ -122,6 +128,7 @@ public class TestGetAccountIdFacade {
                                           + "  \"links\" : [ ]\n"
                                           + "}";
 
+        assertNotNull(response);
         if (!response.equals(okResult)) {
             assertEquals(response, okResultWithReverseOrder);
         }
@@ -166,6 +173,7 @@ public class TestGetAccountIdFacade {
                                           + "  \"links\" : [ ]\n"
                                           + "}";
 
+        assertNotNull(response);
         if (!response.equals(okResult)) {
             assertEquals(response, okResultWithReverseOrder);
         }

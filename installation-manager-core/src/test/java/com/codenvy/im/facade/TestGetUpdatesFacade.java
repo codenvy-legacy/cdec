@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.utils.AuthenticationException;
@@ -55,6 +56,8 @@ public class TestGetUpdatesFacade {
     private SaasAuthServiceProxy    saasAuthServiceProxy;
     @Mock
     private SaasAccountServiceProxy saasAccountServiceProxy;
+    @Mock
+    private PasswordManager passwordManager;
 
     private InstallationManagerFacade installationManagerService;
     private Artifact                  installManagerArtifact;
@@ -67,7 +70,8 @@ public class TestGetUpdatesFacade {
                                                                    mockInstallationManager,
                                                                    transport,
                                                                    saasAuthServiceProxy,
-                                                                   saasAccountServiceProxy);
+                                                                   saasAccountServiceProxy,
+                                                                   passwordManager);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }

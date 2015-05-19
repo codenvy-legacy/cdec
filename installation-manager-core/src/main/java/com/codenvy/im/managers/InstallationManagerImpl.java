@@ -75,7 +75,6 @@ public class InstallationManagerImpl implements InstallationManager {
     private final Set<Artifact>    artifacts;
     private final NodeManager      nodeManager;
     private final BackupManager    backupManager;
-    private final PasswordManager  passwordManager;
     private final Path             downloadDir;
     private final Path storageDir;
 
@@ -88,12 +87,10 @@ public class InstallationManagerImpl implements InstallationManager {
                                    InstallerManager installerManager,
                                    Set<Artifact> artifacts,
                                    NodeManager nodeManager,
-                                   BackupManager backupManager,
-                                   PasswordManager passwordManager) throws IOException {
+                                   BackupManager backupManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transport = transport;
         this.installerManager = installerManager;
-        this.passwordManager = passwordManager;
         this.artifacts = new ArtifactsSet(artifacts); // keep order
 
         this.storageDir = Paths.get(storageDir);
@@ -345,12 +342,6 @@ public class InstallationManagerImpl implements InstallationManager {
     @Override
     public void restore(BackupConfig config) throws IOException {
         backupManager.restore(config);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void changeAdminPassword(byte[] newPassword) throws IOException {
-        passwordManager.changeAdminPassword(newPassword);
     }
 
     /** {@inheritDoc} */

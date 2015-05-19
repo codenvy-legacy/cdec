@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.response.Response;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 
@@ -26,11 +28,15 @@ import org.apache.karaf.shell.commands.Command;
 @Command(scope = "codenvy", name = "im-password", description = "Change Codenvy admin password")
 public class ChangeAdminPasswordCommand extends AbstractIMCommand {
 
-    @Argument(name = "password", description = "new admin password", required = true, multiValued = false, index = 0)
-    private String password;
+    @Argument(name = "currentPassword", description = "current admin password", required = true, multiValued = false, index = 0)
+    private String currentPassword;
+
+    @Argument(name = "newPassword", description = "new admin password", required = true, multiValued = false, index = 1)
+    private String newPassword;
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        console.printResponse(facade.changeAdminPassword(password.getBytes("UTF-8")));
+        Response response = facade.changeAdminPassword(currentPassword.getBytes("UTF-8"), newPassword.getBytes("UTF-8"));
+        console.printResponse(response.toJson());
     }
 }

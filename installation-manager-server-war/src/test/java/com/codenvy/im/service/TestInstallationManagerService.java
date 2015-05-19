@@ -179,11 +179,11 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetInstalledVersions() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstalledVersions();
+        doReturn(mockFacadeOkResponse).when(mockFacade).getInstalledVersions();
         Response result = service.getInstalledVersions();
         assertOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstalledVersions();
+        doReturn(mockFacadeErrorResponse).when(mockFacade).getInstalledVersions();
         result = service.getInstalledVersions();
         assertErrorResponse(result);
     }
