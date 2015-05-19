@@ -257,11 +257,11 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetConfig() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getConfig();
+        doReturn(mockFacadeOkResponse).when(mockFacade).getInstallationManagerConfig();
         Response result = service.getInstallationManagerServerConfig();
         assertOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getConfig();
+        doReturn(mockFacadeErrorResponse).when(mockFacade).getInstallationManagerConfig();
         result = service.getInstallationManagerServerConfig();
         assertErrorResponse(result);
     }
@@ -394,17 +394,6 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testHandleIncorrectFacadeResponse() throws Exception {
-        doReturn("{").when(mockFacade).getConfig();
-        Response result = service.getInstallationManagerServerConfig();
-
-        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        String facadeResponse = (String)result.getEntity();
-        assertTrue(facadeResponse.contains("com.fasterxml.jackson.core.JsonParseException: " +
-                                           "Unexpected end-of-input: expected close marker for OBJECT"));
-    }
-
-    @Test
     public void testLoginToSaas() throws IOException, JsonParseException {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
         Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
@@ -487,10 +476,10 @@ public class TestInstallationManagerService extends BaseTest {
                 "additional_builders", "",
                 "data_host_name", "data.dev.com"
                                                                           )));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
-        Response result = service.getNodeConfig();
+        Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"builder_host_name\" : \"builder1.dev.com\",\n"
@@ -505,7 +494,7 @@ public class TestInstallationManagerService extends BaseTest {
     public void testGetNodeConfigWhenSingleNode() throws IOException {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
 
-        Response result = service.getNodeConfig();
+        Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{ }");
     }
@@ -514,7 +503,7 @@ public class TestInstallationManagerService extends BaseTest {
     public void testGetNodeConfigError() throws IOException {
         doThrow(new RuntimeException("error")).when(configManager).detectInstallationType();
 
-        Response result = service.getNodeConfig();
+        Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"message\" : \"error\",\n"

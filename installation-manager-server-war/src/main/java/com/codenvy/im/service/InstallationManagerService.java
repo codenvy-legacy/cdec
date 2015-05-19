@@ -243,14 +243,14 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets Installation Manager Server configuration", response = Response.class)
     public javax.ws.rs.core.Response getInstallationManagerServerConfig() {
-        return handleInstallationManagerResponse(delegate.getConfig());
+        return handleInstallationManagerResponse(delegate.getInstallationManagerConfig().toJson());
     }
 
-    /** Gets Codenvy on-prem nodes configuration */
+    /** Gets Codenvy nodes configuration */
     @GET
     @Path("nodes")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets Codenvy on-prem nodes configuration", response = Response.class)
+    @ApiOperation(value = "Gets Codenvy nodes configuration", response = Response.class)
     public javax.ws.rs.core.Response getNodesList() {
         try {
             InstallType installType = configManager.detectInstallationType();
