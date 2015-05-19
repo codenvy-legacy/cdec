@@ -479,7 +479,7 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetCodenvyConfig() throws IOException {
+    public void testGetNodeConfig() throws IOException {
         Config testConfig = new Config(new LinkedHashMap<>(ImmutableMap.of(
                 "builder_host_name", "builder1.dev.com",
                 "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
@@ -490,7 +490,7 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
-        Response result = service.getCodenvyConfig();
+        Response result = service.getNodeConfig();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"builder_host_name\" : \"builder1.dev.com\",\n"
@@ -502,19 +502,19 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetCodenvyConfigWhenSingleNode() throws IOException {
+    public void testGetNodeConfigWhenSingleNode() throws IOException {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
 
-        Response result = service.getCodenvyConfig();
+        Response result = service.getNodeConfig();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{ }");
     }
 
     @Test
-    public void testGetCodenvyConfigError() throws IOException {
+    public void testGetNodeConfigError() throws IOException {
         doThrow(new RuntimeException("error")).when(configManager).detectInstallationType();
 
-        Response result = service.getCodenvyConfig();
+        Response result = service.getNodeConfig();
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"message\" : \"error\",\n"

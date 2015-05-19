@@ -246,12 +246,12 @@ public class InstallationManagerService {
         return handleInstallationManagerResponse(delegate.getConfig());
     }
 
-    /** Gets Codenvy on-prem configuration */
+    /** Gets Codenvy on-prem nodes configuration */
     @GET
-    @Path("config/codenvy")
+    @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets Codenvy on-prem configuration", response = Response.class)
-    public javax.ws.rs.core.Response getCodenvyConfig() {
+    @ApiOperation(value = "Gets Codenvy on-prem nodes configuration", response = Response.class)
+    public javax.ws.rs.core.Response getNodeConfig() {
         try {
             InstallType installType = configManager.detectInstallationType();
             if (InstallType.SINGLE_SERVER.equals(installType)) {
