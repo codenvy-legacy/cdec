@@ -75,7 +75,6 @@ import static java.nio.file.Files.size;
  */
 // TODO [AB] return response everywhere
 // TODO [AB] no exceptions
-// TODO [AB] user readable error messages
 @Singleton
 public class InstallationManagerFacade {
     private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
@@ -450,8 +449,8 @@ public class InstallationManagerFacade {
     }
 
     /** @return the configuration of the Installation Manager */
-    public String getConfig() {
-        return new Response().setStatus(ResponseCode.OK).setConfig(manager.getConfig()).toJson();
+    public Response getInstallationManagerConfig() {
+        return new Response().setStatus(ResponseCode.OK).setConfig(manager.getConfig());
     }
 
     /** Add node to multi-server Codenvy */
@@ -483,8 +482,8 @@ public class InstallationManagerFacade {
     /** Perform backup according to certain backup config */
     public String backup(@Nonnull BackupConfig config) throws IOException {
         try {
-            BackupConfig updatedConfig = manager.backup(config);
-            return new Response().setBackup(BackupInfo.createSuccessInfo(updatedConfig))
+            BackupConfig backupConfig = manager.backup(config);
+            return new Response().setBackup(BackupInfo.createSuccessInfo(backupConfig))
                                  .setStatus(ResponseCode.OK)
                                  .toJson();
         } catch (Exception e) {
@@ -568,13 +567,13 @@ public class InstallationManagerFacade {
     }
 
     /** Change codenvy config property */
-    public String changeCodenvyConfig(String property, String value) {
+    public Response changeCodenvyConfig(String property, String value) {
         try {
             manager.changeCodenvyConfig(property, value);
-            return new Response().setStatus(ResponseCode.OK).toJson();
+            return new Response().setStatus(ResponseCode.OK);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.valueOf(e);
         }
     }
 }

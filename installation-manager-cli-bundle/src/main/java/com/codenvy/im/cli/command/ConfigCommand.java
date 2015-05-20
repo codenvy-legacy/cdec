@@ -19,9 +19,10 @@ package com.codenvy.im.cli.command;
 
 
 import com.codenvy.im.managers.Config;
+import com.codenvy.im.response.Response;
+
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
-import org.eclipse.che.commons.json.JsonParseException;
 
 /** @author Anatoliy Bazko */
 @Command(scope = "codenvy", name = "im-config", description = "Config installation manager and Codenvy on-prem")
@@ -42,11 +43,13 @@ public class ConfigCommand extends AbstractIMCommand {
         getImConfig();
     }
 
-    private void getImConfig() throws JsonParseException {
-        console.printResponse(facade.getConfig());
+    private void getImConfig() throws Exception {
+        Response response = facade.getInstallationManagerConfig();
+        console.printResponse(response.toJson());
     }
 
-    private void changeCodenvyHostUrl() throws JsonParseException {
-        console.printResponse(facade.changeCodenvyConfig(Config.HOST_URL, codenvyHostUrl));
+    private void changeCodenvyHostUrl() throws Exception {
+        Response response = facade.changeCodenvyConfig(Config.HOST_URL, codenvyHostUrl);
+        console.printResponse(response.toJson());
     }
 }

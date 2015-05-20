@@ -550,11 +550,23 @@ public class TestInstallationManagerFacade {
         String testProperty = "testProperty";
         String testValue = "testValue";
 
-        String result = installationManagerFacade.changeCodenvyConfig(testProperty, testValue);
-        assertEquals(result, "{\n"
+        Response result = installationManagerFacade.changeCodenvyConfig(testProperty, testValue);
+        assertEquals(result.toJson(), "{\n"
                              + "  \"status\" : \"OK\"\n"
                              + "}");
 
         verify(mockInstallationManager).changeCodenvyConfig(testProperty, testValue);
+    }
+
+    @Test void changeCodenvyConfigWhenError() throws IOException {
+        String testProperty = "testProperty";
+        String testValue = "testValue";
+
+        doThrow(new IOException("error")).when(mockInstallationManager).changeCodenvyConfig(testProperty, testValue);
+        Response result = installationManagerFacade.changeCodenvyConfig(testProperty, testValue);
+        assertEquals(result.toJson(), "{\n" +
+                                      "  \"message\" : \"error\",\n" +
+                                      "  \"status\" : \"ERROR\"\n" +
+                                      "}");
     }
 }

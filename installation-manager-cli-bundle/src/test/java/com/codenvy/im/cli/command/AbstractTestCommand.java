@@ -31,7 +31,7 @@ import static org.mockito.Mockito.spy;
  * @author Dmytro Nochevnov
  */
 public abstract class AbstractTestCommand {
-    void performBaseMocks(AbstractIMCommand spyCommand, boolean interactive) throws IOException {
+    protected void performBaseMocks(AbstractIMCommand spyCommand, boolean interactive) throws IOException {
         doNothing().when(spyCommand).init();
         doReturn(interactive).when(spyCommand).isInteractive();
 
