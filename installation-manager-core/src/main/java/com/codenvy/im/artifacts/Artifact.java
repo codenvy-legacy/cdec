@@ -74,8 +74,9 @@ public interface Artifact extends Comparable<Artifact> {
     SortedMap<Version, Path> getDownloadedVersions(Path downloadDir) throws IOException;
 
     /** @return command to collect backup data at the certain backup directory */
-    Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
+    Command getBackupCommand(BackupConfig backupConfig) throws IOException;
 
     /** @return command to restore data from backup */
-    Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
+    Command getRestoreCommand(BackupConfig backupConfig) throws IOException;
+
 }

@@ -76,7 +76,8 @@ public class InstallationManagerImpl implements InstallationManager {
     private final NodeManager      nodeManager;
     private final BackupManager    backupManager;
     private final Path             downloadDir;
-    private final Path storageDir;
+    private final Path             storageDir;
+    private final ConfigManager    configManager;
 
 
     @Inject
@@ -87,7 +88,8 @@ public class InstallationManagerImpl implements InstallationManager {
                                    InstallerManager installerManager,
                                    Set<Artifact> artifacts,
                                    NodeManager nodeManager,
-                                   BackupManager backupManager) throws IOException {
+                                   BackupManager backupManager,
+                                   ConfigManager configManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transport = transport;
         this.installerManager = installerManager;
@@ -99,6 +101,7 @@ public class InstallationManagerImpl implements InstallationManager {
 
         this.nodeManager = nodeManager;
         this.backupManager = backupManager;
+        this.configManager = configManager;
     }
 
     private void checkRWPermissions(Path downloadDir) throws IOException {
@@ -378,6 +381,14 @@ public class InstallationManagerImpl implements InstallationManager {
         }
 
         return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void changeCodenvyConfig(String property, String value) throws IOException {
+        configManager.changeConfig(property, value);
     }
 
     private Properties loadProperties(Path propertiesFile) throws IOException {

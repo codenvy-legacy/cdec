@@ -58,6 +58,7 @@ import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -543,5 +544,17 @@ public class TestInstallationManagerFacade {
                                         "  \"message\" : \"error\",\n" +
                                         "  \"status\" : \"ERROR\"\n" +
                                         "}");
+    }
+
+    @Test void changeCodenvyConfig() throws IOException {
+        String testProperty = "testProperty";
+        String testValue = "testValue";
+
+        String result = installationManagerFacade.changeCodenvyConfig(testProperty, testValue);
+        assertEquals(result, "{\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}");
+
+        verify(mockInstallationManager).changeCodenvyConfig(testProperty, testValue);
     }
 }

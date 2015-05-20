@@ -355,7 +355,7 @@ public class TestCDECArtifact extends BaseTest {
         
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
 
-        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configManager));
+        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig));
     }
 
     @Test
@@ -366,7 +366,7 @@ public class TestCDECArtifact extends BaseTest {
                                                       .setBackupDirectory("some_dir");
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
 
-        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig, configManager));
+        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig));
     }
 
     @Test
@@ -377,7 +377,7 @@ public class TestCDECArtifact extends BaseTest {
                                                       .setBackupFile("dummyFile")
                                                       .setBackupDirectory("dummyDirectory");
 
-        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configManager));
+        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig));
     }
 
     @Test
@@ -388,7 +388,7 @@ public class TestCDECArtifact extends BaseTest {
                                                       .setBackupFile("dummyFile")
                                                       .setBackupDirectory("dummyDirectory");
 
-        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig, configManager));
+        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig));
     }
 
 }

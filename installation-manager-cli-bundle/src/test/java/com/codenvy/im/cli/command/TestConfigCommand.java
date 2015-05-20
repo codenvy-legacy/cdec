@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.managers.Config;
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -26,7 +27,9 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
@@ -59,5 +62,36 @@ public class TestConfigCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, okStatus + "\n");
+    }
+
+    @Test
+    public void testChangeCodenvyHostUrl() throws Exception {
+        String testDns = "test.com";
+        doReturn(okStatus).when(service).changeCodenvyConfig(Config.HOST_URL, testDns);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--codenvy_host_url", testDns);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.getOutputStream();
+        assertEquals(output, okStatus + "\n");
+    }
+
+    @Test
+    public void testCheckSubscriptionWhenServiceThrowsError() throws Exception {
+        String testDns = "test.com";
+        String expectedOutput = "{\n"
+                                + "  \"message\" : \"Server Error Exception\",\n"
+                                + "  \"status\" : \"ERROR\"\n"
+                                + "}";
+        doThrow(new RuntimeException("Server Error Exception"))
+            .when(service).changeCodenvyConfig(Config.HOST_URL, testDns);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--codenvy_host_url", testDns);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, expectedOutput + "\n");
     }
 }

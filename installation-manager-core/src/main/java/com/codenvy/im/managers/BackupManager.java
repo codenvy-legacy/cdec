@@ -40,14 +40,11 @@ import static java.lang.String.format;
 @Singleton
 public class BackupManager {
 
-    private ConfigManager configManager;
     private String        defaultBackupDir;
 
     @Inject
-    public BackupManager(@Named("installation-manager.backup_dir") String defaultBackupDir,
-                         ConfigManager configManager) throws IOException {
+    public BackupManager(@Named("installation-manager.backup_dir") String defaultBackupDir) throws IOException {
         this.defaultBackupDir = defaultBackupDir;
-        this.configManager = configManager;
     }
 
     /**
@@ -75,7 +72,7 @@ public class BackupManager {
             backupConfig.setArtifactVersion(artifactVersion.toString());
             backupConfig.storeConfigIntoBackup();
 
-            Command backupCommand = artifact.getBackupCommand(backupConfig, configManager);
+            Command backupCommand = artifact.getBackupCommand(backupConfig);
             backupCommand.execute();
 
             Path compressedBackupFile = BackupConfig.addGzipExtension(backupFile);
@@ -117,7 +114,7 @@ public class BackupManager {
             BackupConfig storedBackupConfig = backupConfig.extractConfigFromBackup();
             checkBackup(artifact, storedBackupConfig);
 
-            Command restoreCommand = artifact.getRestoreCommand(backupConfig, configManager);
+            Command restoreCommand = artifact.getRestoreCommand(backupConfig);
             restoreCommand.execute();
         } catch(IllegalArgumentException | IllegalStateException | BackupException e) {
             throw e;

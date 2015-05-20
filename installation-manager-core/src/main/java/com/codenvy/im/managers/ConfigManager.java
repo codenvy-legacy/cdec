@@ -21,6 +21,8 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -53,6 +56,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
+import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -67,6 +73,7 @@ public class ConfigManager {
     private final String        updateEndpoint;
     private final String        puppetBaseDir;
     private final Path          puppetConfFile;
+    
     @Inject
     public ConfigManager(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                          @Named("puppet.base_dir") String puppetBaseDir,
@@ -457,4 +464,54 @@ public class ConfigManager {
         }
         return Files.toString(pathToIdRsa.toFile(), Charsets.UTF_8);
     }
+
+    public void changeConfig(String property, String value) throws IOException {
+        Config config = loadInstalledCodenvyConfig();
+        Map<String, String> configProperties = config.getProperties();
+        if (!configProperties.containsKey(property)) {
+            String errorMessage = format("There is no property '%s' in Codenvy configuration", property);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        Command commands = getChangeConfigCommand(property, value);
+        commands.execute();
+    }
+
+    /** @return commands to add change puppet master config and wait until changes is propagated */
+    protected Command getChangeConfigCommand(String property, String value) throws NodeException {
+        List<Command> commands = new ArrayList<>();
+
+        InstallType installType = detectInstallationType();
+        switch (installType) {
+            case SINGLE_SERVER:
+                // modify codenvy single server config
+                String singleServerPropertiesFilePath = Config.getPathToCodenvyConfigFile(Config.SINGLE_SERVER_PROPERTIES).toString();
+                commands.add(createFileBackupCommand(singleServerPropertiesFilePath));
+                commands.add(createPropertyReplaceCommand(singleServerPropertiesFilePath, "$" + property, value));
+
+                String singleServerBasePropertiesFilePath =  Config.getPathToCodenvyConfigFile(Config.SINGLE_SERVER_BASE_PROPERTIES).toString();
+                commands.add(createFileBackupCommand(singleServerBasePropertiesFilePath));
+                commands.add(createPropertyReplaceCommand(singleServerBasePropertiesFilePath, "$" + property, value));
+
+                break;
+
+            case MULTI_SERVER:
+                // modify codenvy multi server config
+                String multiServerPropertiesFilePath = Config.getPathToCodenvyConfigFile(Config.MULTI_SERVER_PROPERTIES).toString();
+                commands.add(createFileBackupCommand(multiServerPropertiesFilePath));
+                commands.add(createPropertyReplaceCommand(multiServerPropertiesFilePath, "$" + property, value));
+
+                String multiServerBasePropertiesFilePath =  Config.getPathToCodenvyConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES).toString();
+                commands.add(createFileBackupCommand(multiServerBasePropertiesFilePath));
+                commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + property, value));
+
+                break;
+
+            default:
+                throw new IllegalArgumentException(format("Unsupported installation type '%s'", installType));
+        }
+
+        return new MacroCommand(commands, "Change config commands");
+    }
+
 }

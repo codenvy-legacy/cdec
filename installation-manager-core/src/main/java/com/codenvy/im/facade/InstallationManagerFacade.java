@@ -566,4 +566,15 @@ public class InstallationManagerFacade {
             return Response.valueOf(e);
         }
     }
+
+    /** Change codenvy config property */
+    public String changeCodenvyConfig(String property, String value) {
+        try {
+            manager.changeCodenvyConfig(property, value);
+            return new Response().setStatus(ResponseCode.OK).toJson();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return Response.valueOf(e).toJson();
+        }
+    }
 }

@@ -159,4 +159,11 @@ public interface InstallationManager {
      */
     Map<String, String> readProperties(Collection<String> names) throws IOException;
 
+    /**
+     * Change codenvy config property.
+     * @param property property name
+     * @param value property value
+     * @throws IOException if any I/O error occurred
+     */
+    void changeCodenvyConfig(String property, String value) throws IOException;
 }

@@ -80,7 +80,7 @@ public class TestBackupManager {
         BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = TEST_BACKUP_NAME_TIME_FORMAT;
 
-        spyManager = spy(new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString(), mockConfigManager));
+        spyManager = spy(new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString()));
         doReturn(mockCdecArtifact).when(spyManager).getArtifact(CDECArtifact.NAME);
 
         doReturn(CDECArtifact.NAME).when(mockCdecArtifact).getName();
@@ -109,7 +109,7 @@ public class TestBackupManager {
                 return SimpleCommand.createCommand(
                         format("echo '' > %s", backupConfig.getBackupFile().toString()));  // create empty backup file for testing propose
             }
-        }).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigManager);
+        }).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig);
 
         BackupConfig result = spyManager.backup(initialBackupConfig);
 
@@ -127,7 +127,7 @@ public class TestBackupManager {
         BackupConfig expectedBackupConfig = initialBackupConfig.setBackupFile(initialBackupConfig.generateBackupFilePath().toString())
                                                                .setArtifactVersion(TEST_VERSION);
 
-        doThrow(new IOException("error")).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig, mockConfigManager);
+        doThrow(new IOException("error")).when(mockCdecArtifact).getBackupCommand(expectedBackupConfig);
         spyManager.backup(initialBackupConfig);
     }
 
@@ -156,8 +156,8 @@ public class TestBackupManager {
         Path tempBackupFile = expectedBackupDirectory.resolve(backupFile.getFileName().toString());
         expectedBackupConfig.setBackupFile(tempBackupFile.toString());
 
-        doReturn(mockCommand).when(mockCdecArtifact).getRestoreCommand(expectedBackupConfig,
-                                                                       mockConfigManager);
+        doReturn(mockCommand).when(mockCdecArtifact).getRestoreCommand(expectedBackupConfig
+        );
 
         spyManager.restore(initialBackupConfig);
     }
@@ -195,7 +195,7 @@ public class TestBackupManager {
         BackupConfig initialBackupConfig = new BackupConfig().setArtifactName("codenvy")
                                                              .setBackupFile(compressedBackupFile.toString());
 
-        doThrow(new IOException("error")).when(mockCdecArtifact).getRestoreCommand(any(BackupConfig.class), any(ConfigManager.class));
+        doThrow(new IOException("error")).when(mockCdecArtifact).getRestoreCommand(any(BackupConfig.class));
         spyManager.restore(initialBackupConfig);
     }
 
@@ -246,7 +246,7 @@ public class TestBackupManager {
 
     @Test
     public void testGetArtifact() throws IOException {
-        BackupManager manager = new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString(), mockConfigManager);
+        BackupManager manager = new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString());
         Artifact result = manager.getArtifact("codenvy");
         assertEquals(result.getName(), "codenvy");
     }

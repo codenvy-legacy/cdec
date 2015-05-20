@@ -162,16 +162,16 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+    public Command getBackupCommand(BackupConfig backupConfig) throws IOException {
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        return helper.getBackupCommand(backupConfig, codenvyConfigManager);
+        return helper.getBackupCommand(backupConfig, configManager);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+    public Command getRestoreCommand(BackupConfig backupConfig) throws IOException {
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        return helper.getRestoreCommand(backupConfig, codenvyConfigManager);
+        return helper.getRestoreCommand(backupConfig, configManager);
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {

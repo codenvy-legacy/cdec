@@ -105,7 +105,8 @@ public class TestInstallationManager {
                 installerManager,
                 new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
                 mockNodeManager,
-                mockBackupManager));
+                mockBackupManager,
+                configManager));
 
         testCredentials = new SaasUserCredentials("auth token", "accountId");
     }
@@ -118,12 +119,12 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
-        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null);
+        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null, null);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null);
+        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null, null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -578,5 +579,15 @@ public class TestInstallationManager {
 
         Map<String, String> m = manager.readProperties(Collections.<String>emptySet());
         assertTrue(m.isEmpty());
+    }
+
+    @Test
+    public void testChangeCodenvyConfig() throws IOException {
+        String testProperty = "testProperty";
+        String testValue = "testValue";
+
+        manager.changeCodenvyConfig(testProperty, testValue);
+
+        verify(configManager).changeConfig(testProperty, testValue);
     }
 }

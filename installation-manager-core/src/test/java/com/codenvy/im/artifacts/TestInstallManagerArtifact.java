@@ -120,11 +120,11 @@ public class TestInstallManagerArtifact {
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testBackupCommand() throws IOException {
-        imArtifact.getBackupCommand(null, null);
+        imArtifact.getBackupCommand(null);
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testRestoreCommand() throws IOException {
-        imArtifact.getRestoreCommand(null, null);
+        imArtifact.getRestoreCommand(null);
     }
 }
