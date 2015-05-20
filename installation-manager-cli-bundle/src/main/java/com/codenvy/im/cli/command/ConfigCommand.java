@@ -18,11 +18,15 @@
 package com.codenvy.im.cli.command;
 
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.response.Response;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
 /** @author Anatoliy Bazko */
 @Command(scope = "codenvy", name = "im-config", description = "Config installation manager and Codenvy on-prem")
@@ -49,7 +53,12 @@ public class ConfigCommand extends AbstractIMCommand {
     }
 
     private void changeCodenvyHostUrl() throws Exception {
-        Response response = facade.changeCodenvyConfig(Config.HOST_URL, codenvyHostUrl);
-        console.printResponse(response.toJson());
+        console.showProgressor();
+        try {
+            Response response = facade.changeArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, codenvyHostUrl);
+            console.printResponse(response.toJson());
+        } finally {
+            console.hideProgressor();
+        }
     }
 }

@@ -66,13 +66,8 @@ public class TestConfigManager extends BaseTest {
     private ConfigManager configManager;
     private HttpTransport transport;
 
-    @Mock
-    private Command mockCommand;
-
     @BeforeMethod
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-
         transport = mock(HttpTransport.class);
         configManager = spy(new ConfigManager("", "target/puppet", transport));
     }
@@ -467,75 +462,4 @@ public class TestConfigManager extends BaseTest {
         assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
 
-    @Test
-    public void testChangeCodenvyConfig() throws IOException {
-        String testProperty = Config.HOST_URL;
-        String testValue = "c";
-        Config testConfig = new Config(ImmutableMap.of(testProperty, "a", "property2", "b"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
-
-        doReturn(mockCommand).when(configManager).getChangeConfigCommand(testProperty, testValue);
-
-        configManager.changeConfig(testProperty, testValue);
-        verify(configManager).getChangeConfigCommand(testProperty, testValue);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "There is no property 'unknown' in Codenvy configuration")
-    public void testChangeCodenvyConfigWhenPropertyAbsent() throws IOException {
-        String testProperty = "unknown";
-        String testValue = "c";
-        Config testConfig = new Config(ImmutableMap.of("property", "b"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
-        configManager.changeConfig(testProperty, testValue);
-    }
-
-    @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "error")
-    public void testChangeCodenvyConfigWhenCommandException() throws IOException {
-        String testProperty = "a";
-        String testValue = "b";
-        Config testConfig = new Config(ImmutableMap.of(testProperty, "c"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
-
-        doThrow(new CommandException("error", new AgentException("error"))).when(mockCommand).execute();
-        doReturn(mockCommand).when(configManager).getChangeConfigCommand(testProperty, testValue);
-
-        configManager.changeConfig(testProperty, testValue);
-    }
-
-    @Test
-    public void testGetChangeSingleServerConfigCommand() throws IOException {
-        String testProperty = Config.HOST_URL;
-        String testValue = "c";
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-        Command command = configManager.getChangeConfigCommand(testProperty, testValue);
-        assertEquals(command.toString(), "[" +
-                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/single_server.pp /etc/puppet/manifests/nodes/single_server/single_server.pp.back', 'agent'='LocalAgent'}, "
-                                         +
-                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"c\"|g' /etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}, "
-                                         +
-                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp /etc/puppet/manifests/nodes/single_server/base_config.pp.back', 'agent'='LocalAgent'}, "
-                                         +
-                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"c\"|g' /etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}"
-                                         +
-                                         "]");
-    }
-
-    @Test
-    public void testGetChangeMultiServerConfigCommand() throws IOException {
-        String testProperty = Config.HOST_URL;
-        String testValue = "c";
-        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
-
-        Command command = configManager.getChangeConfigCommand(testProperty, testValue);
-        assertEquals(command.toString(), "[" +
-                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"c\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"c\"|g' /etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}" +
-                                         "]");
-    }
 }
-

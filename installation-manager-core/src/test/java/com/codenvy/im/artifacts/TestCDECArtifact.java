@@ -18,7 +18,12 @@
 package com.codenvy.im.artifacts;
 
 import com.codenvy.im.BaseTest;
+import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
+import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
+import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -40,9 +45,12 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static java.lang.String.format;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
@@ -56,6 +64,8 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestCDECArtifact extends BaseTest {
     private static final String initialOsVersion = OSUtils.VERSION;
+    private static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+    
     private CDECArtifact  spyCdecArtifact;
     @Mock
     private HttpTransport transport;
@@ -63,6 +73,10 @@ public class TestCDECArtifact extends BaseTest {
     private ConfigManager configManager;
     @Mock
     private Config        config;
+    @Mock
+    private Command       mockCommand;
+    @Mock
+    private CDECArtifactHelper mockHelper;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -391,4 +405,87 @@ public class TestCDECArtifact extends BaseTest {
         assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig));
     }
 
+    @Test
+    public void testChangeCodenvyConfig() throws IOException {
+        String testProperty = Config.HOST_URL;
+        String testValue = "c";
+        Config testConfig = new Config(ImmutableMap.of(testProperty, "a", "property2", "b"));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+
+        doReturn(mockCommand).when(mockHelper).getChangeConfigCommand(testProperty, testValue, testConfig);
+        doReturn(mockHelper).when(spyCdecArtifact).getHelper(InstallType.MULTI_SERVER);
+
+        spyCdecArtifact.changeConfig(testProperty, testValue);
+        verify(mockHelper).getChangeConfigCommand(testProperty, testValue, testConfig);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "There is no property 'unknown' in Codenvy configuration")
+    public void testChangeCodenvyConfigWhenPropertyAbsent() throws IOException {
+        String testProperty = "unknown";
+        String testValue = "c";
+        Config testConfig = new Config(ImmutableMap.of("property", "b"));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        spyCdecArtifact.changeConfig(testProperty, testValue);
+    }
+
+    @Test(expectedExceptions = IOException.class,
+          expectedExceptionsMessageRegExp = "error")
+    public void testChangeCodenvyConfigWhenCommandException() throws IOException {
+        String testProperty = "a";
+        String testValue = "b";
+        Config testConfig = new Config(ImmutableMap.of(testProperty, "c"));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        doThrow(new CommandException("error", new AgentException("error"))).when(mockCommand).execute();
+        doReturn(mockCommand).when(mockHelper).getChangeConfigCommand(testProperty, testValue, testConfig);
+        doReturn(mockHelper).when(spyCdecArtifact).getHelper(any(InstallType.class));
+
+        spyCdecArtifact.changeConfig(testProperty, testValue);
+    }
+
+    @Test
+    public void testGetChangeSingleServerConfigCommand() throws IOException {
+        String testProperty = Config.HOST_URL;
+        String testValue = "a";
+        Config testConfig = new Config(ImmutableMap.of(testProperty, "c"));
+
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+
+        CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact);
+
+        Command command = testHelper.getChangeConfigCommand(testProperty, testValue, testConfig);
+        assertEquals(command.toString(), "[" +
+                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/single_server.pp /etc/puppet/manifests/nodes/single_server/single_server.pp.back', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp /etc/puppet/manifests/nodes/single_server/base_config.pp.back', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}, " +
+                                         "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='LocalAgent'}, " +
+                                         "Expected to be installed 'codenvy' of the version '1.0.0'" +
+                                         "]");
+    }
+
+    @Test
+    public void testGetChangeMultiServerConfigCommand() throws IOException {
+        String testProperty = Config.HOST_URL;
+        String testValue = "a";
+        Config testConfig = new Config(ImmutableMap.of(testProperty, "c",
+                                                       "api_host_name", "api.dev.com"));
+
+        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+
+        CDECMultiServerHelper testHelper = new CDECMultiServerHelper(spyCdecArtifact);
+
+        Command command = testHelper.getChangeConfigCommand(testProperty, testValue, testConfig);
+        assertEquals(command.toString(), format("[" +
+                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back', 'agent'='LocalAgent'}, " +
+                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, " +
+                                         "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='api.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                         "Expected to be installed 'codenvy' of the version '1.0.0'" +
+                                         "]", SYSTEM_USER_NAME));
+    }
 }

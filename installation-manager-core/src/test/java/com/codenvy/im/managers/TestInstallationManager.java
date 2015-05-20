@@ -105,8 +105,7 @@ public class TestInstallationManager {
                 installerManager,
                 new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact)),
                 mockNodeManager,
-                mockBackupManager,
-                configManager));
+                mockBackupManager));
 
         testCredentials = new SaasUserCredentials("auth token", "accountId");
     }
@@ -119,12 +118,12 @@ public class TestInstallationManager {
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfDownloadDirectoryNotExist() throws IOException {
-        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null, null);
+        new InstallationManagerImpl("", "/home/bla-bla", "", null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testInitializationIfWrongPermission() throws Exception {
-        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null, null);
+        new InstallationManagerImpl("", "/root", "", null, null, Collections.<Artifact>emptySet(), null, null);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -582,12 +581,13 @@ public class TestInstallationManager {
     }
 
     @Test
-    public void testChangeCodenvyConfig() throws IOException {
+    public void testChangeArtifactConfig() throws IOException {
         String testProperty = "testProperty";
         String testValue = "testValue";
 
-        manager.changeCodenvyConfig(testProperty, testValue);
+        doNothing().when(cdecArtifact).changeConfig(testProperty, testValue);
+        manager.changeArtifactConfig(cdecArtifact, testProperty, testValue);
 
-        verify(configManager).changeConfig(testProperty, testValue);
+        verify(cdecArtifact).changeConfig(testProperty, testValue);
     }
 }

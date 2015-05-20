@@ -307,6 +307,14 @@ public class CommandLibrary {
     }
 
     /**
+     * @return command to execute "sudo puppet agent -t" at the node only if there is no "/var/lib/puppet/state/agent_catalog_run.lock" file at the node,
+     * that is run of Puppet configuration client isn't already in progress.
+     */
+    public static Command createForcePuppetAgentCommand() throws AgentException {
+        return createCommand(getForcePuppetAgentCommand());
+    }
+
+    /**
      * @return command to execute "sudo puppet agent -t" only if there is no /var/lib/puppet/state/agent_catalog_run.lock file
      */
     private static String getForcePuppetAgentCommand() {

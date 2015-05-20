@@ -127,4 +127,9 @@ public class TestInstallManagerArtifact {
     public void testRestoreCommand() throws IOException {
         imArtifact.getRestoreCommand(null);
     }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testChangeConfig() throws IOException {
+        imArtifact.changeConfig(null, null);
+    }
 }

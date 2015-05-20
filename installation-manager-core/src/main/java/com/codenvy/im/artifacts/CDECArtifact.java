@@ -174,9 +174,23 @@ public class CDECArtifact extends AbstractArtifact {
         return helper.getRestoreCommand(backupConfig, configManager);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void changeConfig(String property, String value) throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+        Map<String, String> configProperties = config.getProperties();
+        if (!configProperties.containsKey(property)) {
+            String errorMessage = format("There is no property '%s' in Codenvy configuration", property);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
+        Command commands = helper.getChangeConfigCommand(property, value, config);
+        commands.execute();
+    }
+
     protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }
-
 
 }

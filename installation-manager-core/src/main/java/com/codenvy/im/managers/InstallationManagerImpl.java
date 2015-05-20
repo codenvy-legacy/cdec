@@ -18,6 +18,7 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
@@ -47,6 +48,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
 import static com.codenvy.im.utils.Commons.ArtifactsSet;
@@ -77,8 +79,6 @@ public class InstallationManagerImpl implements InstallationManager {
     private final BackupManager    backupManager;
     private final Path             downloadDir;
     private final Path             storageDir;
-    private final ConfigManager    configManager;
-
 
     @Inject
     public InstallationManagerImpl(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -88,8 +88,7 @@ public class InstallationManagerImpl implements InstallationManager {
                                    InstallerManager installerManager,
                                    Set<Artifact> artifacts,
                                    NodeManager nodeManager,
-                                   BackupManager backupManager,
-                                   ConfigManager configManager) throws IOException {
+                                   BackupManager backupManager) throws IOException {
         this.updateEndpoint = updateEndpoint;
         this.transport = transport;
         this.installerManager = installerManager;
@@ -101,7 +100,6 @@ public class InstallationManagerImpl implements InstallationManager {
 
         this.nodeManager = nodeManager;
         this.backupManager = backupManager;
-        this.configManager = configManager;
     }
 
     private void checkRWPermissions(Path downloadDir) throws IOException {
@@ -387,8 +385,8 @@ public class InstallationManagerImpl implements InstallationManager {
      * {@inheritDoc}
      */
     @Override
-    public void changeCodenvyConfig(String property, String value) throws IOException {
-        configManager.changeConfig(property, value);
+    public void changeArtifactConfig(Artifact artifact, String property, String value) throws IOException {
+        artifact.changeConfig(property, value);
     }
 
     private Properties loadProperties(Path propertiesFile) throws IOException {

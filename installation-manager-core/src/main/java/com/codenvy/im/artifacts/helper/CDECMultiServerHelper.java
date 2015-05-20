@@ -40,7 +40,9 @@ import java.util.Map;
 
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromLocalToRemoteCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromRemoteToLocalCommand;
+import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createFileRestoreOrBackupCommand;
+import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
@@ -550,5 +552,30 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("rm -rf %s", localTempDir)));
 
         return new MacroCommand(commands, "Restore data commands");
+    }
+
+    @Override
+    public Command getChangeConfigCommand(String property, String value, Config config) throws IOException {
+        List<Command> commands = new ArrayList<>();
+
+        // modify codenvy multi server config
+        String multiServerPropertiesFilePath = Config.getPathToCodenvyConfigFile(Config.MULTI_SERVER_PROPERTIES).toString();
+        commands.add(createFileBackupCommand(multiServerPropertiesFilePath));
+        commands.add(createPropertyReplaceCommand(multiServerPropertiesFilePath, "$" + property, value));
+
+        String multiServerBasePropertiesFilePath =  Config.getPathToCodenvyConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES).toString();
+        commands.add(createFileBackupCommand(multiServerBasePropertiesFilePath));
+        commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + property, value));
+
+        // force applying updated puppet config on puppet agent at the api node
+        // we don't go through the all nodes because of there could an error in time of applying changes to the some middle node
+        NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
+        commands.add(createForcePuppetAgentCommand(apiNode));
+
+        // wait until API server restarts
+        if (original.getInstalledVersion() != null) {
+            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        }
+        return new MacroCommand(commands, "Change config commands");
     }
 }

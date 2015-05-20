@@ -546,24 +546,24 @@ public class TestInstallationManagerFacade {
                                         "}");
     }
 
-    @Test void changeCodenvyConfig() throws IOException {
+    @Test void changeArtifactConfig() throws IOException {
         String testProperty = "testProperty";
         String testValue = "testValue";
 
-        Response result = installationManagerFacade.changeCodenvyConfig(testProperty, testValue);
+        Response result = installationManagerFacade.changeArtifactConfig(CDECArtifact.NAME, testProperty, testValue);
         assertEquals(result.toJson(), "{\n"
                              + "  \"status\" : \"OK\"\n"
                              + "}");
 
-        verify(mockInstallationManager).changeCodenvyConfig(testProperty, testValue);
+        verify(mockInstallationManager).changeArtifactConfig(cdecArtifact, testProperty, testValue);
     }
 
-    @Test void changeCodenvyConfigWhenError() throws IOException {
+    @Test void changeArtifactConfigWhenError() throws IOException {
         String testProperty = "testProperty";
         String testValue = "testValue";
 
-        doThrow(new IOException("error")).when(mockInstallationManager).changeCodenvyConfig(testProperty, testValue);
-        Response result = installationManagerFacade.changeCodenvyConfig(testProperty, testValue);
+        doThrow(new IOException("error")).when(mockInstallationManager).changeArtifactConfig(cdecArtifact, testProperty, testValue);
+        Response result = installationManagerFacade.changeArtifactConfig(CDECArtifact.NAME, testProperty, testValue);
         assertEquals(result.toJson(), "{\n" +
                                       "  \"message\" : \"error\",\n" +
                                       "  \"status\" : \"ERROR\"\n" +

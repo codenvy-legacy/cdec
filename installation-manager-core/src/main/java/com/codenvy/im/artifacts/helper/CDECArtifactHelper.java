@@ -20,6 +20,7 @@ package com.codenvy.im.artifacts.helper;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.Version;
@@ -62,4 +63,7 @@ public abstract class CDECArtifactHelper {
      * @return list of commands to restore codenvy due to given backup config and codenvy config
      */
     public abstract Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
+
+    /** @return commands to add change puppet master config and wait until changes is propagated */
+    public abstract Command getChangeConfigCommand(String property, String value, Config config) throws IOException;
 }

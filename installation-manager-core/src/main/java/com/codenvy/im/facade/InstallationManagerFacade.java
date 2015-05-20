@@ -61,6 +61,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -566,10 +567,10 @@ public class InstallationManagerFacade {
         }
     }
 
-    /** Change codenvy config property */
-    public Response changeCodenvyConfig(String property, String value) {
+    /** Change artifact config property */
+    public Response changeArtifactConfig(String artifactName, String property, String value) {
         try {
-            manager.changeCodenvyConfig(property, value);
+            manager.changeArtifactConfig(createArtifact(artifactName), property, value);
             return new Response().setStatus(ResponseCode.OK);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);

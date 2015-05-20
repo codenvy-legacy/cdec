@@ -58,7 +58,6 @@ public class TestAbstractArtifact {
 
     private static final String  UPDATE_ENDPOINT     = "update/endpoint";
     private static final String  TEST_ARTIFACT_NAME  = "test_artifact_name";
-    private static final String  TEST_TOKEN          = "auth token";
     private static final String  TEST_VERSION_STRING = "1.0.0";
     private static final Version TEST_VERSION        = Version.valueOf(TEST_VERSION_STRING);
 
@@ -247,5 +246,7 @@ public class TestAbstractArtifact {
         public Command getRestoreCommand(BackupConfig backupConfig) throws IOException {
             return null;
         }
+
+        @Override public void changeConfig(String property, String value) throws IOException {}
     }
 }

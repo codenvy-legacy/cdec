@@ -26,6 +26,8 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -37,7 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createFileRestoreOrBackupCommand;
+import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
@@ -48,6 +52,7 @@ import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.managers.BackupConfig.Component.LDAP;
 import static com.codenvy.im.managers.BackupConfig.Component.MONGO;
 import static com.codenvy.im.managers.BackupConfig.getComponentTempPath;
+import static com.codenvy.im.managers.NodeConfig.extractConfigsFrom;
 import static java.lang.String.format;
 
 /**
@@ -389,5 +394,29 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("rm -rf %s", tempDir)));
 
         return new MacroCommand(commands, "Restore data commands");
+    }
+
+    @Override
+    public Command getChangeConfigCommand(String property, String value, Config config) throws IOException {
+        List<Command> commands = new ArrayList<>();
+
+        // modify codenvy single server config
+        String singleServerPropertiesFilePath = Config.getPathToCodenvyConfigFile(Config.SINGLE_SERVER_PROPERTIES).toString();
+        commands.add(createFileBackupCommand(singleServerPropertiesFilePath));
+        commands.add(createPropertyReplaceCommand(singleServerPropertiesFilePath, "$" + property, value));
+
+        String singleServerBasePropertiesFilePath =  Config.getPathToCodenvyConfigFile(Config.SINGLE_SERVER_BASE_PROPERTIES).toString();
+        commands.add(createFileBackupCommand(singleServerBasePropertiesFilePath));
+        commands.add(createPropertyReplaceCommand(singleServerBasePropertiesFilePath, "$" + property, value));
+
+        // force applying updated puppet config on puppet agent of API node
+        commands.add(createForcePuppetAgentCommand());
+
+        // wait until API server restarts
+        if (original.getInstalledVersion() != null) {
+            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        }
+
+        return new MacroCommand(commands, "Change config commands");
     }
 }

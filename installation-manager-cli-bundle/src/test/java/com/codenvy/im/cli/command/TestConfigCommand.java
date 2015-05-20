@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.response.Response;
 
@@ -69,13 +70,13 @@ public class TestConfigCommand extends AbstractTestCommand {
     @Test
     public void testChangeCodenvyHostUrl() throws Exception {
         String testDns = "test.com";
-        doReturn(Response.OK).when(managerFacade).changeCodenvyConfig(Config.HOST_URL, testDns);
+        doReturn(Response.OK).when(managerFacade).changeArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--codenvy_host_url", testDns);
 
         CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
+        String output = result.disableAnsi().getOutputStream();
         assertEquals(output, Response.OK.toJson() + "\n");
     }
 
@@ -87,7 +88,7 @@ public class TestConfigCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-            .when(managerFacade).changeCodenvyConfig(Config.HOST_URL, testDns);
+            .when(managerFacade).changeArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--codenvy_host_url", testDns);

@@ -173,4 +173,10 @@ public class InstallManagerArtifact extends AbstractArtifact {
         throw new UnsupportedOperationException();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void changeConfig(String property, String value) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
 }
