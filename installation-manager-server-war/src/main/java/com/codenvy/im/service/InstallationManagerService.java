@@ -120,7 +120,6 @@ public class InstallationManagerService {
     /** Starts downloading */
     @POST
     @Path("download/start")
-    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response =
             Response.class)
@@ -196,7 +195,6 @@ public class InstallationManagerService {
     /** Updates codenvy */
     @POST
     @Path("update/" + CDECArtifact.NAME)
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Updates " + CDECArtifact.NAME,
             notes = "Install " + CDECArtifact.NAME + " update which has already been downloaded from Update Server and is ready to install. " +
@@ -341,7 +339,6 @@ public class InstallationManagerService {
     /** Adds trial subscription to account */
     @POST
     @Path("subscription")
-    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
             response = Response.class)
