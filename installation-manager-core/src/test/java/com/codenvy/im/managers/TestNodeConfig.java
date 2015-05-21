@@ -125,7 +125,7 @@ public class TestNodeConfig {
 
     @Test
     public void testTypeEnum() throws Exception {
-        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, API, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS, PUPPET_MASTER]");
+        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS, PUPPET_MASTER, API]");
     }
 
     @Test
@@ -140,20 +140,20 @@ public class TestNodeConfig {
             put("analytics_host_name", "analytics.dev.com");
             put("site_host_name", "site.dev.com");
             put("codeassistant_host_name", "codeassistant.dev.com");  // this is unknown node type 'codeassistant'
-            put("puppet_master_host_name", "puppet-master.dev.com");  // this is unknown node type 'codeassistant'
+            put("puppet_master_host_name", "puppet-master.dev.com");
         }};
         Config config = new Config(configProperties);
 
         List<NodeConfig> result = NodeConfig.extractConfigsFrom(config);
         assertEquals(result.toString(), "[" +
                                         "{'host':'data.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'DATA'}, " +
-                                        "{'host':'api.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'API'}, " +
                                         "{'host':'site.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'SITE'}, " +
                                         "{'host':'builder1.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'BUILDER'}, " +
                                         "{'host':'runner1.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'RUNNER'}, " +
                                         "{'host':'datasource.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'DATASOURCE'}, " +
                                         "{'host':'analytics.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'ANALYTICS'}, " +
-                                        "{'host':'puppet-master.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'PUPPET_MASTER'}" +
+                                        "{'host':'puppet-master.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'PUPPET_MASTER'}, " +
+                                        "{'host':'api.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'API'}" +
                                         "]");
     }
 

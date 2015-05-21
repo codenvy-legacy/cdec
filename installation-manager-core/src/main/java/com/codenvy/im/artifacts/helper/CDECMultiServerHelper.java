@@ -567,14 +567,16 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createFileBackupCommand(multiServerBasePropertiesFilePath));
         commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + property, value));
 
-        // force applying updated puppet config on puppet agent at the api node
-        // we don't go through the all nodes because of there could an error in time of applying changes to the some middle node
-        NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
-        commands.add(createForcePuppetAgentCommand(apiNode));
+        // force applying updated puppet config on puppet agent at the all nodes (don't take into account additional nodes)
+        final List<NodeConfig> nodes = extractConfigsFrom(config);
+        for (NodeConfig node: nodes) {
+            commands.add(createForcePuppetAgentCommand(node));
+        }
 
         // wait until API server restarts
-        if (original.getInstalledVersion() != null) {
-            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        Version installedVersion = original.getInstalledVersion();
+        if (installedVersion != null) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion));
         }
         return new MacroCommand(commands, "Change config commands");
     }

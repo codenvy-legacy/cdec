@@ -472,7 +472,8 @@ public class TestCDECArtifact extends BaseTest {
         String testProperty = Config.HOST_URL;
         String testValue = "a";
         Config testConfig = new Config(ImmutableMap.of(testProperty, "c",
-                                                       "api_host_name", "api.dev.com"));
+                                                       "api_host_name", "api.dev.com",
+                                                       "data_host_name", "data.dev.com"));
 
         doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
 
@@ -484,6 +485,7 @@ public class TestCDECArtifact extends BaseTest {
                                          "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, " +
                                          "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back', 'agent'='LocalAgent'}, " +
                                          "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, " +
+                                         "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='data.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
                                          "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='api.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
                                          "Expected to be installed 'codenvy' of the version '1.0.0'" +
                                          "]", SYSTEM_USER_NAME));

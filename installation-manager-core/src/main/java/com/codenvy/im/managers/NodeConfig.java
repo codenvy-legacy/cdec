@@ -28,13 +28,13 @@ public class NodeConfig {
 
     public enum NodeType {
         DATA,
-        API,
         SITE,
         BUILDER,
         RUNNER,
         DATASOURCE,
         ANALYTICS,
-        PUPPET_MASTER
+        PUPPET_MASTER,
+        API  // should be last one to accumulate changes in other nodes
     }
 
     private String host;
