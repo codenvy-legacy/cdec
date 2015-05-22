@@ -88,10 +88,13 @@ public class HttpTransport {
     }
 
     /**
-     * Performs POST request.
+     * POST request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
+     *
+     * @throws com.codenvy.im.utils.HttpException
+     *         if request failed
      */
-    public String doPost(String path, Object body) throws IOException {
+    public String doPost(String path, Object body) throws HttpException, IOException {
         return request(path, "POST", body, MediaType.APPLICATION_JSON, null);
     }
 
@@ -99,7 +102,7 @@ public class HttpTransport {
                            String method,
                            @Nullable Object body,
                            @Nullable String expectedContentType,
-                           @Nullable String accessToken) throws IOException {
+                           @Nullable String accessToken) throws HttpException, IOException {
         HttpURLConnection conn = null;
 
         try {
@@ -168,8 +171,7 @@ public class HttpTransport {
     private void request(String method,
                          @Nullable Object body,
                          @Nullable String expectedContentType,
-                         HttpURLConnection conn) throws IOException {
-
+                         HttpURLConnection conn) throws HttpException, IOException {
         conn.setConnectTimeout(30 * 1000);
         conn.setRequestMethod(method);
         if (body != null) {

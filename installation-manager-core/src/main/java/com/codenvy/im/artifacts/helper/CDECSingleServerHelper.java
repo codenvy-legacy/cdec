@@ -26,8 +26,6 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
-import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -52,7 +50,6 @@ import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.managers.BackupConfig.Component.LDAP;
 import static com.codenvy.im.managers.BackupConfig.Component.MONGO;
 import static com.codenvy.im.managers.BackupConfig.getComponentTempPath;
-import static com.codenvy.im.managers.NodeConfig.extractConfigsFrom;
 import static java.lang.String.format;
 
 /**
@@ -60,8 +57,8 @@ import static java.lang.String.format;
  */
 public class CDECSingleServerHelper extends CDECArtifactHelper {
 
-    public CDECSingleServerHelper(CDECArtifact original) {
-        super(original);
+    public CDECSingleServerHelper(CDECArtifact original, ConfigManager configManager) {
+        super(original, configManager);
     }
 
     /** {@inheritDoc} */
@@ -280,9 +277,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
      * @return MacroCommand which holds all commands
      */
     @Override
-    public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+    public Command getBackupCommand(BackupConfig backupConfig) throws IOException {
         List<Command> commands = new ArrayList<>();
-        Config codenvyConfig = codenvyConfigManager.loadInstalledCodenvyConfig();
+        Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = Paths.get(backupConfig.getBackupFile());
 
@@ -348,9 +345,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
      * @return MacroCommand which holds all commands
      */
     @Override
-    public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+    public Command getRestoreCommand(BackupConfig backupConfig) throws IOException {
         List<Command> commands = new ArrayList<>();
-        Config codenvyConfig = codenvyConfigManager.loadInstalledCodenvyConfig();
+        Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = Paths.get(backupConfig.getBackupFile());
 
@@ -396,16 +393,19 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         return new MacroCommand(commands, "Restore data commands");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Command getChangeConfigCommand(String property, String value, Config config) throws IOException {
+    public Command getUpdateConfigCommand(String property, String value, Config config) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy single server config
-        String singleServerPropertiesFilePath = Config.getPathToCodenvyConfigFile(Config.SINGLE_SERVER_PROPERTIES).toString();
+        String singleServerPropertiesFilePath = configManager.getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES).toString();
         commands.add(createFileBackupCommand(singleServerPropertiesFilePath));
         commands.add(createPropertyReplaceCommand(singleServerPropertiesFilePath, "$" + property, value));
 
-        String singleServerBasePropertiesFilePath =  Config.getPathToCodenvyConfigFile(Config.SINGLE_SERVER_BASE_PROPERTIES).toString();
+        String singleServerBasePropertiesFilePath = configManager.getPuppetConfigFile(Config.SINGLE_SERVER_BASE_PROPERTIES).toString();
         commands.add(createFileBackupCommand(singleServerBasePropertiesFilePath));
         commands.add(createPropertyReplaceCommand(singleServerBasePropertiesFilePath, "$" + property, value));
 

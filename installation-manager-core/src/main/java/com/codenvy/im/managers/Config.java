@@ -17,8 +17,6 @@
  */
 package com.codenvy.im.managers;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -153,10 +151,5 @@ public class Config {
     /** @return the either #HOST_URL or #AIO_HOST_URL property value */
     public String getHostUrl() {
         return properties.containsKey(HOST_URL) ? properties.get(HOST_URL) : properties.get(AIO_HOST_URL);
-    }
-
-
-    public static Path getPathToCodenvyConfigFile(String configFilename) {
-        return Paths.get("/etc/puppet/").resolve(configFilename);
     }
 }

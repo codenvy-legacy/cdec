@@ -25,14 +25,24 @@
          metadata-complete="true">
     <display-name>Installation-Manager Service</display-name>
 
+    <context-param>
+        <param-name>org.everrest.asynchronous</param-name>
+        <param-value>0</param-value>
+    </context-param>
+
     <listener>
         <listener-class>org.eclipse.che.inject.CodenvyBootstrap</listener-class>
+    </listener>
+
+    <listener>
+        <listener-class>com.codenvy.auth.sso.client.DestroySessionListener</listener-class>
     </listener>
 
     <filter>
         <filter-name>guiceFilter</filter-name>
         <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
     </filter>
+
     <filter-mapping>
         <filter-name>guiceFilter</filter-name>
         <url-pattern>/*</url-pattern>

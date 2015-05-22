@@ -21,40 +21,47 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.response.Response;
+
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+import org.eclipse.che.commons.json.JsonParseException;
+
+import java.io.IOException;
+import java.util.Map;
+
+import static com.google.api.client.repackaged.com.google.common.base.Strings.isNullOrEmpty;
 
 /** @author Anatoliy Bazko */
-@Command(scope = "codenvy", name = "im-config", description = "Config installation manager and Codenvy on-prem")
+@Command(scope = "codenvy", name = "im-config", description = "Configure installation manager")
 public class ConfigCommand extends AbstractIMCommand {
 
+    @Option(name = "--codenvy_dns", description = "new Codenvy DNS", required = false)
+    private String codenvyDNS;
 
-    @Option(name = "--codenvy_host_url", description = "DNS name of codenvy host to change", required = false)
-    private String codenvyHostUrl;
-
+    /** {@inheritDoc} */
     @Override
-
     protected void doExecuteCommand() throws Exception {
-        if (codenvyHostUrl != null && !codenvyHostUrl.isEmpty()) {
-            changeCodenvyHostUrl();
+        if (!isNullOrEmpty(codenvyDNS)) {
+            doUpdateCodenvyHostUrl();
             return;
         }
 
-        getImConfig();
+        doGetConfig();
     }
 
-    private void getImConfig() throws Exception {
-        Response response = facade.getInstallationManagerConfig();
-        console.printResponse(response.toJson());
-    }
-
-    private void changeCodenvyHostUrl() throws Exception {
+    private void doUpdateCodenvyHostUrl() throws IOException, JsonParseException {
         console.showProgressor();
         try {
-            Response response = facade.changeArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, codenvyHostUrl);
-            console.printResponse(response.toJson());
+            facade.updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, codenvyDNS);
+            console.printResponse(Response.ok());
         } finally {
             console.hideProgressor();
         }
+    }
+
+    private void doGetConfig() throws JsonParseException {
+        Map<String, String> properties = facade.getInstallationManagerProperties();
+        Response response = Response.ok().setProperties(properties);
+        console.printResponse(response);
     }
 }

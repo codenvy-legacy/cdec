@@ -17,15 +17,15 @@
  */
 package com.codenvy.im.saas;
 
+import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.commons.json.JsonParseException;
-import org.eclipse.che.dto.server.JsonStringMapImpl;
+import org.eclipse.che.api.core.ApiException;
 
 import javax.inject.Named;
 import java.io.IOException;
@@ -35,11 +35,10 @@ import static com.codenvy.im.utils.Commons.createDtoFromJson;
 
 /**
  * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
 @Singleton
 public class SaasAuthServiceProxy {
-    public static final String CANNOT_LOGIN = "Login impossible.";
-
     private final String        saasApiEndpoint;
     private final HttpTransport transport;
 
@@ -51,18 +50,25 @@ public class SaasAuthServiceProxy {
     }
 
     /**
-     * Login to Codenvy SaaS.
+     * Logins to Codenvy SaaS.
+     *
+     * @throws org.eclipse.che.api.auth.AuthenticationException
+     *         if login fails
+     * @throws org.eclipse.che.api.core.ApiException
+     *         if unexpected error occurred
      */
-    public Token login(Credentials credentials) throws IOException, JsonParseException {
+    public Token login(Credentials credentials) throws ApiException {
         String requestUrl = combinePaths(saasApiEndpoint, "/auth/login");
 
-        Object body = new JsonStringMapImpl<>(ImmutableMap.of("username", credentials.getUsername(),
-                                                              "password", credentials.getPassword()));
-
-        String response = transport.doPost(requestUrl, body);
-        if (response == null) {
-            return null;
+        String response;
+        try {
+            response = transport.doPost(requestUrl, credentials);
+        } catch (HttpException e) {
+            throw new AuthenticationException();
+        } catch (IOException e) {
+            throw new ApiException(e);
         }
+
         return createDtoFromJson(response, Token.class);
     }
 }

@@ -157,7 +157,7 @@ public class TestBackupManager {
         expectedBackupConfig.setBackupFile(tempBackupFile.toString());
 
         doReturn(mockCommand).when(mockCdecArtifact).getRestoreCommand(expectedBackupConfig
-        );
+                                                                      );
 
         spyManager.restore(initialBackupConfig);
     }

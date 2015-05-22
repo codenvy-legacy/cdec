@@ -18,7 +18,7 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.utils.Version;
 
@@ -63,7 +63,7 @@ public class DownloadDescriptor {
 
     /** Factory method */
     public static DownloadDescriptor createDescriptor(Map<Artifact, Version> artifacts,
-                                                      InstallationManager manager,
+                                                      DownloadManager downloadManager,
                                                       Thread downloadThread) throws IOException {
         Map<Path, Long> m = new LinkedHashMap<>();
 
@@ -71,8 +71,8 @@ public class DownloadDescriptor {
             Artifact artifact = e.getKey();
             Version version = e.getValue();
 
-            Path pathToBinaries = manager.getPathToBinaries(artifact, version);
-            Long binariesSize = manager.getBinariesSize(artifact, version);
+            Path pathToBinaries = downloadManager.getPathToBinaries(artifact, version);
+            Long binariesSize = downloadManager.getBinariesSize(artifact, version);
 
             m.put(pathToBinaries, binariesSize);
         }

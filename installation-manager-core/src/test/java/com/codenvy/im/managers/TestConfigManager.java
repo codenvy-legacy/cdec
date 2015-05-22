@@ -18,21 +18,16 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.BaseTest;
-import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.commands.Command;
-import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -53,7 +48,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -461,5 +455,5 @@ public class TestConfigManager extends BaseTest {
         assertNotNull(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY));
         assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
-
 }
+

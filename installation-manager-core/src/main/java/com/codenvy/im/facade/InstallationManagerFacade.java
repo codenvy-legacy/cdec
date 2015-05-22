@@ -18,11 +18,16 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.DownloadManager;
+import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
-import com.codenvy.im.managers.InstallationManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
+import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
@@ -33,6 +38,7 @@ import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.Status;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableSortedMap;
@@ -43,13 +49,15 @@ import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.api.core.ApiException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,11 +69,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.size;
@@ -74,35 +80,48 @@ import static java.nio.file.Files.size;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-// TODO [AB] return response everywhere
-// TODO [AB] no exceptions
 @Singleton
 public class InstallationManagerFacade {
     private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
 
-    protected final InstallationManager     manager;
     protected final HttpTransport           transport;
     protected final SaasAuthServiceProxy    saasAuthServiceProxy;
     protected final SaasAccountServiceProxy saasAccountServiceProxy;
     protected final PasswordManager passwordManager;
+    protected final NodeManager     nodeManager;
+    protected final BackupManager   backupManager;
+    protected final StorageManager  storageManager;
+    protected final InstallManager  installManager;
+    protected final DownloadManager downloadManager;
 
     private final String updateServerEndpoint;
+    private final Path downloadDir;
 
     private DownloadDescriptor downloadDescriptor;
 
     @Inject
-    public InstallationManagerFacade(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
-                                     InstallationManager manager,
+    public InstallationManagerFacade(@Named("installation-manager.download_dir") String downloadDir,
+                                     @Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
                                      HttpTransport transport,
                                      SaasAuthServiceProxy saasAuthServiceProxy,
                                      SaasAccountServiceProxy saasAccountServiceProxy,
-                                     PasswordManager passwordManager) {
-        this.manager = manager;
+                                     PasswordManager passwordManager,
+                                     NodeManager nodeManager,
+                                     BackupManager backupManager,
+                                     StorageManager storageManager,
+                                     InstallManager installManager,
+                                     DownloadManager downloadManager) {
+        this.installManager = installManager;
+        this.downloadManager = downloadManager;
+        this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.updateServerEndpoint = updateServerEndpoint;
         this.saasAuthServiceProxy = saasAuthServiceProxy;
         this.saasAccountServiceProxy = saasAccountServiceProxy;
         this.passwordManager = passwordManager;
+        this.nodeManager = nodeManager;
+        this.backupManager = backupManager;
+        this.storageManager = storageManager;
     }
 
     public String getUpdateServerEndpoint() {
@@ -121,7 +140,7 @@ public class InstallationManagerFacade {
                                  .toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e).toJson();
         }
     }
 
@@ -157,7 +176,7 @@ public class InstallationManagerFacade {
     /** Starts downloading */
     public String startDownload(@Nonnull final Request request) {
         try {
-            manager.checkIfConnectionIsAvailable();
+            downloadManager.checkIfConnectionIsAvailable();
 
             final CountDownLatch latcher = new CountDownLatch(1);
 
@@ -174,7 +193,7 @@ public class InstallationManagerFacade {
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e).toJson();
         }
     }
 
@@ -185,12 +204,12 @@ public class InstallationManagerFacade {
         downloadDescriptor = null;
         List<ArtifactInfo> infos = null;
         try {
-            Map<Artifact, Version> updatesToDownload = manager.getUpdatesToDownload(request.createArtifact(), request.createVersion());
+            Map<Artifact, Version> updatesToDownload = downloadManager.getUpdatesToDownload(request.createArtifact(), request.createVersion());
 
             infos = new ArrayList<>(updatesToDownload.size());
 
-            downloadDescriptor = DownloadDescriptor.createDescriptor(updatesToDownload, manager, currentThread);
-            manager.checkEnoughDiskSpace(downloadDescriptor.getTotalSize());
+            downloadDescriptor = DownloadDescriptor.createDescriptor(updatesToDownload, downloadManager, currentThread);
+            downloadManager.checkEnoughDiskSpace(downloadDescriptor.getTotalSize());
 
             latcher.countDown();
 
@@ -217,7 +236,7 @@ public class InstallationManagerFacade {
 
             if (downloadDescriptor == null) {
                 downloadDescriptor = new DownloadDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
-                downloadDescriptor.setDownloadResult(Response.valueOf(e));
+                downloadDescriptor.setDownloadResult(Response.error(e));
             } else {
                 downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
                                                                    .setMessage(e.getMessage())
@@ -231,7 +250,7 @@ public class InstallationManagerFacade {
     }
 
     protected Path doDownload(Artifact artifact, Version version) throws IOException, IllegalStateException {
-        return manager.download(artifact, version);
+        return downloadManager.download(artifact, version);
     }
 
     /** @return the current status of downloading process */
@@ -259,7 +278,7 @@ public class InstallationManagerFacade {
             }
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e).toJson();
         }
     }
 
@@ -285,7 +304,7 @@ public class InstallationManagerFacade {
             return new Response().setStatus(ResponseCode.OK).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e).toJson();
         }
     }
 
@@ -296,13 +315,13 @@ public class InstallationManagerFacade {
                 List<ArtifactInfo> infos = new ArrayList<>();
 
                 if (request.createArtifact() == null) {
-                    Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = manager.getDownloadedArtifacts();
+                    Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
 
                     for (Map.Entry<Artifact, SortedMap<Version, Path>> e : downloadedArtifacts.entrySet()) {
                         infos.addAll(getDownloadedArtifactsInfo(e.getKey(), e.getValue()));
                     }
                 } else {
-                    SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.createArtifact());
+                    SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(request.createArtifact());
 
                     if ((downloadedVersions != null) && !downloadedVersions.isEmpty()) {
                         Version version = request.createVersion();
@@ -318,7 +337,7 @@ public class InstallationManagerFacade {
                 return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, e.getMessage(), e);
-                return Response.valueOf(e).toJson();
+                return Response.error(e).toJson();
             }
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
@@ -332,7 +351,7 @@ public class InstallationManagerFacade {
         for (Map.Entry<Version, Path> e : downloadedVersions.entrySet()) {
             Version version = e.getKey();
             Path pathToBinaries = e.getValue();
-            Status status = manager.isInstallable(artifact, version) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+            Status status = installManager.isInstallable(artifact, version) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
 
             info.add(new ArtifactInfo(artifact, version, pathToBinaries, status));
         }
@@ -343,13 +362,13 @@ public class InstallationManagerFacade {
     /** @return update list from the server */
     public String getUpdates() {
         try {
-            Map<Artifact, Version> updates = manager.getUpdates();
+            Map<Artifact, Version> updates = downloadManager.getUpdates();
             List<ArtifactInfo> infos = new ArrayList<>(updates.size());
             for (Map.Entry<Artifact, Version> e : updates.entrySet()) {
                 Artifact artifact = e.getKey();
                 Version version = e.getValue();
 
-                if (manager.getDownloadedVersions(artifact).containsKey(version)) {
+                if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
                     infos.add(new ArtifactInfo(artifact, version, Status.DOWNLOADED));
                 } else {
                     infos.add(new ArtifactInfo(artifact, version));
@@ -359,13 +378,13 @@ public class InstallationManagerFacade {
             return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e).toJson();
         }
     }
 
     /** @return the list of installed artifacts and theirs versions */
     public Response getInstalledVersions() throws IOException {
-        Map<Artifact, Version> installedArtifacts = manager.getInstalledArtifacts();
+        Map<Artifact, Version> installedArtifacts = installManager.getInstalledArtifacts();
         return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts);
     }
 
@@ -375,7 +394,7 @@ public class InstallationManagerFacade {
             InstallOptions installOptions = request.getInstallOptions();
             Version version = doGetVersionToInstall(request);
 
-            List<String> infos = manager.getInstallInfo(request.createArtifact(), version, installOptions);
+            List<String> infos = installManager.getInstallInfo(request.createArtifact(), version, installOptions);
             return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
@@ -390,7 +409,7 @@ public class InstallationManagerFacade {
             Version version = doGetVersionToInstall(request);
 
             try {
-                manager.install(request.obtainAccessToken(), request.createArtifact(), version, installOptions);
+                install(request.createArtifact(), version, installOptions);
                 ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
@@ -401,6 +420,25 @@ public class InstallationManagerFacade {
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
             return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
+        }
+    }
+
+    protected void install(Artifact artifact, Version version, InstallOptions options) throws IOException {
+        Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
+
+        if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(version)) {
+            Path pathToBinaries = downloadedArtifacts.get(artifact).get(version);
+            if (pathToBinaries == null) {
+                throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
+            }
+
+            if (options.getStep() != 0 || artifact.isInstallable(version)) {
+                installManager.install(artifact, version, pathToBinaries, options);
+            } else {
+                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
+            }
+        } else {
+            throw new FileNotFoundException("Binaries to install artifact '" + artifact.getName() + "' version '" + version + "' not found");
         }
     }
 
@@ -424,7 +462,7 @@ public class InstallationManagerFacade {
             return request.createVersion();
 
         } else if (installStep == 0) {
-            Version version = manager.getLatestInstallableVersion(request.obtainAccessToken(), request.createArtifact());
+            Version version = installManager.getLatestInstallableVersion(request.createArtifact());
 
             if (version == null) {
                 throw new IllegalStateException(format("There is no newer version to install '%s'.", request.createArtifact()));
@@ -433,7 +471,7 @@ public class InstallationManagerFacade {
             return version;
 
         } else {
-            SortedMap<Version, Path> downloadedVersions = manager.getDownloadedVersions(request.createArtifact());
+            SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(request.createArtifact());
             if (downloadedVersions.isEmpty()) {
                 throw new IllegalStateException(format("Installation in progress but binaries for '%s' not found.", request.createArtifact()));
             }
@@ -443,138 +481,121 @@ public class InstallationManagerFacade {
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
     @Nullable
-    public String getAccountReferenceWhereUserIsOwner(@Nullable String accountName, @Nonnull Request request) throws IOException {
-        AccountReference accountReference = saasAccountServiceProxy.getAccountReferenceWhereUserIsOwner(request.obtainAccessToken(),
-                                                                                                        accountName);
-        return accountReference == null ? null : toJson(accountReference);
+    public AccountReference getAccountWhereUserIsOwner(@Nullable String accountName, @Nonnull Request request) throws IOException {
+        return saasAccountServiceProxy.getAccountWhereUserIsOwner(request.obtainAccessToken(), accountName);
     }
 
-    /** @return the configuration of the Installation Manager */
-    public Response getInstallationManagerConfig() {
-        return new Response().setStatus(ResponseCode.OK).setConfig(manager.getConfig());
+    /**
+     * @return configuration of the Installation Manager
+     */
+    public Map<String, String> getInstallationManagerProperties() {
+        return new LinkedHashMap<String, String>() {{
+            put("download directory", downloadDir.toString());
+            put("base url", extractServerUrl(updateServerEndpoint));
+        }};
     }
 
-    /** Add node to multi-server Codenvy */
-    public String addNode(@Nonnull String dns) {
+    protected String extractServerUrl(String url) {
+        return Commons.extractServerUrl(url);
+    }
+
+    /**
+     * @see com.codenvy.im.managers.NodeManager#add(String)
+     */
+    public Response addNode(@Nonnull String dns) {
         try {
-            NodeConfig node = manager.addNode(dns);
-            return new Response().setNode(NodeInfo.createSuccessInfo(node))
-                                 .setStatus(ResponseCode.OK)
-                                 .toJson();
+            NodeConfig node = nodeManager.add(dns);
+            return Response.ok().setNode(NodeInfo.createSuccessInfo(node));
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e);
         }
     }
 
-    /** Remove node from multi-server Codenvy */
-    public String removeNode(@Nonnull String dns) {
+    /**
+     * @see com.codenvy.im.managers.NodeManager#remove(String)
+     */
+    public Response removeNode(@Nonnull String dns) {
         try {
-            NodeConfig node = manager.removeNode(dns);
-            return new Response().setNode(NodeInfo.createSuccessInfo(node))
-                                 .setStatus(ResponseCode.OK)
-                                 .toJson();
+            NodeConfig node = nodeManager.remove(dns);
+            return Response.ok().setNode(NodeInfo.createSuccessInfo(node));
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e).toJson();
+            return Response.error(e);
         }
     }
 
-    /** Perform backup according to certain backup config */
-    public String backup(@Nonnull BackupConfig config) throws IOException {
+    /**
+     * @see com.codenvy.im.managers.BackupManager#backup(com.codenvy.im.managers.BackupConfig)
+     */
+    public Response backup(@Nonnull BackupConfig config) {
         try {
-            BackupConfig backupConfig = manager.backup(config);
-            return new Response().setBackup(BackupInfo.createSuccessInfo(backupConfig))
-                                 .setStatus(ResponseCode.OK)
-                                 .toJson();
+            BackupConfig backupConfig = backupManager.backup(config);
+            return Response.ok().setBackup(BackupInfo.createSuccessInfo(backupConfig));
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e)
-                           .setBackup(BackupInfo.createFailureInfo(config))
-                           .toJson();
+            return Response.error(e).setBackup(BackupInfo.createFailureInfo(config));
         }
     }
 
-    /** Perform restore according to certain backup config */
-    public String restore(@Nonnull BackupConfig config) throws IOException {
+    /**
+     * @see com.codenvy.im.managers.BackupManager#restore(com.codenvy.im.managers.BackupConfig)
+     */
+    public Response restore(@Nonnull BackupConfig config) {
         try {
-            manager.restore(config);
-            return new Response().setBackup(BackupInfo.createSuccessInfo(config))
-                                 .setStatus(ResponseCode.OK)
-                                 .toJson();
+            backupManager.restore(config);
+            return Response.ok().setBackup(BackupInfo.createSuccessInfo(config));
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e)
-                           .setBackup(BackupInfo.createFailureInfo(config))
-                           .toJson();
+            return Response.error(e).setBackup(BackupInfo.createFailureInfo(config));
         }
     }
 
-    /** Login into SaaS Codenvy and return authToken */
-    public String loginToCodenvySaaS(@Nonnull Credentials credentials) throws IOException, JsonParseException {
-        Token authToken = saasAuthServiceProxy.login(credentials);
-        return authToken == null ? null : toJson(authToken);
+    /**
+     * @see com.codenvy.im.saas.SaasAuthServiceProxy#login(org.eclipse.che.api.auth.shared.dto.Credentials)
+     */
+    public Token loginToCodenvySaaS(@Nonnull Credentials credentials) throws ApiException {
+        return saasAuthServiceProxy.login(credentials);
     }
 
-
-    /** Get user's certain subscription descriptor */
+    /**
+     * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
+     */
     @Nullable
-    public SubscriptionDescriptor getSubscriptionDescriptor(String subscriptionName,
-                                                            @Nonnull Request request) throws IOException {
+    public SubscriptionDescriptor getSubscriptionDescriptor(String subscriptionName, @Nonnull Request request) throws IOException {
         return saasAccountServiceProxy.getSubscription(subscriptionName,
                                                        request.obtainAccessToken(),
                                                        request.obtainAccountId());
     }
 
-    /** Perform restore according to certain backup config */
-    public Response changeAdminPassword(byte[] currentPassword, byte[] newPassword) {
-        try {
-            passwordManager.changeAdminPassword(currentPassword, newPassword);
-            return new Response().setStatus(ResponseCode.OK);
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e);
-        }
+    /**
+     * @see com.codenvy.im.managers.PasswordManager#changeAdminPassword(byte[], byte[])
+     */
+    public void changeAdminPassword(byte[] currentPassword, byte[] newPassword) throws IOException {
+        passwordManager.changeAdminPassword(currentPassword, newPassword);
     }
 
     /**
-     * @see com.codenvy.im.managers.InstallationManager#storeProperties(java.util.Map)
+     * @see com.codenvy.im.managers.StorageManager#storeProperties(java.util.Map)
      */
-    public Response storeProperties(Map<String, String> newProperties) {
-        try {
-            manager.storeProperties(newProperties);
-            return new Response().setStatus(ResponseCode.OK);
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e);
-        }
+    public void storeProperties(@Nullable Map<String, String> newProperties) throws IOException {
+        storageManager.storeProperties(newProperties);
     }
 
     /**
-     * @see com.codenvy.im.managers.InstallationManager#readProperties(java.util.Collection)
+     * @see com.codenvy.im.managers.StorageManager#loadProperties(java.util.Collection)
      */
-    public Response readProperties(@Nullable Collection<String> names) {
-        if (names == null) {
-            return new Response().setStatus(ResponseCode.OK);
-        }
-
-        try {
-            LinkedHashMap<String, String> properties = new LinkedHashMap<>(manager.readProperties(names));
-            return new Response().setStatus(ResponseCode.OK).setConfig(properties);
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e);
-        }
+    public Map<String, String> loadProperties(@Nullable Collection<String> names) throws IOException {
+        return storageManager.loadProperties(names);
     }
 
-    /** Change artifact config property */
-    public Response changeArtifactConfig(String artifactName, String property, String value) {
-        try {
-            manager.changeArtifactConfig(createArtifact(artifactName), property, value);
-            return new Response().setStatus(ResponseCode.OK);
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.valueOf(e);
-        }
+    /** Update artifact config property */
+    public void updateArtifactConfig(String artifactName, String property, String value) throws IOException {
+        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+        doUpdateArtifactConfig(artifact, property, value);
+    }
+
+    protected void doUpdateArtifactConfig(Artifact artifact, String property, String value) throws IOException {
+        artifact.updateConfig(property, value);
     }
 }

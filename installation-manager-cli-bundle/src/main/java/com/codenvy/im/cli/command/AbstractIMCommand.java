@@ -39,7 +39,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 
 /**
@@ -156,10 +155,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
         Request request = new Request().setSaasUserCredentials(getCredentials());
-        String json = facade.getAccountReferenceWhereUserIsOwner(accountName, request);
-        return json == null ? null : createDtoFromJson(json, AccountReference.class);
+        return facade.getAccountWhereUserIsOwner(accountName, request);
     }
-
 
     protected SaasUserCredentials getCredentials() {
         return new SaasUserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());

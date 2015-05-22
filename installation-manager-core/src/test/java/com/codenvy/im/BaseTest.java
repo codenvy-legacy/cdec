@@ -39,7 +39,9 @@ import static org.mockito.Mockito.when;
  * @author Anatoliy Bazko
  */
 public class BaseTest {
-    public static final Path PUPPET_CONF_FILE = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
+    protected static final String DOWNLOAD_DIR        = "target/download";
+    protected static final String UPDATE_API_ENDPOINT = "update/endpoint";
+    public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
 
     @BeforeMethod
     public void clear() throws Exception {

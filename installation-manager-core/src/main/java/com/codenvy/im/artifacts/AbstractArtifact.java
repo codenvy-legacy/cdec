@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -48,13 +49,18 @@ import static java.nio.file.Files.newDirectoryStream;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractArtifact implements Artifact {
-    private final String        name;
-    private final HttpTransport transport;
-    private final String        updateEndpoint;
+    private final   String        name;
+    protected final HttpTransport transport;
+    protected final ConfigManager configManager;
+    protected final String        updateEndpoint;
 
-    public AbstractArtifact(String name, HttpTransport transport, String updateEndpoint) {
+    public AbstractArtifact(String name,
+                            String updateEndpoint,
+                            HttpTransport transport,
+                            ConfigManager configManager) {
         this.name = name;
         this.transport = transport;
+        this.configManager = configManager;
         this.updateEndpoint = updateEndpoint;
     }
 

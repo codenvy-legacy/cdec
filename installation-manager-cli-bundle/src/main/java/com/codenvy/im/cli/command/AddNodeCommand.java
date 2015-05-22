@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.response.Response;
+
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 
@@ -34,7 +36,8 @@ public class AddNodeCommand extends AbstractIMCommand {
         if (dns != null && !dns.isEmpty()) {
             try {
                 console.showProgressor();
-                console.printResponse(facade.addNode(dns));
+                Response response = facade.addNode(dns);
+                console.printResponse(response.toJson());
             } finally {
                 console.hideProgressor();
             }

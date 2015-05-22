@@ -20,6 +20,7 @@ package com.codenvy.im.console;
 import jline.console.ConsoleReader;
 
 import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
@@ -155,7 +156,7 @@ public class Console {
     }
 
     public void printErrorAndExit(Exception ex) {
-        String errorMessage = Response.valueOf(ex).toJson();
+        String errorMessage = Response.error(ex).toJson();
         LOG.log(Level.SEVERE, ex.getMessage(), ex);
 
         printError(errorMessage);
@@ -179,6 +180,15 @@ public class Console {
             printErrorAndExit(response);
         } else {
             println(response);
+        }
+    }
+
+
+    public void printResponse(Response response) throws JsonParseException {
+        if (response.getStatus() == ResponseCode.OK) {
+            println(response.toJson());
+        } else {
+            printErrorAndExit(response.toJson());
         }
     }
 

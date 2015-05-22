@@ -19,6 +19,7 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.response.Response;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -43,7 +44,8 @@ public class BackupCommand extends AbstractIMCommand {
 
         try {
             console.showProgressor();
-            console.printResponse(facade.backup(config));
+            Response response = facade.backup(config);
+            console.printResponse(response.toJson());
         } finally {
             console.hideProgressor();
         }

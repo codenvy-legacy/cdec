@@ -79,6 +79,6 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return command to restore data from backup */
     Command getRestoreCommand(BackupConfig backupConfig) throws IOException;
 
-    /** Change artifact configuration */
-    void changeConfig(String property, String value) throws IOException;
+    /** Updates artifact configuration. */
+    void updateConfig(String property, String value) throws IOException;
 }

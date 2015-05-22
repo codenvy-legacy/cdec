@@ -20,8 +20,6 @@ package com.codenvy.im.service;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.managers.InstallationManager;
-import com.codenvy.im.managers.InstallationManagerImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
@@ -33,7 +31,6 @@ public class InstallationManagerServerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(InstallationManager.class).to(InstallationManagerImpl.class);
         bind(InstallationManagerService.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(InstallManagerArtifact.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(CDECArtifact.class);

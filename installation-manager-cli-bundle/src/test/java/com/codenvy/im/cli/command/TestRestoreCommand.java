@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.response.Response;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -64,18 +65,14 @@ public class TestRestoreCommand extends AbstractTestCommand {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
                                              .setBackupFile(testBackupFile);
 
-        String okServiceResponse = "{\n"
-                                   + "  \"status\" : \"OK\"\n"
-                                   + "}";
-
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).restore(testBackupConfig);
+        doReturn(Response.ok()).when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
+        assertEquals(output, Response.ok().toJson() + "\n");
     }
 
     @Test

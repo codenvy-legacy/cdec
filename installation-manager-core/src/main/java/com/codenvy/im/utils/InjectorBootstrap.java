@@ -20,8 +20,6 @@ package com.codenvy.im.utils;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.managers.InstallationManager;
-import com.codenvy.im.managers.InstallationManagerImpl;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,7 +61,6 @@ public class InjectorBootstrap {
             public void configure(Binder binder) {
                 bindProperties(binder);
 
-                binder.bind(InstallationManager.class).to(InstallationManagerImpl.class);
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);
             }

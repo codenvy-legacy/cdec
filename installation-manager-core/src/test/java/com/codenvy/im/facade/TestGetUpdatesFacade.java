@@ -22,8 +22,12 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.DownloadManager;
+import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
+import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.utils.AuthenticationException;
@@ -49,15 +53,24 @@ import static org.testng.Assert.assertEquals;
 public class TestGetUpdatesFacade {
 
     @Mock
-    private InstallationManager     mockInstallationManager;
-    @Mock
     private HttpTransport           transport;
     @Mock
     private SaasAuthServiceProxy    saasAuthServiceProxy;
     @Mock
     private SaasAccountServiceProxy saasAccountServiceProxy;
     @Mock
-    private PasswordManager passwordManager;
+    private PasswordManager         passwordManager;
+    @Mock
+    private NodeManager             nodeManager;
+    @Mock
+    private BackupManager           backupManager;
+    @Mock
+    private StorageManager          storageManager;
+    @Mock
+    private InstallManager          installManager;
+    @Mock
+    private DownloadManager         downloadManager;
+
 
     private InstallationManagerFacade installationManagerService;
     private Artifact                  installManagerArtifact;
@@ -66,12 +79,17 @@ public class TestGetUpdatesFacade {
     @BeforeMethod
     public void init() throws ArtifactNotFoundException {
         MockitoAnnotations.initMocks(this);
-        installationManagerService = new InstallationManagerFacade("update/endpoint",
-                                                                   mockInstallationManager,
+        installationManagerService = new InstallationManagerFacade("target/download",
+                                                                   "update/endpoint",
                                                                    transport,
                                                                    saasAuthServiceProxy,
                                                                    saasAccountServiceProxy,
-                                                                   passwordManager);
+                                                                   passwordManager,
+                                                                   nodeManager,
+                                                                   backupManager,
+                                                                   storageManager,
+                                                                   installManager,
+                                                                   downloadManager);
         installManagerArtifact = ArtifactFactory.createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
     }
@@ -79,18 +97,18 @@ public class TestGetUpdatesFacade {
     @Test
     public void testGetUpdates() throws Exception {
         final Version version100 = Version.valueOf("1.0.0");
-        when(mockInstallationManager.getUpdates()).thenReturn(new LinkedHashMap<Artifact, Version>() {
+        when(downloadManager.getUpdates()).thenReturn(new LinkedHashMap<Artifact, Version>() {
             {
                 put(installManagerArtifact, version100);
                 put(cdecArtifact, Version.valueOf("2.10.5"));
             }
         });
 
-        when(mockInstallationManager.getDownloadedVersions(installManagerArtifact)).thenReturn(new TreeMap<Version, Path>() {{
+        when(downloadManager.getDownloadedVersions(installManagerArtifact)).thenReturn(new TreeMap<Version, Path>() {{
             put(version100, null);
         }});
 
-        when(mockInstallationManager.getDownloadedVersions(cdecArtifact)).thenReturn(new TreeMap<Version, Path>());
+        when(downloadManager.getDownloadedVersions(cdecArtifact)).thenReturn(new TreeMap<Version, Path>());
 
         String response = installationManagerService.getUpdates();
         assertEquals(response, "{\n" +
@@ -108,7 +126,7 @@ public class TestGetUpdatesFacade {
 
     @Test
     public void testGetUpdatesCatchesAuthenticationException() throws Exception {
-        when(mockInstallationManager.getUpdates()).thenThrow(new AuthenticationException());
+        when(downloadManager.getUpdates()).thenThrow(new AuthenticationException());
 
         String response = installationManagerService.getUpdates();
         assertEquals(response, "{\n" +
@@ -119,7 +137,7 @@ public class TestGetUpdatesFacade {
 
     @Test
     public void testGetUpdatesCatchesArtifactNotFoundException() throws Exception {
-        when(mockInstallationManager.getUpdates()).thenThrow(new ArtifactNotFoundException(cdecArtifact));
+        when(downloadManager.getUpdates()).thenThrow(new ArtifactNotFoundException(cdecArtifact));
 
         String response = installationManagerService.getUpdates();
 
@@ -131,7 +149,7 @@ public class TestGetUpdatesFacade {
 
     @Test
     public void testGetUpdatesCatchesException() throws Exception {
-        when(mockInstallationManager.getUpdates()).thenThrow(new IOException("Error"));
+        when(downloadManager.getUpdates()).thenThrow(new IOException("Error"));
 
         String response = installationManagerService.getUpdates();
 

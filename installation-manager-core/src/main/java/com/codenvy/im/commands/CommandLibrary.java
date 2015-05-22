@@ -299,23 +299,23 @@ public class CommandLibrary {
     }
 
     /**
-     * @return command to execute "sudo puppet agent -t" at the node only if there is no "/var/lib/puppet/state/agent_catalog_run.lock" file at the node,
-     * that is run of Puppet configuration client isn't already in progress.
+     * Creates command to force running puppet agent if no lock file exists.
      */
     public static Command createForcePuppetAgentCommand(NodeConfig node) throws AgentException {
         return createCommand(getForcePuppetAgentCommand(), node);
     }
 
+
     /**
-     * @return command to execute "sudo puppet agent -t" at the node only if there is no "/var/lib/puppet/state/agent_catalog_run.lock" file at the node,
-     * that is run of Puppet configuration client isn't already in progress.
+     * Creates command to force running puppet agent if no lock file exists.
      */
     public static Command createForcePuppetAgentCommand() throws AgentException {
         return createCommand(getForcePuppetAgentCommand());
     }
 
     /**
-     * @return command to execute "sudo puppet agent -t" only if there is no /var/lib/puppet/state/agent_catalog_run.lock file
+     * Creates command to force running puppet agent if no lock file exists.
+     * Lock file is placed at /var/lib/puppet/state/agent_catalog_run.lock
      */
     private static String getForcePuppetAgentCommand() {
         return "if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then " +

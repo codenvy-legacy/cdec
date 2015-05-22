@@ -19,6 +19,7 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.response.Response;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -34,14 +35,13 @@ public class RestoreCommand extends AbstractIMCommand {
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        String artifactToBackup = CDECArtifact.NAME;
-        BackupConfig config = new BackupConfig().setArtifactName(artifactToBackup);
-
-        config.setBackupFile(backup);
+        BackupConfig config = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                .setBackupFile(backup);
 
         try {
             console.showProgressor();
-            console.printResponse(facade.restore(config));
+            Response restore = facade.restore(config);
+            console.printResponse(restore.toJson());
         } finally {
             console.hideProgressor();
         }

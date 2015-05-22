@@ -34,7 +34,7 @@ public class NodeConfig {
         DATASOURCE,
         ANALYTICS,
         PUPPET_MASTER,
-        API  // should be last one to accumulate changes in other nodes
+        API,
     }
 
     private String host;

@@ -90,11 +90,15 @@ public class TestInstallManagerArtifact {
                                          + "rm -rf /home/dummy-user/codenvy-im/codenvy-cli/* \n"
                                          + "tar -xzf /home/dummy-user/codenvy-im/child -C /home/dummy-user/codenvy-im/codenvy-cli \n"
                                          + "chmod +x /home/dummy-user/codenvy-im/codenvy-cli/bin/* \n"
-                                         + "sed -i \"2iJAVA_HOME=/home/dummy-user/codenvy-im/jre\" /home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \n"
+                                         +
+                                         "sed -i \"2iJAVA_HOME=/home/dummy-user/codenvy-im/jre\" " +
+                                         "/home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \n"
                                          + "rm -f /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh \n"
                                          + "rm -f /home/dummy-user/codenvy-im/child \n"
                                          + "' > /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh\"', 'agent'='LocalAgent'}, "
-                                         + "{'command'='sudo chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh', 'agent'='LocalAgent'}, "
+                                         +
+                                         "{'command'='sudo chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh', " +
+                                         "'agent'='LocalAgent'}, "
                                          + "{'command'='sudo cp /parent/child /home/dummy-user/codenvy-im/child', 'agent'='LocalAgent'}"
                                          + "]");
     }
@@ -129,7 +133,7 @@ public class TestInstallManagerArtifact {
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testChangeConfig() throws IOException {
-        imArtifact.changeConfig(null, null);
+    public void testUpdateConfig() throws IOException {
+        imArtifact.updateConfig(null, null);
     }
 }

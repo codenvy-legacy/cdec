@@ -33,10 +33,12 @@ import java.util.List;
  * @author Dmytro Nochevnov
  */
 public abstract class CDECArtifactHelper {
-    CDECArtifact original;
+    protected final CDECArtifact  original;
+    protected final ConfigManager configManager;
 
-    public CDECArtifactHelper(CDECArtifact original) {
+    public CDECArtifactHelper(CDECArtifact original, ConfigManager configManager) {
         this.original = original;
+        this.configManager = configManager;
     }
 
     /**
@@ -57,13 +59,13 @@ public abstract class CDECArtifactHelper {
     /**
      * @return list of commands to backup codenvy due to given backup config and codenvy config
      */
-    public abstract Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
+    public abstract Command getBackupCommand(BackupConfig backupConfig) throws IOException;
 
     /**
      * @return list of commands to restore codenvy due to given backup config and codenvy config
      */
-    public abstract Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException;
+    public abstract Command getRestoreCommand(BackupConfig backupConfig) throws IOException;
 
     /** @return commands to add change puppet master config and wait until changes is propagated */
-    public abstract Command getChangeConfigCommand(String property, String value, Config config) throws IOException;
+    public abstract Command getUpdateConfigCommand(String property, String value, Config config) throws IOException;
 }

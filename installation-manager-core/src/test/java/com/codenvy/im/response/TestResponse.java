@@ -94,7 +94,7 @@ public class TestResponse {
                                           .setSubscription("subscription")
                                           .setDownloadInfo(new DownloadStatusInfo(Status.DOWNLOADING, 30))
                                           .setInfos(ImmutableList.of("info1", "info2"))
-                                          .setConfig(new LinkedHashMap<String, String>() {{
+                                          .setProperties(new LinkedHashMap<String, String>() {{
                                               put("prop1", "value1");
                                               put("prop2", "value2");
                                           }})
@@ -106,7 +106,7 @@ public class TestResponse {
                           + "    \"status\" : \"DOWNLOADING\",\n"
                           + "    \"percents\" : 30\n"
                           + "  },\n"
-                          + "  \"config\" : {\n"
+                          + "  \"properties\" : {\n"
                           + "    \"prop1\" : \"value1\",\n"
                           + "    \"prop2\" : \"value2\"\n"
                           + "  },\n"

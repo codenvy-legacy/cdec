@@ -20,24 +20,53 @@ package com.codenvy.im.managers;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Commons.isInstall;
 
 /**
  * @author Anatoliy Bazko
  */
 @Singleton
-public class InstallerManager {
+public class InstallManager {
+    private final Set<Artifact> artifacts;
 
     @Inject
-    public InstallerManager() {
+    public InstallManager(Set<Artifact> artifacts) {
+        this.artifacts = new Commons.ArtifactsSet(artifacts); // keep order
+    }
+
+    /**
+     * Scans all installed artifacts and returns their versions.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    public Map<Artifact, Version> getInstalledArtifacts() throws IOException {
+        Map<Artifact, Version> installed = new LinkedHashMap<>();
+        for (Artifact artifact : artifacts) {
+            try {
+                Version installedVersion = artifact.getInstalledVersion();
+                if (installedVersion != null) {
+                    installed.put(artifact, installedVersion);
+                }
+            } catch (IOException e) {
+                throw getProperException(e, artifact);
+            }
+        }
+
+        return installed;
     }
 
     /** Installs specific artifact. */
@@ -68,6 +97,19 @@ public class InstallerManager {
         } else {
             return doGetUpdateInfo(artifact, options);
         }
+    }
+
+    /**
+     * @return the latest version of the artifact
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
+        return artifact.getLatestInstallableVersion();
+    }
+
+    public boolean isInstallable(Artifact artifact, Version version) throws IOException {
+        return artifact.isInstallable(version);
     }
 
     protected List<String> doGetUpdateInfo(Artifact artifact, InstallOptions options) throws IOException {

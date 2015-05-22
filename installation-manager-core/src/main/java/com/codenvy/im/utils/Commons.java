@@ -110,12 +110,12 @@ public class Commons {
     }
 
     /** Translates JSON to the list of DTO objects. */
-    public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+    public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) {
         return JsonUtils.createListDtoFromJson(json, dtoInterface);
     }
 
     /** Translates JSON to the list of DTO objects. */
-    public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+    public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) {
         return JsonUtils.createDtoFromJson(json, dtoInterface);
     }
 
@@ -286,12 +286,12 @@ public class Commons {
                 new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writerWithDefaultPrettyPrinter();
 
         /** Translates JSON to the list of DTO objects. */
-        public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+        public static <DTO> List<DTO> createListDtoFromJson(String json, Class<DTO> dtoInterface) {
             return DtoFactory.getInstance().createListDtoFromJson(json, dtoInterface);
         }
 
         /** Translates JSON to the list of DTO objects. */
-        public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) throws IOException {
+        public static <DTO> DTO createDtoFromJson(String json, Class<DTO> dtoInterface) {
             return DtoFactory.getInstance().createDtoFromJson(json, dtoInterface);
         }
 

@@ -19,6 +19,8 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -58,17 +60,20 @@ public class TestAbstractArtifact {
 
     private static final String  UPDATE_ENDPOINT     = "update/endpoint";
     private static final String  TEST_ARTIFACT_NAME  = "test_artifact_name";
+    private static final String  TEST_TOKEN          = "auth token";
     private static final String  TEST_VERSION_STRING = "1.0.0";
     private static final Version TEST_VERSION        = Version.valueOf(TEST_VERSION_STRING);
 
     @Mock
     private HttpTransport mockTransport;
+    @Mock
+    private ConfigManager configManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, mockTransport, ""));
+        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, mockTransport, "", configManager));
     }
 
     @AfterMethod
@@ -90,8 +95,8 @@ public class TestAbstractArtifact {
     @Test
     public void testGetLatestVersion() throws IOException {
         doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
-            .when(mockTransport)
-            .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
+                .when(mockTransport)
+                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
         Version version = spyTestArtifact.getLatestVersion(UPDATE_ENDPOINT, mockTransport);
         assertEquals(version.toString(), TEST_VERSION_STRING);
@@ -102,8 +107,10 @@ public class TestAbstractArtifact {
         Version newVersion = Version.valueOf("2.0.0");
 
         doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
-        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // allowed previous version of new artifact is unknown
-        doReturn("{}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + newVersion));  // allowed previous version of new artifact is unknown
+        doReturn("{}").when(mockTransport)
+                      .doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // allowed previous version of new artifact is unknown
+        doReturn("{}").when(mockTransport)
+                      .doGet(endsWith(TEST_ARTIFACT_NAME + "/" + newVersion));  // allowed previous version of new artifact is unknown
 
         assertFalse(spyTestArtifact.isInstallable(TEST_VERSION));
         assertTrue(spyTestArtifact.isInstallable(newVersion));
@@ -202,8 +209,8 @@ public class TestAbstractArtifact {
     }
 
     private static class TestedAbstractArtifact extends AbstractArtifact {
-        public TestedAbstractArtifact(String name, HttpTransport transport, String updateEndpoint) {
-            super(name, transport, updateEndpoint);
+        public TestedAbstractArtifact(String name, HttpTransport transport, String updateEndpoint, ConfigManager configManager) {
+            super(name, updateEndpoint, transport, configManager);
         }
 
         @Nullable
@@ -247,6 +254,8 @@ public class TestAbstractArtifact {
             return null;
         }
 
-        @Override public void changeConfig(String property, String value) throws IOException {}
+        @Override
+        public void updateConfig(String property, String value) throws IOException {
+        }
     }
 }

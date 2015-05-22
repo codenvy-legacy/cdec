@@ -18,8 +18,12 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.BaseTest;
-import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.DownloadManager;
+import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
+import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
@@ -51,29 +55,42 @@ import static org.testng.Assert.assertEquals;
  */
 public class TestCheckSubscriptionFacade extends BaseTest {
     @Mock
-    private InstallationManager  installationManager;
-    @Mock
     private SaasAuthServiceProxy saasAuthServiceProxy;
     @Mock
     private HttpTransport        transport;
     @Mock
     private Request              request;
     @Mock
-    private PasswordManager passwordManager;
+    private PasswordManager      passwordManager;
+    @Mock
+    private NodeManager          nodeManager;
+    @Mock
+    private BackupManager        backupManager;
+    @Mock
+    private StorageManager       storageManager;
+    @Mock
+    private InstallManager       installManager;
+    @Mock
+    private DownloadManager      downloadManager;
 
     private InstallationManagerFacade installationManagerService;
-    private SaasAccountServiceProxy saasAccountServiceProxy;
+    private SaasAccountServiceProxy   saasAccountServiceProxy;
 
     @BeforeMethod
     public void init() {
         initMocks(this);
         saasAccountServiceProxy = new SaasAccountServiceProxy("update/endpoint", transport);
-        installationManagerService = new InstallationManagerFacade("update/endpoint",
-                                                                   installationManager,
+        installationManagerService = new InstallationManagerFacade("target/download",
+                                                                   "update/endpoint",
                                                                    transport,
                                                                    saasAuthServiceProxy,
                                                                    saasAccountServiceProxy,
-                                                                   passwordManager);
+                                                                   passwordManager,
+                                                                   nodeManager,
+                                                                   backupManager,
+                                                                   storageManager,
+                                                                   installManager,
+                                                                   downloadManager);
         request = new Request().setSaasUserCredentials(new SaasUserCredentials("auth token", "accountId"));
     }
 

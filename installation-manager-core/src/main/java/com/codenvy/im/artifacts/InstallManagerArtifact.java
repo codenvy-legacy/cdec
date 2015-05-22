@@ -23,6 +23,7 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -57,8 +58,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Inject
     public InstallManagerArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
-                                  HttpTransport transport) {
-        super(NAME, transport, updateEndpoint);
+                                  HttpTransport transport,
+                                  ConfigManager configManager) {
+        super(NAME, updateEndpoint, transport, configManager);
     }
 
     /** {@inheritDoc} */
@@ -175,8 +177,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public void changeConfig(String property, String value) throws IOException {
+    public void updateConfig(String property, String value) throws IOException {
         throw new UnsupportedOperationException();
     }
-
 }

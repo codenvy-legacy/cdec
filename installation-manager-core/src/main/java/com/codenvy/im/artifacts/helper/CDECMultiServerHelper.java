@@ -64,8 +64,8 @@ import static java.lang.String.format;
  */
 public class CDECMultiServerHelper extends CDECArtifactHelper {
 
-    public CDECMultiServerHelper(CDECArtifact original) {
-        super(original);
+    public CDECMultiServerHelper(CDECArtifact original, ConfigManager configManager) {
+        super(original, configManager);
     }
 
     /** {@inheritDoc} */
@@ -366,10 +366,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * @return MacroCommand which holds all commands
      */
     @Override
-    public Command getBackupCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+    public Command getBackupCommand(BackupConfig backupConfig) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config codenvyConfig = codenvyConfigManager.loadInstalledCodenvyConfig();
+        Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
@@ -472,10 +472,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * @return MacroCommand which holds all commands
      */
     @Override
-    public Command getRestoreCommand(BackupConfig backupConfig, ConfigManager codenvyConfigManager) throws IOException {
+    public Command getRestoreCommand(BackupConfig backupConfig) throws IOException {
         List<Command> commands = new ArrayList<>();
 
-        Config codenvyConfig = codenvyConfigManager.loadInstalledCodenvyConfig();
+        Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         NodeConfig apiNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.API);
         NodeConfig dataNode = NodeConfig.extractConfigFrom(codenvyConfig, NodeConfig.NodeType.DATA);
 
@@ -554,22 +554,25 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         return new MacroCommand(commands, "Restore data commands");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Command getChangeConfigCommand(String property, String value, Config config) throws IOException {
+    public Command getUpdateConfigCommand(String property, String value, Config config) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy multi server config
-        String multiServerPropertiesFilePath = Config.getPathToCodenvyConfigFile(Config.MULTI_SERVER_PROPERTIES).toString();
+        String multiServerPropertiesFilePath = configManager.getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES).toString();
         commands.add(createFileBackupCommand(multiServerPropertiesFilePath));
         commands.add(createPropertyReplaceCommand(multiServerPropertiesFilePath, "$" + property, value));
 
-        String multiServerBasePropertiesFilePath =  Config.getPathToCodenvyConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES).toString();
+        String multiServerBasePropertiesFilePath = configManager.getPuppetConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES).toString();
         commands.add(createFileBackupCommand(multiServerBasePropertiesFilePath));
         commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + property, value));
 
         // force applying updated puppet config on puppet agent at the all nodes (don't take into account additional nodes)
         final List<NodeConfig> nodes = extractConfigsFrom(config);
-        for (NodeConfig node: nodes) {
+        for (NodeConfig node : nodes) {
             commands.add(createForcePuppetAgentCommand(node));
         }
 

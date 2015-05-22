@@ -19,9 +19,8 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.response.Response;
-
 import com.codenvy.im.managers.Config;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -29,7 +28,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -59,25 +60,31 @@ public class TestConfigCommand extends AbstractTestCommand {
 
     @Test
     public void testGetConfig() throws Exception {
-        doReturn(Response.OK).when(managerFacade).getInstallationManagerConfig();
+        doReturn(Collections.emptyMap()).when(managerFacade).getInstallationManagerProperties();
 
         CommandInvoker.Result result = commandInvoker.invoke();
 
         String output = result.getOutputStream();
-        assertEquals(output, Response.OK.toJson() + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"properties\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
+
 
     @Test
     public void testChangeCodenvyHostUrl() throws Exception {
         String testDns = "test.com";
-        doReturn(Response.OK).when(managerFacade).changeArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
+        doNothing().when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--codenvy_host_url", testDns);
+        commandInvoker.option("--codenvy_dns", testDns);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Response.OK.toJson() + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
@@ -88,10 +95,10 @@ public class TestConfigCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-            .when(managerFacade).changeArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
+                .when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--codenvy_host_url", testDns);
+        commandInvoker.option("--codenvy_dns", testDns);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

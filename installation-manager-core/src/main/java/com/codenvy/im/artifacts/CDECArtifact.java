@@ -53,22 +53,16 @@ import static java.lang.String.format;
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
     private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of(
-            InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this),
-            InstallType.MULTI_SERVER, new CDECMultiServerHelper(this)
-                                                                                );
+            InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this, configManager),
+            InstallType.MULTI_SERVER, new CDECMultiServerHelper(this, configManager));
 
     public static final String NAME = "codenvy";
-
-    private final HttpTransport transport;
-    private final ConfigManager configManager;
 
     @Inject
     public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                         HttpTransport transport,
                         ConfigManager configManager) {
-        super(NAME, transport, updateEndpoint);
-        this.transport = transport;
-        this.configManager = configManager;
+        super(NAME, updateEndpoint, transport, configManager);
     }
 
     /** {@inheritDoc} */
@@ -164,19 +158,19 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public Command getBackupCommand(BackupConfig backupConfig) throws IOException {
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        return helper.getBackupCommand(backupConfig, configManager);
+        return helper.getBackupCommand(backupConfig);
     }
 
     /** {@inheritDoc} */
     @Override
     public Command getRestoreCommand(BackupConfig backupConfig) throws IOException {
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        return helper.getRestoreCommand(backupConfig, configManager);
+        return helper.getRestoreCommand(backupConfig);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void changeConfig(String property, String value) throws IOException {
+    public void updateConfig(String property, String value) throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
         Map<String, String> configProperties = config.getProperties();
         if (!configProperties.containsKey(property)) {
@@ -185,12 +179,13 @@ public class CDECArtifact extends AbstractArtifact {
         }
 
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        Command commands = helper.getChangeConfigCommand(property, value, config);
+        Command commands = helper.getUpdateConfigCommand(property, value, config);
         commands.execute();
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }
+
 
 }

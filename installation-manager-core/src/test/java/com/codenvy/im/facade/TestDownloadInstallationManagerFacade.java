@@ -21,8 +21,12 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.managers.InstallationManager;
+import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.DownloadManager;
+import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
+import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadStatusInfo;
 import com.codenvy.im.response.Response;
@@ -67,15 +71,23 @@ public class TestDownloadInstallationManagerFacade {
     private InstallationManagerFacade installationManagerService;
 
     @Mock
-    private InstallationManager     installationManager;
-    @Mock
     private SaasAuthServiceProxy    saasAuthServiceProxy;
     @Mock
     private SaasAccountServiceProxy saasAccountServiceProxy;
     @Mock
     private HttpTransport           transport;
     @Mock
-    private PasswordManager passwordManager;
+    private PasswordManager         passwordManager;
+    @Mock
+    private NodeManager             nodeManager;
+    @Mock
+    private BackupManager           backupManager;
+    @Mock
+    private StorageManager          storageManager;
+    @Mock
+    private InstallManager          installManager;
+    @Mock
+    private DownloadManager         downloadManager;
 
     private Artifact            installManagerArtifact;
     private Artifact            cdecArtifact;
@@ -86,12 +98,17 @@ public class TestDownloadInstallationManagerFacade {
     @BeforeMethod
     public void init() throws Exception {
         initMocks(this);
-        installationManagerService = new InstallationManagerFacade("update/endpoint",
-                                                                   installationManager,
+        installationManagerService = new InstallationManagerFacade("target/download",
+                                                                   "update/endpoint",
                                                                    transport,
                                                                    saasAuthServiceProxy,
                                                                    saasAccountServiceProxy,
-                                                                   passwordManager);
+                                                                   passwordManager,
+                                                                   nodeManager,
+                                                                   backupManager,
+                                                                   storageManager,
+                                                                   installManager,
+                                                                   downloadManager);
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
 
@@ -117,7 +134,7 @@ public class TestDownloadInstallationManagerFacade {
                 put(cdecArtifact, version200);
                 put(installManagerArtifact, version100);
             }
-        }).when(installationManager).getUpdatesToDownload(null, null);
+        }).when(downloadManager).getUpdatesToDownload(null, null);
 
         doAnswer(new Answer() {
             @Override
@@ -125,7 +142,7 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(installationManager).download(cdecArtifact, version200);
+        }).when(downloadManager).download(cdecArtifact, version200);
 
         doAnswer(new Answer() {
             @Override
@@ -133,13 +150,13 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathIM.toFile(), new byte[50]);
                 return pathIM;
             }
-        }).when(installationManager).download(installManagerArtifact, version100);
+        }).when(downloadManager).download(installManagerArtifact, version100);
 
-        doReturn(pathCDEC).when(installationManager).getPathToBinaries(cdecArtifact, version200);
-        doReturn(pathIM).when(installationManager).getPathToBinaries(installManagerArtifact, version100);
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, version200);
+        doReturn(pathIM).when(downloadManager).getPathToBinaries(installManagerArtifact, version100);
 
-        doReturn(100L).when(installationManager).getBinariesSize(cdecArtifact, version200);
-        doReturn(50L).when(installationManager).getBinariesSize(installManagerArtifact, version100);
+        doReturn(100L).when(downloadManager).getBinariesSize(cdecArtifact, version200);
+        doReturn(50L).when(downloadManager).getBinariesSize(installManagerArtifact, version100);
 
         Request request = new Request().setSaasUserCredentials(testCredentials);
         installationManagerService.startDownload(request);
@@ -176,7 +193,7 @@ public class TestDownloadInstallationManagerFacade {
             {
                 put(cdecArtifact, version200);
             }
-        }).when(installationManager).getUpdatesToDownload(cdecArtifact, null);
+        }).when(downloadManager).getUpdatesToDownload(cdecArtifact, null);
 
         doAnswer(new Answer() {
             @Override
@@ -184,10 +201,10 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(installationManager).download(cdecArtifact, version200);
+        }).when(downloadManager).download(cdecArtifact, version200);
 
-        doReturn(pathCDEC).when(installationManager).getPathToBinaries(cdecArtifact, version200);
-        doReturn(100L).when(installationManager).getBinariesSize(cdecArtifact, version200);
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, version200);
+        doReturn(100L).when(downloadManager).getBinariesSize(cdecArtifact, version200);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME);
         installationManagerService.startDownload(request);
@@ -218,7 +235,7 @@ public class TestDownloadInstallationManagerFacade {
             {
                 put(cdecArtifact, version200);
             }
-        }).when(installationManager).getUpdatesToDownload(cdecArtifact, version200);
+        }).when(downloadManager).getUpdatesToDownload(cdecArtifact, version200);
 
         doAnswer(new Answer() {
             @Override
@@ -226,10 +243,10 @@ public class TestDownloadInstallationManagerFacade {
                 FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[100]);
                 return pathCDEC;
             }
-        }).when(installationManager).download(cdecArtifact, version200);
+        }).when(downloadManager).download(cdecArtifact, version200);
 
-        doReturn(pathCDEC).when(installationManager).getPathToBinaries(cdecArtifact, version200);
-        doReturn(100L).when(installationManager).getBinariesSize(cdecArtifact, version200);
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, version200);
+        doReturn(100L).when(downloadManager).getBinariesSize(cdecArtifact, version200);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);
@@ -255,7 +272,7 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testDownloadErrorIfUpdatesAbsent() throws Exception {
-        doReturn(Collections.emptyMap()).when(installationManager).getUpdatesToDownload(null, null);
+        doReturn(Collections.emptyMap()).when(downloadManager).getUpdatesToDownload(null, null);
 
         Request request = new Request().setSaasUserCredentials(testCredentials);
         installationManagerService.startDownload(request);
@@ -274,7 +291,7 @@ public class TestDownloadInstallationManagerFacade {
                                                         "}");
 
         /* -------------- */
-        doReturn(Collections.emptyMap()).when(installationManager).getUpdatesToDownload(cdecArtifact, null);
+        doReturn(Collections.emptyMap()).when(downloadManager).getUpdatesToDownload(cdecArtifact, null);
 
         request.setArtifactName(CDECArtifact.NAME);
         installationManagerService.startDownload(request);
@@ -311,20 +328,20 @@ public class TestDownloadInstallationManagerFacade {
     @Test
     public void testDownloadErrorIfSpecificVersionArtifactAbsent() throws Exception {
         Version version200 = Version.valueOf("2.0.0");
-        doThrow(new ArtifactNotFoundException(cdecArtifact, version200)).when(installationManager)
+        doThrow(new ArtifactNotFoundException(cdecArtifact, version200)).when(downloadManager)
                                                                         .getUpdatesToDownload(cdecArtifact, version200
                                                                         );
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
-                .when(installationManager)
+                .when(downloadManager)
                 .getPathToBinaries(cdecArtifact, version200);
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
-                .when(installationManager)
+                .when(downloadManager)
                 .getBinariesSize(cdecArtifact, version200);
 
         doThrow(new ArtifactNotFoundException(cdecArtifact, version200))
-                .when(installationManager)
+                .when(downloadManager)
                 .download(cdecArtifact, version200);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
@@ -346,7 +363,7 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testDownloadErrorIfAuthenticationFailedOnGetUpdates() throws Exception {
-        when(installationManager.getUpdatesToDownload(null, null)).thenThrow(new AuthenticationException());
+        when(downloadManager.getUpdatesToDownload(null, null)).thenThrow(new AuthenticationException());
 
         Request request = new Request().setSaasUserCredentials(testCredentials);
         installationManagerService.startDownload(request);
@@ -374,11 +391,11 @@ public class TestDownloadInstallationManagerFacade {
             {
                 put(cdecArtifact, version200);
             }
-        }).when(installationManager).getUpdatesToDownload(cdecArtifact, version200);
+        }).when(downloadManager).getUpdatesToDownload(cdecArtifact, version200);
 
-        doThrow(new AuthenticationException()).when(installationManager).getPathToBinaries(cdecArtifact, version200);
-        doThrow(new AuthenticationException()).when(installationManager).getBinariesSize(cdecArtifact, version200);
-        doThrow(new AuthenticationException()).when(installationManager).download(cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(downloadManager).getPathToBinaries(cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(downloadManager).getBinariesSize(cdecArtifact, version200);
+        doThrow(new AuthenticationException()).when(downloadManager).download(cdecArtifact, version200);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         installationManagerService.startDownload(request);
@@ -400,7 +417,7 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testDownloadErrorIfSubscriptionVerificationFailed() throws Exception {
-        when(installationManager.getUpdatesToDownload(cdecArtifact, null))
+        when(downloadManager.getUpdatesToDownload(cdecArtifact, null))
                 .thenThrow(new IllegalStateException("Valid subscription is required to download cdec"));
 
 
@@ -428,9 +445,9 @@ public class TestDownloadInstallationManagerFacade {
         final Version version101 = Version.valueOf("1.0.1");
         final Version version200 = Version.valueOf("2.0.0");
 
-        doReturn(false).when(installationManager).isInstallable(cdecArtifact, version100);
-        doReturn(true).when(installationManager).isInstallable(cdecArtifact, version101);
-        doReturn(true).when(installationManager).isInstallable(installManagerArtifact, version200);
+        doReturn(false).when(installManager).isInstallable(cdecArtifact, version100);
+        doReturn(true).when(installManager).isInstallable(cdecArtifact, version101);
+        doReturn(true).when(installManager).isInstallable(installManagerArtifact, version200);
 
         doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
             put(cdecArtifact, new TreeMap<Version, Path>() {{
@@ -440,7 +457,7 @@ public class TestDownloadInstallationManagerFacade {
             put(installManagerArtifact, new TreeMap<Version, Path>() {{
                 put(Version.valueOf("2.0.0"), Paths.get("target/file3"));
             }});
-        }}).when(installationManager).getDownloadedArtifacts();
+        }}).when(downloadManager).getDownloadedArtifacts();
 
         Request request = new Request().setSaasUserCredentials(testCredentials);
         String response = installationManagerService.getDownloads(request);
@@ -473,10 +490,10 @@ public class TestDownloadInstallationManagerFacade {
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, Paths.get("target/file1"));
             put(version201, Paths.get("target/file2"));
-        }}).when(installationManager).getDownloadedVersions(installManagerArtifact);
+        }}).when(downloadManager).getDownloadedVersions(installManagerArtifact);
 
-        doReturn(false).when(installationManager).isInstallable(installManagerArtifact, version200);
-        doReturn(true).when(installationManager).isInstallable(installManagerArtifact, version201);
+        doReturn(false).when(installManager).isInstallable(installManagerArtifact, version200);
+        doReturn(true).when(installManager).isInstallable(installManagerArtifact, version201);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
         String response = installationManagerService.getDownloads(request);
@@ -501,9 +518,9 @@ public class TestDownloadInstallationManagerFacade {
         final Version version200 = Version.valueOf("2.0.0");
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, Paths.get("target/file1"));
-        }}).when(installationManager).getDownloadedVersions(cdecArtifact);
+        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
-        doReturn(true).when(installationManager).isInstallable(cdecArtifact, version200);
+        doReturn(true).when(installManager).isInstallable(cdecArtifact, version200);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
         String response = installationManagerService.getDownloads(request);
@@ -520,7 +537,7 @@ public class TestDownloadInstallationManagerFacade {
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
-        doReturn(new TreeMap<>()).when(installationManager).getDownloadedVersions(installManagerArtifact);
+        doReturn(new TreeMap<>()).when(downloadManager).getDownloadedVersions(installManagerArtifact);
 
         Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
         String response = installationManagerService.getDownloads(request);

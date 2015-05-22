@@ -21,9 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.commands.CheckInstalledVersionCommand;
-import com.codenvy.im.commands.Command;
-import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -46,7 +43,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -57,11 +53,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
-import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
-import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
-import static com.codenvy.im.commands.SimpleCommand.createCommand;
-import static com.codenvy.im.managers.NodeConfig.extractConfigsFrom;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -429,6 +420,10 @@ public class ConfigManager {
         }
     }
 
+    public Path getPuppetConfigFile(String configFilename) {
+        return Paths.get(puppetBaseDir).resolve(configFilename);
+    }
+
     protected boolean isInstall(Artifact artifact, Version version) throws IOException {
         return Commons.isInstall(artifact, version);
     }
@@ -467,5 +462,4 @@ public class ConfigManager {
         }
         return Files.toString(pathToIdRsa.toFile(), Charsets.UTF_8);
     }
-
 }

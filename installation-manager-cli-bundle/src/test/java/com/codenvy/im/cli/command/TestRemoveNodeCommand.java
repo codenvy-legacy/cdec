@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.response.Response;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -57,17 +58,14 @@ public class TestRemoveNodeCommand extends AbstractTestCommand {
 
     @Test
     public void testRemoveNodeCommand() throws Exception {
-        String okServiceResponse = "{\n"
-                                   + "  \"status\" : \"OK\"\n"
-                                   + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).removeNode(TEST_DNS);
+        doReturn(Response.ok()).when(mockInstallationManagerProxy).removeNode(TEST_DNS);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("dns", TEST_DNS);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
+        assertEquals(output, Response.ok().toJson() + "\n");
     }
 
     @Test

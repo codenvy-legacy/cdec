@@ -27,7 +27,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,27 +35,28 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"downloadInfo", "config", "artifacts", "subscription", "node", "backup", "authToken", "message", "status"})
+@JsonPropertyOrder({"downloadInfo", "properties", "artifacts", "subscription", "node", "backup", "authToken", "message", "status"})
 @JsonIgnoreProperties({"CLI client version"})
 public class Response {
-    public static Response OK = new Response().setStatus(ResponseCode.OK);
-
-    private List<ArtifactInfo>            artifacts;
-    private String                        message;
-    private ResponseCode                  status;
-    private DownloadStatusInfo            downloadInfo;
-    private LinkedHashMap<String, String> config;
-    private List<String>                  infos;
-    private String                        subscription;
-    private NodeInfo                      node;
-    private BackupInfo                    backup;
+    private List<ArtifactInfo>  artifacts;
+    private String              message;
+    private ResponseCode        status;
+    private DownloadStatusInfo  downloadInfo;
+    private Map<String, String> properties;
+    private List<String>        infos;
+    private String              subscription;
+    private NodeInfo            node;
+    private BackupInfo          backup;
 
     public Response() {
     }
 
-    public static Response valueOf(Throwable e) {
-        return new Response().setStatus(ResponseCode.ERROR)
-                             .setMessage(e.getMessage());
+    public static Response ok() {
+        return new Response().setStatus(ResponseCode.OK);
+    }
+
+    public static Response error(Throwable e) {
+        return new Response().setStatus(ResponseCode.ERROR).setMessage(e.getMessage());
     }
 
     public String toJson() {
@@ -129,12 +129,12 @@ public class Response {
         return this;
     }
 
-    public LinkedHashMap<String, String> getConfig() {
-        return config;
+    public Map<String, String> getProperties() {
+        return properties;
     }
 
-    public Response setConfig(LinkedHashMap<String, String> config) {
-        this.config = config;
+    public Response setProperties(Map<String, String> properties) {
+        this.properties = properties;
         return this;
     }
 

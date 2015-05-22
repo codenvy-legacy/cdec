@@ -34,10 +34,10 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
-import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.wordnik.swagger.annotations.Api;
@@ -48,8 +48,11 @@ import com.wordnik.swagger.annotations.ApiResponses;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
+import org.eclipse.che.api.auth.AuthenticationException;
+import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 
@@ -76,9 +79,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static com.codenvy.im.utils.Commons.toJson;
-import static java.lang.String.format;
 
 /**
  * @author Dmytro Nochevnov
@@ -89,7 +90,6 @@ import static java.lang.String.format;
 @Path("/")
 @RolesAllowed({"system/admin"})
 @Api(value = "/im", description = "Installation manager")
-// TODO [AB] Response.class
 public class InstallationManagerService {
 
     private static final Logger LOG       = Logger.getLogger(InstallationManagerService.class.getSimpleName());
@@ -241,7 +241,8 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets Installation Manager Server configuration", response = Response.class)
     public javax.ws.rs.core.Response getInstallationManagerServerConfig() {
-        return handleInstallationManagerResponse(delegate.getInstallationManagerConfig().toJson());
+        Map<String, String> properties = delegate.getInstallationManagerProperties();
+        return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
     }
 
     /** Gets Codenvy nodes configuration */
@@ -252,11 +253,14 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response getNodesList() {
         try {
             InstallType installType = configManager.detectInstallationType();
+            Config config = configManager.loadInstalledCodenvyConfig(installType);
+
             if (InstallType.SINGLE_SERVER.equals(installType)) {
-                return javax.ws.rs.core.Response.ok(toJson(new HashMap())).build();
+                // TODO [AB] test
+                ImmutableMap<String, String> properties = ImmutableMap.of(Config.HOST_URL, config.getHostUrl());
+                return javax.ws.rs.core.Response.ok(toJson(properties)).build();
             }
 
-            Config config = configManager.loadInstalledCodenvyConfig(installType);
             Map<String, Object> selectedProperties = new HashMap<>();
 
             // filter node dns
@@ -290,7 +294,8 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = Response.class)
     public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns name of adding node") @ApiParam(required = true) String dns) {
-        return handleInstallationManagerResponse(delegate.addNode(dns));
+        Response response = delegate.addNode(dns);
+        return handleInstallationManagerResponse(response);
     }
 
     /** Removes Codenvy node in the multi-node environment */
@@ -299,7 +304,8 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Removes Codenvy node in the multi-node environment", response = Response.class)
     public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns name of removing node") @ApiParam(required = true) String dns) {
-        return handleInstallationManagerResponse(delegate.removeNode(dns));
+        Response response = delegate.removeNode(dns);
+        return handleInstallationManagerResponse(response);
     }
 
     /** Performs Codenvy backup according to given backup config */
@@ -316,7 +322,8 @@ public class InstallationManagerService {
         BackupConfig config = new BackupConfig().setArtifactName(artifactName)
                                                 .setBackupDirectory(backupDirectoryPath);
 
-        return handleInstallationManagerResponse(delegate.backup(config));
+        Response response = delegate.backup(config);
+        return handleInstallationManagerResponse(response);
     }
 
     /** Performs Codenvy restore according to given backup config */
@@ -333,7 +340,8 @@ public class InstallationManagerService {
         BackupConfig config = new BackupConfig().setArtifactName(artifactName)
                                                 .setBackupFile(backupFilePath);
 
-        return handleInstallationManagerResponse(delegate.restore(config));
+        Response restore = delegate.restore(config);
+        return handleInstallationManagerResponse(restore);
     }
 
     /** Adds trial subscription to account */
@@ -387,35 +395,31 @@ public class InstallationManagerService {
     @POST
     @Path("login")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 400, message = "Authentication failed"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Login to Codenvy SaaS",
-            notes = "After login is successful SaaS user credentials will be cached.",
-            response = Response.class)
-    public javax.ws.rs.core.Response loginToCodenvySaas(Credentials credentials, @Context SecurityContext context) throws IOException {
+            notes = "After login is successful SaaS user credentials will be cached.")
+    public javax.ws.rs.core.Response loginToCodenvySaas(Credentials credentials, @Context SecurityContext context) {
         try {
-            String json = delegate.loginToCodenvySaaS(credentials);
-            if (json == null) {
-                return javax.ws.rs.core.Response.serverError().entity(SaasAuthServiceProxy.CANNOT_LOGIN).build();
-            }
-            Token authToken = createDtoFromJson(json, Token.class);
-            SaasUserCredentials saasUserCredentials = new SaasUserCredentials(authToken.getValue());
+            credentials = new DtoServerImpls.CredentialsImpl(credentials);
+
+            Token token = delegate.loginToCodenvySaaS(credentials);
+            SaasUserCredentials saasUserCredentials = new SaasUserCredentials(token.getValue());
 
             // get SaaS account id where user is owner
-            json = delegate.getAccountReferenceWhereUserIsOwner(null, new Request().setSaasUserCredentials(saasUserCredentials));
-            if (json == null) {
-                return javax.ws.rs.core.Response.serverError().entity(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG).build();
+            Request request = new Request().setSaasUserCredentials(saasUserCredentials);
+            AccountReference accountRef = delegate.getAccountWhereUserIsOwner(null, request);
+            if (accountRef == null) {
+                throw new ApiException(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
             }
-            AccountReference accountReference = createDtoFromJson(json, AccountReference.class);
-            saasUserCredentials.setAccountId(accountReference.getId());
+            saasUserCredentials.setAccountId(accountRef.getId());
 
             // cache SaaS user credentials into the state of service
             users.put(context.getUserPrincipal().getName(), saasUserCredentials);
 
-            String useAccountMessage = format(SaasAccountServiceProxy.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName());
-            String response = new Response().setStatus(ResponseCode.OK)
-                                            .setMessage(useAccountMessage)
-                                            .toJson();
-            return javax.ws.rs.core.Response.ok(response).build();
+            return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -456,15 +460,12 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Reads properties from the storage", response = Response.class)
-    public javax.ws.rs.core.Response readProperty(@QueryParam(value = "name") final List<String> names) {
-        Response response = delegate.readProperties(names);
-
-        if (ResponseCode.ERROR == response.getStatus()) {
-            String errorMessage = response.getMessage();
-            return javax.ws.rs.core.Response.serverError().entity(errorMessage).build();
-        } else {
-            JsonStringMapImpl<String> properties = new JsonStringMapImpl<>(response.getConfig());
-            return javax.ws.rs.core.Response.ok().entity(properties).build();
+    public javax.ws.rs.core.Response loadProperty(@QueryParam(value = "name") final List<String> names) {
+        try {
+            Map<String, String> properties = delegate.loadProperties(names);
+            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+        } catch (Exception e) {
+            return handleException(e);
         }
     }
 
@@ -477,25 +478,28 @@ public class InstallationManagerService {
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Stores properties into the storage", response = Response.class)
     public javax.ws.rs.core.Response storeProperty(Map<String, String> properties) {
-        Response response = delegate.storeProperties(properties);
-
-        if (ResponseCode.ERROR == response.getStatus()) {
-            String errorMessage = response.getMessage();
-            return javax.ws.rs.core.Response.serverError().entity(errorMessage).build();
-        } else {
+        try {
+            delegate.storeProperties(properties);
             return javax.ws.rs.core.Response.ok().build();
+        } catch (Exception e) {
+            return handleException(e);
         }
     }
 
     private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
         try {
-            if (!Response.isError(responseString)) {
-                return javax.ws.rs.core.Response.ok(responseString, MediaType.APPLICATION_JSON_TYPE).build();
-            } else {
-                return javax.ws.rs.core.Response.serverError().entity(responseString).build();
-            }
+            return handleInstallationManagerResponse(Response.fromJson(responseString));
         } catch (Exception e) {
             return handleException(e);
+        }
+    }
+
+    private javax.ws.rs.core.Response handleInstallationManagerResponse(Response response) {
+        ResponseCode responseCode = response.getStatus();
+        if (ResponseCode.OK == responseCode) {
+            return javax.ws.rs.core.Response.ok(response.toJson(), MediaType.APPLICATION_JSON_TYPE).build();
+        } else {
+            return javax.ws.rs.core.Response.serverError().entity(response.toJson()).build();
         }
     }
 
@@ -517,6 +521,11 @@ public class InstallationManagerService {
             } catch (JsonParseException jpe) {
                 // ignore so as there is old message in errorMessage variable
             }
+        } else if (e instanceof AuthenticationException) {
+            return javax.ws.rs.core.Response.serverError()
+                                            .status(javax.ws.rs.core.Response.Status.BAD_REQUEST)
+                                            .entity(e.getMessage())
+                                            .build();
         }
 
         Response response = new Response().setMessage(errorMessage).setStatus(ResponseCode.ERROR);
