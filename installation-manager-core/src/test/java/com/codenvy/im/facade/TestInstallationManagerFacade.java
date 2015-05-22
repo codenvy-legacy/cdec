@@ -420,7 +420,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         doReturn("[" + testDescriptorJson + "]").when(transport)
                                                 .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
-        SubscriptionDescriptor descriptor = installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
+        SubscriptionDescriptor descriptor = installationManagerFacade.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
         assertNotNull(descriptor);
         assertEquals(descriptor.getServiceId(), "OnPremises");
         assertEquals(descriptor.getId(), "subscription_id1");
@@ -441,7 +441,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         doReturn("[]").when(transport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
 
         SubscriptionDescriptor descriptor =
-                installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
+                installationManagerFacade.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
         assertNull(descriptor);
     }
 
@@ -456,7 +456,7 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         doThrow(new HttpException(500, "error")).when(transport)
                                                 .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
-        installationManagerFacade.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
+        installationManagerFacade.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
     }
 
     @Test

@@ -67,13 +67,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,28 +89,16 @@ import static com.codenvy.im.utils.Commons.toJson;
 public class InstallationManagerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerService.class.getSimpleName());
-    private static final int    MAX_USERS = 10;
 
     protected final InstallationManagerFacade delegate;
-    private final ConfigManager configManager;
+    protected final ConfigManager configManager;
 
-    /**
-     * Cached users' credentials.
-     */
-    protected final Map<String, SaasUserCredentials> users;
+    protected SaasUserCredentials saasUserCredentials;
 
     @Inject
-    public InstallationManagerService(InstallationManagerFacade delegate,
-                                      ConfigManager configManager) {
+    public InstallationManagerService(InstallationManagerFacade delegate, ConfigManager configManager) {
         this.delegate = delegate;
         this.configManager = configManager;
-
-        this.users = new LinkedHashMap<String, SaasUserCredentials>() {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry eldest) {
-                return size() > MAX_USERS;
-            }
-        };
     }
 
     /** Starts downloading */
@@ -349,40 +334,43 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
             response = Response.class)
-    public javax.ws.rs.core.Response addTrialSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
-        String callerName = context.getUserPrincipal().getName();
-        if (!users.containsKey(callerName)) {
+    public javax.ws.rs.core.Response addTrialSubscription() throws IOException, CloneNotSupportedException {
+        if (saasUserCredentials == null) {
             return handleException(new RuntimeException("User not authenticated"));
         }
 
-        SaasUserCredentials saasUserCredentials = users.get(callerName);
+        SaasUserCredentials saasUserCredentials = this.saasUserCredentials;
         Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
 
         return handleInstallationManagerResponse(delegate.addTrialSaasSubscription(request));
     }
 
-    /** Get details of OnPremises subscription */
+    /**
+     * Gets OnPremises subscription for Codenvy SaaS user.
+     * User has to be logged into Codenvy SaaS using {@link #loginToCodenvySaaS} method.
+     */
     @GET
     @Path("subscription")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get description of OnPremises subscription of account of user which has already logged into SaaS Codenvy",
-            response = SubscriptionDescriptor.class)
-    public javax.ws.rs.core.Response getSaasSubscription(@Context SecurityContext context) throws IOException, CloneNotSupportedException {
-        String callerName = context.getUserPrincipal().getName();
-        if (!users.containsKey(callerName)) {
-            return handleException(new RuntimeException("User not authenticated"));
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
+                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
+                           @ApiResponse(code = 404, message = "Subscription not found"),
+                           @ApiResponse(code = 500, message = "Server unexpected error")})
+    @ApiOperation(value = "Gets OnPremises subscription for Codenvy SaaS user", response = SubscriptionDescriptor.class)
+    public javax.ws.rs.core.Response getOnPremisesSaasSubscription() {
+        if (saasUserCredentials == null) {
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.FORBIDDEN).build();
         }
 
-        SaasUserCredentials saasUserCredentials = users.get(callerName);
-        Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
-
         try {
-            SubscriptionDescriptor descriptor = delegate.getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, request);
+            Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
+
+            SubscriptionDescriptor descriptor = delegate.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
             if (descriptor == null) {
-                throw new RuntimeException(SaasAccountServiceProxy.CANNOT_OBTAIN_SUBCRIPTION);
+                return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND).build();
             }
 
-            // remove useless info
+            // remove useless info, since links point to Codenvy SaaS API
             descriptor.setLinks(null);
 
             return javax.ws.rs.core.Response.ok(toJson(descriptor)).build();
@@ -400,7 +388,7 @@ public class InstallationManagerService {
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Login to Codenvy SaaS",
             notes = "After login is successful SaaS user credentials will be cached.")
-    public javax.ws.rs.core.Response loginToCodenvySaas(Credentials credentials, @Context SecurityContext context) {
+    public javax.ws.rs.core.Response loginToCodenvySaaS(Credentials credentials) {
         try {
             credentials = new DtoServerImpls.CredentialsImpl(credentials);
 
@@ -416,7 +404,7 @@ public class InstallationManagerService {
             saasUserCredentials.setAccountId(accountRef.getId());
 
             // cache SaaS user credentials into the state of service
-            users.put(context.getUserPrincipal().getName(), saasUserCredentials);
+            this.saasUserCredentials = saasUserCredentials;
 
             return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {

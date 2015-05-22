@@ -46,7 +46,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
 import java.text.SimpleDateFormat;
@@ -65,6 +64,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -96,8 +96,6 @@ public class TestInstallationManagerService extends BaseTest {
     @Mock
     private Principal                 mockPrincipal;
     @Mock
-    private SecurityContext           mockSecurityContext;
-    @Mock
     private Config                    mockConfig;
 
     private com.codenvy.im.response.Response mockFacadeOkResponse;
@@ -110,7 +108,6 @@ public class TestInstallationManagerService extends BaseTest {
         mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR).setMessage("error");
         service = spy(new InstallationManagerService(mockFacade, configManager));
 
-        doReturn(mockPrincipal).when(mockSecurityContext).getUserPrincipal();
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
     }
 
@@ -318,13 +315,13 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
 
-        service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
+        service.saasUserCredentials = testUserCredentials;
 
-        Response result = service.addTrialSubscription(mockSecurityContext);
+        Response result = service.addTrialSubscription();
         assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
-        result = service.addTrialSubscription(mockSecurityContext);
+        result = service.addTrialSubscription();
         assertErrorResponse(result);
     }
 
@@ -362,11 +359,11 @@ public class TestInstallationManagerService extends BaseTest {
                                                 + "  \"state\": \"ACTIVE\"\n"
                                                 + "}";
         SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson(testSubscriptionDescriptorJson, SubscriptionDescriptor.class);
-        doReturn(descriptor).when(mockFacade).getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, testRequest);
+        doReturn(descriptor).when(mockFacade).getSubscription(SaasAccountServiceProxy.ON_PREMISES, testRequest);
 
-        service.users.put(TEST_SYSTEM_ADMIN_NAME, testUserCredentials);
+        service.saasUserCredentials = testUserCredentials;
 
-        Response result = service.getSaasSubscription(mockSecurityContext);
+        Response result = service.getOnPremisesSaasSubscription();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         SubscriptionDescriptor subscription = Commons.createDtoFromJson((String)result.getEntity(), SubscriptionDescriptor.class);
         assertEquals(subscription.getDescription(), "On-Prem Commercial 25 Users");
@@ -378,8 +375,8 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(subscription.getProperties().get("Users"), "25");
         assertEquals(subscription.getProperties().get("Package"), "Commercial");
 
-        doThrow(new HttpException(500, "error")).when(mockFacade).getSubscriptionDescriptor(SaasAccountServiceProxy.ON_PREMISES, testRequest);
-        result = service.getSaasSubscription(mockSecurityContext);
+        doThrow(new HttpException(500, "error")).when(mockFacade).getSubscription(SaasAccountServiceProxy.ON_PREMISES, testRequest);
+        result = service.getOnPremisesSaasSubscription();
         assertErrorResponse(result);
     }
 
@@ -392,13 +389,12 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId(TEST_ACCOUNT_ID).withName(TEST_ACCOUNT_NAME))
                 .when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
 
-        Response result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
+        Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
 
-        assertEquals(service.users.size(), 1);
-        assertTrue(service.users.containsKey(TEST_SYSTEM_ADMIN_NAME));
+        assertNotNull(service.saasUserCredentials);
 
-        SaasUserCredentials testSaasSaasUserCredentials = service.users.get(TEST_SYSTEM_ADMIN_NAME);
+        SaasUserCredentials testSaasSaasUserCredentials = service.saasUserCredentials;
         assertEquals(testSaasSaasUserCredentials.getAccountId(), TEST_ACCOUNT_ID);
         assertEquals(testSaasSaasUserCredentials.getToken(), TEST_ACCESS_TOKEN);
     }
@@ -409,12 +405,12 @@ public class TestInstallationManagerService extends BaseTest {
         Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doThrow(AuthenticationException.class).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        Response result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
+        Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
-        result = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
+        result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
@@ -427,7 +423,7 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doReturn(null).when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
 
-        Response response = service.loginToCodenvySaas(testSaasUsernameAndPassword, mockSecurityContext);
+        Response response = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 

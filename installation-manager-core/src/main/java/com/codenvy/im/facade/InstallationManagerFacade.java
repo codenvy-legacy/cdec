@@ -562,7 +562,7 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
      */
     @Nullable
-    public SubscriptionDescriptor getSubscriptionDescriptor(String subscriptionName, @Nonnull Request request) throws IOException {
+    public SubscriptionDescriptor getSubscription(String subscriptionName, @Nonnull Request request) throws IOException {
         return saasAccountServiceProxy.getSubscription(subscriptionName,
                                                        request.obtainAccessToken(),
                                                        request.obtainAccountId());
