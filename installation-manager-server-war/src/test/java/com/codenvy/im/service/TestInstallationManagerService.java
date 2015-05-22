@@ -82,10 +82,10 @@ public class TestInstallationManagerService extends BaseTest {
 
     public static final String TEST_SYSTEM_ADMIN_NAME = "admin";
 
-    private static final String TEST_CREDENTIALS_JSON            = "{\n"
-                                                                   + "  \"username\": \"" + TEST_USER_NAME + "\",\n"
-                                                                   + "  \"password\": \"" + TEST_USER_PASSWORD + "\"\n"
-                                                                   + "}";
+    private static final String TEST_CREDENTIALS_JSON = "{\n"
+                                                        + "  \"username\": \"" + TEST_USER_NAME + "\",\n"
+                                                        + "  \"password\": \"" + TEST_USER_PASSWORD + "\"\n"
+                                                        + "}";
 
     private InstallationManagerService service;
 
@@ -100,14 +100,14 @@ public class TestInstallationManagerService extends BaseTest {
     @Mock
     private Config                    mockConfig;
 
-    private com.codenvy.im.response.Response mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
-
-    private com.codenvy.im.response.Response mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR)
-                                                                                                             .setMessage("error");
+    private com.codenvy.im.response.Response mockFacadeOkResponse;
+    private com.codenvy.im.response.Response mockFacadeErrorResponse;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
+        mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR).setMessage("error");
         service = spy(new InstallationManagerService(mockFacade, configManager));
 
         doReturn(mockPrincipal).when(mockSecurityContext).getUserPrincipal();
@@ -475,10 +475,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(result.getEntity(), "{\n"
-                                         + "  \"message\" : \"error\",\n"
-                                         + "  \"status\" : \"ERROR\"\n"
-                                         + "}");
+        assertEquals(result.getEntity(), "error");
     }
 
     @Test
@@ -537,14 +534,10 @@ public class TestInstallationManagerService extends BaseTest {
 
     private void assertOkResponse(Response result) throws IOException {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
-        String facadeResponse = (String)result.getEntity();
-        assertEquals(facadeResponse, mockFacadeOkResponse.toJson());
     }
 
     private void assertErrorResponse(Response result) {
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        String facadeResponse = (String)result.getEntity();
-        assertEquals(facadeResponse, mockFacadeErrorResponse.toJson());
     }
 }
 

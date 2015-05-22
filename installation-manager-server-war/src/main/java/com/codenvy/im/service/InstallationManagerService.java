@@ -53,8 +53,9 @@ import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -75,8 +76,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.toJson;
@@ -92,7 +91,7 @@ import static com.codenvy.im.utils.Commons.toJson;
 @Api(value = "/im", description = "Installation manager")
 public class InstallationManagerService {
 
-    private static final Logger LOG       = Logger.getLogger(InstallationManagerService.class.getSimpleName());
+    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerService.class.getSimpleName());
     private static final int    MAX_USERS = 10;
 
     protected final InstallationManagerFacade delegate;
@@ -496,6 +495,7 @@ public class InstallationManagerService {
 
     private javax.ws.rs.core.Response handleInstallationManagerResponse(Response response) {
         ResponseCode responseCode = response.getStatus();
+        response.setStatus(null);
         if (ResponseCode.OK == responseCode) {
             return javax.ws.rs.core.Response.ok(response.toJson(), MediaType.APPLICATION_JSON_TYPE).build();
         } else {
@@ -504,8 +504,7 @@ public class InstallationManagerService {
     }
 
     private javax.ws.rs.core.Response handleException(Exception e) {
-        String errorMessage = e.getMessage();
-        LOG.log(Level.SEVERE, errorMessage, e);
+        LOG.error(e.getMessage(), e);
 
         if (e instanceof ArtifactNotFoundException) {
             return javax.ws.rs.core.Response.serverError()
@@ -514,13 +513,11 @@ public class InstallationManagerService {
                                             .build();
 
         } else if (e instanceof HttpException) {
-            // work around error message like "{"message":"Authentication failed. Please check username and password."}"
-            try {
-                Response response = Response.fromJson(errorMessage);
-                errorMessage = response.getMessage();
-            } catch (JsonParseException jpe) {
-                // ignore so as there is old message in errorMessage variable
-            }
+            return javax.ws.rs.core.Response.serverError()
+                                            .status(((HttpException)e).getStatus())
+                                            .entity(e.getMessage())
+                                            .build();
+
         } else if (e instanceof AuthenticationException) {
             return javax.ws.rs.core.Response.serverError()
                                             .status(javax.ws.rs.core.Response.Status.BAD_REQUEST)
@@ -528,8 +525,6 @@ public class InstallationManagerService {
                                             .build();
         }
 
-        Response response = new Response().setMessage(errorMessage).setStatus(ResponseCode.ERROR);
-        return javax.ws.rs.core.Response.serverError().entity(response.toJson()).build();
+        return javax.ws.rs.core.Response.serverError().entity(e.getMessage()).build();
     }
-
 }
