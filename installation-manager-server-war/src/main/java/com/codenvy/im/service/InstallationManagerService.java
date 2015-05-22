@@ -353,9 +353,9 @@ public class InstallationManagerService {
     @Path("subscription")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
-                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
+                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token has been expired"),
                            @ApiResponse(code = 404, message = "Subscription not found"),
-                           @ApiResponse(code = 500, message = "Server unexpected error")})
+                           @ApiResponse(code = 500, message = "Server error")})
     @ApiOperation(value = "Gets OnPremises subscription for Codenvy SaaS user", response = SubscriptionDescriptor.class)
     public javax.ws.rs.core.Response getOnPremisesSaasSubscription() {
         if (saasUserCredentials == null) {
