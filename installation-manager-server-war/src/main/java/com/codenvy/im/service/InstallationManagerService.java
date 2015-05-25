@@ -353,7 +353,7 @@ public class InstallationManagerService {
     @Path("subscription")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
-                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token has been expired"),
+                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
                            @ApiResponse(code = 404, message = "Subscription not found"),
                            @ApiResponse(code = 500, message = "Server error")})
     @ApiOperation(value = "Gets OnPremises subscription for Codenvy SaaS user", response = SubscriptionDescriptor.class)
@@ -420,7 +420,7 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 404, message = "Artifact not Found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets properties of the specific artifact and version", response = Response.class)
+    @ApiOperation(value = "Gets properties of the specific artifact and version")
     public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
                                                            @PathParam("version") final String versionNumber) {
         try {
@@ -494,25 +494,22 @@ public class InstallationManagerService {
     private javax.ws.rs.core.Response handleException(Exception e) {
         LOG.error(e.getMessage(), e);
 
+        javax.ws.rs.core.Response.Status status;
+
         if (e instanceof ArtifactNotFoundException) {
-            return javax.ws.rs.core.Response.serverError()
-                                            .status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-                                            .entity(e.getMessage())
-                                            .build();
-
+            status = javax.ws.rs.core.Response.Status.NOT_FOUND;
         } else if (e instanceof HttpException) {
-            return javax.ws.rs.core.Response.serverError()
-                                            .status(((HttpException)e).getStatus())
-                                            .entity(e.getMessage())
-                                            .build();
-
+            status = javax.ws.rs.core.Response.Status.fromStatusCode(((HttpException)e).getStatus());
         } else if (e instanceof AuthenticationException) {
-            return javax.ws.rs.core.Response.serverError()
-                                            .status(javax.ws.rs.core.Response.Status.BAD_REQUEST)
-                                            .entity(e.getMessage())
-                                            .build();
+            status = javax.ws.rs.core.Response.Status.BAD_REQUEST;
+        } else {
+            status = javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
         }
 
-        return javax.ws.rs.core.Response.serverError().entity(e.getMessage()).build();
+        JsonStringMapImpl<String> msgBody = new JsonStringMapImpl<>(ImmutableMap.of("message", e.getMessage()));
+        return javax.ws.rs.core.Response.status(status)
+                                        .entity(msgBody)
+                                        .type(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
     }
 }

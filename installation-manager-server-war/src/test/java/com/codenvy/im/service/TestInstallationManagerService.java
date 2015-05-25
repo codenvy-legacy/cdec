@@ -404,7 +404,7 @@ public class TestInstallationManagerService extends BaseTest {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
         Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
-        doThrow(AuthenticationException.class).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
+        doThrow(new AuthenticationException("error")).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
@@ -471,7 +471,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(result.getEntity(), "error");
+        assertEquals(result.getEntity().toString(), "{message=error}");
     }
 
     @Test
@@ -503,7 +503,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testLoadPropertyShouldReturnErrorResponse() throws Exception {
-        doThrow(IOException.class).when(mockFacade).loadProperties(anyCollection());
+        doThrow(new IOException("error")).when(mockFacade).loadProperties(anyCollection());
 
         Response response = service.loadProperty(Collections.<String>emptyList());
 
@@ -521,7 +521,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testStorePropertyShouldReturnErrorResponse() throws Exception {
-        doThrow(IOException.class).when(mockFacade).storeProperties(anyMap());
+        doThrow(new IOException("error")).when(mockFacade).storeProperties(anyMap());
 
         Response response = service.storeProperty(Collections.<String, String>emptyMap());
 
