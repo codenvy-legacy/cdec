@@ -138,7 +138,7 @@ public class TestNodeConfig {
             put("datasource_host_name", "datasource.dev.com");
             put("analytics_host_name", "analytics.dev.com");
             put("site_host_name", "site.dev.com");
-            put("codeassistant_host_name", "codeassistant.dev.com");
+            put("codeassistant_host_name", "codeassistant.dev.com");  // this is unknown node type 'codeassistant'
             put("puppet_master_host_name", "puppet-master.dev.com");
             put("api_host_name", "api.dev.com");
         }};

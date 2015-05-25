@@ -125,12 +125,13 @@ public class TestConfig {
         OSUtils.VERSION = osVersion;
         Config config = new Config(Collections.singletonMap(propertyName, propertyValue));
         List<String> result = config.getAllValues(propertyName);
-        assertEquals(result.toString(), expectedResult.toString());
+        assertEquals(result, expectedResult);
     }
 
     @DataProvider(name = "GetValues")
     public static Object[][] GetValues() {
         return new Object[][]{
+            {"property", null, "6", null},
             {"property", "", "6", new ArrayList<String>()},
             {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
             {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},

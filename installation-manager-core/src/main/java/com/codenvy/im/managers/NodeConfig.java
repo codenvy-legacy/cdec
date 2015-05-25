@@ -26,6 +26,7 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class NodeConfig {
 
+    /** (API node should be last one to accumulate changes from the other nodes ) */
     public enum NodeType {
         DATA,
         SITE,

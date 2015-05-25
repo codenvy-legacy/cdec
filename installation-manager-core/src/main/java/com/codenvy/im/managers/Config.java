@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.managers;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -98,6 +100,7 @@ public class Config {
     }
 
     /** @return the property value */
+    @Nullable
     public String getValue(String property) {
         property = property.toLowerCase();
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
@@ -107,6 +110,7 @@ public class Config {
     }
 
     /** @return list of values separated by comma */
+    @Nullable
     public List<String> getAllValues(String property) {
         property = property.toLowerCase();
         String value;
@@ -117,6 +121,10 @@ public class Config {
         }
 
         List<String> result = new LinkedList<>();
+        if (value == null) {
+            return null;
+        }
+
         for (String item : value.split(",")) {
             item = item.trim();
             if (!item.isEmpty()) {
