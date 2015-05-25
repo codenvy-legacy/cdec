@@ -428,13 +428,13 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetNodeConfig() throws IOException {
+    public void testGetNodeConfigForMultiNode() throws IOException {
         Config testConfig = new Config(new LinkedHashMap<>(ImmutableMap.of(
                 "builder_host_name", "builder1.dev.com",
                 "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
                 "analytics_host_name", "analytics.dev.com",
                 "additional_builders", "",
-                "data_host_name", "data.dev.com"
+                "host_url", "local.dev.com"
                                                                           )));
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
@@ -446,7 +446,7 @@ public class TestInstallationManagerService extends BaseTest {
                                          + "  \"additional_runners\" : [ \"runner1.dev.com\", \"runner2.dev.com\" ],\n"
                                          + "  \"analytics_host_name\" : \"analytics.dev.com\",\n"
                                          + "  \"additional_builders\" : [ ],\n"
-                                         + "  \"data_host_name\" : \"data.dev.com\"\n"
+                                         + "  \"host_url\" : \"local.dev.com\"\n"
                                          + "}");
     }
 
@@ -465,6 +465,8 @@ public class TestInstallationManagerService extends BaseTest {
     public void testGetNodeConfigWhenSingleNode() throws IOException {
         Config config = mock(Config.class);
         doReturn("local").when(config).getHostUrl();
+        doReturn(null).when(config).getAllValues("additional_builders");
+        doReturn(null).when(config).getAllValues("additional_runners");
 
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);

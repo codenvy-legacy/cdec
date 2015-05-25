@@ -239,12 +239,6 @@ public class InstallationManagerService {
             InstallType installType = configManager.detectInstallationType();
             Config config = configManager.loadInstalledCodenvyConfig(installType);
 
-            if (InstallType.SINGLE_SERVER.equals(installType)) {
-                // TODO [AB] test
-                ImmutableMap<String, String> properties = ImmutableMap.of(Config.HOST_URL, config.getHostUrl());
-                return javax.ws.rs.core.Response.ok(toJson(properties)).build();
-            }
-
             Map<String, Object> selectedProperties = new HashMap<>();
 
             // filter node dns
@@ -264,6 +258,12 @@ public class InstallationManagerService {
             Map<String, List<String>> additionalBuilders = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
             if (additionalBuilders != null) {
                 selectedProperties.putAll(additionalBuilders);
+            }
+
+            // add host url
+            String hostUrl = config.getHostUrl();
+            if (hostUrl != null) {
+                selectedProperties.put(Config.HOST_URL, hostUrl);
             }
 
             return javax.ws.rs.core.Response.ok(toJson(selectedProperties)).build();
