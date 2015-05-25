@@ -221,4 +221,12 @@ public class TestAdditionalNodesConfigUtil {
         Map<String, List<String>> result = spyConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
         assertEquals(result.toString(), "{additional_runners=[test1.dev.com, test-2.dev.com, test3.dev.com]}");
     }
+
+    @Test
+    public void testExtractAdditionalNodesDnsWhenPropertiesIsAbsent() {
+        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+
+        Map<String, List<String>> result = spyConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
+        assertNull(result);
+    }
 }

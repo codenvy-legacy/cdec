@@ -182,9 +182,16 @@ public class AdditionalNodesConfigUtil {
     /**
      * @return for given additional node type: Map[{additionalNodesPropertyName}, {List<String> of additionalNodesDns}]
      */
+    @Nullable
     public Map<String, List<String>> extractAdditionalNodesDns(NodeConfig.NodeType nodeType) {
+        Map<String, List<String>> result = new HashMap<>();
+
         String additionalNodesProperty = getPropertyNameBy(nodeType);
         List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        if (nodesUrls == null) {
+            return null;
+        }
+
         List<String> nodesDns = new ArrayList<>();
         for (String nodeUrl: nodesUrls) {
             String nodeDns = getAdditionalNodeDns(nodeUrl);
@@ -193,7 +200,6 @@ public class AdditionalNodesConfigUtil {
             }
         }
 
-        Map<String, List<String>> result = new HashMap<>();
         result.put(additionalNodesProperty, nodesDns);
 
         return result;

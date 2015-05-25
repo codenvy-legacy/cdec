@@ -451,6 +451,17 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
+    public void testGetNodeConfigWhenPropertiesIsAbsence() throws IOException {
+        Config testConfig = new Config(new LinkedHashMap<String, String>());
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+
+        Response result = service.getNodesList();
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(result.getEntity(), "{ }");
+    }
+
+    @Test
     public void testGetNodeConfigWhenSingleNode() throws IOException {
         Config config = mock(Config.class);
         doReturn("local").when(config).getHostUrl();
