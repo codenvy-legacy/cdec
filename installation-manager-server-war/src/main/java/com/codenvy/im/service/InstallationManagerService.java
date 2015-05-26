@@ -416,13 +416,13 @@ public class InstallationManagerService {
 
     /** @return the properties of the specific artifact and version */
     @GET
-    @Path("/artifact/properties/{artifact}/{version}")
+    @Path("/artifact/{artifact}/version/{version}/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 404, message = "Artifact not Found"),
+            @ApiResponse(code = 404, message = "Artifact not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets properties of the specific artifact and version")
+    @ApiOperation(value = "Gets list of the specific artifact and version properties")
     public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
                                                            @PathParam("version") final String versionNumber) {
         try {
@@ -441,14 +441,14 @@ public class InstallationManagerService {
         }
     }
 
-    /** Get list of properties from the storage */
+    /** Gets list of properties from the storage */
     @GET
     @Path("/storage/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Get list of properties from the storage", response = Response.class)
+    @ApiOperation(value = "Gets list of properties from the storage", response = Response.class)
     public javax.ws.rs.core.Response getProperties() {
         try {
             Map<String, String> properties = delegate.loadProperties();
@@ -458,14 +458,14 @@ public class InstallationManagerService {
         }
     }
 
-    /** Insert new properties into the storage and update existed */
+    /** Inserts new properties into the storage and update existed */
     @POST
     @Path("/storage/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Insert new properties into the storage and update existed")
+    @ApiOperation(value = "Inserts new properties into the storage and update existed")
     public javax.ws.rs.core.Response insertProperties(Map<String, String> properties) {
         try {
             delegate.storeProperties(properties);
@@ -482,7 +482,7 @@ public class InstallationManagerService {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Property not found"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Get property value from the storage")
+    @ApiOperation(value = "Gets property value from the storage")
     public javax.ws.rs.core.Response getProperty(@PathParam("key") String key) {
         try {
             String value = delegate.loadProperty(key);
@@ -499,7 +499,7 @@ public class InstallationManagerService {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Property not found"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Update property in the storage")
+    @ApiOperation(value = "Updates property in the storage")
     public javax.ws.rs.core.Response updateProperty(@PathParam("key") String key, String value) {
         try {
             delegate.storeProperty(key, value);
@@ -515,7 +515,7 @@ public class InstallationManagerService {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Property not found"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Delete property from the storage")
+    @ApiOperation(value = "Deletes property from the storage")
     public javax.ws.rs.core.Response deleteProperty(@PathParam("key") String key) {
         try {
             delegate.deleteProperty(key);
