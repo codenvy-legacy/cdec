@@ -611,7 +611,7 @@ public class TestInstallationManagerService extends BaseTest {
         String key = "x";
 
         Response response = service.deleteProperty(key);
-        assertOkResponse(response);
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
         verify(mockFacade).deleteProperty(key);
     }
 

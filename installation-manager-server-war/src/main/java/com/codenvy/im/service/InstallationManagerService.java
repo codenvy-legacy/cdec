@@ -512,14 +512,14 @@ public class InstallationManagerService {
     @DELETE
     @Path("/storage/properties/{key}")
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 204, message = "No Content"),
         @ApiResponse(code = 404, message = "Property not found"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Deletes property from the storage")
     public javax.ws.rs.core.Response deleteProperty(@PathParam("key") String key) {
         try {
             delegate.deleteProperty(key);
-            return javax.ws.rs.core.Response.ok().build();
+            return javax.ws.rs.core.Response.noContent().build();
         } catch (Exception e) {
             return handleException(e);
         }
