@@ -29,6 +29,7 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.Response;
@@ -63,6 +64,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -221,7 +223,7 @@ public class InstallationManagerService {
 
     /** Gets Installation Manager configuration */
     @GET
-    @Path("config")
+    @Path("properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets Installation Manager Server configuration", response = Response.class)
     public javax.ws.rs.core.Response getInstallationManagerServerConfig() {
@@ -414,7 +416,7 @@ public class InstallationManagerService {
 
     /** @return the properties of the specific artifact and version */
     @GET
-    @Path("/properties/{artifact}/{version}")
+    @Path("/artifact/properties/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
@@ -439,34 +441,84 @@ public class InstallationManagerService {
         }
     }
 
-    /** Reads properties from the storage */
+    /** Get list of properties from the storage */
     @GET
-    @Path("/property")
+    @Path("/storage/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Reads properties from the storage", response = Response.class)
-    public javax.ws.rs.core.Response loadProperty(@QueryParam(value = "name") final List<String> names) {
+    @ApiOperation(value = "Get list of properties from the storage", response = Response.class)
+    public javax.ws.rs.core.Response getProperties() {
         try {
-            Map<String, String> properties = delegate.loadProperties(names);
+            Map<String, String> properties = delegate.loadProperties();
             return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
     }
 
-    /** Stores properties into the storage */
+    /** Insert new properties into the storage and update existed */
     @POST
-    @Path("/property")
+    @Path("/storage/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Stores properties into the storage", response = Response.class)
-    public javax.ws.rs.core.Response storeProperty(Map<String, String> properties) {
+    @ApiOperation(value = "Insert new properties into the storage and update existed")
+    public javax.ws.rs.core.Response insertProperties(Map<String, String> properties) {
         try {
             delegate.storeProperties(properties);
+            return javax.ws.rs.core.Response.ok().build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /** Get property value from the storage */
+    @GET
+    @Path("/storage/properties/{key}")
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Get property value from the storage")
+    public javax.ws.rs.core.Response getProperty(@PathParam("key") String key) {
+        try {
+            String value = delegate.loadProperty(key);
+            return javax.ws.rs.core.Response.ok(value).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    @PUT
+    @Path("/storage/properties/{key}")
+    @Consumes("text/plain")
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Update property in the storage")
+    public javax.ws.rs.core.Response updateProperty(@PathParam("key") String key, String value) {
+        try {
+            delegate.storeProperty(key, value);
+            return javax.ws.rs.core.Response.ok().build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    @DELETE
+    @Path("/storage/properties/{key}")
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Delete property from the storage")
+    public javax.ws.rs.core.Response deleteProperty(@PathParam("key") String key) {
+        try {
+            delegate.deleteProperty(key);
             return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
@@ -496,7 +548,7 @@ public class InstallationManagerService {
 
         javax.ws.rs.core.Response.Status status;
 
-        if (e instanceof ArtifactNotFoundException) {
+        if (e instanceof ArtifactNotFoundException || e instanceof PropertyNotFoundException) {
             status = javax.ws.rs.core.Response.Status.NOT_FOUND;
         } else if (e instanceof HttpException) {
             status = javax.ws.rs.core.Response.Status.fromStatusCode(((HttpException)e).getStatus());

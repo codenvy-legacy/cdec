@@ -18,11 +18,11 @@
 package com.codenvy.im.managers;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -30,10 +30,13 @@ import java.util.Map;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 public class StorageManagerTest {
 
@@ -52,17 +55,18 @@ public class StorageManagerTest {
     public void testStoreLoadProperties() throws Exception {
         storageManager.storeProperties(ImmutableMap.of("x1", "y1", "x2", "y2"));
 
-        Map<String, String> m = storageManager.loadProperties(ImmutableSet.of("x1", "x2"));
+        Map<String, String> m = storageManager.loadProperties();
         assertEquals(m.size(), 2);
         assertEquals(m.get("x1"), "y1");
         assertEquals(m.get("x2"), "y2");
 
-        storageManager.storeProperties(ImmutableMap.of("x1", "y2"));
+        storageManager.storeProperties(ImmutableMap.of("x1", "y2", "x3", "y3"));
 
-        m = storageManager.loadProperties(ImmutableSet.of("x1", "x2"));
-        assertEquals(m.size(), 2);
+        m = storageManager.loadProperties();
+        assertEquals(m.size(), 3);
         assertEquals(m.get("x1"), "y2");
         assertEquals(m.get("x2"), "y2");
+        assertEquals(m.get("x3"), "y3");
     }
 
     @Test
@@ -71,16 +75,55 @@ public class StorageManagerTest {
     }
 
     @Test
-    public void testLoadUnexistedProperties() throws Exception {
-        storageManager.storeProperties(ImmutableMap.of("x1", "y1", "x2", "y2"));
-
-        Map<String, String> m = storageManager.loadProperties(ImmutableSet.of("x3"));
+    public void testLoadEmptyMap() throws Exception {
+        Map<String, String> m = storageManager.loadProperties();
         assertTrue(m.isEmpty());
     }
 
     @Test
-    public void testLoadEmptyMap() throws Exception {
-        Map<String, String> m = storageManager.loadProperties(Collections.<String>emptyList());
-        assertTrue(m.isEmpty());
+    public void testLoadProperty() throws IOException {
+        storageManager.storeProperties(ImmutableMap.of("x1", "y1", "x2", "y2"));
+
+        String value = storageManager.loadProperty("x1");
+        assertEquals(value, "y1");
+    }
+
+    @Test(expectedExceptions = PropertyNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Property 'x1' not found")
+    public void testLoadNonExistedProperty() throws IOException {
+        String value = storageManager.loadProperty("x1");
+        assertEquals(value, "y1");
+    }
+
+    @Test
+    public void testUpdateProperty() throws IOException {
+        storageManager.storeProperties(ImmutableMap.of("x1", "y1", "x2", "y2"));
+
+        storageManager.storeProperty("x1", "y11");
+        String value = storageManager.loadProperty("x1");
+        assertEquals(value, "y11");
+    }
+
+    @Test(expectedExceptions = PropertyNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Property 'x1' not found")
+    public void testUpdateNonExistedProperty() throws IOException {
+        storageManager.storeProperty("x1", "y1");
+    }
+
+    @Test
+    public void testDeleteProperty() throws IOException {
+        String key = "x1";
+        storageManager.storeProperties(ImmutableMap.of(key, "y1"));
+
+        storageManager.deleteProperty(key);
+
+        Map<String, String> value = storageManager.loadProperties();
+        assertFalse(value.containsKey(key));
+    }
+
+    @Test(expectedExceptions = PropertyNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Property 'x1' not found")
+    public void testDeleteNonExistedProperty() throws IOException {
+        storageManager.deleteProperty("x1");
     }
 }

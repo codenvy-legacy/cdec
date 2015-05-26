@@ -479,11 +479,33 @@ public class TestInstallationManagerFacade extends BaseTest {
 
     @Test
     public void testLoadProperties() throws Exception {
-        List<String> names = ImmutableList.of("x");
+        installationManagerFacade.loadProperties();
+        verify(storageManager).loadProperties();
+    }
 
-        installationManagerFacade.loadProperties(names);
+    @Test
+    public void testLoadProperty() throws Exception {
+        String key = "x";
 
-        verify(storageManager).loadProperties(names);
+        installationManagerFacade.loadProperty(key);
+        verify(storageManager).loadProperty(key);
+    }
+
+    @Test
+    public void testStoreProperty() throws Exception {
+        String key = "x";
+        String value = "y";
+
+        installationManagerFacade.storeProperty(key, value);
+        verify(storageManager).storeProperty(key, value);
+    }
+
+    @Test
+    public void testDeleteProperty() throws Exception {
+        String key = "x";
+
+        installationManagerFacade.deleteProperty(key);
+        verify(storageManager).deleteProperty(key);
     }
 
     @Test

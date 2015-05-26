@@ -26,6 +26,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -63,6 +64,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -506,39 +508,130 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testLoadPropertyShouldReturnOkResponse() throws Exception {
-        doReturn(Collections.emptyMap()).when(mockFacade).loadProperties(anyCollection());
+    public void testGetPropertiesShouldReturnOkResponse() throws Exception {
+        doReturn(Collections.emptyMap()).when(mockFacade).loadProperties();
 
-        Response response = service.loadProperty(Collections.<String>emptyList());
+        Response response = service.getProperties();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void testLoadPropertyShouldReturnErrorResponse() throws Exception {
-        doThrow(new IOException("error")).when(mockFacade).loadProperties(anyCollection());
+    public void testGetPropertiesShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).loadProperties();
 
-        Response response = service.loadProperty(Collections.<String>emptyList());
+        Response response = service.getProperties();
 
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test
-    public void testStorePropertyShouldReturnOkResponse() throws Exception {
+    public void testInsertPropertiesShouldReturnOkResponse() throws Exception {
         doNothing().when(mockFacade).storeProperties(anyMap());
 
-        Response response = service.storeProperty(Collections.<String, String>emptyMap());
+        Response response = service.insertProperties(Collections.<String, String>emptyMap());
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void testStorePropertyShouldReturnErrorResponse() throws Exception {
+    public void testInsertPropertiesShouldReturnErrorResponse() throws Exception {
         doThrow(new IOException("error")).when(mockFacade).storeProperties(anyMap());
 
-        Response response = service.storeProperty(Collections.<String, String>emptyMap());
+        Response response = service.insertProperties(Collections.<String, String>emptyMap());
 
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertErrorResponse(response);
+    }
+
+    @Test
+    public void testGetPropertyShouldReturnOkResponse() throws Exception {
+        String key = "x";
+        String value = "y";
+        doReturn(value).when(mockFacade).loadProperty(key);
+
+        Response response = service.getProperty(key);
+        assertOkResponse(response);
+        assertEquals(response.getEntity(), value);
+
+    }
+
+    @Test
+    public void testGetNonExistedProperty() throws Exception {
+        String key = "x";
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).loadProperty(key);
+
+        Response response = service.getProperty(key);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
+    }
+
+    @Test
+    public void testGetPropertyShouldReturnErrorResponse() throws Exception {
+        String key = "x";
+        doThrow(new IOException("error")).when(mockFacade).loadProperty(key);
+
+        Response response = service.getProperty(key);
+        assertErrorResponse(response);
+    }
+
+    @Test
+    public void testUpdateProperty() throws Exception {
+        String key = "x";
+        String value = "y";
+
+        Response response = service.updateProperty(key, value);
+        assertOkResponse(response);
+
+        verify(mockFacade).storeProperty(key, value);
+    }
+
+    @Test
+    public void testUpdateNonExistedProperty() throws Exception {
+        String key = "x";
+        String value = "y";
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).storeProperty(key, value);
+
+        Response response = service.updateProperty(key, value);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
+    }
+
+    @Test
+    public void testUpdatePropertyShouldReturnErrorResponse() throws Exception {
+        String key = "x";
+        String value = "y";
+        doThrow(new IOException("error")).when(mockFacade).storeProperty(key, value);
+
+        Response response = service.updateProperty(key, value);
+        assertErrorResponse(response);
+    }
+
+    @Test
+    public void testDeleteProperty() throws Exception {
+        String key = "x";
+
+        Response response = service.deleteProperty(key);
+        assertOkResponse(response);
+        verify(mockFacade).deleteProperty(key);
+    }
+
+    @Test
+    public void testDeleteNonExistedProperty() throws Exception {
+        String key = "x";
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).deleteProperty(key);
+
+        Response response = service.deleteProperty(key);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
+    }
+
+    @Test
+    public void testDeletePropertyShouldReturnErrorResponse() throws Exception {
+        String key = "x";
+        doThrow(new IOException("error")).when(mockFacade).deleteProperty(key);
+
+        Response response = service.deleteProperty(key);
+        assertErrorResponse(response);
     }
 
     private void assertOkResponse(Response result) throws IOException {

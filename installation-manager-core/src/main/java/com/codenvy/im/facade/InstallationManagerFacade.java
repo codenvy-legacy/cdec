@@ -583,10 +583,23 @@ public class InstallationManagerFacade {
     }
 
     /**
-     * @see com.codenvy.im.managers.StorageManager#loadProperties(java.util.Collection)
+     * @see com.codenvy.im.managers.StorageManager#loadProperties()
      */
-    public Map<String, String> loadProperties(@Nullable Collection<String> names) throws IOException {
-        return storageManager.loadProperties(names);
+    public Map<String, String> loadProperties() throws IOException {
+        return storageManager.loadProperties();
+    }
+
+    @Nullable
+    public String loadProperty(@Nullable String key) throws IOException {
+        return storageManager.loadProperty(key);
+    }
+
+    public void storeProperty(@Nullable String key, @Nullable String value) throws IOException {
+        storageManager.storeProperty(key, value);
+    }
+
+    public void deleteProperty(@Nullable String name) throws IOException {
+        storageManager.deleteProperty(name);
     }
 
     /** Update artifact config property */

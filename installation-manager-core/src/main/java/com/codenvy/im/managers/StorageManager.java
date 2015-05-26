@@ -20,6 +20,7 @@ package com.codenvy.im.managers;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.BufferedInputStream;
@@ -43,6 +44,7 @@ import static java.nio.file.Files.newOutputStream;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 @Singleton
 public class StorageManager {
@@ -80,32 +82,60 @@ public class StorageManager {
 
     /**
      * Loads installation related properties.
-     * If there is no stored specific property then no value will be returned.
      *
-     * @param names
-     *         properties names to load
      * @throws IOException
      *         if any I/O error occurred
      */
-    public Map<String, String> loadProperties(@Nullable final Collection<String> names) throws IOException {
-        if (names == null || names.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
+    public Map<String, String> loadProperties() throws IOException {
         Path storageFile = getStorageFile();
         Properties properties = loadProperties(storageFile);
 
-        Map<String, String> result = new HashMap<>((Map)properties);
+        return new HashMap<>((Map)properties);
+    }
 
-        Iterator<Map.Entry<String, String>> iter = result.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<String, String> entry = iter.next();
-            if (!names.contains(entry.getKey())) {
-                iter.remove();
-            }
+    /** Loads property with certain key. */
+    @Nullable
+    public String loadProperty(@Nonnull String key) throws IOException {
+        Path storageFile = getStorageFile();
+        Properties properties = loadProperties(storageFile);
+
+        if (!properties.containsKey(key)) {
+            throw PropertyNotFoundException.from(key);
         }
 
-        return result;
+        return properties.getProperty(key);
+    }
+
+    /** Stores property with certain key. */
+    public void storeProperty(@Nonnull String key, @Nonnull String value) throws IOException {
+        Path storageFile = getStorageFile();
+        Properties properties = loadProperties(storageFile);
+
+        if (!properties.containsKey(key)) {
+            throw PropertyNotFoundException.from(key);
+        }
+
+        properties.setProperty(key, value);
+
+        try (OutputStream out = new BufferedOutputStream(newOutputStream(storageFile))) {
+            properties.store(out, null);
+        }
+    }
+
+    /** Deletes property with certain key. */
+    public void deleteProperty(@Nonnull String key) throws IOException {
+        Path storageFile = getStorageFile();
+        Properties properties = loadProperties(storageFile);
+
+        if (!properties.containsKey(key)) {
+            throw PropertyNotFoundException.from(key);
+        }
+
+        properties.remove(key);
+
+        try (OutputStream out = new BufferedOutputStream(newOutputStream(storageFile))) {
+            properties.store(out, null);
+        }
     }
 
     private Properties loadProperties(Path propertiesFile) throws IOException {
