@@ -18,7 +18,10 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.BaseTest;
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
@@ -57,8 +60,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -99,6 +102,8 @@ public class TestInstallationManagerService extends BaseTest {
     private Principal                 mockPrincipal;
     @Mock
     private Config                    mockConfig;
+    @Mock
+    private Artifact                  mockArtifact;
 
     private com.codenvy.im.response.Response mockFacadeOkResponse;
     private com.codenvy.im.response.Response mockFacadeErrorResponse;
@@ -111,6 +116,7 @@ public class TestInstallationManagerService extends BaseTest {
         service = spy(new InstallationManagerService(mockFacade, configManager));
 
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
+        doReturn(mockArtifact).when(service).getArtifact(anyString());
     }
 
     @Test
@@ -490,7 +496,22 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
+    public void testGetArtifactProperties() throws Exception {
+        doReturn(new HashMap() {{
+            put(ArtifactProperties.BUILD_TIME_PROPERTY, "2014-09-23 09:49:06");
+            put(ArtifactProperties.ARTIFACT_PROPERTY, "codenvy");
+            put(ArtifactProperties.SIZE_PROPERTY, "796346268");
+            put(ArtifactProperties.VERSION_PROPERTY, "1.0.0");
+        }}).when(mockArtifact).getProperties(any(Version.class));
+
+        Response response = service.getArtifactProperties("codenvy", "1.0.1");
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{build-time=2014-09-23T09:49:06.0Z, artifact=codenvy, version=1.0.0, size=796346268}");
+    }
+
+    @Test
     public void testGetArtifactPropertiesErrorIfArtifactNotFound() throws Exception {
+        doThrow(new ArtifactNotFoundException("artifact")).when(service).getArtifact(anyString());
         Response response = service.getArtifactProperties("artifact", "1.3.1");
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
@@ -499,12 +520,6 @@ public class TestInstallationManagerService extends BaseTest {
     public void testGetArtifactPropertiesErrorIfVersionInvalid() throws Exception {
         Response response = service.getArtifactProperties("codenvy", "version");
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
-    }
-
-    @Test
-    public void testGetArtifactProperties() throws Exception {
-        Response response = service.getArtifactProperties("codenvy", "1.0.1");
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test

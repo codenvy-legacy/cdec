@@ -19,6 +19,7 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
@@ -71,10 +72,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.toJson;
@@ -426,7 +432,7 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
                                                            @PathParam("version") final String versionNumber) {
         try {
-            Artifact artifact = createArtifact(artifactName);
+            Artifact artifact = getArtifact(artifactName);
             Version version;
             try {
                 version = Version.valueOf(versionNumber);
@@ -435,8 +441,14 @@ public class InstallationManagerService {
             }
 
             Map<String, String> properties = artifact.getProperties(version);
+            if (properties.containsKey(ArtifactProperties.BUILD_TIME_PROPERTY)) {
+                String humanReadableDateTime = properties.get(ArtifactProperties.BUILD_TIME_PROPERTY);
+                String valueInIso = convertToIsoDateTime(humanReadableDateTime);
+                properties.put(ArtifactProperties.BUILD_TIME_PROPERTY, valueInIso);
+            }
+
             return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
-        } catch (IOException e) {
+        } catch (IOException | ParseException e) {
             return handleException(e);
         }
     }
@@ -563,5 +575,23 @@ public class InstallationManagerService {
                                         .entity(msgBody)
                                         .type(MediaType.APPLICATION_JSON_TYPE)
                                         .build();
+    }
+
+    /**
+     * Convert string of datetime of format "yyyy-MM-dd HH:mm:ss" into ISO 8601 format "yyyy-MM-dd'T'HH:mm:ss.S'Z'"
+     */
+    private String convertToIsoDateTime(String humanReadableDateTime) throws ParseException {
+        DateFormat dfInitial = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date initialDateTime = dfInitial.parse(humanReadableDateTime);
+
+
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'");
+        String iso8601formattedDate = df.format(initialDateTime);
+
+        return iso8601formattedDate;
+    }
+
+    protected Artifact getArtifact(String artifactName) throws ArtifactNotFoundException {
+        return createArtifact(artifactName);
     }
 }
