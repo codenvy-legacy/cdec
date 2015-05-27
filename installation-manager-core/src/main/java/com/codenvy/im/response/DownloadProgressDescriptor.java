@@ -15,6 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
+
 package com.codenvy.im.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

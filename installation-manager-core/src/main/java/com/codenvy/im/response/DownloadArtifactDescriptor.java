@@ -78,4 +78,30 @@ public class DownloadArtifactDescriptor {
     public void setStatus(DownloadArtifactStatus status) {
         this.status = status;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DownloadArtifactDescriptor)) return false;
+
+        DownloadArtifactDescriptor that = (DownloadArtifactDescriptor)o;
+
+        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) return false;
+        if (file != null ? !file.equals(that.file) : that.file != null) return false;
+        if (status != that.status) return false;
+        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        int result = artifact != null ? artifact.hashCode() : 0;
+        result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (file != null ? file.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        return result;
+    }
 }

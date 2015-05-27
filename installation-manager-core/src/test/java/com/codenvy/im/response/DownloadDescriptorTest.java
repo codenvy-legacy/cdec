@@ -37,24 +37,30 @@ public class DownloadDescriptorTest extends BaseTest {
 
     @Test
     public void testToJson() throws Exception {
-        DownloadArtifactDescriptor artifactInfo = new DownloadArtifactDescriptor(ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                 Version.valueOf("1.0.1"),
-                                                                                 Paths.get(DOWNLOAD_DIR).resolve("file"),
-                                                                                 DownloadArtifactStatus.DOWNLOADED);
+        DownloadArtifactDescriptor downloadArtifactDescriptor = new DownloadArtifactDescriptor();
+        downloadArtifactDescriptor.setFile("file");
+        downloadArtifactDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
+        downloadArtifactDescriptor.setArtifact("codenvy");
+        downloadArtifactDescriptor.setVersion("1.0.1");
 
-        DownloadDescriptor downloadDescriptor = new DownloadDescriptor(ResponseCode.OK, ImmutableList.of(artifactInfo));
+        DownloadDescriptor actualDescriptor = new DownloadDescriptor();
+        actualDescriptor.setArtifacts(ImmutableList.of(downloadArtifactDescriptor));
+        actualDescriptor.setMessage("error");
+        actualDescriptor.setStatus(ResponseCode.OK);
 
-        assertEquals(downloadDescriptor.getStatus(), ResponseCode.OK);
-        assertEquals(downloadDescriptor.getArtifacts().get(0), artifactInfo);
-        assertEquals(Commons.toJson(downloadDescriptor), "{\n" +
-                                                         "  \"artifacts\" : [ {\n" +
-                                                         "    \"artifact\" : \"codenvy\",\n" +
-                                                         "    \"version\" : \"1.0.1\",\n" +
-                                                         "    \"file\" : \"target/download/file\",\n" +
-                                                         "    \"status\" : \"DOWNLOADED\"\n" +
-                                                         "  } ],\n" +
-                                                         "  \"status\" : \"OK\"\n" +
-                                                         "}");
+        String json = Commons.toJson(actualDescriptor);
+        assertEquals(json, "{\n" +
+                           "  \"artifacts\" : [ {\n" +
+                           "    \"artifact\" : \"codenvy\",\n" +
+                           "    \"version\" : \"1.0.1\",\n" +
+                           "    \"file\" : \"file\",\n" +
+                           "    \"status\" : \"DOWNLOADED\"\n" +
+                           "  } ],\n" +
+                           "  \"message\" : \"error\",\n" +
+                           "  \"status\" : \"OK\"\n" +
+                           "}");
+
+        assertEquals(Commons.fromJson(json, DownloadDescriptor.class), actualDescriptor);
     }
 
     @Test

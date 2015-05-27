@@ -49,9 +49,9 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
+import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.ApiException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -436,7 +436,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.saas.SaasAuthServiceProxy#login(org.eclipse.che.api.auth.shared.dto.Credentials)
      */
-    public Token loginToCodenvySaaS(@Nonnull Credentials credentials) throws ApiException {
+    public Token loginToCodenvySaaS(@Nonnull Credentials credentials) throws IOException, AuthenticationException {
         return saasAuthServiceProxy.login(credentials);
     }
 
