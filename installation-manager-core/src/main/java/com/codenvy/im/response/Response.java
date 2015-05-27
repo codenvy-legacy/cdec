@@ -35,13 +35,12 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"downloadInfo", "properties", "artifacts", "subscription", "node", "backup", "authToken", "message", "status"})
+@JsonPropertyOrder({"properties", "artifacts", "subscription", "node", "backup", "authToken", "message", "status"})
 @JsonIgnoreProperties({"CLI client version"})
 public class Response {
     private List<ArtifactInfo>  artifacts;
     private String              message;
     private ResponseCode        status;
-    private DownloadStatusInfo  downloadInfo;
     private Map<String, String> properties;
     private List<String>        infos;
     private String              subscription;
@@ -57,6 +56,10 @@ public class Response {
 
     public static Response error(Throwable e) {
         return new Response().setStatus(ResponseCode.ERROR).setMessage(e.getMessage());
+    }
+
+    public static Response error() {
+        return new Response().setStatus(ResponseCode.ERROR);
     }
 
     public String toJson() {
@@ -117,15 +120,6 @@ public class Response {
 
     public Response setStatus(ResponseCode status) {
         this.status = status;
-        return this;
-    }
-
-    public DownloadStatusInfo getDownloadInfo() {
-        return downloadInfo;
-    }
-
-    public Response setDownloadInfo(DownloadStatusInfo downloadInfo) {
-        this.downloadInfo = downloadInfo;
         return this;
     }
 

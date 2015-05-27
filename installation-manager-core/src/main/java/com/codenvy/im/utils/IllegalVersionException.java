@@ -15,23 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.response;
+package com.codenvy.im.utils;
 
-import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
+import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
  */
-public class TestDownloadStatusInfo {
-
-    @Test
-    public void testValueOf() throws Exception {
-        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, new Response().setMessage("result"));
-        String json = new Response().setStatus(ResponseCode.OK).setDownloadInfo(expectedInfo).toJson();
-
-        Response response = Response.fromJson(json);
-        assertEquals(response.getDownloadInfo(), expectedInfo);
+public class IllegalVersionException extends RuntimeException {
+    public IllegalVersionException(String version) {
+        super(format("Illegal version '%s'", version));
     }
 }

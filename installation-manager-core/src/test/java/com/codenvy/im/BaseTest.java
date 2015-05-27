@@ -48,6 +48,8 @@ public class BaseTest {
         if (exists(PUPPET_CONF_FILE)) {
             delete(PUPPET_CONF_FILE);
         }
+
+        FileUtils.deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());
     }
 
     protected void createSingleNodeConf() throws Exception {

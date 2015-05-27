@@ -23,15 +23,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /** @author Dmytro Nochevnov */
 @JsonPropertyOrder({"file", "artifactInfo", "status"})
 public class BackupInfo {
-    private ArtifactInfo artifactInfo;
-    private String       file;
-    private Status       status;
+    private ArtifactInfo   artifactInfo;
+    private String         file;
+    private ArtifactStatus status;
 
-    public Status getStatus() {
+    public ArtifactStatus getStatus() {
         return status;
     }
 
-    public BackupInfo setStatus(Status status) {
+    public BackupInfo setStatus(ArtifactStatus status) {
         this.status = status;
         return this;
     }
@@ -58,14 +58,14 @@ public class BackupInfo {
         ArtifactInfo artifactInfo = new ArtifactInfo().setArtifact(config.getArtifactName()).setVersion(config.getArtifactVersion());
         return new BackupInfo().setArtifactInfo(artifactInfo)
                                .setFile(config.getBackupFile() != null ? config.getBackupFile().toString() : null)
-                               .setStatus(Status.SUCCESS);
+                               .setStatus(ArtifactStatus.SUCCESS);
     }
 
     public static BackupInfo createFailureInfo(BackupConfig config) {
         ArtifactInfo artifactInfo = new ArtifactInfo().setArtifact(config.getArtifactName()).setVersion(config.getArtifactVersion());
         return new BackupInfo().setArtifactInfo(artifactInfo)
                                .setFile(config.getBackupFile() != null ? config.getBackupFile().toString() : null)
-                               .setStatus(Status.FAILURE);
+                               .setStatus(ArtifactStatus.FAILURE);
     }
 
 }

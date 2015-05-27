@@ -24,13 +24,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"type", "host", "status"})
 public class NodeInfo {
     private NodeConfig.NodeType type;
-    private String host;
-    private Status status;
+    private String         host;
+    private ArtifactStatus status;
 
     public NodeInfo() {
     }
 
-    public NodeInfo(NodeConfig.NodeType type, String host, Status status) {
+    public NodeInfo(NodeConfig.NodeType type, String host, ArtifactStatus status) {
         this.type = type;
         this.host = host;
         this.status = status;
@@ -54,16 +54,16 @@ public class NodeInfo {
         return this;
     }
 
-    public Status getStatus() {
+    public ArtifactStatus getStatus() {
         return status;
     }
 
-    public NodeInfo setStatus(Status status) {
+    public NodeInfo setStatus(ArtifactStatus status) {
         this.status = status;
         return this;
     }
 
     public static NodeInfo createSuccessInfo(NodeConfig node) {
-        return new NodeInfo(node.getType(), node.getHost(), Status.SUCCESS);
+        return new NodeInfo(node.getType(), node.getHost(), ArtifactStatus.SUCCESS);
     }
 }

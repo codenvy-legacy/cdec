@@ -18,17 +18,23 @@
 package com.codenvy.im.cli.command;
 
 
+import com.codenvy.im.managers.DownloadAlreadyStartedException;
+import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.response.DownloadStatusInfo;
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.Status;
+import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.response.DownloadDescriptor;
+import com.codenvy.im.response.DownloadProgressDescriptor;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
+import java.io.IOException;
+
+import static com.codenvy.im.utils.Commons.createArtifactOrNull;
+import static com.codenvy.im.utils.Commons.createVersionOrNull;
+import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.Thread.sleep;
 
 /**
@@ -41,13 +47,12 @@ public class DownloadCommand extends AbstractIMCommand {
     private String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to download", required = false, multiValued = false)
-    private String version;
+    private String versionNumber;
 
     @Option(name = "--list-local", aliases = "-l", description = "To show the list of downloaded artifacts", required = false)
     private boolean listLocal;
 
-    @Option(name = "--check-remote", aliases = "-c", description = "To check on remote versions to see if new version is available",
-            required = false)
+    @Option(name = "--check-remote", aliases = "-c", description = "To check on remote versions to see if new version is available", required = false)
     private boolean checkRemote;
 
     @Override
@@ -63,32 +68,29 @@ public class DownloadCommand extends AbstractIMCommand {
         }
     }
 
-    private void doDownload() throws InterruptedException, JsonParseException {
+    private void doDownload() throws InterruptedException,
+                                     JsonParseException,
+                                     IOException,
+                                     DownloadAlreadyStartedException,
+                                     DownloadNotStartedException {
         console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
-        Request request = createRequest(artifactName, version);
-        String startResponse = facade.startDownload(request);
-
-        Response responseObj = Response.fromJson(startResponse);
-        if (responseObj.getStatus() != ResponseCode.OK) {
-            console.printErrorAndExit(startResponse);
-            return;
-        }
+        facade.startDownload(createArtifactOrNull(artifactName), createVersionOrNull(versionNumber));
 
         boolean isCanceled = false;
 
         for (; ; ) {
-            String response = facade.getDownloadStatus();
-            if (Response.fromJson(startResponse).getStatus() != ResponseCode.OK) {
+            DownloadProgressDescriptor downloadProgressDescriptor = facade.getDownloadProgress();
+            DownloadDescriptor downloadDescriptor = new DownloadDescriptor(downloadProgressDescriptor);
+
+            if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED) {
                 console.cleanCurrentLine();
-                console.printErrorAndExit(response);
+                console.printErrorAndExit(toJson(downloadDescriptor));
                 break;
             }
 
-            DownloadStatusInfo downloadStatusInfo = Response.fromJson(response).getDownloadInfo();
-
             if (!isCanceled) {
-                console.printProgress(downloadStatusInfo.getPercents());
+                console.printProgress(downloadProgressDescriptor.getPercents());
             }
 
             try {
@@ -99,13 +101,12 @@ public class DownloadCommand extends AbstractIMCommand {
                 isCanceled = true;
             }
 
-            if (downloadStatusInfo.getStatus() == Status.DOWNLOADED || downloadStatusInfo.getStatus() == Status.FAILURE) {
+            if (downloadProgressDescriptor.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
-                String downloadResult = downloadStatusInfo.getDownloadResult().toJson();
-                if (downloadStatusInfo.getStatus() == Status.FAILURE) {
-                    console.printErrorAndExit(downloadResult);
+                if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
+                    console.printErrorAndExit(toJson(downloadDescriptor));
                 } else {
-                    console.println(downloadResult);
+                    console.println(toJson(downloadDescriptor));
                 }
                 break;
             }
@@ -117,7 +118,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doList() throws JsonParseException {
-        Request request = createRequest(artifactName, version);
+        Request request = createRequest(artifactName, versionNumber);
         console.printResponse(facade.getDownloads(request));
     }
 }

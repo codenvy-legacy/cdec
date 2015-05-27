@@ -27,10 +27,14 @@ import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -121,38 +125,35 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testStartDownload() throws Exception {
-        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
-                                           .setVersion(TEST_VERSION);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).startDownload(testRequest);
+        doNothing().when(mockFacade).startDownload(any(Artifact.class), any(Version.class));
         Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
-        assertOkResponse(result);
+        assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).startDownload(testRequest);
+        doThrow(new IOException("error")).when(mockFacade).startDownload(any(Artifact.class), any(Version.class));
         result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
         assertErrorResponse(result);
     }
 
     @Test
     public void testStopDownload() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).stopDownload();
+        doNothing().when(mockFacade).stopDownload();
         Response result = service.stopDownload();
-        assertOkResponse(result);
+        assertEquals(result.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).stopDownload();
+        doThrow(new DownloadNotStartedException()).when(mockFacade).stopDownload();
         result = service.stopDownload();
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
     @Test
     public void testGetDownloadStatus() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloadStatus();
-        Response result = service.getDownloadStatus();
-        assertOkResponse(result);
+        doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
+                                                100,
+                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(mockFacade).getDownloadProgress();
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloadStatus();
-        result = service.getDownloadStatus();
-        assertErrorResponse(result);
+        Response result = service.getDownloadProgress();
+
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
@@ -519,15 +520,13 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testGetArtifactPropertiesErrorIfVersionInvalid() throws Exception {
         Response response = service.getArtifactProperties("codenvy", "version");
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     @Test
     public void testGetPropertiesShouldReturnOkResponse() throws Exception {
         doReturn(Collections.emptyMap()).when(mockFacade).loadProperties();
-
-        Response response = service.getProperties();
-
+        Response response = service.getArtifactProperties("codenvy", "3.1.0");
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 

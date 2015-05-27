@@ -19,33 +19,48 @@ package com.codenvy.im.managers;
 
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
+import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
+import static java.lang.Thread.sleep;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.endsWith;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -66,6 +81,9 @@ public class DownloadManagerTest extends BaseTest {
     private InstallManagerArtifact installManagerArtifact;
     private DownloadManager        downloadManager;
     private SaasUserCredentials saasUserCredentials;
+    private Path pathCDEC;
+    private Path pathIM;
+
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -78,6 +96,8 @@ public class DownloadManagerTest extends BaseTest {
                                                   ImmutableSet.<Artifact>of(cdecArtifact, installManagerArtifact)));
 
         saasUserCredentials = new SaasUserCredentials("auth token", "accountId");
+        pathCDEC = Paths.get("./target/cdec.zip");
+        pathIM = Paths.get("./target/im.zip");
     }
 
     @Test
@@ -125,11 +145,11 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(new TreeMap<Version, Path>(new Version.ReverseOrder()) {{
             put(Version.valueOf("1.0.0"), Paths.get("file1"));
             put(Version.valueOf("1.0.1"), Paths.get("file2"));
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
+        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
         doReturn(new TreeMap<Version, Path>() {{
             put(Version.valueOf("2.0.0"), Paths.get("file3"));
-        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class));
+        }}).when(downloadManager).getDownloadedVersions(installManagerArtifact);
 
         Map<Artifact, SortedMap<Version, Path>> artifacts = downloadManager.getDownloadedArtifacts();
         assertEquals(artifacts.size(), 2);
@@ -145,8 +165,8 @@ public class DownloadManagerTest extends BaseTest {
 
     @Test
     public void testGetDownloadedArtifactsReturnsEmptyMap() throws Exception {
-        doReturn(new TreeMap<Version, Path>()).when(cdecArtifact).getDownloadedVersions(any(Path.class));
-        doReturn(new TreeMap<Version, Path>()).when(installManagerArtifact).getDownloadedVersions(any(Path.class));
+        doReturn(new TreeMap<Version, Path>()).when(downloadManager).getDownloadedVersions(cdecArtifact);
+        doReturn(new TreeMap<Version, Path>()).when(downloadManager).getDownloadedVersions(installManagerArtifact);
 
         Map<Artifact, SortedMap<Version, Path>> m = downloadManager.getDownloadedArtifacts();
         assertTrue(m.isEmpty());
@@ -178,7 +198,7 @@ public class DownloadManagerTest extends BaseTest {
             put(installManagerArtifact, version200);
         }}).when(downloadManager).getUpdates();
 
-        Map<Artifact, Version> artifactsToDownload = downloadManager.getUpdatesToDownload(null, null);
+        Map<Artifact, Version> artifactsToDownload = downloadManager.getLatestUpdatesToDownload(null, null);
         assertEquals(artifactsToDownload.size(), 2);
         assertEquals(artifactsToDownload.toString(), "{" + InstallManagerArtifact.NAME + "=2.0.0, codenvy=1.0.0}");
     }
@@ -189,7 +209,7 @@ public class DownloadManagerTest extends BaseTest {
 
         doReturn(version100).when(cdecArtifact).getLatestInstallableVersion();
 
-        Map<Artifact, Version> artifactsToDownload = downloadManager.getUpdatesToDownload(cdecArtifact, null);
+        Map<Artifact, Version> artifactsToDownload = downloadManager.getLatestUpdatesToDownload(cdecArtifact, null);
         assertEquals(artifactsToDownload.size(), 1);
         assertEquals(artifactsToDownload.toString(), "{codenvy=1.0.0}");
     }
@@ -206,13 +226,13 @@ public class DownloadManagerTest extends BaseTest {
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version200, null);
-        }}).when(cdecArtifact).getDownloadedVersions(any(Path.class));
+        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
         doReturn(new TreeMap<Version, Path>() {{
             put(version100, null);
-        }}).when(installManagerArtifact).getDownloadedVersions(any(Path.class));
+        }}).when(downloadManager).getDownloadedVersions(installManagerArtifact);
 
-        Map<Artifact, Version> artifactsToDownload = downloadManager.getUpdatesToDownload(null, null);
+        Map<Artifact, Version> artifactsToDownload = downloadManager.getLatestUpdatesToDownload(null, null);
         assertEquals(artifactsToDownload.size(), 0);
     }
 
@@ -233,5 +253,290 @@ public class DownloadManagerTest extends BaseTest {
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
         downloadManager.download(cdecArtifact, version100);
+    }
+
+    @Test
+    public void testGetDownloadedVersions() throws IOException {
+        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport)
+                                                                                      .doGet(endsWith("codenvy/1.0.1"));
+        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(transport)
+                                                                                      .doGet(endsWith("codenvy/1.0.2"));
+
+        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
+        Path file2 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.2", "file2");
+        Files.createDirectories(file1.getParent());
+        Files.createDirectories(file2.getParent());
+        Files.createFile(file1);
+        Files.createFile(file2);
+
+        SortedMap<Version, Path> versions = downloadManager.getDownloadedVersions(cdecArtifact);
+        assertEquals(versions.size(), 2);
+        assertEquals(versions.toString(), "{1.0.2=target/download/codenvy/1.0.2/file2, " +
+                                          "1.0.1=target/download/codenvy/1.0.1/file1" +
+                                          "}");
+    }
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class)
+    public void testGetDownloadedVersionsWhenPropertiesAbsent() throws Exception {
+        Path file1 = Paths.get("target", "download", cdecArtifact.getName(), "1.0.1", "file1");
+        Files.createDirectories(file1.getParent());
+        Files.createFile(file1);
+
+        doThrow(new ArtifactNotFoundException(cdecArtifact)).when(cdecArtifact).getProperties(any(Version.class));
+
+        downloadManager.getDownloadedVersions(cdecArtifact);
+    }
+
+    @Test
+    public void testDownloadAll() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        final Version imVersion = Version.valueOf("1.0.0");
+        final int cdecSize = 100;
+        final int imSize = 50;
+
+        doReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, cdecVersion);
+                put(installManagerArtifact, imVersion);
+            }
+        }).when(downloadManager).getLatestUpdatesToDownload(null, null);
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+                return pathCDEC;
+            }
+        }).when(downloadManager).download(cdecArtifact, cdecVersion);
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                FileUtils.writeByteArrayToFile(pathIM.toFile(), new byte[imSize]);
+                return pathIM;
+            }
+        }).when(downloadManager).download(installManagerArtifact, imVersion);
+
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+        doReturn(pathIM).when(downloadManager).getPathToBinaries(installManagerArtifact, imVersion);
+
+        doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+        doReturn((long)imSize).when(downloadManager).getBinariesSize(installManagerArtifact, imVersion);
+
+        downloadManager.startDownload(null, null);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getPercents(), 100);
+
+        List<DownloadArtifactDescriptor> artifacts = info.getArtifacts();
+        assertEquals(artifacts.size(), 2);
+
+        assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
+        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(0).getFile(), pathCDEC.toString());
+        assertEquals(artifacts.get(0).getVersion(), cdecVersion.toString());
+
+        assertEquals(artifacts.get(1).getArtifact(), installManagerArtifact.getName());
+        assertEquals(artifacts.get(1).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(1).getFile(), pathIM.toString());
+        assertEquals(artifacts.get(1).getVersion(), imVersion.toString());
+    }
+
+    @Test
+    public void testDownloadSpecificArtifact() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        final int cdecSize = 100;
+
+        doReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, cdecVersion);
+            }
+        }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, null);
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+                return pathCDEC;
+            }
+        }).when(downloadManager).download(cdecArtifact, cdecVersion);
+
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+        doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+
+        downloadManager.startDownload(cdecArtifact, null);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getPercents(), 100);
+
+        List<DownloadArtifactDescriptor> artifacts = info.getArtifacts();
+        assertEquals(artifacts.size(), 1);
+        assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
+        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(0).getFile(), pathCDEC.toString());
+        assertEquals(artifacts.get(0).getVersion(), cdecVersion.toString());
+    }
+
+    @Test
+    public void testDownloadSpecificVersionArtifact() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        final int cdecSize = 100;
+
+        doReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, cdecVersion);
+            }
+        }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, cdecVersion);
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+                return pathCDEC;
+            }
+        }).when(downloadManager).download(cdecArtifact, cdecVersion);
+
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+        doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+
+        downloadManager.startDownload(cdecArtifact, cdecVersion);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getPercents(), 100);
+
+        List<DownloadArtifactDescriptor> artifacts = info.getArtifacts();
+        assertEquals(artifacts.size(), 1);
+        assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
+        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(0).getFile(), pathCDEC.toString());
+        assertEquals(artifacts.get(0).getVersion(), cdecVersion.toString());
+    }
+
+    @Test
+    public void testDownloadNothing() throws Exception {
+        doReturn(Collections.emptyMap()).when(downloadManager).getLatestUpdatesToDownload(null, null);
+
+        downloadManager.startDownload(null, null);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getPercents(), 0);
+        assertEquals(info.getArtifacts().size(), 0);
+    }
+
+    @Test
+    public void testDownloadFailedIfArtifactNotFound() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        doReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, cdecVersion);
+            }
+        }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, cdecVersion);
+
+        doThrow(ArtifactNotFoundException.class).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+        doThrow(ArtifactNotFoundException.class).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+
+        downloadManager.startDownload(cdecArtifact, cdecVersion);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+    }
+
+    @Test(expectedExceptions = DownloadAlreadyStartedException.class)
+    public void testStartDownloadTwice() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        final int cdecSize = 100;
+
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+        doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+                downloadManager.createDownloadDescriptor(ImmutableMap.<Artifact, Version>of(cdecArtifact, cdecVersion));
+
+                Object[] arguments = invocationOnMock.getArguments();
+                CountDownLatch countDownLatch = (CountDownLatch)arguments[2];
+                countDownLatch.countDown();
+                return null;
+            }
+        }).when(downloadManager).download(any(Artifact.class), any(Version.class), any(CountDownLatch.class));
+
+        downloadManager.startDownload(cdecArtifact, null);
+        downloadManager.startDownload(cdecArtifact, null);
+    }
+
+    @Test(expectedExceptions = DownloadNotStartedException.class)
+    public void testGetDownloadStatusWhenDownloadNotStarted() throws Exception {
+        downloadManager.getDownloadProgress();
+    }
+
+
+    @Test
+    public void testDownloadErrorIfAuthenticationFailedOnGetUpdates() throws Exception {
+        doThrow(AuthenticationException.class).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, null);
+
+        downloadManager.startDownload(cdecArtifact, null);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+    }
+
+    @Test
+    public void testDownloadErrorIfAuthenticationFailedOnDownload() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+
+        doReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, cdecVersion);
+            }
+        }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, null);
+
+        doThrow(new AuthenticationException()).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+        doThrow(new AuthenticationException()).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+        doThrow(new AuthenticationException()).when(downloadManager).download(cdecArtifact, cdecVersion);
+
+        downloadManager.startDownload(cdecArtifact, null);
+
+        DownloadProgressDescriptor info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
     }
 }

@@ -20,7 +20,7 @@ package com.codenvy.im.response;
 /**
  * @author Dmytro Nochevnov
  */
-public enum Status {
+public enum ArtifactStatus {
     SUCCESS,
     READY_TO_INSTALL,
     DOWNLOADED,

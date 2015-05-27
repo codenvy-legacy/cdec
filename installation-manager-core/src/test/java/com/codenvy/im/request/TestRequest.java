@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.saas.SaasUserCredentials;
+import com.codenvy.im.utils.IllegalVersionException;
 import com.codenvy.im.utils.Version;
 
 import org.testng.Assert;
@@ -68,7 +69,7 @@ public class TestRequest {
         testRequest.createArtifact();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalVersionException.class)
     public void testRequestErrorIfVersionInvalid() throws Exception {
         Request testRequest = new Request()
                 .setArtifactName("codenvy")

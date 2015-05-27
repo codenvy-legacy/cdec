@@ -90,7 +90,7 @@ public class TestVersion {
     }
 
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalVersionException.class)
     public void testParseInvalidVersion() throws Exception {
         Version.valueOf("01.1.1");
     }

@@ -48,7 +48,7 @@ public class TestResponse {
     @Test
     public void testToJsonArtifactInfoList() throws Exception {
         ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
-        ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
+        ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), ArtifactStatus.SUCCESS);
         Response response = new Response().setArtifacts(Arrays.asList(info1, info2)).setStatus(ResponseCode.OK);
 
         assertEquals(response.toJson(), "{\n" +
@@ -84,15 +84,15 @@ public class TestResponse {
     @Test
     public void testResponseJsonParsing() throws IOException, JsonParseException {
         final ArtifactInfo info1 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.1"));
-        final ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), Status.SUCCESS);
-        ArtifactInfo info3 = new ArtifactInfo(createArtifact(InstallManagerArtifact.NAME), Version.valueOf("1.0.2"), Paths.get("test"), Status.SUCCESS);
-        Response response = new Response().setArtifacts(new ArrayList<ArtifactInfo>(){{
-                                             add(info1);
-                                             add(info2);
-                                          }})
+        final ArtifactInfo info2 = new ArtifactInfo(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.2"), ArtifactStatus.SUCCESS);
+        ArtifactInfo info3 =
+                new ArtifactInfo(createArtifact(InstallManagerArtifact.NAME), Version.valueOf("1.0.2"), Paths.get("test"), ArtifactStatus.SUCCESS);
+        Response response = new Response().setArtifacts(new ArrayList<ArtifactInfo>() {{
+            add(info1);
+            add(info2);
+        }})
                                           .addArtifact(info3)
                                           .setSubscription("subscription")
-                                          .setDownloadInfo(new DownloadStatusInfo(Status.DOWNLOADING, 30))
                                           .setInfos(ImmutableList.of("info1", "info2"))
                                           .setProperties(new LinkedHashMap<String, String>() {{
                                               put("prop1", "value1");
@@ -101,33 +101,29 @@ public class TestResponse {
                                           .setMessage("message")
                                           .setStatus(ResponseCode.OK);
         String json = response.toJson();
-        String expectedJson = "{\n"
-                          + "  \"downloadInfo\" : {\n"
-                          + "    \"status\" : \"DOWNLOADING\",\n"
-                          + "    \"percents\" : 30\n"
-                          + "  },\n"
-                          + "  \"properties\" : {\n"
-                          + "    \"prop1\" : \"value1\",\n"
-                          + "    \"prop2\" : \"value2\"\n"
-                          + "  },\n"
-                          + "  \"artifacts\" : [ {\n"
-                          + "    \"artifact\" : \"codenvy\",\n"
-                          + "    \"version\" : \"1.0.1\"\n"
-                          + "  }, {\n"
-                          + "    \"artifact\" : \"codenvy\",\n"
-                          + "    \"version\" : \"1.0.2\",\n"
-                          + "    \"status\" : \"SUCCESS\"\n"
-                          + "  }, {\n"
-                          + "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n"
-                          + "    \"version\" : \"1.0.2\",\n"
-                          + "    \"file\" : \"test\",\n"
-                          + "    \"status\" : \"SUCCESS\"\n"
-                          + "  } ],\n"
-                          + "  \"subscription\" : \"subscription\",\n"
-                          + "  \"message\" : \"message\",\n"
-                          + "  \"status\" : \"OK\",\n"
-                          + "  \"infos\" : [ \"info1\", \"info2\" ]\n"
-                          + "}";
+        String expectedJson = "{\n" +
+                              "  \"properties\" : {\n" +
+                              "    \"prop1\" : \"value1\",\n" +
+                              "    \"prop2\" : \"value2\"\n" +
+                              "  },\n" +
+                              "  \"artifacts\" : [ {\n" +
+                              "    \"artifact\" : \"codenvy\",\n" +
+                              "    \"version\" : \"1.0.1\"\n" +
+                              "  }, {\n" +
+                              "    \"artifact\" : \"codenvy\",\n" +
+                              "    \"version\" : \"1.0.2\",\n" +
+                              "    \"status\" : \"SUCCESS\"\n" +
+                              "  }, {\n" +
+                              "    \"artifact\" : \"installation-manager-cli\",\n" +
+                              "    \"version\" : \"1.0.2\",\n" +
+                              "    \"file\" : \"test\",\n" +
+                              "    \"status\" : \"SUCCESS\"\n" +
+                              "  } ],\n" +
+                              "  \"subscription\" : \"subscription\",\n" +
+                              "  \"message\" : \"message\",\n" +
+                              "  \"status\" : \"OK\",\n" +
+                              "  \"infos\" : [ \"info1\", \"info2\" ]\n" +
+                              "}";
         assertEquals(json, expectedJson);
 
         // check real-life scenario of parsing JSON using Commons.fromJson()

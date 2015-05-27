@@ -26,9 +26,9 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 
@@ -194,7 +194,7 @@ public class InstallCommand extends AbstractIMCommand {
         List<ArtifactInfo> artifacts = response.getArtifacts();
         if (artifacts != null) {
             for (ArtifactInfo artifact : artifacts) {
-                if (InstallManagerArtifact.NAME.equals(artifact.getArtifact()) && artifact.getStatus() == Status.SUCCESS) {
+                if (InstallManagerArtifact.NAME.equals(artifact.getArtifact()) && artifact.getStatus() == ArtifactStatus.SUCCESS) {
                     return true;
                 }
             }

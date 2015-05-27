@@ -43,6 +43,7 @@ import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -276,5 +277,17 @@ public class TestCommons {
     @Test
     public void testHostIsUnReachable() throws Exception {
         assertFalse(Commons.isReachable("bla-bla-bla"));
+    }
+
+    @Test
+    public void testCreateArtifactOrNull() throws Exception {
+        assertNull(Commons.createArtifactOrNull(null));
+        assertNotNull(Commons.createArtifactOrNull("codenvy"));
+    }
+
+    @Test
+    public void testCreateVersionOrNull() throws Exception {
+        assertNull(Commons.createVersionOrNull(null));
+        assertNotNull(Commons.createVersionOrNull("1.0.1"));
     }
 }
