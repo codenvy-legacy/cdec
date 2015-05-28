@@ -47,7 +47,6 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
@@ -80,7 +79,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.toJson;
@@ -285,7 +283,7 @@ public class InstallationManagerService {
     @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = Response.class)
-    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns name of adding node") @ApiParam(required = true) String dns) {
+    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "dns name of adding node") String dns) {
         Response response = delegate.addNode(dns);
         return handleInstallationManagerResponse(response);
     }
@@ -295,7 +293,7 @@ public class InstallationManagerService {
     @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Removes Codenvy node in the multi-node environment", response = Response.class)
-    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns name of removing node") @ApiParam(required = true) String dns) {
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "dns name of removing node") String dns) {
         Response response = delegate.removeNode(dns);
         return handleInstallationManagerResponse(response);
     }
@@ -303,7 +301,6 @@ public class InstallationManagerService {
     /** Performs Codenvy backup according to given backup config */
     @POST
     @Path("backup")
-    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Performs backup of given artifact", response = Response.class)
     public javax.ws.rs.core.Response backup(
@@ -321,7 +318,6 @@ public class InstallationManagerService {
     /** Performs Codenvy restore according to given backup config */
     @POST
     @Path("restore")
-    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Performs restore of given artifact from the given backup file", response = Response.class)
     public javax.ws.rs.core.Response restore(
@@ -422,7 +418,7 @@ public class InstallationManagerService {
 
     /** @return the properties of the specific artifact and version */
     @GET
-    @Path("/artifact/{artifact}/version/{version}/properties")
+    @Path("artifact/{artifact}/version/{version}/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
@@ -455,7 +451,7 @@ public class InstallationManagerService {
 
     /** Gets list of properties from the storage */
     @GET
-    @Path("/storage/properties")
+    @Path("storage/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
@@ -472,7 +468,7 @@ public class InstallationManagerService {
 
     /** Inserts new properties into the storage and update existed */
     @POST
-    @Path("/storage/properties")
+    @Path("storage/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
@@ -489,7 +485,8 @@ public class InstallationManagerService {
 
     /** Get property value from the storage */
     @GET
-    @Path("/storage/properties/{key}")
+    @Path("storage/properties/{key}")
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Property not found"),
@@ -505,7 +502,7 @@ public class InstallationManagerService {
     }
 
     @PUT
-    @Path("/storage/properties/{key}")
+    @Path("storage/properties/{key}")
     @Consumes("text/plain")
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
@@ -522,7 +519,7 @@ public class InstallationManagerService {
     }
 
     @DELETE
-    @Path("/storage/properties/{key}")
+    @Path("storage/properties/{key}")
     @ApiResponses(value = {
         @ApiResponse(code = 204, message = "No Content"),
         @ApiResponse(code = 404, message = "Property not found"),
