@@ -46,6 +46,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -56,7 +57,7 @@ public class MongoStorage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
 
     private final DB             db;
-    private final String         dir;
+    private final Path dir;
     private final MongoClientURI uri;
 
     @Inject
@@ -64,7 +65,7 @@ public class MongoStorage {
                         @Named("update-server.mongodb.embedded") boolean embedded,
                         @Named("update-server.mongodb.embedded_dir") String dir) throws IOException {
         this.uri = new MongoClientURI(url);
-        this.dir = dir;
+        this.dir = Paths.get(dir);
 
         if (embedded) { // for testing purpose only
             try {
@@ -121,11 +122,11 @@ public class MongoStorage {
 
         LOG.info("Embedded MongoDB is starting up");
 
-        Files.createDirectories(Paths.get(dir));
+        Files.createDirectories(dir);
 
         MongodConfigBuilder mongodConfigBuilder = new MongodConfigBuilder();
         mongodConfigBuilder.net(new Net(12000, false));
-        mongodConfigBuilder.replication(new Storage(dir, null, 0));
+        mongodConfigBuilder.replication(new Storage(dir.toString(), null, 0));
         mongodConfigBuilder.version(Version.V2_5_4);
 
         RuntimeConfigBuilder runtimeConfigBuilder = new RuntimeConfigBuilder().defaults(Command.MongoD);

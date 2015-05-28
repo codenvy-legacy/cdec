@@ -15,15 +15,26 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.response;
+
+package com.codenvy.im.update;
+
+import com.mongodb.DB;
+
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertNotNull;
+
 
 /**
- * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
-public enum Status {
-    SUCCESS,
-    READY_TO_INSTALL,
-    DOWNLOADED,
-    DOWNLOADING,
-    FAILURE
+public class MongoStorageTest {
+
+    @Test
+    public void testInitMongo() throws Exception {
+        MongoStorage mongoStorage = new MongoStorage("mongodb://localhost:12000/test", true, "target");
+        DB db = mongoStorage.getDb();
+
+        assertNotNull(db);
+    }
 }

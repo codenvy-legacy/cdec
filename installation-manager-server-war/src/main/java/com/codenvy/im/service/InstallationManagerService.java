@@ -27,17 +27,21 @@ import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.DownloadAlreadyStartedException;
+import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
+import com.codenvy.im.utils.IllegalVersionException;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -47,6 +51,7 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
@@ -79,8 +84,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.codenvy.im.utils.Commons.createArtifactOrNull;
+import static com.codenvy.im.utils.Commons.createVersionOrNull;
 import static com.codenvy.im.utils.Commons.toJson;
 
 /**
@@ -94,7 +102,8 @@ import static com.codenvy.im.utils.Commons.toJson;
 @Api(value = "/im", description = "Installation manager")
 public class InstallationManagerService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerService.class.getSimpleName());
+    private static final Logger LOG            = LoggerFactory.getLogger(InstallationManagerService.class);
+    private static final String DOWNLOAD_TOKEN = UUID.randomUUID().toString();
 
     protected final InstallationManagerFacade delegate;
     protected final ConfigManager configManager;
@@ -107,39 +116,80 @@ public class InstallationManagerService {
         this.configManager = configManager;
     }
 
-    /** Starts downloading */
+    /**
+     * Starts downloading artifacts.
+     */
     @POST
-    @Path("download/start")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Starts downloading artifact from Update Server", notes = "Download all updates of installed artifacts.", response =
-            Response.class)
+    @Path("downloads")
+    @ApiOperation(value = "Starts downloading artifacts", response = DownloadToken.class)
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "OK"),
+                           @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
+                           @ApiResponse(code = 409, message = "Downloading already in progress"),
+                           @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response startDownload(
-            @QueryParam(value = "artifact") @ApiParam(value = "review all artifacts by default") String artifactName,
-            @QueryParam(value = "version") @ApiParam(value = "default version is the latest one at Update Server which is newer than installed one")
-            String artifactVersion) {
+            @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
+            @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
 
-        Request request = new Request().setArtifactName(artifactName)
-                                       .setVersion(artifactVersion);
+        try {
+            // DownloadManager has to support tokens
+            DownloadToken downloadToken = new DownloadToken();
+            downloadToken.setId(DOWNLOAD_TOKEN);
 
-        return handleInstallationManagerResponse(delegate.startDownload(request));
+            Artifact artifact = createArtifactOrNull(artifactName);
+            Version version = createVersionOrNull(versionNumber);
+
+            delegate.startDownload(artifact, version);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.ACCEPTED).entity(downloadToken).build();
+        } catch (ArtifactNotFoundException | IllegalVersionException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+        } catch (DownloadAlreadyStartedException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
-    /** Interrupts downloading */
-    @POST
-    @Path("download/stop")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Interrupts downloading artifact from Update Server", response = Response.class)
-    public javax.ws.rs.core.Response stopDownload() {
-        return handleInstallationManagerResponse(delegate.stopDownload());
+    /**
+     * Interrupts downloading.
+     */
+    @DELETE
+    @Path("downloads/{id}")
+    @ApiOperation(value = "Interrupts downloading")
+    @ApiResponses(value = {@ApiResponse(code = 204, message = "OK"),
+                           @ApiResponse(code = 404, message = "Downloading not found"),
+                           @ApiResponse(code = 409, message = "Downloading not in progress"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response stopDownload(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
+        try {
+            delegate.stopDownload();
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NO_CONTENT).build();
+        } catch (DownloadNotStartedException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
-    /** Gets already started download status */
+    /**
+     * Gets download progress.
+     */
     @GET
-    @Path("download/status")
-    @ApiOperation(value = "Gets already started download status", response = Response.class)
+    @Path("downloads/{id}")
+    @ApiOperation(value = "Gets download progress", response = DownloadProgressDescriptor.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
+                           @ApiResponse(code = 404, message = "Downloading not found"),
+                           @ApiResponse(code = 409, message = "Downloading not in progress"),
+                           @ApiResponse(code = 500, message = "Server error")})
     @Produces(MediaType.APPLICATION_JSON)
-    public javax.ws.rs.core.Response getDownloadStatus() {
-        return handleInstallationManagerResponse(delegate.getDownloadStatus());
+    public javax.ws.rs.core.Response getDownloadProgress(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
+        try {
+            DownloadProgressDescriptor downloadProgress = delegate.getDownloadProgress();
+            return javax.ws.rs.core.Response.ok(downloadProgress).build();
+        } catch (DownloadNotStartedException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     /** Get the list of actual updates from Update Server */
@@ -153,7 +203,7 @@ public class InstallationManagerService {
 
     /** Gets the list of downloaded artifacts" */
     @GET
-    @Path("download")
+    @Path("downloads")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
     public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") @ApiParam(value = "default is all artifacts") String artifactName) {
@@ -244,6 +294,11 @@ public class InstallationManagerService {
         try {
             InstallType installType = configManager.detectInstallationType();
             Config config = configManager.loadInstalledCodenvyConfig(installType);
+
+            if (InstallType.SINGLE_SERVER.equals(installType)) {
+                ImmutableMap<String, String> properties = ImmutableMap.of(Config.HOST_URL, config.getHostUrl());
+                return javax.ws.rs.core.Response.ok(toJson(properties)).build();
+            }
 
             Map<String, Object> selectedProperties = new HashMap<>();
 
@@ -444,7 +499,7 @@ public class InstallationManagerService {
             }
 
             return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
-        } catch (IOException | ParseException e) {
+        } catch (Exception e) {
             return handleException(e);
         }
     }
@@ -553,19 +608,24 @@ public class InstallationManagerService {
     }
 
     private javax.ws.rs.core.Response handleException(Exception e) {
-        LOG.error(e.getMessage(), e);
-
         javax.ws.rs.core.Response.Status status;
 
         if (e instanceof ArtifactNotFoundException || e instanceof PropertyNotFoundException) {
             status = javax.ws.rs.core.Response.Status.NOT_FOUND;
         } else if (e instanceof HttpException) {
             status = javax.ws.rs.core.Response.Status.fromStatusCode(((HttpException)e).getStatus());
-        } else if (e instanceof AuthenticationException) {
+        } else if (e instanceof AuthenticationException
+                   || e instanceof IllegalVersionException) {
             status = javax.ws.rs.core.Response.Status.BAD_REQUEST;
         } else {
             status = javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
         }
+
+        return handleException(e, status);
+    }
+
+    private javax.ws.rs.core.Response handleException(Exception e, javax.ws.rs.core.Response.Status status) {
+        LOG.error(e.getMessage(), e);
 
         JsonStringMapImpl<String> msgBody = new JsonStringMapImpl<>(ImmutableMap.of("message", e.getMessage()));
         return javax.ws.rs.core.Response.status(status)
@@ -581,11 +641,9 @@ public class InstallationManagerService {
         DateFormat dfInitial = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date initialDateTime = dfInitial.parse(humanReadableDateTime);
 
-
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'");
-        String iso8601formattedDate = df.format(initialDateTime);
 
-        return iso8601formattedDate;
+        return df.format(initialDateTime);
     }
 
     protected Artifact getArtifact(String artifactName) throws ArtifactNotFoundException {

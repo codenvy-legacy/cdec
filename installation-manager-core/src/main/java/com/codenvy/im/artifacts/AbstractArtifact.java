@@ -25,25 +25,14 @@ import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
-import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.Commons.asMap;
-import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Version.valueOf;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isDirectory;
-import static java.nio.file.Files.newDirectoryStream;
 
 /**
  * @author Anatoliy Bazko
@@ -136,42 +125,6 @@ public abstract class AbstractArtifact implements Artifact {
         } else {
             return null;
         }
-    }
-
-    /** @return the list of downloaded list */
-    @Override
-    public SortedMap<Version, Path> getDownloadedVersions(Path downloadDir) throws IOException {
-        SortedMap<Version, Path> versions = new TreeMap<>(new Version.ReverseOrder());
-
-        Path artifactDir = downloadDir.resolve(getName());
-
-        if (exists(artifactDir)) {
-            try (DirectoryStream<Path> paths = newDirectoryStream(artifactDir)) {
-                Iterator<Path> pathIterator = paths.iterator();
-
-                while (pathIterator.hasNext()) {
-                    try {
-                        Path versionDir = pathIterator.next();
-                        if (isDirectory(versionDir)) {
-                            Version version = valueOf(versionDir.getFileName().toString());
-
-                            Map properties = getProperties(version);
-                            String md5sum = properties.get(MD5_PROPERTY).toString();
-                            String fileName = properties.get(FILE_NAME_PROPERTY).toString();
-
-                            Path file = versionDir.resolve(fileName);
-                            if (exists(file) && md5sum.equals(calculateMD5Sum(file))) {
-                                versions.put(version, file);
-                            }
-                        }
-                    } catch (IllegalArgumentException e) {
-                        // maybe it isn't a version directory
-                    }
-                }
-            }
-        }
-
-        return versions;
     }
 
     protected Map getLatestVersionProperties(String updateEndpoint, HttpTransport transport) throws IOException {

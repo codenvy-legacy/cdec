@@ -39,7 +39,6 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 
@@ -58,7 +57,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.doNothing;
@@ -116,6 +114,29 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       installManager,
                                                                       downloadManager));
         testCredentials = new SaasUserCredentials("auth token");
+    }
+
+    @Test
+    public void testStartDownload() throws Exception {
+        Version version = Version.valueOf("1.0.1");
+
+        installationManagerFacade.startDownload(cdecArtifact, version);
+
+        verify(downloadManager).startDownload(cdecArtifact, version);
+    }
+
+    @Test
+    public void testStopDownload() throws Exception {
+        installationManagerFacade.stopDownload();
+
+        verify(downloadManager).stopDownload();
+    }
+
+    @Test
+    public void testGetDownloadStatus() throws Exception {
+        installationManagerFacade.getDownloadProgress();
+
+        verify(downloadManager).getDownloadProgress();
     }
 
     @Test

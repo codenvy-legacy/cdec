@@ -27,9 +27,9 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.Status;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -340,7 +340,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testListInstalledArtifacts() throws Exception {
         Response response = new Response().setStatus(ResponseCode.OK).addArtifact(new ArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                                    Version.valueOf("1.0.1"),
-                                                                                                   Status.SUCCESS));
+                                                                                                   ArtifactStatus.SUCCESS));
         doReturn(response).when(facade).getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

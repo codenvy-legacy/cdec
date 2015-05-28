@@ -25,7 +25,6 @@ import com.google.inject.Singleton;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.ApiException;
 
 import javax.inject.Named;
 import java.io.IOException;
@@ -54,10 +53,10 @@ public class SaasAuthServiceProxy {
      *
      * @throws org.eclipse.che.api.auth.AuthenticationException
      *         if login fails
-     * @throws org.eclipse.che.api.core.ApiException
+     * @throws IOException
      *         if unexpected error occurred
      */
-    public Token login(Credentials credentials) throws ApiException {
+    public Token login(Credentials credentials) throws AuthenticationException, IOException {
         String requestUrl = combinePaths(saasApiEndpoint, "/auth/login");
 
         String response;
@@ -65,8 +64,6 @@ public class SaasAuthServiceProxy {
             response = transport.doPost(requestUrl, credentials);
         } catch (HttpException e) {
             throw new AuthenticationException();
-        } catch (IOException e) {
-            throw new ApiException(e);
         }
 
         return createDtoFromJson(response, Token.class);

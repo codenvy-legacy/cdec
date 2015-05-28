@@ -17,9 +17,9 @@
  */
 package com.codenvy.im.artifacts;
 
+import com.codenvy.im.BaseTest;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
-import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.HttpTransport;
@@ -34,18 +34,14 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -55,12 +51,11 @@ import static org.testng.Assert.assertTrue;
 
 
 /** @author Dmytro Nochevnov */
-public class TestAbstractArtifact {
+public class TestAbstractArtifact extends BaseTest {
     private AbstractArtifact spyTestArtifact;
 
     private static final String  UPDATE_ENDPOINT     = "update/endpoint";
     private static final String  TEST_ARTIFACT_NAME  = "test_artifact_name";
-    private static final String  TEST_TOKEN          = "auth token";
     private static final String  TEST_VERSION_STRING = "1.0.0";
     private static final Version TEST_VERSION        = Version.valueOf(TEST_VERSION_STRING);
 
@@ -73,7 +68,7 @@ public class TestAbstractArtifact {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, mockTransport, "", configManager));
+        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, UPDATE_API_ENDPOINT, mockTransport, configManager));
     }
 
     @AfterMethod
@@ -172,44 +167,10 @@ public class TestAbstractArtifact {
         assertNull(version);
     }
 
-    @Test
-    public void testGetDownloadedVersions() throws IOException {
-        doReturn("{\"file\":\"file1\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(mockTransport)
-                                                                                      .doGet(endsWith(TEST_ARTIFACT_NAME + "/1.0.1"));
-        doReturn("{\"file\":\"file2\", \"md5\":\"d41d8cd98f00b204e9800998ecf8427e\"}").when(mockTransport)
-                                                                                      .doGet(endsWith(TEST_ARTIFACT_NAME + "/1.0.2"));
-
-        Path file1 = Paths.get("target", "download", spyTestArtifact.getName(), "1.0.1", "file1");
-        Path file2 = Paths.get("target", "download", spyTestArtifact.getName(), "1.0.2", "file2");
-        Files.createDirectories(file1.getParent());
-        Files.createDirectories(file2.getParent());
-        Files.createFile(file1);
-        Files.createFile(file2);
-
-        SortedMap<Version, Path> versions = spyTestArtifact.getDownloadedVersions(Paths.get("target/download")
-                                                                                 );
-        assertEquals(versions.size(), 2);
-        assertEquals(versions.toString(), "{1.0.2=target/download/" + TEST_ARTIFACT_NAME + "/1.0.2/file2, " +
-                                          "1.0.1=target/download/" + TEST_ARTIFACT_NAME + "/1.0.1/file1" +
-                                          "}");
-    }
-
-
-    @Test(expectedExceptions = ArtifactNotFoundException.class,
-            expectedExceptionsMessageRegExp = "Artifact 'test_artifact_name' not found")
-    public void testGetDownloadedVersionsWhenPropertiesAbsent() throws Exception {
-        Path file1 = Paths.get("target", "download", spyTestArtifact.getName(), "1.0.1", "file1");
-        Files.createDirectories(file1.getParent());
-        Files.createFile(file1);
-
-        doThrow(new ArtifactNotFoundException(spyTestArtifact)).when(spyTestArtifact)
-                                                               .getProperties(any(Version.class));
-
-        spyTestArtifact.getDownloadedVersions(Paths.get("target/download"));
-    }
-
     private static class TestedAbstractArtifact extends AbstractArtifact {
-        public TestedAbstractArtifact(String name, HttpTransport transport, String updateEndpoint, ConfigManager configManager) {
+        public TestedAbstractArtifact(String name,
+                                      String updateEndpoint, HttpTransport transport,
+                                      ConfigManager configManager) {
             super(name, updateEndpoint, transport, configManager);
         }
 

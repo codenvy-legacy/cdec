@@ -15,24 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.artifacts;
+package com.codenvy.im.utils;
 
-import javax.annotation.Nonnull;
+import static java.lang.String.format;
 
-import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
-
-/** @author Anatoliy Bazko */
-public class ArtifactFactory {
-
-    /** Artifact factory. */
-    public static Artifact createArtifact(@Nonnull String name) throws ArtifactNotFoundException {
-        switch (name) {
-            case CDECArtifact.NAME:
-                return INJECTOR.getInstance(CDECArtifact.class);
-            case InstallManagerArtifact.NAME:
-                return INJECTOR.getInstance(InstallManagerArtifact.class);
-        }
-
-        throw ArtifactNotFoundException.from(name);
+/**
+ * @author Anatoliy Bazko
+ */
+public class IllegalVersionException extends RuntimeException {
+    public IllegalVersionException(String version) {
+        super(format("Illegal version '%s'", version));
     }
 }

@@ -19,7 +19,6 @@ package com.codenvy.im.artifacts;
 
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
-import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.Version;
 
@@ -28,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 /**
  * @author Anatoliy Bazko
@@ -69,9 +67,6 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return version at the update server which is could be used to update already installed version */
     @Nullable
     Version getLatestInstallableVersion() throws IOException;
-
-    /** @return the list of downloaded versions */
-    SortedMap<Version, Path> getDownloadedVersions(Path downloadDir) throws IOException;
 
     /** @return command to collect backup data at the certain backup directory */
     Command getBackupCommand(BackupConfig backupConfig) throws IOException;

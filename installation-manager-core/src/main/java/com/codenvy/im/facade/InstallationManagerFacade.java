@@ -21,7 +21,9 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadManager;
+import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.NodeConfig;
@@ -30,12 +32,12 @@ import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadStatusInfo;
+import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.Status;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.utils.Commons;
@@ -47,9 +49,9 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
+import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.ApiException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -59,13 +61,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -73,8 +72,6 @@ import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.size;
 
 /**
  * @author Dmytro Nochevnov
@@ -96,8 +93,6 @@ public class InstallationManagerFacade {
 
     private final String updateServerEndpoint;
     private final Path downloadDir;
-
-    private DownloadDescriptor downloadDescriptor;
 
     @Inject
     public InstallationManagerFacade(@Named("installation-manager.download_dir") String downloadDir,
@@ -126,6 +121,28 @@ public class InstallationManagerFacade {
 
     public String getUpdateServerEndpoint() {
         return updateServerEndpoint;
+    }
+
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#startDownload(com.codenvy.im.artifacts.Artifact, com.codenvy.im.utils.Version)
+     */
+    public void startDownload(@Nullable Artifact artifact, @Nullable Version version)
+            throws InterruptedException, DownloadAlreadyStartedException, IOException {
+        downloadManager.startDownload(artifact, version);
+    }
+
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#stopDownload()
+     */
+    public void stopDownload() throws DownloadNotStartedException, InterruptedException {
+        downloadManager.stopDownload();
+    }
+
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#getDownloadProgress()
+     */
+    public DownloadProgressDescriptor getDownloadProgress() throws DownloadNotStartedException, IOException {
+        return downloadManager.getDownloadProgress();
     }
 
     /** Adds trial subscription for user being logged in */
@@ -173,141 +190,6 @@ public class InstallationManagerFacade {
     }
 
 
-    /** Starts downloading */
-    public String startDownload(@Nonnull final Request request) {
-        try {
-            downloadManager.checkIfConnectionIsAvailable();
-
-            final CountDownLatch latcher = new CountDownLatch(1);
-
-            Thread downloadThread = new Thread("download thread") {
-                public void run() {
-                    download(request, latcher, this);
-                }
-            };
-            downloadThread.setDaemon(true);
-            downloadThread.start();
-
-            latcher.await();
-
-            return new Response().setStatus(ResponseCode.OK).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
-    }
-
-    private void download(Request request,
-                          CountDownLatch latcher,
-                          Thread currentThread) {
-
-        downloadDescriptor = null;
-        List<ArtifactInfo> infos = null;
-        try {
-            Map<Artifact, Version> updatesToDownload = downloadManager.getUpdatesToDownload(request.createArtifact(), request.createVersion());
-
-            infos = new ArrayList<>(updatesToDownload.size());
-
-            downloadDescriptor = DownloadDescriptor.createDescriptor(updatesToDownload, downloadManager, currentThread);
-            downloadManager.checkEnoughDiskSpace(downloadDescriptor.getTotalSize());
-
-            latcher.countDown();
-
-            for (Map.Entry<Artifact, Version> e : updatesToDownload.entrySet()) {
-                Artifact artToDownload = e.getKey();
-                Version verToDownload = e.getValue();
-
-                try {
-                    Path pathToBinaries = doDownload(artToDownload, verToDownload);
-                    infos.add(new ArtifactInfo(artToDownload, verToDownload, pathToBinaries, Status.SUCCESS));
-                } catch (Exception exp) {
-                    LOG.log(Level.SEVERE, exp.getMessage(), exp);
-                    infos.add(new ArtifactInfo(artToDownload, verToDownload, Status.FAILURE));
-                    downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
-                                                                       .setMessage(exp.getMessage())
-                                                                       .setArtifacts(infos));
-                    return;
-                }
-            }
-
-            downloadDescriptor.setDownloadResult(new Response().setStatus(ResponseCode.OK).setArtifacts(infos));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-
-            if (downloadDescriptor == null) {
-                downloadDescriptor = new DownloadDescriptor(Collections.<Path, Long>emptyMap(), currentThread);
-                downloadDescriptor.setDownloadResult(Response.error(e));
-            } else {
-                downloadDescriptor.setDownloadResult(new Response().setStatus(ERROR)
-                                                                   .setMessage(e.getMessage())
-                                                                   .setArtifacts(infos));
-            }
-
-            if (latcher.getCount() == 1) {
-                latcher.countDown();
-            }
-        }
-    }
-
-    protected Path doDownload(Artifact artifact, Version version) throws IOException, IllegalStateException {
-        return downloadManager.download(artifact, version);
-    }
-
-    /** @return the current status of downloading process */
-    public String getDownloadStatus() {
-        try {
-            if (downloadDescriptor == null) {
-                return new Response().setStatus(ERROR).setMessage("Can't get downloading descriptor ID").toJson();
-            }
-
-            Response downloadResult = downloadDescriptor.getDownloadResult();
-            if ((downloadResult != null) && (downloadResult.getStatus() == ResponseCode.ERROR)) {
-                DownloadStatusInfo info = new DownloadStatusInfo(Status.FAILURE, 0, downloadResult);
-                return new Response().setStatus(ResponseCode.ERROR).setDownloadInfo(info).toJson();
-            }
-
-            long downloadedSize = getDownloadedSize(downloadDescriptor);
-            int percents = (int)Math.round((downloadedSize * 100D / downloadDescriptor.getTotalSize()));
-
-            if (downloadDescriptor.isDownloadingFinished()) {
-                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADED, percents, downloadResult);
-                return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
-            } else {
-                DownloadStatusInfo info = new DownloadStatusInfo(Status.DOWNLOADING, percents);
-                return new Response().setStatus(ResponseCode.OK).setDownloadInfo(info).toJson();
-            }
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
-    }
-
-    // @return the size of downloaded artifacts
-    private long getDownloadedSize(DownloadDescriptor descriptor) throws IOException {
-        long downloadedSize = 0;
-        for (Path path : descriptor.getArtifactPaths()) {
-            if (exists(path)) {
-                downloadedSize += size(path);
-            }
-        }
-        return downloadedSize;
-    }
-
-    /** Interrupts downloading */
-    public String stopDownload() {
-        try {
-            if (downloadDescriptor == null) {
-                return new Response().setStatus(ERROR).setMessage("Can't get downloading descriptor ID").toJson();
-            }
-
-            downloadDescriptor.getDownloadThread().interrupt();
-            return new Response().setStatus(ResponseCode.OK).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
-    }
-
     /** @return the list of downloaded artifacts */
     public String getDownloads(@Nonnull Request request) {
         try {
@@ -351,7 +233,7 @@ public class InstallationManagerFacade {
         for (Map.Entry<Version, Path> e : downloadedVersions.entrySet()) {
             Version version = e.getKey();
             Path pathToBinaries = e.getValue();
-            Status status = installManager.isInstallable(artifact, version) ? Status.READY_TO_INSTALL : Status.DOWNLOADED;
+            ArtifactStatus status = installManager.isInstallable(artifact, version) ? ArtifactStatus.READY_TO_INSTALL : ArtifactStatus.DOWNLOADED;
 
             info.add(new ArtifactInfo(artifact, version, pathToBinaries, status));
         }
@@ -369,7 +251,7 @@ public class InstallationManagerFacade {
                 Version version = e.getValue();
 
                 if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
-                    infos.add(new ArtifactInfo(artifact, version, Status.DOWNLOADED));
+                    infos.add(new ArtifactInfo(artifact, version, ArtifactStatus.DOWNLOADED));
                 } else {
                     infos.add(new ArtifactInfo(artifact, version));
                 }
@@ -410,11 +292,11 @@ public class InstallationManagerFacade {
 
             try {
                 install(request.createArtifact(), version, installOptions);
-                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.SUCCESS);
+                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, ArtifactStatus.SUCCESS);
                 return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, e.getMessage(), e);
-                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, Status.FAILURE);
+                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, ArtifactStatus.FAILURE);
                 return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
             }
         } catch (Exception e) {
@@ -554,7 +436,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.saas.SaasAuthServiceProxy#login(org.eclipse.che.api.auth.shared.dto.Credentials)
      */
-    public Token loginToCodenvySaaS(@Nonnull Credentials credentials) throws ApiException {
+    public Token loginToCodenvySaaS(@Nonnull Credentials credentials) throws IOException, AuthenticationException {
         return saasAuthServiceProxy.login(credentials);
     }
 

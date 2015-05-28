@@ -18,9 +18,10 @@
 package com.codenvy.im.response;
 
 import com.codenvy.im.artifacts.CDECArtifact;
+
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
 public class TestBackupInfo {
@@ -32,10 +33,10 @@ public class TestBackupInfo {
 
         BackupInfo info = new BackupInfo().setArtifactInfo(artifactInfo)
                                           .setFile(testFile)
-                                          .setStatus(Status.SUCCESS);
+                                          .setStatus(ArtifactStatus.SUCCESS);
 
         assertEquals(info.getArtifactInfo(), artifactInfo);
         assertEquals(info.getFile(), testFile);
-        assertEquals(info.getStatus(), Status.SUCCESS);
+        assertEquals(info.getStatus(), ArtifactStatus.SUCCESS);
     }
 }

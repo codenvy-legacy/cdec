@@ -15,23 +15,34 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
+
 package com.codenvy.im.response;
+
+import com.codenvy.im.utils.Commons;
 
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
+
 
 /**
  * @author Anatoliy Bazko
  */
-public class TestDownloadStatusInfo {
+public class DownloadArtifactDescriptorTest {
 
     @Test
-    public void testValueOf() throws Exception {
-        DownloadStatusInfo expectedInfo = new DownloadStatusInfo(Status.SUCCESS, 100, new Response().setMessage("result"));
-        String json = new Response().setStatus(ResponseCode.OK).setDownloadInfo(expectedInfo).toJson();
+    public void test() throws Exception {
+        DownloadArtifactDescriptor expectedDescriptor = new DownloadArtifactDescriptor();
+        expectedDescriptor.setVersion("1.0.1");
+        expectedDescriptor.setArtifact("codenvy");
+        expectedDescriptor.setFile("file");
+        expectedDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
 
-        Response response = Response.fromJson(json);
-        assertEquals(response.getDownloadInfo(), expectedInfo);
+
+        String json = Commons.toJson(expectedDescriptor);
+
+        DownloadArtifactDescriptor actualDescriptor = Commons.fromJson(json, DownloadArtifactDescriptor.class);
+
+        assertEquals(actualDescriptor, expectedDescriptor);
     }
 }

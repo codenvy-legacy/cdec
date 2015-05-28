@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.DtoFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,6 +52,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Version.valueOf;
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.exists;
@@ -275,6 +277,26 @@ public class Commons {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    /**
+     * Safety artifact creation.
+     *
+     * @throws ArtifactNotFoundException
+     */
+    @Nullable
+    public static Artifact createArtifactOrNull(String artifactName) throws ArtifactNotFoundException {
+        return artifactName == null ? null : createArtifact(artifactName);
+    }
+
+    /**
+     * Safety version creation.
+     *
+     * @throws com.codenvy.im.utils.IllegalVersionException
+     */
+    @Nullable
+    public static Version createVersionOrNull(String versionNumber) throws IllegalVersionException {
+        return versionNumber == null ? null : Version.valueOf(versionNumber);
     }
 
     private static class JsonUtils {

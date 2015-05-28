@@ -30,7 +30,7 @@ public class TestNodeInfo {
 
     private static final String              TEST_HOST   = "host";
     private static final NodeConfig.NodeType TEST_TYPE   = NodeConfig.NodeType.RUNNER;
-    private static final Status              TEST_STATUS = Status.SUCCESS;
+    private static final ArtifactStatus TEST_STATUS = ArtifactStatus.SUCCESS;
 
     @Test
     public void testConstructor() throws Exception {
@@ -63,6 +63,6 @@ public class TestNodeInfo {
         NodeInfo info = NodeInfo.createSuccessInfo(new NodeConfig(TEST_TYPE, TEST_HOST, null));
         assertEquals(info.getType(), TEST_TYPE);
         assertEquals(info.getHost(), TEST_HOST);
-        assertEquals(info.getStatus(), Status.SUCCESS);
+        assertEquals(info.getStatus(), ArtifactStatus.SUCCESS);
     }
 }

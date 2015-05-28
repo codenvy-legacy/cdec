@@ -17,9 +17,11 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.response.DownloadProgressDescriptor;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -28,8 +30,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -48,33 +51,6 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                               "  \"status\" : \"OK\"\n" +
                                               "}";
 
-    private String ok100DownloadStatusResponse = "{\n" +
-                                                 "  \"downloadInfo\" : {\n" +
-                                                 "     \"downloadResult\" : {\n" +
-                                                 "       \"artifacts\" :[ {\n" +
-                                                 "         \"artifact\" :\"codenvy\",\n" +
-                                                 "         \"version\" : \"3.0.0\",\n" +
-                                                 "         \"file\" :\"/home/codenvy-shared/updates/codenvy/3.0.0/codenvy-3.0.0.zip\",\n" +
-                                                 "         \"status\" :\"SUCCESS\"\n" +
-                                                 "       } ],\n" +
-                                                 "       \"status\" :\"OK\"\n" +
-                                                 "    },\n" +
-                                                 "    \"percents\" : 100,\n" +
-                                                 "    \"status\" : \"DOWNLOADED\"\n" +
-                                                 "  },\n" +
-                                                 "  \"status\" : \"OK\"\n" +
-                                                 "}";
-
-    private String ok100DownloadCommandResponse = "{\n" +
-                                                  "  \"artifacts\" : [ {\n" +
-                                                  "    \"artifact\" : \"codenvy\",\n" +
-                                                  "    \"version\" : \"3.0.0\",\n" +
-                                                  "    \"file\" : \"/home/codenvy-shared/updates/codenvy/3.0.0/codenvy-3.0.0.zip\",\n" +
-                                                  "    \"status\" : \"SUCCESS\"\n" +
-                                                  "  } ],\n" +
-                                                  "  \"status\" : \"OK\"\n" +
-                                                  "}";
-
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
@@ -87,87 +63,39 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testDownload() throws Exception {
-        Request request = new Request();
-        doReturn(okResponse).when(service).startDownload(request);
-        doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
+        doNothing().when(service).startDownload(null, null);
+        doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
+                                                100,
+                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n"
-                             + ok100DownloadCommandResponse + "\n");
-    }
-
-    @Test
-    public void testDownloadArtifact() throws Exception {
-        Request request = new Request().setArtifactName(CDECArtifact.NAME);
-        doReturn(okResponse).when(service).startDownload(request);
-        doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             ok100DownloadCommandResponse + "\n");
+                             "{\n" +
+                             "  \"artifacts\" : [ ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
-    @Test
-    public void testDownloadArtifactVersion() throws Exception {
-        Request request = new Request().setArtifactName(CDECArtifact.NAME).setVersion("3.0.0");
-        doReturn(okResponse).when(service).startDownload(request);
-        doReturn(ok100DownloadStatusResponse).when(service).getDownloadStatus();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
-        commandInvoker.argument("version", "3.0.0");
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             ok100DownloadCommandResponse + "\n");
-    }
 
     @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
-        String downloadStatusResponse = "{\n" +
-                                        "  \"downloadInfo\" : {\n" +
-                                        "    \"downloadResult\" : {\n" +
-                                        "      \"artifacts\" : [ {\n" +
-                                        "        \"artifact\" :\"codenvy\",\n" +
-                                        "        \"version\" :\"3.0.0\",\n" +
-                                        "        \"status\" :\"FAILURE\"\n" +
-                                        "      } ],\n" +
-                                        "      \"message\" :\"There is no any version of artifact 'codenvy'\"," +
-                                        "      \"status\" :\"ERROR\"" +
-                                        "    },\n" +
-                                        "    \"percents\" : 0,\n" +
-                                        "    \"status\" : \"FAILURE\"\n" +
-                                        "  },\n" +
-                                        "  \"status\" : \"OK\"\n" +
-                                        "}";
-
-        String serviceErrorResponse = "{\n" +
-                                      "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"codenvy\",\n" +
-                                      "    \"version\" : \"3.0.0\",\n" +
-                                      "    \"status\" : \"FAILURE\"\n" +
-                                      "  } ],\n" +
-                                      "  \"message\" : \"There is no any version of artifact 'codenvy'\",\n" +
-                                      "  \"status\" : \"ERROR\"\n" +
-                                      "}";
-        Request request = new Request();
-        doReturn(okResponse).when(service).startDownload(request);
-        doReturn(downloadStatusResponse).when(service).getDownloadStatus();
+        doNothing().when(service).startDownload(null, null);
+        doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED,
+                                                0,
+                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" +
-                             serviceErrorResponse + "\n");
+                             "{\n" +
+                             "  \"artifacts\" : [ ],\n" +
+                             "  \"status\" : \"ERROR\"\n" +
+                             "}\n");
     }
 
     @Test
@@ -176,8 +104,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new RuntimeException("Server Error Exception"))
-                .when(service).startDownload(any(Request.class));
+        doThrow(new RuntimeException("Server Error Exception")).when(service).startDownload(null, null);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -188,7 +115,6 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdates() throws Exception {
-        Request request = new Request();
         doReturn(okResponse).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -205,7 +131,6 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                       + "\"message\": \"Some error\","
                                       + "\"status\": \"ERROR\""
                                       + "}";
-        Request request = new Request();
         doReturn(serviceErrorResponse).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

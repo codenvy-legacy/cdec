@@ -28,7 +28,7 @@ import java.nio.file.Path;
 public class ArtifactInfo {
     private String         artifact;
     private String         version;
-    private Status         status;
+    private ArtifactStatus status;
     private String         file;
 
     public ArtifactInfo() {
@@ -38,15 +38,15 @@ public class ArtifactInfo {
         this(artifact.getName(), version.toString(), null, null);
     }
 
-    public ArtifactInfo(Artifact artifact, Version version, Status status) {
+    public ArtifactInfo(Artifact artifact, Version version, ArtifactStatus status) {
         this(artifact.getName(), version.toString(), null, status);
     }
 
-    public ArtifactInfo(Artifact artifact, Version version, Path file, Status status) {
+    public ArtifactInfo(Artifact artifact, Version version, Path file, ArtifactStatus status) {
         this(artifact.getName(), version.toString(), file.toString(), status);
     }
 
-    private ArtifactInfo(String artifact, String version, String file, Status status) {
+    private ArtifactInfo(String artifact, String version, String file, ArtifactStatus status) {
         this.artifact = artifact;
         this.version = version;
         this.file = file;
@@ -71,11 +71,11 @@ public class ArtifactInfo {
         return this;
     }
 
-    public Status getStatus() {
+    public ArtifactStatus getStatus() {
         return status;
     }
 
-    public ArtifactInfo setStatus(Status status) {
+    public ArtifactInfo setStatus(ArtifactStatus status) {
         this.status = status;
         return this;
     }
