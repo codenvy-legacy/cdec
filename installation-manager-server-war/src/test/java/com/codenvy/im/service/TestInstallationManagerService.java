@@ -28,13 +28,12 @@ import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.response.DownloadArtifactDescriptor;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -82,13 +81,16 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstallationManagerService extends BaseTest {
 
-    public static final String CODENVY_ARTIFACT_NAME = "codenvy";
-    public static final String TEST_VERSION          = "1.0.0";
-    public static final String TEST_ACCESS_TOKEN     = "accessToken";
-    public static final String TEST_ACCOUNT_ID       = "accountId";
-    public static final String TEST_ACCOUNT_NAME     = "account";
-    public static final String TEST_USER_NAME        = "user";
-    public static final String TEST_USER_PASSWORD    = "password";
+    public static final String ARTIFACT_NAME      = "codenvy";
+    public static final String VERSION_NUMBER     = "1.0.0";
+    public static final String TEST_ACCESS_TOKEN  = "accessToken";
+    public static final String TEST_ACCOUNT_ID    = "accountId";
+    public static final String TEST_ACCOUNT_NAME  = "account";
+    public static final String TEST_USER_NAME     = "user";
+    public static final String TEST_USER_PASSWORD = "password";
+
+    public Version  version;
+    public Artifact artifact;
 
     public static final String TEST_SYSTEM_ADMIN_NAME = "admin";
 
@@ -122,39 +124,76 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
         doReturn(mockArtifact).when(service).getArtifact(anyString());
+
+        artifact = ArtifactFactory.createArtifact(ARTIFACT_NAME);
+        version = Version.valueOf(VERSION_NUMBER);
     }
 
     @Test
     public void testStartDownload() throws Exception {
-        doNothing().when(mockFacade).startDownload(any(Artifact.class), any(Version.class));
-        Response result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
-        assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        Response result = service.startDownload(ARTIFACT_NAME, VERSION_NUMBER);
 
-        doThrow(new IOException("error")).when(mockFacade).startDownload(any(Artifact.class), any(Version.class));
-        result = service.startDownload(CODENVY_ARTIFACT_NAME, TEST_VERSION);
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        assertTrue(result.getEntity() instanceof DownloadToken);
+        assertNotNull(((DownloadToken)result.getEntity()).getId());
+        verify(mockFacade).startDownload(ArtifactFactory.createArtifact("codenvy"), version);
+    }
+
+    @Test
+    public void testStartDownloadShouldReturnBadRequestIfArtifactInvalid() throws Exception {
+        Response result = service.startDownload("no_name", null);
+        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testStartDownloadShouldReturnBadRequestIfVersionInvalid() throws Exception {
+        Response result = service.startDownload(ARTIFACT_NAME, "1");
+        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testStartDownloadShouldReturnConflictWhenDownloadStarted() throws Exception {
+        doThrow(new DownloadAlreadyStartedException()).when(mockFacade).startDownload(artifact, version);
+
+        Response result = service.startDownload(ARTIFACT_NAME, VERSION_NUMBER);
+
+        assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
+        verify(mockFacade).startDownload(artifact, version);
     }
 
     @Test
     public void testStopDownload() throws Exception {
-        doNothing().when(mockFacade).stopDownload();
-        Response result = service.stopDownload();
+        Response result = service.stopDownload("id");
         assertEquals(result.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+    }
 
+    @Test
+    public void testStopDownloadShouldReturnConflictWhenDownloadNotStarted() throws Exception {
         doThrow(new DownloadNotStartedException()).when(mockFacade).stopDownload();
-        result = service.stopDownload();
+
+        Response result = service.stopDownload("id");
+
         assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
     @Test
-    public void testGetDownloadStatus() throws Exception {
-        doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
-                                                100,
-                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(mockFacade).getDownloadProgress();
+    public void testGetDownloadProgress() throws Exception {
+        DownloadProgressDescriptor progressDescriptor = new DownloadProgressDescriptor();
+        doReturn(progressDescriptor).when(mockFacade).getDownloadProgress();
 
-        Response result = service.getDownloadProgress();
+        Response result = service.getDownloadProgress("id");
 
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(result.getEntity(), progressDescriptor);
+    }
+
+    @Test
+    public void testGetDownloadProgressShouldReturnConflictWhenDownloadNotStarted() throws Exception {
+        doThrow(new DownloadNotStartedException()).when(mockFacade).getDownloadProgress();
+
+        Response result = service.getDownloadProgress("id");
+
+        assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
     @Test
@@ -170,14 +209,14 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetDownloads() throws Exception {
-        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME);
+        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        Response result = service.getDownloads(CODENVY_ARTIFACT_NAME);
+        Response result = service.getDownloads(ARTIFACT_NAME);
         assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        result = service.getDownloads(CODENVY_ARTIFACT_NAME);
+        result = service.getDownloads(ARTIFACT_NAME);
         assertErrorResponse(result);
     }
 
@@ -203,7 +242,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(testConfigProperties).when(configManager).prepareInstallProperties(null,
                                                                                     InstallType.SINGLE_SERVER,
-                                                                                    ArtifactFactory.createArtifact(CODENVY_ARTIFACT_NAME),
+                                                                                    ArtifactFactory.createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"));
 
         int testStep = 1;
@@ -211,7 +250,7 @@ public class TestInstallationManagerService extends BaseTest {
                                                                 .setConfigProperties(testConfigProperties)
                                                                 .setStep(testStep);
 
-        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
+        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME)
                                            .setVersion("3.1.0")
                                            .setInstallOptions(testInstallOptions);
 
@@ -233,7 +272,7 @@ public class TestInstallationManagerService extends BaseTest {
                                                                 .setConfigProperties(new HashMap<String, String>())
                                                                 .setStep(testStep);
 
-        Request testRequest = new Request().setArtifactName(CODENVY_ARTIFACT_NAME)
+        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME)
                                            .setInstallOptions(testInstallOptions);
 
         doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
@@ -291,30 +330,30 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testBackup() throws Exception {
         String testBackupDirectoryPath = "test/path";
-        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CODENVY_ARTIFACT_NAME)
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(ARTIFACT_NAME)
                                                           .setBackupDirectory(testBackupDirectoryPath);
 
         doReturn(mockFacadeOkResponse).when(mockFacade).backup(testBackupConfig);
-        Response result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
+        Response result = service.backup(ARTIFACT_NAME, testBackupDirectoryPath);
         assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse).when(mockFacade).backup(testBackupConfig);
-        result = service.backup(CODENVY_ARTIFACT_NAME, testBackupDirectoryPath);
+        result = service.backup(ARTIFACT_NAME, testBackupDirectoryPath);
         assertErrorResponse(result);
     }
 
     @Test
     public void testRestore() throws Exception {
         String testBackupFilePath = "test/path/backup";
-        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CODENVY_ARTIFACT_NAME)
+        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(ARTIFACT_NAME)
                                                           .setBackupFile(testBackupFilePath);
 
         doReturn(mockFacadeOkResponse).when(mockFacade).restore(testBackupConfig);
-        Response result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
+        Response result = service.restore(ARTIFACT_NAME, testBackupFilePath);
         assertOkResponse(result);
 
         doReturn(mockFacadeErrorResponse).when(mockFacade).restore(testBackupConfig);
-        result = service.restore(CODENVY_ARTIFACT_NAME, testBackupFilePath);
+        result = service.restore(ARTIFACT_NAME, testBackupFilePath);
         assertErrorResponse(result);
     }
 
