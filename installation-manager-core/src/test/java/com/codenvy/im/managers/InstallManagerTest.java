@@ -77,58 +77,54 @@ public class InstallManagerTest extends BaseTest {
 
     @Test
     public void testGetInstallInfo() throws Exception {
-        Version version = Version.valueOf("1.0.0");
+        prepareSingleNodeEnv(configManager);
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         doReturn(null).when(artifact).getInstalledVersion();
 
-        List<String> info = installManager.getInstallInfo(artifact, version, options);
+        List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
         assertTrue(info.size() > 0);
-        verify(installManager).doGetInstallInfo(artifact, options);
+        verify(installManager).getInstallInfo(artifact, InstallType.SINGLE_SERVER);
     }
 
     @Test
     public void testGetInstallInfoInstalledSameVersion() throws Exception {
+        prepareSingleNodeEnv(configManager);
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
 
         doReturn(version).when(artifact).getInstalledVersion();
 
-        List<String> info = installManager.getInstallInfo(artifact, version, options);
+        List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
+
         assertTrue(info.size() > 0);
-        verify(installManager).doGetInstallInfo(artifact, options);
+        verify(installManager).getInstallInfo(artifact, InstallType.SINGLE_SERVER);
     }
 
     @Test
     public void testGetUpdateInfoInstalledLowerVersion() throws Exception {
         createSingleNodeConf();
 
-        Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
-
         doReturn(Version.valueOf("0.9.1")).when(artifact).getInstalledVersion();
 
-        List<String> info = installManager.getInstallInfo(artifact, version, options);
+        List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
+
         assertTrue(info.size() > 0);
-        verify(installManager).doGetUpdateInfo(artifact, options);
+        verify(installManager).getInstallInfo(artifact, InstallType.SINGLE_SERVER);
     }
 
     @Test
     public void testGetUpdateInfoInstalledHigherVersion() throws Exception {
         createSingleNodeConf();
 
-        Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        InstallOptions options = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
-
         doReturn(Version.valueOf("1.0.1")).when(artifact).getInstalledVersion();
 
-        List<String> info = installManager.getInstallInfo(artifact, version, options);
+        List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
+
         assertTrue(info.size() > 0);
-        verify(installManager).doGetUpdateInfo(artifact, options);
+        verify(installManager).getInstallInfo(artifact, InstallType.SINGLE_SERVER);
     }
 
     @Test
@@ -145,9 +141,8 @@ public class InstallManagerTest extends BaseTest {
         doReturn(null).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
 
-        installManager.install(artifact, version, pathToBinaries, options);
+        installManager.performInstallStep(artifact, version, pathToBinaries, options);
         verify(installManager).executeCommand(any(Command.class));
-        verify(installManager).doInstall(artifact, version, pathToBinaries, options);
     }
 
     @Test
@@ -164,9 +159,8 @@ public class InstallManagerTest extends BaseTest {
         doReturn(version).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
 
-        installManager.install(artifact, version, pathToBinaries, options);
+        installManager.performInstallStep(artifact, version, pathToBinaries, options);
         verify(installManager).executeCommand(any(Command.class));
-        verify(installManager).doInstall(artifact, version, pathToBinaries, options);
     }
 
     @Test
@@ -185,9 +179,8 @@ public class InstallManagerTest extends BaseTest {
         doReturn(Version.valueOf("0.9.1")).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
 
-        installManager.install(artifact, version, pathToBinaries, options);
+        installManager.performInstallStep(artifact, version, pathToBinaries, options);
         verify(installManager).executeCommand(any(Command.class));
-        verify(installManager).doUpdate(artifact, version, pathToBinaries, options);
     }
 
     @Test
@@ -206,9 +199,8 @@ public class InstallManagerTest extends BaseTest {
         doReturn(Version.valueOf("1.0.1")).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
 
-        installManager.install(artifact, version, pathToBinaries, options);
+        installManager.performInstallStep(artifact, version, pathToBinaries, options);
         verify(installManager).executeCommand(any(Command.class));
-        verify(installManager).doUpdate(artifact, version, pathToBinaries, options);
     }
 
     @Test

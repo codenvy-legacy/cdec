@@ -35,10 +35,10 @@ import java.util.List;
 @JsonPropertyOrder({"artifacts", "percents", "message", "status"})
 public class DownloadProgressDescriptor {
 
-    private int                              percents;
-    private String                           message;
-    private DownloadArtifactStatus           status;
-    private List<DownloadArtifactDescriptor> artifacts;
+    private int                          percents;
+    private String                       message;
+    private DownloadArtifactStatus       status;
+    private List<DownloadArtifactResult> artifacts;
 
     public DownloadProgressDescriptor() {
     }
@@ -56,7 +56,7 @@ public class DownloadProgressDescriptor {
     public DownloadProgressDescriptor(@Nonnull DownloadArtifactStatus status,
                                       @Nullable String message,
                                       @Nonnegative int percents,
-                                      @Nonnull List<DownloadArtifactDescriptor> artifacts) {
+                                      @Nonnull List<DownloadArtifactResult> artifacts) {
         this.status = status;
         this.percents = percents;
         this.message = message;
@@ -73,7 +73,7 @@ public class DownloadProgressDescriptor {
      */
     public DownloadProgressDescriptor(@Nonnull DownloadArtifactStatus status,
                                       @Nonnegative int percents,
-                                      @Nonnull List<DownloadArtifactDescriptor> artifacts) {
+                                      @Nonnull List<DownloadArtifactResult> artifacts) {
         this(status, null, percents, artifacts);
     }
 
@@ -85,7 +85,7 @@ public class DownloadProgressDescriptor {
         return percents;
     }
 
-    public List<DownloadArtifactDescriptor> getArtifacts() {
+    public List<DownloadArtifactResult> getArtifacts() {
         return artifacts;
     }
 
@@ -105,7 +105,7 @@ public class DownloadProgressDescriptor {
         this.status = status;
     }
 
-    public void setArtifacts(List<DownloadArtifactDescriptor> artifacts) {
+    public void setArtifacts(List<DownloadArtifactResult> artifacts) {
         this.artifacts = artifacts;
     }
 }

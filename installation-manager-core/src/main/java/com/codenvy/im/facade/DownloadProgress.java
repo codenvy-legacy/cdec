@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadArtifactStatus;
 
 import javax.annotation.Nullable;
@@ -40,7 +40,7 @@ import static java.nio.file.Files.size;
  */
 public class DownloadProgress {
 
-    private final List<DownloadArtifactDescriptor>        downloadedArtifacts;
+    private final List<DownloadArtifactResult> downloadedArtifacts;
     private final Map<Path, Long>                         artifacts;
     private final AtomicReference<Exception>              exception;
     private final AtomicReference<DownloadArtifactStatus> status;
@@ -54,11 +54,11 @@ public class DownloadProgress {
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
     }
 
-    public void addDownloadedArtifact(DownloadArtifactDescriptor artifactInfo) {
+    public void addDownloadedArtifact(DownloadArtifactResult artifactInfo) {
         downloadedArtifacts.add(artifactInfo);
     }
 
-    public List<DownloadArtifactDescriptor> getDownloadedArtifacts() {
+    public List<DownloadArtifactResult> getDownloadedArtifacts() {
         return downloadedArtifacts;
     }
 

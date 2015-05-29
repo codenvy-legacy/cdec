@@ -29,22 +29,22 @@ import java.util.List;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "message", "status"})
-public class DownloadDescriptor {
+public class DownloadResult {
 
-    private ResponseCode                     status;
-    private String                           message;
-    private List<DownloadArtifactDescriptor> artifacts;
+    private ResponseCode                 status;
+    private String                       message;
+    private List<DownloadArtifactResult> artifacts;
 
-    public DownloadDescriptor() {
+    public DownloadResult() {
     }
 
-    public DownloadDescriptor(DownloadProgressDescriptor downloadProgressDescriptor) {
+    public DownloadResult(DownloadProgressDescriptor downloadProgressDescriptor) {
         this.artifacts = new ArrayList<>(downloadProgressDescriptor.getArtifacts());
         this.status = downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED ? ResponseCode.ERROR : ResponseCode.OK;
         this.message = downloadProgressDescriptor.getMessage();
     }
 
-    public DownloadDescriptor(ResponseCode status, List<DownloadArtifactDescriptor> artifacts) {
+    public DownloadResult(ResponseCode status, List<DownloadArtifactResult> artifacts) {
         this.status = status;
         this.artifacts = new ArrayList<>(artifacts);
         this.message = null;
@@ -58,7 +58,7 @@ public class DownloadDescriptor {
         return message;
     }
 
-    public List<DownloadArtifactDescriptor> getArtifacts() {
+    public List<DownloadArtifactResult> getArtifacts() {
         return artifacts;
     }
 
@@ -70,7 +70,7 @@ public class DownloadDescriptor {
         this.message = message;
     }
 
-    public void setArtifacts(List<DownloadArtifactDescriptor> artifacts) {
+    public void setArtifacts(List<DownloadArtifactResult> artifacts) {
         this.artifacts = artifacts;
     }
 
@@ -78,9 +78,9 @@ public class DownloadDescriptor {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DownloadDescriptor)) return false;
+        if (!(o instanceof DownloadResult)) return false;
 
-        DownloadDescriptor that = (DownloadDescriptor)o;
+        DownloadResult that = (DownloadResult)o;
 
         if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) return false;
         if (message != null ? !message.equals(that.message) : that.message != null) return false;

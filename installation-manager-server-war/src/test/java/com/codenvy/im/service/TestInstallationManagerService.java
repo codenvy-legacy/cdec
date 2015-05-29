@@ -23,14 +23,12 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
-import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
@@ -234,7 +232,8 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testUpdateCodenvy() throws Exception {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doReturn("3.1.0").when(mockFacade).getVersionToInstall(any(Request.class));
+        doReturn(Version.valueOf("3.1.0")).when(mockFacade).getLatestInstallableVersion(any(Artifact.class));
+        doReturn(Collections.emptyList()).when(mockFacade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
 
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
@@ -245,57 +244,8 @@ public class TestInstallationManagerService extends BaseTest {
                                                                                     ArtifactFactory.createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"));
 
-        int testStep = 1;
-        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
-                                                                .setConfigProperties(testConfigProperties)
-                                                                .setStep(testStep);
-
-        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME)
-                                           .setVersion("3.1.0")
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(testStep);
-        assertOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateCodenvy(testStep);
-        assertErrorResponse(result);
-    }
-
-    @Test
-    public void testUpdateCodenvyWhenConfigNull() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-        int testStep = 1;
-        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
-                                                                .setConfigProperties(new HashMap<String, String>())
-                                                                .setStep(testStep);
-
-        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME)
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(testStep);
-        assertOkResponse(result);
-    }
-
-    @Test
-    public void testGetUpdateCodenvyInfo() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
-
-        Request testRequest = new Request().setArtifactName(CDECArtifact.NAME)
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        Response result = service.getUpdateCodenvyInfo();
-        assertOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        result = service.getUpdateCodenvyInfo();
-        assertErrorResponse(result);
+        Response result = service.updateCodenvy();
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
     @Test

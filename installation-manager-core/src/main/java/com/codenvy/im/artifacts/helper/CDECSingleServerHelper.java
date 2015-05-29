@@ -63,7 +63,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
+    public List<String> getInstallInfo() throws IOException {
         return ImmutableList.of("Disable SELinux",
                                 "Install puppet binaries",
                                 "Unzip Codenvy binaries",

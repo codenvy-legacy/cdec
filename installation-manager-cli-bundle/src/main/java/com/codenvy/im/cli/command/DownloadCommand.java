@@ -22,8 +22,8 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadDescriptor;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadResult;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -81,11 +81,11 @@ public class DownloadCommand extends AbstractIMCommand {
 
         for (; ; ) {
             DownloadProgressDescriptor downloadProgressDescriptor = facade.getDownloadProgress();
-            DownloadDescriptor downloadDescriptor = new DownloadDescriptor(downloadProgressDescriptor);
+            DownloadResult downloadResult = new DownloadResult(downloadProgressDescriptor);
 
             if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED) {
                 console.cleanCurrentLine();
-                console.printErrorAndExit(toJson(downloadDescriptor));
+                console.printErrorAndExit(toJson(downloadResult));
                 break;
             }
 
@@ -104,9 +104,9 @@ public class DownloadCommand extends AbstractIMCommand {
             if (downloadProgressDescriptor.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
                 if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
-                    console.printErrorAndExit(toJson(downloadDescriptor));
+                    console.printErrorAndExit(toJson(downloadResult));
                 } else {
-                    console.println(toJson(downloadDescriptor));
+                    console.println(toJson(downloadResult));
                 }
                 break;
             }

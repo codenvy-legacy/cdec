@@ -36,6 +36,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.specification.RequestSpecification;
+
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -59,6 +60,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
@@ -299,39 +301,6 @@ public class TestInstallationManagerServiceContract {
     }
 
     @Test
-    public void testGetUpdateCodenvyInfo() {
-        testContract(
-            "update/" + CDECArtifact.NAME + "/info",               // path
-            null,                            // query parameters
-            null,                            // request body
-            null,                            // consume content type
-            ContentType.JSON,                // produce content type
-            HttpMethod.GET,                  // HTTP method
-            OK_RESPONSE_BODY,                // response body
-            Response.Status.OK,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-                    try {
-                        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
-                        Request testRequest = new Request().setArtifactName(CDECArtifact.NAME)
-                                                           .setInstallOptions(testInstallOptions);
-
-                        doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).getInstallInfo(testRequest);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-            },
-            null // assertion
-        );
-    }
-
-    @Test
     public void testGetInstalledVersions() {
         testContract(
             "installation",                  // path
@@ -388,10 +357,10 @@ public class TestInstallationManagerServiceContract {
             ImmutableMap.of("step", "1"),    // query parameters
             null,                            // request body
             null,                            // consume content type
-            ContentType.JSON,                // produce content type
+            null,                // produce content type
             HttpMethod.POST,                 // HTTP method
-            OK_RESPONSE_BODY,                // response body
-            Response.Status.OK,              // response status
+            null,                // response body
+            Response.Status.CREATED,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
@@ -399,7 +368,8 @@ public class TestInstallationManagerServiceContract {
                     try {
                         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
                         doReturn(null).when(configManager).prepareInstallProperties(anyString(), any(InstallType.class), any(Artifact.class), any(Version.class));
-                        doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).install(any(Request.class));
+                        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+                        doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

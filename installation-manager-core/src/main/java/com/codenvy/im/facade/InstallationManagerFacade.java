@@ -26,6 +26,7 @@ import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
@@ -270,95 +271,58 @@ public class InstallationManagerFacade {
         return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts);
     }
 
-    /** @return installation info */
-    public String getInstallInfo(@Nonnull Request request) throws IOException {
-        try {
-            InstallOptions installOptions = request.getInstallOptions();
-            Version version = doGetVersionToInstall(request);
-
-            List<String> infos = installManager.getInstallInfo(request.createArtifact(), version, installOptions);
-            return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
-        }
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getInstallInfo
+     */
+    public List<String> getInstallInfo(Artifact artifact, InstallType installType) throws IOException {
+        return installManager.getInstallInfo(artifact, installType);
     }
 
-    /** Installs artifact */
-    public String install(@Nonnull Request request) throws IOException {
-        try {
-            InstallOptions installOptions = request.getInstallOptions();
-            Version version = doGetVersionToInstall(request);
-
-            try {
-                install(request.createArtifact(), version, installOptions);
-                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, ArtifactStatus.SUCCESS);
-                return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
-            } catch (Exception e) {
-                LOG.log(Level.SEVERE, e.getMessage(), e);
-                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, ArtifactStatus.FAILURE);
-                return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
-            }
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
-        }
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getUpdateInfo
+     */
+    public List<String> getUpdateInfo(Artifact artifact, InstallType installType) throws IOException {
+        return installManager.getUpdateInfo(artifact, installType);
     }
 
-    protected void install(Artifact artifact, Version version, InstallOptions options) throws IOException {
-        Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
-
-        if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(version)) {
-            Path pathToBinaries = downloadedArtifacts.get(artifact).get(version);
-            if (pathToBinaries == null) {
-                throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
-            }
-
-            if (options.getStep() != 0 || artifact.isInstallable(version)) {
-                installManager.install(artifact, version, pathToBinaries, options);
-            } else {
-                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
-            }
-        } else {
-            throw new FileNotFoundException("Binaries to install artifact '" + artifact.getName() + "' version '" + version + "' not found");
+    /**
+     * @throws java.io.FileNotFoundException
+     *         if binaries to install given artifact not found
+     * @see com.codenvy.im.managers.InstallManager#performInstallStep
+     */
+    public void install(@Nonnull Artifact artifact,
+                        @Nonnull Version version,
+                        @Nonnull InstallOptions installOptions) throws IOException {
+        SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
+        if (!downloadedVersions.containsKey(version)) {
+            throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
+
+        installManager.performInstallStep(artifact, version, downloadedVersions.get(version), installOptions);
     }
 
-    /** @return the version of the artifact that can be installed */
-    public String getVersionToInstall(@Nonnull Request request) throws IOException {
-        try {
-            return doGetVersionToInstall(request).toString();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
+    /**
+     * @throws java.io.FileNotFoundException
+     *         if binaries to install given artifact not found
+     * @see com.codenvy.im.managers.InstallManager#performUpdateStep
+     */
+    public void update(@Nonnull Artifact artifact,
+                       @Nonnull Version version,
+                       @Nonnull InstallOptions installOptions) throws IOException {
+        SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
+        if (!downloadedVersions.containsKey(version)) {
+            throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
+
+        installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions);
     }
 
-    protected Version doGetVersionToInstall(@Nonnull Request request) throws IOException {
-        int installStep = 0;
-        if (request.getInstallOptions() != null) {
-            installStep = request.getInstallOptions().getStep();
-        }
-
-        if (request.createVersion() != null) {
-            return request.createVersion();
-
-        } else if (installStep == 0) {
-            Version version = installManager.getLatestInstallableVersion(request.createArtifact());
-
-            if (version == null) {
-                throw new IllegalStateException(format("There is no newer version to install '%s'.", request.createArtifact()));
-            }
-
-            return version;
-
-        } else {
-            SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(request.createArtifact());
-            if (downloadedVersions.isEmpty()) {
-                throw new IllegalStateException(format("Installation in progress but binaries for '%s' not found.", request.createArtifact()));
-            }
-            return downloadedVersions.keySet().iterator().next();
-        }
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getLatestInstallableVersion
+     */
+    @Nullable
+    public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
+        return installManager.getLatestInstallableVersion(artifact);
     }
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */

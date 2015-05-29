@@ -53,18 +53,12 @@ public class TestInstallManagerArtifact {
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testGetInstallInfo() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setStep(1);
-
-        imArtifact.getInstallInfo(options);
+        imArtifact.getInstallInfo(null);
     }
 
     @Test
     public void testGetUpdateInfo() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setStep(1);
-
-        List<String> info = imArtifact.getUpdateInfo(options);
+        List<String> info = imArtifact.getUpdateInfo(null);
         assertNotNull(info);
         assertEquals(info.toString(), "[Initialize updating installation manager]");
     }

@@ -90,6 +90,35 @@ public abstract class AbstractArtifact implements Artifact {
 
     /** {@inheritDoc} */
     @Override
+    @Nullable
+    public Version getLatestInstallableVersion() throws IOException {
+        Version ver2Install = getLatestVersion(updateEndpoint, transport);
+
+        Version installedVersion = getInstalledVersion();
+        if (installedVersion == null) {
+            return ver2Install;
+        }
+
+        for (; ; ) {
+            Version allowedPrevVersion = getAllowedPreviousVersion(ver2Install);
+            if (allowedPrevVersion == null) {
+                if (installedVersion.compareTo(ver2Install) < 0) {
+                    return ver2Install;
+                } else {
+                    return null;
+                }
+            } else {
+                if (allowedPrevVersion.equals(installedVersion)) {
+                    return ver2Install;
+                } else {
+                    ver2Install = allowedPrevVersion;
+                }
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public boolean isInstallable(Version versionToInstall) throws IOException {
         Version installedVersion = getInstalledVersion();
 
@@ -112,19 +141,6 @@ public abstract class AbstractArtifact implements Artifact {
         }
 
         return null;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    @Nullable
-    public Version getLatestInstallableVersion() throws IOException {
-        Version version = getLatestVersion(updateEndpoint, transport);
-
-        if (version != null && isInstallable(version)) {
-            return version;
-        } else {
-            return null;
-        }
     }
 
     protected Map getLatestVersionProperties(String updateEndpoint, HttpTransport transport) throws IOException {

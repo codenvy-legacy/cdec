@@ -19,7 +19,7 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 
@@ -66,7 +66,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         doNothing().when(service).startDownload(null, null);
         doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
                                                 100,
-                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(service).getDownloadProgress();
+                                                Collections.<DownloadArtifactResult>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -85,7 +85,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         doNothing().when(service).startDownload(null, null);
         doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED,
                                                 0,
-                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(service).getDownloadProgress();
+                                                Collections.<DownloadArtifactResult>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

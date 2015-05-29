@@ -33,18 +33,18 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Anatoliy Bazko
  */
-public class DownloadDescriptorTest extends BaseTest {
+public class DownloadResultTest extends BaseTest {
 
     @Test
     public void testToJson() throws Exception {
-        DownloadArtifactDescriptor downloadArtifactDescriptor = new DownloadArtifactDescriptor();
-        downloadArtifactDescriptor.setFile("file");
-        downloadArtifactDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
-        downloadArtifactDescriptor.setArtifact("codenvy");
-        downloadArtifactDescriptor.setVersion("1.0.1");
+        DownloadArtifactResult downloadArtifactResult = new DownloadArtifactResult();
+        downloadArtifactResult.setFile("file");
+        downloadArtifactResult.setStatus(DownloadArtifactStatus.DOWNLOADED);
+        downloadArtifactResult.setArtifact("codenvy");
+        downloadArtifactResult.setVersion("1.0.1");
 
-        DownloadDescriptor actualDescriptor = new DownloadDescriptor();
-        actualDescriptor.setArtifacts(ImmutableList.of(downloadArtifactDescriptor));
+        DownloadResult actualDescriptor = new DownloadResult();
+        actualDescriptor.setArtifacts(ImmutableList.of(downloadArtifactResult));
         actualDescriptor.setMessage("error");
         actualDescriptor.setStatus(ResponseCode.OK);
 
@@ -60,25 +60,25 @@ public class DownloadDescriptorTest extends BaseTest {
                            "  \"status\" : \"OK\"\n" +
                            "}");
 
-        assertEquals(Commons.fromJson(json, DownloadDescriptor.class), actualDescriptor);
+        assertEquals(Commons.fromJson(json, DownloadResult.class), actualDescriptor);
     }
 
     @Test
     public void testResponseCode() throws Exception {
-        DownloadArtifactDescriptor artifactInfo = new DownloadArtifactDescriptor(ArtifactFactory.createArtifact(CDECArtifact.NAME),
+        DownloadArtifactResult artifactInfo = new DownloadArtifactResult(ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                  Version.valueOf("1.0.1"),
                                                                                  Paths.get(DOWNLOAD_DIR).resolve("file"),
                                                                                  DownloadArtifactStatus.DOWNLOADING);
 
         DownloadProgressDescriptor
                 downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED, 100, ImmutableList.of(artifactInfo));
-        DownloadDescriptor downloadDescriptor = new DownloadDescriptor(downloadProgressDescriptor);
+        DownloadResult downloadResult = new DownloadResult(downloadProgressDescriptor);
 
-        assertEquals(downloadDescriptor.getStatus(), ResponseCode.OK);
+        assertEquals(downloadResult.getStatus(), ResponseCode.OK);
 
         downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED, 100, ImmutableList.of(artifactInfo));
-        downloadDescriptor = new DownloadDescriptor(downloadProgressDescriptor);
+        downloadResult = new DownloadResult(downloadProgressDescriptor);
 
-        assertEquals(downloadDescriptor.getStatus(), ResponseCode.ERROR);
+        assertEquals(downloadResult.getStatus(), ResponseCode.ERROR);
     }
 }

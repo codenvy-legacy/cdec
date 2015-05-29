@@ -352,7 +352,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesFromConfigInstallUseCase() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(true).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
@@ -368,7 +368,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesInstallUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(true).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
@@ -384,7 +384,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesFromConfigUpdateUseCase() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(false).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(false).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
@@ -402,7 +402,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(false).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(false).when(configManager).isInstall(any(Artifact.class));
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
@@ -420,7 +420,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesUseTemplates() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b", "c", "${a}"));
 
-        doReturn(true).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
@@ -437,7 +437,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateMultiServerUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(false).when(configManager).isInstall(any(Artifact.class), any(Version.class));
+        doReturn(false).when(configManager).isInstall(any(Artifact.class));
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
         doReturn("master").when(configManager).fetchMasterHostName();

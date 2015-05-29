@@ -95,18 +95,14 @@ public class TestCDECArtifact extends BaseTest {
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setStep(1);
 
-        List<String> info = spyCdecArtifact.getInstallInfo(options);
+        List<String> info = spyCdecArtifact.getInstallInfo(InstallType.SINGLE_SERVER);
         assertNotNull(info);
         assertTrue(info.size() > 1);
     }
 
     @Test
     public void testGetInstallMultiServerInfo() throws Exception {
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.MULTI_SERVER);
-        options.setStep(1);
-
-        List<String> info = spyCdecArtifact.getInstallInfo(options);
+        List<String> info = spyCdecArtifact.getInstallInfo(InstallType.MULTI_SERVER);
         assertNotNull(info);
         assertTrue(info.size() > 1);
     }
@@ -119,7 +115,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
 
-        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        int steps = spyCdecArtifact.getInstallInfo(InstallType.SINGLE_SERVER).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
             Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
@@ -135,7 +131,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
 
-        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        int steps = spyCdecArtifact.getInstallInfo(InstallType.SINGLE_SERVER).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
             Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
@@ -161,7 +157,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("site_host_name", "site.example.com"));
 
-        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        int steps = spyCdecArtifact.getInstallInfo(InstallType.MULTI_SERVER).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
             Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
@@ -177,7 +173,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
 
-        int steps = spyCdecArtifact.getInstallInfo(options).size();
+        int steps = spyCdecArtifact.getInstallInfo(InstallType.MULTI_SERVER).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
             Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
@@ -262,7 +258,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
         options.setInstallType(InstallType.SINGLE_SERVER);
 
-        int steps = spyCdecArtifact.getUpdateInfo(options).size();
+        int steps = spyCdecArtifact.getUpdateInfo(InstallType.SINGLE_SERVER).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
             Command command = spyCdecArtifact.getUpdateCommand(Version.valueOf("4.0.0"), Paths.get("some path"), options);
@@ -278,7 +274,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
         options.setInstallType(InstallType.MULTI_SERVER);
 
-        int steps = spyCdecArtifact.getUpdateInfo(options).size();
+        int steps = spyCdecArtifact.getUpdateInfo(InstallType.MULTI_SERVER).size();
         for (int i = 0; i < steps; i++) {
             options.setStep(i);
             Command command = spyCdecArtifact.getUpdateCommand(Version.valueOf("4.0.0"), Paths.get("some path"), options);
@@ -312,7 +308,7 @@ public class TestCDECArtifact extends BaseTest {
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setStep(0);
 
-        spyCdecArtifact.getUpdateInfo(options);
+        spyCdecArtifact.getUpdateInfo(InstallType.MULTI_SERVER);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -320,14 +316,7 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetUpdateInfoFromMultiToSingleServerError() throws Exception {
         prepareMultiNodeEnv(configManager, transport);
 
-        OSUtils.VERSION = "7";
-
-        InstallOptions options = new InstallOptions();
-        options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setInstallType(InstallType.SINGLE_SERVER);
-        options.setStep(0);
-
-        spyCdecArtifact.getUpdateInfo(options);
+        spyCdecArtifact.getUpdateInfo(InstallType.SINGLE_SERVER);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,

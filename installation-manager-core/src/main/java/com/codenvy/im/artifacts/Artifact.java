@@ -20,6 +20,7 @@ package com.codenvy.im.artifacts;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
@@ -44,10 +45,10 @@ public interface Artifact extends Comparable<Artifact> {
     int getPriority();
 
     /** @return the some information about future installation process */
-    List<String> getInstallInfo(InstallOptions installOptions) throws IOException;
+    List<String> getInstallInfo(InstallType installType) throws IOException;
 
     /** @return the some information about future installation process */
-    List<String> getUpdateInfo(InstallOptions installOptions) throws IOException;
+    List<String> getUpdateInfo(InstallType installType) throws IOException;
 
     /** @return list of commands to perform installation. */
     Command getInstallCommand(Version versionToInstall, Path pathToBinaries, InstallOptions installOptions) throws IOException;
