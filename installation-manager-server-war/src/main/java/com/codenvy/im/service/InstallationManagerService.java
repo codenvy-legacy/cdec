@@ -449,6 +449,8 @@ public class InstallationManagerService {
             notes = "After login is successful SaaS user credentials will be cached.")
     public javax.ws.rs.core.Response loginToCodenvySaaS(Credentials credentials) {
         try {
+            this.saasUserCredentials = null;
+
             credentials = new DtoServerImpls.CredentialsImpl(credentials);
 
             Token token = delegate.loginToCodenvySaaS(credentials);
