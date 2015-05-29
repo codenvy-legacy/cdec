@@ -445,7 +445,7 @@ public class InstallationManagerService {
             notes = "After login is successful SaaS user credentials will be cached.")
     public javax.ws.rs.core.Response loginToCodenvySaaS(Credentials credentials) {
         try {
-            this.saasUserCredentials = null;
+            logoutFromCodenvySaaS();
 
             credentials = new DtoServerImpls.CredentialsImpl(credentials);
 
@@ -466,6 +466,26 @@ public class InstallationManagerService {
             return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
+        }
+    }
+
+    @POST
+    @Path("logout")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Logout from Codenvy SaaS")
+    public javax.ws.rs.core.Response logoutFromCodenvySaaS() {
+        try {
+            if (saasUserCredentials != null) {
+                delegate.logoutFromCodenvySaaS(saasUserCredentials.getToken());
+            }
+
+            return javax.ws.rs.core.Response.ok().build();
+        } catch (Exception e) {
+            return handleException(e);
+        } finally {
+            saasUserCredentials = null;
         }
     }
 

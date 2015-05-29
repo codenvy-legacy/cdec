@@ -68,4 +68,15 @@ public class SaasAuthServiceProxy {
 
         return createDtoFromJson(response, Token.class);
     }
+
+    /**
+     * Logout from Codenvy SaaS.
+     *
+     * @throws IOException
+     *         if unexpected error occurred
+     */
+    public void logout(String authToken) throws IOException {
+        String requestUrl = combinePaths(saasApiEndpoint, "/auth/logout?token=" + authToken);
+        transport.doPost(requestUrl, null);
+    }
 }

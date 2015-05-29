@@ -405,6 +405,13 @@ public class InstallationManagerFacade {
     }
 
     /**
+     * @see com.codenvy.im.saas.SaasAuthServiceProxy#logout(String)
+     */
+    public void logoutFromCodenvySaaS(@Nonnull String authToken) throws IOException {
+        saasAuthServiceProxy.logout(authToken);
+    }
+
+    /**
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
      */
     @Nullable

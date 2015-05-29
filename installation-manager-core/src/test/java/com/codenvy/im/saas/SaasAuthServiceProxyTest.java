@@ -33,8 +33,10 @@ import java.io.IOException;
 
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 
@@ -62,6 +64,13 @@ public class SaasAuthServiceProxyTest extends BaseTest {
         Token token = saasAuthServiceProxy.login(credentials);
 
         assertEquals(token.getValue(), "token");
+    }
+
+    @Test
+    public void testLogout() throws Exception {
+        saasAuthServiceProxy.logout("auhToken");
+
+        verify(transport).doPost(endsWith("/auth/logout?token=auhToken"), isNull());
     }
 
     @Test(expectedExceptions = AuthenticationException.class)

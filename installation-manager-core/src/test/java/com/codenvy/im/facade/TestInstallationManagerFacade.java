@@ -335,6 +335,13 @@ public class TestInstallationManagerFacade extends BaseTest {
     }
 
     @Test
+    public void testLoginFromSaas() throws Exception {
+        installationManagerFacade.logoutFromCodenvySaaS("token");
+
+        verify(saasAuthServiceProxy).logout("token");
+    }
+
+    @Test
     public void testLoginToSaasWhenTokenNull() throws Exception {
         final String TEST_USER_NAME = "user";
         final String TEST_USER_PASSWORD = "password";
