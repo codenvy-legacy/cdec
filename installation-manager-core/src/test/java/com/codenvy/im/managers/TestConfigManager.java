@@ -321,7 +321,7 @@ public class TestConfigManager extends BaseTest {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfBadFormat() throws Exception {
         doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
-        
+
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "    certname  bla.bla.com\n");
         configManager.fetchMasterHostName();

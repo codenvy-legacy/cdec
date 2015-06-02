@@ -283,7 +283,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         Path tempDir = backupConfig.obtainArtifactTempDirectory();
         Path backupFile = Paths.get(backupConfig.getBackupFile());
 
-        // create temp dir
+        // re-create local temp dir
+        commands.add(createCommand(format("rm -rf %s", tempDir)));
         commands.add(createCommand(format("mkdir -p %s", tempDir)));
 
         // stop services
@@ -371,7 +372,11 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
         // restore mongo from {temp_backup_directory}/mongo folder
         Path mongoBackupPath = getComponentTempPath(tempDir, MONGO);
-        commands.add(createCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop",
+        // remove all databases expect 'admin' one
+        commands.add(createCommand(format("/usr/bin/mongo -u SuperAdmin -p %s --authenticationDatabase admin --quiet --eval " +
+                                          "'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
+                                          codenvyConfig.getMongoAdminPassword())));
+        commands.add(createCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSH
                                           codenvyConfig.getMongoAdminPassword(),
                                           mongoBackupPath)));
 

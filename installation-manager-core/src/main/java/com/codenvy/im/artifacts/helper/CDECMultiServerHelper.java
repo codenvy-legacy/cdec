@@ -356,16 +356,18 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      *
      * Commands:
      * - obtain config of API and DATA nodes from puppet-master config file
-     * - create local temp dir for the artifact backup data
+     * - re-create local temp dir for the artifact backup data
      * - stop services on API node
      * - stop services on DATA node
+     * - stop services on ANALYTICS node
      * - copy backup file into api node, pack filesystem data of API node to the {backup_file}/fs folder into backup file, and then copy it to local temp dir
      * - create dump of MONGO at the DATA node, copy it to {local_backup_dir}/mongo
+     * - create dump of MONGO_ANALYTICS at the ANALYTICS node, copy it to {local_backup_dir}/mongo_analytics
      * - create dump of LDAP at the DATA node, copy it to {local_backup_dir}/ldap
      * - add dumps to the local backup file
      * - start services
      * - wait until API server starts
-     * - remove local temp dir
+     * - remove local and remote temp dirs
      *
      * @return MacroCommand which holds all commands
      */
@@ -382,7 +384,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         Path remoteTempDir = Paths.get("/tmp/codenvy");
         Path backupFile = Paths.get(backupConfig.getBackupFile());
 
-        // create local temp dir
+        // re-create local temp dir
+        commands.add(createCommand(format("rm -rf %s", localTempDir)));
         commands.add(createCommand(format("mkdir -p %s", localTempDir)));
 
         // stop services on API node
@@ -497,9 +500,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * - stop services on ANALYTICS node
      * - restore filesystem data at the API node from {backup_file}/fs folder
      * - restore MONGO data at the DATA node from {temp_backup_directory}/mongo folder
+     * - restore MONGO_ANALYTICS data at the DATA node from {temp_backup_directory}/mongo_analytics folder
      * - restore LDAP at the DATA node from {temp_backup_directory}/ldap/ldap.ldif file
      * - start services
-     * - remove local temp dir
+     * - remove local and remote temp dirs
      *
      * @return MacroCommand which holds all commands
      */
@@ -559,10 +563,11 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                             dataNode));
 
             // remove all databases expect 'admin' one
-            commands.add(createCommand(format("/usr/bin/mongo -u SuperAdmin -p %s --authenticationDatabase admin --quiet --eval 'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
+            commands.add(createCommand(format("/usr/bin/mongo -u SuperAdmin -p %s --authenticationDatabase admin --quiet --eval " +
+                                              "'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
             codenvyConfig.getMongoAdminPassword()), dataNode));
 
-            commands.add(createCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSh
+            commands.add(createCommand(format("/usr/bin/mongorestore -uSuperAdmin -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getMongoAdminPassword(),
                                               remoteMongoBackupPath.getParent()), dataNode));
         }
