@@ -295,18 +295,24 @@ public class TestConfigManager extends BaseTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfFileEmpty() throws Exception {
+        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "");
         configManager.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfPropertyAbsent() throws Exception {
+        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
         configManager.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfValueEmpty() throws Exception {
+        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "   certname = ");
         configManager.fetchMasterHostName();
@@ -314,6 +320,8 @@ public class TestConfigManager extends BaseTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfBadFormat() throws Exception {
+        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+        
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "    certname  bla.bla.com\n");
         configManager.fetchMasterHostName();
@@ -422,15 +430,18 @@ public class TestConfigManager extends BaseTest {
 
         doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
+        doReturn("key").when(configManager).readSSHKey(any(Path.class));
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
-                                                                                      InstallType.SINGLE_SERVER,
+                                                                                      InstallType.MULTI_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"));
-        assertEquals(actualProperties.size(), 3);
+        assertEquals(actualProperties.size(), 5);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "b");
         assertEquals(actualProperties.get("version"), "3.1.0");
+        assertEquals(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY), System.getProperty("user.name"));
+        assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
 
     @Test
@@ -441,19 +452,16 @@ public class TestConfigManager extends BaseTest {
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
         doReturn("master").when(configManager).fetchMasterHostName();
-        doReturn("key").when(configManager).readSSHKey(any(Path.class));
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       InstallType.MULTI_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"));
-        assertEquals(actualProperties.size(), 6);
+        assertEquals(actualProperties.size(), 4);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "d");
         assertEquals(actualProperties.get("version"), "3.1.0");
         assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY), "master");
-        assertNotNull(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY));
-        assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
 }
 

@@ -361,6 +361,12 @@ public class ConfigManager {
 
             SubnodeConfiguration section = iniFile.getSection("main");
             if (section.getString("certname", "").isEmpty()) {
+                // try to obtain host name from codenvy config
+                Map<String, String> codenvyProperties = loadInstalledCodenvyConfig().getProperties();
+                if (codenvyProperties.containsKey(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)) {
+                    return codenvyProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY);
+                }
+
                 throw new IllegalStateException("There is no puppet master host name in the configuration");
             }
             return section.getString("certname");
@@ -398,6 +404,10 @@ public class ConfigManager {
                 if (isInstall(artifact)) {
                     properties = configFile != null ? loadConfigProperties(configFile)
                                                     : loadCodenvyDefaultProperties(version, installType);
+
+                    if (installType == InstallType.MULTI_SERVER) {
+                        setSSHAccessProperties(properties);
+                    }
                 } else { // update
                     properties = merge(loadInstalledCodenvyProperties(installType),
                                        configFile != null ? loadConfigProperties(configFile)
@@ -409,9 +419,6 @@ public class ConfigManager {
                 }
 
                 properties.put(Config.VERSION, version.toString());
-                if (installType == InstallType.MULTI_SERVER) {
-                    setSSHAccessProperties(properties);
-                }
                 setTemplatesProperties(properties);
 
                 return properties;
