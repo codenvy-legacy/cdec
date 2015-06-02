@@ -395,7 +395,7 @@ public class ConfigManager {
             case CDECArtifact.NAME:
                 Map<String, String> properties;
 
-                if (isInstall(artifact, version)) {
+                if (isInstall(artifact)) {
                     properties = configFile != null ? loadConfigProperties(configFile)
                                                     : loadCodenvyDefaultProperties(version, installType);
                 } else { // update
@@ -424,8 +424,8 @@ public class ConfigManager {
         return Paths.get(puppetBaseDir).resolve(configFilename);
     }
 
-    protected boolean isInstall(Artifact artifact, Version version) throws IOException {
-        return Commons.isInstall(artifact, version);
+    protected boolean isInstall(Artifact artifact) throws IOException {
+        return Commons.isInstall(artifact);
     }
 
     /**

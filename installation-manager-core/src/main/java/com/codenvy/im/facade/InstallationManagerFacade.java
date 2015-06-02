@@ -26,6 +26,7 @@ import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
@@ -35,14 +36,21 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -69,7 +77,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
-import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 
@@ -126,8 +133,9 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#startDownload(com.codenvy.im.artifacts.Artifact, com.codenvy.im.utils.Version)
      */
-    public void startDownload(@Nullable Artifact artifact, @Nullable Version version)
-            throws InterruptedException, DownloadAlreadyStartedException, IOException {
+    public void startDownload(@Nullable Artifact artifact, @Nullable Version version) throws InterruptedException,
+                                                                                             DownloadAlreadyStartedException,
+                                                                                             IOException {
         downloadManager.startDownload(artifact, version);
     }
 
@@ -145,20 +153,12 @@ public class InstallationManagerFacade {
         return downloadManager.getDownloadProgress();
     }
 
-    /** Adds trial subscription for user being logged in */
-    public String addTrialSaasSubscription(@Nonnull Request request) throws IOException {
-        try {
-            transport
-                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
-                            request.obtainAccessToken());
-            return new Response().setStatus(ResponseCode.OK)
-                                 .setSubscription(ON_PREMISES)
-                                 .setMessage("Subscription has been added")
-                                 .toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
+    /**
+     * Adds trial subscription for user being logged into Codenvy SaaS.
+     */
+    public void addTrialSaasSubscription(@Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
+        String requestUrl = combinePaths(updateServerEndpoint, "/repository/subscription", saasUserCredentials.getAccountId());
+        transport.doPost(requestUrl, null, saasUserCredentials.getToken());
     }
 
     /** Check user's subscription. */
@@ -241,124 +241,104 @@ public class InstallationManagerFacade {
         return info;
     }
 
-    /** @return update list from the server */
-    public String getUpdates() {
-        try {
-            Map<Artifact, Version> updates = downloadManager.getUpdates();
-            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
-            for (Map.Entry<Artifact, Version> e : updates.entrySet()) {
-                Artifact artifact = e.getKey();
-                Version version = e.getValue();
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#getUpdates()
+     */
+    public List<UpdatesArtifactResult> getUpdates() throws IOException {
+        Map<Artifact, Version> updates = downloadManager.getUpdates();
 
-                if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
-                    infos.add(new ArtifactInfo(artifact, version, ArtifactStatus.DOWNLOADED));
-                } else {
-                    infos.add(new ArtifactInfo(artifact, version));
+        return FluentIterable.from(updates.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactResult>() {
+            @Override
+            public UpdatesArtifactResult apply(Map.Entry<Artifact, Version> entry) {
+                Artifact artifact = entry.getKey();
+                Version version = entry.getValue();
+
+                UpdatesArtifactResult uaResult = new UpdatesArtifactResult();
+                uaResult.setArtifact(artifact.getName());
+                uaResult.setVersion(version.toString());
+                try {
+                    if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
+                        uaResult.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+                    }
+                } catch (IOException e) {
+                    // simply ignore
                 }
-            }
 
-            return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
+                return uaResult;
+            }
+        }).toList();
     }
 
-    /** @return the list of installed artifacts and theirs versions */
-    public Response getInstalledVersions() throws IOException {
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getInstalledArtifacts()
+     */
+    public List<InstallArtifactResult> getInstalledVersions() throws IOException {
         Map<Artifact, Version> installedArtifacts = installManager.getInstalledArtifacts();
-        return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts);
+
+        return FluentIterable.from(installedArtifacts.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactResult>() {
+            @Override
+            public InstallArtifactResult apply(Map.Entry<Artifact, Version> entry) {
+                InstallArtifactResult iaResult = new InstallArtifactResult();
+                iaResult.setArtifact(entry.getKey().getName());
+                iaResult.setVersion(entry.getValue().toString());
+                iaResult.setStatus(InstallArtifactStatus.SUCCESS);
+                return iaResult;
+            }
+        }).toList();
     }
 
-    /** @return installation info */
-    public String getInstallInfo(@Nonnull Request request) throws IOException {
-        try {
-            InstallOptions installOptions = request.getInstallOptions();
-            Version version = doGetVersionToInstall(request);
-
-            List<String> infos = installManager.getInstallInfo(request.createArtifact(), version, installOptions);
-            return new Response().setStatus(ResponseCode.OK).setInfos(infos).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
-        }
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getInstallInfo
+     */
+    public List<String> getInstallInfo(Artifact artifact, InstallType installType) throws IOException {
+        return installManager.getInstallInfo(artifact, installType);
     }
 
-    /** Installs artifact */
-    public String install(@Nonnull Request request) throws IOException {
-        try {
-            InstallOptions installOptions = request.getInstallOptions();
-            Version version = doGetVersionToInstall(request);
-
-            try {
-                install(request.createArtifact(), version, installOptions);
-                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, ArtifactStatus.SUCCESS);
-                return new Response().setStatus(ResponseCode.OK).addArtifact(info).toJson();
-            } catch (Exception e) {
-                LOG.log(Level.SEVERE, e.getMessage(), e);
-                ArtifactInfo info = new ArtifactInfo(request.createArtifact(), version, ArtifactStatus.FAILURE);
-                return new Response().setStatus(ERROR).setMessage(e.getMessage()).addArtifact(info).toJson();
-            }
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
-        }
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getUpdateInfo
+     */
+    public List<String> getUpdateInfo(Artifact artifact, InstallType installType) throws IOException {
+        return installManager.getUpdateInfo(artifact, installType);
     }
 
-    protected void install(Artifact artifact, Version version, InstallOptions options) throws IOException {
-        Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
-
-        if (downloadedArtifacts.containsKey(artifact) && downloadedArtifacts.get(artifact).containsKey(version)) {
-            Path pathToBinaries = downloadedArtifacts.get(artifact).get(version);
-            if (pathToBinaries == null) {
-                throw new IOException(String.format("Binaries for artifact '%s' version '%s' not found", artifact, version));
-            }
-
-            if (options.getStep() != 0 || artifact.isInstallable(version)) {
-                installManager.install(artifact, version, pathToBinaries, options);
-            } else {
-                throw new IllegalStateException("Can not install the artifact '" + artifact.getName() + "' version '" + version + "'.");
-            }
-        } else {
-            throw new FileNotFoundException("Binaries to install artifact '" + artifact.getName() + "' version '" + version + "' not found");
+    /**
+     * @throws java.io.FileNotFoundException
+     *         if binaries to install given artifact not found
+     * @see com.codenvy.im.managers.InstallManager#performInstallStep
+     */
+    public void install(@Nonnull Artifact artifact,
+                        @Nonnull Version version,
+                        @Nonnull InstallOptions installOptions) throws IOException {
+        SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
+        if (!downloadedVersions.containsKey(version)) {
+            throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
+
+        installManager.performInstallStep(artifact, version, downloadedVersions.get(version), installOptions);
     }
 
-    /** @return the version of the artifact that can be installed */
-    public String getVersionToInstall(@Nonnull Request request) throws IOException {
-        try {
-            return doGetVersionToInstall(request).toString();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
+    /**
+     * @throws java.io.FileNotFoundException
+     *         if binaries to install given artifact not found
+     * @see com.codenvy.im.managers.InstallManager#performUpdateStep
+     */
+    public void update(@Nonnull Artifact artifact,
+                       @Nonnull Version version,
+                       @Nonnull InstallOptions installOptions) throws IOException {
+        SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
+        if (!downloadedVersions.containsKey(version)) {
+            throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
+
+        installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions);
     }
 
-    protected Version doGetVersionToInstall(@Nonnull Request request) throws IOException {
-        int installStep = 0;
-        if (request.getInstallOptions() != null) {
-            installStep = request.getInstallOptions().getStep();
-        }
-
-        if (request.createVersion() != null) {
-            return request.createVersion();
-
-        } else if (installStep == 0) {
-            Version version = installManager.getLatestInstallableVersion(request.createArtifact());
-
-            if (version == null) {
-                throw new IllegalStateException(format("There is no newer version to install '%s'.", request.createArtifact()));
-            }
-
-            return version;
-
-        } else {
-            SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(request.createArtifact());
-            if (downloadedVersions.isEmpty()) {
-                throw new IllegalStateException(format("Installation in progress but binaries for '%s' not found.", request.createArtifact()));
-            }
-            return downloadedVersions.keySet().iterator().next();
-        }
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getLatestInstallableVersion
+     */
+    @Nullable
+    public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
+        return installManager.getLatestInstallableVersion(artifact);
     }
 
     /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
@@ -441,6 +421,13 @@ public class InstallationManagerFacade {
     }
 
     /**
+     * @see com.codenvy.im.saas.SaasAuthServiceProxy#logout(String)
+     */
+    public void logoutFromCodenvySaaS(@Nonnull String authToken) throws IOException {
+        saasAuthServiceProxy.logout(authToken);
+    }
+
+    /**
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
      */
     @Nullable
@@ -471,15 +458,24 @@ public class InstallationManagerFacade {
         return storageManager.loadProperties();
     }
 
+    /**
+     * @see com.codenvy.im.managers.StorageManager#loadProperty(String)
+     */
     @Nullable
     public String loadProperty(@Nullable String key) throws IOException {
         return storageManager.loadProperty(key);
     }
 
+    /**
+     * @see com.codenvy.im.managers.StorageManager#storeProperty(String, String)
+     */
     public void storeProperty(@Nullable String key, @Nullable String value) throws IOException {
         storageManager.storeProperty(key, value);
     }
 
+    /**
+     * @see com.codenvy.im.managers.StorageManager#deleteProperty(String)
+     */
     public void deleteProperty(@Nullable String name) throws IOException {
         storageManager.deleteProperty(name);
     }

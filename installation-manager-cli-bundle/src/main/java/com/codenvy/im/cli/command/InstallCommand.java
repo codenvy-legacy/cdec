@@ -17,20 +17,20 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.artifacts.ArtifactFactory;
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.request.Request;
-import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactStatus;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallResult;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -42,9 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.managers.Config.isEmpty;
 import static com.codenvy.im.managers.Config.isMandatory;
 import static com.codenvy.im.managers.Config.isValidForMandatoryProperty;
+import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -65,7 +67,7 @@ public class InstallCommand extends AbstractIMCommand {
     protected String artifactName;
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
-    private String version;
+    private String versionNumber;
 
     @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
     private boolean list;
@@ -103,21 +105,21 @@ public class InstallCommand extends AbstractIMCommand {
             artifactName = CDECArtifact.NAME;
         }
 
-        final InstallOptions installOptions = new InstallOptions();
+        final Artifact artifact = createArtifact(artifactName);
+        final Version version = versionNumber != null ? Version.valueOf(versionNumber) : facade.getLatestInstallableVersion(artifact);
         if (version == null) {
-            installOptions.setStep(getFirstInstallStep());
-            Request request = createRequest(artifactName, null);
-            request.setInstallOptions(installOptions);
-            version = facade.getVersionToInstall(request);
+            throw new IllegalStateException("There is no new version to install");
         }
+        versionNumber = version.toString();
+
+        final InstallOptions installOptions = new InstallOptions();
+        final boolean isInstall = isInstall();
 
         if (multi) {
             installType = InstallType.MULTI_SERVER;
         } else {
             installType = InstallType.SINGLE_SERVER;
         }
-
-        final Request request = createRequest(artifactName, version);
 
         installOptions.setInstallType(installType);
         setInstallProperties(installOptions);
@@ -127,15 +129,14 @@ public class InstallCommand extends AbstractIMCommand {
             confirmOrReenterOptions(installOptions);
         }
 
-        String response = facade.getInstallInfo(request.setInstallOptions(installOptions));
-        Response responseObj = Response.fromJson(response);
 
-        if (responseObj.getStatus() == ResponseCode.ERROR) {
-            console.printErrorAndExit(response);
-            return null;
+        List<String> infos;
+        if (isInstall) {
+            infos = facade.getInstallInfo(artifact, installType);
+        } else {
+            infos = facade.getUpdateInfo(artifact, installType);
         }
 
-        List<String> infos = responseObj.getInfos();
         final int finalStep = infos.size() - 1;
         final int firstStep = getFirstInstallStep();
         final int lastStep = getLastInstallationStep(finalStep);
@@ -144,6 +145,16 @@ public class InstallCommand extends AbstractIMCommand {
         for (String i : infos) {
             maxInfoLen = max(maxInfoLen, i.length());
         }
+
+        InstallArtifactResult installArtifactResult = new InstallArtifactResult();
+        installArtifactResult.setArtifact(artifactName);
+        installArtifactResult.setVersion(versionNumber);
+        installArtifactResult.setStatus(InstallArtifactStatus.SUCCESS);
+
+        InstallResult installResult = new InstallResult();
+        installResult.setStatus(ResponseCode.OK);
+        installResult.setArtifacts(ImmutableList.of(installArtifactResult));
+
 
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
@@ -155,12 +166,21 @@ public class InstallCommand extends AbstractIMCommand {
             try {
                 installOptions.setStep(step);
 
-                response = facade.install(request.setInstallOptions(installOptions));
-                responseObj = Response.fromJson(response);
+                try {
+                    if (isInstall) {
+                        facade.install(artifact, version, installOptions);
+                    } else {
+                        facade.update(artifact, version, installOptions);
+                    }
+                } catch (Exception e) {
+                    installArtifactResult.setStatus(InstallArtifactStatus.FAILURE);
+                    installResult.setStatus(ResponseCode.ERROR);
+                    installResult.setMessage(e.getMessage());
+                }
 
-                if (responseObj.getStatus() == ResponseCode.ERROR) {
+                if (installResult.getStatus() == ResponseCode.ERROR) {
                     console.printError(" [FAIL]", true);
-                    console.printErrorAndExit(response);
+                    console.printErrorAndExit(toJson(installResult));
                     return null;
                 } else {
                     console.printSuccessWithoutCodenvyPrompt(" [OK]");
@@ -172,10 +192,9 @@ public class InstallCommand extends AbstractIMCommand {
 
         // only OK response can be here
         if (lastStep == finalStep) {
-            console.println(response);
-            responseObj = Response.fromJson(response);
+            console.println(toJson(installResult));
 
-            if (isInteractive() && isIMSuccessfullyUpdated(responseObj)) {
+            if (isInteractive() && artifactName.equals(InstallManagerArtifact.NAME)) {
                 console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
                 console.exit(0);
             }
@@ -185,22 +204,12 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        Response response = facade.getInstalledVersions();
-        console.printResponse(response.toJson());
+        List<InstallArtifactResult> installedVersions = facade.getInstalledVersions();
+        InstallResult installResult = new InstallResult();
+        installResult.setArtifacts(installedVersions);
+        installResult.setStatus(ResponseCode.OK);
+        console.printResponse(toJson(installResult));
         return null;
-    }
-
-    protected boolean isIMSuccessfullyUpdated(Response response) {
-        List<ArtifactInfo> artifacts = response.getArtifacts();
-        if (artifacts != null) {
-            for (ArtifactInfo artifact : artifacts) {
-                if (InstallManagerArtifact.NAME.equals(artifact.getArtifact()) && artifact.getStatus() == ArtifactStatus.SUCCESS) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     protected InstallOptions enterMandatoryOptions(InstallOptions options) throws IOException {
@@ -275,8 +284,8 @@ public class InstallCommand extends AbstractIMCommand {
             case CDECArtifact.NAME:
                 Map<String, String> properties = configManager.prepareInstallProperties(configFilePath,
                                                                                         installType,
-                                                                                        ArtifactFactory.createArtifact(artifactName),
-                                                                                        Version.valueOf(version));
+                                                                                        createArtifact(artifactName),
+                                                                                        Version.valueOf(versionNumber));
                 options.setConfigProperties(properties);
                 break;
             default:
@@ -285,7 +294,7 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected boolean isInstall() throws IOException {
-        return Commons.isInstall(ArtifactFactory.createArtifact(CDECArtifact.NAME), Version.valueOf(version));
+        return Commons.isInstall(createArtifact(CDECArtifact.NAME));
     }
 
     public void confirmOrReenterOptions(InstallOptions installOptions) throws IOException, InterruptedException {

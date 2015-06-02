@@ -22,6 +22,7 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -159,7 +160,7 @@ public class TestAbstractArtifact extends BaseTest {
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
-        doReturn("{\"previous-version\":\"0.0.1\"}")
+        doReturn("{}")
             .when(mockTransport)
             .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
 
@@ -169,7 +170,8 @@ public class TestAbstractArtifact extends BaseTest {
 
     private static class TestedAbstractArtifact extends AbstractArtifact {
         public TestedAbstractArtifact(String name,
-                                      String updateEndpoint, HttpTransport transport,
+                                      String updateEndpoint,
+                                      HttpTransport transport,
                                       ConfigManager configManager) {
             super(name, updateEndpoint, transport, configManager);
         }
@@ -186,12 +188,12 @@ public class TestAbstractArtifact extends BaseTest {
         }
 
         @Override
-        public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
+        public List<String> getInstallInfo(InstallType installType) throws IOException {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
+        public List<String> getUpdateInfo(InstallType installType) throws IOException {
             return null;
         }
 

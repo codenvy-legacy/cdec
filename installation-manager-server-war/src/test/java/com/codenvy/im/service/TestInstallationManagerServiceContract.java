@@ -33,9 +33,11 @@ import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.specification.RequestSpecification;
+
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -52,6 +54,7 @@ import org.testng.annotations.Test;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -59,9 +62,11 @@ import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 /**
  * @author Dmytro Nochevnov
@@ -72,11 +77,11 @@ public class TestInstallationManagerServiceContract {
                                                   + "    \n"
                                                   + "}";
     @Mock
-    public InstallationManagerFacade facade;
+    public  InstallationManagerFacade facade;
     @Mock
-    public ConfigManager       configManager;
+    public  ConfigManager             configManager;
     @Mock
-    public SaasUserCredentials saasUserCredentials;
+    public  SaasUserCredentials       saasUserCredentials;
     @Mock
     private Artifact                  mockArtifact;
 
@@ -94,53 +99,53 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testBackup() {
         testContract(
-             "backup",                                     // path
-             ImmutableMap.of("artifact", CDECArtifact.NAME,
-                             "backupDir", "test"),         // query parameters
-             null,                                         // request body
-             null,                                         // consume content type
-             ContentType.JSON,                             // produce content type
-             HttpMethod.POST,                              // HTTP method
-             OK_RESPONSE_BODY,                             // response body
-             Response.Status.OK,                           // response status
-             new Function<Object, Object>() {              // before test
-                 @Nullable
-                 @Override
-                 public Object apply(@Nullable Object o) {
-                     BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                                       .setBackupDirectory("test");
-                     doReturn(com.codenvy.im.response.Response.ok()).when(facade).backup(testBackupConfig);
-                     return null;
-                 }
-             },
-             null // assertion
-            );
+                "backup",                                     // path
+                ImmutableMap.of("artifact", CDECArtifact.NAME,
+                                "backupDir", "test"),         // query parameters
+                null,                                         // request body
+                null,                                         // consume content type
+                ContentType.JSON,                             // produce content type
+                HttpMethod.POST,                              // HTTP method
+                OK_RESPONSE_BODY,                             // response body
+                Response.Status.OK,                           // response status
+                new Function<Object, Object>() {              // before test
+                    @Nullable
+                    @Override
+                    public Object apply(@Nullable Object o) {
+                        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                                          .setBackupDirectory("test");
+                        doReturn(com.codenvy.im.response.Response.ok()).when(facade).backup(testBackupConfig);
+                        return null;
+                    }
+                },
+                null // assertion
+                    );
     }
 
     @Test
     public void testRestore() {
         testContract(
-             "restore",                                    // path
-             ImmutableMap.of("artifact", CDECArtifact.NAME,
-                             "backupFile", "test"),        // query parameters
-             null,                                         // request body
-             null,                                         // consume content type
-             ContentType.JSON,                             // produce content type
-             HttpMethod.POST,                              // HTTP method
-             OK_RESPONSE_BODY,                             // response body
-             Response.Status.OK,                           // response status
-             new Function<Object, Object>() {              // before test
-                 @Nullable
-                 @Override
-                 public Object apply(@Nullable Object o) {
-                     BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                                       .setBackupFile("test");
-                     doReturn(com.codenvy.im.response.Response.ok()).when(facade).restore(testBackupConfig);
-                     return null;
-                 }
-             },
-             null // assertion
-        );
+                "restore",                                    // path
+                ImmutableMap.of("artifact", CDECArtifact.NAME,
+                                "backupFile", "test"),        // query parameters
+                null,                                         // request body
+                null,                                         // consume content type
+                ContentType.JSON,                             // produce content type
+                HttpMethod.POST,                              // HTTP method
+                OK_RESPONSE_BODY,                             // response body
+                Response.Status.OK,                           // response status
+                new Function<Object, Object>() {              // before test
+                    @Nullable
+                    @Override
+                    public Object apply(@Nullable Object o) {
+                        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                                          .setBackupFile("test");
+                        doReturn(com.codenvy.im.response.Response.ok()).when(facade).restore(testBackupConfig);
+                        return null;
+                    }
+                },
+                null // assertion
+                    );
     }
 
     @Test
@@ -233,7 +238,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         verify(facade).startDownload(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
                     } catch (InterruptedException | DownloadAlreadyStartedException | IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -259,7 +264,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         verify(facade).stopDownload();
                     } catch (InterruptedException | DownloadNotStartedException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -289,40 +294,7 @@ public class TestInstallationManagerServiceContract {
                         downloadDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
                         doReturn(downloadDescriptor).when(facade).getDownloadProgress();
                     } catch (IOException | DownloadNotStartedException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-            },
-            null // assertion
-        );
-    }
-
-    @Test
-    public void testGetUpdateCodenvyInfo() {
-        testContract(
-            "update/" + CDECArtifact.NAME + "/info",               // path
-            null,                            // query parameters
-            null,                            // request body
-            null,                            // consume content type
-            ContentType.JSON,                // produce content type
-            HttpMethod.GET,                  // HTTP method
-            OK_RESPONSE_BODY,                // response body
-            Response.Status.OK,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-                    try {
-                        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
-                        Request testRequest = new Request().setArtifactName(CDECArtifact.NAME)
-                                                           .setInstallOptions(testInstallOptions);
-
-                        doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).getInstallInfo(testRequest);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -334,22 +306,24 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testGetInstalledVersions() {
         testContract(
-            "installation",                  // path
+                "installations",                  // path
             null,                            // query parameters
             null,                            // request body
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            OK_RESPONSE_BODY,                // response body
+            "[\n" +
+            "    \n" +
+            "]",                // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        doReturn(com.codenvy.im.response.Response.ok()).when(facade).getInstalledVersions();
+                        doReturn(ImmutableList.of()).when(facade).getInstalledVersions();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -361,19 +335,25 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testGetUpdates() {
         testContract(
-            "update",                        // path
+                "updates",                        // path
             null,                            // query parameters
             null,                            // request body
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            OK_RESPONSE_BODY,                // response body
+            "[\n" +
+            "    \n" +
+            "]",                // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
-                    doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).getUpdates();
+                    try {
+                        doReturn(Collections.emptyList()).when(facade).getUpdates();
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
                     return null;
                 }
             },
@@ -388,10 +368,10 @@ public class TestInstallationManagerServiceContract {
             ImmutableMap.of("step", "1"),    // query parameters
             null,                            // request body
             null,                            // consume content type
-            ContentType.JSON,                // produce content type
+            null,                // produce content type
             HttpMethod.POST,                 // HTTP method
-            OK_RESPONSE_BODY,                // response body
-            Response.Status.OK,              // response status
+            null,                // response body
+            Response.Status.CREATED,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
@@ -399,9 +379,10 @@ public class TestInstallationManagerServiceContract {
                     try {
                         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
                         doReturn(null).when(configManager).prepareInstallProperties(anyString(), any(InstallType.class), any(Artifact.class), any(Version.class));
-                        doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).install(any(Request.class));
+                        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+                        doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
 
                     return null;
@@ -428,14 +409,14 @@ public class TestInstallationManagerServiceContract {
                 public Object apply(@Nullable Object o) {
                     try {
                         doReturn(new DtoServerImpls.TokenImpl().withValue("token"))
-                            .when(facade)
-                            .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
+                                .when(facade)
+                                .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
 
                         doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId("id").withName("name"))
-                            .when(facade).getAccountWhereUserIsOwner(anyString(), any(Request.class));
+                                .when(facade).getAccountWhereUserIsOwner(anyString(), any(Request.class));
 
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
 
                     return null;
@@ -473,7 +454,7 @@ public class TestInstallationManagerServiceContract {
                         SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson("{}", SubscriptionDescriptor.class);
                         doReturn(descriptor).when(facade).getSubscription(anyString(), any(Request.class));
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
 
                     return null;
@@ -490,19 +471,19 @@ public class TestInstallationManagerServiceContract {
             null,                                              // query parameters
             null,                                              // request body
             null,                                              // consume content type
-            ContentType.JSON,                                  // produce content type
+            null,                                  // produce content type
             HttpMethod.POST,                                   // HTTP method
-            OK_RESPONSE_BODY,                                  // response body
-            Response.Status.OK,                                // response status
+            null,                                  // response body
+            Response.Status.CREATED,                                // response status
             new Function<Object, Object>() {                   // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
                         service.saasUserCredentials = new SaasUserCredentials("id", "token");
-                        doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).addTrialSaasSubscription(any(Request.class));
+                        doNothing().when(facade).addTrialSaasSubscription(any(SaasUserCredentials.class));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -531,7 +512,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         doReturn(ImmutableMap.of("a", "b")).when(facade).loadProperties();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -559,7 +540,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         verify(facade).storeProperties(ImmutableMap.of("a", "b"));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -585,7 +566,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         doReturn("b").when(facade).loadProperty("a");
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -613,7 +594,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         verify(facade).storeProperty("a", "b");
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }
@@ -640,7 +621,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         verify(facade).deleteProperty("a");
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        fail(e.getMessage(), e);
                     }
                     return null;
                 }

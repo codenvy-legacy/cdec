@@ -19,7 +19,7 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 
@@ -47,10 +47,6 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Mock
     private CommandSession            commandSession;
 
-    private String          okResponse      = "{\n" +
-                                              "  \"status\" : \"OK\"\n" +
-                                              "}";
-
     @BeforeMethod
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
@@ -66,7 +62,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         doNothing().when(service).startDownload(null, null);
         doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
                                                 100,
-                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(service).getDownloadProgress();
+                                                Collections.<DownloadArtifactResult>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -85,7 +81,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         doNothing().when(service).startDownload(null, null);
         doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED,
                                                 0,
-                                                Collections.<DownloadArtifactDescriptor>emptyList())).when(service).getDownloadProgress();
+                                                Collections.<DownloadArtifactResult>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -115,30 +111,32 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdates() throws Exception {
-        doReturn(okResponse).when(service).getUpdates();
+        doReturn(Collections.emptyList()).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, okResponse + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"artifacts\" : [ ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testCheckUpdatesWhenErrorInResponse() throws Exception {
-        String serviceErrorResponse = "{"
-                                      + "\"message\": \"Some error\","
-                                      + "\"status\": \"ERROR\""
-                                      + "}";
-        doReturn(serviceErrorResponse).when(service).getUpdates();
+        doThrow(new IOException("Some error")).when(service).getUpdates();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, serviceErrorResponse + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"message\" : \"Some error\",\n" +
+                             "  \"status\" : \"ERROR\"\n" +
+                             "}\n");
     }
 
     @Test

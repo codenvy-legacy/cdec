@@ -113,8 +113,8 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
-        if (installOptions.getInstallType() != configManager.detectInstallationType()) {
+    public List<String> getUpdateInfo(InstallType installType) throws IOException {
+        if (installType != configManager.detectInstallationType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
 
@@ -124,7 +124,7 @@ public class CDECArtifact extends AbstractArtifact {
                                 "Move Codenvy binaries to /etc/puppet",
                                 "Update Codenvy",
                                 "Patch resources after update"
-        );
+                               );
     }
 
     /** {@inheritDoc} */
@@ -139,9 +139,10 @@ public class CDECArtifact extends AbstractArtifact {
         return getHelper(installOptions.getInstallType()).getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
     }
 
+    /** {@inheritDoc} */
     @Override
-    public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
-        return getHelper(installOptions.getInstallType()).getInstallInfo(installOptions);
+    public List<String> getInstallInfo(InstallType installType) throws IOException {
+        return getHelper(installType).getInstallInfo();
     }
 
     /** {@inheritDoc} */
@@ -186,6 +187,4 @@ public class CDECArtifact extends AbstractArtifact {
     protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }
-
-
 }

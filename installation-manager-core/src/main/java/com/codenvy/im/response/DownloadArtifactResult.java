@@ -27,23 +27,23 @@ import java.nio.file.Path;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifact", "version", "file", "status"})
-public class DownloadArtifactDescriptor {
+public class DownloadArtifactResult {
     private String                 artifact;
     private String                 version;
     private String                 file;
     private DownloadArtifactStatus status;
 
-    public DownloadArtifactDescriptor() {
+    public DownloadArtifactResult() {
     }
 
-    public DownloadArtifactDescriptor(Artifact artifact, Version version, Path file, DownloadArtifactStatus status) {
+    public DownloadArtifactResult(Artifact artifact, Version version, Path file, DownloadArtifactStatus status) {
         this.artifact = artifact.getName();
         this.version = version.toString();
         this.file = file.toString();
         this.status = status;
     }
 
-    public DownloadArtifactDescriptor(Artifact artifact, Version version, DownloadArtifactStatus status) {
+    public DownloadArtifactResult(Artifact artifact, Version version, DownloadArtifactStatus status) {
         this(artifact, version, null, status);
     }
 
@@ -83,9 +83,9 @@ public class DownloadArtifactDescriptor {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DownloadArtifactDescriptor)) return false;
+        if (!(o instanceof DownloadArtifactResult)) return false;
 
-        DownloadArtifactDescriptor that = (DownloadArtifactDescriptor)o;
+        DownloadArtifactResult that = (DownloadArtifactResult)o;
 
         if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) return false;
         if (file != null ? !file.equals(that.file) : that.file != null) return false;

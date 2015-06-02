@@ -32,6 +32,8 @@ import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -40,7 +42,6 @@ import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
@@ -52,17 +53,22 @@ import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -75,7 +81,6 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstallationManagerFacade extends BaseTest {
     private InstallationManagerFacade installationManagerFacade;
-    private SaasUserCredentials       testCredentials;
     private Artifact                  cdecArtifact;
 
     @Mock
@@ -113,7 +118,6 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       storageManager,
                                                                       installManager,
                                                                       downloadManager));
-        testCredentials = new SaasUserCredentials("auth token");
     }
 
     @Test
@@ -142,115 +146,51 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Test
     public void testInstall() throws Exception {
         InstallOptions installOptions = new InstallOptions();
-        Request request = new Request().setSaasUserCredentials(testCredentials)
-                                       .setArtifactName(cdecArtifact.getName())
-                                       .setInstallOptions(installOptions);
-        Version version = Version.valueOf("2.10.5");
+        final Version version = Version.valueOf("2.10.5");
+        final Path pathToBinaries = Paths.get("file");
 
-        doReturn(version).when(installManager).getLatestInstallableVersion(cdecArtifact);
-        doNothing().when(installationManagerFacade).install(cdecArtifact, version, installOptions);
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version, pathToBinaries);
+        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
+        installationManagerFacade.install(cdecArtifact, version, installOptions);
 
-        String response = installationManagerFacade.install(request);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"codenvy\",\n" +
-                               "    \"version\" : \"2.10.5\",\n" +
-                               "    \"status\" : \"SUCCESS\"\n" +
-                               "  } ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
+        verify(installManager).performInstallStep(cdecArtifact, version, pathToBinaries, installOptions);
     }
 
-    @Test
+    @Test(expectedExceptions = FileNotFoundException.class)
     public void testInstallError() throws Exception {
         InstallOptions installOptions = new InstallOptions();
-        Request request = new Request().setSaasUserCredentials(testCredentials)
-                                       .setArtifactName(cdecArtifact.getName())
-                                       .setVersion("1.0.1")
-                                       .setInstallOptions(installOptions);
+        Version version = Version.valueOf("1.0.1");
 
-        doThrow(new IOException("I/O error")).when(installationManagerFacade)
-                                             .install(cdecArtifact, Version.valueOf("1.0.1"), installOptions);
+        doThrow(FileNotFoundException.class).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
-
-        String response = installationManagerFacade.install(request);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"codenvy\",\n" +
-                               "    \"version\" : \"1.0.1\",\n" +
-                               "    \"status\" : \"FAILURE\"\n" +
-                               "  } ],\n" +
-                               "  \"message\" : \"I/O error\",\n" +
-                               "  \"status\" : \"ERROR\"\n" +
-                               "}");
+        installationManagerFacade.install(cdecArtifact, version, installOptions);
     }
 
     @Test
-    public void testGetVersionToInstallVersionSetExplicitly() throws Exception {
-        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName()).setVersion("1.0.1");
+    public void testUpdate() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        final Version version = Version.valueOf("2.10.5");
+        final Path pathToBinaries = Paths.get("file");
 
-        doReturn(Version.valueOf("1.0.2")).when(installManager).getLatestInstallableVersion(cdecArtifact);
-        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(downloadManager)
-                                                                                         .getDownloadedVersions(cdecArtifact);
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version, pathToBinaries);
+        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerFacade.doGetVersionToInstall(request);
-        assertEquals(Version.valueOf("1.0.1"), version);
+        installationManagerFacade.update(cdecArtifact, version, installOptions);
+
+        verify(installManager).performUpdateStep(cdecArtifact, version, pathToBinaries, installOptions);
     }
 
-    @Test
-    public void testGetVersionToInstallFirstInstallStep() throws Exception {
-        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
+    @Test(expectedExceptions = FileNotFoundException.class)
+    public void testUpdateError() throws Exception {
+        InstallOptions installOptions = new InstallOptions();
+        Version version = Version.valueOf("1.0.1");
 
-        doReturn(Version.valueOf("1.0.2")).when(installManager).getLatestInstallableVersion(cdecArtifact);
-        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(downloadManager)
-                                                                                         .getDownloadedVersions(cdecArtifact);
+        doThrow(FileNotFoundException.class).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
-        Version version = installationManagerFacade.doGetVersionToInstall(request);
-        assertEquals(Version.valueOf("1.0.2"), version);
-    }
-
-    @Test
-    public void testGetVersionToInstallInstallInProgress() throws Exception {
-        InstallOptions installOptionsWithStep1 = new InstallOptions();
-        installOptionsWithStep1.setStep(1);
-
-        Request request = new Request().setSaasUserCredentials(testCredentials)
-                                       .setArtifactName(cdecArtifact.getName())
-                                       .setInstallOptions(installOptionsWithStep1);
-
-        doReturn(Version.valueOf("1.0.4")).when(installManager).getLatestInstallableVersion(cdecArtifact);
-        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(downloadManager)
-                                                                                         .getDownloadedVersions(cdecArtifact);
-
-        Version version = installationManagerFacade.doGetVersionToInstall(request);
-        assertEquals(Version.valueOf("1.0.3"), version);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testGetVersionToInstallErrorFirstInstallStep() throws Exception {
-        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(cdecArtifact.getName());
-
-        doReturn(null).when(installManager).getLatestInstallableVersion(cdecArtifact);
-        doReturn(ImmutableSortedMap.of(Version.valueOf("1.0.3"), Paths.get("some path"))).when(downloadManager)
-                                                                                         .getDownloadedVersions(cdecArtifact);
-
-        installationManagerFacade.doGetVersionToInstall(request);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testGetVersionToInstallErrorInstallInProgress() throws Exception {
-        InstallOptions installOptionsWithStep1 = new InstallOptions();
-        installOptionsWithStep1.setStep(1);
-
-        Request request = new Request().setSaasUserCredentials(testCredentials)
-                                       .setArtifactName(cdecArtifact.getName())
-                                       .setInstallOptions(installOptionsWithStep1);
-
-        doReturn(Version.valueOf("1.0.4")).when(installManager).getLatestInstallableVersion(cdecArtifact);
-        doReturn(ImmutableSortedMap.of()).when(downloadManager).getDownloadedVersions(cdecArtifact);
-
-        installationManagerFacade.doGetVersionToInstall(request);
+        installationManagerFacade.update(cdecArtifact, version, installOptions);
     }
 
     @Test
@@ -395,6 +335,13 @@ public class TestInstallationManagerFacade extends BaseTest {
         installationManagerFacade.loginToCodenvySaaS(credentials);
 
         verify(saasAuthServiceProxy).login(credentials);
+    }
+
+    @Test
+    public void testLoginFromSaas() throws Exception {
+        installationManagerFacade.logoutFromCodenvySaaS("token");
+
+        verify(saasAuthServiceProxy).logout("token");
     }
 
     @Test
@@ -558,5 +505,25 @@ public class TestInstallationManagerFacade extends BaseTest {
         doThrow(IOException.class).when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, testProperty, testValue);
 
         installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, testProperty, testValue);
+    }
+
+    @Test
+    public void testGetUpdates() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
+        when(downloadManager.getUpdates()).thenReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, version100);
+            }
+        });
+
+        when(downloadManager.getDownloadedVersions(cdecArtifact)).thenReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }});
+
+        List<UpdatesArtifactResult> updates = installationManagerFacade.getUpdates();
+        assertEquals(updates.size(), 1);
+        assertEquals(updates.get(0).getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(updates.get(0).getArtifact(), cdecArtifact.getName());
+        assertEquals(updates.get(0).getVersion(), version100.toString());
     }
 }

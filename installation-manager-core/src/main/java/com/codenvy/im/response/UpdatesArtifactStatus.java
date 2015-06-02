@@ -15,16 +15,12 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
+
 package com.codenvy.im.response;
 
 /**
  * @author Dmytro Nochevnov
  */
-public enum Property {
-    ARTIFACT,
-    ARTIFACTS,
-    VERSION,
-    STATUS,
-    MESSAGE,
-    DOWNLOAD_INFO
+public enum UpdatesArtifactStatus {
+    DOWNLOADED
 }

@@ -74,7 +74,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getInstallInfo(InstallOptions installOptions) throws IOException {
+    public List<String> getInstallInfo() throws IOException {
         return ImmutableList.of(
             "Disable SELinux on nodes",
             "Install puppet master and agents on nodes",

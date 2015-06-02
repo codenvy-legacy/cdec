@@ -18,18 +18,14 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.request.Request;
-import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactStatus;
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -45,6 +41,7 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,14 +66,6 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallationManagerFacade facade;
     private ConfigManager mockConfigManager;
     private CommandSession            commandSession;
-    private String okServiceResponse = "{\n"
-                                       + "  \"artifacts\" : [ {\n"
-                                       + "    \"artifact\" : \"codenvy\",\n"
-                                       + "    \"version\" : \"1.0.1\",\n"
-                                       + "    \"status\" : \"SUCCESS\"\n"
-                                       + "  } ],\n"
-                                       + "  \"status\" : \"OK\"\n"
-                                       + "}";
 
     private ByteArrayOutputStream outputStream;
     private ByteArrayOutputStream errorStream;
@@ -93,9 +82,8 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(InstallationManagerFacade.class);
-        doReturn("1.0.1").when(facade).getVersionToInstall(any(Request.class));
-        doReturn(new Response().setInfos(ImmutableList.of("step 1", "step 2")).toJson())
-                .when(facade).getInstallInfo(any(Request.class));
+        doReturn(Version.valueOf("1.0.1")).when(facade).getLatestInstallableVersion(any(Artifact.class));
+        doReturn(ImmutableList.of("step 1", "step 2")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand(mockConfigManager));
@@ -123,59 +111,30 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testInstallArtifact() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        final String expectedOutput = "step 1 [OK]\n" +
-                                      "step 2 [OK]\n" +
-                                      "{\n" +
-                                      "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"codenvy\",\n" +
-                                      "    \"version\" : \"1.0.1\",\n" +
-                                      "    \"status\" : \"SUCCESS\"\n" +
-                                      "  } ],\n" +
-                                      "  \"status\" : \"OK\"\n" +
-                                      "}\n";
-
-        doAnswer(new Answer<String>() {
-            @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                Request request = (Request)invocation.getArguments()[0];
-                InstallOptions installOptions = request.getInstallOptions();
-                assertEquals(installOptions.getInstallType(), InstallType.SINGLE_SERVER);
-                return okServiceResponse;
-            }
-        }).when(facade).install(any(Request.class));
+        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput);
+        assertEquals(output, "step 1 [OK]\n" +
+                             "step 2 [OK]\n" +
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.1\",\n" +
+                             "    \"status\" : \"SUCCESS\"\n" +
+                             "  } ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testInstallMultiServerArtifact() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        final String expectedOutput = "step 1 [OK]\n" +
-                                      "step 2 [OK]\n" +
-                                      "{\n" +
-                                      "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"codenvy\",\n" +
-                                      "    \"version\" : \"1.0.1\",\n" +
-                                      "    \"status\" : \"SUCCESS\"\n" +
-                                      "  } ],\n" +
-                                      "  \"status\" : \"OK\"\n" +
-                                      "}\n";
-
-        doAnswer(new Answer<String>() {
-            @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                Request request = (Request)invocation.getArguments()[0];
-                InstallOptions installOptions = request.getInstallOptions();
-                assertEquals(installOptions.getInstallType(), InstallType.MULTI_SERVER);
-                return okServiceResponse;
-            }
-        }).when(facade).install(any(Request.class));
+        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -183,12 +142,21 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput);
+        assertEquals(output, "step 1 [OK]\n" +
+                             "step 2 [OK]\n" +
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.1\",\n" +
+                             "    \"status\" : \"SUCCESS\"\n" +
+                             "  } ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
-        doReturn("1.0.2").when(facade).getVersionToInstall(any(Request.class));
+        doReturn(Version.valueOf("1.0.2")).when(facade).getLatestInstallableVersion(any(Artifact.class));
         doReturn(false).when(spyCommand).isInstall();
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
                                                                                                                               any(InstallType.class),
@@ -204,7 +172,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand.console).readLine();
 
         // no installation info provided
-        doReturn("{\"infos\":[]}").when(facade).getInstallInfo(any(Request.class));
+        doReturn(Collections.emptyList()).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {
@@ -246,26 +214,21 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"b\" : \"some value\"\n" +
                              "}\n" +
                              "Do you confirm parameters above? [y/N]\n" +
-                             "{\"infos\":[]}\n");
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.2\",\n" +
+                             "    \"status\" : \"SUCCESS\"\n" +
+                             "  } ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-
-        final String expectedOutput = "step 1 [OK]\n" +
-                                      "step 2 [OK]\n" +
-                                      "{\n" +
-                                      "  \"artifacts\" : [ {\n" +
-                                      "    \"artifact\" : \"codenvy\",\n" +
-                                      "    \"version\" : \"1.0.1\",\n" +
-                                      "    \"status\" : \"SUCCESS\"\n" +
-                                      "  } ],\n" +
-                                      "  \"status\" : \"OK\"\n" +
-                                      "}\n";
-
-        doReturn(okServiceResponse).when(facade).install(any(Request.class));
+        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -273,59 +236,63 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput);
+        assertEquals(output, "step 1 [OK]\n" +
+                             "step 2 [OK]\n" +
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.1\",\n" +
+                             "    \"status\" : \"SUCCESS\"\n" +
+                             "  } ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testInstallWhenUnknownArtifact() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        final String serviceErrorResponse = "{\n"
-                                            + "  \"message\" : \"Artifact 'any' not found\",\n"
-                                            + "  \"status\" : \"ERROR\"\n"
-                                            + "}";
-
-        doReturn(serviceErrorResponse).when(facade).getInstallInfo(any(Request.class));
+        doThrow(new IOException("Artifact 'any' not found")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", "any");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, serviceErrorResponse + "\n");
+        assertEquals(output, "{\n"
+                             + "  \"message\" : \"Artifact 'any' not found\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
     }
 
     @Test
     public void testInstallErrorStepFailed() throws Exception {
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
-        final String expectedOutput = "step 1 [FAIL]\n" +
-                                      "{\n"
-                                      + "  \"message\" : \"step failed\",\n"
-                                      + "  \"status\" : \"ERROR\"\n"
-                                      + "}";
-        doReturn("{\n"
-                 + "  \"message\" : \"step failed\",\n"
-                 + "  \"status\" : \"ERROR\"\n"
-                 + "}").when(facade).install(any(Request.class));
+        doThrow(new IOException("step failed")).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput + "\n");
+        assertEquals(output, "step 1 [FAIL]\n" +
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.1\",\n" +
+                             "    \"status\" : \"FAILURE\"\n" +
+                             "  } ],\n" +
+                             "  \"message\" : \"step failed\",\n" +
+                             "  \"status\" : \"ERROR\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testInstallWhenServiceThrowsError2() throws Exception {
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
-        final String expectedOutput = "{\n"
-                                      + "  \"message\" : \"Property is missed\",\n"
-                                      + "  \"status\" : \"ERROR\"\n"
-                                      + "}";
-        doReturn(expectedOutput).when(facade).getInstallInfo(any(Request.class));
+        doThrow(new IOException("Property is missed")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -333,15 +300,17 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, expectedOutput + "\n");
+        assertEquals(output, "{\n"
+                             + "  \"message\" : \"Property is missed\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
     }
 
     @Test
     public void testListInstalledArtifacts() throws Exception {
-        Response response = new Response().setStatus(ResponseCode.OK).addArtifact(new ArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                                   Version.valueOf("1.0.1"),
-                                                                                                   ArtifactStatus.SUCCESS));
-        doReturn(response).when(facade).getInstalledVersions();
+        doReturn(ImmutableList.of(new InstallArtifactResult().withArtifact("codenvy")
+                                                             .withVersion("1.0.1")
+                                                             .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -395,7 +364,8 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand.console).readLine();
 
         // no installation info provided
-        doReturn("{\"infos\":[]}").when(facade).getInstallInfo(any(Request.class));
+        doReturn(Collections.emptyList()).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {
@@ -434,7 +404,14 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"a\" : \"some value\"\n" +
                              "}\n" +
                              "Do you confirm parameters above? [y/N]\n" +
-                             "{\"infos\":[]}\n");
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.0\",\n" +
+                             "    \"status\" : \"SUCCESS\"\n" +
+                             "  } ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test

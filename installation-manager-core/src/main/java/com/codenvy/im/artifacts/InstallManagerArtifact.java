@@ -25,6 +25,7 @@ import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -86,13 +87,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getInstallInfo(InstallOptions installOptions) {
+    public List<String> getInstallInfo(InstallType installType) {
         throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
-    public List<String> getUpdateInfo(InstallOptions installOptions) throws IOException {
+    public List<String> getUpdateInfo(InstallType installType) throws IOException {
         return new ArrayList<String>() {{
             add("Initialize updating installation manager");
         }};

@@ -22,8 +22,11 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadDescriptor;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadResult;
+import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesResult;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -31,6 +34,7 @@ import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
 import static com.codenvy.im.utils.Commons.createVersionOrNull;
@@ -81,11 +85,11 @@ public class DownloadCommand extends AbstractIMCommand {
 
         for (; ; ) {
             DownloadProgressDescriptor downloadProgressDescriptor = facade.getDownloadProgress();
-            DownloadDescriptor downloadDescriptor = new DownloadDescriptor(downloadProgressDescriptor);
+            DownloadResult downloadResult = new DownloadResult(downloadProgressDescriptor);
 
             if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED) {
                 console.cleanCurrentLine();
-                console.printErrorAndExit(toJson(downloadDescriptor));
+                console.printErrorAndExit(toJson(downloadResult));
                 break;
             }
 
@@ -104,17 +108,21 @@ public class DownloadCommand extends AbstractIMCommand {
             if (downloadProgressDescriptor.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
                 if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
-                    console.printErrorAndExit(toJson(downloadDescriptor));
+                    console.printErrorAndExit(toJson(downloadResult));
                 } else {
-                    console.println(toJson(downloadDescriptor));
+                    console.println(toJson(downloadResult));
                 }
                 break;
             }
         }
     }
 
-    private void doCheck() throws JsonParseException {
-        console.printResponse(facade.getUpdates());
+    private void doCheck() throws JsonParseException, IOException {
+        List<UpdatesArtifactResult> updates = facade.getUpdates();
+        UpdatesResult updatesResult = new UpdatesResult();
+        updatesResult.setArtifacts(updates);
+        updatesResult.setStatus(ResponseCode.OK);
+        console.printResponse(toJson(updatesResult));
     }
 
     private void doList() throws JsonParseException {

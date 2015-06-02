@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.codenvy.im.utils.Commons.getProperException;
-import static com.codenvy.im.utils.Commons.isInstall;
 
 /**
  * @author Anatoliy Bazko
@@ -70,33 +69,25 @@ public class InstallManager {
     }
 
     /** Installs specific artifact. */
-    public void install(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
-        if (isInstall(artifact, version)) {
-            doInstall(artifact, version, pathToBinaries, options);
-        } else {
-            doUpdate(artifact, version, pathToBinaries, options);
-        }
-    }
-
-    /** Install specific artifact. */
-    protected void doInstall(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
+    public void performInstallStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
         Command command = artifact.getInstallCommand(version, pathToBinaries, options);
         executeCommand(command);
     }
 
     /** Updates specific artifact. */
-    protected void doUpdate(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
+    public void performUpdateStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
         Command command = artifact.getUpdateCommand(version, pathToBinaries, options);
         executeCommand(command);
     }
 
     /** @return the list with descriptions of installation steps */
-    public List<String> getInstallInfo(Artifact artifact, Version version, InstallOptions options) throws IOException {
-        if (isInstall(artifact, version)) {
-            return doGetInstallInfo(artifact, options);
-        } else {
-            return doGetUpdateInfo(artifact, options);
-        }
+    public List<String> getInstallInfo(Artifact artifact, InstallType installType) throws IOException {
+        return artifact.getUpdateInfo(installType);
+    }
+
+    /** @return the list with descriptions of installation steps */
+    public List<String> getUpdateInfo(Artifact artifact, InstallType installType) throws IOException {
+        return artifact.getUpdateInfo(installType);
     }
 
     /**
@@ -112,17 +103,7 @@ public class InstallManager {
         return artifact.isInstallable(version);
     }
 
-    protected List<String> doGetUpdateInfo(Artifact artifact, InstallOptions options) throws IOException {
-        return artifact.getUpdateInfo(options);
-    }
-
-    protected List<String> doGetInstallInfo(Artifact artifact, InstallOptions options) throws IOException {
-        return artifact.getInstallInfo(options);
-    }
-
     protected String executeCommand(Command command) throws CommandException {
         return command.execute();
     }
-
-
 }

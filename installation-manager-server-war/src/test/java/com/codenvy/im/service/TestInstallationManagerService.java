@@ -23,24 +23,25 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
-import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
@@ -197,15 +198,23 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetUpdates() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates();
-        Response result = service.getUpdates();
-        assertOkResponse(result);
+    public void testGetUpdatesShouldReturnOkStatus() throws Exception {
+        doReturn(Collections.emptyList()).when(mockFacade).getUpdates();
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates();
-        result = service.getUpdates();
-        assertErrorResponse(result);
+        Response result = service.getUpdates();
+
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
     }
+
+    @Test
+    public void testGeUpdatesShouldReturnErrorStatus() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).getUpdates();
+
+        Response result = service.getUpdates();
+
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
 
     @Test
     public void testGetDownloads() throws Exception {
@@ -221,20 +230,30 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetInstalledVersions() throws Exception {
-        doReturn(mockFacadeOkResponse).when(mockFacade).getInstalledVersions();
-        Response result = service.getInstalledVersions();
-        assertOkResponse(result);
+    public void testGetInstalledVersionsShouldReturnOkStatus() throws Exception {
+        doReturn(ImmutableList.of(new InstallArtifactResult().withVersion("1.0.1")
+                                                             .withArtifact("codenvy")
+                                                             .withStatus(InstallArtifactStatus.SUCCESS))).when(mockFacade).getInstalledVersions();
 
-        doReturn(mockFacadeErrorResponse).when(mockFacade).getInstalledVersions();
-        result = service.getInstalledVersions();
-        assertErrorResponse(result);
+        Response result = service.getInstalledVersions();
+
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testGetInstalledVersionsShouldReturnErrorStatus() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).getInstalledVersions();
+
+        Response result = service.getInstalledVersions();
+
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test
     public void testUpdateCodenvy() throws Exception {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doReturn("3.1.0").when(mockFacade).getVersionToInstall(any(Request.class));
+        doReturn(Version.valueOf("3.1.0")).when(mockFacade).getLatestInstallableVersion(any(Artifact.class));
+        doReturn(Collections.emptyList()).when(mockFacade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
 
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
@@ -245,57 +264,8 @@ public class TestInstallationManagerService extends BaseTest {
                                                                                     ArtifactFactory.createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"));
 
-        int testStep = 1;
-        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
-                                                                .setConfigProperties(testConfigProperties)
-                                                                .setStep(testStep);
-
-        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME)
-                                           .setVersion("3.1.0")
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(testStep);
-        assertOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).install(testRequest);
-        result = service.updateCodenvy(testStep);
-        assertErrorResponse(result);
-    }
-
-    @Test
-    public void testUpdateCodenvyWhenConfigNull() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-        int testStep = 1;
-        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
-                                                                .setConfigProperties(new HashMap<String, String>())
-                                                                .setStep(testStep);
-
-        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME)
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).install(testRequest);
-        Response result = service.updateCodenvy(testStep);
-        assertOkResponse(result);
-    }
-
-    @Test
-    public void testGetUpdateCodenvyInfo() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-
-        InstallOptions testInstallOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER);
-
-        Request testRequest = new Request().setArtifactName(CDECArtifact.NAME)
-                                           .setInstallOptions(testInstallOptions);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        Response result = service.getUpdateCodenvyInfo();
-        assertOkResponse(result);
-
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getInstallInfo(testRequest);
-        result = service.getUpdateCodenvyInfo();
-        assertErrorResponse(result);
+        Response result = service.updateCodenvy();
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
     @Test
@@ -358,20 +328,24 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscription() throws Exception {
+    public void testAddTrialSubscriptionShouldReturnOkResponse() throws Exception {
         SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request testRequest = new Request().setSaasUserCredentials(testUserCredentials);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
-
         service.saasUserCredentials = testUserCredentials;
+        doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
 
         Response result = service.addTrialSubscription();
-        assertOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
-        result = service.addTrialSubscription();
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
+    }
+
+    @Test
+    public void testAddTrialSubscriptionShouldReturnForbiddenResponse() throws Exception {
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
+
+        Response result = service.addTrialSubscription();
+
+        assertEquals(result.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
     }
 
     @Test

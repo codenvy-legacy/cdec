@@ -28,11 +28,11 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Anatoliy Bazko
  */
-public class DownloadArtifactDescriptorTest {
+public class DownloadArtifactResultTest {
 
     @Test
     public void test() throws Exception {
-        DownloadArtifactDescriptor expectedDescriptor = new DownloadArtifactDescriptor();
+        DownloadArtifactResult expectedDescriptor = new DownloadArtifactResult();
         expectedDescriptor.setVersion("1.0.1");
         expectedDescriptor.setArtifact("codenvy");
         expectedDescriptor.setFile("file");
@@ -41,7 +41,7 @@ public class DownloadArtifactDescriptorTest {
 
         String json = Commons.toJson(expectedDescriptor);
 
-        DownloadArtifactDescriptor actualDescriptor = Commons.fromJson(json, DownloadArtifactDescriptor.class);
+        DownloadArtifactResult actualDescriptor = Commons.fromJson(json, DownloadArtifactResult.class);
 
         assertEquals(actualDescriptor, expectedDescriptor);
     }

@@ -20,7 +20,7 @@ package com.codenvy.im.managers;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.DownloadProgress;
-import com.codenvy.im.response.DownloadArtifactDescriptor;
+import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.utils.Commons;
@@ -169,14 +169,14 @@ public class DownloadManager {
 
                 try {
                     Path pathToBinaries = download(artToDownload, verToDownload);
-                    DownloadArtifactDescriptor downloadArtifactDesc = new DownloadArtifactDescriptor(artToDownload,
+                    DownloadArtifactResult downloadArtifactDesc = new DownloadArtifactResult(artToDownload,
                                                                                                      verToDownload,
                                                                                                      pathToBinaries,
                                                                                                      DownloadArtifactStatus.DOWNLOADED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
-                    DownloadArtifactDescriptor downloadArtifactDesc = new DownloadArtifactDescriptor(artToDownload,
+                    DownloadArtifactResult downloadArtifactDesc = new DownloadArtifactResult(artToDownload,
                                                                                                      verToDownload,
                                                                                                      DownloadArtifactStatus.FAILED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);

@@ -24,6 +24,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -41,10 +42,17 @@ public abstract class CDECArtifactHelper {
         this.configManager = configManager;
     }
 
-    /**
-     * @return list of install command description
-     */
-    public abstract List<String> getInstallInfo(InstallOptions installOptions) throws IOException;
+    public List<String> getInstallInfo() throws IOException {
+        return ImmutableList.of("Disable SELinux",
+                                "Install puppet binaries",
+                                "Unzip Codenvy binaries",
+                                "Configure puppet master",
+                                "Configure puppet agent",
+                                "Launch puppet master",
+                                "Launch puppet agent",
+                                "Install Codenvy (~25 min)",
+                                "Boot Codenvy");
+    }
 
     /**
      * @return list of commands to install Codenvy due to given version, install options and path to binaries
