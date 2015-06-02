@@ -471,17 +471,17 @@ public class TestInstallationManagerServiceContract {
             null,                                              // query parameters
             null,                                              // request body
             null,                                              // consume content type
-            ContentType.JSON,                                  // produce content type
+            null,                                  // produce content type
             HttpMethod.POST,                                   // HTTP method
-            OK_RESPONSE_BODY,                                  // response body
-            Response.Status.OK,                                // response status
+            null,                                  // response body
+            Response.Status.CREATED,                                // response status
             new Function<Object, Object>() {                   // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
                         service.saasUserCredentials = new SaasUserCredentials("id", "token");
-                        doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).addTrialSaasSubscription(any(Request.class));
+                        doNothing().when(facade).addTrialSaasSubscription(any(SaasUserCredentials.class));
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }

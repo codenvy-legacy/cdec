@@ -20,8 +20,8 @@ package com.codenvy.im.cli.command;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 
 import org.apache.felix.service.command.CommandSession;
@@ -98,7 +98,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
-        doReturn("{\"status\":\"OK\"}").when(service).addTrialSaasSubscription(any(Request.class));
+        doNothing().when(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
             .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
@@ -109,7 +109,7 @@ public class TestLoginCommand extends AbstractTestCommand {
                                            "Login success.\n",
                                            TEST_USER_ACCOUNT_NAME));
         assertTrue(output.contains(TEST_USER_ACCOUNT_NAME));
-        verify(service).addTrialSaasSubscription(any(Request.class));
+        verify(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -118,19 +118,20 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
-        doReturn("{\"status\":\"ERROR\"}").when(service).addTrialSaasSubscription(any(Request.class));
+        doThrow(IOException.class).when(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
                 .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Your Codenvy account '%s' will be used to verify on-premises subscription.\n" +
-                                           "Login success.\n" +
-                                           "{\"status\":\"ERROR\"}\n",
-                                           TEST_USER_ACCOUNT_NAME));
+        assertEquals(output, "Your Codenvy account 'testUserAccountName' will be used to verify on-premises subscription.\n" +
+                             "Login success.\n" +
+                             "{\n" +
+                             "  \"status\" : \"ERROR\"\n" +
+                             "}\n");
         assertTrue(output.contains(TEST_USER_ACCOUNT_NAME));
-        verify(service).addTrialSaasSubscription(any(Request.class));
+        verify(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -145,7 +146,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", UPDATE_SERVER_REMOTE_NAME));
-        verify(service, never()).addTrialSaasSubscription(any(Request.class));
+        verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -161,7 +162,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG + "\n");
-        verify(service, never()).addTrialSaasSubscription(any(Request.class));
+        verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -171,7 +172,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
         commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
 
-        doReturn("{\"status\":\"OK\"}").when(service).addTrialSaasSubscription(any(Request.class));
+        doNothing().when(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
         doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
                 .when(spyCommand).getAccountReferenceWhereUserIsOwner(TEST_USER_ACCOUNT_NAME);
@@ -181,7 +182,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         assertEquals(output, "Login success.\n");
         assertFalse(output.contains(TEST_USER_ACCOUNT_NAME));
 
-        verify(service).addTrialSaasSubscription(any(Request.class));
+        verify(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -197,7 +198,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Account '%s' is not yours or may be you aren't owner of this account.\n", TEST_USER_ACCOUNT_NAME));
-        verify(service, never()).addTrialSaasSubscription(any(Request.class));
+        verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -214,7 +215,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");
-        verify(service, never()).addTrialSaasSubscription(any(Request.class));
+        verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -231,7 +232,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         assertEquals(output, String.format("Login success on remote '%s' [%s].\n",
                                            ANOTHER_REMOTE_NAME,
                                            ANOTHER_REMOTE_URL));
-        verify(service, never()).addTrialSaasSubscription(any(Request.class));
+        verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     @Test
@@ -247,7 +248,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
-        verify(service, never()).addTrialSaasSubscription(any(Request.class));
+        verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
     class TestedLoginCommand extends LoginCommand {

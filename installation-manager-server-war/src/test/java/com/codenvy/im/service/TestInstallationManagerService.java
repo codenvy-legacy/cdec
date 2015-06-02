@@ -328,20 +328,24 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscription() throws Exception {
+    public void testAddTrialSubscriptionShouldReturnOkResponse() throws Exception {
         SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request testRequest = new Request().setSaasUserCredentials(testUserCredentials);
-
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
-
         service.saasUserCredentials = testUserCredentials;
+        doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
 
         Response result = service.addTrialSubscription();
-        assertOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).addTrialSaasSubscription(testRequest);
-        result = service.addTrialSubscription();
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
+    }
+
+    @Test
+    public void testAddTrialSubscriptionShouldReturnForbiddenResponse() throws Exception {
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
+
+        Response result = service.addTrialSubscription();
+
+        assertEquals(result.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
     }
 
     @Test

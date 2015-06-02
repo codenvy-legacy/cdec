@@ -45,6 +45,7 @@ import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -76,7 +77,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.response.ResponseCode.ERROR;
-import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 
@@ -133,8 +133,9 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#startDownload(com.codenvy.im.artifacts.Artifact, com.codenvy.im.utils.Version)
      */
-    public void startDownload(@Nullable Artifact artifact, @Nullable Version version)
-            throws InterruptedException, DownloadAlreadyStartedException, IOException {
+    public void startDownload(@Nullable Artifact artifact, @Nullable Version version) throws InterruptedException,
+                                                                                             DownloadAlreadyStartedException,
+                                                                                             IOException {
         downloadManager.startDownload(artifact, version);
     }
 
@@ -152,20 +153,12 @@ public class InstallationManagerFacade {
         return downloadManager.getDownloadProgress();
     }
 
-    /** Adds trial subscription for user being logged in */
-    public String addTrialSaasSubscription(@Nonnull Request request) throws IOException {
-        try {
-            transport
-                    .doPost(combinePaths(updateServerEndpoint, "/repository/subscription/" + request.obtainAccountId()), null,
-                            request.obtainAccessToken());
-            return new Response().setStatus(ResponseCode.OK)
-                                 .setSubscription(ON_PREMISES)
-                                 .setMessage("Subscription has been added")
-                                 .toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
+    /**
+     * Adds trial subscription for user being logged into Codenvy SaaS.
+     */
+    public void addTrialSaasSubscription(@Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
+        String requestUrl = combinePaths(updateServerEndpoint, "/repository/subscription", saasUserCredentials.getAccountId());
+        transport.doPost(requestUrl, null, saasUserCredentials.getToken());
     }
 
     /** Check user's subscription. */
@@ -465,15 +458,24 @@ public class InstallationManagerFacade {
         return storageManager.loadProperties();
     }
 
+    /**
+     * @see com.codenvy.im.managers.StorageManager#loadProperty(String)
+     */
     @Nullable
     public String loadProperty(@Nullable String key) throws IOException {
         return storageManager.loadProperty(key);
     }
 
+    /**
+     * @see com.codenvy.im.managers.StorageManager#storeProperty(String, String)
+     */
     public void storeProperty(@Nullable String key, @Nullable String value) throws IOException {
         storageManager.storeProperty(key, value);
     }
 
+    /**
+     * @see com.codenvy.im.managers.StorageManager#deleteProperty(String)
+     */
     public void deleteProperty(@Nullable String name) throws IOException {
         storageManager.deleteProperty(name);
     }

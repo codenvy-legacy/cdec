@@ -388,21 +388,26 @@ public class InstallationManagerService {
         return handleInstallationManagerResponse(restore);
     }
 
-    /** Adds trial subscription to account */
+    /**
+     * Adds trial subscription to account.
+     */
     @POST
     @Path("subscription")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy",
-            response = Response.class)
+    @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy")
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Subscription added"),
+                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
+                           @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response addTrialSubscription() throws IOException, CloneNotSupportedException {
         if (saasUserCredentials == null) {
-            return handleException(new RuntimeException("User not authenticated"));
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.FORBIDDEN).build();
         }
 
-        SaasUserCredentials saasUserCredentials = this.saasUserCredentials;
-        Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
-
-        return handleInstallationManagerResponse(delegate.addTrialSaasSubscription(request));
+        try {
+            delegate.addTrialSaasSubscription(saasUserCredentials.clone());
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     /**
