@@ -23,6 +23,7 @@ import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 
+import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
@@ -51,6 +52,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
 
     private static final String TOKEN        = "auth token";
     private static final String ACCOUNT_ID   = "accountId";
+    private static final String ACCOUNT_NAME = "accountName";
     private static final String SUBSCRIPTION = "OnPremises";
 
     @Mock
@@ -158,4 +160,79 @@ public class SaasAccountServiceProxyTest extends BaseTest {
                                                 .doGet(endsWith("account/" + ACCOUNT_ID + "/subscriptions"), eq(TOKEN));
         saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
+
+    @Test
+    public void testGetAccountReference() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"" + ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                 + "}]").when(transport).doGet(endsWith("account"), eq(TOKEN));
+        AccountReference accountRef = saasAccountServiceProxy.getAccountWhereUserIsOwner(null, TOKEN);
+
+        assertNotNull(accountRef);
+        assertEquals(accountRef.getId(), ACCOUNT_ID);
+        assertEquals(accountRef.getName(), ACCOUNT_NAME);
+    }
+
+    @Test
+    public void testGetAccountReferenceFromSeveral() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"" + ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                 + "},{roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"another-account-id\"}"
+                 + "}]").when(transport).doGet(endsWith("account"), eq(TOKEN));
+        AccountReference accountRef = saasAccountServiceProxy.getAccountWhereUserIsOwner(null, TOKEN);
+
+        assertNotNull(accountRef);
+        assertEquals(accountRef.getId(), ACCOUNT_ID);
+        assertEquals(accountRef.getName(), ACCOUNT_NAME);
+    }
+
+    @Test
+    public void testGetAccountReferenceReturnNullIfAccountWasNotFound() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"account/member\"],"
+                 + "accountReference:{id:\"" + ACCOUNT_ID + "\"}"
+                 + "}]").when(transport).doGet(endsWith("account"), eq(TOKEN));
+        AccountReference accountRef = saasAccountServiceProxy.getAccountWhereUserIsOwner(null, TOKEN);
+
+        assertNull(accountRef);
+    }
+
+    @Test(expectedExceptions = IOException.class)
+    public void testGetAccountReferenceErrorIfAuthenticationFailed() throws Exception {
+        doThrow(AuthenticationException.class).when(transport).doGet(endsWith("account"), eq(TOKEN));
+
+        saasAccountServiceProxy.getAccountWhereUserIsOwner(null, TOKEN);
+    }
+
+    @Test
+    public void testGetAccountReferenceWithSpecificName() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"" + ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                 + "}]").when(transport).doGet(endsWith("account"), eq(TOKEN));
+
+        AccountReference accountRef = saasAccountServiceProxy.getAccountWhereUserIsOwner(ACCOUNT_NAME, TOKEN);
+
+        assertNotNull(accountRef);
+        assertEquals(accountRef.getId(), ACCOUNT_ID);
+        assertEquals(accountRef.getName(), ACCOUNT_NAME);
+    }
+
+
+    @Test
+    public void testGetAccountReferenceWithSpecificNameReturnNullIfAccountWasNotFound() throws Exception {
+        doReturn("[{"
+                 + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                 + "accountReference:{id:\"" + ACCOUNT_ID + "\",name:\"" + ACCOUNT_NAME + "\"}"
+                 + "}]").when(transport).doGet(endsWith("account"), eq(TOKEN));
+
+        AccountReference accountRef = saasAccountServiceProxy.getAccountWhereUserIsOwner("another name", TOKEN);
+
+        assertNull(accountRef);
+    }
+
+
 }

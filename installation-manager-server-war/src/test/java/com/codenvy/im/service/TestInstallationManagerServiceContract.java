@@ -413,7 +413,7 @@ public class TestInstallationManagerServiceContract {
                                 .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
 
                         doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId("id").withName("name"))
-                                .when(facade).getAccountWhereUserIsOwner(anyString(), any(Request.class));
+                                .when(facade).getAccountWhereUserIsOwner(anyString(), anyString());
 
                     } catch (Exception e) {
                         fail(e.getMessage(), e);

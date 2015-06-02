@@ -405,11 +405,10 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testLoginToSaas() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId(TEST_ACCOUNT_ID).withName(TEST_ACCOUNT_NAME))
-                .when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
+                .when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
 
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
@@ -424,14 +423,13 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testLoginToSaasWhenHttpException() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doThrow(new AuthenticationException("error")).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
+        doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
         result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
@@ -440,10 +438,9 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testLoginToSaasWhenNullAccountReference() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doReturn(null).when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
+        doReturn(null).when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
 
         Response response = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());

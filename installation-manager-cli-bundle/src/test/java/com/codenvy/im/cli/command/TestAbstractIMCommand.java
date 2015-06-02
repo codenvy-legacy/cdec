@@ -24,7 +24,6 @@ import com.codenvy.cli.preferences.PreferencesAPI;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.google.common.io.Files;
@@ -107,9 +106,8 @@ public class TestAbstractIMCommand {
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
-        Request request = new Request().setSaasUserCredentials(spyCommand.getCredentials());
         doReturn(Commons.createDtoFromJson(TEST_ACCOUNT_REFERENCE, AccountReference.class))
-                .when(service).getAccountWhereUserIsOwner("accountName", request);
+                .when(service).getAccountWhereUserIsOwner("accountName", TEST_TOKEN);
 
         AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner("accountName");
         assertNotNull(accountReference);

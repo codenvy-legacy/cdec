@@ -164,8 +164,7 @@ public class SaasAccountServiceProxy {
      * @throws IOException
      */
     @Nullable
-    public AccountReference getAccountWhereUserIsOwner(String accessToken,
-                                                       @Nullable String accountName) throws IOException {
+    public AccountReference getAccountWhereUserIsOwner(@Nullable String accountName, String accessToken) throws IOException {
 
         List<MemberDescriptor> members = createListDtoFromJson(transport.doGet(combinePaths(saasApiEndpoint, "account"), accessToken),
                                                                MemberDescriptor.class);

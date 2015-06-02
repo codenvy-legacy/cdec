@@ -154,8 +154,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
-        Request request = new Request().setSaasUserCredentials(getCredentials());
-        return facade.getAccountWhereUserIsOwner(accountName, request);
+        SaasUserCredentials credentials = getCredentials();
+        return facade.getAccountWhereUserIsOwner(accountName, credentials.getToken());
     }
 
     protected SaasUserCredentials getCredentials() {

@@ -323,10 +323,12 @@ public class InstallationManagerFacade {
         return installManager.getLatestInstallableVersion(artifact);
     }
 
-    /** @return account reference of first valid account of user based on his/her auth token passed into service within the body of request */
+    /**
+     * @see com.codenvy.im.saas.SaasAccountServiceProxy#getAccountWhereUserIsOwner(String, String)
+     */
     @Nullable
-    public AccountReference getAccountWhereUserIsOwner(@Nullable String accountName, @Nonnull Request request) throws IOException {
-        return saasAccountServiceProxy.getAccountWhereUserIsOwner(request.obtainAccessToken(), accountName);
+    public AccountReference getAccountWhereUserIsOwner(@Nullable String accountName, @Nonnull String authToken) throws IOException {
+        return saasAccountServiceProxy.getAccountWhereUserIsOwner(accountName, authToken);
     }
 
     /**

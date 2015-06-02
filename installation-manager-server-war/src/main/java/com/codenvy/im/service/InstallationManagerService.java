@@ -461,8 +461,7 @@ public class InstallationManagerService {
             SaasUserCredentials saasUserCredentials = new SaasUserCredentials(token.getValue());
 
             // get SaaS account id where user is owner
-            Request request = new Request().setSaasUserCredentials(saasUserCredentials);
-            AccountReference accountRef = delegate.getAccountWhereUserIsOwner(null, request);
+            AccountReference accountRef = delegate.getAccountWhereUserIsOwner(null, saasUserCredentials.getToken());
             if (accountRef == null) {
                 throw new ApiException(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
             }

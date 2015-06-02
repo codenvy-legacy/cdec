@@ -99,7 +99,7 @@ public class TestAccountUtils {
                                                                        + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(ACCESS_TOKEN, null);
+        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(null, ACCESS_TOKEN);
         assertNotNull(accountReference);
         assertEquals(accountReference.getId(), "id1");
         assertEquals(accountReference.getName(), "name1");
@@ -117,7 +117,7 @@ public class TestAccountUtils {
                                                                        + "roles:[\"account/member\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(ACCESS_TOKEN, null);
+        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(null, ACCESS_TOKEN);
         assertNull(accountReference);
     }
 
@@ -133,7 +133,7 @@ public class TestAccountUtils {
                                                                        + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(ACCESS_TOKEN, "name2");
+        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner("name2", ACCESS_TOKEN);
         assertNotNull(accountReference);
         assertEquals(accountReference.getId(), "id2");
         assertEquals(accountReference.getName(), "name2");
@@ -151,7 +151,7 @@ public class TestAccountUtils {
                                                                        + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                        + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                        + "}]");
-        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(ACCESS_TOKEN, "name3");
+        AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner("name3", ACCESS_TOKEN);
         assertNull(accountReference);
     }
 
