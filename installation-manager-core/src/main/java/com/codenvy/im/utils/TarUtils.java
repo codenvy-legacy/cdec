@@ -90,6 +90,31 @@ public class TarUtils {
         }
     }
 
+    public static void unpackAllFiles(Path pack, Path dirToUnpack) throws IOException {
+        try (TarArchiveInputStream in = new TarArchiveInputStream(new BufferedInputStream(newInputStream(pack)))) {
+
+            if (!Files.exists(dirToUnpack)) {
+                createDirectories(dirToUnpack);
+            }
+
+            TarArchiveEntry tarEntry;
+            while ((tarEntry = in.getNextTarEntry()) != null) {
+                Path destPath = dirToUnpack.resolve(tarEntry.getName());
+
+                if (tarEntry.isDirectory()) {
+                    if (!Files.exists(destPath)) {
+                        createDirectories(destPath);
+                    }
+                } else {
+                    try (BufferedOutputStream out = new BufferedOutputStream(newOutputStream(destPath))) {
+                        copy(in, out);
+                        setLastModifiedTime(destPath, FileTime.fromMillis(tarEntry.getModTime().getTime()));
+                    }
+                }
+            }
+        }
+    }
+
     /** Pack file without compression */
     public static void packFile(Path fileToPack, Path packageFile) throws IOException {
         pack(fileToPack, packageFile, false);

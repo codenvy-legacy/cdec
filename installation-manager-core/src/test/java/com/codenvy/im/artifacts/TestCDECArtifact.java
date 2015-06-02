@@ -35,12 +35,16 @@ import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 
+import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +58,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -82,6 +87,10 @@ public class TestCDECArtifact extends BaseTest {
     public void setUp() throws Exception {
         initMocks(this);
         spyCdecArtifact = spy(new CDECArtifact("", transport, configManager));
+
+        // cleanup temp directory
+        File remoteTempDir = new File("/tmp/codenvy");
+        FileUtils.deleteDirectory(remoteTempDir);
     }
 
     @AfterMethod
@@ -373,17 +382,6 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetBackupMultiServerCommand() throws Exception {
-        prepareMultiNodeEnv(configManager, transport);
-
-        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupDirectory("some_dir");
-        backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
-
-        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig));
-    }
-
-    @Test
     public void testGetRestoreSingleServerCommand() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
@@ -395,14 +393,37 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetRestoreMultiServerCommand() throws Exception {
+    public void testGetRestoreMultiServerCommandFromFullBackup() throws Exception {
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar.test").getPath());
+
         prepareMultiNodeEnv(configManager, transport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupFile("dummyFile")
-                                                      .setBackupDirectory("dummyDirectory");
+                                                      .setBackupFile(testingBackup.toString())
+                                                      .setBackupDirectory(testingBackup.getParent().toString());
 
-        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig));
+        Command result = spyCdecArtifact.getRestoreCommand(backupConfig);
+        assertNotNull(result);
+        assertTrue(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"));  // check presence of restore FS commands
+        assertTrue(result.toString().contains("mongorestore"));  // check presence of restore MONGO and MONGO_ANALYTICS commands
+        assertTrue(result.toString().contains("sudo slapadd -q"));  // check presence of restore LDAP commands
+    }
+
+    @Test
+    public void testGetRestoreMultiServerCommandFromEmptyBackup() throws Exception {
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/empty_backup.tar.test").getPath());
+
+        prepareMultiNodeEnv(configManager, transport);
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupFile(testingBackup.toString())
+                                                      .setBackupDirectory(testingBackup.getParent().toString());
+
+        Command result = spyCdecArtifact.getRestoreCommand(backupConfig);
+        assertNotNull(result);
+        assertFalse(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"));  // check absence of restore FS commands
+        assertFalse(result.toString().contains("mongorestore"));  // check absence of restore MONGO and MONGO_ANALYTICS commands
+        assertFalse(result.toString().contains("sudo slapadd -q"));  // check absence of restore LDAP commands
     }
 
     @Test

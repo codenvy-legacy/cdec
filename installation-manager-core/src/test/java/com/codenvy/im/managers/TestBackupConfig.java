@@ -234,7 +234,7 @@ public class TestBackupConfig {
 
     @Test
     public void testExtractConfigFromBackup() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backups/backup.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/empty_backup.tar.test").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                     .setArtifactVersion("1.0.0")
                                                     .setBackupFile(testingBackup);

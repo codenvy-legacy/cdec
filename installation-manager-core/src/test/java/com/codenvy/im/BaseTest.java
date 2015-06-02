@@ -90,6 +90,7 @@ public class BaseTest {
                 (
                         "api_host_name", "api.example.com",
                         "data_host_name", "data.example.com",
+                        "analytics_host_name", "analytics.example.com",
                         "host_url", "hostname"
                 );
 

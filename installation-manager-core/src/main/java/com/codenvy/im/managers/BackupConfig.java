@@ -45,6 +45,7 @@ public class BackupConfig {
     public enum Component {
         LDAP("ldap.ldif"),
         MONGO,
+        MONGO_ANALYTICS,
         FS;
 
         private String filename;
