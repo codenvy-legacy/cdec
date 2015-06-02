@@ -26,10 +26,10 @@ import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
-import com.codenvy.im.request.Request;
+import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
-import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -41,7 +41,9 @@ import org.testng.annotations.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -49,13 +51,12 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
  */
 public class TestDownloadInstallationManagerFacade {
-    private static final String TEST_TOKEN = "auth token";
-
     private InstallationManagerFacade installationManagerService;
 
     @Mock
@@ -79,7 +80,6 @@ public class TestDownloadInstallationManagerFacade {
 
     private Artifact            installManagerArtifact;
     private Artifact            cdecArtifact;
-    private SaasUserCredentials testCredentials;
     private Path                pathCDEC;
     private Path                pathIM;
 
@@ -99,8 +99,6 @@ public class TestDownloadInstallationManagerFacade {
                                                                    downloadManager);
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
-
-        testCredentials = new SaasUserCredentials(TEST_TOKEN, "accountId");
 
         installManagerArtifact = createArtifact(InstallManagerArtifact.NAME);
         cdecArtifact = createArtifact(CDECArtifact.NAME);
@@ -133,27 +131,26 @@ public class TestDownloadInstallationManagerFacade {
             }});
         }}).when(downloadManager).getDownloadedArtifacts();
 
-        Request request = new Request().setSaasUserCredentials(testCredentials);
-        String response = installationManagerService.getDownloads(request);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"codenvy\",\n" +
-                               "    \"version\" : \"1.0.0\",\n" +
-                               "    \"file\" : \"target/file1\",\n" +
-                               "    \"status\" : \"DOWNLOADED\"\n" +
-                               "  }, {\n" +
-                               "    \"artifact\" : \"codenvy\",\n" +
-                               "    \"version\" : \"1.0.1\",\n" +
-                               "    \"file\" : \"target/file2\",\n" +
-                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
-                               "  }, {\n" +
-                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
-                               "    \"version\" : \"2.0.0\",\n" +
-                               "    \"file\" : \"target/file3\",\n" +
-                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
-                               "  } ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
+        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(null, null);
+
+        assertEquals(downloads.size(), 3);
+        DownloadArtifactResult result = downloads.get(0);
+        assertEquals(result.getArtifact(), "codenvy");
+        assertEquals(result.getVersion(), "1.0.0");
+        assertEquals(result.getFile(), "target/file1");
+        assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+
+        result = downloads.get(1);
+        assertEquals(result.getArtifact(), "codenvy");
+        assertEquals(result.getVersion(), "1.0.1");
+        assertEquals(result.getFile(), "target/file2");
+        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
+
+        result = downloads.get(2);
+        assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
+        assertEquals(result.getVersion(), "2.0.0");
+        assertEquals(result.getFile(), "target/file3");
+        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
     }
 
     @Test
@@ -161,63 +158,59 @@ public class TestDownloadInstallationManagerFacade {
         final Version version200 = Version.valueOf("2.0.0");
         final Version version201 = Version.valueOf("2.0.1");
 
-        doReturn(new TreeMap<Version, Path>() {{
-            put(version200, Paths.get("target/file1"));
-            put(version201, Paths.get("target/file2"));
-        }}).when(downloadManager).getDownloadedVersions(installManagerArtifact);
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(version200, Paths.get("target/file1"));
+                put(version201, Paths.get("target/file2"));
+            }});
+        }}).when(downloadManager).getDownloadedArtifacts();
 
         doReturn(false).when(installManager).isInstallable(installManagerArtifact, version200);
         doReturn(true).when(installManager).isInstallable(installManagerArtifact, version201);
 
-        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
-        String response = installationManagerService.getDownloads(request);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
-                               "    \"version\" : \"2.0.0\",\n" +
-                               "    \"file\" : \"target/file1\",\n" +
-                               "    \"status\" : \"DOWNLOADED\"\n" +
-                               "  }, {\n" +
-                               "    \"artifact\" : \"" + InstallManagerArtifact.NAME + "\",\n" +
-                               "    \"version\" : \"2.0.1\",\n" +
-                               "    \"file\" : \"target/file2\",\n" +
-                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
-                               "  } ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
+        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+
+        assertEquals(downloads.size(), 2);
+        DownloadArtifactResult result = downloads.get(0);
+        assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
+        assertEquals(result.getVersion(), "2.0.0");
+        assertEquals(result.getFile(), "target/file1");
+        assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+
+        result = downloads.get(1);
+        assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
+        assertEquals(result.getVersion(), "2.0.1");
+        assertEquals(result.getFile(), "target/file2");
+        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
     }
 
     @Test
     public void testGetDownloadsOlderVersionInstallManagerArtifact() throws Exception {
         final Version version200 = Version.valueOf("2.0.0");
-        doReturn(new TreeMap<Version, Path>() {{
-            put(version200, Paths.get("target/file1"));
-        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(installManagerArtifact, new TreeMap<Version, Path>() {{
+                put(version200, Paths.get("target/file1"));
+            }});
+        }}).when(downloadManager).getDownloadedArtifacts();
 
-        doReturn(true).when(installManager).isInstallable(cdecArtifact, version200);
+        doReturn(true).when(installManager).isInstallable(installManagerArtifact, version200);
 
-        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(CDECArtifact.NAME).setVersion("2.0.0");
-        String response = installationManagerService.getDownloads(request);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ {\n" +
-                               "    \"artifact\" : \"codenvy\",\n" +
-                               "    \"version\" : \"2.0.0\",\n" +
-                               "    \"file\" : \"target/file1\",\n" +
-                               "    \"status\" : \"READY_TO_INSTALL\"\n" +
-                               "  } ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
+        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME),
+                                                                                         Version.valueOf("2.0.0"));
+
+        assertEquals(downloads.size(), 1);
+        DownloadArtifactResult result = downloads.get(0);
+        assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
+        assertEquals(result.getVersion(), "2.0.0");
+        assertEquals(result.getFile(), "target/file1");
+        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
     }
 
     @Test
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
-        doReturn(new TreeMap<>()).when(downloadManager).getDownloadedVersions(installManagerArtifact);
+        doReturn(Collections.emptyMap()).when(downloadManager).getDownloadedArtifacts();
 
-        Request request = new Request().setSaasUserCredentials(testCredentials).setArtifactName(InstallManagerArtifact.NAME);
-        String response = installationManagerService.getDownloads(request);
-        assertEquals(response, "{\n" +
-                               "  \"artifacts\" : [ ],\n" +
-                               "  \"status\" : \"OK\"\n" +
-                               "}");
+        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+        assertTrue(downloads.isEmpty());
     }
 }

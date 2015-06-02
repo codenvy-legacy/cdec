@@ -18,15 +18,18 @@
 package com.codenvy.im.cli.command;
 
 
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
-import com.codenvy.im.request.Request;
+import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.DownloadResult;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.response.UpdatesResult;
+import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.Version;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -125,8 +128,16 @@ public class DownloadCommand extends AbstractIMCommand {
         console.printResponse(toJson(updatesResult));
     }
 
-    private void doList() throws JsonParseException {
-        Request request = createRequest(artifactName, versionNumber);
-        console.printResponse(facade.getDownloads(request));
+    private void doList() throws JsonParseException, IOException {
+        Artifact artifact = Commons.createArtifactOrNull(artifactName);
+        Version version = Commons.createVersionOrNull(versionNumber);
+
+        List<DownloadArtifactResult> downloads = facade.getDownloads(artifact, version);
+
+        DownloadResult downloadResult = new DownloadResult();
+        downloadResult.setStatus(ResponseCode.OK);
+        downloadResult.setArtifacts(downloads);
+
+        console.printResponse(toJson(downloadResult));
     }
 }

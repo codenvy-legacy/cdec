@@ -32,7 +32,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
-import com.codenvy.im.request.Request;
+import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.Response;
@@ -210,14 +210,29 @@ public class InstallationManagerService {
         }
     }
 
-    /** Gets the list of downloaded artifacts" */
+    /**
+     * Gets the list of downloaded artifacts.
+     */
     @GET
     @Path("downloads")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of downloaded artifacts", response = Response.class)
-    public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") @ApiParam(value = "default is all artifacts") String artifactName) {
-        Request request = new Request().setArtifactName(artifactName);
-        return handleInstallationManagerResponse(delegate.getDownloads(request));
+    @ApiOperation(value = "Gets the list of downloaded artifacts", response = DownloadArtifactResult.class, responseContainer = "List")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
+                           @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") String artifactName,
+                                                  @QueryParam(value = "version") String versionNumber) {
+        try {
+            Artifact artifact = createArtifactOrNull(artifactName);
+            Version version = createVersionOrNull(versionNumber);
+
+            List<DownloadArtifactResult> downloads = delegate.getDownloads(artifact, version);
+            return javax.ws.rs.core.Response.ok(downloads).build();
+        } catch (ArtifactNotFoundException | IllegalVersionException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     /**
@@ -609,14 +624,6 @@ public class InstallationManagerService {
         try {
             delegate.deleteProperty(key);
             return javax.ws.rs.core.Response.noContent().build();
-        } catch (Exception e) {
-            return handleException(e);
-        }
-    }
-
-    private javax.ws.rs.core.Response handleInstallationManagerResponse(String responseString) {
-        try {
-            return handleInstallationManagerResponse(Response.fromJson(responseString));
         } catch (Exception e) {
             return handleException(e);
         }

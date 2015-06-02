@@ -31,7 +31,6 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.InstallArtifactStatus;
@@ -217,16 +216,25 @@ public class TestInstallationManagerService extends BaseTest {
 
 
     @Test
-    public void testGetDownloads() throws Exception {
-        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME);
+    public void testGetDownloadsShouldReturnOkResponse() throws Exception {
+        doReturn(Collections.emptyList()).when(mockFacade).getDownloads(null, null);
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        Response result = service.getDownloads(ARTIFACT_NAME);
-        assertOkResponse(result);
+        Response result = service.getDownloads(null, null);
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+    }
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        result = service.getDownloads(ARTIFACT_NAME);
-        assertErrorResponse(result);
+    @Test
+    public void testGetDownloadsShouldReturnConflictResponse() throws Exception {
+        Response result = service.getDownloads("artifact", null);
+        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testGetDownloadsShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).getDownloads(null, null);
+
+        Response result = service.getDownloads(null, null);
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test

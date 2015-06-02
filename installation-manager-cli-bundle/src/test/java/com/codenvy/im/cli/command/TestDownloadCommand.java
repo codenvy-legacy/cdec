@@ -18,7 +18,6 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
@@ -158,18 +157,16 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testListLocalOption() throws Exception {
-        final String ok = "{\n"
-                          + "  \"status\": \"OK\"\n"
-                          + "}";
-
-        Request request = new Request();
-        doReturn(ok).when(service).getDownloads(request);
+        doReturn(Collections.emptyList()).when(service).getDownloads(null, null);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, ok + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"artifacts\" : [ ],\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 }

@@ -31,16 +31,14 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
-import com.codenvy.im.request.Request;
-import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.BackupInfo;
+import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -50,8 +48,8 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -76,7 +74,6 @@ import java.util.SortedMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.codenvy.im.response.ResponseCode.ERROR;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 
@@ -172,55 +169,51 @@ public class InstallationManagerFacade {
     }
 
 
-    /** @return the list of downloaded artifacts */
-    public String getDownloads(@Nonnull Request request) {
-        try {
-            try {
-                List<ArtifactInfo> infos = new ArrayList<>();
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#getDownloadedArtifacts()
+     */
+    public List<DownloadArtifactResult> getDownloads(@Nullable final Artifact artifact, @Nullable final Version version) throws IOException {
+        Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
 
-                if (request.createArtifact() == null) {
-                    Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
+        return FluentIterable.from(downloadedArtifacts.entrySet()).transformAndConcat(
+                new Function<Map.Entry<Artifact, SortedMap<Version, Path>>, Iterable<DownloadArtifactResult>>() {
+                    @Override
+                    public Iterable<DownloadArtifactResult> apply(Map.Entry<Artifact, SortedMap<Version, Path>> entry) {
+                        SortedMap<Version, Path> versions = entry.getValue();
 
-                    for (Map.Entry<Artifact, SortedMap<Version, Path>> e : downloadedArtifacts.entrySet()) {
-                        infos.addAll(getDownloadedArtifactsInfo(e.getKey(), e.getValue()));
-                    }
-                } else {
-                    SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(request.createArtifact());
+                        List<DownloadArtifactResult> l = new ArrayList<>(versions.size());
+                        for (Map.Entry<Version, Path> versionEntry : versions.entrySet()) {
+                            DownloadArtifactResult daResult = new DownloadArtifactResult();
+                            daResult.setArtifact(entry.getKey().getName());
+                            daResult.setFile(versionEntry.getValue().toString());
+                            daResult.setVersion(versionEntry.getKey().toString());
 
-                    if ((downloadedVersions != null) && !downloadedVersions.isEmpty()) {
-                        Version version = request.createVersion();
-                        if ((version != null) && downloadedVersions.containsKey(version)) {
-                            final Path path = downloadedVersions.get(version);
-                            downloadedVersions = ImmutableSortedMap.of(version, path);
+                            try {
+                                if (installManager.isInstallable(entry.getKey(), versionEntry.getKey())) {
+                                    daResult.setStatus(DownloadArtifactStatus.READY_TO_INSTALL);
+                                } else {
+                                    daResult.setStatus(DownloadArtifactStatus.DOWNLOADED);
+                                }
+                            } catch (IOException e) {
+                                daResult.setStatus(DownloadArtifactStatus.DOWNLOADED);
+                            }
+
+                            l.add(daResult);
                         }
 
-                        infos = getDownloadedArtifactsInfo(request.createArtifact(), downloadedVersions);
+                        return l;
                     }
-                }
-
-                return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
-            } catch (Exception e) {
-                LOG.log(Level.SEVERE, e.getMessage(), e);
-                return Response.error(e).toJson();
+                }).filter(new Predicate<DownloadArtifactResult>() {
+            @Override
+            public boolean apply(DownloadArtifactResult downloadArtifactResult) {
+                return artifact == null || downloadArtifactResult.getArtifact().equals(artifact.getName());
             }
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR).setMessage(e.getMessage()).toJson();
-        }
-    }
-
-    private List<ArtifactInfo> getDownloadedArtifactsInfo(Artifact artifact, SortedMap<Version, Path> downloadedVersions) throws IOException {
-        List<ArtifactInfo> info = new ArrayList<>();
-
-        for (Map.Entry<Version, Path> e : downloadedVersions.entrySet()) {
-            Version version = e.getKey();
-            Path pathToBinaries = e.getValue();
-            ArtifactStatus status = installManager.isInstallable(artifact, version) ? ArtifactStatus.READY_TO_INSTALL : ArtifactStatus.DOWNLOADED;
-
-            info.add(new ArtifactInfo(artifact, version, pathToBinaries, status));
-        }
-
-        return info;
+        }).filter(new Predicate<DownloadArtifactResult>() {
+            @Override
+            public boolean apply(DownloadArtifactResult downloadArtifactResult) {
+                return version == null || downloadArtifactResult.getVersion().equals(version.toString());
+            }
+        }).toList();
     }
 
     /**

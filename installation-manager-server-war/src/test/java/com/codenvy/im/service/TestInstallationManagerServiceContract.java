@@ -26,7 +26,6 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -203,14 +202,19 @@ public class TestInstallationManagerServiceContract {
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            OK_RESPONSE_BODY,                // response body
+            "[\n" +
+            "    \n" +
+            "]",                // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
-                    Request testRequest = new Request().setArtifactName(CDECArtifact.NAME);
-                    doReturn(com.codenvy.im.response.Response.ok().toJson()).when(facade).getDownloads(testRequest);
+                    try {
+                        doReturn(Collections.emptyList()).when(facade).getDownloads(any(Artifact.class), any(Version.class));
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
                     return null;
                 }
             },
