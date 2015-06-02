@@ -26,13 +26,13 @@ import java.util.List;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "message", "status"})
-public class InstallResult {
+public class UpdatesResult {
 
     private ResponseCode                status;
     private String                      message;
-    private List<InstallArtifactResult> artifacts;
+    private List<UpdatesArtifactResult> artifacts;
 
-    public InstallResult() {
+    public UpdatesResult() {
     }
 
     public ResponseCode getStatus() {
@@ -51,11 +51,11 @@ public class InstallResult {
         this.message = message;
     }
 
-    public List<InstallArtifactResult> getArtifacts() {
+    public List<UpdatesArtifactResult> getArtifacts() {
         return artifacts;
     }
 
-    public void setArtifacts(List<InstallArtifactResult> artifacts) {
+    public void setArtifacts(List<UpdatesArtifactResult> artifacts) {
         this.artifacts = artifacts;
     }
 }

@@ -32,6 +32,8 @@ import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.request.Request;
+import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -57,6 +59,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -64,6 +68,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -500,5 +505,25 @@ public class TestInstallationManagerFacade extends BaseTest {
         doThrow(IOException.class).when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, testProperty, testValue);
 
         installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, testProperty, testValue);
+    }
+
+    @Test
+    public void testGetUpdates() throws Exception {
+        final Version version100 = Version.valueOf("1.0.0");
+        when(downloadManager.getUpdates()).thenReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, version100);
+            }
+        });
+
+        when(downloadManager.getDownloadedVersions(cdecArtifact)).thenReturn(new TreeMap<Version, Path>() {{
+            put(version100, null);
+        }});
+
+        List<UpdatesArtifactResult> updates = installationManagerFacade.getUpdates();
+        assertEquals(updates.size(), 1);
+        assertEquals(updates.get(0).getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(updates.get(0).getArtifact(), cdecArtifact.getName());
+        assertEquals(updates.get(0).getVersion(), version100.toString());
     }
 }

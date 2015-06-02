@@ -37,6 +37,7 @@ import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
@@ -191,13 +192,22 @@ public class InstallationManagerService {
         }
     }
 
-    /** Get the list of actual updates from Update Server */
+    /**
+     * Get the list of actual updates from Update Server.
+     */
     @GET
-    @Path("update")
+    @Path("updates")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = Response.class)
+    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = UpdatesArtifactResult.class, responseContainer = "List")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
+                           @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getUpdates() {
-        return handleInstallationManagerResponse(delegate.getUpdates());
+        try {
+            List<UpdatesArtifactResult> installedVersions = delegate.getUpdates();
+            return javax.ws.rs.core.Response.ok(installedVersions).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     /** Gets the list of downloaded artifacts" */

@@ -41,6 +41,8 @@ import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.utils.Commons;
@@ -246,27 +248,32 @@ public class InstallationManagerFacade {
         return info;
     }
 
-    /** @return update list from the server */
-    public String getUpdates() {
-        try {
-            Map<Artifact, Version> updates = downloadManager.getUpdates();
-            List<ArtifactInfo> infos = new ArrayList<>(updates.size());
-            for (Map.Entry<Artifact, Version> e : updates.entrySet()) {
-                Artifact artifact = e.getKey();
-                Version version = e.getValue();
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#getUpdates()
+     */
+    public List<UpdatesArtifactResult> getUpdates() throws IOException {
+        Map<Artifact, Version> updates = downloadManager.getUpdates();
 
-                if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
-                    infos.add(new ArtifactInfo(artifact, version, ArtifactStatus.DOWNLOADED));
-                } else {
-                    infos.add(new ArtifactInfo(artifact, version));
+        return FluentIterable.from(updates.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactResult>() {
+            @Override
+            public UpdatesArtifactResult apply(Map.Entry<Artifact, Version> entry) {
+                Artifact artifact = entry.getKey();
+                Version version = entry.getValue();
+
+                UpdatesArtifactResult uaResult = new UpdatesArtifactResult();
+                uaResult.setArtifact(artifact.getName());
+                uaResult.setVersion(version.toString());
+                try {
+                    if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
+                        uaResult.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+                    }
+                } catch (IOException e) {
+                    // simply ignore
                 }
-            }
 
-            return new Response().setStatus(ResponseCode.OK).setArtifacts(infos).toJson();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).toJson();
-        }
+                return uaResult;
+            }
+        }).toList();
     }
 
     /**

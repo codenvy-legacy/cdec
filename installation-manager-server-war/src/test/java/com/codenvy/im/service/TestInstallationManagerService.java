@@ -198,15 +198,23 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetUpdates() throws Exception {
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getUpdates();
-        Response result = service.getUpdates();
-        assertOkResponse(result);
+    public void testGetUpdatesShouldReturnOkStatus() throws Exception {
+        doReturn(Collections.emptyList()).when(mockFacade).getUpdates();
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getUpdates();
-        result = service.getUpdates();
-        assertErrorResponse(result);
+        Response result = service.getUpdates();
+
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
     }
+
+    @Test
+    public void testGeUpdatesShouldReturnErrorStatus() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).getUpdates();
+
+        Response result = service.getUpdates();
+
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
 
     @Test
     public void testGetDownloads() throws Exception {
