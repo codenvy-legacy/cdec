@@ -17,10 +17,14 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.response.Response;
+import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
+
+import static com.codenvy.im.utils.Commons.toJson;
 
 /**
  * @author Alexander Reshetnyak
@@ -35,6 +39,20 @@ public class SubscriptionCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         String subscription2check = subscription != null ? subscription : SaasAccountServiceProxy.ON_PREMISES;
-        console.printResponse(facade.checkSubscription(subscription2check, createRequestWithUserCredentials()));
+
+        Response response;
+
+        boolean isValid = facade.hasValidSaaSSubscription(subscription2check, getCredentials());
+        if (isValid) {
+            response = new Response().setStatus(ResponseCode.OK)
+                                     .setSubscription(subscription2check)
+                                     .setMessage("Subscription is valid");
+        } else {
+            response = new Response().setStatus(ResponseCode.ERROR)
+                                     .setSubscription(subscription2check)
+                                     .setMessage("Subscription not found or outdated");
+        }
+
+        console.printResponse(toJson(response));
     }
 }

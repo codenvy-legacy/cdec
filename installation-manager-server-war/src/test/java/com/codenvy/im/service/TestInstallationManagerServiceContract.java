@@ -452,7 +452,7 @@ public class TestInstallationManagerServiceContract {
                         service.saasUserCredentials = new SaasUserCredentials("id", "token");
 
                         SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson("{}", SubscriptionDescriptor.class);
-                        doReturn(descriptor).when(facade).getSubscription(anyString(), any(Request.class));
+                        doReturn(descriptor).when(facade).getSaaSSubscription(anyString(), any(SaasUserCredentials.class));
                     } catch (Exception e) {
                         fail(e.getMessage(), e);
                     }

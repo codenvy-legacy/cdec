@@ -428,9 +428,7 @@ public class InstallationManagerService {
         }
 
         try {
-            Request request = new Request().setSaasUserCredentials(saasUserCredentials.clone());
-
-            SubscriptionDescriptor descriptor = delegate.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
+            SubscriptionDescriptor descriptor = delegate.getSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, saasUserCredentials);
             if (descriptor == null) {
                 return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND).build();
             }

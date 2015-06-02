@@ -351,7 +351,6 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testGetSubscription() throws Exception {
         SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
-        Request testRequest = new Request().setSaasUserCredentials(testUserCredentials);
 
         SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT);
         Calendar cal = Calendar.getInstance();
@@ -382,7 +381,7 @@ public class TestInstallationManagerService extends BaseTest {
                                                 + "  \"state\": \"ACTIVE\"\n"
                                                 + "}";
         SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson(testSubscriptionDescriptorJson, SubscriptionDescriptor.class);
-        doReturn(descriptor).when(mockFacade).getSubscription(SaasAccountServiceProxy.ON_PREMISES, testRequest);
+        doReturn(descriptor).when(mockFacade).getSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
 
         service.saasUserCredentials = testUserCredentials;
 
@@ -398,7 +397,7 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(subscription.getProperties().get("Users"), "25");
         assertEquals(subscription.getProperties().get("Package"), "Commercial");
 
-        doThrow(new HttpException(500, "error")).when(mockFacade).getSubscription(SaasAccountServiceProxy.ON_PREMISES, testRequest);
+        doThrow(new HttpException(500, "error")).when(mockFacade).getSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
         result = service.getOnPremisesSaasSubscription();
         assertErrorResponse(result);
     }

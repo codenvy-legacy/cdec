@@ -18,7 +18,6 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 
@@ -48,7 +47,6 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
     private CommandSession            commandSession;
 
     private SaasUserCredentials credentials;
-    private Request             request;
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -60,35 +58,28 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
         performBaseMocks(spyCommand, true);
 
         credentials = new SaasUserCredentials("token", "accountId");
-        request = new Request().setSaasUserCredentials(credentials);
         doReturn(credentials).when(spyCommand).getCredentials();
     }
 
     @Test
     public void testCheckDefaultSubscription() throws Exception {
-        String okServiceResponse = "{\n"
-                                   + "  \"message\" : \"Subscription is valid\",\n"
-                                   + "  \"status\" : \"OK\",\n"
-                                   + "  \"subscription\" : \"OnPremises\"\n"
-                                   + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
+        doReturn(true).when(mockInstallationManagerProxy).hasValidSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, credentials);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"subscription\" : \"OnPremises\",\n" +
+                             "  \"message\" : \"Subscription is valid\",\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testCheckSubscriptionReturnOkResponse() throws Exception {
-        String okServiceResponse = "{\n"
-                                   + "  \"message\" : \"Subscription is valid\",\n"
-                                   + "  \"status\" : \"OK\",\n"
-                                   + "  \"subscription\": \"AnotherSubscription\"\n"
-                                   + "}";
-        doReturn(okServiceResponse).when(mockInstallationManagerProxy).checkSubscription("AnotherSubscription", request);
+        doReturn(true).when(mockInstallationManagerProxy).hasValidSaaSSubscription("AnotherSubscription", credentials);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -96,7 +87,11 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
-        assertEquals(output, okServiceResponse + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"subscription\" : \"AnotherSubscription\",\n" +
+                             "  \"message\" : \"Subscription is valid\",\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
@@ -106,7 +101,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-                .when(mockInstallationManagerProxy).checkSubscription(anyString(), eq(request));
+                .when(mockInstallationManagerProxy).hasValidSaaSSubscription(anyString(), eq(credentials));
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
