@@ -33,6 +33,7 @@ import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.specification.RequestSpecification;
@@ -303,20 +304,22 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testGetInstalledVersions() {
         testContract(
-            "installation",                  // path
+                "installations",                  // path
             null,                            // query parameters
             null,                            // request body
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            OK_RESPONSE_BODY,                // response body
+            "[\n" +
+            "    \n" +
+            "]",                // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        doReturn(com.codenvy.im.response.Response.ok()).when(facade).getInstalledVersions();
+                        doReturn(ImmutableList.of()).when(facade).getInstalledVersions();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -398,11 +401,11 @@ public class TestInstallationManagerServiceContract {
                 public Object apply(@Nullable Object o) {
                     try {
                         doReturn(new DtoServerImpls.TokenImpl().withValue("token"))
-                            .when(facade)
-                            .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
+                                .when(facade)
+                                .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
 
                         doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId("id").withName("name"))
-                            .when(facade).getAccountWhereUserIsOwner(anyString(), any(Request.class));
+                                .when(facade).getAccountWhereUserIsOwner(anyString(), any(Request.class));
 
                     } catch (Exception e) {
                         e.printStackTrace();

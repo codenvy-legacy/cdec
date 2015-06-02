@@ -33,12 +33,15 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
@@ -219,14 +222,23 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetInstalledVersions() throws Exception {
-        doReturn(mockFacadeOkResponse).when(mockFacade).getInstalledVersions();
-        Response result = service.getInstalledVersions();
-        assertOkResponse(result);
+    public void testGetInstalledVersionsShouldReturnOkStatus() throws Exception {
+        doReturn(ImmutableList.of(new InstallArtifactResult().withVersion("1.0.1")
+                                                             .withArtifact("codenvy")
+                                                             .withStatus(InstallArtifactStatus.SUCCESS))).when(mockFacade).getInstalledVersions();
 
-        doReturn(mockFacadeErrorResponse).when(mockFacade).getInstalledVersions();
-        result = service.getInstalledVersions();
-        assertErrorResponse(result);
+        Response result = service.getInstalledVersions();
+
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testGetInstalledVersionsShouldReturnErrorStatus() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).getInstalledVersions();
+
+        Response result = service.getInstalledVersions();
+
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test

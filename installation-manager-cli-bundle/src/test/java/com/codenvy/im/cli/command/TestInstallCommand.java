@@ -18,17 +18,14 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactStatus;
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -69,14 +66,6 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallationManagerFacade facade;
     private ConfigManager mockConfigManager;
     private CommandSession            commandSession;
-    private String okServiceResponse = "{\n"
-                                       + "  \"artifacts\" : [ {\n"
-                                       + "    \"artifact\" : \"codenvy\",\n"
-                                       + "    \"version\" : \"1.0.1\",\n"
-                                       + "    \"status\" : \"SUCCESS\"\n"
-                                       + "  } ],\n"
-                                       + "  \"status\" : \"OK\"\n"
-                                       + "}";
 
     private ByteArrayOutputStream outputStream;
     private ByteArrayOutputStream errorStream;
@@ -319,10 +308,9 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifacts() throws Exception {
-        Response response = new Response().setStatus(ResponseCode.OK).addArtifact(new ArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                                   Version.valueOf("1.0.1"),
-                                                                                                   ArtifactStatus.SUCCESS));
-        doReturn(response).when(facade).getInstalledVersions();
+        doReturn(ImmutableList.of(new InstallArtifactResult().withArtifact("codenvy")
+                                                             .withVersion("1.0.1")
+                                                             .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);

@@ -27,7 +27,6 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallResult;
-import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
@@ -205,8 +204,11 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        Response response = facade.getInstalledVersions();
-        console.printResponse(response.toJson());
+        List<InstallArtifactResult> installedVersions = facade.getInstalledVersions();
+        InstallResult installResult = new InstallResult();
+        installResult.setArtifacts(installedVersions);
+        installResult.setStatus(ResponseCode.OK);
+        console.printResponse(toJson(installResult));
         return null;
     }
 

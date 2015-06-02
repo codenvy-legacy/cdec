@@ -76,7 +76,6 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestInstallationManagerFacade extends BaseTest {
     private InstallationManagerFacade installationManagerFacade;
-    private SaasUserCredentials       testCredentials;
     private Artifact                  cdecArtifact;
 
     @Mock
@@ -114,7 +113,6 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       storageManager,
                                                                       installManager,
                                                                       downloadManager));
-        testCredentials = new SaasUserCredentials("auth token");
     }
 
     @Test

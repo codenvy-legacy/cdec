@@ -36,6 +36,8 @@ import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
@@ -44,6 +46,8 @@ import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -265,10 +269,22 @@ public class InstallationManagerFacade {
         }
     }
 
-    /** @return the list of installed artifacts and theirs versions */
-    public Response getInstalledVersions() throws IOException {
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getInstalledArtifacts()
+     */
+    public List<InstallArtifactResult> getInstalledVersions() throws IOException {
         Map<Artifact, Version> installedArtifacts = installManager.getInstalledArtifacts();
-        return new Response().setStatus(ResponseCode.OK).addArtifacts(installedArtifacts);
+
+        return FluentIterable.from(installedArtifacts.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactResult>() {
+            @Override
+            public InstallArtifactResult apply(Map.Entry<Artifact, Version> entry) {
+                InstallArtifactResult iaResult = new InstallArtifactResult();
+                iaResult.setArtifact(entry.getKey().getName());
+                iaResult.setVersion(entry.getValue().toString());
+                iaResult.setStatus(InstallArtifactStatus.SUCCESS);
+                return iaResult;
+            }
+        }).toList();
     }
 
     /**

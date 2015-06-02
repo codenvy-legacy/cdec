@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
@@ -34,8 +33,8 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.request.Request;
-import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -82,7 +81,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -212,25 +210,22 @@ public class InstallationManagerService {
         return handleInstallationManagerResponse(delegate.getDownloads(request));
     }
 
-    /** Gets the list of installed artifacts. */
+    /**
+     * Gets installed artifacts.
+     */
     @GET
-    @Path("installation")
+    @Path("installations")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of installed artifacts", response = Response.class)
-    public javax.ws.rs.core.Response getInstalledVersions() throws IOException {
-        Response response = delegate.getInstalledVersions();
-
-        if (response.getArtifacts() != null) {
-            Iterator<ArtifactInfo> iter = response.getArtifacts().iterator();
-            while (iter.hasNext()) {
-                ArtifactInfo item = iter.next();
-                if (item.getArtifact().equals(InstallManagerArtifact.NAME)) {
-                    iter.remove();
-                }
-            }
+    @ApiOperation(value = "Gets installed artifacts", response = InstallArtifactResult.class, responseContainer = "List")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response getInstalledVersions() {
+        try {
+            List<InstallArtifactResult> installedVersions = delegate.getInstalledVersions();
+            return javax.ws.rs.core.Response.ok(installedVersions).build();
+        } catch (Exception e) {
+            return handleException(e);
         }
-
-        return handleInstallationManagerResponse(response.toJson());
     }
 
     /**

@@ -56,6 +56,21 @@ public class InstallArtifactResult {
         this.status = status;
     }
 
+    public InstallArtifactResult withArtifact(String artifact) {
+        this.artifact = artifact;
+        return this;
+    }
+
+    public InstallArtifactResult withVersion(String version) {
+        this.version = version;
+        return this;
+    }
+
+    public InstallArtifactResult withStatus(InstallArtifactStatus status) {
+        this.status = status;
+        return this;
+    }
+
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
