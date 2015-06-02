@@ -161,32 +161,14 @@ public class InstallationManagerFacade {
         transport.doPost(requestUrl, null, saasUserCredentials.getToken());
     }
 
-    /** Check user's subscription. */
-    public String checkSubscription(String subscription,
-                                    @Nonnull Request request) throws IOException {
-        try {
-            boolean subscriptionValidated = saasAccountServiceProxy.hasValidSubscription(subscription,
-                                                                                         request.obtainAccessToken(),
-                                                                                         request.obtainAccountId());
-
-            if (subscriptionValidated) {
-                return new Response().setStatus(ResponseCode.OK)
-                                     .setSubscription(subscription)
-                                     .setMessage("Subscription is valid")
-                                     .toJson();
-            } else {
-                return new Response().setStatus(ERROR)
-                                     .setSubscription(subscription)
-                                     .setMessage("Subscription not found or outdated")
-                                     .toJson();
-            }
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return new Response().setStatus(ERROR)
-                                 .setSubscription(subscription)
-                                 .setMessage(e.getMessage())
-                                 .toJson();
-        }
+    /**
+     * @see com.codenvy.im.saas.SaasAccountServiceProxy#hasValidSubscription(String, String, String)
+     */
+    public boolean hasValidSaaSSubscription(@Nonnull String subscription,
+                                            @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
+        return saasAccountServiceProxy.hasValidSubscription(subscription,
+                                                            saasUserCredentials.getToken(),
+                                                            saasUserCredentials.getAccountId());
     }
 
 
@@ -431,10 +413,10 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
      */
     @Nullable
-    public SubscriptionDescriptor getSubscription(String subscriptionName, @Nonnull Request request) throws IOException {
+    public SubscriptionDescriptor getSaaSSubscription(String subscriptionName, @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
         return saasAccountServiceProxy.getSubscription(subscriptionName,
-                                                       request.obtainAccessToken(),
-                                                       request.obtainAccountId());
+                                                       saasUserCredentials.getToken(),
+                                                       saasUserCredentials.getAccountId());
     }
 
     /**

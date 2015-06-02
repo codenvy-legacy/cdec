@@ -18,14 +18,11 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.saas.SaasAccountServiceProxy;
-import com.codenvy.im.saas.SaasUserCredentials;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
-
-import java.io.IOException;
 
 import static java.lang.String.format;
 
@@ -94,7 +91,7 @@ public class LoginCommand extends AbstractIMCommand {
             preferencesStorage.setAccountId(accountReference.getId());
             console.printSuccess("Login success.");
 
-            addTrialSaaSSubscription();
+            facade.addTrialSaasSubscription(getCredentials());
         } catch (Exception e) {
             if (preferencesStorage != null) {
                 preferencesStorage.invalidate();
@@ -102,13 +99,6 @@ public class LoginCommand extends AbstractIMCommand {
 
             throw e;
         }
-    }
-
-    private void addTrialSaaSSubscription() throws IOException {
-        SaasUserCredentials saasUserCredentials = new SaasUserCredentials();
-        saasUserCredentials.setAccountId(preferencesStorage.getAccountId());
-        saasUserCredentials.setToken(preferencesStorage.getAuthToken());
-        facade.addTrialSaasSubscription(saasUserCredentials);
     }
 
     @Override

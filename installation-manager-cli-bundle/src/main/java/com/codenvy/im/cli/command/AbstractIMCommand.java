@@ -159,6 +159,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected SaasUserCredentials getCredentials() {
+        validateIfUserLoggedIn();
         return new SaasUserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
     }
 
@@ -216,10 +217,5 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return new Request()
                 .setArtifactName(artifactName)
                 .setVersion(version);
-    }
-
-    protected Request createRequestWithUserCredentials() {
-        validateIfUserLoggedIn();
-        return new Request().setSaasUserCredentials(getCredentials());
     }
 }

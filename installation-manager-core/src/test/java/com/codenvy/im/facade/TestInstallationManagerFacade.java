@@ -31,23 +31,19 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
-import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 
-import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
@@ -57,8 +53,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +66,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -84,28 +77,29 @@ public class TestInstallationManagerFacade extends BaseTest {
     private Artifact                  cdecArtifact;
 
     @Mock
-    private HttpTransport        transport;
+    private HttpTransport           transport;
     @Mock
-    private SaasAuthServiceProxy saasAuthServiceProxy;
+    private SaasAuthServiceProxy    saasAuthServiceProxy;
     @Mock
-    private PasswordManager      passwordManager;
+    private SaasAccountServiceProxy saasAccountServiceProxy;
     @Mock
-    private NodeManager          nodeManager;
+    private PasswordManager         passwordManager;
     @Mock
-    private BackupManager        backupManager;
+    private NodeManager             nodeManager;
     @Mock
-    private StorageManager       storageManager;
+    private BackupManager           backupManager;
     @Mock
-    private InstallManager       installManager;
+    private StorageManager          storageManager;
     @Mock
-    private DownloadManager      downloadManager;
+    private InstallManager          installManager;
     @Mock
-    private ConfigManager        configManager;
+    private DownloadManager         downloadManager;
+    @Mock
+    private ConfigManager           configManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        SaasAccountServiceProxy saasAccountServiceProxy = new SaasAccountServiceProxy("api/endpoint", transport);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
         installationManagerFacade = spy(new InstallationManagerFacade("target/download",
                                                                       "update/endpoint",
@@ -316,16 +310,16 @@ public class TestInstallationManagerFacade extends BaseTest {
         doThrow(new IOException("error")).when(backupManager).restore(testBackupConfig);
 
         assertEquals(installationManagerFacade.restore(testBackupConfig).toJson(), "{\n"
-                                                                          + "  \"backup\" : {\n"
-                                                                          + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                          + "    \"artifactInfo\" : {\n"
-                                                                          + "      \"artifact\" : \"codenvy\"\n"
-                                                                          + "    },\n"
-                                                                          + "    \"status\" : \"FAILURE\"\n"
-                                                                          + "  },\n"
-                                                                          + "  \"message\" : \"error\",\n"
-                                                                          + "  \"status\" : \"ERROR\"\n"
-                                                                          + "}");
+                                                                                   + "  \"backup\" : {\n"
+                                                                                   + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
+                                                                                   + "    \"artifactInfo\" : {\n"
+                                                                                   + "      \"artifact\" : \"codenvy\"\n"
+                                                                                   + "    },\n"
+                                                                                   + "    \"status\" : \"FAILURE\"\n"
+                                                                                   + "  },\n"
+                                                                                   + "  \"message\" : \"error\",\n"
+                                                                                   + "  \"status\" : \"ERROR\"\n"
+                                                                                   + "}");
     }
 
     @Test
@@ -362,69 +356,6 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         Token token = installationManagerFacade.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertNull(token);
-    }
-
-    @Test
-    public void testGetSubscriptionDescriptor() throws IOException, JsonParseException {
-        final String TEST_ACCOUNT_ID = "accountId";
-        final String TEST_ACCESS_TOKEN = "accessToken";
-
-        SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request request = new Request().setSaasUserCredentials(userCredentials);
-
-        final String SUBSCRIPTION_ID = "subscription_id1";
-        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT);
-
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        String startDate = subscriptionDateFormat.format(cal.getTime());
-
-        cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, 1);
-        String endDate = subscriptionDateFormat.format(cal.getTime());
-
-        String testDescriptorJson = "{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
-                                    + ",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
-        doReturn("[" + testDescriptorJson + "]").when(transport)
-                                                .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
-
-        SubscriptionDescriptor descriptor = installationManagerFacade.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
-        assertNotNull(descriptor);
-        assertEquals(descriptor.getServiceId(), "OnPremises");
-        assertEquals(descriptor.getId(), "subscription_id1");
-        assertEquals(descriptor.getStartDate(), startDate);
-        assertEquals(descriptor.getEndDate(), endDate);
-        assertTrue(descriptor.getProperties().isEmpty());
-        assertTrue(descriptor.getLinks().isEmpty());
-    }
-
-    @Test
-    public void testGetSubscriptionDescriptorWhenDescriptorNull() throws IOException {
-        final String TEST_ACCOUNT_ID = "accountId";
-        final String TEST_ACCESS_TOKEN = "accessToken";
-
-        SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request request = new Request().setSaasUserCredentials(userCredentials);
-
-        doReturn("[]").when(transport).doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
-
-        SubscriptionDescriptor descriptor =
-                installationManagerFacade.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
-        assertNull(descriptor);
-    }
-
-    @Test(expectedExceptions = HttpException.class,
-            expectedExceptionsMessageRegExp = "error")
-    public void testGetSubscriptionDescriptorWhenException() throws IOException {
-        final String TEST_ACCOUNT_ID = "accountId";
-        final String TEST_ACCESS_TOKEN = "accessToken";
-
-        SaasUserCredentials userCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        Request request = new Request().setSaasUserCredentials(userCredentials);
-
-        doThrow(new HttpException(500, "error")).when(transport)
-                                                .doGet("api/endpoint/account/" + TEST_ACCOUNT_ID + "/subscriptions", TEST_ACCESS_TOKEN);
-        installationManagerFacade.getSubscription(SaasAccountServiceProxy.ON_PREMISES, request);
     }
 
     @Test
@@ -525,5 +456,27 @@ public class TestInstallationManagerFacade extends BaseTest {
         assertEquals(updates.get(0).getStatus(), UpdatesArtifactStatus.DOWNLOADED);
         assertEquals(updates.get(0).getArtifact(), cdecArtifact.getName());
         assertEquals(updates.get(0).getVersion(), version100.toString());
+    }
+
+    @Test
+    public void testHasValidSaaSSubscription() throws Exception {
+        SaasUserCredentials saasUserCredentials = new SaasUserCredentials();
+        saasUserCredentials.setAccountId("id");
+        saasUserCredentials.setToken("token");
+
+        installationManagerFacade.hasValidSaaSSubscription("OnPremises", saasUserCredentials);
+
+        verify(saasAccountServiceProxy).hasValidSubscription("OnPremises", "token", "id");
+    }
+
+    @Test
+    public void testGetSubscription() throws Exception {
+        SaasUserCredentials saasUserCredentials = new SaasUserCredentials();
+        saasUserCredentials.setAccountId("id");
+        saasUserCredentials.setToken("token");
+
+        installationManagerFacade.getSaaSSubscription("OnPremises", saasUserCredentials);
+
+        verify(saasAccountServiceProxy).getSubscription("OnPremises", "token", "id");
     }
 }

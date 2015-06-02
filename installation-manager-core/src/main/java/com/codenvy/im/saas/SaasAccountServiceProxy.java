@@ -136,11 +136,11 @@ public class SaasAccountServiceProxy {
         transport.doDelete(requestUrl, accessToken);
     }
 
-    /** Get certain subscription descriptor **/
+    /** Get certain subscription descriptor * */
     @Nullable
     public SubscriptionDescriptor getSubscription(String subscriptionName,
-                                                         String accessToken,
-                                                         String accountId) throws IOException {
+                                                  String accessToken,
+                                                  String accountId) throws IOException {
 
         List<SubscriptionDescriptor> subscriptions = getSubscriptions(accessToken, accountId);
         for (SubscriptionDescriptor subscriptionDescriptor : subscriptions) {
@@ -151,7 +151,7 @@ public class SaasAccountServiceProxy {
 
         return null;
     }
-    
+
     private List<SubscriptionDescriptor> getSubscriptions(String accessToken,
                                                           String accountId) throws IOException {
         String requestUrl = combinePaths(saasApiEndpoint, "account/" + accountId + "/subscriptions");
