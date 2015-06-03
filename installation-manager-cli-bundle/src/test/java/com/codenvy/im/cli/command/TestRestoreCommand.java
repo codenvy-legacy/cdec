@@ -18,7 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.response.BackupInfo;
 
@@ -40,9 +40,9 @@ public class TestRestoreCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade mockInstallationManagerProxy;
+    private IMArtifactLabeledFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     private BackupConfig testBackupConfig;
 

@@ -19,9 +19,7 @@
 package com.codenvy.im.response;
 
 /**
- * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
-public enum UpdatesArtifactStatus {
-    DOWNLOADED,
-    AVAILABLE_TO_DOWNLOAD
+public interface Info {
 }

@@ -37,14 +37,14 @@ public class DownloadResultTest extends BaseTest {
 
     @Test
     public void testToJson() throws Exception {
-        DownloadArtifactResult downloadArtifactResult = new DownloadArtifactResult();
-        downloadArtifactResult.setFile("file");
-        downloadArtifactResult.setStatus(DownloadArtifactStatus.DOWNLOADED);
-        downloadArtifactResult.setArtifact("codenvy");
-        downloadArtifactResult.setVersion("1.0.1");
+        DownloadArtifactInfo downloadArtifactInfo = new DownloadArtifactInfo();
+        downloadArtifactInfo.setFile("file");
+        downloadArtifactInfo.setStatus(DownloadArtifactStatus.DOWNLOADED);
+        downloadArtifactInfo.setArtifact("codenvy");
+        downloadArtifactInfo.setVersion("1.0.1");
 
         DownloadResult actualDescriptor = new DownloadResult();
-        actualDescriptor.setArtifacts(ImmutableList.of(downloadArtifactResult));
+        actualDescriptor.setArtifacts(ImmutableList.of(downloadArtifactInfo));
         actualDescriptor.setMessage("error");
         actualDescriptor.setStatus(ResponseCode.OK);
 
@@ -65,7 +65,7 @@ public class DownloadResultTest extends BaseTest {
 
     @Test
     public void testResponseCode() throws Exception {
-        DownloadArtifactResult artifactInfo = new DownloadArtifactResult(ArtifactFactory.createArtifact(CDECArtifact.NAME),
+        DownloadArtifactInfo artifactInfo = new DownloadArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                  Version.valueOf("1.0.1"),
                                                                                  Paths.get(DOWNLOAD_DIR).resolve("file"),
                                                                                  DownloadArtifactStatus.DOWNLOADING);

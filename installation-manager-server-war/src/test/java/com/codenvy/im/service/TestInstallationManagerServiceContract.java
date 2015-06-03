@@ -19,7 +19,7 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
@@ -78,13 +78,13 @@ public class TestInstallationManagerServiceContract {
                                                   + "    \n"
                                                   + "}";
     @Mock
-    public  InstallationManagerFacade facade;
+    public  IMArtifactLabeledFacade facade;
     @Mock
-    public  ConfigManager             configManager;
+    public  ConfigManager           configManager;
     @Mock
-    public  SaasUserCredentials       saasUserCredentials;
+    public  SaasUserCredentials     saasUserCredentials;
     @Mock
-    private Artifact                  mockArtifact;
+    private Artifact                mockArtifact;
 
     public InstallationManagerService service;
 

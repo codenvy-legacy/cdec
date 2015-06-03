@@ -31,7 +31,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
-import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
@@ -407,7 +407,7 @@ public class TestInstallationManagerFacade extends BaseTest {
             put(version100, null);
         }});
 
-        List<UpdatesArtifactResult> updates = installationManagerFacade.getUpdates();
+        List<UpdatesArtifactInfo> updates = installationManagerFacade.getUpdates();
         assertEquals(updates.size(), 1);
         assertEquals(updates.get(0).getStatus(), UpdatesArtifactStatus.DOWNLOADED);
         assertEquals(updates.get(0).getArtifact(), cdecArtifact.getName());

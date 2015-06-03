@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.response.NodeInfo;
 
 import org.apache.felix.service.command.CommandSession;
@@ -38,9 +38,9 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade mockInstallationManagerProxy;
+    private IMArtifactLabeledFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -76,7 +76,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
                                 + "}";
         String TEST_DNS_NAME = "some";
         doThrow(new RuntimeException("Server Error Exception"))
-            .when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+                .when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);

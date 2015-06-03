@@ -23,7 +23,7 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.google.common.io.Files;
@@ -52,22 +52,22 @@ public class TestAbstractIMCommand {
     private Preferences             globalPreferences;
 
     @Mock
-    private InstallationManagerFacade service;
+    private IMArtifactLabeledFacade service;
     @Mock
-    private CommandSession            session;
+    private CommandSession          session;
     @Mock
-    private MultiRemoteCodenvy        mockMultiRemoteCodenvy;
+    private MultiRemoteCodenvy      mockMultiRemoteCodenvy;
     @Mock
-    private Remote                    mockUpdateServerRemote;
+    private Remote                  mockUpdateServerRemote;
     @Mock
-    private Remote                    mockAnotherRemote;
+    private Remote                  mockAnotherRemote;
 
     private final static String UPDATE_SERVER_REMOTE_NAME = "update-server";
     private final static String UPDATE_SERVER_URL         = "https://test.com";
     private final static String TEST_ACCOUNT_ID           = "test-account-id";
     private static final String TEST_ACCOUNT_NAME         = "test-account-name";
     private static final String TEST_ACCOUNT_REFERENCE    =
-        "{\"name\":\"" + TEST_ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}";
+            "{\"name\":\"" + TEST_ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}";
     private final static String TEST_TOKEN                = "authToken";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";

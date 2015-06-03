@@ -18,31 +18,33 @@
 
 package com.codenvy.im.response;
 
-import com.codenvy.im.utils.Commons;
-
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+
+import static com.codenvy.im.utils.Commons.fromJson;
+import static com.codenvy.im.utils.Commons.toJson;
 import static org.testng.Assert.assertEquals;
 
 
 /**
  * @author Anatoliy Bazko
  */
-public class DownloadArtifactResultTest {
+public class UpdatesResultTest {
 
     @Test
     public void test() throws Exception {
-        DownloadArtifactResult expectedDescriptor = new DownloadArtifactResult();
-        expectedDescriptor.setVersion("1.0.1");
-        expectedDescriptor.setArtifact("codenvy");
-        expectedDescriptor.setFile("file");
-        expectedDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
+        UpdatesResult result = new UpdatesResult();
+        result.setStatus(ResponseCode.ERROR);
+        result.setMessage("error");
+        result.setArtifacts(Collections.<UpdatesArtifactInfo>emptyList());
 
-
-        String json = Commons.toJson(expectedDescriptor);
-
-        DownloadArtifactResult actualDescriptor = Commons.fromJson(json, DownloadArtifactResult.class);
-
-        assertEquals(actualDescriptor, expectedDescriptor);
+        String json = toJson(result);
+        assertEquals(json, "{\n" +
+                           "  \"artifacts\" : [ ],\n" +
+                           "  \"message\" : \"error\",\n" +
+                           "  \"status\" : \"ERROR\"\n" +
+                           "}");
+        assertEquals(fromJson(json, UpdatesResult.class), result);
     }
 }

@@ -37,7 +37,7 @@ public class DownloadProgressDescriptorTest extends BaseTest {
 
     @Test
     public void test() throws Exception {
-        DownloadArtifactResult artifactInfo = new DownloadArtifactResult(ArtifactFactory.createArtifact(CDECArtifact.NAME),
+        DownloadArtifactInfo artifactInfo = new DownloadArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                  Version.valueOf("1.0.1"),
                                                                                  Paths.get(DOWNLOAD_DIR).resolve("file"),
                                                                                  DownloadArtifactStatus.DOWNLOADED);

@@ -15,9 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.facade;
+package com.codenvy.im.managers;
 
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 
 import javax.annotation.Nullable;
@@ -40,7 +40,7 @@ import static java.nio.file.Files.size;
  */
 public class DownloadProgress {
 
-    private final List<DownloadArtifactResult> downloadedArtifacts;
+    private final List<DownloadArtifactInfo> downloadedArtifacts;
     private final Map<Path, Long>                         artifacts;
     private final AtomicReference<Exception>              exception;
     private final AtomicReference<DownloadArtifactStatus> status;
@@ -54,11 +54,11 @@ public class DownloadProgress {
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
     }
 
-    public void addDownloadedArtifact(DownloadArtifactResult artifactInfo) {
+    public void addDownloadedArtifact(DownloadArtifactInfo artifactInfo) {
         downloadedArtifacts.add(artifactInfo);
     }
 
-    public List<DownloadArtifactResult> getDownloadedArtifacts() {
+    public List<DownloadArtifactInfo> getDownloadedArtifacts() {
         return downloadedArtifacts;
     }
 

@@ -23,7 +23,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -33,10 +33,9 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
-import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
@@ -104,24 +103,19 @@ public class TestInstallationManagerService extends BaseTest {
     private InstallationManagerService service;
 
     @Mock
-    private InstallationManagerFacade mockFacade;
+    private IMArtifactLabeledFacade mockFacade;
     @Mock
-    private ConfigManager             configManager;
+    private ConfigManager           configManager;
     @Mock
-    private Principal                 mockPrincipal;
+    private Principal               mockPrincipal;
     @Mock
-    private Config                    mockConfig;
+    private Config                  mockConfig;
     @Mock
-    private Artifact                  mockArtifact;
-
-    private com.codenvy.im.response.Response mockFacadeOkResponse;
-    private com.codenvy.im.response.Response mockFacadeErrorResponse;
+    private Artifact                mockArtifact;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
-        mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR).setMessage("error");
         service = spy(new InstallationManagerService(BACKUP_DIR, mockFacade, configManager));
 
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
@@ -243,7 +237,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetInstalledVersionsShouldReturnOkStatus() throws Exception {
-        doReturn(ImmutableList.of(new InstallArtifactResult().withVersion("1.0.1")
+        doReturn(ImmutableList.of(new InstallArtifactInfo().withVersion("1.0.1")
                                                              .withArtifact("codenvy")
                                                              .withStatus(InstallArtifactStatus.SUCCESS))).when(mockFacade).getInstalledVersions();
 

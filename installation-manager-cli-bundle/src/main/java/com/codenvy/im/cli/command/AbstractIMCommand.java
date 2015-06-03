@@ -24,7 +24,7 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.saas.SaasUserCredentials;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
@@ -44,14 +44,14 @@ import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    protected InstallationManagerFacade facade;
-    protected PreferencesStorage        preferencesStorage;
-    protected Console                   console;
+    protected IMArtifactLabeledFacade facade;
+    protected PreferencesStorage      preferencesStorage;
+    protected Console                 console;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
 
     public AbstractIMCommand() {
-        facade = INJECTOR.getInstance(InstallationManagerFacade.class);
+        facade = INJECTOR.getInstance(IMArtifactLabeledFacade.class);
     }
 
     @Override

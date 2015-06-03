@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.response.NodeInfo;
 
 import org.apache.felix.service.command.CommandSession;
@@ -40,9 +40,9 @@ public class TestRemoveNodeCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade mockInstallationManagerProxy;
+    private IMArtifactLabeledFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     private final static String TEST_DNS = "builder.node.com";
 

@@ -21,12 +21,12 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.DownloadResult;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesResult;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
@@ -121,7 +121,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException, IOException {
-        List<UpdatesArtifactResult> updates = facade.getUpdates();
+        List<UpdatesArtifactInfo> updates = facade.getUpdates();
         UpdatesResult updatesResult = new UpdatesResult();
         updatesResult.setArtifacts(updates);
         updatesResult.setStatus(ResponseCode.OK);
@@ -132,7 +132,7 @@ public class DownloadCommand extends AbstractIMCommand {
         Artifact artifact = Commons.createArtifactOrNull(artifactName);
         Version version = Commons.createVersionOrNull(versionNumber);
 
-        List<DownloadArtifactResult> downloads = facade.getDownloads(artifact, version);
+        List<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
 
         DownloadResult downloadResult = new DownloadResult();
         downloadResult.setStatus(ResponseCode.OK);

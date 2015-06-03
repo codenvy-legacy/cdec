@@ -31,9 +31,9 @@ import java.util.List;
 @JsonPropertyOrder({"artifacts", "message", "status"})
 public class DownloadResult {
 
-    private ResponseCode                 status;
-    private String                       message;
-    private List<DownloadArtifactResult> artifacts;
+    private ResponseCode               status;
+    private String                     message;
+    private List<DownloadArtifactInfo> artifacts;
 
     public DownloadResult() {
     }
@@ -44,12 +44,6 @@ public class DownloadResult {
         this.message = downloadProgressDescriptor.getMessage();
     }
 
-    public DownloadResult(ResponseCode status, List<DownloadArtifactResult> artifacts) {
-        this.status = status;
-        this.artifacts = new ArrayList<>(artifacts);
-        this.message = null;
-    }
-
     public ResponseCode getStatus() {
         return status;
     }
@@ -58,7 +52,7 @@ public class DownloadResult {
         return message;
     }
 
-    public List<DownloadArtifactResult> getArtifacts() {
+    public List<DownloadArtifactInfo> getArtifacts() {
         return artifacts;
     }
 
@@ -70,7 +64,7 @@ public class DownloadResult {
         this.message = message;
     }
 
-    public void setArtifacts(List<DownloadArtifactResult> artifacts) {
+    public void setArtifacts(List<DownloadArtifactInfo> artifacts) {
         this.artifacts = artifacts;
     }
 

@@ -18,7 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 
 import org.apache.felix.service.command.CommandSession;
@@ -41,10 +41,10 @@ public class TestConfigCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade managerFacade;
+    private IMArtifactLabeledFacade managerFacade;
     @Mock
-    private CommandSession            commandSession;
-    private CommandInvoker commandInvoker;
+    private CommandSession          commandSession;
+    private CommandInvoker          commandInvoker;
 
     @BeforeMethod
     public void initMocks() throws IOException {

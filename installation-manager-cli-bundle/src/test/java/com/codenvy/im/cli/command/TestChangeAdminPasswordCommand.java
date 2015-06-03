@@ -18,7 +18,7 @@
 
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -36,9 +36,9 @@ public class TestChangeAdminPasswordCommand extends AbstractTestCommand {
     private ChangeAdminPasswordCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade installationManagerFacade;
+    private IMArtifactLabeledFacade installationManagerFacade;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     @BeforeMethod
     public void initMocks() throws IOException {

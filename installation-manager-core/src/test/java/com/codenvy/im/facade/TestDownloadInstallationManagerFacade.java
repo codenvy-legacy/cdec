@@ -26,7 +26,7 @@ import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
@@ -131,10 +131,10 @@ public class TestDownloadInstallationManagerFacade {
             }});
         }}).when(downloadManager).getDownloadedArtifacts();
 
-        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(null, null);
+        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(null, null);
 
         assertEquals(downloads.size(), 3);
-        DownloadArtifactResult result = downloads.get(0);
+        DownloadArtifactInfo result = downloads.get(0);
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.0");
         assertEquals(result.getFile(), "target/file1");
@@ -168,10 +168,10 @@ public class TestDownloadInstallationManagerFacade {
         doReturn(false).when(installManager).isInstallable(installManagerArtifact, version200);
         doReturn(true).when(installManager).isInstallable(installManagerArtifact, version201);
 
-        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
 
         assertEquals(downloads.size(), 2);
-        DownloadArtifactResult result = downloads.get(0);
+        DownloadArtifactInfo result = downloads.get(0);
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file1");
@@ -195,11 +195,11 @@ public class TestDownloadInstallationManagerFacade {
 
         doReturn(true).when(installManager).isInstallable(installManagerArtifact, version200);
 
-        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME),
+        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME),
                                                                                          Version.valueOf("2.0.0"));
 
         assertEquals(downloads.size(), 1);
-        DownloadArtifactResult result = downloads.get(0);
+        DownloadArtifactInfo result = downloads.get(0);
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file1");
@@ -210,7 +210,7 @@ public class TestDownloadInstallationManagerFacade {
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
         doReturn(Collections.emptyMap()).when(downloadManager).getDownloadedArtifacts();
 
-        List<DownloadArtifactResult> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
         assertTrue(downloads.isEmpty());
     }
 }

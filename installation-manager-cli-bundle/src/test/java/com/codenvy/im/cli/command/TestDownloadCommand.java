@@ -17,8 +17,8 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 
@@ -42,9 +42,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade service;
+    private IMArtifactLabeledFacade service;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     @BeforeMethod
     public void initMocks() throws IOException {
@@ -61,7 +61,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         doNothing().when(service).startDownload(null, null);
         doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
                                                 100,
-                                                Collections.<DownloadArtifactResult>emptyList())).when(service).getDownloadProgress();
+                                                Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -80,7 +80,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         doNothing().when(service).startDownload(null, null);
         doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED,
                                                 0,
-                                                Collections.<DownloadArtifactResult>emptyList())).when(service).getDownloadProgress();
+                                                Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

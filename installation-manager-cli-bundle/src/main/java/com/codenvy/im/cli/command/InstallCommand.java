@@ -24,7 +24,7 @@ import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallResult;
 import com.codenvy.im.response.ResponseCode;
@@ -146,14 +146,14 @@ public class InstallCommand extends AbstractIMCommand {
             maxInfoLen = max(maxInfoLen, i.length());
         }
 
-        InstallArtifactResult installArtifactResult = new InstallArtifactResult();
-        installArtifactResult.setArtifact(artifactName);
-        installArtifactResult.setVersion(versionNumber);
-        installArtifactResult.setStatus(InstallArtifactStatus.SUCCESS);
+        InstallArtifactInfo installArtifactInfo = new InstallArtifactInfo();
+        installArtifactInfo.setArtifact(artifactName);
+        installArtifactInfo.setVersion(versionNumber);
+        installArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
 
         InstallResult installResult = new InstallResult();
         installResult.setStatus(ResponseCode.OK);
-        installResult.setArtifacts(ImmutableList.of(installArtifactResult));
+        installResult.setArtifacts(ImmutableList.of(installArtifactInfo));
 
 
         for (int step = firstStep; step <= lastStep; step++) {
@@ -173,7 +173,7 @@ public class InstallCommand extends AbstractIMCommand {
                         facade.update(artifact, version, installOptions);
                     }
                 } catch (Exception e) {
-                    installArtifactResult.setStatus(InstallArtifactStatus.FAILURE);
+                    installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
                     installResult.setStatus(ResponseCode.ERROR);
                     installResult.setMessage(e.getMessage());
                 }
@@ -204,7 +204,7 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        List<InstallArtifactResult> installedVersions = facade.getInstalledVersions();
+        List<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
         InstallResult installResult = new InstallResult();
         installResult.setArtifacts(installedVersions);
         installResult.setStatus(ResponseCode.OK);

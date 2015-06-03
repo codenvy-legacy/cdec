@@ -21,7 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -33,12 +33,12 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
-import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
@@ -107,15 +107,15 @@ public class InstallationManagerService {
     private static final Logger LOG            = LoggerFactory.getLogger(InstallationManagerService.class);
     private static final String DOWNLOAD_TOKEN = UUID.randomUUID().toString();
 
-    protected final InstallationManagerFacade delegate;
-    protected final ConfigManager configManager;
-    protected final String backupDir;
+    protected final IMArtifactLabeledFacade delegate;
+    protected final ConfigManager           configManager;
+    protected final String                  backupDir;
 
     protected SaasUserCredentials saasUserCredentials;
 
     @Inject
     public InstallationManagerService(@Named("installation-manager.backup_dir") String backupDir,
-                                      InstallationManagerFacade delegate,
+                                      IMArtifactLabeledFacade delegate,
                                       ConfigManager configManager) {
         this.delegate = delegate;
         this.configManager = configManager;
@@ -204,12 +204,12 @@ public class InstallationManagerService {
     @GET
     @Path("updates")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = UpdatesArtifactResult.class, responseContainer = "List")
+    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = UpdatesArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getUpdates() {
         try {
-            List<UpdatesArtifactResult> installedVersions = delegate.getUpdates();
+            List<UpdatesArtifactInfo> installedVersions = delegate.getUpdates();
             return javax.ws.rs.core.Response.ok(installedVersions).build();
         } catch (Exception e) {
             return handleException(e);
@@ -222,7 +222,7 @@ public class InstallationManagerService {
     @GET
     @Path("downloads")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of downloaded artifacts", response = DownloadArtifactResult.class, responseContainer = "List")
+    @ApiOperation(value = "Gets the list of downloaded artifacts", response = DownloadArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
                            @ApiResponse(code = 500, message = "Server error")})
@@ -232,7 +232,7 @@ public class InstallationManagerService {
             Artifact artifact = createArtifactOrNull(artifactName);
             Version version = createVersionOrNull(versionNumber);
 
-            List<DownloadArtifactResult> downloads = delegate.getDownloads(artifact, version);
+            List<DownloadArtifactInfo> downloads = delegate.getDownloads(artifact, version);
             return javax.ws.rs.core.Response.ok(downloads).build();
         } catch (ArtifactNotFoundException | IllegalVersionException e) {
             return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
@@ -247,12 +247,12 @@ public class InstallationManagerService {
     @GET
     @Path("installations")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets installed artifacts", response = InstallArtifactResult.class, responseContainer = "List")
+    @ApiOperation(value = "Gets installed artifacts", response = InstallArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getInstalledVersions() {
         try {
-            List<InstallArtifactResult> installedVersions = delegate.getInstalledVersions();
+            List<InstallArtifactInfo> installedVersions = delegate.getInstalledVersions();
             return javax.ws.rs.core.Response.ok(installedVersions).build();
         } catch (Exception e) {
             return handleException(e);

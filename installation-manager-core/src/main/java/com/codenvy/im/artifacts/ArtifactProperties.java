@@ -24,6 +24,7 @@ import java.util.Set;
 /** @author Dmytro Nochevnov */
 public class ArtifactProperties {
     public static final String VERSION_PROPERTY                 = "version";
+    public static final String LABEL_PROPERTY                   = "label";
     public static final String PREVIOUS_VERSION_PROPERTY        = "previous-version";
     public static final String ARTIFACT_PROPERTY                = "artifact";
     public static final String BUILD_TIME_PROPERTY              = "build-time";
@@ -36,6 +37,7 @@ public class ArtifactProperties {
 
     public static final Set<String> PUBLIC_PROPERTIES = ImmutableSet.of(
             VERSION_PROPERTY,
+            LABEL_PROPERTY,
             PREVIOUS_VERSION_PROPERTY,
             ARTIFACT_PROPERTY,
             BUILD_TIME_PROPERTY,

@@ -18,18 +18,20 @@
 
 package com.codenvy.im.response;
 
+import com.codenvy.im.artifacts.VersionLabel;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"artifact", "version", "status"})
-public class UpdatesArtifactResult {
+@JsonPropertyOrder({"artifact", "version", "label", "status"})
+public class UpdatesArtifactInfo implements Info {
     private String                artifact;
     private String                version;
+    private VersionLabel label;
     private UpdatesArtifactStatus status;
 
-    public UpdatesArtifactResult() {
+    public UpdatesArtifactInfo() {
     }
 
     public String getArtifact() {
@@ -56,15 +58,24 @@ public class UpdatesArtifactResult {
         this.status = status;
     }
 
+    public VersionLabel getLabel() {
+        return label;
+    }
+
+    public void setLabel(VersionLabel label) {
+        this.label = label;
+    }
+
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UpdatesArtifactResult)) return false;
+        if (!(o instanceof UpdatesArtifactInfo)) return false;
 
-        UpdatesArtifactResult that = (UpdatesArtifactResult)o;
+        UpdatesArtifactInfo that = (UpdatesArtifactInfo)o;
 
         if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) return false;
+        if (label != that.label) return false;
         if (status != that.status) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
 
@@ -76,6 +87,7 @@ public class UpdatesArtifactResult {
     public int hashCode() {
         int result = artifact != null ? artifact.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (label != null ? label.hashCode() : 0);
         result = 31 * result + (status != null ? status.hashCode() : 0);
         return result;
     }

@@ -32,13 +32,13 @@ import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
-import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.UpdatesArtifactResult;
+import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
@@ -70,7 +70,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.logging.Logger;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
@@ -81,8 +80,6 @@ import static java.lang.String.format;
  */
 @Singleton
 public class InstallationManagerFacade {
-    private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
-
     protected final HttpTransport           transport;
     protected final SaasAuthServiceProxy    saasAuthServiceProxy;
     protected final SaasAccountServiceProxy saasAccountServiceProxy;
@@ -170,18 +167,18 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#getDownloadedArtifacts()
      */
-    public List<DownloadArtifactResult> getDownloads(@Nullable final Artifact artifact, @Nullable final Version version) throws IOException {
+    public List<DownloadArtifactInfo> getDownloads(@Nullable final Artifact artifact, @Nullable final Version version) throws IOException {
         Map<Artifact, SortedMap<Version, Path>> downloadedArtifacts = downloadManager.getDownloadedArtifacts();
 
         return FluentIterable.from(downloadedArtifacts.entrySet()).transformAndConcat(
-                new Function<Map.Entry<Artifact, SortedMap<Version, Path>>, Iterable<DownloadArtifactResult>>() {
+                new Function<Map.Entry<Artifact, SortedMap<Version, Path>>, Iterable<DownloadArtifactInfo>>() {
                     @Override
-                    public Iterable<DownloadArtifactResult> apply(Map.Entry<Artifact, SortedMap<Version, Path>> entry) {
+                    public Iterable<DownloadArtifactInfo> apply(Map.Entry<Artifact, SortedMap<Version, Path>> entry) {
                         SortedMap<Version, Path> versions = entry.getValue();
 
-                        List<DownloadArtifactResult> l = new ArrayList<>(versions.size());
+                        List<DownloadArtifactInfo> l = new ArrayList<>(versions.size());
                         for (Map.Entry<Version, Path> versionEntry : versions.entrySet()) {
-                            DownloadArtifactResult daResult = new DownloadArtifactResult();
+                            DownloadArtifactInfo daResult = new DownloadArtifactInfo();
                             daResult.setArtifact(entry.getKey().getName());
                             daResult.setFile(versionEntry.getValue().toString());
                             daResult.setVersion(versionEntry.getKey().toString());
@@ -201,15 +198,15 @@ public class InstallationManagerFacade {
 
                         return l;
                     }
-                }).filter(new Predicate<DownloadArtifactResult>() {
+                }).filter(new Predicate<DownloadArtifactInfo>() {
             @Override
-            public boolean apply(DownloadArtifactResult downloadArtifactResult) {
-                return artifact == null || downloadArtifactResult.getArtifact().equals(artifact.getName());
+            public boolean apply(DownloadArtifactInfo downloadArtifactInfo) {
+                return artifact == null || downloadArtifactInfo.getArtifact().equals(artifact.getName());
             }
-        }).filter(new Predicate<DownloadArtifactResult>() {
+        }).filter(new Predicate<DownloadArtifactInfo>() {
             @Override
-            public boolean apply(DownloadArtifactResult downloadArtifactResult) {
-                return version == null || downloadArtifactResult.getVersion().equals(version.toString());
+            public boolean apply(DownloadArtifactInfo downloadArtifactInfo) {
+                return version == null || downloadArtifactInfo.getVersion().equals(version.toString());
             }
         }).toList();
     }
@@ -217,21 +214,23 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#getUpdates()
      */
-    public List<UpdatesArtifactResult> getUpdates() throws IOException {
+    public List<UpdatesArtifactInfo> getUpdates() throws IOException {
         Map<Artifact, Version> updates = downloadManager.getUpdates();
 
-        return FluentIterable.from(updates.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactResult>() {
+        return FluentIterable.from(updates.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactInfo>() {
             @Override
-            public UpdatesArtifactResult apply(Map.Entry<Artifact, Version> entry) {
+            public UpdatesArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
                 Artifact artifact = entry.getKey();
                 Version version = entry.getValue();
 
-                UpdatesArtifactResult uaResult = new UpdatesArtifactResult();
+                UpdatesArtifactInfo uaResult = new UpdatesArtifactInfo();
                 uaResult.setArtifact(artifact.getName());
                 uaResult.setVersion(version.toString());
                 try {
                     if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
                         uaResult.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+                    } else {
+                        uaResult.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
                     }
                 } catch (IOException e) {
                     // simply ignore
@@ -245,13 +244,13 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.InstallManager#getInstalledArtifacts()
      */
-    public List<InstallArtifactResult> getInstalledVersions() throws IOException {
+    public List<InstallArtifactInfo> getInstalledVersions() throws IOException {
         Map<Artifact, Version> installedArtifacts = installManager.getInstalledArtifacts();
 
-        return FluentIterable.from(installedArtifacts.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactResult>() {
+        return FluentIterable.from(installedArtifacts.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactInfo>() {
             @Override
-            public InstallArtifactResult apply(Map.Entry<Artifact, Version> entry) {
-                InstallArtifactResult iaResult = new InstallArtifactResult();
+            public InstallArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
+                InstallArtifactInfo iaResult = new InstallArtifactInfo();
                 iaResult.setArtifact(entry.getKey().getName());
                 iaResult.setVersion(entry.getValue().toString());
                 iaResult.setStatus(InstallArtifactStatus.SUCCESS);
