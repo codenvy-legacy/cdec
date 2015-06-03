@@ -464,11 +464,11 @@ public class TestInstallationManagerService extends BaseTest {
         Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
+                                         + "  \"host_url\" : \"local.dev.com\",\n"
                                          + "  \"builder_host_name\" : \"builder1.dev.com\",\n"
-                                         + "  \"additional_runners\" : [ \"runner1.dev.com\", \"runner2.dev.com\" ],\n"
-                                         + "  \"analytics_host_name\" : \"analytics.dev.com\",\n"
                                          + "  \"additional_builders\" : [ ],\n"
-                                         + "  \"host_url\" : \"local.dev.com\"\n"
+                                         + "  \"analytics_host_name\" : \"analytics.dev.com\",\n"
+                                         + "  \"additional_runners\" : [ \"runner1.dev.com\", \"runner2.dev.com\" ]\n"
                                          + "}");
     }
 
@@ -511,7 +511,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetArtifactProperties() throws Exception {
-        doReturn(new HashMap() {{
+        doReturn(new LinkedHashMap() {{
             put(ArtifactProperties.BUILD_TIME_PROPERTY, "2014-09-23 09:49:06");
             put(ArtifactProperties.ARTIFACT_PROPERTY, "codenvy");
             put(ArtifactProperties.SIZE_PROPERTY, "796346268");
@@ -520,7 +520,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response response = service.getArtifactProperties("codenvy", "1.0.1");
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        assertEquals(response.getEntity().toString(), "{build-time=2014-09-23T09:49:06.0Z, artifact=codenvy, version=1.0.0, size=796346268}");
+        assertEquals(response.getEntity().toString(), "{build-time=2014-09-23T09:49:06.0Z, artifact=codenvy, size=796346268, version=1.0.0}");
     }
 
     @Test
