@@ -18,7 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.NodeInfo;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -55,14 +55,17 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     @Test
     public void testAddNode() throws Exception {
         String TEST_DNS_NAME = "some";
-        doReturn(Response.ok()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Response.ok().toJson() + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"node\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test

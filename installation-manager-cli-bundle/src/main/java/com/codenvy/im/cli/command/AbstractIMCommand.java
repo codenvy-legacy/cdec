@@ -25,7 +25,6 @@ import com.codenvy.client.Codenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.request.Request;
 import com.codenvy.im.saas.SaasUserCredentials;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
@@ -213,9 +212,4 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return super.isInteractive();
     }
 
-    protected Request createRequest(String artifactName, String version) {
-        return new Request()
-                .setArtifactName(artifactName)
-                .setVersion(version);
-    }
 }

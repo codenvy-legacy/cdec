@@ -19,10 +19,14 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.BackupConfig;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.BackupInfo;
+import com.codenvy.im.response.BackupResult;
+import com.codenvy.im.response.ResponseCode;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+
+import static com.codenvy.im.utils.Commons.toJson;
 
 /**
  * @author Dmytro Nochevnov
@@ -30,18 +34,28 @@ import org.apache.karaf.shell.commands.Command;
 @Command(scope = "codenvy", name = "im-restore", description = "Restore Codenvy")
 public class RestoreCommand extends AbstractIMCommand {
 
-    @Argument(name = "backup", description = "Relative path to backup file. There should be <backup_name>.tar.gz file with the compressed <backup_name>.tar file with the same backup name. For example: backup file codenvy_backup_19-Mar-2015_16-52-06.tar.gz which consists of codenvy_backup_19-Mar-2015_16-52-06.tar", required = true, multiValued = false, index = 0)
+    @Argument(name = "backup", description = "Relative path to backup file. There should be <backup_name>.tar.gz file with the compressed " +
+                                             "<backup_name>.tar file with the same backup name. For example: backup file " +
+                                             "codenvy_backup_19-Mar-2015_16-52-06.tar.gz which consists of codenvy_backup_19-Mar-2015_16-52-06" +
+                                             ".tar", required = true, multiValued = false, index = 0)
     private String backup;
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        BackupConfig config = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                .setBackupFile(backup);
-
         try {
+            BackupConfig config = new BackupConfig();
+            config.setArtifactName(CDECArtifact.NAME);
+            config.setBackupFile(backup);
+
             console.showProgressor();
-            Response restore = facade.restore(config);
-            console.printResponse(restore.toJson());
+
+            BackupInfo backupInfo = facade.restore(config);
+
+            BackupResult backupResult = new BackupResult();
+            backupResult.setBackup(backupInfo);
+            backupResult.setStatus(ResponseCode.OK);
+
+            console.printResponse(toJson(backupResult));
         } finally {
             console.hideProgressor();
         }

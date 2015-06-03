@@ -32,11 +32,12 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
+import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadArtifactResult;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -64,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.RolesAllowed;
+import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -107,13 +109,17 @@ public class InstallationManagerService {
 
     protected final InstallationManagerFacade delegate;
     protected final ConfigManager configManager;
+    protected final String backupDir;
 
     protected SaasUserCredentials saasUserCredentials;
 
     @Inject
-    public InstallationManagerService(InstallationManagerFacade delegate, ConfigManager configManager) {
+    public InstallationManagerService(@Named("installation-manager.backup_dir") String backupDir,
+                                      InstallationManagerFacade delegate,
+                                      ConfigManager configManager) {
         this.delegate = delegate;
         this.configManager = configManager;
+        this.backupDir = backupDir;
     }
 
     /**
@@ -348,59 +354,93 @@ public class InstallationManagerService {
         }
     }
 
-    /** Adds Codenvy node in the multi-node environment */
+    /**
+     * Adds Codenvy node in the multi-node environment.
+     */
     @POST
     @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = Response.class)
-    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "dns name of adding node") String dns) {
-        Response response = delegate.addNode(dns);
-        return handleInstallationManagerResponse(response);
+    @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = NodeInfo.class)
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully added"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "node DNS to add") String dns) {
+        try {
+            NodeInfo nodeInfo = delegate.addNode(dns);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).entity(nodeInfo).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
-    /** Removes Codenvy node in the multi-node environment */
+    /**
+     * Removes Codenvy node in the multi-node environment
+     */
     @DELETE
     @Path("node")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Removes Codenvy node in the multi-node environment", response = Response.class)
-    public javax.ws.rs.core.Response removeNode(
-            @QueryParam(value = "dns") @ApiParam(required = true, value = "dns name of removing node") String dns) {
-        Response response = delegate.removeNode(dns);
-        return handleInstallationManagerResponse(response);
+    @ApiOperation(value = "Removes Codenvy node in the multi-node environment")
+    @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "node DNS to remove") String dns) {
+        try {
+            delegate.removeNode(dns);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NO_CONTENT).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
-    /** Performs Codenvy backup according to given backup config */
+    /**
+     * Performs Codenvy backup.
+     */
     @POST
     @Path("backup")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Performs backup of given artifact", response = Response.class)
-    public javax.ws.rs.core.Response backup(
-            @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " +
-                                                                                               CDECArtifact.NAME) String artifactName,
-            @QueryParam(value = "backupDir") @ApiParam(value = "path to backup directory") String backupDirectoryPath) throws IOException {
+    @ApiOperation(value = "Performs Codenvy backup", response = BackupInfo.class)
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully created"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response backup(@DefaultValue(CDECArtifact.NAME)
+                                            @QueryParam(value = "artifact")
+                                            @ApiParam(allowableValues = "codenvy") String artifactName) {
 
-        BackupConfig config = new BackupConfig().setArtifactName(artifactName)
-                                                .setBackupDirectory(backupDirectoryPath);
+        try {
+            BackupConfig config = new BackupConfig();
+            config.setArtifactName(artifactName);
+            config.setBackupDirectory(backupDir);
 
-        Response response = delegate.backup(config);
-        return handleInstallationManagerResponse(response);
+            BackupInfo backupInfo = delegate.backup(config);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).entity(backupInfo).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
-    /** Performs Codenvy restore according to given backup config */
+    /**
+     * Performs Codenvy restoring.
+     */
     @POST
     @Path("restore")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Performs restore of given artifact from the given backup file", response = Response.class)
-    public javax.ws.rs.core.Response restore(
-            @DefaultValue(CDECArtifact.NAME) @QueryParam(value = "artifact") @ApiParam(value = "default artifact is " +
-                                                                                               CDECArtifact.NAME) String artifactName,
-            @QueryParam(value = "backupFile") @ApiParam(value = "path to backup file", required = true) String backupFilePath) throws IOException {
+    @ApiOperation(value = "Performs Codenvy restoring", response = BackupInfo.class)
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully restored"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response restore(@DefaultValue(CDECArtifact.NAME)
+                                             @QueryParam(value = "artifact")
+                                             @ApiParam(allowableValues = "codenvy") String artifactName,
+                                             @QueryParam(value = "backupFile")
+                                             @ApiParam(value = "path to backup file", required = true)
+                                             String backupFile) throws IOException {
 
-        BackupConfig config = new BackupConfig().setArtifactName(artifactName)
-                                                .setBackupFile(backupFilePath);
+        try {
+            BackupConfig config = new BackupConfig();
+            config.setArtifactName(artifactName);
+            config.setBackupFile(backupFile);
 
-        Response restore = delegate.restore(config);
-        return handleInstallationManagerResponse(restore);
+            BackupInfo backupInfo = delegate.restore(config);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).entity(backupInfo).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
     }
 
     /**
@@ -626,16 +666,6 @@ public class InstallationManagerService {
             return javax.ws.rs.core.Response.noContent().build();
         } catch (Exception e) {
             return handleException(e);
-        }
-    }
-
-    private javax.ws.rs.core.Response handleInstallationManagerResponse(Response response) {
-        ResponseCode responseCode = response.getStatus();
-        response.setStatus(null);
-        if (ResponseCode.OK == responseCode) {
-            return javax.ws.rs.core.Response.ok(response.toJson(), MediaType.APPLICATION_JSON_TYPE).build();
-        } else {
-            return javax.ws.rs.core.Response.serverError().entity(response.toJson()).build();
         }
     }
 

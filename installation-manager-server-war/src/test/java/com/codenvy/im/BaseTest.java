@@ -38,6 +38,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class BaseTest {
 
+    protected final String BACKUP_DIR = "target/backup";
+
     private RepositoryService testedRepositoryService;
 
     @BeforeTest

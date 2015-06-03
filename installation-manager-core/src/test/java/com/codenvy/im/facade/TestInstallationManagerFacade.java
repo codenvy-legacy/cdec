@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.codenvy.im.utils.Commons.toJson;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -190,25 +191,18 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Test
     public void testAddNode() throws IOException {
         doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null)).when(nodeManager).add("builder.node.com");
-        assertEquals(installationManagerFacade.addNode("builder.node.com").toJson(), "{\n"
-                                                                                     + "  \"node\" : {\n"
-                                                                                     + "    \"type\" : \"BUILDER\",\n"
-                                                                                     + "    \"host\" : \"builder.node.com\",\n"
-                                                                                     + "    \"status\" : \"SUCCESS\"\n"
-                                                                                     + "  },\n"
-                                                                                     + "  \"status\" : \"OK\"\n"
-                                                                                     + "}");
+        assertEquals(toJson(installationManagerFacade.addNode("builder.node.com")), "{\n" +
+                                                                                    "  \"type\" : \"BUILDER\",\n" +
+                                                                                    "  \"host\" : \"builder.node.com\"\n" +
+                                                                                    "}");
     }
 
 
-    @Test
+    @Test(expectedExceptions = IOException.class)
     public void testAddNodeException() throws IOException {
         doThrow(new IOException("error")).when(nodeManager).add("builder.node.com");
 
-        assertEquals(installationManagerFacade.addNode("builder.node.com").toJson(), "{\n"
-                                                                                     + "  \"message\" : \"error\",\n"
-                                                                                     + "  \"status\" : \"ERROR\"\n"
-                                                                                     + "}");
+        installationManagerFacade.addNode("builder.node.com");
     }
 
     @Test
@@ -217,25 +211,18 @@ public class TestInstallationManagerFacade extends BaseTest {
         final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS, null);
         doReturn(TEST_NODE).when(nodeManager).remove(TEST_NODE_DNS);
 
-        assertEquals(installationManagerFacade.removeNode(TEST_NODE_DNS).toJson(), "{\n"
-                                                                          + "  \"node\" : {\n"
-                                                                          + "    \"type\" : \"BUILDER\",\n"
-                                                                          + "    \"host\" : \"builder.node.com\",\n"
-                                                                          + "    \"status\" : \"SUCCESS\"\n"
-                                                                          + "  },\n"
-                                                                          + "  \"status\" : \"OK\"\n"
-                                                                          + "}");
+        assertEquals(toJson(installationManagerFacade.removeNode(TEST_NODE_DNS)), "{\n" +
+                                                                                  "  \"type\" : \"BUILDER\",\n" +
+                                                                                  "  \"host\" : \"builder.node.com\"\n" +
+                                                                                  "}");
     }
 
-    @Test
+    @Test(expectedExceptions = IOException.class)
     public void testRemoveNodeException() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
         doThrow(new IOException("error")).when(nodeManager).remove(TEST_NODE_DNS);
 
-        assertEquals(installationManagerFacade.removeNode(TEST_NODE_DNS).toJson(), "{\n"
-                                                                          + "  \"message\" : \"error\",\n"
-                                                                          + "  \"status\" : \"ERROR\"\n"
-                                                                          + "}");
+        installationManagerFacade.removeNode(TEST_NODE_DNS);
     }
 
     @Test
@@ -245,24 +232,18 @@ public class TestInstallationManagerFacade extends BaseTest {
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupDirectory(testBackupDirectory.toString());
 
-        doReturn(testBackupConfig.setBackupFile(testBackupFile.toString())
-                                 .setArtifactVersion("1.0.0"))
+        doReturn(testBackupConfig.setBackupFile(testBackupFile.toString()).setArtifactVersion("1.0.0"))
                 .when(backupManager).backup(testBackupConfig);
-        assertEquals(installationManagerFacade.backup(testBackupConfig).toJson(), "{\n"
-                                                                         + "  \"backup\" : {\n"
-                                                                         + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                         + "    \"artifactInfo\" : {\n"
-                                                                         + "      \"artifact\" : \"codenvy\",\n"
-                                                                         + "      \"version\" : \"1.0.0\"\n"
-                                                                         + "    },\n"
-                                                                         + "    \"status\" : \"SUCCESS\"\n"
-                                                                         + "  },\n"
-                                                                         + "  \"status\" : \"OK\"\n"
-                                                                         + "}");
+
+        assertEquals(toJson(installationManagerFacade.backup(testBackupConfig)), "{\n" +
+                                                                                 "  \"file\" : \"test/backup/directory/backup.tar.gz\",\n" +
+                                                                                 "  \"artifact\" : \"codenvy\",\n" +
+                                                                                 "  \"version\" : \"1.0.0\"\n" +
+                                                                                 "}");
     }
 
 
-    @Test
+    @Test(expectedExceptions = IOException.class)
     public void testBackupException() throws IOException {
         String testBackupDirectory = "test/backup/directory";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
@@ -270,16 +251,7 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         doThrow(new IOException("error")).when(backupManager).backup(testBackupConfig);
 
-        assertEquals(installationManagerFacade.backup(testBackupConfig).toJson(), "{\n"
-                                                                         + "  \"backup\" : {\n"
-                                                                         + "    \"artifactInfo\" : {\n"
-                                                                         + "      \"artifact\" : \"codenvy\"\n"
-                                                                         + "    },\n"
-                                                                         + "    \"status\" : \"FAILURE\"\n"
-                                                                         + "  },\n"
-                                                                         + "  \"message\" : \"error\",\n"
-                                                                         + "  \"status\" : \"ERROR\"\n"
-                                                                         + "}");
+        installationManagerFacade.backup(testBackupConfig);
     }
 
     @Test
@@ -288,20 +260,14 @@ public class TestInstallationManagerFacade extends BaseTest {
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                           .setBackupFile(testBackupFile);
 
-        assertEquals(installationManagerFacade.restore(testBackupConfig).toJson(), "{\n"
-                                                                          + "  \"backup\" : {\n"
-                                                                          + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                          + "    \"artifactInfo\" : {\n"
-                                                                          + "      \"artifact\" : \"codenvy\"\n"
-                                                                          + "    },\n"
-                                                                          + "    \"status\" : \"SUCCESS\"\n"
-                                                                          + "  },\n"
-                                                                          + "  \"status\" : \"OK\"\n"
-                                                                          + "}");
+        assertEquals(toJson(installationManagerFacade.restore(testBackupConfig)), "{\n" +
+                                                                                  "  \"file\" : \"test/backup/directory/backup.tar.gz\",\n" +
+                                                                                  "  \"artifact\" : \"codenvy\"\n" +
+                                                                                  "}");
     }
 
 
-    @Test
+    @Test(expectedExceptions = IOException.class)
     public void testRestoreException() throws IOException {
         String testBackupFile = "test/backup/directory/backup.tar.gz";
         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
@@ -309,17 +275,7 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         doThrow(new IOException("error")).when(backupManager).restore(testBackupConfig);
 
-        assertEquals(installationManagerFacade.restore(testBackupConfig).toJson(), "{\n"
-                                                                                   + "  \"backup\" : {\n"
-                                                                                   + "    \"file\" : \"test/backup/directory/backup.tar.gz\",\n"
-                                                                                   + "    \"artifactInfo\" : {\n"
-                                                                                   + "      \"artifact\" : \"codenvy\"\n"
-                                                                                   + "    },\n"
-                                                                                   + "    \"status\" : \"FAILURE\"\n"
-                                                                                   + "  },\n"
-                                                                                   + "  \"message\" : \"error\",\n"
-                                                                                   + "  \"status\" : \"ERROR\"\n"
-                                                                                   + "}");
+        installationManagerFacade.restore(testBackupConfig);
     }
 
     @Test

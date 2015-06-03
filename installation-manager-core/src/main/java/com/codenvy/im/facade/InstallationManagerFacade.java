@@ -38,7 +38,6 @@ import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactResult;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.Response;
 import com.codenvy.im.response.UpdatesArtifactResult;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -71,7 +70,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -341,53 +339,55 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.NodeManager#add(String)
      */
-    public Response addNode(@Nonnull String dns) {
-        try {
-            NodeConfig node = nodeManager.add(dns);
-            return Response.ok().setNode(NodeInfo.createSuccessInfo(node));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e);
-        }
+    public NodeInfo addNode(@Nonnull String dns) throws IOException {
+        NodeConfig nodeConfig = nodeManager.add(dns);
+
+        NodeInfo nodeInfo = new NodeInfo();
+        nodeInfo.setType(nodeConfig.getType());
+        nodeInfo.setHost(nodeConfig.getHost());
+
+        return nodeInfo;
     }
 
     /**
      * @see com.codenvy.im.managers.NodeManager#remove(String)
      */
-    public Response removeNode(@Nonnull String dns) {
-        try {
-            NodeConfig node = nodeManager.remove(dns);
-            return Response.ok().setNode(NodeInfo.createSuccessInfo(node));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e);
-        }
+    public NodeInfo removeNode(@Nonnull String dns) throws IOException {
+        NodeConfig nodeConfig = nodeManager.remove(dns);
+
+        NodeInfo nodeInfo = new NodeInfo();
+        nodeInfo.setType(nodeConfig.getType());
+        nodeInfo.setHost(nodeConfig.getHost());
+
+        return nodeInfo;
     }
 
     /**
      * @see com.codenvy.im.managers.BackupManager#backup(com.codenvy.im.managers.BackupConfig)
      */
-    public Response backup(@Nonnull BackupConfig config) {
-        try {
-            BackupConfig backupConfig = backupManager.backup(config);
-            return Response.ok().setBackup(BackupInfo.createSuccessInfo(backupConfig));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).setBackup(BackupInfo.createFailureInfo(config));
-        }
+    public BackupInfo backup(@Nonnull BackupConfig config) throws IOException {
+        BackupConfig backupConfig = backupManager.backup(config);
+
+        BackupInfo backupInfo = new BackupInfo();
+        backupInfo.setArtifact(backupConfig.getArtifactName());
+        backupInfo.setFile(backupConfig.getBackupFile());
+        backupInfo.setVersion(backupConfig.getArtifactVersion());
+
+        return backupInfo;
     }
 
     /**
      * @see com.codenvy.im.managers.BackupManager#restore(com.codenvy.im.managers.BackupConfig)
      */
-    public Response restore(@Nonnull BackupConfig config) {
-        try {
-            backupManager.restore(config);
-            return Response.ok().setBackup(BackupInfo.createSuccessInfo(config));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            return Response.error(e).setBackup(BackupInfo.createFailureInfo(config));
-        }
+    public BackupInfo restore(@Nonnull BackupConfig backupConfig) throws IOException {
+        backupManager.restore(backupConfig);
+
+        BackupInfo backupInfo = new BackupInfo();
+        backupInfo.setArtifact(backupConfig.getArtifactName());
+        backupInfo.setFile(backupConfig.getBackupFile());
+        backupInfo.setVersion(backupConfig.getArtifactVersion());
+
+        return backupInfo;
     }
 
     /**

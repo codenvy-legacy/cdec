@@ -17,10 +17,14 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.NodeInfo;
+import com.codenvy.im.response.NodeManagerResult;
+import com.codenvy.im.response.ResponseCode;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+
+import static com.codenvy.im.utils.Commons.toJson;
 
 /**
  * @author Dmytro Nochevnov
@@ -36,8 +40,16 @@ public class AddNodeCommand extends AbstractIMCommand {
         if (dns != null && !dns.isEmpty()) {
             try {
                 console.showProgressor();
-                Response response = facade.addNode(dns);
-                console.printResponse(response.toJson());
+
+
+                NodeInfo nodeInfo = facade.addNode(dns);
+
+                NodeManagerResult nodeManagerResult = new NodeManagerResult();
+                nodeManagerResult.setStatus(ResponseCode.OK);
+                nodeManagerResult.setNode(nodeInfo);
+
+
+                console.printResponse(toJson(nodeManagerResult));
             } finally {
                 console.hideProgressor();
             }

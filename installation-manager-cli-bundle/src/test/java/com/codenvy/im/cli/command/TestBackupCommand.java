@@ -20,7 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.BackupConfig;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.BackupInfo;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -64,26 +64,32 @@ public class TestBackupCommand  extends AbstractTestCommand {
     public void testBackup() throws Exception {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
 
-        doReturn(Response.ok()).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).backup(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Response.ok().toJson() + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"backup\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
     public void testBackupToDirWithEmptyName() throws Exception {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
 
-        doReturn(Response.ok()).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).backup(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("directory", "");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Response.ok().toJson() + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"backup\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test
@@ -91,14 +97,17 @@ public class TestBackupCommand  extends AbstractTestCommand {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
                                              .setBackupDirectory(testBackupDirectory);
 
-        doReturn(Response.ok()).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).backup(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("directory", testBackupDirectory);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Response.ok().toJson() + "\n");
+        assertEquals(output, "{\n" +
+                             "  \"backup\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test

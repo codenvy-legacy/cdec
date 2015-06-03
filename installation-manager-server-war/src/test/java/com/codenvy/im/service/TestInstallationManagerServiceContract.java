@@ -26,8 +26,10 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
@@ -92,7 +94,7 @@ public class TestInstallationManagerServiceContract {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        service = new InstallationManagerService(facade, configManager);
+        service = new InstallationManagerService("", facade, configManager);
     }
 
     @Test
@@ -106,14 +108,16 @@ public class TestInstallationManagerServiceContract {
                 ContentType.JSON,                             // produce content type
                 HttpMethod.POST,                              // HTTP method
                 OK_RESPONSE_BODY,                             // response body
-                Response.Status.OK,                           // response status
+                Response.Status.CREATED,                           // response status
                 new Function<Object, Object>() {              // before test
                     @Nullable
                     @Override
                     public Object apply(@Nullable Object o) {
-                        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                                          .setBackupDirectory("test");
-                        doReturn(com.codenvy.im.response.Response.ok()).when(facade).backup(testBackupConfig);
+                        try {
+                            doReturn(new BackupInfo()).when(facade).backup(any(BackupConfig.class));
+                        } catch (IOException e) {
+                            fail(e.getMessage(), e);
+                        }
                         return null;
                     }
                 },
@@ -132,14 +136,18 @@ public class TestInstallationManagerServiceContract {
                 ContentType.JSON,                             // produce content type
                 HttpMethod.POST,                              // HTTP method
                 OK_RESPONSE_BODY,                             // response body
-                Response.Status.OK,                           // response status
+                Response.Status.CREATED,                           // response status
                 new Function<Object, Object>() {              // before test
                     @Nullable
                     @Override
                     public Object apply(@Nullable Object o) {
                         BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                                           .setBackupFile("test");
-                        doReturn(com.codenvy.im.response.Response.ok()).when(facade).restore(testBackupConfig);
+                        try {
+                            doReturn(new BackupInfo()).when(facade).restore(testBackupConfig);
+                        } catch (IOException e) {
+                            fail(e.getMessage(), e);
+                        }
                         return null;
                     }
                 },
@@ -157,12 +165,16 @@ public class TestInstallationManagerServiceContract {
              ContentType.JSON,                // produce content type
              HttpMethod.POST,                 // HTTP method
              OK_RESPONSE_BODY,                // response body
-             Response.Status.OK,              // response status
+             Response.Status.CREATED,              // response status
              new Function<Object, Object>() { // before test
                  @Nullable
                  @Override
                  public Object apply(@Nullable Object o) {
-                     doReturn(com.codenvy.im.response.Response.ok()).when(facade).addNode("test");
+                     try {
+                         doReturn(new NodeInfo()).when(facade).addNode("test");
+                     } catch (IOException e) {
+                         fail(e.getMessage(), e);
+                     }
                      return null;
                  }
              },
@@ -177,15 +189,19 @@ public class TestInstallationManagerServiceContract {
             ImmutableMap.of("dns", "test"),  // query parameters
             null,                            // request body
             null,                            // consume content type
-            ContentType.JSON,                // produce content type
+            null,                // produce content type
             HttpMethod.DELETE,               // HTTP method
-            OK_RESPONSE_BODY,                // response body
-            Response.Status.OK,              // response status
+            null,                // response body
+            Response.Status.NO_CONTENT,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
-                    doReturn(com.codenvy.im.response.Response.ok()).when(facade).removeNode("test");
+                    try {
+                        doReturn(new NodeInfo()).when(facade).removeNode("test");
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
                     return null;
                 }
             },

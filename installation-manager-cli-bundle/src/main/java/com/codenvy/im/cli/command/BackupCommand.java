@@ -19,10 +19,14 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.BackupConfig;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.BackupInfo;
+import com.codenvy.im.response.BackupResult;
+import com.codenvy.im.response.ResponseCode;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+
+import static com.codenvy.im.utils.Commons.toJson;
 
 /**
  * @author Dmytro Nochevnov
@@ -44,8 +48,14 @@ public class BackupCommand extends AbstractIMCommand {
 
         try {
             console.showProgressor();
-            Response response = facade.backup(config);
-            console.printResponse(response.toJson());
+
+            BackupInfo backupInfo = facade.backup(config);
+
+            BackupResult backupResult = new BackupResult();
+            backupResult.setBackup(backupInfo);
+            backupResult.setStatus(ResponseCode.OK);
+
+            console.printResponse(toJson(backupResult));
         } finally {
             console.hideProgressor();
         }
