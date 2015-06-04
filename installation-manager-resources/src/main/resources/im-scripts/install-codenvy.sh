@@ -400,7 +400,7 @@ printPostInstallInfo() {
     printPrompt; echo
     printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}
     printPrompt; echo
-    printPrompt; echo "Administrate your installation ready at http://"${HOSTNAME}"/site/admin"
+    printPrompt; echo "Administrate your installation ready at http://"${HOSTNAME}"/admin"
     printPrompt; echo "System admin user name : "${CODENVY_ADMIN_NAME}
     printPrompt; echo "System admin password  : "${CODENVY_ADMIN_PASSWORD}
     printPrompt; echo
