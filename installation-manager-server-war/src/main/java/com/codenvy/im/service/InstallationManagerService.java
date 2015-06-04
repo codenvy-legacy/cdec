@@ -43,7 +43,6 @@ import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.IllegalVersionException;
-import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -88,6 +87,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
@@ -97,7 +98,7 @@ import static com.codenvy.im.utils.Commons.toJson;
 /**
  * @author Dmytro Nochevnov
  *         We deny concurrent access to the services by marking this class as Singleton
- *         so as there are operations which couldn't execute simulteniously: addNode, removeNode, backup, restore
+ *         so as there are operations which couldn't execute simulteniously: addNode, removeNode, backup, restore, updateCodenvyProperty
  */
 @Singleton
 @Path("/")
@@ -105,8 +106,13 @@ import static com.codenvy.im.utils.Commons.toJson;
 @Api(value = "/im", description = "Installation manager")
 public class InstallationManagerService {
 
-    private static final Logger LOG            = LoggerFactory.getLogger(InstallationManagerService.class);
-    private static final String DOWNLOAD_TOKEN = UUID.randomUUID().toString();
+    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerService.class);
+    private static final String DOWNLOAD_TOKEN    = UUID.randomUUID().toString();
+
+    private static final String    SECURE_VALUE_MASK    = "*****";
+    private static final Pattern[] PRIVATE_KEY_PATTERNS = new Pattern[]{Pattern.compile("password$"),
+                                                                        Pattern.compile("_pass$"),
+                                                                        Pattern.compile("secret$")};
 
     protected final IMArtifactLabeledFacade delegate;
     protected final ConfigManager           configManager;
@@ -134,8 +140,8 @@ public class InstallationManagerService {
                            @ApiResponse(code = 409, message = "Downloading already in progress"),
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response startDownload(
-            @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
-            @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
+        @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
+        @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
 
         try {
             // DownloadManager has to support tokens
@@ -484,7 +490,7 @@ public class InstallationManagerService {
         }
 
         try {
-            SubscriptionDescriptor descriptor = delegate.getSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, saasUserCredentials);
+            SubscriptionDescriptor descriptor = delegate.getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, saasUserCredentials);
             if (descriptor == null) {
                 return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND).build();
             }
@@ -593,9 +599,9 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets list of properties from the storage", response = Response.class)
-    public javax.ws.rs.core.Response getProperties() {
+    public javax.ws.rs.core.Response getStorageProperties() {
         try {
-            Map<String, String> properties = delegate.loadProperties();
+            Map<String, String> properties = delegate.loadStorageProperties();
             return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
         } catch (Exception e) {
             return handleException(e);
@@ -610,9 +616,9 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Inserts new properties into the storage and update existed")
-    public javax.ws.rs.core.Response insertProperties(Map<String, String> properties) {
+    public javax.ws.rs.core.Response insertStorageProperties(Map<String, String> properties) {
         try {
-            delegate.storeProperties(properties);
+            delegate.storeStorageProperties(properties);
             return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
@@ -628,9 +634,9 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets property value from the storage")
-    public javax.ws.rs.core.Response getProperty(@PathParam("key") String key) {
+    public javax.ws.rs.core.Response getStorageProperty(@PathParam("key") String key) {
         try {
-            String value = delegate.loadProperty(key);
+            String value = delegate.loadStorageProperty(key);
             return javax.ws.rs.core.Response.ok(value).build();
         } catch (Exception e) {
             return handleException(e);
@@ -645,9 +651,9 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property in the storage")
-    public javax.ws.rs.core.Response updateProperty(@PathParam("key") String key, String value) {
+    public javax.ws.rs.core.Response updateStorageProperty(@PathParam("key") String key, String value) {
         try {
-            delegate.storeProperty(key, value);
+            delegate.storeStorageProperty(key, value);
             return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
@@ -661,10 +667,71 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Deletes property from the storage")
-    public javax.ws.rs.core.Response deleteProperty(@PathParam("key") String key) {
+    public javax.ws.rs.core.Response deleteStorageProperty(@PathParam("key") String key) {
         try {
-            delegate.deleteProperty(key);
+            delegate.deleteStorageProperty(key);
             return javax.ws.rs.core.Response.noContent().build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /** Gets list of properties from configuration of Codenvy on-prem */
+    @GET
+    @Path("codenvy/properties")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Gets list of properties from configuration of Codenvy on-prem", response = Response.class)
+    public javax.ws.rs.core.Response getCodenvyProperties() {
+        try {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            Map<String, String> properties = maskPrivateProperties(config.getProperties());
+            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /** Gets property value from configuration of Codenvy on-prem */
+    @GET
+    @Path("codenvy/properties/{key}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Gets property value from configuration of Codenvy on-prem")
+    public javax.ws.rs.core.Response getCodenvyProperty(@PathParam("key") String key) {
+        try {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            Map<String, String> properties = maskPrivateProperties(config.getProperties());
+
+            if (properties.containsKey(key)) {
+                String value = properties.get(key);
+                return javax.ws.rs.core.Response.ok(value).build();
+            } else {
+                throw PropertyNotFoundException.from(key);
+            }
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /** Updates property of configuration of Codenvy on-prem. */
+    @PUT
+    @Path("codenvy/properties/{key}")
+    @Consumes("text/plain")
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
+    public javax.ws.rs.core.Response updateCodenvyProperty(@PathParam("key") String key, String value) {
+        try {
+            delegate.updateArtifactConfig(CDECArtifact.NAME, key, value);
+            return javax.ws.rs.core.Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -711,5 +778,32 @@ public class InstallationManagerService {
 
     protected Artifact getArtifact(String artifactName) throws ArtifactNotFoundException {
         return createArtifact(artifactName);
+    }
+
+    /**
+     * @return map where all private keys ("password", "secret" etc.) were been updated to have PASSWORD_MASK value
+     */
+    private Map<String, String> maskPrivateProperties(Map<String, String> properties) {
+        Map<String, String> maskedProperties = new HashMap<>(properties);
+        for (Map.Entry<String, String> property : maskedProperties.entrySet()) {
+            String key = property.getKey();
+            if (isPrivateProperty(key)) {
+                property.setValue(SECURE_VALUE_MASK);
+            }
+        }
+
+        return maskedProperties;
+    }
+
+    /** @return true if only key matches one of the patterns from the PRIVATE_KEY_PATTERNS */
+    private boolean isPrivateProperty(String key) {
+        for (Pattern pattern: PRIVATE_KEY_PATTERNS) {
+            Matcher m = pattern.matcher(key);
+            if (m.find()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

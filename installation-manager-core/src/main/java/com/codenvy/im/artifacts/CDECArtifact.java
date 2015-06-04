@@ -26,6 +26,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -175,8 +176,7 @@ public class CDECArtifact extends AbstractArtifact {
         Config config = configManager.loadInstalledCodenvyConfig();
         Map<String, String> configProperties = config.getProperties();
         if (!configProperties.containsKey(property)) {
-            String errorMessage = format("There is no property '%s' in Codenvy configuration", property);
-            throw new IllegalArgumentException(errorMessage);
+            throw PropertyNotFoundException.from(property);
         }
 
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());

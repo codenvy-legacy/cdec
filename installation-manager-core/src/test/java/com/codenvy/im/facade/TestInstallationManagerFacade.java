@@ -327,14 +327,14 @@ public class TestInstallationManagerFacade extends BaseTest {
     public void testStoreProperties() throws Exception {
         Map<String, String> properties = ImmutableMap.of("x", "y");
 
-        installationManagerFacade.storeProperties(properties);
+        installationManagerFacade.storeStorageProperties(properties);
 
         verify(storageManager).storeProperties(properties);
     }
 
     @Test
     public void testLoadProperties() throws Exception {
-        installationManagerFacade.loadProperties();
+        installationManagerFacade.loadStorageProperties();
         verify(storageManager).loadProperties();
     }
 
@@ -342,7 +342,7 @@ public class TestInstallationManagerFacade extends BaseTest {
     public void testLoadProperty() throws Exception {
         String key = "x";
 
-        installationManagerFacade.loadProperty(key);
+        installationManagerFacade.loadStorageProperty(key);
         verify(storageManager).loadProperty(key);
     }
 
@@ -351,7 +351,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         String key = "x";
         String value = "y";
 
-        installationManagerFacade.storeProperty(key, value);
+        installationManagerFacade.storeStorageProperty(key, value);
         verify(storageManager).storeProperty(key, value);
     }
 
@@ -359,7 +359,7 @@ public class TestInstallationManagerFacade extends BaseTest {
     public void testDeleteProperty() throws Exception {
         String key = "x";
 
-        installationManagerFacade.deleteProperty(key);
+        installationManagerFacade.deleteStorageProperty(key);
         verify(storageManager).deleteProperty(key);
     }
 
@@ -420,7 +420,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         saasUserCredentials.setAccountId("id");
         saasUserCredentials.setToken("token");
 
-        installationManagerFacade.hasValidSaaSSubscription("OnPremises", saasUserCredentials);
+        installationManagerFacade.hasValidSaasSubscription("OnPremises", saasUserCredentials);
 
         verify(saasAccountServiceProxy).hasValidSubscription("OnPremises", "token", "id");
     }
@@ -431,7 +431,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         saasUserCredentials.setAccountId("id");
         saasUserCredentials.setToken("token");
 
-        installationManagerFacade.getSaaSSubscription("OnPremises", saasUserCredentials);
+        installationManagerFacade.getSaasSubscription("OnPremises", saasUserCredentials);
 
         verify(saasAccountServiceProxy).getSubscription("OnPremises", "token", "id");
     }

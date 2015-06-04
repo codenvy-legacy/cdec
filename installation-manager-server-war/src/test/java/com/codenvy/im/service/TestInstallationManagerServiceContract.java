@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
@@ -472,7 +473,7 @@ public class TestInstallationManagerServiceContract {
                         service.saasUserCredentials = new SaasUserCredentials("id", "token");
 
                         SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson("{}", SubscriptionDescriptor.class);
-                        doReturn(descriptor).when(facade).getSaaSSubscription(anyString(), any(SaasUserCredentials.class));
+                        doReturn(descriptor).when(facade).getSaasSubscription(anyString(), any(SaasUserCredentials.class));
                     } catch (Exception e) {
                         fail(e.getMessage(), e);
                     }
@@ -513,7 +514,7 @@ public class TestInstallationManagerServiceContract {
     }
 
     @Test
-    public void testGetProperties() {
+    public void testGetStorageProperties() {
         testContract(
             "storage/properties",                              // path
             null,                                              // query parameters
@@ -530,7 +531,7 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        doReturn(ImmutableMap.of("a", "b")).when(facade).loadProperties();
+                        doReturn(ImmutableMap.of("a", "b")).when(facade).loadStorageProperties();
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }
@@ -558,7 +559,7 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        verify(facade).storeProperties(ImmutableMap.of("a", "b"));
+                        verify(facade).storeStorageProperties(ImmutableMap.of("a", "b"));
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }
@@ -569,7 +570,7 @@ public class TestInstallationManagerServiceContract {
     }
 
     @Test
-    public void testGetProperty() {
+    public void testGetStorageProperty() {
         testContract(
             "storage/properties/a",                           // path
             null,                                             // query parameters
@@ -584,7 +585,7 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        doReturn("b").when(facade).loadProperty("a");
+                        doReturn("b").when(facade).loadStorageProperty("a");
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }
@@ -596,7 +597,7 @@ public class TestInstallationManagerServiceContract {
     }
 
     @Test
-    public void testUpdateProperty() {
+    public void testUpdateStorageProperty() {
         testContract(
             "storage/properties/a",                           // path
             null,                                             // query parameters
@@ -612,7 +613,7 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        verify(facade).storeProperty("a", "b");
+                        verify(facade).storeStorageProperty("a", "b");
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }
@@ -623,7 +624,7 @@ public class TestInstallationManagerServiceContract {
     }
 
     @Test
-    public void testDeleteProperty() {
+    public void testDeleteStorageProperty() {
         testContract(
             "storage/properties/a",                           // path
             null,                                             // query parameters
@@ -639,7 +640,93 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        verify(facade).deleteProperty("a");
+                        verify(facade).deleteStorageProperty("a");
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
+                    return null;
+                }
+            }                                                 // assertion
+        );
+    }
+
+    @Test
+    public void testGetCodenvyProperties() {
+        testContract(
+            "codenvy/properties",                              // path
+            null,                                              // query parameters
+            null,                                              // request body
+            null,                                              // consume content type
+            ContentType.JSON,                                  // produce content type
+            HttpMethod.GET,                                    // HTTP method
+            "{\n"
+            + "    \"a\": \"b\",\n"
+            + "    \"password\": \"*****\"\n"
+            + "}",                                             // response body
+            Response.Status.OK,                                // response status
+            new Function<Object, Object>() {                   // before test
+                @Nullable
+                @Override
+                public Object apply(@Nullable Object o) {
+                    try {
+                        Config testConfig = new Config(ImmutableMap.of("a", "b", "password", "123"));
+                        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
+                    return null;
+                }
+            },
+            null // assertion
+        );
+    }
+
+    @Test
+    public void testGetCodenvyProperty() {
+        testContract(
+            "codenvy/properties/host_url",                    // path
+            null,                                             // query parameters
+            null,                                             // request body
+            null,                                             // consume content type
+            ContentType.TEXT,                                 // produce content type
+            HttpMethod.GET,                                   // HTTP method
+            "test.com",                                       // response body
+            Response.Status.OK,                               // response status
+            new Function<Object, Object>() {                  // before test
+                @Nullable
+                @Override
+                public Object apply(@Nullable Object o) {
+                    try {
+                        Config testConfig = new Config(ImmutableMap.of("host_url", "test.com"));
+                        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
+                    return null;
+                }
+            },
+            null // assertion
+        );
+    }
+
+    @Test
+    public void testUpdateCodenvyProperty() {
+        testContract(
+            "codenvy/properties/a",                           // path
+            null,                                             // query parameters
+            "b",                                              // request body
+            ContentType.TEXT,                                 // consume content type
+            null,                                             // produce content type
+            HttpMethod.PUT,                                   // HTTP method
+            "",                                               // response body
+            Response.Status.OK,                               // response status
+            null,                                             // before test
+            new Function<Object, Object>() {
+                @Nullable
+                @Override
+                public Object apply(@Nullable Object o) {
+                    try {
+                        verify(facade).updateArtifactConfig(CDECArtifact.NAME, "a", "b");
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }

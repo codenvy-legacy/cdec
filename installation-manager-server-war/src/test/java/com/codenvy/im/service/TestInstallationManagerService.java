@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -52,6 +53,7 @@ import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
@@ -373,7 +375,7 @@ public class TestInstallationManagerService extends BaseTest {
                                                 + "  \"state\": \"ACTIVE\"\n"
                                                 + "}";
         SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson(testSubscriptionDescriptorJson, SubscriptionDescriptor.class);
-        doReturn(descriptor).when(mockFacade).getSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
+        doReturn(descriptor).when(mockFacade).getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
 
         service.saasUserCredentials = testUserCredentials;
 
@@ -389,7 +391,7 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(subscription.getProperties().get("Users"), "25");
         assertEquals(subscription.getProperties().get("Package"), "Commercial");
 
-        doThrow(new HttpException(500, "error")).when(mockFacade).getSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
+        doThrow(new HttpException(500, "error")).when(mockFacade).getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
         result = service.getOnPremisesSaasSubscription();
         assertErrorResponse(result);
     }
@@ -526,127 +528,229 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetPropertiesShouldReturnOkResponse() throws Exception {
-        doReturn(Collections.emptyMap()).when(mockFacade).loadProperties();
+    public void testGetStoragePropertiesShouldReturnOkResponse() throws Exception {
+        doReturn(Collections.emptyMap()).when(mockFacade).loadStorageProperties();
+
         Response response = service.getArtifactProperties("codenvy", "3.1.0");
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void testGetPropertiesShouldReturnErrorResponse() throws Exception {
-        doThrow(new IOException("error")).when(mockFacade).loadProperties();
+    public void testGetStoragePropertiesShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).loadStorageProperties();
 
-        Response response = service.getProperties();
-
+        Response response = service.getStorageProperties();
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test
-    public void testInsertPropertiesShouldReturnOkResponse() throws Exception {
-        doNothing().when(mockFacade).storeProperties(anyMap());
+    public void testInsertStoragePropertiesShouldReturnOkResponse() throws Exception {
+        doNothing().when(mockFacade).storeStorageProperties(anyMap());
 
-        Response response = service.insertProperties(Collections.<String, String>emptyMap());
-
+        Response response = service.insertStorageProperties(Collections.<String, String>emptyMap());
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void testInsertPropertiesShouldReturnErrorResponse() throws Exception {
-        doThrow(new IOException("error")).when(mockFacade).storeProperties(anyMap());
+    public void testInsertStoragePropertiesShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).storeStorageProperties(anyMap());
 
-        Response response = service.insertProperties(Collections.<String, String>emptyMap());
-
+        Response response = service.insertStorageProperties(Collections.<String, String>emptyMap());
         assertErrorResponse(response);
     }
 
     @Test
-    public void testGetPropertyShouldReturnOkResponse() throws Exception {
+    public void testGetStoragePropertyShouldReturnOkResponse() throws Exception {
         String key = "x";
         String value = "y";
-        doReturn(value).when(mockFacade).loadProperty(key);
+        doReturn(value).when(mockFacade).loadStorageProperty(key);
 
-        Response response = service.getProperty(key);
+        Response response = service.getStorageProperty(key);
         assertOkResponse(response);
         assertEquals(response.getEntity(), value);
-
     }
 
     @Test
-    public void testGetNonExistedProperty() throws Exception {
+    public void testGetNonExistedStorageProperty() throws Exception {
         String key = "x";
-        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).loadProperty(key);
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).loadStorageProperty(key);
 
-        Response response = service.getProperty(key);
+        Response response = service.getStorageProperty(key);
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
         assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
     }
 
     @Test
-    public void testGetPropertyShouldReturnErrorResponse() throws Exception {
+    public void testGetStoragePropertyShouldReturnErrorResponse() throws Exception {
         String key = "x";
-        doThrow(new IOException("error")).when(mockFacade).loadProperty(key);
+        doThrow(new IOException("error")).when(mockFacade).loadStorageProperty(key);
 
-        Response response = service.getProperty(key);
+        Response response = service.getStorageProperty(key);
         assertErrorResponse(response);
     }
 
     @Test
-    public void testUpdateProperty() throws Exception {
+    public void testUpdateStorageProperty() throws Exception {
         String key = "x";
         String value = "y";
 
-        Response response = service.updateProperty(key, value);
+        Response response = service.updateStorageProperty(key, value);
         assertOkResponse(response);
 
-        verify(mockFacade).storeProperty(key, value);
+        verify(mockFacade).storeStorageProperty(key, value);
     }
 
     @Test
-    public void testUpdateNonExistedProperty() throws Exception {
+    public void testUpdateNonExistedStorageProperty() throws Exception {
         String key = "x";
         String value = "y";
-        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).storeProperty(key, value);
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).storeStorageProperty(key, value);
 
-        Response response = service.updateProperty(key, value);
+        Response response = service.updateStorageProperty(key, value);
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
         assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
     }
 
     @Test
-    public void testUpdatePropertyShouldReturnErrorResponse() throws Exception {
+    public void testUpdateStoragePropertyShouldReturnErrorResponse() throws Exception {
         String key = "x";
         String value = "y";
-        doThrow(new IOException("error")).when(mockFacade).storeProperty(key, value);
+        doThrow(new IOException("error")).when(mockFacade).storeStorageProperty(key, value);
 
-        Response response = service.updateProperty(key, value);
+        Response response = service.updateStorageProperty(key, value);
         assertErrorResponse(response);
     }
 
     @Test
-    public void testDeleteProperty() throws Exception {
+    public void testDeleteStorageProperty() throws Exception {
         String key = "x";
 
-        Response response = service.deleteProperty(key);
+        Response response = service.deleteStorageProperty(key);
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
-        verify(mockFacade).deleteProperty(key);
+        verify(mockFacade).deleteStorageProperty(key);
     }
 
     @Test
-    public void testDeleteNonExistedProperty() throws Exception {
+    public void testDeleteNonExistedStorageProperty() throws Exception {
         String key = "x";
-        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).deleteProperty(key);
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).deleteStorageProperty(key);
 
-        Response response = service.deleteProperty(key);
+        Response response = service.deleteStorageProperty(key);
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
         assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
     }
 
     @Test
-    public void testDeletePropertyShouldReturnErrorResponse() throws Exception {
+    public void testDeleteStoragePropertyShouldReturnErrorResponse() throws Exception {
         String key = "x";
-        doThrow(new IOException("error")).when(mockFacade).deleteProperty(key);
+        doThrow(new IOException("error")).when(mockFacade).deleteStorageProperty(key);
 
-        Response response = service.deleteProperty(key);
+        Response response = service.deleteStorageProperty(key);
+        assertErrorResponse(response);
+    }
+
+    @Test
+    public void testGetCodenvyPropertiesShouldReturnOkResponse() throws Exception {
+        Config testConfig = new Config(ImmutableMap.of("a", "b", "password", "c"));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        Response response = service.getCodenvyProperties();
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{a=b, password=*****}");
+    }
+
+    @Test
+    public void testGetCodenvyPropertiesShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(configManager).loadInstalledCodenvyConfig();
+
+        Response response = service.getCodenvyProperties();
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
+    public void testGetCodenvyPropertyShouldReturnOkResponse() throws Exception {
+        String key = "x";
+        String value = "y";
+        Config testConfig = new Config(ImmutableMap.of(key, value));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        Response response = service.getCodenvyProperty(key);
+        assertOkResponse(response);
+        assertEquals(response.getEntity(), value);
+    }
+
+    @Test
+    public void testGetNonExistedCodenvyProperty() throws Exception {
+        String key = "x";
+        Config testConfig = new Config(ImmutableMap.of("y", "a"));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        Response response = service.getCodenvyProperty(key);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
+    }
+
+    @Test
+    public void testGetCodenvyPropertyShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(configManager).loadInstalledCodenvyConfig();
+
+        Response response = service.getCodenvyProperty("x");
+        assertErrorResponse(response);
+    }
+
+
+    @Test(dataProvider = "privateCodenvyPropertyMaskTest")
+    public void testPrivateCodenvyPropertyMask(String key, boolean masked) throws IOException {
+        String value = "y";
+        Config testConfig = new Config(ImmutableMap.of(key, value));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        Response response = service.getCodenvyProperty(key);
+        String returnValue = (String)response.getEntity();
+        assertEquals(returnValue.equals("*****"), masked);
+    }
+
+    @DataProvider(name = "privateCodenvyPropertyMaskTest")
+    public Object[][] getTestPrivateCodenvyPropertyMaskData() {
+        return new Object[][] {
+            {"test_password", true},
+            {"test_password_field_name", false},
+            {"test_secret", true},
+            {"test_secret_field_name", false},
+            {"test_pass", true},
+            {"test_passenger", false},
+        };
+    }
+
+    @Test
+    public void testUpdateCodenvyProperty() throws Exception {
+        String key = "x";
+        String value = "y";
+
+        Response response = service.updateCodenvyProperty(key, value);
+        assertOkResponse(response);
+
+        verify(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
+    }
+
+    @Test
+    public void testUpdateNonExistedCodenvyProperty() throws Exception {
+        String key = "x";
+        String value = "y";
+        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
+
+        Response response = service.updateCodenvyProperty(key, value);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
+    }
+
+    @Test
+    public void testUpdateCodenvyPropertyShouldReturnErrorResponse() throws Exception {
+        String key = "x";
+        String value = "y";
+        doThrow(new IOException("error")).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
+
+        Response response = service.updateCodenvyProperty(key, value);
         assertErrorResponse(response);
     }
 

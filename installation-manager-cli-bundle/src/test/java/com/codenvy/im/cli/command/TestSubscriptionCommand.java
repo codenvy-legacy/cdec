@@ -63,7 +63,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckDefaultSubscription() throws Exception {
-        doReturn(true).when(mockInstallationManagerProxy).hasValidSaaSSubscription(SaasAccountServiceProxy.ON_PREMISES, credentials);
+        doReturn(true).when(mockInstallationManagerProxy).hasValidSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, credentials);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -79,7 +79,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckSubscriptionReturnOkResponse() throws Exception {
-        doReturn(true).when(mockInstallationManagerProxy).hasValidSaaSSubscription("AnotherSubscription", credentials);
+        doReturn(true).when(mockInstallationManagerProxy).hasValidSaasSubscription("AnotherSubscription", credentials);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -101,7 +101,7 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-                .when(mockInstallationManagerProxy).hasValidSaaSSubscription(anyString(), eq(credentials));
+                .when(mockInstallationManagerProxy).hasValidSaasSubscription(anyString(), eq(credentials));
         doNothing().when(spyCommand).validateIfUserLoggedIn();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

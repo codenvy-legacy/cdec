@@ -156,7 +156,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#hasValidSubscription(String, String, String)
      */
-    public boolean hasValidSaaSSubscription(@Nonnull String subscription,
+    public boolean hasValidSaasSubscription(@Nonnull String subscription,
                                             @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
         return saasAccountServiceProxy.hasValidSubscription(subscription,
                                                             saasUserCredentials.getToken(),
@@ -407,7 +407,7 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
      */
     @Nullable
-    public SubscriptionDescriptor getSaaSSubscription(String subscriptionName, @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
+    public SubscriptionDescriptor getSaasSubscription(String subscriptionName, @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
         return saasAccountServiceProxy.getSubscription(subscriptionName,
                                                        saasUserCredentials.getToken(),
                                                        saasUserCredentials.getAccountId());
@@ -423,14 +423,14 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.StorageManager#storeProperties(java.util.Map)
      */
-    public void storeProperties(@Nullable Map<String, String> newProperties) throws IOException {
+    public void storeStorageProperties(@Nullable Map<String, String> newProperties) throws IOException {
         storageManager.storeProperties(newProperties);
     }
 
     /**
      * @see com.codenvy.im.managers.StorageManager#loadProperties()
      */
-    public Map<String, String> loadProperties() throws IOException {
+    public Map<String, String> loadStorageProperties() throws IOException {
         return storageManager.loadProperties();
     }
 
@@ -438,21 +438,21 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.managers.StorageManager#loadProperty(String)
      */
     @Nullable
-    public String loadProperty(@Nullable String key) throws IOException {
+    public String loadStorageProperty(@Nullable String key) throws IOException {
         return storageManager.loadProperty(key);
     }
 
     /**
      * @see com.codenvy.im.managers.StorageManager#storeProperty(String, String)
      */
-    public void storeProperty(@Nullable String key, @Nullable String value) throws IOException {
+    public void storeStorageProperty(@Nullable String key, @Nullable String value) throws IOException {
         storageManager.storeProperty(key, value);
     }
 
     /**
      * @see com.codenvy.im.managers.StorageManager#deleteProperty(String)
      */
-    public void deleteProperty(@Nullable String name) throws IOException {
+    public void deleteStorageProperty(@Nullable String name) throws IOException {
         storageManager.deleteProperty(name);
     }
 

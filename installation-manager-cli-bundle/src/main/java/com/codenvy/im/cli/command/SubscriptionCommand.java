@@ -42,7 +42,7 @@ public class SubscriptionCommand extends AbstractIMCommand {
 
         Response response;
 
-        boolean isValid = facade.hasValidSaaSSubscription(subscription2check, getCredentials());
+        boolean isValid = facade.hasValidSaasSubscription(subscription2check, getCredentials());
         if (isValid) {
             response = new Response().setStatus(ResponseCode.OK)
                                      .setSubscription(subscription2check)

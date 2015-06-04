@@ -29,6 +29,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
@@ -431,8 +432,8 @@ public class TestCDECArtifact extends BaseTest {
         verify(mockHelper).getUpdateConfigCommand(testProperty, testValue, testConfig);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "There is no property 'unknown' in Codenvy configuration")
+    @Test(expectedExceptions = PropertyNotFoundException.class,
+            expectedExceptionsMessageRegExp = "Property 'unknown' not found")
     public void testChangeCodenvyConfigWhenPropertyAbsent() throws IOException {
         String testProperty = "unknown";
         String testValue = "c";
