@@ -28,9 +28,9 @@ import java.util.List;
 @JsonPropertyOrder({"artifacts", "message", "status"})
 public class UpdatesResult {
 
-    private ResponseCode                status;
-    private String                      message;
-    private List<UpdatesArtifactResult> artifacts;
+    private ResponseCode              status;
+    private String                    message;
+    private List<UpdatesArtifactInfo> artifacts;
 
     public UpdatesResult() {
     }
@@ -51,11 +51,35 @@ public class UpdatesResult {
         this.message = message;
     }
 
-    public List<UpdatesArtifactResult> getArtifacts() {
+    public List<UpdatesArtifactInfo> getArtifacts() {
         return artifacts;
     }
 
-    public void setArtifacts(List<UpdatesArtifactResult> artifacts) {
+    public void setArtifacts(List<UpdatesArtifactInfo> artifacts) {
         this.artifacts = artifacts;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UpdatesResult)) return false;
+
+        UpdatesResult that = (UpdatesResult)o;
+
+        if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) return false;
+        if (message != null ? !message.equals(that.message) : that.message != null) return false;
+        if (status != that.status) return false;
+
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        int result = status != null ? status.hashCode() : 0;
+        result = 31 * result + (message != null ? message.hashCode() : 0);
+        result = 31 * result + (artifacts != null ? artifacts.hashCode() : 0);
+        return result;
     }
 }

@@ -19,12 +19,12 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -63,9 +63,9 @@ import static org.testng.Assert.assertEquals;
 public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
-    private InstallationManagerFacade facade;
-    private ConfigManager mockConfigManager;
-    private CommandSession            commandSession;
+    private IMArtifactLabeledFacade facade;
+    private ConfigManager           mockConfigManager;
+    private CommandSession          commandSession;
 
     private ByteArrayOutputStream outputStream;
     private ByteArrayOutputStream errorStream;
@@ -81,7 +81,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
-        facade = mock(InstallationManagerFacade.class);
+        facade = mock(IMArtifactLabeledFacade.class);
         doReturn(Version.valueOf("1.0.1")).when(facade).getLatestInstallableVersion(any(Artifact.class));
         doReturn(ImmutableList.of("step 1", "step 2")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
         commandSession = mock(CommandSession.class);
@@ -308,7 +308,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifacts() throws Exception {
-        doReturn(ImmutableList.of(new InstallArtifactResult().withArtifact("codenvy")
+        doReturn(ImmutableList.of(new InstallArtifactInfo().withArtifact("codenvy")
                                                              .withVersion("1.0.1")
                                                              .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();
 

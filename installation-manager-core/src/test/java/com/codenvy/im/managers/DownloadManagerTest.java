@@ -23,7 +23,7 @@ import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -334,7 +334,7 @@ public class DownloadManagerTest extends BaseTest {
         assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
         assertEquals(info.getPercents(), 100);
 
-        List<DownloadArtifactResult> artifacts = info.getArtifacts();
+        List<DownloadArtifactInfo> artifacts = info.getArtifacts();
         assertEquals(artifacts.size(), 2);
 
         assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
@@ -381,7 +381,7 @@ public class DownloadManagerTest extends BaseTest {
         assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
         assertEquals(info.getPercents(), 100);
 
-        List<DownloadArtifactResult> artifacts = info.getArtifacts();
+        List<DownloadArtifactInfo> artifacts = info.getArtifacts();
         assertEquals(artifacts.size(), 1);
         assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
         assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
@@ -422,7 +422,7 @@ public class DownloadManagerTest extends BaseTest {
         assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
         assertEquals(info.getPercents(), 100);
 
-        List<DownloadArtifactResult> artifacts = info.getArtifacts();
+        List<DownloadArtifactInfo> artifacts = info.getArtifacts();
         assertEquals(artifacts.size(), 1);
         assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
         assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);

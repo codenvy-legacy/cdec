@@ -16,12 +16,13 @@
  * from Codenvy S.A..
  */
 
-package com.codenvy.im.response;
+package com.codenvy.im.artifacts;
 
 /**
- * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
  */
-public enum UpdatesArtifactStatus {
-    DOWNLOADED,
-    AVAILABLE_TO_DOWNLOAD
+public enum VersionLabel {
+    STABLE,
+    RC,
+    RC_UNSTABLE
 }

@@ -19,8 +19,7 @@ package com.codenvy.im.managers;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.facade.DownloadProgress;
-import com.codenvy.im.response.DownloadArtifactResult;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.utils.Commons;
@@ -169,14 +168,14 @@ public class DownloadManager {
 
                 try {
                     Path pathToBinaries = download(artToDownload, verToDownload);
-                    DownloadArtifactResult downloadArtifactDesc = new DownloadArtifactResult(artToDownload,
+                    DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
                                                                                                      verToDownload,
                                                                                                      pathToBinaries,
                                                                                                      DownloadArtifactStatus.DOWNLOADED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
-                    DownloadArtifactResult downloadArtifactDesc = new DownloadArtifactResult(artToDownload,
+                    DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
                                                                                                      verToDownload,
                                                                                                      DownloadArtifactStatus.FAILED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
@@ -313,7 +312,9 @@ public class DownloadManager {
     }
 
     /**
-     * @return the list of the artifacts to update.
+     * Gets a list of artifacts to download.
+     * Only newer versions if the installed artifacts will be returned.
+     *
      * @throws java.io.IOException
      *         if an I/O error occurred
      */

@@ -18,9 +18,9 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.BackupInfo;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -40,9 +40,9 @@ public class TestRestoreCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade mockInstallationManagerProxy;
+    private IMArtifactLabeledFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     private BackupConfig testBackupConfig;
 
@@ -65,14 +65,18 @@ public class TestRestoreCommand extends AbstractTestCommand {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
                                              .setBackupFile(testBackupFile);
 
-        doReturn(Response.ok()).when(mockInstallationManagerProxy).restore(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).restore(testBackupConfig);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, Response.ok().toJson() + "\n");
+
+        assertEquals(output, "{\n" +
+                             "  \"backup\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
     }
 
     @Test

@@ -15,42 +15,45 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
+
 package com.codenvy.im.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-/** @author Dmytro Nochevnov */
-@JsonPropertyOrder({"file", "artifactInfo", "status"})
-public class BackupInfo {
-    private String file;
-    private String artifact;
-    private String version;
+/**
+ * @author Anatoliy Bazko
+ */
+@JsonPropertyOrder({"node", "message", "status"})
+public class NodeManagerResult {
 
+    private ResponseCode status;
+    private String       message;
+    private NodeInfo     node;
 
-    public BackupInfo() {
+    public NodeManagerResult() {
     }
 
-    public String getFile() {
-        return file;
+    public ResponseCode getStatus() {
+        return status;
     }
 
-    public void setFile(String file) {
-        this.file = file;
+    public void setStatus(ResponseCode status) {
+        this.status = status;
     }
 
-    public String getArtifact() {
-        return artifact;
+    public String getMessage() {
+        return message;
     }
 
-    public void setArtifact(String artifact) {
-        this.artifact = artifact;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    public String getVersion() {
-        return version;
+    public NodeInfo getNode() {
+        return node;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setNode(NodeInfo node) {
+        this.node = node;
     }
 }

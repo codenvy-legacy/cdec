@@ -24,8 +24,7 @@ import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
-import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.request.Request;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.saas.SaasUserCredentials;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
@@ -45,14 +44,14 @@ import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    protected InstallationManagerFacade facade;
-    protected PreferencesStorage        preferencesStorage;
-    protected Console                   console;
+    protected IMArtifactLabeledFacade facade;
+    protected PreferencesStorage      preferencesStorage;
+    protected Console                 console;
 
     private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
 
     public AbstractIMCommand() {
-        facade = INJECTOR.getInstance(InstallationManagerFacade.class);
+        facade = INJECTOR.getInstance(IMArtifactLabeledFacade.class);
     }
 
     @Override
@@ -154,8 +153,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     @Nullable
     protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
-        Request request = new Request().setSaasUserCredentials(getCredentials());
-        return facade.getAccountWhereUserIsOwner(accountName, request);
+        SaasUserCredentials credentials = getCredentials();
+        return facade.getAccountWhereUserIsOwner(accountName, credentials.getToken());
     }
 
     protected SaasUserCredentials getCredentials() {
@@ -213,9 +212,4 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return super.isInteractive();
     }
 
-    protected Request createRequest(String artifactName, String version) {
-        return new Request()
-                .setArtifactName(artifactName)
-                .setVersion(version);
-    }
 }

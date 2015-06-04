@@ -23,7 +23,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -31,11 +31,11 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
-import com.codenvy.im.request.Request;
+import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
-import com.codenvy.im.response.InstallArtifactResult;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
-import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
@@ -103,25 +103,20 @@ public class TestInstallationManagerService extends BaseTest {
     private InstallationManagerService service;
 
     @Mock
-    private InstallationManagerFacade mockFacade;
+    private IMArtifactLabeledFacade mockFacade;
     @Mock
-    private ConfigManager             configManager;
+    private ConfigManager           configManager;
     @Mock
-    private Principal                 mockPrincipal;
+    private Principal               mockPrincipal;
     @Mock
-    private Config                    mockConfig;
+    private Config                  mockConfig;
     @Mock
-    private Artifact                  mockArtifact;
-
-    private com.codenvy.im.response.Response mockFacadeOkResponse;
-    private com.codenvy.im.response.Response mockFacadeErrorResponse;
+    private Artifact                mockArtifact;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        mockFacadeOkResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.OK);
-        mockFacadeErrorResponse = new com.codenvy.im.response.Response().setStatus(ResponseCode.ERROR).setMessage("error");
-        service = spy(new InstallationManagerService(mockFacade, configManager));
+        service = spy(new InstallationManagerService(BACKUP_DIR, mockFacade, configManager));
 
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
         doReturn(mockArtifact).when(service).getArtifact(anyString());
@@ -217,21 +212,32 @@ public class TestInstallationManagerService extends BaseTest {
 
 
     @Test
-    public void testGetDownloads() throws Exception {
-        Request testRequest = new Request().setArtifactName(ARTIFACT_NAME);
+    public void testGetDownloadsShouldReturnOkResponse() throws Exception {
+        doReturn(Collections.emptyList()).when(mockFacade).getDownloads(null, null);
 
-        doReturn(mockFacadeOkResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        Response result = service.getDownloads(ARTIFACT_NAME);
-        assertOkResponse(result);
+        Response result = service.getDownloads(null, null);
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+    }
 
-        doReturn(mockFacadeErrorResponse.toJson()).when(mockFacade).getDownloads(testRequest);
-        result = service.getDownloads(ARTIFACT_NAME);
-        assertErrorResponse(result);
+    @Test
+    public void testGetDownloadsShouldReturnConflictResponse() throws Exception {
+        doReturn(Collections.emptyList()).when(mockFacade).getDownloads(null, null);
+
+        Response result = service.getDownloads("artifact", null);
+        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testGetDownloadsShouldReturnErrorResponse() throws Exception {
+        doThrow(new IOException("error")).when(mockFacade).getDownloads(null, null);
+
+        Response result = service.getDownloads(null, null);
+        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test
     public void testGetInstalledVersionsShouldReturnOkStatus() throws Exception {
-        doReturn(ImmutableList.of(new InstallArtifactResult().withVersion("1.0.1")
+        doReturn(ImmutableList.of(new InstallArtifactInfo().withVersion("1.0.1")
                                                              .withArtifact("codenvy")
                                                              .withStatus(InstallArtifactStatus.SUCCESS))).when(mockFacade).getInstalledVersions();
 
@@ -271,60 +277,46 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testGetConfig() throws Exception {
         doReturn(Collections.emptyMap()).when(mockFacade).getInstallationManagerProperties();
+
         Response response = service.getInstallationManagerServerConfig();
+
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void testAddNode() throws Exception {
-        doReturn(mockFacadeOkResponse).when(mockFacade).addNode("dns");
+    public void testAddNodeShouldReturnOkResponse() throws Exception {
+        doReturn(new NodeInfo()).when(mockFacade).addNode("dns");
+
         Response result = service.addNode("dns");
-        assertOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse).when(mockFacade).addNode("dns");
-        result = service.addNode("dns");
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
     @Test
-    public void testRemoveNode() throws Exception {
-        doReturn(mockFacadeOkResponse).when(mockFacade).removeNode("dns");
+    public void testRemoveNodeShouldReturnOkResponse() throws Exception {
+        doReturn(new NodeInfo()).when(mockFacade).removeNode("dns");
+
         Response result = service.removeNode("dns");
-        assertOkResponse(result);
 
-        doReturn(mockFacadeErrorResponse).when(mockFacade).removeNode("dns");
-        result = service.removeNode("dns");
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
     }
 
     @Test
-    public void testBackup() throws Exception {
-        String testBackupDirectoryPath = "test/path";
-        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(ARTIFACT_NAME)
-                                                          .setBackupDirectory(testBackupDirectoryPath);
+    public void testBackupShouldReturnOkResponse() throws Exception {
+        doReturn(new BackupInfo()).when(mockFacade).backup(any(BackupConfig.class));
 
-        doReturn(mockFacadeOkResponse).when(mockFacade).backup(testBackupConfig);
-        Response result = service.backup(ARTIFACT_NAME, testBackupDirectoryPath);
-        assertOkResponse(result);
+        Response result = service.backup(ARTIFACT_NAME);
 
-        doReturn(mockFacadeErrorResponse).when(mockFacade).backup(testBackupConfig);
-        result = service.backup(ARTIFACT_NAME, testBackupDirectoryPath);
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
     @Test
-    public void testRestore() throws Exception {
-        String testBackupFilePath = "test/path/backup";
-        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(ARTIFACT_NAME)
-                                                          .setBackupFile(testBackupFilePath);
+    public void testRestoreShouldReturnOkResponse() throws Exception {
+        doReturn(new BackupInfo()).when(mockFacade).restore(any(BackupConfig.class));
 
-        doReturn(mockFacadeOkResponse).when(mockFacade).restore(testBackupConfig);
-        Response result = service.restore(ARTIFACT_NAME, testBackupFilePath);
-        assertOkResponse(result);
+        Response result = service.restore(ARTIFACT_NAME, "");
 
-        doReturn(mockFacadeErrorResponse).when(mockFacade).restore(testBackupConfig);
-        result = service.restore(ARTIFACT_NAME, testBackupFilePath);
-        assertErrorResponse(result);
+        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
     @Test
@@ -405,11 +397,10 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testLoginToSaas() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId(TEST_ACCOUNT_ID).withName(TEST_ACCOUNT_NAME))
-                .when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
+                .when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
 
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
@@ -424,14 +415,13 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testLoginToSaasWhenHttpException() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doThrow(new AuthenticationException("error")).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
+        doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
         result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
@@ -440,10 +430,9 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testLoginToSaasWhenNullAccountReference() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-        Request testRequest = new Request().setSaasUserCredentials(new SaasUserCredentials(TEST_ACCESS_TOKEN));
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doReturn(null).when(mockFacade).getAccountWhereUserIsOwner(null, testRequest);
+        doReturn(null).when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
 
         Response response = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());

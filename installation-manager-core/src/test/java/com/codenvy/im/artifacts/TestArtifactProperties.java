@@ -41,6 +41,6 @@ public class TestArtifactProperties {
     @Test
     public void testPublicProperties() {
         assertEquals(ArtifactProperties.PUBLIC_PROPERTIES.toString(),
-                     "[version, previous-version, artifact, build-time, authentication-required, file, md5, size, description]");
+                     "[version, label, previous-version, artifact, build-time, authentication-required, file, md5, size, description]");
     }
 }

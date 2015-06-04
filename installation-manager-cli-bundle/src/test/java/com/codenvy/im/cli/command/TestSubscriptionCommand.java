@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 
@@ -42,9 +42,9 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
     private SubscriptionCommand spyCommand;
 
     @Mock
-    private InstallationManagerFacade mockInstallationManagerProxy;
+    private IMArtifactLabeledFacade mockInstallationManagerProxy;
     @Mock
-    private CommandSession            commandSession;
+    private CommandSession          commandSession;
 
     private SaasUserCredentials credentials;
 

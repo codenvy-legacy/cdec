@@ -21,19 +21,12 @@ import com.codenvy.im.managers.NodeConfig;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /** @author Dmytro Nochevnov */
-@JsonPropertyOrder({"type", "host", "status"})
+@JsonPropertyOrder({"type", "host"})
 public class NodeInfo {
     private NodeConfig.NodeType type;
-    private String         host;
-    private ArtifactStatus status;
+    private String host;
 
     public NodeInfo() {
-    }
-
-    public NodeInfo(NodeConfig.NodeType type, String host, ArtifactStatus status) {
-        this.type = type;
-        this.host = host;
-        this.status = status;
     }
 
     public NodeConfig.NodeType getType() {
@@ -52,18 +45,5 @@ public class NodeInfo {
     public NodeInfo setHost(String host) {
         this.host = host;
         return this;
-    }
-
-    public ArtifactStatus getStatus() {
-        return status;
-    }
-
-    public NodeInfo setStatus(ArtifactStatus status) {
-        this.status = status;
-        return this;
-    }
-
-    public static NodeInfo createSuccessInfo(NodeConfig node) {
-        return new NodeInfo(node.getType(), node.getHost(), ArtifactStatus.SUCCESS);
     }
 }
