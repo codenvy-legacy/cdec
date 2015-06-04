@@ -17,76 +17,78 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.utils.Version;
+import com.codenvy.im.artifacts.VersionLabel;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.nio.file.Path;
-
-/** @author Dmytro Nochevnov */
-@JsonPropertyOrder({"artifact", "version", "file", "status"})
-public class ArtifactInfo {
+/**
+ * @author Dmytro Nochevnov
+ * @author Anatoliy Bazko
+ */
+@JsonPropertyOrder({"artifact", "version", "label", "status"})
+public class ArtifactInfo extends BasicArtifactInfo {
     private String         artifact;
     private String         version;
+    private VersionLabel label;
     private ArtifactStatus status;
-    private String         file;
 
     public ArtifactInfo() {
-    }
-
-    public ArtifactInfo(Artifact artifact, Version version) {
-        this(artifact.getName(), version.toString(), null, null);
-    }
-
-    public ArtifactInfo(Artifact artifact, Version version, ArtifactStatus status) {
-        this(artifact.getName(), version.toString(), null, status);
-    }
-
-    public ArtifactInfo(Artifact artifact, Version version, Path file, ArtifactStatus status) {
-        this(artifact.getName(), version.toString(), file.toString(), status);
-    }
-
-    private ArtifactInfo(String artifact, String version, String file, ArtifactStatus status) {
-        this.artifact = artifact;
-        this.version = version;
-        this.file = file;
-        this.status = status;
     }
 
     public String getArtifact() {
         return artifact;
     }
 
-    public ArtifactInfo setArtifact(String artifact) {
+    public void setArtifact(String artifact) {
         this.artifact = artifact;
-        return this;
     }
 
     public String getVersion() {
         return version;
     }
 
-    public ArtifactInfo setVersion(String version) {
+    public void setVersion(String version) {
         this.version = version;
-        return this;
     }
 
     public ArtifactStatus getStatus() {
         return status;
     }
 
-    public ArtifactInfo setStatus(ArtifactStatus status) {
+    public void setStatus(ArtifactStatus status) {
         this.status = status;
-        return this;
     }
 
-    public String getFile() {
-        return file;
+    public VersionLabel getLabel() {
+        return label;
     }
 
-    public ArtifactInfo setFile(String file) {
-        this.file = file;
-        return this;
+    public void setLabel(VersionLabel label) {
+        this.label = label;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ArtifactInfo)) return false;
+
+        ArtifactInfo that = (ArtifactInfo)o;
+
+        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) return false;
+        if (label != that.label) return false;
+        if (status != that.status) return false;
+        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        int result = artifact != null ? artifact.hashCode() : 0;
+        result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (label != null ? label.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        return result;
+    }
 }

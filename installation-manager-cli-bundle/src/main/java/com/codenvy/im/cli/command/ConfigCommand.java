@@ -20,7 +20,8 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.Config;
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.BasicResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -53,15 +54,16 @@ public class ConfigCommand extends AbstractIMCommand {
         console.showProgressor();
         try {
             facade.updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, codenvyDNS);
-            console.printResponse(Response.ok());
+            console.printResponse(BasicResponse.ok());
         } finally {
             console.hideProgressor();
         }
     }
 
-    private void doGetConfig() throws JsonParseException {
+    private void doGetConfig() throws JsonParseException, JsonProcessingException {
         Map<String, String> properties = facade.getInstallationManagerProperties();
-        Response response = Response.ok().setProperties(properties);
+        BasicResponse response = BasicResponse.ok();
+        response.setProperties(properties);
         console.printResponse(response);
     }
 }

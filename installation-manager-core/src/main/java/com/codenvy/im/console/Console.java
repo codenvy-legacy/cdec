@@ -19,8 +19,10 @@ package com.codenvy.im.console;
 
 import jline.console.ConsoleReader;
 
+import com.codenvy.im.response.BasicResponse;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.ResponseCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
@@ -32,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.codenvy.im.response.Response.isError;
+import static com.codenvy.im.utils.Commons.toJson;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -155,11 +157,11 @@ public class Console {
         consoleReader.readCharacter();
     }
 
-    public void printErrorAndExit(Exception ex) {
-        String errorMessage = Response.error(ex).toJson();
+    public void printErrorAndExit(Exception ex) throws JsonProcessingException {
+        BasicResponse errorResponse = BasicResponse.error(ex.getMessage());
         LOG.log(Level.SEVERE, ex.getMessage(), ex);
 
-        printError(errorMessage);
+        printError(toJson(errorResponse));
 
         if (!interactive) {
             exit(1);
@@ -175,20 +177,11 @@ public class Console {
         }
     }
 
-    public void printResponse(String response) throws JsonParseException {
-        if (isError(response)) {
-            printErrorAndExit(response);
-        } else {
-            println(response);
-        }
-    }
-
-
-    public void printResponse(Response response) throws JsonParseException {
+    public void printResponse(Response response) throws JsonParseException, JsonProcessingException {
         if (response.getStatus() == ResponseCode.OK) {
-            println(response.toJson());
+            println(toJson(response));
         } else {
-            printErrorAndExit(response.toJson());
+            printErrorAndExit(toJson(response));
         }
     }
 
@@ -230,7 +223,7 @@ public class Console {
     private void restoreCursorPosition() {
         print(ansi().restorCursorPosition());
 
-        for(; rowCounter > 0; rowCounter--) {
+        for (; rowCounter > 0; rowCounter--) {
             cleanCurrentLine();
             print(ansi().cursorUp(1));
         }

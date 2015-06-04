@@ -24,8 +24,6 @@ import com.codenvy.im.response.ResponseCode;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 
-import static com.codenvy.im.utils.Commons.toJson;
-
 /**
  * @author Dmytro Nochevnov
  */
@@ -47,7 +45,7 @@ public class RemoveNodeCommand extends AbstractIMCommand {
                 nodeManagerResult.setStatus(ResponseCode.OK);
                 nodeManagerResult.setNode(nodeInfo);
 
-                console.printResponse(toJson(nodeManagerResult));
+                console.printResponse(nodeManagerResult);
             } finally {
                 console.hideProgressor();
             }

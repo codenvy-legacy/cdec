@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.response.Response;
+import com.codenvy.im.response.BasicResponse;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
@@ -37,6 +37,6 @@ public class ChangeAdminPasswordCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         facade.changeAdminPassword(currentPassword.getBytes("UTF-8"), newPassword.getBytes("UTF-8"));
-        console.printResponse(Response.ok());
+        console.printResponse(BasicResponse.ok());
     }
 }

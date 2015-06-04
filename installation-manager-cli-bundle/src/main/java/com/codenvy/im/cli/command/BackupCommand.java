@@ -26,8 +26,6 @@ import com.codenvy.im.response.ResponseCode;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 
-import static com.codenvy.im.utils.Commons.toJson;
-
 /**
  * @author Dmytro Nochevnov
  */
@@ -55,7 +53,7 @@ public class BackupCommand extends AbstractIMCommand {
             backupResult.setBackup(backupInfo);
             backupResult.setStatus(ResponseCode.OK);
 
-            console.printResponse(toJson(backupResult));
+            console.printResponse(backupResult);
         } finally {
             console.hideProgressor();
         }

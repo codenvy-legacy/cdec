@@ -20,21 +20,27 @@ package com.codenvy.im.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"artifacts", "message", "status"})
-public class UpdatesResult implements Response {
+@JsonPropertyOrder({"properties", "message", "status"})
+public class BasicResponse implements Response {
 
-    private ResponseCode              status;
-    private String                    message;
-    private Collection<UpdatesArtifactInfo> artifacts;
+    private Map<String, String> properties;
+    private ResponseCode        status;
+    private String              message;
 
-    public UpdatesResult() {
+    public BasicResponse(ResponseCode status) {
+        this.status = status;
     }
 
+    public BasicResponse() {
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public ResponseCode getStatus() {
         return status;
     }
@@ -51,24 +57,34 @@ public class UpdatesResult implements Response {
         this.message = message;
     }
 
-    public Collection<UpdatesArtifactInfo> getArtifacts() {
-        return artifacts;
+    public Map<String, String> getProperties() {
+        return properties;
     }
 
-    public void setArtifacts(Collection<UpdatesArtifactInfo> artifacts) {
-        this.artifacts = artifacts;
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
+
+    public static BasicResponse ok() {
+        return new BasicResponse(ResponseCode.OK);
+    }
+
+    public static BasicResponse error(String message) {
+        BasicResponse response = new BasicResponse(ResponseCode.ERROR);
+        response.setMessage(message);
+        return response;
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UpdatesResult)) return false;
+        if (!(o instanceof BasicResponse)) return false;
 
-        UpdatesResult that = (UpdatesResult)o;
+        BasicResponse that = (BasicResponse)o;
 
-        if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) return false;
         if (message != null ? !message.equals(that.message) : that.message != null) return false;
+        if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
         if (status != that.status) return false;
 
         return true;
@@ -77,9 +93,9 @@ public class UpdatesResult implements Response {
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        int result = status != null ? status.hashCode() : 0;
+        int result = properties != null ? properties.hashCode() : 0;
+        result = 31 * result + (status != null ? status.hashCode() : 0);
         result = 31 * result + (message != null ? message.hashCode() : 0);
-        result = 31 * result + (artifacts != null ? artifacts.hashCode() : 0);
         return result;
     }
 }

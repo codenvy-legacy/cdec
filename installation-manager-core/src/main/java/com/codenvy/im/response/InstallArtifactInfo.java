@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifact", "version", "label", "status"})
-public class InstallArtifactInfo implements Info {
+public class InstallArtifactInfo extends BasicArtifactInfo {
     private String                artifact;
     private String                version;
     private VersionLabel label;

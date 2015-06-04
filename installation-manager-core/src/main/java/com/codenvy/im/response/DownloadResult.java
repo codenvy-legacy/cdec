@@ -20,7 +20,7 @@ package com.codenvy.im.response;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Is used when downloading is finished.
@@ -29,11 +29,11 @@ import java.util.List;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "message", "status"})
-public class DownloadResult {
+public class DownloadResult implements Response {
 
     private ResponseCode               status;
     private String                     message;
-    private List<DownloadArtifactInfo> artifacts;
+    private Collection<DownloadArtifactInfo> artifacts;
 
     public DownloadResult() {
     }
@@ -52,7 +52,7 @@ public class DownloadResult {
         return message;
     }
 
-    public List<DownloadArtifactInfo> getArtifacts() {
+    public Collection<DownloadArtifactInfo> getArtifacts() {
         return artifacts;
     }
 
@@ -64,7 +64,7 @@ public class DownloadResult {
         this.message = message;
     }
 
-    public void setArtifacts(List<DownloadArtifactInfo> artifacts) {
+    public void setArtifacts(Collection<DownloadArtifactInfo> artifacts) {
         this.artifacts = artifacts;
     }
 

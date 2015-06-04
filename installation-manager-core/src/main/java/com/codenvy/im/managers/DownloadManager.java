@@ -90,10 +90,9 @@ public class DownloadManager {
     }
 
     /** Starts downloading */
-    public void startDownload(@Nullable final Artifact artifact, @Nullable final Version version)
-            throws IOException,
-                   InterruptedException,
-                   DownloadAlreadyStartedException {
+    public void startDownload(@Nullable final Artifact artifact, @Nullable final Version version) throws IOException,
+                                                                                                         InterruptedException,
+                                                                                                         DownloadAlreadyStartedException {
 
         validateIfDownloadInProgress();
         validateIfConnectionAvailable();
@@ -109,6 +108,13 @@ public class DownloadManager {
         downloadThread.start();
 
         latcher.await();
+    }
+
+    public String getDownloadIdInProgress() throws DownloadNotStartedException {
+        if (downloadProgress == null || downloadProgress.isDownloadingFinished()) {
+            throw new DownloadNotStartedException();
+        }
+        return downloadProgress.getUuid();
     }
 
     private void validateIfDownloadInProgress() throws DownloadAlreadyStartedException {
@@ -169,15 +175,15 @@ public class DownloadManager {
                 try {
                     Path pathToBinaries = download(artToDownload, verToDownload);
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
-                                                                                                     verToDownload,
-                                                                                                     pathToBinaries,
-                                                                                                     DownloadArtifactStatus.DOWNLOADED);
+                                                                                         verToDownload,
+                                                                                         pathToBinaries,
+                                                                                         DownloadArtifactStatus.DOWNLOADED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
-                                                                                                     verToDownload,
-                                                                                                     DownloadArtifactStatus.FAILED);
+                                                                                         verToDownload,
+                                                                                         DownloadArtifactStatus.FAILED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                     downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, exp);
                     return;

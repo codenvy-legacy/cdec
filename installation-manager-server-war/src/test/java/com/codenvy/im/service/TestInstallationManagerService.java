@@ -212,31 +212,6 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
-
-    @Test
-    public void testGetDownloadsShouldReturnOkResponse() throws Exception {
-        doReturn(Collections.emptyList()).when(mockFacade).getDownloads(null, null);
-
-        Response result = service.getDownloads(null, null);
-        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
-    }
-
-    @Test
-    public void testGetDownloadsShouldReturnConflictResponse() throws Exception {
-        doReturn(Collections.emptyList()).when(mockFacade).getDownloads(null, null);
-
-        Response result = service.getDownloads("artifact", null);
-        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-    }
-
-    @Test
-    public void testGetDownloadsShouldReturnErrorResponse() throws Exception {
-        doThrow(new IOException("error")).when(mockFacade).getDownloads(null, null);
-
-        Response result = service.getDownloads(null, null);
-        assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
-
     @Test
     public void testGetInstalledVersionsShouldReturnOkStatus() throws Exception {
         doReturn(ImmutableList.of(new InstallArtifactInfo().withVersion("1.0.1")
@@ -752,6 +727,24 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response response = service.updateCodenvyProperty(key, value);
         assertErrorResponse(response);
+    }
+
+    @Test
+    public void testGetDownloadsShouldReturnOkResponse() throws Exception {
+        doReturn("id").when(mockFacade).getDownloadIdInProgress();
+
+        Response response = service.getDownloads();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testGetDownloadsShouldReturnConflictResponse() throws Exception {
+        doThrow(new DownloadNotStartedException()).when(mockFacade).getDownloadIdInProgress();
+
+        Response result = service.getDownloads();
+
+        assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
     private void assertOkResponse(Response result) throws IOException {

@@ -28,7 +28,7 @@ import java.nio.file.Path;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifact", "version", "label", "file", "status"})
-public class DownloadArtifactInfo implements Info {
+public class DownloadArtifactInfo extends BasicArtifactInfo {
     private String                 artifact;
     private String                 version;
     private String                 file;

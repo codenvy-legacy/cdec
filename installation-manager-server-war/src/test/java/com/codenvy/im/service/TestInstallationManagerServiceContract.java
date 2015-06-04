@@ -28,7 +28,6 @@ import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -219,17 +218,17 @@ public class TestInstallationManagerServiceContract {
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            "[\n" +
-            "    \n" +
-            "]",                // response body
+            "{\n" +
+            "    \"id\": \"id\"\n" +
+            "}",                // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        doReturn(Collections.emptyList()).when(facade).getDownloads(any(Artifact.class), any(Version.class));
-                    } catch (IOException e) {
+                        doReturn("id").when(facade).getDownloadIdInProgress();
+                    } catch (DownloadNotStartedException e) {
                         fail(e.getMessage(), e);
                     }
                     return null;
@@ -301,10 +300,9 @@ public class TestInstallationManagerServiceContract {
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            "{\n"
-            + "    \"status\": \"DOWNLOADED\",\n"
-            + "    \"percents\": 0\n"
-            + "}",                           // response body
+            "{\n" +
+            "    \"percents\": 0\n" +
+            "}",                           // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
@@ -312,7 +310,6 @@ public class TestInstallationManagerServiceContract {
                 public Object apply(@Nullable Object o) {
                     try {
                         DownloadProgressDescriptor downloadDescriptor = new DownloadProgressDescriptor();
-                        downloadDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
                         doReturn(downloadDescriptor).when(facade).getDownloadProgress();
                     } catch (IOException | DownloadNotStartedException e) {
                         fail(e.getMessage(), e);

@@ -20,17 +20,17 @@ package com.codenvy.im.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "message", "status"})
-public class InstallResult {
+public class InstallResult implements Response {
 
     private ResponseCode              status;
     private String                    message;
-    private List<InstallArtifactInfo> artifacts;
+    private Collection<InstallArtifactInfo> artifacts;
 
     public InstallResult() {
     }
@@ -51,11 +51,11 @@ public class InstallResult {
         this.message = message;
     }
 
-    public List<InstallArtifactInfo> getArtifacts() {
+    public Collection<InstallArtifactInfo> getArtifacts() {
         return artifacts;
     }
 
-    public void setArtifacts(List<InstallArtifactInfo> artifacts) {
+    public void setArtifacts(Collection<InstallArtifactInfo> artifacts) {
         this.artifacts = artifacts;
     }
 

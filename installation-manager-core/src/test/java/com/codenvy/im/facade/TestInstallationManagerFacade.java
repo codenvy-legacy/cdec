@@ -31,6 +31,8 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
+import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -53,9 +55,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.codenvy.im.utils.Commons.toJson;
@@ -407,11 +412,13 @@ public class TestInstallationManagerFacade extends BaseTest {
             put(version100, null);
         }});
 
-        List<UpdatesArtifactInfo> updates = installationManagerFacade.getUpdates();
+        Collection<UpdatesArtifactInfo> updates = installationManagerFacade.getUpdates();
         assertEquals(updates.size(), 1);
-        assertEquals(updates.get(0).getStatus(), UpdatesArtifactStatus.DOWNLOADED);
-        assertEquals(updates.get(0).getArtifact(), cdecArtifact.getName());
-        assertEquals(updates.get(0).getVersion(), version100.toString());
+
+        UpdatesArtifactInfo info = updates.iterator().next();
+        assertEquals(info.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(info.getArtifact(), cdecArtifact.getName());
+        assertEquals(info.getVersion(), version100.toString());
     }
 
     @Test
@@ -434,5 +441,42 @@ public class TestInstallationManagerFacade extends BaseTest {
         installationManagerFacade.getSaasSubscription("OnPremises", saasUserCredentials);
 
         verify(saasAccountServiceProxy).getSubscription("OnPremises", "token", "id");
+    }
+
+    @Test
+    public void testGetArtifacts() throws Exception {
+        doReturn(new HashMap<Artifact, Version>() {{
+            put(cdecArtifact, Version.valueOf("1.0.1"));
+        }}).when(installManager).getInstalledArtifacts();
+
+        doReturn(new LinkedHashMap<Artifact, SortedMap<Version, Path>>() {{
+            put(cdecArtifact, new TreeMap<Version, Path>() {{
+                put(Version.valueOf("1.0.0"), Paths.get("target/file1"));
+                put(Version.valueOf("1.0.1"), Paths.get("target/file2"));
+                put(Version.valueOf("1.0.2"), Paths.get("target/file3"));
+            }});
+        }}).when(downloadManager).getDownloadedArtifacts();
+
+        doReturn(true).when(installManager).isInstallable(cdecArtifact, Version.valueOf("1.0.2"));
+
+        Collection<ArtifactInfo> artifacts = installationManagerFacade.getArtifacts();
+
+        assertEquals(artifacts.size(), 3);
+
+        Iterator<ArtifactInfo> iterator = artifacts.iterator();
+        ArtifactInfo info = iterator.next();
+        assertEquals(info.getArtifact(), "codenvy");
+        assertEquals(info.getVersion(), "1.0.2");
+        assertEquals(info.getStatus(), ArtifactStatus.READY_TO_INSTALL);
+
+        info = iterator.next();
+        assertEquals(info.getArtifact(), "codenvy");
+        assertEquals(info.getVersion(), "1.0.1");
+        assertEquals(info.getStatus(), ArtifactStatus.INSTALLED);
+
+        info = iterator.next();
+        assertEquals(info.getArtifact(), "codenvy");
+        assertEquals(info.getVersion(), "1.0.0");
+        assertEquals(info.getStatus(), ArtifactStatus.DOWNLOADED);
     }
 }
