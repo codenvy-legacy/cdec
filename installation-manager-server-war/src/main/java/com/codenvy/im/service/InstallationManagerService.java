@@ -42,6 +42,7 @@ import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.IllegalVersionException;
+import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

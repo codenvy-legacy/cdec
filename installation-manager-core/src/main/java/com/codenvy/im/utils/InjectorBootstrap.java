@@ -27,12 +27,14 @@ import com.google.inject.Module;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -46,86 +48,94 @@ import static java.nio.file.Files.newInputStream;
 public class InjectorBootstrap {
 
     public static final  Injector            INJECTOR;
-    private static final Map<String, String> boundProperties;
+    protected static final Map<String, String> boundProperties;
+
+    private static final Pattern envPattern = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
 
     static {
         boundProperties = new HashMap<>();
         INJECTOR = createInjector();
     }
 
-    private static Injector createInjector() {
-        final Pattern envPattern = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
-
+    public static Injector createInjector() {
         return Guice.createInjector(new Module() {
             @Override
             public void configure(Binder binder) {
-                bindProperties(binder);
+                InjectorBootstrap.bindAllProperties(binder);
 
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(InstallManagerArtifact.class);
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);
             }
+        });
+    }
 
-            private void bindProperties(Binder binder) {
-                bindProperties("codenvy/update-server.properties");
-                bindProperties("codenvy/installation-manager.properties");
+    private static void bindAllProperties(Binder binder) {
+        bindFileProperties("codenvy/update-server.properties");
+        bindFileProperties("codenvy/installation-manager.properties");
 
-                // overrides default properties
-                String confDir = System.getenv("CODENVY_LOCAL_CONF_DIR");
-                if (confDir != null) {
-                    Iterator<Path> pathIterator = Paths.get(confDir).iterator();
-                    while (pathIterator.hasNext()) {
-                        Path conf = pathIterator.next();
-                        if (conf.endsWith(".properties")) {
-                            try (InputStream in = newInputStream(conf)) {
-                                doBindProperties(in);
-                            } catch (IOException e) {
-                                throw new IllegalStateException("Can't load properties", e);
-                            }
+        String confDir = System.getenv("CODENVY_LOCAL_CONF_DIR");
+        if (confDir != null) {
+            overrideDefaultProperties(confDir);
+        }
+
+        for (Map.Entry<String, String> e : boundProperties.entrySet()) {
+            binder.bindConstant().annotatedWith(Names.named(e.getKey())).to(e.getValue());
+        }
+    }
+
+    private static void bindFileProperties(String fileProperties) {
+        try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream(fileProperties)) {
+            if (in != null) {
+                doBindFileProperties(in);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Can't load properties", e);
+        }
+    }
+
+    private static void doBindFileProperties(InputStream in) {
+        Properties properties = new Properties();
+        try {
+            properties.load(in);
+        } catch (IOException e) {
+            throw new IllegalStateException("Can't load properties", e);
+        }
+
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            String key = (String)entry.getKey();
+            String value = replaceEnvVariables((String)entry.getValue());
+
+            boundProperties.put(key, value);
+        }
+    }
+
+    /** Replaces environment variables by them actual values using ${...} template. */
+    private static String replaceEnvVariables(String value) {
+        Matcher matcher = envPattern.matcher(value);
+        if (matcher.find()) {
+            String envVar = matcher.group(1);
+            return value.substring(0, matcher.start(1) - 2) + System.getenv(envVar) + value.substring(matcher.end(1) + 1);
+        } else {
+            return value;
+        }
+    }
+
+    /** Override default properties from jar with values from CODENVY_LOCAL_CONF_DIR directory */
+    protected static void overrideDefaultProperties(@Nonnull String localConfDir) {
+        Path confDirPath = Paths.get(localConfDir);
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(confDirPath)) {
+            for (Path entry : stream) {
+                if (!Files.isDirectory(entry)) {
+                    if (entry.toString().endsWith(".properties")) {
+                        try (InputStream in = newInputStream(entry)) {
+                            doBindFileProperties(in);
                         }
                     }
                 }
-
-                for (Map.Entry<String, String> e : boundProperties.entrySet()) {
-                    binder.bindConstant().annotatedWith(Names.named(e.getKey())).to(e.getValue());
-                }
             }
-
-            private void bindProperties(String fileProperties) {
-                try (InputStream in = InjectorBootstrap.class.getClassLoader().getResourceAsStream(fileProperties)) {
-                    if (in != null) {
-                        doBindProperties(in);
-                    }
-                } catch (IOException e) {
-                    throw new IllegalStateException("Can't load properties", e);
-                }
-            }
-
-            private void doBindProperties(InputStream in) {
-                Properties properties = new Properties();
-                try {
-                    properties.load(in);
-                } catch (IOException e) {
-                    throw new IllegalStateException("Can't load properties", e);
-                }
-
-                for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                    String key = (String)entry.getKey();
-                    String value = replaceEnvVariables((String)entry.getValue());
-
-                    boundProperties.put(key, value);
-                }
-            }
-
-            /** Replaces environment variables by them actual values using ${...} template. */
-            private String replaceEnvVariables(String value) {
-                Matcher matcher = envPattern.matcher(value);
-                if (matcher.find()) {
-                    String envVar = matcher.group(1);
-                    return value.substring(0, matcher.start(1) - 2) + System.getenv(envVar) + value.substring(matcher.end(1) + 1);
-                } else {
-                    return value;
-                }
-            }
-        });
+        } catch (IOException e) {
+            throw new IllegalStateException("Can't load properties", e);
+        }
     }
 }
