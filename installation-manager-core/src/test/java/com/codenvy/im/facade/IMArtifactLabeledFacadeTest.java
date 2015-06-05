@@ -48,8 +48,11 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -133,6 +136,28 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
         Collection<UpdatesArtifactInfo> updates = facade.getUpdates();
+
+        assertEquals(updates.size(), 1);
+
+        UpdatesArtifactInfo result = updates.iterator().next();
+        assertEquals(result.getArtifact(), "codenvy");
+        assertEquals(result.getVersion(), "1.0.1");
+        assertEquals(result.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(result.getLabel(), VersionLabel.STABLE);
+    }
+
+
+    @Test
+    public void testGetAllUpdates() throws Exception {
+        doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
+            add(new AbstractMap.SimpleEntry<>(artifact, version));
+        }}).when(downloadManager).getAllUpdates(artifact, null);
+        doReturn(new TreeMap<Version, Path>() {{
+            put(version, Paths.get("path"));
+        }}).when(downloadManager).getDownloadedVersions(artifact);
+        doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
+
+        Collection<UpdatesArtifactInfo> updates = facade.getAllUpdates(artifact);
 
         assertEquals(updates.size(), 1);
 
