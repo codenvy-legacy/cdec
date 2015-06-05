@@ -527,12 +527,12 @@ public class InstallationManagerFacade {
     }
 
     /** Update artifact config property */
-    public void updateArtifactConfig(String artifactName, String property, String value) throws IOException {
+    public void updateArtifactConfig(String artifactName, Map<String, String> properties) throws IOException {
         Artifact artifact = ArtifactFactory.createArtifact(artifactName);
-        doUpdateArtifactConfig(artifact, property, value);
+        doUpdateArtifactConfig(artifact, properties);
     }
 
-    protected void doUpdateArtifactConfig(Artifact artifact, String property, String value) throws IOException {
-        artifact.updateConfig(property, value);
+    protected void doUpdateArtifactConfig(Artifact artifact, Map<String, String> properties) throws IOException {
+        artifact.updateConfig(properties);
     }
 }

@@ -636,17 +636,21 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * {@inheritDoc}
      */
     @Override
-    public Command getUpdateConfigCommand(String property, String value, Config config) throws IOException {
+    public Command getUpdateConfigCommand(Config config, Map<String, String> properties) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy multi server config
         String multiServerPropertiesFilePath = configManager.getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES).toString();
         commands.add(createFileBackupCommand(multiServerPropertiesFilePath));
-        commands.add(createPropertyReplaceCommand(multiServerPropertiesFilePath, "$" + property, value));
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            commands.add(createPropertyReplaceCommand(multiServerPropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
+        }
 
         String multiServerBasePropertiesFilePath = configManager.getPuppetConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES).toString();
         commands.add(createFileBackupCommand(multiServerBasePropertiesFilePath));
-        commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + property, value));
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
+        }
 
         // force applying updated puppet config on puppet agent at the all nodes (don't take into account additional nodes)
         final List<NodeConfig> nodes = extractConfigsFrom(config);

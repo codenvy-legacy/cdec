@@ -685,9 +685,11 @@ public class TestInstallationManagerServiceContract {
             null,                                             // query parameters
             null,                                             // request body
             null,                                             // consume content type
-            ContentType.TEXT,                                 // produce content type
+            ContentType.JSON,                                 // produce content type
             HttpMethod.GET,                                   // HTTP method
-            "test.com",                                       // response body
+            "{\n" +
+            "    \"host_url\": \"test.com\"\n" +
+            "}",                                       // response body
             Response.Status.OK,                               // response status
             new Function<Object, Object>() {                  // before test
                 @Nullable
@@ -709,21 +711,21 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testUpdateCodenvyProperty() {
         testContract(
-            "codenvy/properties/a",                           // path
+                "codenvy/properties",                           // path
             null,                                             // query parameters
-            "b",                                              // request body
-            ContentType.TEXT,                                 // consume content type
+            "{\"a\":\"b\"}",                                          // request body
+            ContentType.JSON,                                 // consume content type
             null,                                             // produce content type
             HttpMethod.PUT,                                   // HTTP method
-            "",                                               // response body
-            Response.Status.OK,                               // response status
+            null,                                               // response body
+            Response.Status.CREATED,                               // response status
             null,                                             // before test
             new Function<Object, Object>() {
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        verify(facade).updateArtifactConfig(CDECArtifact.NAME, "a", "b");
+                        verify(facade).updateArtifactConfig(CDECArtifact.NAME, ImmutableMap.of("a", "b"));
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }

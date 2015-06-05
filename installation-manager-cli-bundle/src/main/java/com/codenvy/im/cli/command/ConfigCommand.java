@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.response.BasicResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -53,7 +54,7 @@ public class ConfigCommand extends AbstractIMCommand {
     private void doUpdateCodenvyHostUrl() throws IOException, JsonParseException {
         console.showProgressor();
         try {
-            facade.updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, codenvyDNS);
+            facade.updateArtifactConfig(CDECArtifact.NAME, ImmutableMap.of(Config.HOST_URL, codenvyDNS));
             console.printResponse(BasicResponse.ok());
         } finally {
             console.hideProgressor();

@@ -380,23 +380,21 @@ public class TestInstallationManagerFacade extends BaseTest {
 
     @Test
     public void updateArtifactConfig() throws IOException {
-        String testProperty = "testProperty";
-        String testValue = "testValue";
-        doNothing().when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, testProperty, testValue);
+        Map<String, String> properties = ImmutableMap.of("a", "b");
+        doNothing().when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, properties);
 
-        installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, testProperty, testValue);
+        installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, properties);
 
-        verify(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, testProperty, testValue);
+        verify(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, properties);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void updateArtifactConfigWhenError() throws Exception {
+        Map<String, String> properties = ImmutableMap.of("a", "b");
         prepareSingleNodeEnv(configManager);
-        String testProperty = "testProperty";
-        String testValue = "testValue";
-        doThrow(IOException.class).when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, testProperty, testValue);
+        doThrow(IOException.class).when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, properties);
 
-        installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, testProperty, testValue);
+        installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, properties);
     }
 
     @Test

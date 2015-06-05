@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmytro Nochevnov
@@ -75,5 +76,5 @@ public abstract class CDECArtifactHelper {
     public abstract Command getRestoreCommand(BackupConfig backupConfig) throws IOException;
 
     /** @return commands to add change puppet master config and wait until changes is propagated */
-    public abstract Command getUpdateConfigCommand(String property, String value, Config config) throws IOException;
+    public abstract Command getUpdateConfigCommand(Config config, Map<String, String> properties) throws IOException;
 }

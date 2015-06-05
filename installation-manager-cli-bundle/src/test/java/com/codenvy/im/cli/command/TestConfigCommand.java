@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -29,6 +30,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -75,7 +77,8 @@ public class TestConfigCommand extends AbstractTestCommand {
     @Test
     public void testChangeCodenvyHostUrl() throws Exception {
         String testDns = "test.com";
-        doNothing().when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, testDns);
+        doNothing().when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--codenvy_dns", testDns);
@@ -90,12 +93,13 @@ public class TestConfigCommand extends AbstractTestCommand {
     @Test
     public void testChangeCodenvyHostUrlWhenServiceThrowsError() throws Exception {
         String testDns = "test.com";
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, testDns);
         String expectedOutput = "{\n"
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-                .when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, Config.HOST_URL, testDns);
+                .when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--codenvy_dns", testDns);

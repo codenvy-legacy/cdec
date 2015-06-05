@@ -238,7 +238,7 @@ public class InstallationManagerService {
             String id = delegate.getDownloadIdInProgress();
             Map<String, String> ids = ImmutableMap.of("id", id);
 
-            return javax.ws.rs.core.Response.ok(ids).build();
+            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(ids)).build();
         } catch (DownloadNotStartedException e) {
             return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
         } catch (Exception e) {
@@ -692,14 +692,14 @@ public class InstallationManagerService {
         }
     }
 
-    /** Gets list of properties from configuration of Codenvy on-prem */
+    /** Gets Codenvy configuration properties. */
     @GET
     @Path("codenvy/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets list of properties from configuration of Codenvy on-prem", response = Response.class)
+    @ApiOperation(value = "Gets Codenvy configuration properties")
     public javax.ws.rs.core.Response getCodenvyProperties() {
         try {
             Config config = configManager.loadInstalledCodenvyConfig();
@@ -710,23 +710,23 @@ public class InstallationManagerService {
         }
     }
 
-    /** Gets property value from configuration of Codenvy on-prem */
+    /** Gets specific Codenvy configuration property. */
     @GET
     @Path("codenvy/properties/{key}")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Property not found"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets property value from configuration of Codenvy on-prem")
+    @ApiOperation(value = "Gets specific Codenvy configuration property")
     public javax.ws.rs.core.Response getCodenvyProperty(@PathParam("key") String key) {
         try {
             Config config = configManager.loadInstalledCodenvyConfig();
             Map<String, String> properties = maskPrivateProperties(config.getProperties());
 
             if (properties.containsKey(key)) {
-                String value = properties.get(key);
-                return javax.ws.rs.core.Response.ok(value).build();
+                Map<String, String> m = ImmutableMap.of(key, properties.get(key));
+                return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(m)).build();
             } else {
                 throw PropertyNotFoundException.from(key);
             }
@@ -735,19 +735,18 @@ public class InstallationManagerService {
         }
     }
 
-    /** Updates property of configuration of Codenvy on-prem. */
+    /** Updates Codenvy configuration property */
     @PUT
-    @Path("codenvy/properties/{key}")
-    @Consumes("text/plain")
+    @Path("codenvy/properties")
+    @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK"),
-        @ApiResponse(code = 404, message = "Property not found"),
+            @ApiResponse(code = 201, message = "Successfully updated"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
-    public javax.ws.rs.core.Response updateCodenvyProperty(@PathParam("key") String key, String value) {
+    public javax.ws.rs.core.Response updateCodenvyProperties(Map<String, String> properties) {
         try {
-            delegate.updateArtifactConfig(CDECArtifact.NAME, key, value);
-            return javax.ws.rs.core.Response.ok().build();
+            delegate.updateArtifactConfig(CDECArtifact.NAME, properties);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
         } catch (Exception e) {
             return handleException(e);
         }

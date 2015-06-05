@@ -40,6 +40,8 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newDirectoryStream;
 import static java.nio.file.Files.newInputStream;
 
 /**
@@ -124,18 +126,20 @@ public class InjectorBootstrap {
     protected static void overrideDefaultProperties(@Nonnull String localConfDir) {
         Path confDirPath = Paths.get(localConfDir);
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(confDirPath)) {
-            for (Path entry : stream) {
-                if (!Files.isDirectory(entry)) {
-                    if (entry.toString().endsWith(".properties")) {
-                        try (InputStream in = newInputStream(entry)) {
-                            doBindFileProperties(in);
+        if (exists(confDirPath)) {
+            try (DirectoryStream<Path> stream = newDirectoryStream(confDirPath)) {
+                for (Path entry : stream) {
+                    if (!Files.isDirectory(entry)) {
+                        if (entry.toString().endsWith(".properties")) {
+                            try (InputStream in = newInputStream(entry)) {
+                                doBindFileProperties(in);
+                            }
                         }
                     }
                 }
+            } catch (IOException e) {
+                throw new IllegalStateException("Can't load properties", e);
             }
-        } catch (IOException e) {
-            throw new IllegalStateException("Can't load properties", e);
         }
     }
 }

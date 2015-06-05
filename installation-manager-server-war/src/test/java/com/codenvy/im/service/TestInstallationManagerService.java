@@ -644,14 +644,13 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetCodenvyPropertyShouldReturnOkResponse() throws Exception {
-        String key = "x";
-        String value = "y";
-        Config testConfig = new Config(ImmutableMap.of(key, value));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        Config config = new Config(ImmutableMap.of("x", "y"));
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig();
 
-        Response response = service.getCodenvyProperty(key);
-        assertOkResponse(response);
-        assertEquals(response.getEntity(), value);
+        Response response = service.getCodenvyProperty("x");
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{x=y}");
     }
 
     @Test
@@ -681,8 +680,8 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
 
         Response response = service.getCodenvyProperty(key);
-        String returnValue = (String)response.getEntity();
-        assertEquals(returnValue.equals("*****"), masked);
+        Map returnValue = (Map)response.getEntity();
+        assertEquals(returnValue.get(key), masked ? "*****" : value);
     }
 
     @DataProvider(name = "privateCodenvyPropertyMaskTest")
@@ -699,33 +698,21 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testUpdateCodenvyProperty() throws Exception {
-        String key = "x";
-        String value = "y";
+        Map<String, String> properties = ImmutableMap.of("x", "y");
 
-        Response response = service.updateCodenvyProperty(key, value);
-        assertOkResponse(response);
+        Response response = service.updateCodenvyProperties(properties);
 
-        verify(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
-    }
+        assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 
-    @Test
-    public void testUpdateNonExistedCodenvyProperty() throws Exception {
-        String key = "x";
-        String value = "y";
-        doThrow(PropertyNotFoundException.from(key)).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
-
-        Response response = service.updateCodenvyProperty(key, value);
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
-        assertEquals(response.getEntity().toString(), "{message=Property 'x' not found}");
+        verify(mockFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
     }
 
     @Test
     public void testUpdateCodenvyPropertyShouldReturnErrorResponse() throws Exception {
-        String key = "x";
-        String value = "y";
-        doThrow(new IOException("error")).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
+        Map<String, String> properties = ImmutableMap.of("x", "y");
+        doThrow(new IOException("error")).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
 
-        Response response = service.updateCodenvyProperty(key, value);
+        Response response = service.updateCodenvyProperties(properties);
         assertErrorResponse(response);
     }
 

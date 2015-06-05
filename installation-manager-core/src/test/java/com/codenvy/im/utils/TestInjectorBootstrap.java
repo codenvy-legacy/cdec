@@ -22,6 +22,7 @@ import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -65,7 +66,7 @@ public class TestInjectorBootstrap {
         return new String[][]{
             {"installation-manager.download_dir", "target/updates"},
             {"installation-manager.backup_dir", "target/backups"},
-            {"installation-manager.storage_dir", System.getProperty("user.home") + "/storage"},  // test InjectorBootstrap...replaceEnvVariables() method
+            {"installation-manager.storage_dir", "target/storage"},  // test InjectorBootstrap...replaceEnvVariables() method
             {"installation-manager.update_server_endpoint", "/update/endpoint"},
             {"api.endpoint", "/api/endpoint"},
             {"saas.api.endpoint", "/saas/api/endpoint"},

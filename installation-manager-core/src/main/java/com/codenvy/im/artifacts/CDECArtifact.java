@@ -26,7 +26,6 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -172,15 +171,10 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public void updateConfig(String property, String value) throws IOException {
+    public void updateConfig(Map<String, String> properties) throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
-        Map<String, String> configProperties = config.getProperties();
-        if (!configProperties.containsKey(property)) {
-            throw PropertyNotFoundException.from(property);
-        }
-
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        Command commands = helper.getUpdateConfigCommand(property, value, config);
+        Command commands = helper.getUpdateConfigCommand(config, properties);
         commands.execute();
     }
 

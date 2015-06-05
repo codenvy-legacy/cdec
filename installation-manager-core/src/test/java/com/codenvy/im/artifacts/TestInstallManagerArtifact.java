@@ -128,6 +128,6 @@ public class TestInstallManagerArtifact {
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testUpdateConfig() throws IOException {
-        imArtifact.updateConfig(null, null);
+        imArtifact.updateConfig(null);
     }
 }
