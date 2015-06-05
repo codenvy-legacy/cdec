@@ -206,6 +206,29 @@ public class InstallationManagerService {
     }
 
     /**
+     * Deletes downloaded artifact.
+     */
+    @DELETE
+    @Path("downloads/artifact/{artifact}/version/{version}")
+    @ApiOperation(value = "Deletes downloaded artifact")
+    @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
+                           @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
+                           @ApiResponse(code = 404, message = "Artifact not found"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response deleteDownloadedArtifact(@PathParam("artifact") @ApiParam(value = "Artifact name") String artifactName,
+                                                              @PathParam("version") @ApiParam(value = "Artifact version") String artifactVersion) {
+        try {
+            Artifact artifact = getArtifact(artifactName);
+            Version version = Version.valueOf(artifactVersion);
+
+            delegate.deleteDownloadedArtifact(artifact, version);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NO_CONTENT).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
      * Get the list of actual updates from Update Server.
      */
     @GET
@@ -568,14 +591,14 @@ public class InstallationManagerService {
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets list of the specific artifact and version properties")
     public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
-                                                           @PathParam("version") final String versionNumber) {
+                                                           @PathParam("version") final String artifactVersion) {
         try {
             Artifact artifact = getArtifact(artifactName);
             Version version;
             try {
-                version = Version.valueOf(versionNumber);
+                version = Version.valueOf(artifactVersion);
             } catch (IllegalArgumentException e) {
-                throw new ArtifactNotFoundException(artifactName, versionNumber);
+                throw new ArtifactNotFoundException(artifactName, artifactVersion);
             }
 
             Map<String, String> properties = artifact.getProperties(version);

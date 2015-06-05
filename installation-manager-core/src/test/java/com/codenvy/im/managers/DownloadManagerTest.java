@@ -38,6 +38,7 @@ import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -65,10 +66,12 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 public class DownloadManagerTest extends BaseTest {
 
@@ -538,5 +541,37 @@ public class DownloadManagerTest extends BaseTest {
         } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
 
         assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+    }
+
+    @Test
+    public void testDeleteDownloadedArtifact() throws Exception {
+        Artifact artifact = cdecArtifact;
+        Version version = Version.valueOf("1.0.1");
+
+        Path binary = Paths.get("target", "download", artifact.getName(), version.toString(), "file1");
+        Files.createDirectories(binary.getParent());
+        Files.createFile(binary);
+
+        doReturn(binary).when(downloadManager).getPathToBinaries(artifact, version);
+
+        downloadManager.deleteArtifact(artifact, version);
+        assertFalse(Files.exists(Paths.get("target", "download", artifact.getName(), version.toString())));
+    }
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Artifact codenvy:1.0.1 not found")
+    public void testDeleteDownloadedArtifactWhenBinaryNotExists() throws Exception {
+        Artifact artifact = cdecArtifact;
+        Version version = Version.valueOf("1.0.1");
+
+        Path binary = Paths.get("target", "download", artifact.getName(), version.toString(), "file1");
+        doReturn(binary).when(downloadManager).getPathToBinaries(artifact, version);
+
+        downloadManager.deleteArtifact(artifact, version);
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+        FileUtils.deleteDirectory(Paths.get("target", "download").toFile());
     }
 }

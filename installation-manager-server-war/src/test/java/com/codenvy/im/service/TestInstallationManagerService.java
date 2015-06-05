@@ -66,6 +66,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -123,7 +124,7 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
         doReturn(mockArtifact).when(service).getArtifact(anyString());
 
-        artifact = ArtifactFactory.createArtifact(ARTIFACT_NAME);
+        artifact = createArtifact(ARTIFACT_NAME);
         version = Version.valueOf(VERSION_NUMBER);
     }
 
@@ -134,7 +135,7 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
         assertTrue(result.getEntity() instanceof DownloadToken);
         assertNotNull(((DownloadToken)result.getEntity()).getId());
-        verify(mockFacade).startDownload(ArtifactFactory.createArtifact("codenvy"), version);
+        verify(mockFacade).startDownload(createArtifact("codenvy"), version);
     }
 
     @Test
@@ -269,7 +270,7 @@ public class TestInstallationManagerService extends BaseTest {
 
         doReturn(testConfigProperties).when(configManager).prepareInstallProperties(null,
                                                                                     InstallType.SINGLE_SERVER,
-                                                                                    ArtifactFactory.createArtifact(ARTIFACT_NAME),
+                                                                                    createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"));
 
         Response result = service.updateCodenvy();
@@ -751,6 +752,43 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new IOException("error")).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, key, value);
 
         Response response = service.updateCodenvyProperty(key, value);
+        assertErrorResponse(response);
+    }
+
+    @Test
+    public void testDeleteDownloadedArtifact() throws Exception {
+        doReturn(artifact).when(service).getArtifact(artifact.getName());
+
+        Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+        verify(mockFacade).deleteDownloadedArtifact(artifact, version);
+    }
+
+    @Test
+    public void testDeleteNonDownloadedArtifact() throws Exception {
+        doReturn(artifact).when(service).getArtifact(artifact.getName());
+        doThrow(new ArtifactNotFoundException(artifact, version)).when(mockFacade).deleteDownloadedArtifact(artifact, version);
+
+        Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Artifact codenvy:1.0.0 not found}");
+    }
+
+    @Test
+    public void testDeleteDownloadedArtifactWhenVersionIsIncorrect() throws Exception {
+        doReturn(artifact).when(service).getArtifact(artifact.getName());
+
+        Response response = service.deleteDownloadedArtifact(artifact.getName(), "incorrect");
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Illegal version 'incorrect'}");
+    }
+
+    @Test
+    public void testDeleteDownloadedArtifactShouldReturnErrorResponse() throws Exception {
+        doReturn(artifact).when(service).getArtifact(artifact.getName());
+        doThrow(new IOException("error")).when(mockFacade).deleteDownloadedArtifact(artifact, version);
+
+        Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
         assertErrorResponse(response);
     }
 

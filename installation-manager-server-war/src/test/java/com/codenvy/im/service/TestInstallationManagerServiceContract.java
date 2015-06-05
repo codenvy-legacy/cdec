@@ -84,8 +84,6 @@ public class TestInstallationManagerServiceContract {
     public  ConfigManager           configManager;
     @Mock
     public  SaasUserCredentials     saasUserCredentials;
-    @Mock
-    private Artifact                mockArtifact;
 
     public InstallationManagerService service;
 
@@ -628,7 +626,7 @@ public class TestInstallationManagerServiceContract {
         testContract(
             "storage/properties/a",                           // path
             null,                                             // query parameters
-            "b",                                              // request body
+            null,                                             // request body
             null,                                             // consume content type
             null,                                             // produce content type
             HttpMethod.DELETE,                                // HTTP method
@@ -779,6 +777,33 @@ public class TestInstallationManagerServiceContract {
         );
     }
 
+    @Test
+    public void testDeleteDownload() {
+        testContract(
+            "downloads/artifact/codenvy/version/1.0.0",       // path
+            null,                                             // query parameters
+            null,                                             // request body
+            null,                                             // consume content type
+            null,                                             // produce content type
+            HttpMethod.DELETE,                                // HTTP method
+            null,                                             // response body
+            Response.Status.NO_CONTENT,                       // response status
+            null,                                             // before test
+            new Function<Object, Object>() {
+                @Nullable
+                @Override
+                public Object apply(@Nullable Object o) {
+                    try {
+                        verify(facade).deleteDownloadedArtifact(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
+                    return null;
+                }
+            }                                                 // assertion
+        );
+    }
+
     private void testContract(String path,
                              Map<String, String> queryParameters,
                              String body,
@@ -835,7 +860,6 @@ public class TestInstallationManagerServiceContract {
             assertion.apply(null);
         }
     }
-
 
     private void assertResponse(com.jayway.restassured.response.Response response,
                                 ContentType PRODUCE_CONTENT_TYPE,

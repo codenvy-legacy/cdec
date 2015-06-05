@@ -462,7 +462,12 @@ public class InstallationManagerFacade {
         doUpdateArtifactConfig(artifact, property, value);
     }
 
+    public void deleteDownloadedArtifact(Artifact artifact, Version version) throws IOException {
+        downloadManager.deleteArtifact(artifact, version);
+    }
+
     protected void doUpdateArtifactConfig(Artifact artifact, String property, String value) throws IOException {
         artifact.updateConfig(property, value);
     }
+
 }
