@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
@@ -66,7 +67,7 @@ public class TestInjectorBootstrap {
         return new String[][]{
             {"installation-manager.download_dir", "target/updates"},
             {"installation-manager.backup_dir", "target/backups"},
-            {"installation-manager.storage_dir", "target/storage"},  // test InjectorBootstrap...replaceEnvVariables() method
+            {"installation-manager.storage_dir", "target/storage"},
             {"installation-manager.update_server_endpoint", "/update/endpoint"},
             {"api.endpoint", "/api/endpoint"},
             {"saas.api.endpoint", "/saas/api/endpoint"},
@@ -81,7 +82,8 @@ public class TestInjectorBootstrap {
         InjectorBootstrap.overrideDefaultProperties(newPropertiesDirectory);
 
         assertEquals(InjectorBootstrap.boundProperties.get("installation-manager.download_dir"), "target/updates");
-        assertEquals(InjectorBootstrap.boundProperties.get("installation-manager.update_server_endpoint"), "another/update/endpoint");
+        assertEquals(InjectorBootstrap.boundProperties.get("installation-manager.update_server_endpoint"),
+                     format("%s/update/endpoint", System.getProperty("user.home"))); // test InjectorBootstrap...replaceEnvVariables() method
     }
 
 }

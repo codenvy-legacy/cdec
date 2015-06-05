@@ -18,6 +18,7 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -31,7 +32,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
+import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +64,7 @@ import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.valueOf;
+import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.delete;
@@ -240,7 +242,7 @@ public class DownloadManager {
     protected void checkEnoughDiskSpace(long requiredSize) throws IOException {
         long freeSpace = downloadDir.toFile().getFreeSpace();
         if (freeSpace < requiredSize) {
-            throw new IOException(String.format("Not enough disk space. Required %d bytes but available only %d bytes", requiredSize, freeSpace));
+            throw new IOException(format("Not enough disk space. Required %d bytes but available only %d bytes", requiredSize, freeSpace));
         }
     }
 
@@ -452,8 +454,23 @@ public class DownloadManager {
 
     /** Remove binaries of already downloaded artifact */
     public void deleteArtifact(Artifact artifact, Version version) throws IOException {
-        Path pathToBinary = getPathToBinaries(artifact, version);
+        List<DownloadArtifactInfo> downloadArtifactInfo = null;
+        try {
+            downloadArtifactInfo = getDownloadProgress().getArtifacts();
+        } catch (DownloadNotStartedException e) {
+            // don't take into account this exception
+        }
 
+        if (downloadArtifactInfo != null) {
+            for (DownloadArtifactInfo info : downloadArtifactInfo) {
+                if (info.getArtifact().equals(artifact.getName())
+                    && info.getVersion().equals(version.toString())) {
+                    throw new IllegalStateException(format("Artifact '%s' version '%s' is being downloaded.", artifact.getName(), version.toString()));
+                }
+            }
+        }
+
+        Path pathToBinary = getPathToBinaries(artifact, version);
         if (!Files.exists(pathToBinary)) {
             throw new ArtifactNotFoundException(artifact, version);
         }

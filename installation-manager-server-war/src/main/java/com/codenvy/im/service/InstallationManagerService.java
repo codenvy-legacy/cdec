@@ -214,10 +214,11 @@ public class InstallationManagerService {
     @ApiOperation(value = "Deletes downloaded artifact")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
+
                            @ApiResponse(code = 404, message = "Artifact not found"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response deleteDownloadedArtifact(@PathParam("artifact") @ApiParam(value = "Artifact name") String artifactName,
-                                                              @PathParam("version") @ApiParam(value = "Artifact version") String artifactVersion) {
+    public javax.ws.rs.core.Response deleteDownloadedArtifact(@PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,
+                                                              @PathParam("version") @ApiParam(value = "Artifact version") final String artifactVersion) {
         try {
             Artifact artifact = getArtifact(artifactName);
             Version version = Version.valueOf(artifactVersion);
@@ -447,7 +448,7 @@ public class InstallationManagerService {
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response backup(@DefaultValue(CDECArtifact.NAME)
                                             @QueryParam(value = "artifact")
-                                            @ApiParam(allowableValues = "codenvy") String artifactName) {
+                                            @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName) {
 
         try {
             BackupConfig config = new BackupConfig();
@@ -472,7 +473,7 @@ public class InstallationManagerService {
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response restore(@DefaultValue(CDECArtifact.NAME)
                                              @QueryParam(value = "artifact")
-                                             @ApiParam(allowableValues = "codenvy") String artifactName,
+                                             @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName,
                                              @QueryParam(value = "backupFile")
                                              @ApiParam(value = "path to backup file", required = true)
                                              String backupFile) throws IOException {
@@ -763,7 +764,7 @@ public class InstallationManagerService {
     @Path("codenvy/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successfully updated"),
+        @ApiResponse(code = 201, message = "Successfully updated"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
     public javax.ws.rs.core.Response updateCodenvyProperties(Map<String, String> properties) {

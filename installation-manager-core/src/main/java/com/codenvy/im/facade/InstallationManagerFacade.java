@@ -568,12 +568,12 @@ public class InstallationManagerFacade {
         doUpdateArtifactConfig(artifact, properties);
     }
 
-    public void deleteDownloadedArtifact(Artifact artifact, Version version) throws IOException {
-        downloadManager.deleteArtifact(artifact, version);
+    protected void doUpdateArtifactConfig(Artifact artifact, Map<String, String> properties) throws IOException {
+        artifact.updateConfig(properties);
     }
 
-    protected void doUpdateArtifactConfig(Artifact artifact, String property, String value) throws IOException {
-        artifact.updateConfig(property, value);
+    public void deleteDownloadedArtifact(Artifact artifact, Version version) throws IOException {
+        downloadManager.deleteArtifact(artifact, version);
     }
 
 }

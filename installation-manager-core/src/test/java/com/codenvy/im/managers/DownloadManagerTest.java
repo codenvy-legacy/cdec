@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -63,6 +64,7 @@ import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -559,7 +561,6 @@ public class DownloadManagerTest extends BaseTest {
         doReturn("[\"2.0.1\"]").when(transport).doGet(endsWith("updates/codenvy"));
 
         Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact, null);
-
         assertEquals(updates.size(), 1);
     }
 
@@ -576,6 +577,27 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.deleteArtifact(artifact, version);
         assertFalse(Files.exists(Paths.get("target", "download", artifact.getName(), version.toString())));
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded.")
+    public void testDeleteDownloadingArtifact() throws Exception {
+        Artifact artifact = cdecArtifact;
+        Version version = Version.valueOf("1.0.1");
+
+        Path binary = Paths.get("target", "download", artifact.getName(), version.toString(), "file1");
+        doReturn(binary).when(downloadManager).getPathToBinaries(artifact, version);
+
+        DownloadArtifactInfo mockDownloadArtifactInfo = mock(DownloadArtifactInfo.class);
+        doReturn(artifact.getName()).when(mockDownloadArtifactInfo).getArtifact();
+        doReturn(version.toString()).when(mockDownloadArtifactInfo).getVersion();
+
+        DownloadProgressDescriptor mockDownloadProgressDescriptor = mock(DownloadProgressDescriptor.class);
+        doReturn(Arrays.asList(mockDownloadArtifactInfo)).when(mockDownloadProgressDescriptor).getArtifacts();
+
+        doReturn(mockDownloadProgressDescriptor).when(downloadManager).getDownloadProgress();
+
+        downloadManager.deleteArtifact(artifact, version);
     }
 
     @Test(expectedExceptions = ArtifactNotFoundException.class,
