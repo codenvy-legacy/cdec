@@ -59,6 +59,7 @@ import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
+import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -251,6 +252,41 @@ public class InstallationManagerFacade {
                 return info;
             }
         }).toList();
+    }
+
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#getAllUpdates
+     */
+    public Collection<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
+        Version installedVersion = artifact.getInstalledVersion();
+        Collection<Map.Entry<Artifact, Version>> allUpdates = downloadManager.getAllUpdates(artifact, installedVersion);
+
+        Set<UpdatesArtifactInfo> infos = new TreeSet<>();
+
+        infos.addAll(FluentIterable.from(allUpdates).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactInfo>() {
+            @Override
+            public UpdatesArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
+                Artifact artifact = entry.getKey();
+                Version version = entry.getValue();
+
+                UpdatesArtifactInfo info = new UpdatesArtifactInfo();
+                info.setArtifact(artifact.getName());
+                info.setVersion(version.toString());
+                try {
+                    if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
+                        info.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+                    } else {
+                        info.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+                    }
+                } catch (IOException e) {
+                    // simply ignore
+                }
+
+                return info;
+            }
+        }).toList());
+
+        return infos;
     }
 
     /**

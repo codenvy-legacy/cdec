@@ -196,7 +196,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetUpdatesShouldReturnOkStatus() throws Exception {
-        doReturn(Collections.emptyList()).when(mockFacade).getUpdates();
+        doReturn(Collections.emptyList()).when(mockFacade).getAllUpdates(any(Artifact.class));
 
         Response result = service.getUpdates();
 
@@ -205,7 +205,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGeUpdatesShouldReturnErrorStatus() throws Exception {
-        doThrow(new IOException("error")).when(mockFacade).getUpdates();
+        doThrow(new IOException("error")).when(mockFacade).getAllUpdates(any(Artifact.class));
 
         Response result = service.getUpdates();
 

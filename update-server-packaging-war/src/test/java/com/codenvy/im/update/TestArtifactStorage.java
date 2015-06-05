@@ -18,6 +18,7 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.utils.Version;
 
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.BeforeTest;
@@ -32,6 +33,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Properties;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
@@ -213,5 +215,17 @@ public class TestArtifactStorage extends BaseTest {
     @Test(expectedExceptions = ArtifactNotFoundException.class)
     public void testDownloadThrowExceptionIfPropertiesAbsent() throws Exception {
         artifactStorage.download("installation-manager", "1.0.1");
+    }
+
+    @Test
+    public void testGetVersions() throws Exception {
+        Files.createDirectories(artifactStorage.getArtifactDir("codenvy", "1.0.1"));
+        Files.createDirectories(artifactStorage.getArtifactDir("codenvy", "1.0.2"));
+        Files.createDirectories(artifactStorage.getArtifactDir("codenvy", "1.0.3"));
+
+        Collection<Version> versions = artifactStorage.getVersions("codenvy", "1.0.2");
+
+        assertEquals(versions.size(), 1);
+        assertEquals(versions.iterator().next(), Version.valueOf("1.0.3"));
     }
 }

@@ -55,6 +55,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -418,6 +420,34 @@ public class TestInstallationManagerFacade extends BaseTest {
         assertEquals(info.getArtifact(), cdecArtifact.getName());
         assertEquals(info.getVersion(), version100.toString());
     }
+
+    @Test
+    public void testAllGetUpdates() throws Exception {
+        doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
+            add(new AbstractMap.SimpleEntry<>(cdecArtifact, Version.valueOf("1.0.1")));
+            add(new AbstractMap.SimpleEntry<>(cdecArtifact, Version.valueOf("1.0.2")));
+        }}).when(downloadManager).getAllUpdates(cdecArtifact, null);
+
+        doReturn(new TreeMap<Version, Path>() {{
+            put(Version.valueOf("1.0.1"), Paths.get("file1"));
+        }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
+
+        Collection<UpdatesArtifactInfo> updates = installationManagerFacade.getAllUpdates(cdecArtifact);
+        assertEquals(updates.size(), 2);
+
+        Iterator<UpdatesArtifactInfo> iter = updates.iterator();
+
+        UpdatesArtifactInfo info = iter.next();
+        assertEquals(info.getVersion(), "1.0.2");
+        assertEquals(info.getArtifact(), cdecArtifact.getName());
+        assertEquals(info.getStatus(), UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+
+        info = iter.next();
+        assertEquals(info.getVersion(), "1.0.1");
+        assertEquals(info.getArtifact(), cdecArtifact.getName());
+        assertEquals(info.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+    }
+
 
     @Test
     public void testHasValidSaaSSubscription() throws Exception {

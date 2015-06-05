@@ -33,6 +33,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.TreeSet;
 
@@ -75,6 +77,24 @@ public class ArtifactStorage {
         }
 
         return versions.last().toString();
+    }
+
+    /**
+     * @return available artifact versions beginning from the given one, excluded
+     */
+    public Collection<Version> getVersions(String artifact, String fromVersionNumber) throws IOException {
+        Version fromVersion = Version.valueOf(fromVersionNumber);
+        Path dir = getArtifactDir(artifact);
+
+        TreeSet<Version> versions = getVersionsList(dir);
+        Iterator<Version> iter = versions.iterator();
+        while (iter.hasNext()) {
+            Version version = iter.next();
+            if (fromVersion.compareTo(version) >= 0) {
+                iter.remove();
+            }
+        }
+        return versions;
     }
 
     /**
