@@ -41,7 +41,7 @@ public class DownloadArtifactInfo extends BasicArtifactInfo {
     public DownloadArtifactInfo(Artifact artifact, Version version, Path file, DownloadArtifactStatus status) {
         this.artifact = artifact.getName();
         this.version = version.toString();
-        this.file = file.toString();
+        this.file = (file != null) ? file.toString() : null;
         this.status = status;
     }
 

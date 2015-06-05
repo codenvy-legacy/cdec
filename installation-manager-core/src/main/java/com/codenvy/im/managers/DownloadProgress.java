@@ -38,6 +38,7 @@ import static java.nio.file.Files.size;
  *
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 public class DownloadProgress {
 
@@ -47,6 +48,8 @@ public class DownloadProgress {
     private final AtomicReference<DownloadArtifactStatus> status;
     private final String uuid;
     private final Thread                                  downloadThread;
+
+    private DownloadArtifactInfo downloadingArtifactInfo;
 
     public DownloadProgress(Map<Path, Long> artifacts) {
         this.downloadThread = Thread.currentThread();
@@ -119,5 +122,14 @@ public class DownloadProgress {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public DownloadArtifactInfo getDownloadingArtifactInfo() {
+        return downloadingArtifactInfo;
+    }
+
+    public DownloadProgress setDownloadingArtifactInfo(DownloadArtifactInfo downloadingArtifactInfo) {
+        this.downloadingArtifactInfo = downloadingArtifactInfo;
+        return this;
     }
 }

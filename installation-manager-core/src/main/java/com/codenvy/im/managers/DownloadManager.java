@@ -75,6 +75,7 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 @Singleton
 public class DownloadManager {
@@ -86,7 +87,7 @@ public class DownloadManager {
     private final Path          downloadDir;
     private final Set<Artifact> artifacts;
 
-    private DownloadProgress downloadProgress;
+    protected DownloadProgress downloadProgress;
 
     @Inject
     public DownloadManager(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
@@ -184,12 +185,18 @@ public class DownloadManager {
                 Version verToDownload = e.getValue();
 
                 try {
+                    DownloadArtifactInfo downloadingArtifactDesc = new DownloadArtifactInfo(artToDownload,
+                                                                                            verToDownload,
+                                                                                            DownloadArtifactStatus.DOWNLOADING);
+                    downloadProgress.setDownloadingArtifactInfo(downloadingArtifactDesc);
+
                     Path pathToBinaries = download(artToDownload, verToDownload);
-                    DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
+
+                    DownloadArtifactInfo downloadedArtifactDesc = new DownloadArtifactInfo(artToDownload,
                                                                                          verToDownload,
                                                                                          pathToBinaries,
                                                                                          DownloadArtifactStatus.DOWNLOADED);
-                    downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
+                    downloadProgress.addDownloadedArtifact(downloadedArtifactDesc);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
@@ -198,6 +205,8 @@ public class DownloadManager {
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                     downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, exp);
                     return;
+                } finally {
+                    downloadProgress.setDownloadingArtifactInfo(null);
                 }
             }
 
@@ -452,21 +461,14 @@ public class DownloadManager {
         downloadProgress = new DownloadProgress(m);
     }
 
-    /** Remove binaries of already downloaded artifact */
+    /** Delete binaries of already downloaded artifact */
     public void deleteArtifact(Artifact artifact, Version version) throws IOException {
-        List<DownloadArtifactInfo> downloadArtifactInfo = null;
-        try {
-            downloadArtifactInfo = getDownloadProgress().getArtifacts();
-        } catch (DownloadNotStartedException e) {
-            // don't take into account this exception
-        }
-
-        if (downloadArtifactInfo != null) {
-            for (DownloadArtifactInfo info : downloadArtifactInfo) {
-                if (info.getArtifact().equals(artifact.getName())
-                    && info.getVersion().equals(version.toString())) {
-                    throw new IllegalStateException(format("Artifact '%s' version '%s' is being downloaded.", artifact.getName(), version.toString()));
-                }
+        if (downloadProgress != null) {
+            DownloadArtifactInfo info = downloadProgress.getDownloadingArtifactInfo();
+            if (info != null
+                && info.getArtifact().equals(artifact.getName())
+                && info.getVersion().equals(version.toString())) {
+                throw new IllegalStateException(format("Artifact '%s' version '%s' is being downloaded and cannot be deleted.", artifact.getName(), version.toString()));
             }
         }
 

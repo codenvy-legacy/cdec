@@ -64,4 +64,6 @@ public class DownloadProgressDescriptorTest extends BaseTest {
                                                                  "  \"status\" : \"DOWNLOADED\"\n" +
                                                                  "}");
     }
+
+
 }

@@ -49,6 +49,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -100,6 +102,7 @@ public class DownloadManagerTest extends BaseTest {
                                                   DOWNLOAD_DIR,
                                                   transport,
                                                   ImmutableSet.<Artifact>of(cdecArtifact, installManagerArtifact)));
+        downloadManager.downloadProgress = null;
 
         saasUserCredentials = new SaasUserCredentials("auth token", "accountId");
         pathCDEC = Paths.get("./target/cdec.zip");
@@ -333,8 +336,15 @@ public class DownloadManagerTest extends BaseTest {
 
         DownloadProgressDescriptor info;
         do {
-            sleep(100); // due to async request, wait a bit to get proper download status
+            sleep(1); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
+            if (info.getStatus() == DownloadArtifactStatus.DOWNLOADING) {
+                DownloadArtifactInfo downloadingArtifactInfo = downloadManager.downloadProgress.getDownloadingArtifactInfo();
+                assertNotNull(downloadingArtifactInfo);
+                assertEquals(downloadingArtifactInfo.getArtifact(), cdecArtifact.getName());
+                assertEquals(downloadingArtifactInfo.getVersion(), cdecVersion.toString());
+            }
+
         } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
 
         assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
@@ -580,7 +590,7 @@ public class DownloadManagerTest extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded.")
+          expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded and cannot be deleted.")
     public void testDeleteDownloadingArtifact() throws Exception {
         Artifact artifact = cdecArtifact;
         Version version = Version.valueOf("1.0.1");
@@ -592,10 +602,8 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(artifact.getName()).when(mockDownloadArtifactInfo).getArtifact();
         doReturn(version.toString()).when(mockDownloadArtifactInfo).getVersion();
 
-        DownloadProgressDescriptor mockDownloadProgressDescriptor = mock(DownloadProgressDescriptor.class);
-        doReturn(Arrays.asList(mockDownloadArtifactInfo)).when(mockDownloadProgressDescriptor).getArtifacts();
-
-        doReturn(mockDownloadProgressDescriptor).when(downloadManager).getDownloadProgress();
+        DownloadProgress testDownloadProgress = new DownloadProgress(new HashMap<Path, Long>()).setDownloadingArtifactInfo(mockDownloadArtifactInfo);
+        downloadManager.downloadProgress = testDownloadProgress;
 
         downloadManager.deleteArtifact(artifact, version);
     }
