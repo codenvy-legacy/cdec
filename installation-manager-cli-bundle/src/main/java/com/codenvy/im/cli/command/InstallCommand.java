@@ -26,7 +26,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
-import com.codenvy.im.response.InstallResult;
+import com.codenvy.im.response.InstallResponse;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
@@ -152,9 +152,9 @@ public class InstallCommand extends AbstractIMCommand {
         installArtifactInfo.setVersion(versionNumber);
         installArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
 
-        InstallResult installResult = new InstallResult();
-        installResult.setStatus(ResponseCode.OK);
-        installResult.setArtifacts(ImmutableList.of(installArtifactInfo));
+        InstallResponse installResponse = new InstallResponse();
+        installResponse.setStatus(ResponseCode.OK);
+        installResponse.setArtifacts(ImmutableList.of(installArtifactInfo));
 
 
         for (int step = firstStep; step <= lastStep; step++) {
@@ -175,13 +175,13 @@ public class InstallCommand extends AbstractIMCommand {
                     }
                 } catch (Exception e) {
                     installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
-                    installResult.setStatus(ResponseCode.ERROR);
-                    installResult.setMessage(e.getMessage());
+                    installResponse.setStatus(ResponseCode.ERROR);
+                    installResponse.setMessage(e.getMessage());
                 }
 
-                if (installResult.getStatus() == ResponseCode.ERROR) {
+                if (installResponse.getStatus() == ResponseCode.ERROR) {
                     console.printError(" [FAIL]", true);
-                    console.printErrorAndExit(toJson(installResult));
+                    console.printErrorAndExit(toJson(installResponse));
                     return null;
                 } else {
                     console.printSuccessWithoutCodenvyPrompt(" [OK]");
@@ -193,7 +193,7 @@ public class InstallCommand extends AbstractIMCommand {
 
         // only OK response can be here
         if (lastStep == finalStep) {
-            console.println(toJson(installResult));
+            console.println(toJson(installResponse));
 
             if (isInteractive() && artifactName.equals(InstallManagerArtifact.NAME)) {
                 console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
@@ -206,10 +206,10 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
         Collection<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
-        InstallResult installResult = new InstallResult();
-        installResult.setArtifacts(installedVersions);
-        installResult.setStatus(ResponseCode.OK);
-        console.printResponse(installResult);
+        InstallResponse installResponse = new InstallResponse();
+        installResponse.setArtifacts(installedVersions);
+        installResponse.setStatus(ResponseCode.OK);
+        console.printResponse(installResponse);
         return null;
     }
 

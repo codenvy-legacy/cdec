@@ -24,10 +24,10 @@ import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
-import com.codenvy.im.response.DownloadResult;
+import com.codenvy.im.response.DownloadResponse;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesResult;
+import com.codenvy.im.response.UpdatesResponse;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 
@@ -88,11 +88,11 @@ public class DownloadCommand extends AbstractIMCommand {
 
         for (; ; ) {
             DownloadProgressDescriptor downloadProgressDescriptor = facade.getDownloadProgress();
-            DownloadResult downloadResult = new DownloadResult(downloadProgressDescriptor);
+            DownloadResponse downloadResponse = new DownloadResponse(downloadProgressDescriptor);
 
             if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED) {
                 console.cleanCurrentLine();
-                console.printErrorAndExit(toJson(downloadResult));
+                console.printErrorAndExit(toJson(downloadResponse));
                 break;
             }
 
@@ -111,9 +111,9 @@ public class DownloadCommand extends AbstractIMCommand {
             if (downloadProgressDescriptor.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
                 if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
-                    console.printErrorAndExit(toJson(downloadResult));
+                    console.printErrorAndExit(toJson(downloadResponse));
                 } else {
-                    console.println(toJson(downloadResult));
+                    console.println(toJson(downloadResponse));
                 }
                 break;
             }
@@ -122,10 +122,10 @@ public class DownloadCommand extends AbstractIMCommand {
 
     private void doCheck() throws JsonParseException, IOException {
         Collection<UpdatesArtifactInfo> updates = facade.getUpdates();
-        UpdatesResult updatesResult = new UpdatesResult();
-        updatesResult.setArtifacts(updates);
-        updatesResult.setStatus(ResponseCode.OK);
-        console.printResponse(updatesResult);
+        UpdatesResponse updatesResponse = new UpdatesResponse();
+        updatesResponse.setArtifacts(updates);
+        updatesResponse.setStatus(ResponseCode.OK);
+        console.printResponse(updatesResponse);
     }
 
     private void doList() throws JsonParseException, IOException {
@@ -134,10 +134,10 @@ public class DownloadCommand extends AbstractIMCommand {
 
         Collection<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
 
-        DownloadResult downloadResult = new DownloadResult();
-        downloadResult.setStatus(ResponseCode.OK);
-        downloadResult.setArtifacts(downloads);
+        DownloadResponse downloadResponse = new DownloadResponse();
+        downloadResponse.setStatus(ResponseCode.OK);
+        downloadResponse.setArtifacts(downloads);
 
-        console.printResponse(downloadResult);
+        console.printResponse(downloadResponse);
     }
 }

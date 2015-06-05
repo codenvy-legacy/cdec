@@ -24,13 +24,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"node", "message", "status"})
-public class NodeManagerResult implements Response {
+public class NodeManagerResponse implements Response {
 
     private ResponseCode status;
     private String       message;
     private NodeInfo     node;
 
-    public NodeManagerResult() {
+    public NodeManagerResponse() {
     }
 
     public ResponseCode getStatus() {

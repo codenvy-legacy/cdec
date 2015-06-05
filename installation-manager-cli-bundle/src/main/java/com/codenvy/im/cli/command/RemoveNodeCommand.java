@@ -18,7 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.NodeManagerResult;
+import com.codenvy.im.response.NodeManagerResponse;
 import com.codenvy.im.response.ResponseCode;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -41,11 +41,11 @@ public class RemoveNodeCommand extends AbstractIMCommand {
 
                 NodeInfo nodeInfo = facade.removeNode(dns);
 
-                NodeManagerResult nodeManagerResult = new NodeManagerResult();
-                nodeManagerResult.setStatus(ResponseCode.OK);
-                nodeManagerResult.setNode(nodeInfo);
+                NodeManagerResponse nodeManagerResponse = new NodeManagerResponse();
+                nodeManagerResponse.setStatus(ResponseCode.OK);
+                nodeManagerResponse.setNode(nodeInfo);
 
-                console.printResponse(nodeManagerResult);
+                console.printResponse(nodeManagerResponse);
             } finally {
                 console.hideProgressor();
             }

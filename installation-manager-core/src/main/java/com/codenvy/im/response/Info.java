@@ -23,3 +23,4 @@ package com.codenvy.im.response;
  */
 public interface Info {
 }
+

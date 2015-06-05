@@ -33,7 +33,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Anatoliy Bazko
  */
-public class DownloadResultTest extends BaseTest {
+public class DownloadResponseTest extends BaseTest {
 
     @Test
     public void testToJson() throws Exception {
@@ -43,7 +43,7 @@ public class DownloadResultTest extends BaseTest {
         downloadArtifactInfo.setArtifact("codenvy");
         downloadArtifactInfo.setVersion("1.0.1");
 
-        DownloadResult actualDescriptor = new DownloadResult();
+        DownloadResponse actualDescriptor = new DownloadResponse();
         actualDescriptor.setArtifacts(ImmutableList.of(downloadArtifactInfo));
         actualDescriptor.setMessage("error");
         actualDescriptor.setStatus(ResponseCode.OK);
@@ -60,7 +60,7 @@ public class DownloadResultTest extends BaseTest {
                            "  \"status\" : \"OK\"\n" +
                            "}");
 
-        assertEquals(Commons.fromJson(json, DownloadResult.class), actualDescriptor);
+        assertEquals(Commons.fromJson(json, DownloadResponse.class), actualDescriptor);
     }
 
     @Test
@@ -72,13 +72,13 @@ public class DownloadResultTest extends BaseTest {
 
         DownloadProgressDescriptor
                 downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED, 100, ImmutableList.of(artifactInfo));
-        DownloadResult downloadResult = new DownloadResult(downloadProgressDescriptor);
+        DownloadResponse downloadResponse = new DownloadResponse(downloadProgressDescriptor);
 
-        assertEquals(downloadResult.getStatus(), ResponseCode.OK);
+        assertEquals(downloadResponse.getStatus(), ResponseCode.OK);
 
         downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED, 100, ImmutableList.of(artifactInfo));
-        downloadResult = new DownloadResult(downloadProgressDescriptor);
+        downloadResponse = new DownloadResponse(downloadProgressDescriptor);
 
-        assertEquals(downloadResult.getStatus(), ResponseCode.ERROR);
+        assertEquals(downloadResponse.getStatus(), ResponseCode.ERROR);
     }
 }

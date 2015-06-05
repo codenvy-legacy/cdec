@@ -15,47 +15,56 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-
 package com.codenvy.im.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ * Is used when downloading is finished.
+ * No progress info, just a final result as {@link com.codenvy.im.response.ResponseCode}
+ *
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "message", "status"})
-public class UpdatesResult implements Response {
+public class DownloadResponse implements Response {
 
-    private ResponseCode              status;
-    private String                    message;
-    private Collection<UpdatesArtifactInfo> artifacts;
+    private ResponseCode               status;
+    private String                     message;
+    private Collection<DownloadArtifactInfo> artifacts;
 
-    public UpdatesResult() {
+    public DownloadResponse() {
+    }
+
+    public DownloadResponse(DownloadProgressDescriptor downloadProgressDescriptor) {
+        this.artifacts = new ArrayList<>(downloadProgressDescriptor.getArtifacts());
+        this.status = downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED ? ResponseCode.ERROR : ResponseCode.OK;
+        this.message = downloadProgressDescriptor.getMessage();
     }
 
     public ResponseCode getStatus() {
         return status;
     }
 
-    public void setStatus(ResponseCode status) {
-        this.status = status;
-    }
-
     public String getMessage() {
         return message;
+    }
+
+    public Collection<DownloadArtifactInfo> getArtifacts() {
+        return artifacts;
+    }
+
+    public void setStatus(ResponseCode status) {
+        this.status = status;
     }
 
     public void setMessage(String message) {
         this.message = message;
     }
 
-    public Collection<UpdatesArtifactInfo> getArtifacts() {
-        return artifacts;
-    }
-
-    public void setArtifacts(Collection<UpdatesArtifactInfo> artifacts) {
+    public void setArtifacts(Collection<DownloadArtifactInfo> artifacts) {
         this.artifacts = artifacts;
     }
 
@@ -63,9 +72,9 @@ public class UpdatesResult implements Response {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UpdatesResult)) return false;
+        if (!(o instanceof DownloadResponse)) return false;
 
-        UpdatesResult that = (UpdatesResult)o;
+        DownloadResponse that = (DownloadResponse)o;
 
         if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) return false;
         if (message != null ? !message.equals(that.message) : that.message != null) return false;

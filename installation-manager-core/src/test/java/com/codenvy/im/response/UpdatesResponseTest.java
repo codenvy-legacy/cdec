@@ -30,21 +30,21 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Anatoliy Bazko
  */
-public class InstallResultTest {
+public class UpdatesResponseTest {
 
     @Test
     public void test() throws Exception {
-        InstallResult result = new InstallResult();
-        result.setStatus(ResponseCode.OK);
-        result.setMessage("msg");
-        result.setArtifacts(Collections.<InstallArtifactInfo>emptyList());
+        UpdatesResponse result = new UpdatesResponse();
+        result.setStatus(ResponseCode.ERROR);
+        result.setMessage("error");
+        result.setArtifacts(Collections.<UpdatesArtifactInfo>emptyList());
 
         String json = toJson(result);
         assertEquals(json, "{\n" +
                            "  \"artifacts\" : [ ],\n" +
-                           "  \"message\" : \"msg\",\n" +
-                           "  \"status\" : \"OK\"\n" +
+                           "  \"message\" : \"error\",\n" +
+                           "  \"status\" : \"ERROR\"\n" +
                            "}");
-        assertEquals(fromJson(json, InstallResult.class), result);
+        assertEquals(fromJson(json, UpdatesResponse.class), result);
     }
 }
