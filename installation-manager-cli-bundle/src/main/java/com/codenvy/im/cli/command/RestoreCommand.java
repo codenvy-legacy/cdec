@@ -20,7 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.BackupResult;
+import com.codenvy.im.response.BackupResponse;
 import com.codenvy.im.response.ResponseCode;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -49,11 +49,11 @@ public class RestoreCommand extends AbstractIMCommand {
 
             BackupInfo backupInfo = facade.restore(config);
 
-            BackupResult backupResult = new BackupResult();
-            backupResult.setBackup(backupInfo);
-            backupResult.setStatus(ResponseCode.OK);
+            BackupResponse backupResponse = new BackupResponse();
+            backupResponse.setBackup(backupInfo);
+            backupResponse.setStatus(ResponseCode.OK);
 
-            console.printResponse(backupResult);
+            console.printResponse(backupResponse);
         } finally {
             console.hideProgressor();
         }

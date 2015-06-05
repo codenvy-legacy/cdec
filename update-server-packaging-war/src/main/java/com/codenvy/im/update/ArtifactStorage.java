@@ -18,12 +18,14 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -82,16 +84,19 @@ public class ArtifactStorage {
     /**
      * @return available artifact versions beginning from the given one, excluded
      */
-    public Collection<Version> getVersions(String artifact, String fromVersionNumber) throws IOException {
-        Version fromVersion = Version.valueOf(fromVersionNumber);
+    public Collection<Version> getVersions(String artifact, @Nullable String fromVersionNumber) throws IOException {
+        Version fromVersion = Commons.createVersionOrNull(fromVersionNumber);
         Path dir = getArtifactDir(artifact);
 
         TreeSet<Version> versions = getVersionsList(dir);
-        Iterator<Version> iter = versions.iterator();
-        while (iter.hasNext()) {
-            Version version = iter.next();
-            if (fromVersion.compareTo(version) >= 0) {
-                iter.remove();
+
+        if (fromVersion != null) {
+            Iterator<Version> iter = versions.iterator();
+            while (iter.hasNext()) {
+                Version version = iter.next();
+                if (fromVersion.compareTo(version) >= 0) {
+                    iter.remove();
+                }
             }
         }
         return versions;
@@ -103,6 +108,7 @@ public class ArtifactStorage {
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
+
     public void upload(final InputStream in, String artifact, String version, String fileName, Properties props) throws IOException {
         props.put(FILE_NAME_PROPERTY, fileName);
         props.put(VERSION_PROPERTY, version);

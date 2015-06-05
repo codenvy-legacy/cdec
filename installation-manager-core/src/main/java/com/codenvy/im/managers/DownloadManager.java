@@ -367,7 +367,7 @@ public class DownloadManager {
     public Collection<Map.Entry<Artifact, Version>> getAllUpdates(@Nonnull final Artifact artifact,
                                                                   @Nullable Version fromVersion) throws IOException, JsonParseException {
 
-        String requestUrl = combinePaths(updateEndpoint, "updates/" + artifact + (fromVersion == null ? ""
+        String requestUrl = combinePaths(updateEndpoint, "repository/updates/" + artifact + (fromVersion == null ? ""
                                                                                                       : "?fromVersion=" + fromVersion.toString()));
         List<String> l = fromJson(transport.doGet(requestUrl), List.class);
         return FluentIterable.from(l).transform(new Function<String, Map.Entry<Artifact, Version>>() {

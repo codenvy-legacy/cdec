@@ -39,6 +39,8 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.commons.json.JsonParseException;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -113,6 +115,14 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
         Collection<ArtifactInfo> artifacts = super.getArtifacts();
         setVersionLabel(artifacts);
         return artifacts;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Collection<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
+        Collection<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
+        setVersionLabel(updates);
+        return updates;
     }
 
     protected void setVersionLabel(Collection<? extends BasicArtifactInfo> infos) throws IOException {
