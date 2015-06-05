@@ -41,9 +41,10 @@ import org.testng.annotations.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -131,22 +132,23 @@ public class TestDownloadInstallationManagerFacade {
             }});
         }}).when(downloadManager).getDownloadedArtifacts();
 
-        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(null, null);
+        Collection<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(null, null);
+        Iterator<DownloadArtifactInfo> iter = downloads.iterator();
 
         assertEquals(downloads.size(), 3);
-        DownloadArtifactInfo result = downloads.get(0);
+        DownloadArtifactInfo result = iter.next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.0");
         assertEquals(result.getFile(), "target/file1");
         assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
 
-        result = downloads.get(1);
+        result = iter.next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
         assertEquals(result.getFile(), "target/file2");
         assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
 
-        result = downloads.get(2);
+        result = iter.next();
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file3");
@@ -168,16 +170,18 @@ public class TestDownloadInstallationManagerFacade {
         doReturn(false).when(installManager).isInstallable(installManagerArtifact, version200);
         doReturn(true).when(installManager).isInstallable(installManagerArtifact, version201);
 
-        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+        Collection<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+
+        Iterator<DownloadArtifactInfo> iter = downloads.iterator();
 
         assertEquals(downloads.size(), 2);
-        DownloadArtifactInfo result = downloads.get(0);
+        DownloadArtifactInfo result = iter.next();
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file1");
         assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
 
-        result = downloads.get(1);
+        result = iter.next();
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.1");
         assertEquals(result.getFile(), "target/file2");
@@ -195,11 +199,11 @@ public class TestDownloadInstallationManagerFacade {
 
         doReturn(true).when(installManager).isInstallable(installManagerArtifact, version200);
 
-        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME),
+        Collection<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME),
                                                                                          Version.valueOf("2.0.0"));
 
         assertEquals(downloads.size(), 1);
-        DownloadArtifactInfo result = downloads.get(0);
+        DownloadArtifactInfo result = downloads.iterator().next();
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file1");
@@ -210,7 +214,7 @@ public class TestDownloadInstallationManagerFacade {
     public void testGetDownloadsSpecificArtifactShouldReturnEmptyList() throws Exception {
         doReturn(Collections.emptyMap()).when(downloadManager).getDownloadedArtifacts();
 
-        List<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
+        Collection<DownloadArtifactInfo> downloads = installationManagerService.getDownloads(createArtifact(InstallManagerArtifact.NAME), null);
         assertTrue(downloads.isEmpty());
     }
 }

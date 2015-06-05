@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,6 +45,7 @@ public class DownloadProgress {
     private final Map<Path, Long>                         artifacts;
     private final AtomicReference<Exception>              exception;
     private final AtomicReference<DownloadArtifactStatus> status;
+    private final String uuid;
     private final Thread                                  downloadThread;
 
     public DownloadProgress(Map<Path, Long> artifacts) {
@@ -52,6 +54,7 @@ public class DownloadProgress {
         this.status = new AtomicReference<>(DownloadArtifactStatus.DOWNLOADING);
         this.exception = new AtomicReference<>();
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
+        this.uuid = UUID.randomUUID().toString();
     }
 
     public void addDownloadedArtifact(DownloadArtifactInfo artifactInfo) {
@@ -112,5 +115,9 @@ public class DownloadProgress {
     /** Get thread which downloading artifacts. */
     public Thread getDownloadThread() {
         return downloadThread;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 }

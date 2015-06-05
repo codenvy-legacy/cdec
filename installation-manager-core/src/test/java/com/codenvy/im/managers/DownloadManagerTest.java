@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -541,6 +542,25 @@ public class DownloadManagerTest extends BaseTest {
         } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
 
         assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+    }
+
+    @Test
+    public void testGetAllUpdates() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        doReturn("[\"2.0.1\", \"2.0.2\"]").when(transport).doGet(endsWith("updates/codenvy?fromVersion=2.0.0"));
+
+        Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact, cdecVersion);
+
+        assertEquals(updates.size(), 2);
+    }
+
+    @Test
+    public void testGetAllUpdatesNoStartVersion() throws Exception {
+        doReturn("[\"2.0.1\"]").when(transport).doGet(endsWith("updates/codenvy"));
+
+        Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact, null);
+
+        assertEquals(updates.size(), 1);
     }
 
     @Test

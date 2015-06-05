@@ -27,6 +27,8 @@ import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
+import com.codenvy.im.response.ArtifactInfo;
+import com.codenvy.im.response.BasicArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
@@ -41,7 +43,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -82,42 +85,44 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
 
     /** {@inheritDoc} */
     @Override
-    public List<InstallArtifactInfo> getInstalledVersions() throws IOException {
-        List<InstallArtifactInfo> installedVersions = super.getInstalledVersions();
-
-        for (InstallArtifactInfo info : installedVersions) {
-            VersionLabel versionLabel = fetchVersionLabel(info.getArtifact(), info.getVersion());
-            info.setLabel(versionLabel);
-        }
-
+    public Collection<InstallArtifactInfo> getInstalledVersions() throws IOException {
+        Collection<InstallArtifactInfo> installedVersions = super.getInstalledVersions();
+        setVersionLabel(installedVersions);
         return installedVersions;
     }
 
     /** {@inheritDoc} */
     @Override
-    public List<UpdatesArtifactInfo> getUpdates() throws IOException {
-        List<UpdatesArtifactInfo> updates = super.getUpdates();
-
-        for (UpdatesArtifactInfo info : updates) {
-            VersionLabel versionLabel = fetchVersionLabel(info.getArtifact(), info.getVersion());
-            info.setLabel(versionLabel);
-
-        }
-
+    public Collection<UpdatesArtifactInfo> getUpdates() throws IOException {
+        Collection<UpdatesArtifactInfo> updates = super.getUpdates();
+        setVersionLabel(updates);
         return updates;
     }
 
     /** {@inheritDoc} */
     @Override
-    public List<DownloadArtifactInfo> getDownloads(@Nullable Artifact artifact, @Nullable Version version) throws IOException {
-        List<DownloadArtifactInfo> downloads = super.getDownloads(artifact, version);
+    public Collection<DownloadArtifactInfo> getDownloads(@Nullable Artifact artifact, @Nullable Version version) throws IOException {
+        Collection<DownloadArtifactInfo> downloads = super.getDownloads(artifact, version);
+        setVersionLabel(downloads);
+        return downloads;
+    }
 
-        for (DownloadArtifactInfo info : downloads) {
+    /** {@inheritDoc} */
+    @Override
+    public Collection<ArtifactInfo> getArtifacts() throws IOException {
+        Collection<ArtifactInfo> artifacts = super.getArtifacts();
+        setVersionLabel(artifacts);
+        return artifacts;
+    }
+
+    protected void setVersionLabel(Collection<? extends BasicArtifactInfo> infos) throws IOException {
+        Iterator<? extends BasicArtifactInfo> iter = infos.iterator();
+
+        while (iter.hasNext()) {
+            BasicArtifactInfo info = iter.next();
             VersionLabel versionLabel = fetchVersionLabel(info.getArtifact(), info.getVersion());
             info.setLabel(versionLabel);
         }
-
-        return downloads;
     }
 
     @Nullable

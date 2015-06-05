@@ -32,8 +32,8 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
+import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.NodeInfo;
@@ -82,6 +82,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -239,33 +240,48 @@ public class InstallationManagerService {
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getUpdates() {
         try {
-            List<UpdatesArtifactInfo> installedVersions = delegate.getUpdates();
-            return javax.ws.rs.core.Response.ok(installedVersions).build();
+            Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(createArtifact(CDECArtifact.NAME));
+            return javax.ws.rs.core.Response.ok(updates).build();
         } catch (Exception e) {
             return handleException(e);
         }
     }
 
     /**
-     * Gets the list of downloaded artifacts.
+     * Get download ID being in progress.
      */
     @GET
     @Path("downloads")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of downloaded artifacts", response = DownloadArtifactInfo.class, responseContainer = "List")
+    @ApiOperation(value = "Get download ID being in progress")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
-                           @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
-                           @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getDownloads(@QueryParam(value = "artifact") String artifactName,
-                                                  @QueryParam(value = "version") String versionNumber) {
+                           @ApiResponse(code = 409, message = "Downloading not in progress")})
+    public javax.ws.rs.core.Response getDownloads() {
         try {
-            Artifact artifact = createArtifactOrNull(artifactName);
-            Version version = createVersionOrNull(versionNumber);
+            String id = delegate.getDownloadIdInProgress();
+            Map<String, String> ids = ImmutableMap.of("id", id);
 
-            List<DownloadArtifactInfo> downloads = delegate.getDownloads(artifact, version);
-            return javax.ws.rs.core.Response.ok(downloads).build();
-        } catch (ArtifactNotFoundException | IllegalVersionException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(ids)).build();
+        } catch (DownloadNotStartedException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
+     * Gets the list of downloaded and installed artifacts.
+     */
+    @GET
+    @Path("artifacts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Gets the list of downloaded and installed artifacts", response = ArtifactInfo.class, responseContainer = "List")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response getArtifacts() {
+        try {
+            Collection<ArtifactInfo> artifacts = delegate.getArtifacts();
+            return javax.ws.rs.core.Response.ok(artifacts).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -282,7 +298,7 @@ public class InstallationManagerService {
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getInstalledVersions() {
         try {
-            List<InstallArtifactInfo> installedVersions = delegate.getInstalledVersions();
+            Collection<InstallArtifactInfo> installedVersions = delegate.getInstalledVersions();
             return javax.ws.rs.core.Response.ok(installedVersions).build();
         } catch (Exception e) {
             return handleException(e);
@@ -699,14 +715,14 @@ public class InstallationManagerService {
         }
     }
 
-    /** Gets list of properties from configuration of Codenvy on-prem */
+    /** Gets Codenvy configuration properties. */
     @GET
     @Path("codenvy/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets list of properties from configuration of Codenvy on-prem", response = Response.class)
+    @ApiOperation(value = "Gets Codenvy configuration properties")
     public javax.ws.rs.core.Response getCodenvyProperties() {
         try {
             Config config = configManager.loadInstalledCodenvyConfig();
@@ -717,23 +733,23 @@ public class InstallationManagerService {
         }
     }
 
-    /** Gets property value from configuration of Codenvy on-prem */
+    /** Gets specific Codenvy configuration property. */
     @GET
     @Path("codenvy/properties/{key}")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Property not found"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets property value from configuration of Codenvy on-prem")
+    @ApiOperation(value = "Gets specific Codenvy configuration property")
     public javax.ws.rs.core.Response getCodenvyProperty(@PathParam("key") String key) {
         try {
             Config config = configManager.loadInstalledCodenvyConfig();
             Map<String, String> properties = maskPrivateProperties(config.getProperties());
 
             if (properties.containsKey(key)) {
-                String value = properties.get(key);
-                return javax.ws.rs.core.Response.ok(value).build();
+                Map<String, String> m = ImmutableMap.of(key, properties.get(key));
+                return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(m)).build();
             } else {
                 throw PropertyNotFoundException.from(key);
             }
@@ -742,19 +758,18 @@ public class InstallationManagerService {
         }
     }
 
-    /** Updates property of configuration of Codenvy on-prem. */
+    /** Updates Codenvy configuration property */
     @PUT
-    @Path("codenvy/properties/{key}")
-    @Consumes("text/plain")
+    @Path("codenvy/properties")
+    @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK"),
-        @ApiResponse(code = 404, message = "Property not found"),
+            @ApiResponse(code = 201, message = "Successfully updated"),
         @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
-    public javax.ws.rs.core.Response updateCodenvyProperty(@PathParam("key") String key, String value) {
+    public javax.ws.rs.core.Response updateCodenvyProperties(Map<String, String> properties) {
         try {
-            delegate.updateArtifactConfig(CDECArtifact.NAME, key, value);
-            return javax.ws.rs.core.Response.ok().build();
+            delegate.updateArtifactConfig(CDECArtifact.NAME, properties);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
         } catch (Exception e) {
             return handleException(e);
         }

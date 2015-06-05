@@ -71,7 +71,9 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "{\n" +
-                             "  \"subscription\" : \"OnPremises\",\n" +
+                             "  \"properties\" : {\n" +
+                             "    \"subscription\" : \"OnPremises\"\n" +
+                             "  },\n" +
                              "  \"message\" : \"Subscription is valid\",\n" +
                              "  \"status\" : \"OK\"\n" +
                              "}\n");
@@ -88,7 +90,9 @@ public class TestSubscriptionCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.getOutputStream();
         assertEquals(output, "{\n" +
-                             "  \"subscription\" : \"AnotherSubscription\",\n" +
+                             "  \"properties\" : {\n" +
+                             "    \"subscription\" : \"AnotherSubscription\"\n" +
+                             "  },\n" +
                              "  \"message\" : \"Subscription is valid\",\n" +
                              "  \"status\" : \"OK\"\n" +
                              "}\n");

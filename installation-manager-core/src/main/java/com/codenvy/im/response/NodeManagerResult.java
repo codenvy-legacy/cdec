@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"node", "message", "status"})
-public class NodeManagerResult {
+public class NodeManagerResult implements Response {
 
     private ResponseCode status;
     private String       message;

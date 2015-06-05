@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import static java.lang.String.format;
@@ -176,9 +177,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
         throw new UnsupportedOperationException();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * @param properties
+     */
     @Override
-    public void updateConfig(String property, String value) throws IOException {
+    public void updateConfig(Map<String, String> properties) throws IOException {
         throw new UnsupportedOperationException();
     }
 }

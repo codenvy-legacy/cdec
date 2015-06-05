@@ -37,7 +37,7 @@ import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
 import static com.codenvy.im.utils.Commons.createVersionOrNull;
@@ -121,23 +121,23 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException, IOException {
-        List<UpdatesArtifactInfo> updates = facade.getUpdates();
+        Collection<UpdatesArtifactInfo> updates = facade.getUpdates();
         UpdatesResult updatesResult = new UpdatesResult();
         updatesResult.setArtifacts(updates);
         updatesResult.setStatus(ResponseCode.OK);
-        console.printResponse(toJson(updatesResult));
+        console.printResponse(updatesResult);
     }
 
     private void doList() throws JsonParseException, IOException {
         Artifact artifact = Commons.createArtifactOrNull(artifactName);
         Version version = Commons.createVersionOrNull(versionNumber);
 
-        List<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
+        Collection<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
 
         DownloadResult downloadResult = new DownloadResult();
         downloadResult.setStatus(ResponseCode.OK);
         downloadResult.setArtifacts(downloads);
 
-        console.printResponse(toJson(downloadResult));
+        console.printResponse(downloadResult);
     }
 }

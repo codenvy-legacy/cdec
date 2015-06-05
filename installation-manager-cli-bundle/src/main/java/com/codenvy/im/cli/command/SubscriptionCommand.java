@@ -17,14 +17,12 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.response.BasicResponse;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
-
-import static com.codenvy.im.utils.Commons.toJson;
 
 /**
  * @author Alexander Reshetnyak
@@ -40,19 +38,18 @@ public class SubscriptionCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         String subscription2check = subscription != null ? subscription : SaasAccountServiceProxy.ON_PREMISES;
 
-        Response response;
+        BasicResponse response;
 
         boolean isValid = facade.hasValidSaasSubscription(subscription2check, getCredentials());
         if (isValid) {
-            response = new Response().setStatus(ResponseCode.OK)
-                                     .setSubscription(subscription2check)
-                                     .setMessage("Subscription is valid");
+            response = BasicResponse.ok();
+            response.setMessage("Subscription is valid");
+            response.setProperties(ImmutableMap.of("subscription", subscription2check));
         } else {
-            response = new Response().setStatus(ResponseCode.ERROR)
-                                     .setSubscription(subscription2check)
-                                     .setMessage("Subscription not found or outdated");
+            response = BasicResponse.error("Subscription not found or outdated");
+            response.setProperties(ImmutableMap.of("subscription", subscription2check));
         }
 
-        console.printResponse(toJson(response));
+        console.printResponse(response);
     }
 }

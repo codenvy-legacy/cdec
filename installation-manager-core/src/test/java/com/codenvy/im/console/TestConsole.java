@@ -18,9 +18,10 @@
 
 package com.codenvy.im.console;
 
-import com.codenvy.im.response.Response;
-import com.codenvy.im.response.ResponseCode;
 import jline.console.ConsoleReader;
+
+import com.codenvy.im.response.BasicResponse;
+
 import org.eclipse.che.commons.json.JsonParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiOutputStream;
@@ -33,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.Thread.sleep;
 import static org.fusesource.jansi.Ansi.ansi;
 import static org.mockito.Matchers.any;
@@ -302,29 +304,30 @@ public class TestConsole {
 
     @Test
     public void testPrintOkResponse() throws JsonParseException, IOException {
-        String testResponse = new Response().setStatus(ResponseCode.OK).setMessage("test").toJson();
+        BasicResponse response = BasicResponse.ok();
+        response.setMessage("test");
 
         Console spyConsole = createInteractiveConsole();
-        spyConsole.printResponse(testResponse);
-        assertEquals(getOutputContent(), testResponse + "\n");
+        spyConsole.printResponse(response);
+        assertEquals(getOutputContent(), toJson(response) + "\n");
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.printResponse(testResponse);
-        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + testResponse + "\n");
+        spyConsole.printResponse(response);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + toJson(response) + "\n");
     }
 
     @Test
     public void testPrintErrorResponse() throws JsonParseException, IOException {
-        String testErrorResponse = new Response().setStatus(ResponseCode.ERROR).setMessage("error").toJson();
+        BasicResponse response = BasicResponse.error("error");
 
         Console spyConsole = createInteractiveConsole();
-        spyConsole.printResponse(testErrorResponse);
-        assertEquals(getOutputContent(), "\u001B[31m" + testErrorResponse + "\n\u001B[m");
+        spyConsole.printResponse(response);
+        assertEquals(getOutputContent(), "\u001B[31m" + toJson(response) + "\n\u001B[m");
         verify(spyConsole, never()).exit(1);
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.printResponse(testErrorResponse);
-        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + testErrorResponse + "\n\u001B[m");
+        spyConsole.printResponse(response);
+        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + toJson(response) + "\n\u001B[m");
         verify(spyConsole).exit(1);
     }
 

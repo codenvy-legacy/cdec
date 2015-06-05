@@ -29,7 +29,6 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
@@ -44,11 +43,11 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
@@ -418,50 +417,38 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testChangeCodenvyConfig() throws IOException {
-        String testProperty = Config.HOST_URL;
-        String testValue = "c";
-        Config testConfig = new Config(ImmutableMap.of(testProperty, "a", "property2", "b"));
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "c");
+
+        Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "a", "property2", "b"));
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
 
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
-        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testProperty, testValue, testConfig);
+        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testConfig, properties);
         doReturn(mockHelper).when(spyCdecArtifact).getHelper(InstallType.MULTI_SERVER);
 
-        spyCdecArtifact.updateConfig(testProperty, testValue);
-        verify(mockHelper).getUpdateConfigCommand(testProperty, testValue, testConfig);
+        spyCdecArtifact.updateConfig(properties);
+        verify(mockHelper).getUpdateConfigCommand(testConfig, properties);
     }
 
-    @Test(expectedExceptions = PropertyNotFoundException.class,
-            expectedExceptionsMessageRegExp = "Property 'unknown' not found")
-    public void testChangeCodenvyConfigWhenPropertyAbsent() throws IOException {
-        String testProperty = "unknown";
-        String testValue = "c";
-        Config testConfig = new Config(ImmutableMap.of("property", "b"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
-        spyCdecArtifact.updateConfig(testProperty, testValue);
-    }
-
-    @Test(expectedExceptions = IOException.class,
-            expectedExceptionsMessageRegExp = "error")
+    @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = "error")
     public void testChangeCodenvyConfigWhenCommandException() throws IOException {
-        String testProperty = "a";
-        String testValue = "b";
-        Config testConfig = new Config(ImmutableMap.of(testProperty, "c"));
+        Map<String, String> properties = ImmutableMap.of("a", "c");
+
+        Config testConfig = new Config(ImmutableMap.of("a", "c"));
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
 
         doThrow(new CommandException("error", new AgentException("error"))).when(mockCommand).execute();
-        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testProperty, testValue, testConfig);
+        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testConfig, properties);
         doReturn(mockHelper).when(spyCdecArtifact).getHelper(any(InstallType.class));
 
-        spyCdecArtifact.updateConfig(testProperty, testValue);
+        spyCdecArtifact.updateConfig(properties);
     }
 
     @Test
     public void testGetChangeSingleServerConfigCommand() throws IOException {
-        String testProperty = Config.HOST_URL;
-        String testValue = "a";
-        Config testConfig = new Config(ImmutableMap.of(testProperty, "c"));
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "a");
+        Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "c"));
 
         doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES);
         doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(
@@ -470,7 +457,7 @@ public class TestCDECArtifact extends BaseTest {
 
         CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact, configManager);
 
-        Command command = testHelper.getUpdateConfigCommand(testProperty, testValue, testConfig);
+        Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
         assertEquals(command.toString(), "[" +
                                          "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/single_server.pp " +
                                          "/etc/puppet/manifests/nodes/single_server/single_server.pp.back', 'agent'='LocalAgent'}, " +
@@ -488,9 +475,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetChangeMultiServerConfigCommand() throws IOException {
-        String testProperty = Config.HOST_URL;
-        String testValue = "a";
-        Config testConfig = new Config(ImmutableMap.of(testProperty, "c",
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "a");
+        Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "c",
                                                        "api_host_name", "api.dev.com",
                                                        "data_host_name", "data.dev.com"));
 
@@ -500,7 +486,7 @@ public class TestCDECArtifact extends BaseTest {
 
         CDECMultiServerHelper testHelper = new CDECMultiServerHelper(spyCdecArtifact, configManager);
 
-        Command command = testHelper.getUpdateConfigCommand(testProperty, testValue, testConfig);
+        Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
         assertEquals(command.toString(), format("[" +
                                                 "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp " +
                                                 "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', 'agent'='LocalAgent'}, " +

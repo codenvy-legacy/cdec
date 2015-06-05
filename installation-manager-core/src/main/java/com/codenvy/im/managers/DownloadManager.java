@@ -18,7 +18,6 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -27,14 +26,17 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.apache.commons.io.FileUtils;
+import org.eclipse.che.commons.json.JsonParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
@@ -42,8 +44,11 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -55,6 +60,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SIZE_PROPERTY;
 import static com.codenvy.im.utils.Commons.calculateMD5Sum;
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.getProperException;
 import static com.codenvy.im.utils.Version.valueOf;
 import static java.nio.file.Files.createDirectories;
@@ -67,7 +73,6 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
  * @author Anatoliy Bazko
- * @author Dmytro Nochevnov
  */
 @Singleton
 public class DownloadManager {
@@ -94,10 +99,9 @@ public class DownloadManager {
     }
 
     /** Starts downloading */
-    public void startDownload(@Nullable final Artifact artifact, @Nullable final Version version)
-            throws IOException,
-                   InterruptedException,
-                   DownloadAlreadyStartedException {
+    public void startDownload(@Nullable final Artifact artifact, @Nullable final Version version) throws IOException,
+                                                                                                         InterruptedException,
+                                                                                                         DownloadAlreadyStartedException {
 
         validateIfDownloadInProgress();
         validateIfConnectionAvailable();
@@ -113,6 +117,13 @@ public class DownloadManager {
         downloadThread.start();
 
         latcher.await();
+    }
+
+    public String getDownloadIdInProgress() throws DownloadNotStartedException {
+        if (downloadProgress == null || downloadProgress.isDownloadingFinished()) {
+            throw new DownloadNotStartedException();
+        }
+        return downloadProgress.getUuid();
     }
 
     private void validateIfDownloadInProgress() throws DownloadAlreadyStartedException {
@@ -173,15 +184,15 @@ public class DownloadManager {
                 try {
                     Path pathToBinaries = download(artToDownload, verToDownload);
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
-                                                                                                     verToDownload,
-                                                                                                     pathToBinaries,
-                                                                                                     DownloadArtifactStatus.DOWNLOADED);
+                                                                                         verToDownload,
+                                                                                         pathToBinaries,
+                                                                                         DownloadArtifactStatus.DOWNLOADED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
-                                                                                                     verToDownload,
-                                                                                                     DownloadArtifactStatus.FAILED);
+                                                                                         verToDownload,
+                                                                                         DownloadArtifactStatus.FAILED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                     downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, exp);
                     return;
@@ -345,6 +356,25 @@ public class DownloadManager {
         return newVersions;
     }
 
+    /**
+     * Gets all updates for given artifact.
+     *
+     * @throws java.io.IOException
+     *         if an I/O error occurred
+     */
+    public Collection<Map.Entry<Artifact, Version>> getAllUpdates(@Nonnull final Artifact artifact,
+                                                                  @Nullable Version fromVersion) throws IOException, JsonParseException {
+
+        String requestUrl = combinePaths(updateEndpoint, "updates/" + artifact + (fromVersion == null ? ""
+                                                                                                      : "?fromVersion=" + fromVersion.toString()));
+        List<String> l = fromJson(transport.doGet(requestUrl), List.class);
+        return FluentIterable.from(l).transform(new Function<String, Map.Entry<Artifact, Version>>() {
+            @Override
+            public Map.Entry<Artifact, Version> apply(String version) {
+                return new AbstractMap.SimpleEntry<>(artifact, Version.valueOf(version));
+            }
+        }).toList();
+    }
 
     private void checkRWPermissions(Path downloadDir) throws IOException {
         try {

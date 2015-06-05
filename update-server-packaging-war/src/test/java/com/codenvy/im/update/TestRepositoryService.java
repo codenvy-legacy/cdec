@@ -46,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -528,6 +529,20 @@ public class TestRepositoryService extends BaseTest {
         repositoryService
                 .sendNotificationLetter("accountId", new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         verify(mailUtil).sendNotificationLetter("accountId", "userEmail");
+    }
+
+    @Test
+    public void testUpdates() throws Exception {
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", new Properties());
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.2", "tmp", new Properties());
+
+        Response response = given().when().get("/repository/updates/codenvy?fromVersion=1.0.1");
+
+        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+
+        List l = response.getBody().as(List.class);
+        assertEquals(l.size(), 1);
+        assertEquals(l.get(0), "1.0.2");
     }
 }
 

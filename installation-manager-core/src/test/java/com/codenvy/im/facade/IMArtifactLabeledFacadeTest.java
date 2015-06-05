@@ -48,8 +48,8 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -113,11 +113,11 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         doReturn(versions).when(installManager).getInstalledArtifacts();
         doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
-        List<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
+        Collection<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
 
         assertEquals(installedVersions.size(), 1);
 
-        InstallArtifactInfo installArtifactInfo = installedVersions.get(0);
+        InstallArtifactInfo installArtifactInfo = installedVersions.iterator().next();
         assertEquals(installArtifactInfo.getArtifact(), "codenvy");
         assertEquals(installArtifactInfo.getVersion(), "1.0.1");
         assertEquals(installArtifactInfo.getStatus(), InstallArtifactStatus.SUCCESS);
@@ -132,11 +132,11 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         }}).when(downloadManager).getDownloadedVersions(artifact);
         doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
-        List<UpdatesArtifactInfo> updates = facade.getUpdates();
+        Collection<UpdatesArtifactInfo> updates = facade.getUpdates();
 
         assertEquals(updates.size(), 1);
 
-        UpdatesArtifactInfo result = updates.get(0);
+        UpdatesArtifactInfo result = updates.iterator().next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
         assertEquals(result.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
@@ -152,15 +152,21 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         }}).when(downloadManager).getDownloadedArtifacts();
         doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
-        List<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
+        Collection<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
 
         assertEquals(downloads.size(), 1);
 
-        DownloadArtifactInfo result = downloads.get(0);
+        DownloadArtifactInfo result = downloads.iterator().next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
         assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
         assertEquals(result.getLabel(), VersionLabel.STABLE);
         assertEquals(result.getFile(), "path");
+    }
+
+    @Test
+    public void testGetArtifacts() throws Exception {
+
+
     }
 }

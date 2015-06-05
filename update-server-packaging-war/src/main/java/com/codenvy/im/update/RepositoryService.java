@@ -22,8 +22,11 @@ import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.IllegalVersionException;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
 
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
@@ -37,6 +40,7 @@ import org.eclipse.che.api.account.shared.dto.NewSubscription;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;
+import org.eclipse.che.dto.server.JsonArrayImpl;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +57,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -65,6 +70,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +123,41 @@ public class RepositoryService {
         this.mailUtil = mailUtil;
         this.saasUserServiceProxy = saasUserServiceProxy;
         this.saasAccountServiceProxy = saasAccountServiceProxy;
+    }
+
+    /**
+     * Retrieves the list of available updates.
+     *
+     * @param artifact
+     *         artifact name
+     * @param fromVersion
+     *         to return the list of updates beginning from the given version, excluded
+     */
+    @GenerateLink(rel = "updates")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/updates/{artifact}")
+    public Response getUpdates(@PathParam("artifact") final String artifact, @QueryParam("fromVersion") final String fromVersion) {
+        try {
+            Collection<Version> versions = artifactStorage.getVersions(artifact, fromVersion);
+
+            List<String> l = FluentIterable.from(versions).transform(new Function<Version, String>() {
+                @Override
+                public String apply(Version version) {
+                    return version.toString();
+                }
+            }).toList();
+
+            return Response.status(Response.Status.OK).entity(new JsonArrayImpl<>(l)).build();
+        } catch (IllegalVersionException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (ArtifactNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'").build();
+        }
     }
 
     /**

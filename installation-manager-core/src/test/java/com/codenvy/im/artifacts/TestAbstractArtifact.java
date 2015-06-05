@@ -218,7 +218,7 @@ public class TestAbstractArtifact extends BaseTest {
         }
 
         @Override
-        public void updateConfig(String property, String value) throws IOException {
+        public void updateConfig(Map<String, String> properties) throws IOException {
         }
     }
 }

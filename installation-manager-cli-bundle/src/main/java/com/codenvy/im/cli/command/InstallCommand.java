@@ -38,6 +38,7 @@ import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -204,11 +205,11 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        List<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
+        Collection<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
         InstallResult installResult = new InstallResult();
         installResult.setArtifacts(installedVersions);
         installResult.setStatus(ResponseCode.OK);
-        console.printResponse(toJson(installResult));
+        console.printResponse(installResult);
         return null;
     }
 

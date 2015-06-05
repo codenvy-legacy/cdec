@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"backup", "message", "status"})
-public class BackupResult {
+public class BackupResult implements Response {
 
     private ResponseCode status;
     private String       message;

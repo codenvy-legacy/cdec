@@ -402,17 +402,21 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
      * {@inheritDoc}
      */
     @Override
-    public Command getUpdateConfigCommand(String property, String value, Config config) throws IOException {
+    public Command getUpdateConfigCommand(Config config, Map<String, String> properties) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy single server config
         String singleServerPropertiesFilePath = configManager.getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES).toString();
         commands.add(createFileBackupCommand(singleServerPropertiesFilePath));
-        commands.add(createPropertyReplaceCommand(singleServerPropertiesFilePath, "$" + property, value));
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            commands.add(createPropertyReplaceCommand(singleServerPropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
+        }
 
         String singleServerBasePropertiesFilePath = configManager.getPuppetConfigFile(Config.SINGLE_SERVER_BASE_PROPERTIES).toString();
         commands.add(createFileBackupCommand(singleServerBasePropertiesFilePath));
-        commands.add(createPropertyReplaceCommand(singleServerBasePropertiesFilePath, "$" + property, value));
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            commands.add(createPropertyReplaceCommand(singleServerBasePropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
+        }
 
         // force applying updated puppet config on puppet agent of API node
         commands.add(createForcePuppetAgentCommand());

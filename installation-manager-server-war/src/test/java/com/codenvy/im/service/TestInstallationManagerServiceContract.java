@@ -28,7 +28,6 @@ import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressDescriptor;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -217,17 +216,17 @@ public class TestInstallationManagerServiceContract {
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            "[\n" +
-            "    \n" +
-            "]",                // response body
+            "{\n" +
+            "    \"id\": \"id\"\n" +
+            "}",                // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        doReturn(Collections.emptyList()).when(facade).getDownloads(any(Artifact.class), any(Version.class));
-                    } catch (IOException e) {
+                        doReturn("id").when(facade).getDownloadIdInProgress();
+                    } catch (DownloadNotStartedException e) {
                         fail(e.getMessage(), e);
                     }
                     return null;
@@ -299,10 +298,9 @@ public class TestInstallationManagerServiceContract {
             null,                            // consume content type
             ContentType.JSON,                // produce content type
             HttpMethod.GET,                  // HTTP method
-            "{\n"
-            + "    \"status\": \"DOWNLOADED\",\n"
-            + "    \"percents\": 0\n"
-            + "}",                           // response body
+            "{\n" +
+            "    \"percents\": 0\n" +
+            "}",                           // response body
             Response.Status.OK,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
@@ -310,7 +308,6 @@ public class TestInstallationManagerServiceContract {
                 public Object apply(@Nullable Object o) {
                     try {
                         DownloadProgressDescriptor downloadDescriptor = new DownloadProgressDescriptor();
-                        downloadDescriptor.setStatus(DownloadArtifactStatus.DOWNLOADED);
                         doReturn(downloadDescriptor).when(facade).getDownloadProgress();
                     } catch (IOException | DownloadNotStartedException e) {
                         fail(e.getMessage(), e);
@@ -686,9 +683,11 @@ public class TestInstallationManagerServiceContract {
             null,                                             // query parameters
             null,                                             // request body
             null,                                             // consume content type
-            ContentType.TEXT,                                 // produce content type
+            ContentType.JSON,                                 // produce content type
             HttpMethod.GET,                                   // HTTP method
-            "test.com",                                       // response body
+            "{\n" +
+            "    \"host_url\": \"test.com\"\n" +
+            "}",                                       // response body
             Response.Status.OK,                               // response status
             new Function<Object, Object>() {                  // before test
                 @Nullable
@@ -710,21 +709,21 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testUpdateCodenvyProperty() {
         testContract(
-            "codenvy/properties/a",                           // path
+                "codenvy/properties",                           // path
             null,                                             // query parameters
-            "b",                                              // request body
-            ContentType.TEXT,                                 // consume content type
+            "{\"a\":\"b\"}",                                          // request body
+            ContentType.JSON,                                 // consume content type
             null,                                             // produce content type
             HttpMethod.PUT,                                   // HTTP method
-            "",                                               // response body
-            Response.Status.OK,                               // response status
+            null,                                               // response body
+            Response.Status.CREATED,                               // response status
             null,                                             // before test
             new Function<Object, Object>() {
                 @Nullable
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        verify(facade).updateArtifactConfig(CDECArtifact.NAME, "a", "b");
+                        verify(facade).updateArtifactConfig(CDECArtifact.NAME, ImmutableMap.of("a", "b"));
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }
