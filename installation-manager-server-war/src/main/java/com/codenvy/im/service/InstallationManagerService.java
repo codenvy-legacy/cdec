@@ -214,7 +214,6 @@ public class InstallationManagerService {
     @ApiOperation(value = "Deletes downloaded artifact")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
-
                            @ApiResponse(code = 404, message = "Artifact not found"),
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response deleteDownloadedArtifact(@PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,

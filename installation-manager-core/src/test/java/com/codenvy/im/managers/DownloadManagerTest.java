@@ -333,7 +333,7 @@ public class DownloadManagerTest extends BaseTest {
 
         DownloadProgressResponse info;
         do {
-            sleep(1); // due to async request, wait a bit to get proper download status
+            sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
         } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
 
