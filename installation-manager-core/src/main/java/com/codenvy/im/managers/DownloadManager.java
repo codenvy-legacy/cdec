@@ -155,16 +155,25 @@ public class DownloadManager {
             throw new DownloadNotStartedException();
         }
 
+        List<DownloadArtifactInfo> infos = downloadProgress.getDownloadedArtifacts();
+        for (Map.Entry<Artifact, Version> a : downloadProgress.getArtifacts2Download().entrySet()) {
+            DownloadArtifactInfo info = new DownloadArtifactInfo();
+            info.setArtifact(a.getKey().getName());
+            info.setVersion(a.getValue().toString());
+            info.setStatus(DownloadArtifactStatus.DOWNLOADING);
+            infos.add(info);
+        }
+
         if (downloadProgress.getDownloadStatus() == DownloadArtifactStatus.FAILED) {
             return new DownloadProgressDescriptor(downloadProgress.getDownloadStatus(),
                                                   downloadProgress.getErrorMessage(),
                                                   downloadProgress.getProgress(),
-                                                  downloadProgress.getDownloadedArtifacts());
+                                                  infos);
         }
 
         return new DownloadProgressDescriptor(downloadProgress.getDownloadStatus(),
                                               downloadProgress.getProgress(),
-                                              downloadProgress.getDownloadedArtifacts());
+                                              infos);
     }
 
     protected void download(@Nullable Artifact artifact,
@@ -185,28 +194,20 @@ public class DownloadManager {
                 Version verToDownload = e.getValue();
 
                 try {
-                    DownloadArtifactInfo downloadingArtifactDesc = new DownloadArtifactInfo(artToDownload,
-                                                                                            verToDownload,
-                                                                                            DownloadArtifactStatus.DOWNLOADING);
-                    downloadProgress.setDownloadingArtifactInfo(downloadingArtifactDesc);
-
                     Path pathToBinaries = download(artToDownload, verToDownload);
-
-                    DownloadArtifactInfo downloadedArtifactDesc = new DownloadArtifactInfo(artToDownload,
+                    DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
                                                                                          verToDownload,
                                                                                          pathToBinaries,
                                                                                          DownloadArtifactStatus.DOWNLOADED);
-                    downloadProgress.addDownloadedArtifact(downloadedArtifactDesc);
+                    downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
-                    DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
-                                                                                         verToDownload,
-                                                                                         DownloadArtifactStatus.FAILED);
-                    downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
+                    DownloadArtifactInfo info = new DownloadArtifactInfo(artToDownload,
+                                                                         verToDownload,
+                                                                         DownloadArtifactStatus.FAILED);
+                    downloadProgress.addDownloadedArtifact(info);
                     downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, exp);
                     return;
-                } finally {
-                    downloadProgress.setDownloadingArtifactInfo(null);
                 }
             }
 
@@ -215,7 +216,7 @@ public class DownloadManager {
             LOG.error(e.getMessage(), e);
 
             if (downloadProgress == null) {
-                downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap());
+                downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap(), Collections.<Artifact, Version>emptyMap());
             }
             downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, e);
 
@@ -446,7 +447,7 @@ public class DownloadManager {
 
     /** Factory method */
     protected void createDownloadDescriptor(Map<Artifact, Version> artifacts) throws IOException {
-        Map<Path, Long> m = new LinkedHashMap<>();
+        Map<Path, Long> binaries = new LinkedHashMap<>();
 
         for (Map.Entry<Artifact, Version> e : artifacts.entrySet()) {
             Artifact artifact = e.getKey();
@@ -455,9 +456,10 @@ public class DownloadManager {
             Path pathToBinaries = getPathToBinaries(artifact, version);
             Long binariesSize = getBinariesSize(artifact, version);
 
-            m.put(pathToBinaries, binariesSize);
+            binaries.put(pathToBinaries, binariesSize);
         }
 
+        downloadProgress = new DownloadProgress(binaries, artifacts);
         downloadProgress = new DownloadProgress(m);
     }
 

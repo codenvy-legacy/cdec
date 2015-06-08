@@ -17,13 +17,17 @@
  */
 package com.codenvy.im.managers;
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.utils.Version;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,30 +42,39 @@ import static java.nio.file.Files.size;
  *
  * @author Alexander Reshetnyak
  * @author Anatoliy Bazko
- * @author Dmytro Nochevnov
  */
 public class DownloadProgress {
 
     private final List<DownloadArtifactInfo> downloadedArtifacts;
+    private final Map<Artifact, Version> artifacts2Download;
     private final Map<Path, Long>                         artifacts;
     private final AtomicReference<Exception>              exception;
     private final AtomicReference<DownloadArtifactStatus> status;
-    private final String uuid;
+    private final String                 uuid;
     private final Thread                                  downloadThread;
 
-    private DownloadArtifactInfo downloadingArtifactInfo;
-
-    public DownloadProgress(Map<Path, Long> artifacts) {
+    public DownloadProgress(Map<Path, Long> binaries, Map<Artifact, Version> artifacts) {
         this.downloadThread = Thread.currentThread();
-        this.artifacts = new HashMap<>(artifacts);
+        this.artifacts = new HashMap<>(binaries);
         this.status = new AtomicReference<>(DownloadArtifactStatus.DOWNLOADING);
         this.exception = new AtomicReference<>();
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
+        this.artifacts2Download = new HashMap<>(artifacts);
         this.uuid = UUID.randomUUID().toString();
     }
 
-    public void addDownloadedArtifact(DownloadArtifactInfo artifactInfo) {
+    public void addDownloadedArtifact(DownloadArtifactInfo artifactInfo) throws ArtifactNotFoundException {
         downloadedArtifacts.add(artifactInfo);
+
+        Iterator<Map.Entry<Artifact, Version>> iter = artifacts2Download.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Artifact, Version> e = iter.next();
+            if (artifactInfo.getArtifact().equals(e.getKey().getName())
+                && artifactInfo.getVersion().equals(e.getValue().toString())) {
+
+                iter.remove();
+            }
+        }
     }
 
     public List<DownloadArtifactInfo> getDownloadedArtifacts() {
@@ -124,12 +137,7 @@ public class DownloadProgress {
         return uuid;
     }
 
-    public DownloadArtifactInfo getDownloadingArtifactInfo() {
-        return downloadingArtifactInfo;
-    }
-
-    public DownloadProgress setDownloadingArtifactInfo(DownloadArtifactInfo downloadingArtifactInfo) {
-        this.downloadingArtifactInfo = downloadingArtifactInfo;
-        return this;
+    public Map<Artifact, Version> getArtifacts2Download() {
+        return artifacts2Download;
     }
 }
