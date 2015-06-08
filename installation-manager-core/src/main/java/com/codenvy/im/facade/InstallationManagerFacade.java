@@ -572,6 +572,9 @@ public class InstallationManagerFacade {
         artifact.updateConfig(properties);
     }
 
+    /**
+     * @see com.codenvy.im.managers.DownloadManager#deleteArtifact(com.codenvy.im.artifacts.Artifact, com.codenvy.im.utils.Version)
+     */
     public void deleteDownloadedArtifact(Artifact artifact, Version version) throws IOException {
         downloadManager.deleteArtifact(artifact, version);
     }

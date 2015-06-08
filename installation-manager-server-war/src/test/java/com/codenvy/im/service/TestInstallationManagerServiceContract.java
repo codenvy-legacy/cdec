@@ -779,7 +779,7 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testDeleteDownload() {
         testContract(
-            "downloads/artifact/codenvy/version/1.0.0",       // path
+                "downloads/codenvy/1.0.0",       // path
             null,                                             // query parameters
             null,                                             // request body
             null,                                             // consume content type

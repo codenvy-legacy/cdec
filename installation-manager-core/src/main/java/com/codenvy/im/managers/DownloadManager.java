@@ -18,7 +18,6 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -33,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +42,6 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
@@ -481,11 +478,9 @@ public class DownloadManager {
         }
 
         Path pathToBinary = getPathToBinaries(artifact, version);
-        if (!Files.exists(pathToBinary)) {
-            throw new ArtifactNotFoundException(artifact, version);
+        if (exists(pathToBinary)) {
+            deleteDirectory(pathToBinary.getParent().toFile());
         }
-
-        FileUtils.deleteDirectory(pathToBinary.getParent().toFile());
     }
 
     protected void invalidateDownloadDescriptor() {

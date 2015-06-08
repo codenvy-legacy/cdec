@@ -593,7 +593,7 @@ public class DownloadManagerTest extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded and cannot be deleted.")
+            expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded and cannot be deleted.")
     public void testDeleteDownloadingArtifactShouldThrowException() throws Exception {
         Artifact artifact = cdecArtifact;
         Version version = Version.valueOf("1.0.1");
@@ -606,21 +606,6 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(version.toString()).when(mockDownloadArtifactInfo).getVersion();
 
         downloadManager.downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap(), ImmutableMap.of(artifact, version));
-
-        downloadManager.deleteArtifact(artifact, version);
-    }
-
-//    @Test(expectedExceptions = ArtifactNotFoundException.class,   // TODO [ndp] fix test
-//          expectedExceptionsMessageRegExp = "Artifact codenvy:1.0.1 not found")
-    public void testDeleteDownloadedArtifactWhenBinaryNotExists() throws Exception {
-        Artifact artifact = cdecArtifact;
-        Version version = Version.valueOf("1.0.1");
-
-        Path binary = Paths.get(DOWNLOAD_DIR, artifact.getName(), version.toString(), "file1");
-        doReturn(binary).when(downloadManager).getPathToBinaries(artifact, version);
-
-        Files.createDirectories(binary.getParent());
-        Files.createFile(binary);
 
         downloadManager.deleteArtifact(artifact, version);
     }
@@ -638,8 +623,8 @@ public class DownloadManagerTest extends BaseTest {
         Files.createFile(binary);
 
         String propertiesFileContent = String.format("{\"%s\": \"%s\", \"%s\":\"%s\"}",
-                                      ArtifactProperties.FILE_NAME_PROPERTY, binaryFileName,
-                                      ArtifactProperties.MD5_PROPERTY, EMPTY_FILE_MD5);
+                                                     ArtifactProperties.FILE_NAME_PROPERTY, binaryFileName,
+                                                     ArtifactProperties.MD5_PROPERTY, EMPTY_FILE_MD5);
         when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version.toString())))
             .thenReturn(propertiesFileContent);
 

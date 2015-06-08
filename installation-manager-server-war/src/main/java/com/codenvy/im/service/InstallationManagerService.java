@@ -18,6 +18,7 @@
 package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
@@ -91,7 +92,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
 import static com.codenvy.im.utils.Commons.createVersionOrNull;
 import static com.codenvy.im.utils.Commons.toJson;
@@ -210,16 +210,17 @@ public class InstallationManagerService {
      * Deletes downloaded artifact.
      */
     @DELETE
-    @Path("downloads/artifact/{artifact}/version/{version}")
+    @Path("downloads/{artifact}/{version}")
     @ApiOperation(value = "Deletes downloaded artifact")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
-                           @ApiResponse(code = 404, message = "Artifact not found"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response deleteDownloadedArtifact(@PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,
-                                                              @PathParam("version") @ApiParam(value = "Artifact version") final String artifactVersion) {
+    public javax.ws.rs.core.Response deleteDownloadedArtifact(
+            @PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,
+            @PathParam("version") @ApiParam(value = "Artifact version") final String artifactVersion) {
+
         try {
-            Artifact artifact = getArtifact(artifactName);
+            Artifact artifact = createArtifact(artifactName);
             Version version = Version.valueOf(artifactVersion);
 
             delegate.deleteDownloadedArtifact(artifact, version);
@@ -240,7 +241,7 @@ public class InstallationManagerService {
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getUpdates() {
         try {
-            Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(createArtifact(CDECArtifact.NAME));
+            Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(ArtifactFactory.createArtifact(CDECArtifact.NAME));
             return javax.ws.rs.core.Response.ok(updates).build();
         } catch (Exception e) {
             return handleException(e);
@@ -317,7 +318,7 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response updateCodenvy() {
         try {
             InstallType installType = configManager.detectInstallationType();
-            CDECArtifact artifact = (CDECArtifact)createArtifact(CDECArtifact.NAME);
+            CDECArtifact artifact = (CDECArtifact)ArtifactFactory.createArtifact(CDECArtifact.NAME);
             Version version = delegate.getLatestInstallableVersion(artifact);
             if (version == null) {
                 return handleException(new IllegalStateException("There is no appropriate version to install"),
@@ -609,7 +610,7 @@ public class InstallationManagerService {
     public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
                                                            @PathParam("version") final String artifactVersion) {
         try {
-            Artifact artifact = getArtifact(artifactName);
+            Artifact artifact = createArtifact(artifactName);
             Version version;
             try {
                 version = Version.valueOf(artifactVersion);
@@ -814,8 +815,8 @@ public class InstallationManagerService {
         return df.format(initialDateTime);
     }
 
-    protected Artifact getArtifact(String artifactName) throws ArtifactNotFoundException {
-        return createArtifact(artifactName);
+    protected Artifact createArtifact(String artifactName) throws ArtifactNotFoundException {
+        return ArtifactFactory.createArtifact(artifactName);
     }
 
     /**

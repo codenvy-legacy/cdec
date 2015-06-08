@@ -27,11 +27,11 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -56,11 +56,11 @@ public class DownloadProgress {
 
     public DownloadProgress(Map<Path, Long> binaries, Map<Artifact, Version> artifacts) {
         this.downloadThread = Thread.currentThread();
-        this.binaries = new HashMap<>(binaries);
+        this.binaries = new ConcurrentHashMap<>(binaries);
         this.status = new AtomicReference<>(DownloadArtifactStatus.DOWNLOADING);
         this.exception = new AtomicReference<>();
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
-        this.artifacts2Download = new HashMap<>(artifacts);
+        this.artifacts2Download = new ConcurrentHashMap<>(artifacts);
         this.uuid = UUID.randomUUID().toString();
     }
 

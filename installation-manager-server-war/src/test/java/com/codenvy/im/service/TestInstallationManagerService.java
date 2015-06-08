@@ -121,7 +121,7 @@ public class TestInstallationManagerService extends BaseTest {
         service = spy(new InstallationManagerService(BACKUP_DIR, mockFacade, configManager));
 
         doReturn(TEST_SYSTEM_ADMIN_NAME).when(mockPrincipal).getName();
-        doReturn(mockArtifact).when(service).getArtifact(anyString());
+        doReturn(mockArtifact).when(service).createArtifact(anyString());
 
         artifact = createArtifact(ARTIFACT_NAME);
         version = Version.valueOf(VERSION_NUMBER);
@@ -491,7 +491,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetArtifactPropertiesErrorIfArtifactNotFound() throws Exception {
-        doThrow(new ArtifactNotFoundException("artifact")).when(service).getArtifact(anyString());
+        doThrow(new ArtifactNotFoundException("artifact")).when(service).createArtifact(anyString());
         Response response = service.getArtifactProperties("artifact", "1.3.1");
         assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
@@ -736,7 +736,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testDeleteDownloadedArtifact() throws Exception {
-        doReturn(artifact).when(service).getArtifact(artifact.getName());
+        doReturn(artifact).when(service).createArtifact(artifact.getName());
 
         Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
@@ -745,7 +745,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testDeleteNonDownloadedArtifact() throws Exception {
-        doReturn(artifact).when(service).getArtifact(artifact.getName());
+        doReturn(artifact).when(service).createArtifact(artifact.getName());
         doThrow(new ArtifactNotFoundException(artifact, version)).when(mockFacade).deleteDownloadedArtifact(artifact, version);
 
         Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
@@ -755,7 +755,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testDeleteDownloadedArtifactWhenVersionIsIncorrect() throws Exception {
-        doReturn(artifact).when(service).getArtifact(artifact.getName());
+        doReturn(artifact).when(service).createArtifact(artifact.getName());
 
         Response response = service.deleteDownloadedArtifact(artifact.getName(), "incorrect");
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
@@ -764,7 +764,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testDeleteDownloadedArtifactShouldReturnErrorResponse() throws Exception {
-        doReturn(artifact).when(service).getArtifact(artifact.getName());
+        doReturn(artifact).when(service).createArtifact(artifact.getName());
         doThrow(new IOException("error")).when(mockFacade).deleteDownloadedArtifact(artifact, version);
 
         Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
