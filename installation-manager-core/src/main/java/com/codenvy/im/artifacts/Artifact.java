@@ -34,6 +34,8 @@ import java.util.Map;
  */
 public interface Artifact extends Comparable<Artifact> {
 
+    String ARTIFACT_PROPERTIES_FILE_NAME = ".properties";
+
     /** @return the artifact name */
     String getName();
 

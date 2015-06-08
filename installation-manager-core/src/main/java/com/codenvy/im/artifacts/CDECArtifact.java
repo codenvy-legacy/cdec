@@ -60,9 +60,10 @@ public class CDECArtifact extends AbstractArtifact {
 
     @Inject
     public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
+                        @Named("installation-manager.download_dir") String downloadDir,
                         HttpTransport transport,
                         ConfigManager configManager) {
-        super(NAME, updateEndpoint, transport, configManager);
+        super(NAME, updateEndpoint, downloadDir, transport, configManager);
     }
 
     /** {@inheritDoc} */

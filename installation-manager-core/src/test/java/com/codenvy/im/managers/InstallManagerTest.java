@@ -69,8 +69,8 @@ public class InstallManagerTest extends BaseTest {
     public void setUp() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        installManagerArtifact = spy(new InstallManagerArtifact(UPDATE_API_ENDPOINT, transport, configManager));
-        cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, transport, configManager));
+        installManagerArtifact = spy(new InstallManagerArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, transport, configManager));
+        cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, transport, configManager));
 
         installManager = spy(new InstallManager(new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
     }

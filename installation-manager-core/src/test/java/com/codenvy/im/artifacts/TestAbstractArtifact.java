@@ -25,16 +25,15 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -55,7 +54,6 @@ import static org.testng.Assert.assertTrue;
 public class TestAbstractArtifact extends BaseTest {
     private AbstractArtifact spyTestArtifact;
 
-    private static final String  UPDATE_ENDPOINT     = "update/endpoint";
     private static final String  TEST_ARTIFACT_NAME  = "test_artifact_name";
     private static final String  TEST_VERSION_STRING = "1.0.0";
     private static final Version TEST_VERSION        = Version.valueOf(TEST_VERSION_STRING);
@@ -69,16 +67,25 @@ public class TestAbstractArtifact extends BaseTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, UPDATE_API_ENDPOINT, mockTransport, configManager));
-    }
-
-    @AfterMethod
-    public void tearDown() throws Exception {
-        FileUtils.deleteDirectory(Paths.get("target", "download").toFile());
+        spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, UPDATE_API_ENDPOINT, DOWNLOAD_DIR, mockTransport, configManager));
     }
 
     @Test
-    public void testGetArtifactProperties() throws Exception {
+    public void testGetArtifactPropertiesFromPropertyFile() throws Exception {
+        Path propertiesFile = Paths.get(DOWNLOAD_DIR, spyTestArtifact.getName(), TEST_VERSION.toString(), Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
+        Files.createDirectories(propertiesFile.getParent());
+        FileUtils.write(propertiesFile.toFile(), "file=file1\n"
+                                                 + "md5=a\n");
+
+        Map m = spyTestArtifact.getProperties(TEST_VERSION);
+        assertTrue(m.containsKey("file"));
+        assertTrue(m.containsKey("md5"));
+        assertEquals(m.get("file"), "file1");
+        assertEquals(m.get("md5"), "a");
+    }
+
+    @Test
+    public void testGetArtifactPropertiesFromUpdateServer() throws Exception {
         doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
 
         Map m = spyTestArtifact.getProperties(TEST_VERSION);
@@ -94,7 +101,7 @@ public class TestAbstractArtifact extends BaseTest {
                 .when(mockTransport)
                 .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
 
-        Version version = spyTestArtifact.getLatestVersion(UPDATE_ENDPOINT, mockTransport);
+        Version version = spyTestArtifact.getLatestVersion(UPDATE_API_ENDPOINT, mockTransport);
         assertEquals(version.toString(), TEST_VERSION_STRING);
     }
 
@@ -171,9 +178,10 @@ public class TestAbstractArtifact extends BaseTest {
     private static class TestedAbstractArtifact extends AbstractArtifact {
         public TestedAbstractArtifact(String name,
                                       String updateEndpoint,
+                                      String downloadDir,
                                       HttpTransport transport,
                                       ConfigManager configManager) {
-            super(name, updateEndpoint, transport, configManager);
+            super(name, updateEndpoint, downloadDir, transport, configManager);
         }
 
         @Nullable

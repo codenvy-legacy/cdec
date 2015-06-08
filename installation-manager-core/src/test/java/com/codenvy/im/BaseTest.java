@@ -24,6 +24,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.nio.file.Path;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.when;
 public class BaseTest {
     protected static final String DOWNLOAD_DIR        = "target/download";
     protected static final String UPDATE_API_ENDPOINT = "update/endpoint";
-    protected static final String SAAS_API_ENDPOINT = "api/endpoint";
+    protected static final String SAAS_API_ENDPOINT   = "api/endpoint";
     public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
 
     @BeforeMethod
@@ -98,4 +99,10 @@ public class BaseTest {
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
         doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
     }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+        FileUtils.deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());
+    }
+
 }

@@ -86,7 +86,7 @@ public class TestCDECArtifact extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact("", transport, configManager));
+        spyCdecArtifact = spy(new CDECArtifact("", "", transport, configManager));
 
         // cleanup temp directory
         File remoteTempDir = new File("/tmp/codenvy");

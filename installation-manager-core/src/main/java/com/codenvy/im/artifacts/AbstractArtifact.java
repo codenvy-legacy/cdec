@@ -24,15 +24,23 @@ import com.codenvy.im.utils.Version;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nullable;
+import javax.inject.Named;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.Version.valueOf;
+import static java.nio.file.Files.newInputStream;
 
 /**
  * @author Anatoliy Bazko
@@ -42,11 +50,14 @@ public abstract class AbstractArtifact implements Artifact {
     protected final HttpTransport transport;
     protected final ConfigManager configManager;
     protected final String        updateEndpoint;
+    private final Path            downloadDir;
 
     public AbstractArtifact(String name,
                             String updateEndpoint,
+                            String downloadDir,
                             HttpTransport transport,
                             ConfigManager configManager) {
+        this.downloadDir = Paths.get(downloadDir);
         this.name = name;
         this.transport = transport;
         this.configManager = configManager;
@@ -158,6 +169,29 @@ public abstract class AbstractArtifact implements Artifact {
     /** @return artifact properties */
     @Override
     public Map<String, String> getProperties(Version version) throws IOException {
+        Path pathToProperties = getDownloadDirectory(version).resolve(Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
+
+        // try to load properties from directory with binaries
+        if (Files.exists(pathToProperties)) {
+            try (InputStream in = newInputStream(pathToProperties)) {
+                Properties properties = new Properties();
+                properties.load(in);
+
+                Map<String, String> propertiesMap = new HashMap<>();
+
+                for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+                    String key = (String)entry.getKey();
+                    String value = (String)entry.getValue();
+
+                    propertiesMap.put(key, value);
+                }
+
+                return propertiesMap;
+            } catch (IOException e) {
+                // ignore so as we can obtain properties from Update Server
+            }
+        }
+
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName() + "/" + version.toString());
         try {
             Map m = asMap(transport.doGet(requestUrl));
@@ -165,6 +199,10 @@ public abstract class AbstractArtifact implements Artifact {
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
+    }
+
+    private Path getDownloadDirectory(Version version) {
+        return downloadDir.resolve(getName()).resolve(version.toString());
     }
 
     protected Version getLatestVersion(String updateEndpoint, HttpTransport transport) throws IOException {

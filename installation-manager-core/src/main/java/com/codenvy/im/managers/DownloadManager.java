@@ -42,6 +42,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,6 +53,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -72,6 +74,7 @@ import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.newDirectoryStream;
+import static java.nio.file.Files.newOutputStream;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 /**
@@ -82,6 +85,7 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 public class DownloadManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DownloadManager.class);
+    public static final String ARTIFACT_PROPERTIES_FILE_NAME = ".properties";
 
     private final String        updateEndpoint;
     private final HttpTransport transport;
@@ -201,6 +205,7 @@ public class DownloadManager {
                                                                                          pathToBinaries,
                                                                                          DownloadArtifactStatus.DOWNLOADED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
+                    saveArtifactProperties(artToDownload, verToDownload, pathToBinaries);
                 } catch (Exception exp) {
                     LOG.error(exp.getMessage(), exp);
                     DownloadArtifactInfo info = new DownloadArtifactInfo(artToDownload,
@@ -428,13 +433,13 @@ public class DownloadManager {
                         if (isDirectory(versionDir)) {
                             Version version = valueOf(versionDir.getFileName().toString());
 
-                            Map properties = artifact.getProperties(version);
-                            String md5sum = properties.get(MD5_PROPERTY).toString();
-                            String fileName = properties.get(FILE_NAME_PROPERTY).toString();
+                            Map<String, String> properties = artifact.getProperties(version);
+                            String fileName = properties.get(FILE_NAME_PROPERTY);
 
-                            Path file = versionDir.resolve(fileName);
-                            if (exists(file) && md5sum.equals(calculateMD5Sum(file))) {
-                                versions.put(version, file);
+                            Path binaryFile = versionDir.resolve(fileName);
+                            Path propertyFile = versionDir.resolve(Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
+                            if (exists(binaryFile) && exists(propertyFile)) {  // check is artifact completely downloaded
+                                versions.put(version, binaryFile);
                             }
                         }
                     } catch (IllegalArgumentException e) {
@@ -485,5 +490,26 @@ public class DownloadManager {
 
     protected void invalidateDownloadDescriptor() {
         downloadProgress = null;
+    }
+
+    /** Save artifact properties into the ".properties" file in the artifact download directory */
+    protected void saveArtifactProperties(Artifact artToDownload, Version verToDownload, Path pathToBinaries) throws IOException {
+        Map<String, String> propertiesMap = artToDownload.getProperties(verToDownload);
+        String md5sum = propertiesMap.get(MD5_PROPERTY);
+
+        if (checkArtifactDownloadedProperly(pathToBinaries, md5sum)) {
+            Path pathToPropertiesFile = pathToBinaries.getParent().resolve(Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
+
+            Properties properties = new Properties();
+            properties.putAll(propertiesMap);
+
+            try(OutputStream out = newOutputStream(pathToPropertiesFile)) {
+                properties.store(out, null);
+            }
+        }
+    }
+
+    private boolean checkArtifactDownloadedProperly(Path pathToBinaries, String md5sum) throws IOException {
+        return exists(pathToBinaries) && md5sum.equals(calculateMD5Sum(pathToBinaries));
     }
 }

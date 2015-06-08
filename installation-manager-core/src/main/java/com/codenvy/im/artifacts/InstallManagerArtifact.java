@@ -60,9 +60,10 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     @Inject
     public InstallManagerArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
+                                  @Named("installation-manager.download_dir") String downloadDir,
                                   HttpTransport transport,
                                   ConfigManager configManager) {
-        super(NAME, updateEndpoint, transport, configManager);
+        super(NAME, updateEndpoint, downloadDir, transport, configManager);
     }
 
     /** {@inheritDoc} */
