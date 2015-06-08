@@ -25,7 +25,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.AuthenticationException;
@@ -46,10 +46,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +69,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -334,17 +331,10 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(null, null);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(1); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-            if (info.getStatus() == DownloadArtifactStatus.DOWNLOADING) {
-                DownloadArtifactInfo downloadingArtifactInfo = downloadManager.downloadProgress.getDownloadingArtifactInfo();
-                assertNotNull(downloadingArtifactInfo);
-                assertEquals(downloadingArtifactInfo.getArtifact(), cdecArtifact.getName());
-                assertEquals(downloadingArtifactInfo.getVersion(), cdecVersion.toString());
-            }
-
         } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
 
         assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
@@ -388,7 +378,7 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(cdecArtifact, null);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
@@ -429,7 +419,7 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(cdecArtifact, cdecVersion);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
@@ -452,7 +442,7 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(null, null);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
@@ -477,7 +467,7 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(cdecArtifact, cdecVersion);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
@@ -522,7 +512,7 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(cdecArtifact, null);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
@@ -547,7 +537,7 @@ public class DownloadManagerTest extends BaseTest {
 
         downloadManager.startDownload(cdecArtifact, null);
 
-        DownloadProgressDescriptor info;
+        DownloadProgressResponse info;
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
@@ -591,7 +581,7 @@ public class DownloadManagerTest extends BaseTest {
 
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded and cannot be deleted.")
-    public void testDeleteDownloadingArtifact() throws Exception {
+    public void testDeleteDownloadingArtifactShouldThrowException() throws Exception {
         Artifact artifact = cdecArtifact;
         Version version = Version.valueOf("1.0.1");
 
@@ -602,8 +592,7 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(artifact.getName()).when(mockDownloadArtifactInfo).getArtifact();
         doReturn(version.toString()).when(mockDownloadArtifactInfo).getVersion();
 
-        DownloadProgress testDownloadProgress = new DownloadProgress(new HashMap<Path, Long>()).setDownloadingArtifactInfo(mockDownloadArtifactInfo);
-        downloadManager.downloadProgress = testDownloadProgress;
+        downloadManager.downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap(), ImmutableMap.of(artifact, version));
 
         downloadManager.deleteArtifact(artifact, version);
     }

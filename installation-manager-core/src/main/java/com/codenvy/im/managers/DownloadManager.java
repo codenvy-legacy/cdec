@@ -22,7 +22,7 @@ import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
@@ -32,6 +32,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.slf4j.Logger;
@@ -150,7 +151,7 @@ public class DownloadManager {
     }
 
     /** @return the current status of downloading process */
-    public DownloadProgressDescriptor getDownloadProgress() throws DownloadNotStartedException, IOException {
+    public DownloadProgressResponse getDownloadProgress() throws DownloadNotStartedException, IOException {
         if (downloadProgress == null) {
             throw new DownloadNotStartedException();
         }
@@ -165,15 +166,15 @@ public class DownloadManager {
         }
 
         if (downloadProgress.getDownloadStatus() == DownloadArtifactStatus.FAILED) {
-            return new DownloadProgressDescriptor(downloadProgress.getDownloadStatus(),
-                                                  downloadProgress.getErrorMessage(),
-                                                  downloadProgress.getProgress(),
-                                                  infos);
+            return new DownloadProgressResponse(downloadProgress.getDownloadStatus(),
+                                                downloadProgress.getErrorMessage(),
+                                                downloadProgress.getProgress(),
+                                                infos);
         }
 
-        return new DownloadProgressDescriptor(downloadProgress.getDownloadStatus(),
-                                              downloadProgress.getProgress(),
-                                              infos);
+        return new DownloadProgressResponse(downloadProgress.getDownloadStatus(),
+                                            downloadProgress.getProgress(),
+                                            infos);
     }
 
     protected void download(@Nullable Artifact artifact,
@@ -378,7 +379,8 @@ public class DownloadManager {
                                                                   @Nullable Version fromVersion) throws IOException, JsonParseException {
 
         String requestUrl = combinePaths(updateEndpoint, "repository/updates/" + artifact + (fromVersion == null ? ""
-                                                                                                      : "?fromVersion=" + fromVersion.toString()));
+                                                                                                                 : "?fromVersion=" +
+                                                                                                                   fromVersion.toString()));
         List<String> l = fromJson(transport.doGet(requestUrl), List.class);
         return FluentIterable.from(l).transform(new Function<String, Map.Entry<Artifact, Version>>() {
             @Override
@@ -460,17 +462,16 @@ public class DownloadManager {
         }
 
         downloadProgress = new DownloadProgress(binaries, artifacts);
-        downloadProgress = new DownloadProgress(m);
     }
 
     /** Delete binaries of already downloaded artifact */
     public void deleteArtifact(Artifact artifact, Version version) throws IOException {
         if (downloadProgress != null) {
-            DownloadArtifactInfo info = downloadProgress.getDownloadingArtifactInfo();
-            if (info != null
-                && info.getArtifact().equals(artifact.getName())
-                && info.getVersion().equals(version.toString())) {
-                throw new IllegalStateException(format("Artifact '%s' version '%s' is being downloaded and cannot be deleted.", artifact.getName(), version.toString()));
+            Map<Artifact, Version> artifacts2Download = downloadProgress.getArtifacts2Download();
+            if (artifacts2Download.containsKey(artifact) &&
+                artifacts2Download.get(artifact).equals(version)) {
+                throw new IllegalStateException(
+                        format("Artifact '%s' version '%s' is being downloaded and cannot be deleted.", artifact.getName(), version.toString()));
             }
         }
 

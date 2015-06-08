@@ -20,7 +20,6 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
@@ -33,7 +32,7 @@ import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
@@ -177,7 +176,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetDownloadProgress() throws Exception {
-        DownloadProgressDescriptor progressDescriptor = new DownloadProgressDescriptor();
+        DownloadProgressResponse progressDescriptor = new DownloadProgressResponse();
         doReturn(progressDescriptor).when(mockFacade).getDownloadProgress();
 
         Response result = service.getDownloadProgress("id");

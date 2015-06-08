@@ -33,7 +33,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Anatoliy Bazko
  */
-public class DownloadProgressDescriptorTest extends BaseTest {
+public class DownloadProgressResponseTest extends BaseTest {
 
     @Test
     public void test() throws Exception {
@@ -42,17 +42,17 @@ public class DownloadProgressDescriptorTest extends BaseTest {
                                                                                  Paths.get(DOWNLOAD_DIR).resolve("file"),
                                                                                  DownloadArtifactStatus.DOWNLOADED);
 
-        DownloadProgressDescriptor downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
+        DownloadProgressResponse downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED,
                                                                                                "message",
                                                                                                100,
                                                                                                ImmutableList.of(artifactInfo));
 
-        assertEquals(downloadProgressDescriptor.getStatus(), DownloadArtifactStatus.DOWNLOADED);
-        assertEquals(downloadProgressDescriptor.getPercents(), 100);
-        assertEquals(downloadProgressDescriptor.getMessage(), "message");
-        assertEquals(downloadProgressDescriptor.getArtifacts().size(), 1);
-        assertEquals(downloadProgressDescriptor.getArtifacts().get(0), artifactInfo);
-        assertEquals(Commons.toJson(downloadProgressDescriptor), "{\n" +
+        assertEquals(downloadProgressResponse.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(downloadProgressResponse.getPercents(), 100);
+        assertEquals(downloadProgressResponse.getMessage(), "message");
+        assertEquals(downloadProgressResponse.getArtifacts().size(), 1);
+        assertEquals(downloadProgressResponse.getArtifacts().get(0), artifactInfo);
+        assertEquals(Commons.toJson(downloadProgressResponse), "{\n" +
                                                                  "  \"artifacts\" : [ {\n" +
                                                                  "    \"artifact\" : \"codenvy\",\n" +
                                                                  "    \"version\" : \"1.0.1\",\n" +

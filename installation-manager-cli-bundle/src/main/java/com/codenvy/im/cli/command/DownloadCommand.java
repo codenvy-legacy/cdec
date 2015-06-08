@@ -23,7 +23,7 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.DownloadResponse;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.response.UpdatesArtifactInfo;
@@ -87,17 +87,17 @@ public class DownloadCommand extends AbstractIMCommand {
         boolean isCanceled = false;
 
         for (; ; ) {
-            DownloadProgressDescriptor downloadProgressDescriptor = facade.getDownloadProgress();
-            DownloadResponse downloadResponse = new DownloadResponse(downloadProgressDescriptor);
+            DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
+            DownloadResponse downloadResponse = new DownloadResponse(downloadProgressResponse);
 
-            if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED) {
+            if (downloadProgressResponse.getStatus() == DownloadArtifactStatus.FAILED) {
                 console.cleanCurrentLine();
                 console.printErrorAndExit(toJson(downloadResponse));
                 break;
             }
 
             if (!isCanceled) {
-                console.printProgress(downloadProgressDescriptor.getPercents());
+                console.printProgress(downloadProgressResponse.getPercents());
             }
 
             try {
@@ -108,9 +108,9 @@ public class DownloadCommand extends AbstractIMCommand {
                 isCanceled = true;
             }
 
-            if (downloadProgressDescriptor.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
+            if (downloadProgressResponse.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
-                if (downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
+                if (downloadProgressResponse.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
                     console.printErrorAndExit(toJson(downloadResponse));
                 } else {
                     console.println(toJson(downloadResponse));

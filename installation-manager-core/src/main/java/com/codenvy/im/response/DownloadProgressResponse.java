@@ -33,14 +33,14 @@ import java.util.List;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "percents", "message", "status"})
-public class DownloadProgressDescriptor {
+public class DownloadProgressResponse {
 
     private int                        percents;
     private String                     message;
     private DownloadArtifactStatus     status;
     private List<DownloadArtifactInfo> artifacts;
 
-    public DownloadProgressDescriptor() {
+    public DownloadProgressResponse() {
     }
 
     /**
@@ -53,10 +53,10 @@ public class DownloadProgressDescriptor {
      * @param artifacts
      *         the result of downloaded artifacts
      */
-    public DownloadProgressDescriptor(@Nonnull DownloadArtifactStatus status,
-                                      @Nullable String message,
-                                      @Nonnegative int percents,
-                                      @Nonnull List<DownloadArtifactInfo> artifacts) {
+    public DownloadProgressResponse(@Nonnull DownloadArtifactStatus status,
+                                    @Nullable String message,
+                                    @Nonnegative int percents,
+                                    @Nonnull List<DownloadArtifactInfo> artifacts) {
         this.status = status;
         this.percents = percents;
         this.message = message;
@@ -71,9 +71,9 @@ public class DownloadProgressDescriptor {
      * @param artifacts
      *         the result of downloaded artifacts
      */
-    public DownloadProgressDescriptor(@Nonnull DownloadArtifactStatus status,
-                                      @Nonnegative int percents,
-                                      @Nonnull List<DownloadArtifactInfo> artifacts) {
+    public DownloadProgressResponse(@Nonnull DownloadArtifactStatus status,
+                                    @Nonnegative int percents,
+                                    @Nonnull List<DownloadArtifactInfo> artifacts) {
         this(status, null, percents, artifacts);
     }
 

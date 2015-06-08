@@ -26,6 +26,7 @@ import com.codenvy.im.utils.Version;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -47,7 +48,7 @@ public class DownloadProgress {
 
     private final List<DownloadArtifactInfo> downloadedArtifacts;
     private final Map<Artifact, Version> artifacts2Download;
-    private final Map<Path, Long>                         artifacts;
+    private final Map<Path, Long> binaries;
     private final AtomicReference<Exception>              exception;
     private final AtomicReference<DownloadArtifactStatus> status;
     private final String                 uuid;
@@ -55,7 +56,7 @@ public class DownloadProgress {
 
     public DownloadProgress(Map<Path, Long> binaries, Map<Artifact, Version> artifacts) {
         this.downloadThread = Thread.currentThread();
-        this.artifacts = new HashMap<>(binaries);
+        this.binaries = new HashMap<>(binaries);
         this.status = new AtomicReference<>(DownloadArtifactStatus.DOWNLOADING);
         this.exception = new AtomicReference<>();
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
@@ -65,26 +66,31 @@ public class DownloadProgress {
 
     public void addDownloadedArtifact(DownloadArtifactInfo artifactInfo) throws ArtifactNotFoundException {
         downloadedArtifacts.add(artifactInfo);
+        removeFrom2DownloadList(artifactInfo);
+    }
 
+    private void removeFrom2DownloadList(DownloadArtifactInfo artifactInfo) {
         Iterator<Map.Entry<Artifact, Version>> iter = artifacts2Download.entrySet().iterator();
+
         while (iter.hasNext()) {
             Map.Entry<Artifact, Version> e = iter.next();
-            if (artifactInfo.getArtifact().equals(e.getKey().getName())
-                && artifactInfo.getVersion().equals(e.getValue().toString())) {
+            String artifactName = e.getKey().getName();
+            String versionNumber = e.getValue().toString();
 
+            if (artifactInfo.getArtifact().equals(artifactName) && artifactInfo.getVersion().equals(versionNumber)) {
                 iter.remove();
             }
         }
     }
 
     public List<DownloadArtifactInfo> getDownloadedArtifacts() {
-        return downloadedArtifacts;
+        return new ArrayList<>(downloadedArtifacts);
     }
 
     /** @return the total size of all artifacts that will be downloaded */
     public long getExpectedSize() {
         long tSize = 0;
-        for (long l : artifacts.values()) {
+        for (long l : binaries.values()) {
             tSize += l;
         }
         return tSize;
@@ -96,7 +102,7 @@ public class DownloadProgress {
 
     public long getDownloadedSize() throws IOException {
         long downloadedSize = 0;
-        for (Path path : artifacts.keySet()) {
+        for (Path path : binaries.keySet()) {
             if (exists(path)) {
                 downloadedSize += size(path);
             }

@@ -70,14 +70,14 @@ public class DownloadResponseTest extends BaseTest {
                                                                                  Paths.get(DOWNLOAD_DIR).resolve("file"),
                                                                                  DownloadArtifactStatus.DOWNLOADING);
 
-        DownloadProgressDescriptor
-                downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED, 100, ImmutableList.of(artifactInfo));
-        DownloadResponse downloadResponse = new DownloadResponse(downloadProgressDescriptor);
+        DownloadProgressResponse
+                downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED, 100, ImmutableList.of(artifactInfo));
+        DownloadResponse downloadResponse = new DownloadResponse(downloadProgressResponse);
 
         assertEquals(downloadResponse.getStatus(), ResponseCode.OK);
 
-        downloadProgressDescriptor = new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED, 100, ImmutableList.of(artifactInfo));
-        downloadResponse = new DownloadResponse(downloadProgressDescriptor);
+        downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactStatus.FAILED, 100, ImmutableList.of(artifactInfo));
+        downloadResponse = new DownloadResponse(downloadProgressResponse);
 
         assertEquals(downloadResponse.getStatus(), ResponseCode.ERROR);
     }

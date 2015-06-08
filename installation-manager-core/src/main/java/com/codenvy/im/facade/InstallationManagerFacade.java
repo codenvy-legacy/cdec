@@ -36,7 +36,7 @@ import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
@@ -147,7 +147,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#getDownloadProgress()
      */
-    public DownloadProgressDescriptor getDownloadProgress() throws DownloadNotStartedException, IOException {
+    public DownloadProgressResponse getDownloadProgress() throws DownloadNotStartedException, IOException {
         return downloadManager.getDownloadProgress();
     }
 

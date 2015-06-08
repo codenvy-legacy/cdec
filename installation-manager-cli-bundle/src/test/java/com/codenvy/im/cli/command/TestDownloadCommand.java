@@ -20,7 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
@@ -59,7 +59,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Test
     public void testDownload() throws Exception {
         doNothing().when(service).startDownload(null, null);
-        doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.DOWNLOADED,
+        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED,
                                                 100,
                                                 Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
 
@@ -78,7 +78,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
         doNothing().when(service).startDownload(null, null);
-        doReturn(new DownloadProgressDescriptor(DownloadArtifactStatus.FAILED,
+        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.FAILED,
                                                 0,
                                                 Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
 

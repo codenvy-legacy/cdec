@@ -38,10 +38,10 @@ public class DownloadResponse implements Response {
     public DownloadResponse() {
     }
 
-    public DownloadResponse(DownloadProgressDescriptor downloadProgressDescriptor) {
-        this.artifacts = new ArrayList<>(downloadProgressDescriptor.getArtifacts());
-        this.status = downloadProgressDescriptor.getStatus() == DownloadArtifactStatus.FAILED ? ResponseCode.ERROR : ResponseCode.OK;
-        this.message = downloadProgressDescriptor.getMessage();
+    public DownloadResponse(DownloadProgressResponse downloadProgressResponse) {
+        this.artifacts = new ArrayList<>(downloadProgressResponse.getArtifacts());
+        this.status = downloadProgressResponse.getStatus() == DownloadArtifactStatus.FAILED ? ResponseCode.ERROR : ResponseCode.OK;
+        this.message = downloadProgressResponse.getMessage();
     }
 
     public ResponseCode getStatus() {

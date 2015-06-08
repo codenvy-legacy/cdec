@@ -34,7 +34,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
@@ -189,7 +189,7 @@ public class InstallationManagerService {
      */
     @GET
     @Path("downloads/{id}")
-    @ApiOperation(value = "Gets download progress", response = DownloadProgressDescriptor.class)
+    @ApiOperation(value = "Gets download progress", response = DownloadProgressResponse.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 404, message = "Downloading not found"),
                            @ApiResponse(code = 409, message = "Downloading not in progress"),
@@ -197,7 +197,7 @@ public class InstallationManagerService {
     @Produces(MediaType.APPLICATION_JSON)
     public javax.ws.rs.core.Response getDownloadProgress(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
         try {
-            DownloadProgressDescriptor downloadProgress = delegate.getDownloadProgress();
+            DownloadProgressResponse downloadProgress = delegate.getDownloadProgress();
             return javax.ws.rs.core.Response.ok(downloadProgress).build();
         } catch (DownloadNotStartedException e) {
             return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);

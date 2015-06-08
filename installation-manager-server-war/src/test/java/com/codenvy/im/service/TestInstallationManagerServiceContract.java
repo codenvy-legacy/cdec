@@ -28,7 +28,7 @@ import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.BackupInfo;
-import com.codenvy.im.response.DownloadProgressDescriptor;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
@@ -307,7 +307,7 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        DownloadProgressDescriptor downloadDescriptor = new DownloadProgressDescriptor();
+                        DownloadProgressResponse downloadDescriptor = new DownloadProgressResponse();
                         doReturn(downloadDescriptor).when(facade).getDownloadProgress();
                     } catch (IOException | DownloadNotStartedException e) {
                         fail(e.getMessage(), e);
