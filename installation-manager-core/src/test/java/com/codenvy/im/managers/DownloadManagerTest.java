@@ -106,6 +106,11 @@ public class DownloadManagerTest extends BaseTest {
         pathIM = Paths.get("./target/im.zip");
     }
 
+    @AfterMethod
+    public void tearDown() throws Exception {
+        FileUtils.deleteDirectory(Paths.get("target", "download").toFile());
+    }
+
     @Test
     public void testCheckEnoughDiskSpace() throws Exception {
         downloadManager.checkEnoughDiskSpace(100);
@@ -580,7 +585,7 @@ public class DownloadManagerTest extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded and cannot be deleted.")
+            expectedExceptionsMessageRegExp = "Artifact 'codenvy' version '1.0.1' is being downloaded and cannot be deleted.")
     public void testDeleteDownloadingArtifactShouldThrowException() throws Exception {
         Artifact artifact = cdecArtifact;
         Version version = Version.valueOf("1.0.1");
@@ -595,22 +600,5 @@ public class DownloadManagerTest extends BaseTest {
         downloadManager.downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap(), ImmutableMap.of(artifact, version));
 
         downloadManager.deleteArtifact(artifact, version);
-    }
-
-    @Test(expectedExceptions = ArtifactNotFoundException.class,
-          expectedExceptionsMessageRegExp = "Artifact codenvy:1.0.1 not found")
-    public void testDeleteDownloadedArtifactWhenBinaryNotExists() throws Exception {
-        Artifact artifact = cdecArtifact;
-        Version version = Version.valueOf("1.0.1");
-
-        Path binary = Paths.get("target", "download", artifact.getName(), version.toString(), "file1");
-        doReturn(binary).when(downloadManager).getPathToBinaries(artifact, version);
-
-        downloadManager.deleteArtifact(artifact, version);
-    }
-
-    @AfterMethod
-    public void tearDown() throws Exception {
-        FileUtils.deleteDirectory(Paths.get("target", "download").toFile());
     }
 }
