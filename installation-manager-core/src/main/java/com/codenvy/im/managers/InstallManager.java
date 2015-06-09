@@ -169,7 +169,7 @@ public class InstallManager {
 
     /** @return the list with descriptions of installation steps */
     public List<String> getInstallInfo(Artifact artifact, InstallType installType) throws IOException {
-        return artifact.getUpdateInfo(installType);
+        return artifact.getInstallInfo(installType);
     }
 
     /** @return the list with descriptions of installation steps */
