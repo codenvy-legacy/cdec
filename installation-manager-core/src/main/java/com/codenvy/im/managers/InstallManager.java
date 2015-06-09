@@ -27,9 +27,6 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -38,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.codenvy.im.utils.Commons.getProperException;
 import static java.lang.String.format;
@@ -47,7 +46,8 @@ import static java.lang.String.format;
  */
 @Singleton
 public class InstallManager {
-    private static final Logger LOG = LoggerFactory.getLogger(DownloadManager.class);
+    private static final Logger LOG = Logger.getLogger(DownloadManager.class.getSimpleName());
+
     protected final Set<Artifact>                        artifacts;
     protected final Map<String, InstallArtifactStepInfo> installations;
 
@@ -122,7 +122,7 @@ public class InstallManager {
 
                         info.setStatus(InstallArtifactStatus.SUCCESS);
                     } catch (Exception e) {
-                        LOG.error(e.getMessage(), e);
+                        LOG.log(Level.SEVERE, e.getMessage(), e);
                         info.setMessage(e.getMessage());
                         info.setStatus(InstallArtifactStatus.FAILURE);
                     } finally {
