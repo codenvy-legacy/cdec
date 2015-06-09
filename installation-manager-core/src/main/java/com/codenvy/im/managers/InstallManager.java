@@ -142,7 +142,7 @@ public class InstallManager {
     /**
      * Waits while installation step is completed.
      */
-    public void waitForInstallStepCompleted(String stepId) throws InterruptedException, InstallationNotStartedException {
+    public void waitForStepCompleted(String stepId) throws InterruptedException, InstallationNotStartedException {
         InstallArtifactStepInfo info = installations.get(stepId);
         if (info != null) {
             synchronized (info) {

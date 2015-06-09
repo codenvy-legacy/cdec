@@ -149,7 +149,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
         String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
-        installManager.waitForInstallStepCompleted(stepId);
+        installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
     }
@@ -170,7 +170,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
         String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
-        installManager.waitForInstallStepCompleted(stepId);
+        installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
     }
@@ -193,7 +193,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
         String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
-        installManager.waitForInstallStepCompleted(stepId);
+        installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
     }
@@ -216,7 +216,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
         String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
-        installManager.waitForInstallStepCompleted(stepId);
+        installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
     }
@@ -282,7 +282,7 @@ public class InstallManagerTest extends BaseTest {
 
         latch.countDown();
 
-        installManager.waitForInstallStepCompleted(stepId);
+        installManager.waitForStepCompleted(stepId);
 
         assertEquals(info.getStatus(), InstallArtifactStatus.SUCCESS);
         assertEquals(info.getStep(), 1);

@@ -22,7 +22,6 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -712,13 +711,13 @@ public class TestInstallationManagerService extends BaseTest {
 
         assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 
-        verify(mockFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
+        verify(mockFacade).updateArtifactConfig(any(Artifact.class), anyMap());
     }
 
     @Test
     public void testUpdateCodenvyPropertyShouldReturnErrorResponse() throws Exception {
         Map<String, String> properties = ImmutableMap.of("x", "y");
-        doThrow(new IOException("error")).when(mockFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
+        doThrow(new IOException("error")).when(mockFacade).updateArtifactConfig(any(Artifact.class), anyMap());
 
         Response response = service.updateCodenvyProperties(properties);
         assertErrorResponse(response);

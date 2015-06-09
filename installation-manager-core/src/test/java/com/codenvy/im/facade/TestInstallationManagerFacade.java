@@ -512,7 +512,7 @@ public class TestInstallationManagerFacade extends BaseTest {
     public void testWaitForInstallStepCompleted() throws Exception {
         installationManagerFacade.waitForInstallStepCompleted("id");
 
-        verify(installManager).waitForInstallStepCompleted("id");
+        verify(installManager).waitForStepCompleted("id");
     }
 
     @Test
