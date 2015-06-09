@@ -31,6 +31,7 @@ import org.eclipse.che.commons.json.JsonParseException;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.google.api.client.repackaged.com.google.common.base.Strings.isNullOrEmpty;
 
 /** @author Anatoliy Bazko */
@@ -54,7 +55,7 @@ public class ConfigCommand extends AbstractIMCommand {
     private void doUpdateCodenvyHostUrl() throws IOException, JsonParseException {
         console.showProgressor();
         try {
-            facade.updateArtifactConfig(CDECArtifact.NAME, ImmutableMap.of(Config.HOST_URL, codenvyDNS));
+            facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of(Config.HOST_URL, codenvyDNS));
             console.printResponse(BasicResponse.ok());
         } finally {
             console.hideProgressor();

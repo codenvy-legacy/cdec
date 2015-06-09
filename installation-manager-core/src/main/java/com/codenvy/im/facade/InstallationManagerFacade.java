@@ -18,7 +18,6 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
@@ -572,8 +571,7 @@ public class InstallationManagerFacade {
     }
 
     /** Update artifact config property */
-    public void updateArtifactConfig(String artifactName, Map<String, String> properties) throws IOException {
-        Artifact artifact = ArtifactFactory.createArtifact(artifactName);
+    public void updateArtifactConfig(Artifact artifact, Map<String, String> properties) throws IOException {
         doUpdateArtifactConfig(artifact, properties);
     }
 

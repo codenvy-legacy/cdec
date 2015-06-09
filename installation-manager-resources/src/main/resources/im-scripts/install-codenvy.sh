@@ -49,10 +49,10 @@ installPackageIfNeed() {
 
 installJava() {
     printPrompt; echo "Installing java"
-    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz' --output-document=jre.tar.gz
+    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz' --output-document=jre.tar.gz
 
     tar -xf jre.tar.gz -C ${DIR}
-    mv ${DIR}/jre1.7.0_17 ${DIR}/jre
+    mv ${DIR}/jre1.8.0_45 ${DIR}/jre
 
     rm jre.tar.gz
 }

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -78,7 +79,7 @@ public class TestConfigCommand extends AbstractTestCommand {
     public void testChangeCodenvyHostUrl() throws Exception {
         String testDns = "test.com";
         Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, testDns);
-        doNothing().when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
+        doNothing().when(managerFacade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), properties);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--codenvy_dns", testDns);
@@ -99,7 +100,7 @@ public class TestConfigCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-                .when(managerFacade).updateArtifactConfig(CDECArtifact.NAME, properties);
+                .when(managerFacade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), properties);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--codenvy_dns", testDns);

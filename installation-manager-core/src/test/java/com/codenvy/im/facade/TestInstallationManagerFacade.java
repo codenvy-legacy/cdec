@@ -385,7 +385,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         Map<String, String> properties = ImmutableMap.of("a", "b");
         doNothing().when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, properties);
 
-        installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, properties);
+        installationManagerFacade.updateArtifactConfig(cdecArtifact, properties);
 
         verify(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, properties);
     }
@@ -396,7 +396,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         prepareSingleNodeEnv(configManager);
         doThrow(IOException.class).when(installationManagerFacade).doUpdateArtifactConfig(cdecArtifact, properties);
 
-        installationManagerFacade.updateArtifactConfig(CDECArtifact.NAME, properties);
+        installationManagerFacade.updateArtifactConfig(cdecArtifact, properties);
     }
 
     @Test
