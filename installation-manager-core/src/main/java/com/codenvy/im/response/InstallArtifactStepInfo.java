@@ -30,7 +30,7 @@ public class InstallArtifactStepInfo extends BasicArtifactInfo {
     private          String                version;
     private          VersionLabel          label;
     private          int                   step;
-    private          String                message;
+    private volatile String message;
     private volatile InstallArtifactStatus status;
 
     /** {@inheritDoc} */

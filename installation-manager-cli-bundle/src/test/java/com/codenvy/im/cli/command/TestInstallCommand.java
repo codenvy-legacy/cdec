@@ -26,6 +26,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -109,6 +110,10 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallArtifact() throws Exception {
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -132,6 +137,10 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallMultiServerArtifact() throws Exception {
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -226,6 +235,10 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallArtifactVersion() throws Exception {
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));

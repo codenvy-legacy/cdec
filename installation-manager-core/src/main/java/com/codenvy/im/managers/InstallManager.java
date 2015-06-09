@@ -27,6 +27,9 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -34,11 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 import static com.codenvy.im.utils.Commons.getProperException;
 import static java.lang.String.format;
@@ -48,15 +47,14 @@ import static java.lang.String.format;
  */
 @Singleton
 public class InstallManager {
+    private static final Logger LOG = LoggerFactory.getLogger(DownloadManager.class);
     protected final Set<Artifact>                        artifacts;
     protected final Map<String, InstallArtifactStepInfo> installations;
-    protected final ExecutorService                      executorService;
 
     @Inject
     public InstallManager(Set<Artifact> artifacts) {
         this.artifacts = new Commons.ArtifactsSet(artifacts); // keep order
         this.installations = new ConcurrentHashMap<>();
-        this.executorService = Executors.newFixedThreadPool(1);
     }
 
     /**
@@ -113,9 +111,9 @@ public class InstallManager {
 
         installations.put(stepId, info);
 
-        FutureTask<Object> task = new FutureTask<>(new Callable<Object>() {
+        Thread thread = new Thread() {
             @Override
-            public Object call() throws IOException {
+            public void run() {
                 synchronized (info) {
                     try {
                         Command command = isUpdate ? artifact.getUpdateCommand(version, pathToBinaries, options)
@@ -124,18 +122,18 @@ public class InstallManager {
 
                         info.setStatus(InstallArtifactStatus.SUCCESS);
                     } catch (Exception e) {
+                        LOG.error(e.getMessage(), e);
+                        info.setMessage(e.getMessage());
                         info.setStatus(InstallArtifactStatus.FAILURE);
-                        throw e;
                     } finally {
                         info.notifyAll();
                     }
                 }
-
-                return null;
             }
-        });
+        };
+        thread.setDaemon(true);
+        thread.start();
 
-        executorService.execute(task);
         return stepId;
     }
 

@@ -26,6 +26,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.InstallResponse;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.utils.Commons;
@@ -175,6 +176,11 @@ public class InstallCommand extends AbstractIMCommand {
                         stepId = facade.update(artifact, version, installOptions);
                     }
                     facade.waitForInstallStepCompleted(stepId);
+                    InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
+                    if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
+                        installResponse.setStatus(ResponseCode.ERROR);
+                        installResponse.setMessage(updateStepInfo.getMessage());
+                    }
                 } catch (Exception e) {
                     installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
                     installResponse.setStatus(ResponseCode.ERROR);
