@@ -507,4 +507,18 @@ public class TestInstallationManagerFacade extends BaseTest {
         assertEquals(info.getVersion(), "1.0.0");
         assertEquals(info.getStatus(), ArtifactStatus.DOWNLOADED);
     }
+
+    @Test
+    public void testWaitForInstallStepCompleted() throws Exception {
+        installationManagerFacade.waitForInstallStepCompleted("id");
+
+        verify(installManager).waitForInstallStepCompleted("id");
+    }
+
+    @Test
+    public void testGetInstallStepInfo() throws Exception {
+        installationManagerFacade.getUpdateStepInfo("id");
+
+        verify(installManager).getUpdateStepInfo("id");
+    }
 }

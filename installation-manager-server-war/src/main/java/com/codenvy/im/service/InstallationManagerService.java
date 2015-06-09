@@ -31,12 +31,14 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.InstallationNotStartedException;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
+import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.Response;
 import com.codenvy.im.response.UpdatesArtifactInfo;
@@ -95,6 +97,7 @@ import java.util.regex.Pattern;
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
 import static com.codenvy.im.utils.Commons.createVersionOrNull;
 import static com.codenvy.im.utils.Commons.toJson;
+import static java.lang.String.format;
 
 /**
  * @author Dmytro Nochevnov
@@ -107,8 +110,8 @@ import static com.codenvy.im.utils.Commons.toJson;
 @Api(value = "/im", description = "Installation manager")
 public class InstallationManagerService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InstallationManagerService.class);
-    private static final String DOWNLOAD_TOKEN    = UUID.randomUUID().toString();
+    private static final Logger LOG            = LoggerFactory.getLogger(InstallationManagerService.class);
+    private static final String DOWNLOAD_TOKEN = UUID.randomUUID().toString();
 
     private static final String    SECURE_VALUE_MASK    = "*****";
     private static final Pattern[] PRIVATE_KEY_PATTERNS = new Pattern[]{Pattern.compile("password$"),
@@ -141,8 +144,8 @@ public class InstallationManagerService {
                            @ApiResponse(code = 409, message = "Downloading already in progress"),
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response startDownload(
-        @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
-        @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
+            @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
+            @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
 
         try {
             // DownloadManager has to support tokens
@@ -307,37 +310,82 @@ public class InstallationManagerService {
     }
 
     /**
+     * Gets updates steps.
+     */
+    @GET
+    @Path("update/info")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Gets updates steps", responseContainer = "List")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response getUpdateInfo() {
+        try {
+            InstallType installType = configManager.detectInstallationType();
+            List<String> infos = delegate.getUpdateInfo(createArtifact(CDECArtifact.NAME), installType);
+            return javax.ws.rs.core.Response.ok(infos).build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
      * Updates Codenvy.
      */
     @POST
-    @Path("update/" + CDECArtifact.NAME)
+    @Path("update")
+    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Updates Codenvy")
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully updated"),
-                           @ApiResponse(code = 400, message = "Binaries to install not found"),
+                           @ApiResponse(code = 400, message = "Binaries to install not found or installation step is out of range"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response updateCodenvy() {
+    public javax.ws.rs.core.Response updateCodenvy(@QueryParam("step") @ApiParam(name = "installation step") int installStep) {
         try {
             InstallType installType = configManager.detectInstallationType();
-            CDECArtifact artifact = (CDECArtifact)ArtifactFactory.createArtifact(CDECArtifact.NAME);
+            Artifact artifact = createArtifact(CDECArtifact.NAME);
             Version version = delegate.getLatestInstallableVersion(artifact);
             if (version == null) {
                 return handleException(new IllegalStateException("There is no appropriate version to install"),
                                        javax.ws.rs.core.Response.Status.BAD_REQUEST);
             }
             Map<String, String> properties = configManager.prepareInstallProperties(null, installType, artifact, version);
-
             final InstallOptions installOptions = new InstallOptions();
             installOptions.setInstallType(installType);
             installOptions.setConfigProperties(properties);
 
             List<String> infos = delegate.getUpdateInfo(artifact, installType);
-            for (int step = 0; step < infos.size(); step++) {
-                installOptions.setStep(step);
-                delegate.update(artifact, version, installOptions);
+            if (installStep <= 0 || installStep > infos.size()) {
+                return handleException(new IllegalArgumentException(format("Installation step is out of range [1..%d]", infos.size() + 1)),
+                                       javax.ws.rs.core.Response.Status.BAD_REQUEST);
             }
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
+
+            installOptions.setStep(installStep);
+            String id = delegate.update(artifact, version, installOptions);
+
+            Map<String, String> m = ImmutableMap.of("id", id);
+            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.ACCEPTED).entity(new JsonStringMapImpl<>(m)).build();
         } catch (FileNotFoundException e) {
             return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    /**
+     * Gets Codenvy updating status.
+     */
+    @GET
+    @Path("update/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Gets Codenvy updating status", response = InstallArtifactStepInfo.class)
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully updated"),
+                           @ApiResponse(code = 404, message = "Updating step not found"),
+                           @ApiResponse(code = 500, message = "Server error")})
+    public javax.ws.rs.core.Response getUpdateStatus(@PathParam("id") @ApiParam(name = "updating step id") String stepId) {
+        try {
+            InstallArtifactStepInfo info = delegate.getUpdateStepInfo(stepId);
+            return javax.ws.rs.core.Response.ok(info).build();
+        } catch (InstallationNotStartedException e) {
+            return handleException(e, javax.ws.rs.core.Response.Status.NOT_FOUND);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -721,8 +769,8 @@ public class InstallationManagerService {
     @Path("codenvy/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK"),
-        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets Codenvy configuration properties")
     public javax.ws.rs.core.Response getCodenvyProperties() {
         try {
@@ -739,9 +787,9 @@ public class InstallationManagerService {
     @Path("codenvy/properties/{key}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK"),
-        @ApiResponse(code = 404, message = "Property not found"),
-        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 404, message = "Property not found"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets specific Codenvy configuration property")
     public javax.ws.rs.core.Response getCodenvyProperty(@PathParam("key") String key) {
         try {
@@ -764,8 +812,8 @@ public class InstallationManagerService {
     @Path("codenvy/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Successfully updated"),
-        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+            @ApiResponse(code = 201, message = "Successfully updated"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
     public javax.ws.rs.core.Response updateCodenvyProperties(Map<String, String> properties) {
         try {
@@ -836,7 +884,7 @@ public class InstallationManagerService {
 
     /** @return true if only key matches one of the patterns from the PRIVATE_KEY_PATTERNS */
     private boolean isPrivateProperty(String key) {
-        for (Pattern pattern: PRIVATE_KEY_PATTERNS) {
+        for (Pattern pattern : PRIVATE_KEY_PATTERNS) {
             Matcher m = pattern.matcher(key);
             if (m.find()) {
                 return true;

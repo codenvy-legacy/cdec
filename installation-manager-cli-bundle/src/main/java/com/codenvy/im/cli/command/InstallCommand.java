@@ -168,11 +168,13 @@ public class InstallCommand extends AbstractIMCommand {
                 installOptions.setStep(step);
 
                 try {
+                    String stepId;
                     if (isInstall) {
-                        facade.install(artifact, version, installOptions);
+                        stepId = facade.install(artifact, version, installOptions);
                     } else {
-                        facade.update(artifact, version, installOptions);
+                        stepId = facade.update(artifact, version, installOptions);
                     }
+                    facade.waitForInstallStepCompleted(stepId);
                 } catch (Exception e) {
                     installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
                     installResponse.setStatus(ResponseCode.ERROR);
