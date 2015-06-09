@@ -247,7 +247,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new CheckInstalledVersionCommand(original, versionToUpdate);
 
             case 5:
-                return createPatchCommand(Paths.get("/tmp/codenvy/patches/"),
+                return createPatchCommand(Paths.get("/etc/puppet/patches/"),
                                           CommandLibrary.PatchType.AFTER_UPDATE,
                                           installOptions);
 

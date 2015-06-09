@@ -380,14 +380,14 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testUpdateCodenvy() {
         testContract(
-            "update/" + CDECArtifact.NAME,   // path
+                "update",   // path
             ImmutableMap.of("step", "1"),    // query parameters
             null,                            // request body
             null,                            // consume content type
             null,                // produce content type
             HttpMethod.POST,                 // HTTP method
             null,                // response body
-            Response.Status.CREATED,              // response status
+            Response.Status.ACCEPTED,              // response status
             new Function<Object, Object>() { // before test
                 @Nullable
                 @Override
@@ -395,7 +395,8 @@ public class TestInstallationManagerServiceContract {
                     try {
                         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
                         doReturn(null).when(configManager).prepareInstallProperties(anyString(), any(InstallType.class), any(Artifact.class), any(Version.class));
-                        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+                        doReturn("id").when(facade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+                        doReturn(ImmutableList.of("a", "b")).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
                         doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
@@ -801,6 +802,36 @@ public class TestInstallationManagerServiceContract {
                 }
             }                                                 // assertion
         );
+    }
+
+    @Test
+    public void testGetUpdatesInfo() {
+        testContract(
+                "update/info",       // path
+                null,                                             // query parameters
+                null,                                             // request body
+                null,                                             // consume content type
+                ContentType.JSON,                                             // produce content type
+                HttpMethod.GET,                                // HTTP method
+                "[\n" +
+                "    \n" +
+                "]",                                             // response body
+                Response.Status.OK,                       // response status
+                null,                                             // before test
+                new Function<Object, Object>() {
+                    @Nullable
+                    @Override
+                    public Object apply(@Nullable Object o) {
+                        try {
+                            doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+                            doReturn(Collections.emptyList()).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
+                        } catch (IOException e) {
+                            fail(e.getMessage(), e);
+                        }
+                        return null;
+                    }
+                }                                                 // assertion
+                    );
     }
 
     private void testContract(String path,

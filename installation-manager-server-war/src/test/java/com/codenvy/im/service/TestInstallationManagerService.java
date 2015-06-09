@@ -29,6 +29,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
+import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.BackupInfo;
@@ -236,7 +237,8 @@ public class TestInstallationManagerService extends BaseTest {
     public void testUpdateCodenvy() throws Exception {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doReturn(Version.valueOf("3.1.0")).when(mockFacade).getLatestInstallableVersion(any(Artifact.class));
-        doReturn(Collections.emptyList()).when(mockFacade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
+        doReturn(ImmutableList.of("a")).when(mockFacade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
+        doReturn("id").when(mockFacade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");
@@ -247,8 +249,14 @@ public class TestInstallationManagerService extends BaseTest {
                                                                                     createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"));
 
-        Response result = service.updateCodenvy();
-        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
+        Response result = service.updateCodenvy(1);
+        assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+
+        result = service.updateCodenvy(0);
+        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+
+        result = service.updateCodenvy(2);
+        assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     @Test
@@ -769,6 +777,28 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response response = service.deleteDownloadedArtifact(artifact.getName(), version.toString());
         assertErrorResponse(response);
+    }
+
+    @Test
+    public void testGetUpdateInfoShouldReturnOkResponse() throws Exception {
+        doReturn(artifact).when(service).createArtifact(artifact.getName());
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(ImmutableList.of("a", "b")).when(mockFacade).getInstallInfo(artifact, InstallType.SINGLE_SERVER);
+
+        Response response = service.getUpdateInfo();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testGetUpdateInfoShouldReturnErrorResponse() throws Exception {
+        doReturn(artifact).when(service).createArtifact(artifact.getName());
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doThrow(new IOException("error")).when(mockFacade).getUpdateInfo(artifact, InstallType.SINGLE_SERVER);
+
+        Response response = service.getUpdateInfo();
+
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     private void assertOkResponse(Response result) throws IOException {

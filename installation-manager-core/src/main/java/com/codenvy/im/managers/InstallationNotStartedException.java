@@ -16,13 +16,13 @@
  * from Codenvy S.A..
  */
 
-package com.codenvy.im.response;
+package com.codenvy.im.managers;
 
 /**
  * @author Anatoliy Bazko
  */
-public enum InstallArtifactStatus {
-    SUCCESS,
-    FAILURE,
-    IN_PROGRESS
+public class InstallationNotStartedException extends InstallationManagerException {
+    public InstallationNotStartedException() {
+        super("Installation is not in progress");
+    }
 }

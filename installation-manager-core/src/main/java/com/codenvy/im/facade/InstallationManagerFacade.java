@@ -27,6 +27,7 @@ import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.InstallationNotStartedException;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
@@ -39,6 +40,7 @@ import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
@@ -384,7 +386,7 @@ public class InstallationManagerFacade {
      *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performInstallStep
      */
-    public void install(@Nonnull Artifact artifact,
+    public String install(@Nonnull Artifact artifact,
                         @Nonnull Version version,
                         @Nonnull InstallOptions installOptions) throws IOException {
         SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
@@ -392,7 +394,7 @@ public class InstallationManagerFacade {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
 
-        installManager.performInstallStep(artifact, version, downloadedVersions.get(version), installOptions);
+        return installManager.performInstallStep(artifact, version, downloadedVersions.get(version), installOptions);
     }
 
     /**
@@ -400,7 +402,7 @@ public class InstallationManagerFacade {
      *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performUpdateStep
      */
-    public void update(@Nonnull Artifact artifact,
+    public String update(@Nonnull Artifact artifact,
                        @Nonnull Version version,
                        @Nonnull InstallOptions installOptions) throws IOException {
         SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
@@ -408,7 +410,14 @@ public class InstallationManagerFacade {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
 
-        installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions);
+        return installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions);
+    }
+
+    /**
+     * @see com.codenvy.im.managers.InstallManager#waitForInstallStepCompleted(String)
+     */
+    public void waitForInstallStepCompleted(String stepId) throws InstallationNotStartedException, InterruptedException {
+        installManager.waitForInstallStepCompleted(stepId);
     }
 
     /**
@@ -579,4 +588,10 @@ public class InstallationManagerFacade {
         downloadManager.deleteArtifact(artifact, version);
     }
 
+    /**
+     * @see com.codenvy.im.managers.InstallManager#getUpdateStepInfo(String)
+     */
+    public InstallArtifactStepInfo getUpdateStepInfo(String stepId) throws InstallationNotStartedException {
+        return installManager.getUpdateStepInfo(stepId);
+    }
 }

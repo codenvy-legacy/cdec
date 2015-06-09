@@ -111,7 +111,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testInstallArtifact() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -134,7 +134,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testInstallMultiServerArtifact() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
@@ -228,7 +228,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testInstallArtifactVersion() throws Exception {
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        doNothing().when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);

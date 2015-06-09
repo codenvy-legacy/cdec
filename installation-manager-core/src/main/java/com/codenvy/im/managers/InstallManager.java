@@ -20,6 +20,8 @@ package com.codenvy.im.managers;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
+import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -31,19 +33,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import static com.codenvy.im.utils.Commons.getProperException;
+import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
  */
 @Singleton
 public class InstallManager {
-    private final Set<Artifact> artifacts;
+    protected final Set<Artifact>                        artifacts;
+    protected final Map<String, InstallArtifactStepInfo> installations;
+    protected final ExecutorService                      executorService;
 
     @Inject
     public InstallManager(Set<Artifact> artifacts) {
         this.artifacts = new Commons.ArtifactsSet(artifacts); // keep order
+        this.installations = new ConcurrentHashMap<>();
+        this.executorService = Executors.newFixedThreadPool(1);
     }
 
     /**
@@ -69,15 +82,89 @@ public class InstallManager {
     }
 
     /** Installs specific artifact. */
-    public void performInstallStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
-        Command command = artifact.getInstallCommand(version, pathToBinaries, options);
-        executeCommand(command);
+    public String performInstallStep(final Artifact artifact,
+                                     final Version version,
+                                     final Path pathToBinaries,
+                                     final InstallOptions options) throws IOException {
+        return performStep(artifact, version, pathToBinaries, options, false);
     }
 
     /** Updates specific artifact. */
-    public void performUpdateStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
-        Command command = artifact.getUpdateCommand(version, pathToBinaries, options);
-        executeCommand(command);
+    public String performUpdateStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
+        return performStep(artifact, version, pathToBinaries, options, true);
+    }
+
+    protected String performStep(final Artifact artifact,
+                                 final Version version,
+                                 final Path pathToBinaries,
+                                 final InstallOptions options,
+                                 final boolean isUpdate) throws IOException {
+
+        if (options.getStep() == 1 && !isInstallable(artifact, version)) {
+            throw new IllegalStateException(format("%s:%s is not installable", artifact.getName(), version.toString()));
+        }
+
+        final String stepId = UUID.randomUUID().toString();
+        final InstallArtifactStepInfo info = new InstallArtifactStepInfo();
+        info.setArtifact(artifact.getName());
+        info.setVersion(version.toString());
+        info.setStep(options.getStep());
+        info.setStatus(InstallArtifactStatus.IN_PROGRESS);
+
+        installations.put(stepId, info);
+
+        FutureTask<Object> task = new FutureTask<>(new Callable<Object>() {
+            @Override
+            public Object call() throws IOException {
+                synchronized (info) {
+                    try {
+                        Command command = isUpdate ? artifact.getUpdateCommand(version, pathToBinaries, options)
+                                                   : artifact.getInstallCommand(version, pathToBinaries, options);
+                        executeCommand(command);
+
+                        info.setStatus(InstallArtifactStatus.SUCCESS);
+                    } catch (Exception e) {
+                        info.setStatus(InstallArtifactStatus.FAILURE);
+                        throw e;
+                    } finally {
+                        info.notifyAll();
+                    }
+                }
+
+                return null;
+            }
+        });
+
+        executorService.execute(task);
+        return stepId;
+    }
+
+    /**
+     * Waits while installation step is completed.
+     */
+    public void waitForInstallStepCompleted(String stepId) throws InterruptedException, InstallationNotStartedException {
+        InstallArtifactStepInfo info = installations.get(stepId);
+        if (info != null) {
+            synchronized (info) {
+                while (info.getStatus() == InstallArtifactStatus.IN_PROGRESS) {
+                    info.wait();
+                }
+            }
+        } else {
+            throw new InstallationNotStartedException();
+        }
+    }
+
+    /**
+     * @return installation step info
+     */
+    public InstallArtifactStepInfo getUpdateStepInfo(String stepId) throws InstallationNotStartedException {
+        InstallArtifactStepInfo info = installations.get(stepId);
+        if (info != null) {
+            return info;
+        } else {
+            throw new InstallationNotStartedException();
+        }
     }
 
     /** @return the list with descriptions of installation steps */
