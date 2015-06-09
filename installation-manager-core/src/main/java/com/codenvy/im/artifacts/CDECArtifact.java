@@ -103,6 +103,11 @@ public class CDECArtifact extends AbstractArtifact {
             return Version.valueOf("3.1.0"); // Old ide doesn't contain Ide Version property
         }
 
+        if (apiInfo.getIdeVersion().contains("codenvy.ide.version")) {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            return Version.valueOf(config.getValue(Config.VERSION));
+        }
+
         return Version.valueOf(apiInfo.getIdeVersion());
     }
 
@@ -124,8 +129,7 @@ public class CDECArtifact extends AbstractArtifact {
                                 "Patch resources before update",
                                 "Move Codenvy binaries to /etc/puppet",
                                 "Update Codenvy",
-                                "Patch resources after update"
-                               );
+                                "Patch resources after update");
     }
 
     /** {@inheritDoc} */
