@@ -84,7 +84,7 @@ public class DownloadManager {
 
     private static final Logger LOG = Logger.getLogger(DownloadManager.class.getSimpleName());  // use java.util.logging instead of slf4j 
                                                                                                 // to prevent echo error message into the CLI console
-
+    
     private final String        updateEndpoint;
     private final HttpTransport transport;
     private final Path          downloadDir;
@@ -495,7 +495,7 @@ public class DownloadManager {
             Properties properties = new Properties();
             properties.putAll(propertiesMap);
 
-            try(OutputStream out = newOutputStream(pathToPropertiesFile)) {
+            try (OutputStream out = newOutputStream(pathToPropertiesFile)) {
                 properties.store(out, null);
             }
         }

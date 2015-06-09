@@ -817,7 +817,7 @@ public class InstallationManagerService {
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
     public javax.ws.rs.core.Response updateCodenvyProperties(Map<String, String> properties) {
         try {
-            delegate.updateArtifactConfig(CDECArtifact.NAME, properties);
+            delegate.updateArtifactConfig(createArtifact(CDECArtifact.NAME), properties);
             return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
         } catch (Exception e) {
             return handleException(e);
