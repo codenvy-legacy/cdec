@@ -111,9 +111,9 @@ public class DownloadCommand extends AbstractIMCommand {
             if (downloadProgressResponse.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
                 if (downloadProgressResponse.getStatus() == DownloadArtifactStatus.DOWNLOADED) {
-                    console.printErrorAndExit(toJson(downloadResponse));
-                } else {
                     console.println(toJson(downloadResponse));
+                } else {
+                    console.printErrorAndExit(toJson(downloadResponse));
                 }
                 break;
             }

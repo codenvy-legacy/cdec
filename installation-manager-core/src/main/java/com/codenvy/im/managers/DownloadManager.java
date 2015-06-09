@@ -33,8 +33,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -81,8 +82,8 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 @Singleton
 public class DownloadManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DownloadManager.class);
-    public static final String ARTIFACT_PROPERTIES_FILE_NAME = ".properties";
+    private static final Logger LOG = Logger.getLogger(DownloadManager.class.getSimpleName());  // use java.util.logging instead of slf4j 
+                                                                                                // to prevent echo error message into the CLI console
 
     private final String        updateEndpoint;
     private final HttpTransport transport;
@@ -139,16 +140,12 @@ public class DownloadManager {
 
     /** Interrupts downloading */
     public void stopDownload() throws DownloadNotStartedException, InterruptedException {
-        try {
-            if (downloadProgress == null || downloadProgress.isDownloadingFinished()) {
-                throw new DownloadNotStartedException();
-            }
-
-            downloadProgress.getDownloadThread().interrupt();
-            downloadProgress.getDownloadThread().join();
-        } finally {
-            invalidateDownloadDescriptor();
+        if (downloadProgress == null || downloadProgress.isDownloadingFinished()) {
+            throw new DownloadNotStartedException();
         }
+
+        downloadProgress.getDownloadThread().interrupt();
+        downloadProgress.getDownloadThread().join();
     }
 
     /** @return the current status of downloading process */
@@ -204,7 +201,7 @@ public class DownloadManager {
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                     saveArtifactProperties(artToDownload, verToDownload, pathToBinaries);
                 } catch (Exception exp) {
-                    LOG.error(exp.getMessage(), exp);
+                    LOG.log(Level.SEVERE, exp.getMessage(), exp);
                     DownloadArtifactInfo info = new DownloadArtifactInfo(artToDownload,
                                                                          verToDownload,
                                                                          DownloadArtifactStatus.FAILED);
@@ -216,7 +213,7 @@ public class DownloadManager {
 
             downloadProgress.setDownloadStatus(DownloadArtifactStatus.DOWNLOADED);
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            LOG.log(Level.SEVERE, e.getMessage(), e);
 
             if (downloadProgress == null) {
                 downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap(), Collections.<Artifact, Version>emptyMap());
