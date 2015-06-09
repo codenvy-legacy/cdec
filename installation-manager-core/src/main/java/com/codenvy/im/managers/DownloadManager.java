@@ -82,7 +82,6 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 public class DownloadManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DownloadManager.class);
-    public static final String ARTIFACT_PROPERTIES_FILE_NAME = ".properties";
 
     private final String        updateEndpoint;
     private final HttpTransport transport;
@@ -498,7 +497,7 @@ public class DownloadManager {
             Properties properties = new Properties();
             properties.putAll(propertiesMap);
 
-            try(OutputStream out = newOutputStream(pathToPropertiesFile)) {
+            try (OutputStream out = newOutputStream(pathToPropertiesFile)) {
                 properties.store(out, null);
             }
         }

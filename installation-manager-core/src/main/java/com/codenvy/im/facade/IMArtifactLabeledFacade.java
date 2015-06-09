@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
+import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PasswordManager;
@@ -30,6 +31,7 @@ import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BasicArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
+import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
@@ -123,6 +125,14 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
         Collection<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
         setVersionLabel(updates);
         return updates;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public DownloadProgressResponse getDownloadProgress() throws DownloadNotStartedException, IOException {
+        DownloadProgressResponse response = super.getDownloadProgress();
+        setVersionLabel(response.getArtifacts());
+        return response;
     }
 
     protected void setVersionLabel(Collection<? extends BasicArtifactInfo> infos) throws IOException {
