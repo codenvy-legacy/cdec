@@ -77,7 +77,7 @@ public class TestAbstractArtifact extends BaseTest {
         FileUtils.write(propertiesFile.toFile(), "file=file1\n"
                                                  + "md5=a\n");
 
-        Map m = spyTestArtifact.getProperties(TEST_VERSION);
+        Map m = spyTestArtifact.fetchPropertiesFromLocalFile(TEST_VERSION);
         assertTrue(m.containsKey("file"));
         assertTrue(m.containsKey("md5"));
         assertEquals(m.get("file"), "file1");

@@ -169,29 +169,46 @@ public abstract class AbstractArtifact implements Artifact {
     /** @return artifact properties */
     @Override
     public Map<String, String> getProperties(Version version) throws IOException {
+//  TODO [ndp] comment to don't read properties from the local file within the downloading updates directory so as label field of artifact properties is mutable
+//        Map<String, String> propertiesMap = fetchPropertiesFromLocalFile(version);
+//        if (propertiesMap != null) {
+//            return propertiesMap;
+//        }
+
+        return fetchPropertiesFromUpdateServer(version);
+    }
+
+    /**
+     * Try to load properties from directory with binaries.
+     * @return null if there is no properties file in the update directory, or there was an exception.
+     */
+    @Nullable
+    protected Map<String, String> fetchPropertiesFromLocalFile(Version version) {
         Path pathToProperties = getDownloadDirectory(version).resolve(Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
-
-        // try to load properties from directory with binaries
-        if (Files.exists(pathToProperties)) {
-            try (InputStream in = newInputStream(pathToProperties)) {
-                Properties properties = new Properties();
-                properties.load(in);
-
-                Map<String, String> propertiesMap = new HashMap<>();
-
-                for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                    String key = (String)entry.getKey();
-                    String value = (String)entry.getValue();
-
-                    propertiesMap.put(key, value);
-                }
-
-                return propertiesMap;
-            } catch (IOException e) {
-                // ignore so as we can obtain properties from Update Server
-            }
+        if (!Files.exists(pathToProperties)) {
+            return null;
         }
 
+        try (InputStream in = newInputStream(pathToProperties)) {
+            Properties properties = new Properties();
+            properties.load(in);
+
+            Map<String, String> propertiesMap = new HashMap<>();
+
+            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+                String key = (String)entry.getKey();
+                String value = (String)entry.getValue();
+
+                propertiesMap.put(key, value);
+            }
+
+            return propertiesMap;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private Map<String, String> fetchPropertiesFromUpdateServer(Version version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties/" + getName() + "/" + version.toString());
         try {
             Map m = asMap(transport.doGet(requestUrl));
