@@ -724,7 +724,7 @@ public class TestInstallationManagerServiceContract {
                 @Override
                 public Object apply(@Nullable Object o) {
                     try {
-                        verify(facade).updateArtifactConfig(CDECArtifact.NAME, ImmutableMap.of("a", "b"));
+                        verify(facade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of("a", "b"));
                     } catch (IOException e) {
                         fail(e.getMessage(), e);
                     }

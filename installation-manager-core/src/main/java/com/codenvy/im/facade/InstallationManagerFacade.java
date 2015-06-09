@@ -413,10 +413,10 @@ public class InstallationManagerFacade {
     }
 
     /**
-     * @see com.codenvy.im.managers.InstallManager#waitForInstallStepCompleted(String)
+     * @see com.codenvy.im.managers.InstallManager#waitForStepCompleted(String)
      */
     public void waitForInstallStepCompleted(String stepId) throws InstallationNotStartedException, InterruptedException {
-        installManager.waitForInstallStepCompleted(stepId);
+        installManager.waitForStepCompleted(stepId);
     }
 
     /**
