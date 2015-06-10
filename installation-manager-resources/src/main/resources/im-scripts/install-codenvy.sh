@@ -379,7 +379,7 @@ doInstallStep5_single() {
 doInstallStep6_single() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeIMCommand im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand im-install --step 9 --force --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
