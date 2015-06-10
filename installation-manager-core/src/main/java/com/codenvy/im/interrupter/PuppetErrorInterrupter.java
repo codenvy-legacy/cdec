@@ -17,12 +17,15 @@
  */
 package com.codenvy.im.interrupter;
 
+import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.SimpleCommand;
 import com.google.common.collect.ImmutableList;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.LinkedList;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,10 +34,12 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Interrupter {
-    public static final String PUPPET_LOG              = "/var/log/messages";
-    public static final int    READ_LOG_TIMEOUT_MILLIS = 100;
+    private static final Path PUPPET_LOG_FILE_PATH = Paths.get("/var/log/messages");
+    protected static final int READ_LOG_TIMEOUT_MILLIS = 100;
+    public static final int SELECTION_LINE_NUMBER = 5;
 
     private boolean interruptHappened;
+    private boolean stop;
     private Context context;
     private Thread  monitorThread;
 
@@ -51,15 +56,20 @@ public class PuppetErrorInterrupter implements Interrupter {
 
     public void start() {
         interruptHappened = false;
+        stop = false;
         context = new NullContext();
 
         monitorThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                File puppetLog = getPuppetLog();
+                Path puppetLog = getPuppetLog();
                 for (; ; ) {
+                    if (stop) {
+                        return;
+                    }
+
                     try {
-                        List<String> lastLines = readNLines(puppetLog, 10);
+                        List<String> lastLines = readNLines(puppetLog, SELECTION_LINE_NUMBER);
 
                         if (lastLines == null) {
                             Thread.sleep(READ_LOG_TIMEOUT_MILLIS);
@@ -85,8 +95,8 @@ public class PuppetErrorInterrupter implements Interrupter {
         monitorThread.start();
     }
 
-    protected File getPuppetLog() {
-        return new File(PUPPET_LOG);
+    protected Path getPuppetLog() {
+        return PUPPET_LOG_FILE_PATH;
     }
 
     private boolean checkPuppetError(String line) {
@@ -100,59 +110,33 @@ public class PuppetErrorInterrupter implements Interrupter {
         return false;
     }
 
-    /** http://stackoverflow.com/questions/686231/quickly-read-the-last-line-of-a-text-file */
-    public List<String> readNLines( File file, int lineNumber) throws IOException {
-        LinkedList<String> lines = new LinkedList<>();
+    private List<String> readNLines(Path file, int lineNumber) throws IOException {
+        Command readFileCommand = getReadPuppetLogCommand(file, lineNumber, true);
+        String allLines = readFileCommand.execute();
 
-        try (RandomAccessFile fileHandler = new RandomAccessFile(file, "r")) {
-            long fileLength = fileHandler.length() - 1;
-            StringBuilder sb = new StringBuilder();
-            int line = 0;
-
-            for (long filePointer = fileLength; filePointer != -1; filePointer--) {
-                fileHandler.seek(filePointer);
-                int readByte = fileHandler.readByte();
-
-                switch (readByte) {
-                    case 0xA : {
-                        if (filePointer < fileLength) {
-                            line = line + 1;
-                            lines.offerFirst(sb.reverse().toString());
-                            sb = new StringBuilder();
-                        }
-                        break;
-                    }
-
-                    case 0xD : {
-                        if (filePointer < fileLength - 1) {
-                            line = line + 1;
-                            lines.offerFirst(sb.reverse().toString());
-                            sb = new StringBuilder();
-                        }
-                        break;
-                    }
-
-                    default:
-                        sb.append((char) readByte);
-                        break;
-                }
-
-                if (line >= lineNumber) {
-                    break;
-                }
-            }
+        if (allLines == null) {
+            Collections.singletonList(String.class);
         }
 
-        return lines;
+        String[] lines = allLines.split("[\n]+");
+        return Arrays.asList(lines);
+    }
+
+    protected Command getReadPuppetLogCommand(Path file, int lineNumber, boolean needSudo) {
+        return SimpleCommand.createCommand(getReadPuppetBashCommand(file, lineNumber, needSudo));
+    }
+
+    private String getReadPuppetBashCommand(Path file, int lineNumber, boolean needSudo) {
+        String command = format("tail -n %s %s", lineNumber, file);
+        if (needSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
     }
 
     public void stop() {
-        monitorThread.interrupt();
-        try {
-            monitorThread.join(READ_LOG_TIMEOUT_MILLIS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        stop = true;
     }
 
     @Override
