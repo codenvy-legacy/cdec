@@ -17,17 +17,10 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.response.BasicResponse;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
 /**
  * @author Anatoliy Bazko
@@ -44,14 +37,6 @@ public class ChangeAdminPasswordCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         facade.changeAdminPassword(currentPassword.getBytes("UTF-8"), newPassword.getBytes("UTF-8"));
-
-        Artifact artifact = createArtifact(CDECArtifact.NAME);
-        Map<String, String> properties = new HashMap<>();
-        properties.put("user_ldap_password", newPassword);
-        properties.put("system_ldap_password", newPassword);
-
-        facade.updateArtifactConfig(artifact, properties);
-
         console.printResponse(BasicResponse.ok());
     }
 }

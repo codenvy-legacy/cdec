@@ -90,7 +90,7 @@ insertProperty() {
 
 askPassword() {
     printPrompt
-    echo -n "System admin password (it cannot be changed easily after install): "
+    echo -n "System admin password (might be changed after installation): "
 
     unset PASSWORD
     unset PROMPT
@@ -143,7 +143,7 @@ prepareConfig_single() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
-    askProperty "System admin user name (it cannot be changed easily after install)" "admin_ldap_user_name"
+    askProperty "System admin user name" "admin_ldap_user_name"
     askPassword
     askDNS_single
 }
@@ -153,7 +153,7 @@ prepareConfig_multi() {
         curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
     fi
 
-    askProperty "System admin user name (it cannot be changed easily after install)" "admin_ldap_user_name"
+    askProperty "System admin user name" "admin_ldap_user_name"
     askPassword
     askDNS_multi "Please set the DNS hostname to be used by Codenvy" "host_url"
     askDNS_multi "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
