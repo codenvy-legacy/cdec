@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
@@ -166,11 +167,12 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn(Version.valueOf("1.0.2")).when(facade).getLatestInstallableVersion(any(Artifact.class));
-        doReturn(false).when(spyCommand).isInstall();
+        doReturn(false).when(spyCommand).isInstall(any(Artifact.class));
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
                                                                                                                               any(InstallType.class),
                                                                                                                               any(Artifact.class),
-                                                                                                                              any(Version.class));
+                                                                                                                              any(Version.class),
+                                                                                                                              anyBoolean());
         // user always enter "some value" as property value
         doAnswer(new Answer() {
             @Override
@@ -364,9 +366,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
                                                                                                                     any(InstallType.class),
                                                                                                                     any(Artifact.class),
-                                                                                                                    any(Version.class));
+                                                                                                                    any(Version.class),
+                                                                                                                    anyBoolean());
 
-        doReturn(true).when(spyCommand).isInstall();
+        doReturn(true).when(spyCommand).isInstall(any(Artifact.class));
         // user always enter "some value" as property value
         doAnswer(new Answer() {
             @Override

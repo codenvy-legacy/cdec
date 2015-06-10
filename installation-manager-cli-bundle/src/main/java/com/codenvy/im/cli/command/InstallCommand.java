@@ -29,7 +29,6 @@ import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.InstallResponse;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
@@ -83,6 +82,9 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--step", aliases = "-s", description = "Particular installation step to perform", required = false)
     private String installStep;
 
+    @Option(name = "--force", aliases = "-f", description = "Force installation in case of splitting process by steps", required = false)
+    private boolean force;
+
     public InstallCommand() {
         this.configManager = INJECTOR.getInstance(ConfigManager.class);
     }
@@ -115,7 +117,7 @@ public class InstallCommand extends AbstractIMCommand {
         versionNumber = version.toString();
 
         final InstallOptions installOptions = new InstallOptions();
-        final boolean isInstall = isInstall();
+        final boolean isInstall = isInstall(artifact);
 
         if (multi) {
             installType = InstallType.MULTI_SERVER;
@@ -124,7 +126,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         installOptions.setInstallType(installType);
-        setInstallProperties(installOptions);
+        setInstallProperties(installOptions, isInstall);
 
         if (!installOptions.checkValid()) {
             enterMandatoryOptions(installOptions);
@@ -284,7 +286,7 @@ public class InstallCommand extends AbstractIMCommand {
         return options;
     }
 
-    protected void setInstallProperties(InstallOptions options) throws IOException {
+    protected void setInstallProperties(InstallOptions options, boolean isInstall) throws IOException {
         switch (artifactName) {
             case InstallManagerArtifact.NAME:
                 options.setCliUserHomeDir(System.getProperty("user.home"));
@@ -294,7 +296,8 @@ public class InstallCommand extends AbstractIMCommand {
                 Map<String, String> properties = configManager.prepareInstallProperties(configFilePath,
                                                                                         installType,
                                                                                         createArtifact(artifactName),
-                                                                                        Version.valueOf(versionNumber));
+                                                                                        Version.valueOf(versionNumber),
+                                                                                        isInstall);
                 options.setConfigProperties(properties);
                 break;
             default:
@@ -302,8 +305,8 @@ public class InstallCommand extends AbstractIMCommand {
         }
     }
 
-    protected boolean isInstall() throws IOException {
-        return Commons.isInstall(createArtifact(CDECArtifact.NAME));
+    protected boolean isInstall(Artifact artifact) throws IOException {
+        return (installStep != null && force) || artifact.getInstalledVersion() == null;
     }
 
     public void confirmOrReenterOptions(InstallOptions installOptions) throws IOException, InterruptedException {

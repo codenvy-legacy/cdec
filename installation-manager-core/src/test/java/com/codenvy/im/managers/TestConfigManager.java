@@ -18,7 +18,6 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.BaseTest;
-import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
@@ -49,7 +48,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -352,7 +350,8 @@ public class TestConfigManager extends BaseTest {
         Map<String, String> properties = configManager.prepareInstallProperties(null,
                                                                                 null,
                                                                                 ArtifactFactory.createArtifact(InstallManagerArtifact.NAME),
-                                                                                null);
+                                                                                null,
+                                                                                true);
         assertTrue(properties.isEmpty());
     }
 
@@ -360,13 +359,13 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesFromConfigInstallUseCase() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"));
+                                                                                      Version.valueOf("3.1.0"),
+                                                                                      true);
         assertEquals(actualProperties.size(), 2);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("version"), "3.1.0");
@@ -376,13 +375,13 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesInstallUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"));
+                                                                                      Version.valueOf("3.1.0"),
+                                                                                      true);
         assertEquals(actualProperties.size(), 2);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("version"), "3.1.0");
@@ -392,14 +391,14 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesFromConfigUpdateUseCase() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(false).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"));
+                                                                                      Version.valueOf("3.1.0"),
+                                                                                      false);
         assertEquals(actualProperties.size(), 3);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "d");
@@ -410,14 +409,14 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(false).when(configManager).isInstall(any(Artifact.class));
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"));
+                                                                                      Version.valueOf("3.1.0"),
+                                                                                      false);
         assertEquals(actualProperties.size(), 3);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "d");
@@ -428,14 +427,14 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesUseTemplates() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b", "c", "${a}"));
 
-        doReturn(true).when(configManager).isInstall(any(Artifact.class));
         doReturn(properties).when(configManager).loadConfigProperties("file");
         doReturn("key").when(configManager).readSSHKey(any(Path.class));
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
                                                                                       InstallType.MULTI_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"));
+                                                                                      Version.valueOf("3.1.0"),
+                                                                                      true);
         assertEquals(actualProperties.size(), 5);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "b");
@@ -448,7 +447,6 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateMultiServerUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(false).when(configManager).isInstall(any(Artifact.class));
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
         doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
         doReturn("master").when(configManager).fetchMasterHostName();
@@ -456,7 +454,8 @@ public class TestConfigManager extends BaseTest {
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       InstallType.MULTI_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"));
+                                                                                      Version.valueOf("3.1.0"),
+                                                                                      false);
         assertEquals(actualProperties.size(), 4);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "d");

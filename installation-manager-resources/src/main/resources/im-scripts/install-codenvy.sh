@@ -167,8 +167,7 @@ prepareConfig_multi() {
 }
 
 executeIMCommand() {
-    if [ ! -z "$1" ]; then printPrompt; echo "$1"; fi
-    ${DIR}/codenvy-cli/bin/codenvy $2 $3 $4 $5 $6 $7 $8 $9
+    ${DIR}/codenvy-cli/bin/codenvy $1 $2 $3 $4 $5 $6 $7 $8 $9
 }
 
 preconfigureSystem() {
@@ -359,36 +358,43 @@ doInstallStep4() {
 
     CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
     CODENVY_ADMIN_PWD=`grep system_ldap_password ${CONFIG} | cut -d '=' -f2`
-    executeIMCommand "Downloading Codenvy binaries" im-download ${ARTIFACT} ${VERSION}
-    executeIMCommand "Checking the list of downloaded binaries" im-download --list-local
+
+    printPrompt; echo "Downloading Codenvy binaries"
+    executeIMCommand im-download ${ARTIFACT} ${VERSION}
+
+    printPrompt; echo "Checking the list of downloaded binaries"
+    executeIMCommand im-download --list-local
+
     printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 
 doInstallStep5_single() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
-    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    printPrompt; echo "Installing the latest Codenvy version. Watch progress in /var/log/messages"
+    executeIMCommand im-install --step 1-8 --force --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_single() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
-    executeIMCommand "" im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand im-install --step 9 --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
 doInstallStep5_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTIPLE NODES"
-    executeIMCommand "Installing the latest Codenvy version. Watch progress in /var/log/messages" im-install --step 1-8 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    printPrompt; echo "Installing the latest Codenvy version. Watch progress in /var/log/messages";
+    executeIMCommand im-install --step 1-8 --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_multi() {
     printPrompt; echo
     printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTIPLE NODES"
-    executeIMCommand "" im-install --step 9 --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
+    executeIMCommand im-install --step 9 --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
     printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 

@@ -246,7 +246,8 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(testConfigProperties).when(configManager).prepareInstallProperties(null,
                                                                                     InstallType.SINGLE_SERVER,
                                                                                     createArtifact(ARTIFACT_NAME),
-                                                                                    Version.valueOf("3.1.0"));
+                                                                                    Version.valueOf("3.1.0"),
+                                                                                    false);
 
         Response result = service.updateCodenvy(1);
         assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());

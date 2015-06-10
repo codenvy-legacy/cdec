@@ -62,6 +62,7 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -394,7 +395,9 @@ public class TestInstallationManagerServiceContract {
                 public Object apply(@Nullable Object o) {
                     try {
                         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-                        doReturn(null).when(configManager).prepareInstallProperties(anyString(), any(InstallType.class), any(Artifact.class), any(Version.class));
+                        doReturn(null).when(configManager)
+                                      .prepareInstallProperties(anyString(), any(InstallType.class), any(Artifact.class), any(Version.class),
+                                                                anyBoolean());
                         doReturn("id").when(facade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
                         doReturn(ImmutableList.of("a", "b")).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
                         doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));

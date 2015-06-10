@@ -347,7 +347,7 @@ public class InstallationManagerService {
                 return handleException(new IllegalStateException("There is no appropriate version to install"),
                                        javax.ws.rs.core.Response.Status.BAD_REQUEST);
             }
-            Map<String, String> properties = configManager.prepareInstallProperties(null, installType, artifact, version);
+            Map<String, String> properties = configManager.prepareInstallProperties(null, installType, artifact, version, false);
             final InstallOptions installOptions = new InstallOptions();
             installOptions.setInstallType(installType);
             installOptions.setConfigProperties(properties);

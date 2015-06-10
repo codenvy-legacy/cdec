@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
@@ -393,7 +392,8 @@ public class ConfigManager {
     public Map<String, String> prepareInstallProperties(@Nullable String configFile,
                                                         InstallType installType,
                                                         Artifact artifact,
-                                                        Version version) throws IOException {
+                                                        Version version,
+                                                        boolean isInstall) throws IOException {
         switch (artifact.getName()) {
             case InstallManagerArtifact.NAME:
                 return Collections.emptyMap();
@@ -401,7 +401,7 @@ public class ConfigManager {
             case CDECArtifact.NAME:
                 Map<String, String> properties;
 
-                if (isInstall(artifact)) {
+                if (isInstall) {
                     properties = configFile != null ? loadConfigProperties(configFile)
                                                     : loadCodenvyDefaultProperties(version, installType);
 
@@ -429,10 +429,6 @@ public class ConfigManager {
 
     public Path getPuppetConfigFile(String configFilename) {
         return Paths.get(puppetBaseDir).resolve(configFilename);
-    }
-
-    protected boolean isInstall(Artifact artifact) throws IOException {
-        return Commons.isInstall(artifact);
     }
 
     /**
