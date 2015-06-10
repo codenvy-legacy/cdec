@@ -22,6 +22,8 @@ import com.codenvy.im.commands.CheckInstalledVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.interrupter.Interrupter;
+import com.codenvy.im.interrupter.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -200,7 +202,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                      "done");
 
             case 8:
-                return new CheckInstalledVersionCommand(original, versionToInstall);
+                return new CheckInstalledVersionCommand(original, versionToInstall, PuppetErrorInterrupter.class);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

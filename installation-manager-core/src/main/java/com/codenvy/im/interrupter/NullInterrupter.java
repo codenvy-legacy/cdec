@@ -15,17 +15,35 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.commands;
-
-import java.io.IOException;
+package com.codenvy.im.interrupter;
 
 /** @author Dmytro Nochevnov */
-public class CommandException extends IOException {
-    public CommandException(String message, Throwable cause) {
-        super(message, cause);
+public class NullInterrupter implements Interrupter {
+    /**
+     * Do nothing.
+     */
+    @Override
+    public void start() {
     }
 
-    public CommandException(String message) {
-        super(message);
+    /**
+     * Do nothing.
+     */
+    @Override
+    public void stop() {
+    }
+
+    /**
+     * @return false
+     */
+    @Override public boolean hasInterrupted() {
+        return false;
+    }
+
+    /**
+     * @return NullContext
+     */
+    @Override public Context getContext() {
+        return new NullContext();
     }
 }

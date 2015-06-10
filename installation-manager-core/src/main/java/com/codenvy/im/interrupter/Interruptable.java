@@ -15,17 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.commands;
-
-import java.io.IOException;
+package com.codenvy.im.interrupter;
 
 /** @author Dmytro Nochevnov */
-public class CommandException extends IOException {
-    public CommandException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public CommandException(String message) {
-        super(message);
-    }
+public interface Interruptable {
+    void interrupt(Context context);
 }
