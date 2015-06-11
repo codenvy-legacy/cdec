@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.managers;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ public class Config {
     public static final String MULTI_SERVER_BASE_PROPERTIES  = "manifests/nodes/multi_server/base_configurations.pp";
     public static final String MULTI_SERVER_NODES_PROPERTIES = "manifests/nodes/multi_server/nodes.pp";
 
-    public static final String VERSION           = "version";
+    public static final String VERSION = "version";
 
     public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
     public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
