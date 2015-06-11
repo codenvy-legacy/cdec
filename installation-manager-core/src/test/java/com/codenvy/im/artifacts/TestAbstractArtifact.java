@@ -25,6 +25,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -36,10 +37,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Matchers.contains;
+import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -96,16 +99,6 @@ public class TestAbstractArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetLatestVersion() throws IOException {
-        doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
-                .when(mockTransport)
-                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
-
-        Version version = spyTestArtifact.getLatestVersion(UPDATE_API_ENDPOINT, mockTransport);
-        assertEquals(version.toString(), TEST_VERSION_STRING);
-    }
-
-    @Test
     public void testIsInstallableWhenPreviousVersionOfNewArtifactIsUnknown() throws IOException {
         Version newVersion = Version.valueOf("2.0.0");
 
@@ -122,7 +115,8 @@ public class TestAbstractArtifact extends BaseTest {
     @Test
     public void testIsInstallableWhenThereIsNoInstalledArtifact() throws IOException {
         doReturn(null).when(spyTestArtifact).getInstalledVersion();
-        doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + Version.valueOf("2.0.0")));
+        doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport)
+                                                                   .doGet(endsWith(TEST_ARTIFACT_NAME + "/" + Version.valueOf("2.0.0")));
 
         assertTrue(spyTestArtifact.isInstallable(TEST_VERSION));
         assertTrue(spyTestArtifact.isInstallable(Version.valueOf("2.0.0")));
@@ -142,36 +136,32 @@ public class TestAbstractArtifact extends BaseTest {
 
     @Test
     public void testGetLatestInstallableVersion() throws Exception {
-        String newVersion = "1.0.1";
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
-
-        doReturn("{\"version\":\"" + newVersion + "\"}")
-                .when(mockTransport)
-                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
-
-        doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}")
-            .when(mockTransport)
-            .doGet(contains("repository/properties/" + TEST_ARTIFACT_NAME + "/" + newVersion));
+        doReturn(Version.valueOf("1.0.0")).when(spyTestArtifact).getInstalledVersion();
+        doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
+            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.1")));
+            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.2")));
+            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.3")));
+        }}).when(spyTestArtifact).getAllUpdates(Version.valueOf("1.0.0"));
+        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.1"), PREVIOUS_VERSION_PROPERTY);
+        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.2"), PREVIOUS_VERSION_PROPERTY);
+        doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
 
         Version version = spyTestArtifact.getLatestInstallableVersion();
 
         assertNotNull(version);
-        assertEquals(version.toString(), newVersion);
+        assertEquals(version, Version.valueOf("1.0.2"));
     }
 
     @Test
     public void testGetNullLatestInstallableVersion() throws Exception {
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
-
-        doReturn("{\"version\":\"" + TEST_VERSION_STRING + "\"}")
-                .when(mockTransport)
-                .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME));
-
-        doReturn("{}")
-            .when(mockTransport)
-            .doGet(endsWith("repository/properties/" + TEST_ARTIFACT_NAME + "/" + TEST_VERSION));
+        doReturn(Version.valueOf("1.0.0")).when(spyTestArtifact).getInstalledVersion();
+        doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
+            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.3")));
+        }}).when(spyTestArtifact).getAllUpdates(Version.valueOf("1.0.0"));
+        doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
 
         Version version = spyTestArtifact.getLatestInstallableVersion();
+
         assertNull(version);
     }
 

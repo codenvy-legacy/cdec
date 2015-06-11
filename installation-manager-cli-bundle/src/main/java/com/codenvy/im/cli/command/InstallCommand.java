@@ -110,7 +110,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         final Artifact artifact = createArtifact(artifactName);
-        final Version version = versionNumber != null ? Version.valueOf(versionNumber) : facade.getLatestInstallableVersion(artifact);
+        final Version version = versionNumber != null ? Version.valueOf(versionNumber) : artifact.getLatestInstallableVersion();
         if (version == null) {
             throw new IllegalStateException("There is no new version to install");
         }

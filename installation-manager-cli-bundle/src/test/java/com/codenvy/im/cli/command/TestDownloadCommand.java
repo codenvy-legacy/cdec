@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.Collections;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -125,7 +127,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdatesWhenErrorInResponse() throws Exception {
-        doThrow(new IOException("Some error")).when(service).getUpdates();
+        doThrow(new IOException("Some error")).when(service).getAllUpdates(any(Artifact.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);
@@ -144,8 +146,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new RuntimeException("Server Error Exception"))
-                .when(service).getUpdates();
+        doThrow(new RuntimeException("Server Error Exception")).when(service).getAllUpdates(any(Artifact.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--check-remote", Boolean.TRUE);

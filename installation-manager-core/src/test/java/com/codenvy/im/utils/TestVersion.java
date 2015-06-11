@@ -76,11 +76,11 @@ public class TestVersion {
     @DataProvider(name = "testParseValidVersionProvider")
     public Object[][] createDataForTestParseValidVersion() {
         return new Object[][]{
-            {"1.0.1", 1, 0, 1, 0, false},
-            {"10.150.200", 10, 150, 200, 0, false},
-            {"10.150.200-SNAPSHOT", 10, 150, 200, 0, true},
-            {"10.150.200-M20", 10, 150, 200, 20, false},
-            {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 20, true},
+                {"1.0.1", 1, 0, 1, 0, false},
+                {"10.150.200", 10, 150, 200, 0, false},
+                {"10.150.200-SNAPSHOT", 10, 150, 200, 0, true},
+                {"10.150.200-M20", 10, 150, 200, 20, false},
+                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 20, true},
         };
     }
 
@@ -99,10 +99,10 @@ public class TestVersion {
     @DataProvider(name = "testToStringProvider")
     public Object[][] createDataForTestToString() {
         return new Object[][]{
-            {"10.150.200", "10.150.200"},
-            {"10.150.200-M20-SNAPSHOT", "10.150.200-M20-SNAPSHOT"},
-            {"10.150.200-M20", "10.150.200-M20"},
-            {"10.150.200-SNAPSHOT", "10.150.200-SNAPSHOT"},
+                {"10.150.200", "10.150.200"},
+                {"10.150.200-M20-SNAPSHOT", "10.150.200-M20-SNAPSHOT"},
+                {"10.150.200-M20", "10.150.200-M20"},
+                {"10.150.200-SNAPSHOT", "10.150.200-SNAPSHOT"},
         };
     }
 
@@ -115,24 +115,24 @@ public class TestVersion {
     @DataProvider(name = "testCompareToProvider")
     public Object[][] createDataForTestCompareTo() {
         return new Object[][]{
-            {"1.0.1", "1.0.1", 0},
-            {"1.0.2-M20", "1.0.2-M20", 0},
-            {"1.0.2-M20-SNAPSHOT", "1.0.2-M20-SNAPSHOT", 0},
-            {"1.0.2-SNAPSHOT", "1.0.2-SNAPSHOT", 0},
+                {"1.0.1", "1.0.1", 0},
+                {"1.0.2-M20", "1.0.2-M20", 0},
+                {"1.0.2-M20-SNAPSHOT", "1.0.2-M20-SNAPSHOT", 0},
+                {"1.0.2-SNAPSHOT", "1.0.2-SNAPSHOT", 0},
 
-            {"2.0.1", "1.0.1", 1},
-            {"1.1.1", "1.0.1", 1},
-            {"1.0.2", "1.0.1", 1},
-            {"1.0.2", "1.0.1-M20", 1},
-            {"1.0.2", "1.0.2-SNAPSHOT", 1},
-            {"1.0.2-M20", "1.0.2", 1},
-            {"1.0.2-M20", "1.0.2-M19", 1},
-            {"1.0.2-M20", "1.0.2-M20-SNAPSHOT", 1},
+                {"2.0.1", "1.0.1", 1},
+                {"1.1.1", "1.0.1", 1},
+                {"1.0.2", "1.0.1", 1},
+                {"1.0.2", "1.0.1-M20", 1},
+                {"1.0.2", "1.0.2-SNAPSHOT", 1},
+                {"1.0.2-M20", "1.0.2", 1},
+                {"1.0.2-M20", "1.0.2-M19", 1},
+                {"1.0.2-M20", "1.0.2-M20-SNAPSHOT", 1},
 
-            {"1.0.1", "2.0.1", -1},
-            {"1.0.1", "1.1.1", -1},
-            {"1.0.1", "1.0.2", -1},
-            {"1.0.1-SNAPSHOT", "1.0.1", -1},
+                {"1.0.1", "2.0.1", -1},
+                {"1.0.1", "1.1.1", -1},
+                {"1.0.1", "1.0.2", -1},
+                {"1.0.1-SNAPSHOT", "1.0.1", -1},
         };
     }
 
@@ -145,5 +145,26 @@ public class TestVersion {
     public void testReverseOrder(String version1, String version2, int result) throws Exception {
         Comparator<Version> reverseOrder = new Version.ReverseOrder();
         assertEquals(reverseOrder.compare(Version.valueOf(version2), Version.valueOf(version1)), result);
+    }
+
+    @Test(dataProvider = "testIsSuitedFor")
+    public void testIsSuitedFor(String version, String pattern, boolean expected) throws Exception {
+        boolean actual = Version.valueOf(version).isSuitedFor(pattern);
+
+        assertEquals(expected, actual);
+    }
+
+    @DataProvider(name = "testIsSuitedFor")
+    public static Object[][] testIsSuitedFor() {
+        return new Object[][]{
+                {"1.0.1", "1\\.0\\.1", true},
+                {"1.0.1", "1\\.0\\.(.*)", true},
+                {"1.0.1", "1\\.(.*)\\.1", true},
+                {"1.0.1", "(.*)\\.0\\.1", true},
+                {"1.0.1", "(.*)\\.(.*)\\.1", true},
+                {"1.0.1", "(.*)\\.(.*)\\.(.*)", true},
+                {"1.0.1", "1\\.0\\.2", false},
+                {"1.0.1", "1\\.1\\.(.*)", false},
+        };
     }
 }

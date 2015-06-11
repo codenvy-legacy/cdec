@@ -81,6 +81,16 @@ public class Version implements Comparable<Version> {
                            !matcher.group(5).isEmpty());
     }
 
+    /**
+     * Checks if version suites for pattern.
+     * For example 3.1.0 version is suited for 3.1.* or 3.*.0
+     */
+    public boolean isSuitedFor(String versionRegex) {
+        Pattern pattern = compile(versionRegex);
+        return pattern.matcher(toString()).matches();
+    }
+
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -96,6 +106,7 @@ public class Version implements Comparable<Version> {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         int result = major;
@@ -106,6 +117,7 @@ public class Version implements Comparable<Version> {
         return result;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int compareTo(Version o) {
         if (major > o.major
@@ -121,6 +133,7 @@ public class Version implements Comparable<Version> {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public String toString() {
         return major + "." + minor + "." + bugFix + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "") + (snapshot ? "-SNAPSHOT" : "");

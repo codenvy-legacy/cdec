@@ -121,7 +121,7 @@ public class DownloadCommand extends AbstractIMCommand {
     }
 
     private void doCheck() throws JsonParseException, IOException {
-        Collection<UpdatesArtifactInfo> updates = facade.getUpdates();
+        Collection<UpdatesArtifactInfo> updates = facade.getAllUpdates(null);
         UpdatesResponse updatesResponse = new UpdatesResponse();
         updatesResponse.setArtifacts(updates);
         updatesResponse.setStatus(ResponseCode.OK);

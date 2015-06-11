@@ -34,9 +34,6 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -56,6 +53,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
@@ -83,8 +82,8 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 public class DownloadManager {
 
     private static final Logger LOG = Logger.getLogger(DownloadManager.class.getSimpleName());  // use java.util.logging instead of slf4j 
-                                                                                                // to prevent echo error message into the CLI console
-    
+    // to prevent echo error message into the CLI console
+
     private final String        updateEndpoint;
     private final HttpTransport transport;
     private final Path          downloadDir;
@@ -375,18 +374,22 @@ public class DownloadManager {
      *         if an I/O error occurred
      */
     public Collection<Map.Entry<Artifact, Version>> getAllUpdates(@Nonnull final Artifact artifact,
-                                                                  @Nullable Version fromVersion) throws IOException, JsonParseException {
+                                                                  @Nullable Version fromVersion) throws IOException {
 
         String requestUrl = combinePaths(updateEndpoint, "repository/updates/" + artifact + (fromVersion == null ? ""
                                                                                                                  : "?fromVersion=" +
                                                                                                                    fromVersion.toString()));
-        List<String> l = fromJson(transport.doGet(requestUrl), List.class);
-        return FluentIterable.from(l).transform(new Function<String, Map.Entry<Artifact, Version>>() {
-            @Override
-            public Map.Entry<Artifact, Version> apply(String version) {
-                return new AbstractMap.SimpleEntry<>(artifact, Version.valueOf(version));
-            }
-        }).toList();
+        try {
+            List<String> l = fromJson(transport.doGet(requestUrl), List.class);
+            return FluentIterable.from(l).transform(new Function<String, Map.Entry<Artifact, Version>>() {
+                @Override
+                public Map.Entry<Artifact, Version> apply(String version) {
+                    return new AbstractMap.SimpleEntry<>(artifact, Version.valueOf(version));
+                }
+            }).toList();
+        } catch (JsonParseException e) {
+            throw new IOException(e);
+        }
     }
 
     private void checkRWPermissions(Path downloadDir) throws IOException {

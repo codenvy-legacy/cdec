@@ -386,8 +386,8 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.managers.InstallManager#performInstallStep
      */
     public String install(@Nonnull Artifact artifact,
-                        @Nonnull Version version,
-                        @Nonnull InstallOptions installOptions) throws IOException {
+                          @Nonnull Version version,
+                          @Nonnull InstallOptions installOptions) throws IOException {
         SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
         if (!downloadedVersions.containsKey(version)) {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
@@ -402,8 +402,8 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.managers.InstallManager#performUpdateStep
      */
     public String update(@Nonnull Artifact artifact,
-                       @Nonnull Version version,
-                       @Nonnull InstallOptions installOptions) throws IOException {
+                         @Nonnull Version version,
+                         @Nonnull InstallOptions installOptions) throws IOException {
         SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
         if (!downloadedVersions.containsKey(version)) {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
@@ -417,14 +417,6 @@ public class InstallationManagerFacade {
      */
     public void waitForInstallStepCompleted(String stepId) throws InstallationNotStartedException, InterruptedException {
         installManager.waitForStepCompleted(stepId);
-    }
-
-    /**
-     * @see com.codenvy.im.managers.InstallManager#getLatestInstallableVersion
-     */
-    @Nullable
-    public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
-        return installManager.getLatestInstallableVersion(artifact);
     }
 
     /**
@@ -591,5 +583,12 @@ public class InstallationManagerFacade {
      */
     public InstallArtifactStepInfo getUpdateStepInfo(String stepId) throws InstallationNotStartedException {
         return installManager.getUpdateStepInfo(stepId);
+    }
+
+    /**
+     * @see com.codenvy.im.artifacts.Artifact#getLatestInstallableVersion()
+     */
+    public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
+        return artifact.getLatestInstallableVersion();
     }
 }

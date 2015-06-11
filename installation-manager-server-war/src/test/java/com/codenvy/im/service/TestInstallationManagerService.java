@@ -235,9 +235,9 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testUpdateCodenvy() throws Exception {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doReturn(Version.valueOf("3.1.0")).when(mockFacade).getLatestInstallableVersion(any(Artifact.class));
         doReturn(ImmutableList.of("a")).when(mockFacade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
         doReturn("id").when(mockFacade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(Version.valueOf("3.1.0")).when(mockFacade).getLatestInstallableVersion(any(Artifact.class));
 
         Map<String, String> testConfigProperties = new HashMap<>();
         testConfigProperties.put("property1", "value1");

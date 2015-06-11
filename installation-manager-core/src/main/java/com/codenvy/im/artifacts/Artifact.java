@@ -59,6 +59,11 @@ public interface Artifact extends Comparable<Artifact> {
     Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
     /**
+     * @return the latest version to install
+     */
+    public Version getLatestInstallableVersion() throws IOException;
+
+    /**
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed and
      * version of the artifact
      */
@@ -67,9 +72,13 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return properties stored at update server */
     Map<String, String> getProperties(Version version) throws IOException;
 
-    /** @return version at the update server which is could be used to update already installed version */
+    /** @return property stored at update server */
     @Nullable
-    Version getLatestInstallableVersion() throws IOException;
+    String getProperty(Version version, String name) throws IOException;
+
+    /** @return property stored at update server */
+    @Nullable
+    String getLatestVersionProperty(String name) throws IOException;
 
     /** @return command to collect backup data at the certain backup directory */
     Command getBackupCommand(BackupConfig backupConfig) throws IOException;

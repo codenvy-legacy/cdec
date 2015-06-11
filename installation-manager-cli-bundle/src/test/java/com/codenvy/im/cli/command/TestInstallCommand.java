@@ -84,7 +84,6 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(IMArtifactLabeledFacade.class);
-        doReturn(Version.valueOf("1.0.1")).when(facade).getLatestInstallableVersion(any(Artifact.class));
         doReturn(ImmutableList.of("step 1", "step 2")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
         commandSession = mock(CommandSession.class);
 
@@ -121,6 +120,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.1");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -148,6 +148,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.1");
         commandInvoker.option("--multi", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -166,7 +167,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
-        doReturn(Version.valueOf("1.0.2")).when(facade).getLatestInstallableVersion(any(Artifact.class));
         doReturn(false).when(spyCommand).isInstall(any(Artifact.class));
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
                                                                                                                               any(InstallType.class),
@@ -202,6 +202,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.2");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -288,6 +289,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.1");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -311,6 +313,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.1");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -381,7 +384,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         // no installation info provided
         doReturn(Collections.emptyList()).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
-        doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(new Answer() {
@@ -400,6 +402,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.0");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

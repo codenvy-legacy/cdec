@@ -395,9 +395,11 @@ public class TestInstallationManagerServiceContract {
                 public Object apply(@Nullable Object o) {
                     try {
                         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-                        doReturn(null).when(configManager)
-                                      .prepareInstallProperties(anyString(), any(InstallType.class), any(Artifact.class), any(Version.class),
-                                                                anyBoolean());
+                        doReturn(null).when(configManager).prepareInstallProperties(anyString(),
+                                                                                    any(InstallType.class),
+                                                                                    any(Artifact.class),
+                                                                                    any(Version.class),
+                                                                                    anyBoolean());
                         doReturn("id").when(facade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
                         doReturn(ImmutableList.of("a", "b")).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
                         doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));

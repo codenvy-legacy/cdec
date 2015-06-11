@@ -175,15 +175,6 @@ public class InstallManager {
         return artifact.getUpdateInfo(installType);
     }
 
-    /**
-     * @return the latest version of the artifact
-     * @throws java.io.IOException
-     *         if an I/O error occurred
-     */
-    public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
-        return artifact.getLatestInstallableVersion();
-    }
-
     public boolean isInstallable(Artifact artifact, Version version) throws IOException {
         return artifact.isInstallable(version);
     }
