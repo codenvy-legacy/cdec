@@ -86,7 +86,7 @@ public class SimpleCommand implements Command {
     public String execute() throws CommandException {
         try {
             if (logCommand) {
-                LOG.log(Level.INFO, toString());
+                LOG.info(toString());
             }
 
             return agent.execute(command);

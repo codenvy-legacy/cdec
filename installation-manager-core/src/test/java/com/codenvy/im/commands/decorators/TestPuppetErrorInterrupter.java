@@ -116,8 +116,7 @@ public class TestPuppetErrorInterrupter {
                     Thread.sleep(WAIT_INTERRUPTER_MILLIS * 2);
 
                     // append error message into puppet log file
-                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: " +
-                                          "Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
 
                     FileUtils.write(testPuppetLog.toFile(), errorMessage, true);
                 } catch (Exception e) {
@@ -137,12 +136,18 @@ public class TestPuppetErrorInterrupter {
 
     @Test(timeOut = 20000)
     public void testNotInterruptWhenAddNoError() throws InterruptedException, IOException {
+        final String[] failMessage = {null};
         final String expectedResult = "okay";
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
-                return expectedResult;
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
+                    return expectedResult;
+                } catch (InterruptedException e) {
+                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                    return null;
+                }
             }
         }).when(mockCommand).execute();
 
@@ -166,6 +171,60 @@ public class TestPuppetErrorInterrupter {
 
         String result = testInterrupter.execute();
         assertEquals(result, expectedResult);
+
+        if (failMessage[0] != null) {
+            fail(failMessage[0]);
+        }
+    }
+
+    @Test(expectedExceptions = CommandException.class,
+          expectedExceptionsMessageRegExp = "error",
+          timeOut = 20000)
+    public void testRethrowCommandExceptionByInterrupter() throws InterruptedException, IOException {
+        final String[] failMessage = {null};
+
+        doAnswer(new Answer() {
+            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+                    throw new CommandException("error");
+                } catch (InterruptedException e) {
+                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                    return null;
+                }
+            }
+        }).when(mockCommand).execute();
+
+        testInterrupter.execute();
+
+        if (failMessage[0] != null) {
+            fail(failMessage[0]);
+        }
+    }
+
+    @Test(expectedExceptions = RuntimeException.class,
+          expectedExceptionsMessageRegExp = "error",
+          timeOut = 20000)
+    public void testRethrowRuntimeExceptionByInterrupter() throws InterruptedException, IOException {
+        final String[] failMessage = {null};
+
+        doAnswer(new Answer() {
+            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+                    throw new RuntimeException("error");
+                } catch (InterruptedException e) {
+                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                    return null;
+                }
+            }
+        }).when(mockCommand).execute();
+
+        testInterrupter.execute();
+
+        if (failMessage[0] != null) {
+            fail(failMessage[0]);
+        }
     }
 
     @AfterMethod

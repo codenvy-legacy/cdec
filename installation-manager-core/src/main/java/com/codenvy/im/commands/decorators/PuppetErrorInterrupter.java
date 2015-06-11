@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +45,7 @@ public class PuppetErrorInterrupter implements Command {
 
     private String result;
     private CommandException commandException;
+    private RuntimeException runtimeException;
 
     private final Command command;
 
@@ -51,12 +53,16 @@ public class PuppetErrorInterrupter implements Command {
         Pattern.compile("puppet-agent[^:]*: Could not retrieve catalog from remote server")
     );
 
+    private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
+
     public PuppetErrorInterrupter(Command command) {
         this.command = command;
     }
 
     @Override
     public String execute() throws CommandException {
+        LOG.info(toString());
+
         stop = false;
         result = null;
         commandException = null;
@@ -66,9 +72,12 @@ public class PuppetErrorInterrupter implements Command {
             public void run() {
                 try {
                     result = command.execute();
+                } catch (CommandException ce) {
+                    commandException = ce;
+                } catch (RuntimeException re) {
+                    runtimeException = re;
+                } finally {
                     stop = true;
-                } catch (CommandException e) {
-                    commandException = e;
                 }
             }
         });
@@ -76,8 +85,12 @@ public class PuppetErrorInterrupter implements Command {
         monitorThread.start();
 
         listenToPuppetError();
+
         if (commandException != null) {
             throw commandException;
+
+        } else if (runtimeException != null) {
+            throw runtimeException;
         }
 
         return result;
@@ -155,7 +168,7 @@ public class PuppetErrorInterrupter implements Command {
 
     @Override
     public String getDescription() {
-        return format("Puppet error interrupter of next command: %s", command.getDescription());
+        return "Puppet error interrupter";
     }
 
     @Override
