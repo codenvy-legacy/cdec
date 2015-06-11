@@ -18,16 +18,13 @@
 package com.codenvy.im.commands;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.interrupter.Context;
 import com.codenvy.im.interrupter.Interruptable;
 import com.codenvy.im.interrupter.Interrupter;
 import com.codenvy.im.interrupter.NullInterrupter;
-import com.codenvy.im.interrupter.PuppetErrorInterrupter;
 import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

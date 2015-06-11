@@ -18,7 +18,6 @@
 package com.codenvy.im.interrupter;
 
 import com.codenvy.im.commands.Command;
-import com.codenvy.im.commands.SimpleCommand;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -26,7 +25,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

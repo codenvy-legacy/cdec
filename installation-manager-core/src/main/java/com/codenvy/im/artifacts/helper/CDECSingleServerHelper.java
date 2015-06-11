@@ -22,7 +22,6 @@ import com.codenvy.im.commands.CheckInstalledVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
-import com.codenvy.im.interrupter.Interrupter;
 import com.codenvy.im.interrupter.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
