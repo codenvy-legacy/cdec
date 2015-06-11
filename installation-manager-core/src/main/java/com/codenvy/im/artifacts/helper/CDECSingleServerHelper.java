@@ -22,7 +22,7 @@ import com.codenvy.im.commands.CheckInstalledVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
-import com.codenvy.im.interrupter.PuppetErrorInterrupter;
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -88,16 +88,17 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
         switch (step) {
             case 0:
-                return new MacroCommand(ImmutableList.of(
-                    createFileRestoreOrBackupCommand("/etc/selinux/config"),
-                    createCommand("if sudo test -f /etc/selinux/config; then " +
-                                  "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
-                                  "        sudo setenforce 0; " +
-                                  "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
-                                  "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
-                                  "    fi " +
-                                  "fi ")),
-                                        "Disable SELinux");
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall));
+//                return new MacroCommand(ImmutableList.of(
+//                    createFileRestoreOrBackupCommand("/etc/selinux/config"),
+//                    createCommand("if sudo test -f /etc/selinux/config; then " +
+//                                  "    if ! grep -Fq \"SELINUX=disabled\" /etc/selinux/config; then " +
+//                                  "        sudo setenforce 0; " +
+//                                  "        sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; " +
+//                                  "        sudo sed -i s/SELINUX=permissive/SELINUX=disabled/g /etc/selinux/config; " +
+//                                  "    fi " +
+//                                  "fi ")),
+//                                        "Disable SELinux");
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
@@ -201,7 +202,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                      "done");
 
             case 8:
-                return new CheckInstalledVersionCommand(original, versionToInstall, PuppetErrorInterrupter.class);
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall));
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

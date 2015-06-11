@@ -37,11 +37,18 @@ public class SimpleCommand implements Command {
     protected final Agent  agent;
 
     private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
+    private final boolean logCommand;
 
     public SimpleCommand(String command, Agent agent, String description) {
+        this(command, agent, description, true);
+
+    }
+
+    public SimpleCommand(String command, Agent agent, String description, boolean logCommand) {
         this.agent = agent;
         this.description = description;
         this.command = command;
+        this.logCommand = logCommand;
     }
 
     /** Factory method to create command which will be executed on the current computer. */
@@ -49,12 +56,17 @@ public class SimpleCommand implements Command {
         return new SimpleCommand(command, new LocalAgent(), null);
     }
 
+    /** Factory method to create command which will be executed on the current computer. */
+    public static SimpleCommand createCommandWithoutLogging(String command) {
+        return new SimpleCommand(command, new LocalAgent(), null, false);
+    }
+
     /** Factory method to create command which will be executed on remote host. */
     protected static SimpleCommand createCommand(String command,
-                                              final String host,
-                                              final int port,
-                                              final String user,
-                                              final String privateKeyFilePath) throws AgentException {
+                                                 final String host,
+                                                 final int port,
+                                                 final String user,
+                                                 final String privateKeyFilePath) throws AgentException {
         return new SimpleCommand(command,
                                  new SecureShellAgent(host, port, user, privateKeyFilePath, null),
                                  null);
@@ -73,7 +85,10 @@ public class SimpleCommand implements Command {
     @Override
     public String execute() throws CommandException {
         try {
-            LOG.log(Level.INFO, toString());
+            if (logCommand) {
+                LOG.log(Level.INFO, toString());
+            }
+
             return agent.execute(command);
         } catch (AgentException e) {
             throw makeCommandException(e);

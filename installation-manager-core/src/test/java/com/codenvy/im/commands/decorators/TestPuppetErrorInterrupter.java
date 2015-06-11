@@ -15,12 +15,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.interrupter;
+package com.codenvy.im.commands.decorators;
 
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandException;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,24 +32,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static java.lang.String.format;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupter {
     public static final int WAIT_INTERRUPTER_MILLIS = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
+
     @Mock
-    Interruptable testInterruptable;
+    Command mockCommand;
 
     PuppetErrorInterrupter testInterrupter;
+
+    Thread testThread;
 
     Path   testPuppetLog           = Paths.get("target/test-classes/messages");
     String logWithoutErrorMessages =
@@ -65,12 +66,11 @@ public class TestPuppetErrorInterrupter {
         + "Jun  8 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
         + "Jun  8 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
 
-
     @BeforeMethod
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        testInterrupter = spy(new PuppetErrorInterrupter(testInterruptable));
+        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand));
 
         doReturn(testPuppetLog).when(testInterrupter).getPuppetLog();
 
@@ -90,46 +90,89 @@ public class TestPuppetErrorInterrupter {
         assertEquals(command.toString(), "{'command'='sudo tail -n 6 target/test-classes/messages', 'agent'='LocalAgent'}");
     }
 
-    @Test
+    @Test(expectedExceptions = CommandException.class,
+          expectedExceptionsMessageRegExp = "Puppet error: 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'",
+          timeOut = 20000)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
-        testInterrupter.start();
-        Thread.sleep(WAIT_INTERRUPTER_MILLIS);
-        assertFalse(testInterrupter.hasInterrupted());
-        assertNull(testInterrupter.getContext().getMessage());
-        verify(testInterruptable, never()).interrupt(any(Context.class));
+        final String[] failMessage = {null};
 
-        // append error message into puppet log file
-        String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: " +
-                              "Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
-        FileUtils.write(testPuppetLog.toFile(), errorMessage, true);
-        Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+        doAnswer(new Answer() {
+            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
+                    failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
+                    return null;
+                } catch(InterruptedException e) {
+                    // it's okay here
+                    return null;
+                }
+            }
+        }).when(mockCommand).execute();
 
-        assertTrue(testInterrupter.hasInterrupted());
-        String expectedErrorMessage = format("Puppet error: '%s'", errorMessage);
-        assertEquals(testInterrupter.getContext().getMessage(), expectedErrorMessage);
+        testThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 2);
 
-        PuppetErrorInterrupter.PuppetErrorContext expectedContext = new PuppetErrorInterrupter.PuppetErrorContext(expectedErrorMessage);
-        verify(testInterruptable).interrupt(expectedContext);
+                    // append error message into puppet log file
+                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: " +
+                                          "Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+
+                    FileUtils.write(testPuppetLog.toFile(), errorMessage, true);
+                } catch (Exception e) {
+                    fail(e.getMessage());
+                }
+            }
+        });
+
+        testThread.start();
+
+        testInterrupter.execute();
+
+        if (failMessage[0] != null) {
+            fail(failMessage[0]);
+        }
     }
 
-    @Test
+    @Test(timeOut = 20000)
     public void testNotInterruptWhenAddNoError() throws InterruptedException, IOException {
-        testInterrupter.start();
-        Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+        final String expectedResult = "okay";
 
-        // append error message into puppet log file
-        String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
-        FileUtils.write(testPuppetLog.toFile(), errorMessage, true);
-        Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+        doAnswer(new Answer() {
+            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
+                return expectedResult;
+            }
+        }).when(mockCommand).execute();
 
-        assertFalse(testInterrupter.hasInterrupted());
-        assertNull(testInterrupter.getContext().getMessage());
-        verify(testInterruptable, never()).interrupt(any(Context.class));
+        testThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 2);
+
+                    // append non-error message into puppet log file
+                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
+
+                    FileUtils.write(testPuppetLog.toFile(), errorMessage, true);
+                } catch (Exception e) {
+                    fail(e.getMessage());
+                }
+            }
+        });
+
+        testThread.start();
+
+        String result = testInterrupter.execute();
+        assertEquals(result, expectedResult);
     }
 
     @AfterMethod
     public void tearDown() throws InterruptedException {
-        testInterrupter.stop();
-        Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+        if (testThread != null) {
+            testThread.interrupt();
+            testThread.join();
+        }
     }
 }
