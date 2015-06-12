@@ -144,7 +144,7 @@ prepareConfig_single() {
     fi
 
     askProperty "System admin user name" "admin_ldap_user_name"
-    askPassword
+    askProperty "System admin password (might be changed after installation)" "system_ldap_password"
     askDNS_single
 }
 
@@ -154,7 +154,8 @@ prepareConfig_multi() {
     fi
 
     askProperty "System admin user name" "admin_ldap_user_name"
-    askPassword
+    askProperty "System admin password (might be changed after installation)" "system_ldap_password"
+
     askDNS_multi "Please set the DNS hostname to be used by Codenvy" "host_url"
     askDNS_multi "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
     askDNS_multi "Please set the DNS hostname of the Data node" "data_host_name"
@@ -231,7 +232,10 @@ printPreInstallInfo_single() {
     printPrompt; echo
     pressAnyKeyToContinueAndClearConsole
 
-    if [[ ! -f ${CONFIG} ]] || [[ ${SILENT} == false ]]; then
+    if [[ -f ${CONFIG} ]] || [[ ${SILENT} == true ]]; then
+        printPrompt; echo "Configuration File: "${CONFIG}
+        printPrompt; echo
+    else
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
         printPrompt; echo "System admin user name : will prompt for entry"
@@ -240,9 +244,6 @@ printPreInstallInfo_single() {
         printPrompt; echo
         pressAnyKeyToContinue
         prepareConfig_single
-        printPrompt; echo
-    else
-        printPrompt; echo "Configuration File: "${CONFIG}
         printPrompt; echo
     fi
 
@@ -286,17 +287,7 @@ printPreInstallInfo_multi() {
     printPrompt; echo
     pressAnyKeyToContinueAndClearConsole
 
-    if [[ ! -f ${CONFIG} ]] || [[ ${SILENT} == false ]]; then
-        printPrompt; echo "Configuration File: not detected - will download template"
-        printPrompt; echo
-        printPrompt; echo "System admin user name       : will prompt for entry"
-        printPrompt; echo "System admin password        : will prompt for entry"
-        printPrompt; echo "Codenvy nodes' DNS hostnames : will prompt for entry"
-        printPrompt; echo
-        pressAnyKeyToContinue
-        prepareConfig_multi
-        printPrompt; echo
-    else
+    if [[ -f ${CONFIG} ]] || [[ ${SILENT} == true ]]; then
         HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
         PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -318,6 +309,17 @@ printPreInstallInfo_multi() {
         printPrompt; echo "Codenvy Datasource node DNS hostname    : "${DATASOURCE_HOST_NAME}
         printPrompt; echo "Codenvy Analytics node DNS hostname     : "${ANALYTICS_HOST_NAME}
         printPrompt; echo "Codenvy Site node DNS hostname          : "${SITE_HOST_NAME}
+        printPrompt; echo
+
+    else
+        printPrompt; echo "Configuration File: not detected - will download template"
+        printPrompt; echo
+        printPrompt; echo "System admin user name       : will prompt for entry"
+        printPrompt; echo "System admin password        : will prompt for entry"
+        printPrompt; echo "Codenvy nodes' DNS hostnames : will prompt for entry"
+        printPrompt; echo
+        pressAnyKeyToContinue
+        prepareConfig_multi
         printPrompt; echo
     fi
 
@@ -406,7 +408,7 @@ printPostInstallInfo() {
     printPrompt; echo
     printPrompt; echo "Codenvy is ready at http://"${HOSTNAME}
     printPrompt; echo
-    printPrompt; echo "Administrate your installation ready at http://"${HOSTNAME}"/admin"
+    printPrompt; echo "Administrator dashboard ready a http://"${HOSTNAME}"/admin"
     printPrompt; echo "System admin user name : "${CODENVY_ADMIN_NAME}
     printPrompt; echo "System admin password  : "${CODENVY_ADMIN_PASSWORD}
     printPrompt; echo
