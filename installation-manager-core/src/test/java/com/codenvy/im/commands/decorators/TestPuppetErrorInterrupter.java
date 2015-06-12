@@ -19,6 +19,7 @@ package com.codenvy.im.commands.decorators;
 
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
+import com.codenvy.im.commands.CommandLibrary;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -74,20 +75,11 @@ public class TestPuppetErrorInterrupter {
 
         doReturn(testPuppetLog).when(testInterrupter).getPuppetLog();
 
-        Command readPuppetLogCommandWithoutSudo = testInterrupter.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
-        doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, true);
+        Command readPuppetLogCommandWithoutSudo = CommandLibrary.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
+        doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(null);
 
         // create log file
         FileUtils.write(testPuppetLog.toFile(), logWithoutErrorMessages);
-    }
-
-    @Test
-    public void testGetReadPuppetLogCommand() {
-        Command command = testInterrupter.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
-        assertEquals(command.toString(), "{'command'='tail -n 5 target/test-classes/messages', 'agent'='LocalAgent'}");
-
-        command = testInterrupter.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER + 1, true);
-        assertEquals(command.toString(), "{'command'='sudo tail -n 6 target/test-classes/messages', 'agent'='LocalAgent'}");
     }
 
     @Test(expectedExceptions = CommandException.class,

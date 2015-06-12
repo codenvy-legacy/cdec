@@ -347,4 +347,21 @@ public class CommandLibrary {
                "   sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " +  // make sure there is no "--detailed-exitcodes" option
                "fi;";
     }
+
+    public static Command createReadFileCommand(Path file, int lineNumber, boolean needSudo) {
+        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo));
+    }
+
+    public static Command createReadFileCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
+        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo), node);
+    }
+
+    private static String getReadFileCommand(Path file, int lineNumber, boolean needSudo) {
+        String command = format("tail -n %s %s", lineNumber, file);
+        if (needSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
+    }
 }
