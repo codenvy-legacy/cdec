@@ -7,7 +7,7 @@ DIR="${HOME}/codenvy-im"
 ARTIFACT="codenvy"
 CODENVY_TYPE="single"
 SILENT=false
-VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\)".*/\1/'`
+VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*"version":"\([^"].*\)".*/\1/'`
 for var in "$@"; do
     if [[ "$var" == "--multi" ]]; then
         CODENVY_TYPE="multi"
