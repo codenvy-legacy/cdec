@@ -126,9 +126,14 @@ public class SecureShellAgent extends AbstractAgent {
         return session;
     }
 
-    private void waitForChannelClosed(Channel channel) throws InterruptedException {
+    private void waitForChannelClosed(Channel channel) {
         while (!channel.isClosed()) {
-            Thread.sleep(100);
+            try {
+                Thread.sleep(100);
+            } catch(InterruptedException e) {
+                // ignore to allow being successful interrupted by PuppetErrorInterrupter
+                return;
+            }
         }
     }
 

@@ -108,7 +108,7 @@ public class TestSimpleCommand {
 
         String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
 
-        Command testCommand = SimpleCommand.createCommand(command, host, port, user, privateKeyFile);
+        Command testCommand = SimpleCommand.createCommand(command, host, port, user, privateKeyFile, false);
         assertEquals(testCommand.toString(), expectedResult);
     }
 

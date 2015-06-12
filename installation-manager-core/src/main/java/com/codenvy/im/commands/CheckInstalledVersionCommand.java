@@ -55,13 +55,13 @@ public class CheckInstalledVersionCommand implements Command {
                     break;
                 }
             } catch (IOException e) {
-                // ignore
+                // ignore because it is correct exception until Codenvy API server starts
             }
 
             try {
                 Thread.sleep(CHECK_VERSION_TIMEOUT_MILLIS);
             } catch (InterruptedException e) {
-                // ignore to be interrupted with special exception in case of puppet error
+                // ignore to allow being successful interrupted by PuppetErrorInterrupter
                 break;
             }
         }

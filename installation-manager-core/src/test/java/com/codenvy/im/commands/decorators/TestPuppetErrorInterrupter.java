@@ -74,8 +74,8 @@ public class TestPuppetErrorInterrupter {
 
         doReturn(testPuppetLog).when(testInterrupter).getPuppetLog();
 
-        Command readPuppetLogCommandWithoutSudo = testInterrupter.getReadPuppetLogCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
-        doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).getReadPuppetLogCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, true);
+        Command readPuppetLogCommandWithoutSudo = testInterrupter.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
+        doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, true);
 
         // create log file
         FileUtils.write(testPuppetLog.toFile(), logWithoutErrorMessages);
@@ -83,10 +83,10 @@ public class TestPuppetErrorInterrupter {
 
     @Test
     public void testGetReadPuppetLogCommand() {
-        Command command = testInterrupter.getReadPuppetLogCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
+        Command command = testInterrupter.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
         assertEquals(command.toString(), "{'command'='tail -n 5 target/test-classes/messages', 'agent'='LocalAgent'}");
 
-        command = testInterrupter.getReadPuppetLogCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER + 1, true);
+        command = testInterrupter.createReadFileCommand(testPuppetLog, PuppetErrorInterrupter.SELECTION_LINE_NUMBER + 1, true);
         assertEquals(command.toString(), "{'command'='sudo tail -n 6 target/test-classes/messages', 'agent'='LocalAgent'}");
     }
 
@@ -226,6 +226,12 @@ public class TestPuppetErrorInterrupter {
             fail(failMessage[0]);
         }
     }
+
+    @Test
+    public void testCheckPuppetError() {
+        // TODO [ndp]
+    }
+
 
     @AfterMethod
     public void tearDown() throws InterruptedException {

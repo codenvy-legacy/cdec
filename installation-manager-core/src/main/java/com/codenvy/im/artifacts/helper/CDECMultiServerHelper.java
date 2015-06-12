@@ -22,6 +22,7 @@ import com.codenvy.im.commands.CheckInstalledVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -280,15 +281,16 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     throw new IllegalArgumentException("Site node config not found.");
                 }
 
-                return createCommand("doneState=\"Installing\"; " +
-                                     "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                     "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                     "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                     "    sleep 30; " +
-                                     "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
+                Command command = createCommand("doneState=\"Installing\"; " +
+                                                "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                                "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                                "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                                "    sleep 30; " +
+                                                "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
+                return new PuppetErrorInterrupter(command, nodeConfigs);
 
             case 8:
-                return new CheckInstalledVersionCommand(original, versionToInstall);
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), nodeConfigs);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

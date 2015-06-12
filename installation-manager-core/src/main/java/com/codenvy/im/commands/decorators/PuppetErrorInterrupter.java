@@ -17,12 +17,13 @@
  */
 package com.codenvy.im.commands.decorators;
 
+import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.SimpleCommand;
+import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -48,6 +49,9 @@ public class PuppetErrorInterrupter implements Command {
     private RuntimeException runtimeException;
 
     private final Command command;
+    private final List<NodeConfig> nodes;
+
+    private Path puppetLog;
 
     private List<Pattern> errorPatterns = ImmutableList.of(
         Pattern.compile("puppet-agent[^:]*: Could not retrieve catalog from remote server")
@@ -56,7 +60,12 @@ public class PuppetErrorInterrupter implements Command {
     private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
 
     public PuppetErrorInterrupter(Command command) {
+        this(command, null);
+    }
+
+    public PuppetErrorInterrupter(Command command, List<NodeConfig> nodes) {
         this.command = command;
+        this.nodes = nodes;
     }
 
     @Override
@@ -66,6 +75,7 @@ public class PuppetErrorInterrupter implements Command {
         stop = false;
         result = null;
         commandException = null;
+        puppetLog = getPuppetLog();
 
         monitorThread = new Thread(new Runnable() {
             @Override
@@ -97,52 +107,52 @@ public class PuppetErrorInterrupter implements Command {
     }
 
     private void listenToPuppetError() throws CommandException {
-        Path puppetLog = getPuppetLog();
         for (; ; ) {
             if (stop) {
                 return;
             }
 
-            List<String> lastLines = readNLines(puppetLog, SELECTION_LINE_NUMBER);
+            if (nodes == null) {
+                listenToLocalPuppetError();
 
-            try {
-                if (lastLines == null) {
-                    Thread.sleep(READ_LOG_TIMEOUT_MILLIS);
-                } else {
-                    for (String line : lastLines) {
-                        if (checkPuppetError(line)) {
-                            String errorMessage = format("Puppet error: '%s'", line);
+            } else {
+                for (NodeConfig node : nodes) {
+                    listenToRemotePuppetError(node);
+                }
+            }
+        }
+    }
 
-                            monitorThread.interrupt();
-                            monitorThread.join();
+    private void listenToRemotePuppetError(NodeConfig node) throws CommandException {
+        List<String> lastLines;
+        try {
+            lastLines = readNLinesRemotely(node);
+        } catch (AgentException | CommandException e) {
+            throw new RuntimeException(format("It is impossible to read puppet log at the node '%s': %s", node.getHost(), e.getMessage()), e);
+        }
 
-                            throw new CommandException(errorMessage);
-                        }
+        try {
+            if (lastLines == null) {
+                Thread.sleep(READ_LOG_TIMEOUT_MILLIS);
+            } else {
+                for (String line : lastLines) {
+                    if (checkPuppetError(line)) {
+                        String errorMessage = format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+
+                        monitorThread.interrupt();
+                        monitorThread.join();
+
+                        throw new CommandException(errorMessage);
                     }
                 }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    protected Path getPuppetLog() {
-        return PUPPET_LOG_FILE_PATH;
-    }
-
-    private boolean checkPuppetError(String line) {
-        for (Pattern errorPattern : errorPatterns) {
-            Matcher m = errorPattern.matcher(line);
-            if (m.find()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private List<String> readNLines(Path file, int lineNumber) throws CommandException {
-        Command readFileCommand = getReadPuppetLogCommand(file, lineNumber, true);
+    private List<String> readNLinesRemotely(NodeConfig node) throws CommandException, AgentException {
+        Command readFileCommand = createReadFileCommand(puppetLog, SELECTION_LINE_NUMBER, node, true);
         String allLines = readFileCommand.execute();
 
         if (allLines == null) {
@@ -153,11 +163,70 @@ public class PuppetErrorInterrupter implements Command {
         return Arrays.asList(lines);
     }
 
-    protected Command getReadPuppetLogCommand(Path file, int lineNumber, boolean needSudo) {
-        return SimpleCommand.createCommandWithoutLogging(getReadPuppetBashCommand(file, lineNumber, needSudo));
+    private void listenToLocalPuppetError() throws CommandException {
+        List<String> lastLines;
+        try {
+            lastLines = readNLinesLocally();
+        } catch (CommandException e) {
+            throw new RuntimeException(format("It is impossible to read puppet log locally: %s", e.getMessage()), e);
+        }
+
+        try {
+            if (lastLines == null) {
+                Thread.sleep(READ_LOG_TIMEOUT_MILLIS);
+            } else {
+                for (String line : lastLines) {
+                    if (checkPuppetError(line)) {
+                        String errorMessage = format("Puppet error: '%s'", line);
+
+                        monitorThread.interrupt();
+                        monitorThread.join();
+
+                        throw new CommandException(errorMessage);
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private String getReadPuppetBashCommand(Path file, int lineNumber, boolean needSudo) {
+    protected Path getPuppetLog() {
+        return PUPPET_LOG_FILE_PATH;
+    }
+
+    protected boolean checkPuppetError(String line) {
+        for (Pattern errorPattern : errorPatterns) {
+            Matcher m = errorPattern.matcher(line);
+            if (m.find()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private List<String> readNLinesLocally() throws CommandException {
+        Command readFileCommand = createReadFileCommand(puppetLog, SELECTION_LINE_NUMBER, true);
+        String allLines = readFileCommand.execute();
+
+        if (allLines == null) {
+            return Collections.emptyList();
+        }
+
+        String[] lines = allLines.split("[\n]+");
+        return Arrays.asList(lines);
+    }
+
+    protected Command createReadFileCommand(Path file, int lineNumber, boolean needSudo) {
+        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo));
+    }
+
+    protected Command createReadFileCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
+        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo), node);
+    }
+
+    private String getReadFileCommand(Path file, int lineNumber, boolean needSudo) {
         String command = format("tail -n %s %s", lineNumber, file);
         if (needSudo) {
             command = "sudo " + command;

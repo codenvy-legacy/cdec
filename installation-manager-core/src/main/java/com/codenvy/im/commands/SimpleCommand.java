@@ -56,7 +56,7 @@ public class SimpleCommand implements Command {
         return new SimpleCommand(command, new LocalAgent(), null);
     }
 
-    /** Factory method to create command which will be executed on the current computer. */
+    /** Factory method to create command which will be executed on the current computer without logging info about command at start of executing. */
     public static SimpleCommand createCommandWithoutLogging(String command) {
         return new SimpleCommand(command, new LocalAgent(), null, false);
     }
@@ -66,10 +66,12 @@ public class SimpleCommand implements Command {
                                                  final String host,
                                                  final int port,
                                                  final String user,
-                                                 final String privateKeyFilePath) throws AgentException {
+                                                 final String privateKeyFilePath,
+                                                 boolean logCommand) throws AgentException {
         return new SimpleCommand(command,
                                  new SecureShellAgent(host, port, user, privateKeyFilePath, null),
-                                 null);
+                                 null,
+                                 logCommand);
     }
 
     /** Factory method to create command which will be executed on remote node. */
@@ -78,7 +80,18 @@ public class SimpleCommand implements Command {
                                            node.getHost(),
                                            node.getPort(),
                                            node.getUser(),
-                                           node.getPrivateKeyFile());
+                                           node.getPrivateKeyFile(),
+                                           true);
+    }
+
+    /** Factory method to create command which will be executed on remote node without logging info about command at start of executing. */
+    public static Command createCommandWithoutLogging(String command, NodeConfig node) throws AgentException {
+        return SimpleCommand.createCommand(command,
+                                           node.getHost(),
+                                           node.getPort(),
+                                           node.getUser(),
+                                           node.getPrivateKeyFile(),
+                                           false);
     }
 
     /** {@inheritDoc} */
@@ -105,6 +118,7 @@ public class SimpleCommand implements Command {
     @Override
     public String toString() {
         return format("{'command'='%s', 'agent'='%s'}", command, agent);
+//        return format("{command='%s', agent=%s, logCommand=%s}", command, agent, logCommand);   // TODO [ndp]
     }
 
     protected CommandException makeCommandException(Exception e) {

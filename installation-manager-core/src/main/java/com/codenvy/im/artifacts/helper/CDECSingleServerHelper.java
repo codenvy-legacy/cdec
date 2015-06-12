@@ -22,6 +22,7 @@ import com.codenvy.im.commands.CheckInstalledVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -193,12 +194,13 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 }
 
             case 7:
-                return createCommand("doneState=\"Installing\"; " +
-                                     "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                     "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                     "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                     "    sleep 30; " +
-                                     "done");
+                Command command = createCommand("doneState=\"Installing\"; " +
+                                                "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                                "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                                "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                                "    sleep 30; " +
+                                                "done");
+                return new PuppetErrorInterrupter(command);
 
             case 8:
                 return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall));
