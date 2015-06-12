@@ -22,7 +22,7 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
+import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -105,15 +105,15 @@ public class TestInstallationManagerService extends BaseTest {
     private InstallationManagerService service;
 
     @Mock
-    private IMArtifactLabeledFacade mockFacade;
+    private IMCliFilteredFacade mockFacade;
     @Mock
-    private ConfigManager           configManager;
+    private ConfigManager       configManager;
     @Mock
-    private Principal               mockPrincipal;
+    private Principal           mockPrincipal;
     @Mock
-    private Config                  mockConfig;
+    private Config              mockConfig;
     @Mock
-    private Artifact                mockArtifact;
+    private Artifact            mockArtifact;
 
     @BeforeMethod
     public void setUp() throws Exception {

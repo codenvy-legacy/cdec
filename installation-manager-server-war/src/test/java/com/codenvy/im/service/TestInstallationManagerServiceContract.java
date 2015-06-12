@@ -19,7 +19,7 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
+import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -79,11 +79,11 @@ public class TestInstallationManagerServiceContract {
                                                   + "    \n"
                                                   + "}";
     @Mock
-    public  IMArtifactLabeledFacade facade;
+    public IMCliFilteredFacade facade;
     @Mock
-    public  ConfigManager           configManager;
+    public ConfigManager       configManager;
     @Mock
-    public  SaasUserCredentials     saasUserCredentials;
+    public SaasUserCredentials saasUserCredentials;
 
     public InstallationManagerService service;
 

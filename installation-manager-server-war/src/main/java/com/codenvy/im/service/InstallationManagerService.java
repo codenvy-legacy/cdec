@@ -22,7 +22,8 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
+import com.codenvy.im.facade.IMCliFilteredFacade;
+import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -118,15 +119,15 @@ public class InstallationManagerService {
                                                                         Pattern.compile("_pass$"),
                                                                         Pattern.compile("secret$")};
 
-    protected final IMArtifactLabeledFacade delegate;
-    protected final ConfigManager           configManager;
-    protected final String                  backupDir;
+    protected final InstallationManagerFacade delegate;
+    protected final ConfigManager             configManager;
+    protected final String                    backupDir;
 
     protected SaasUserCredentials saasUserCredentials;
 
     @Inject
     public InstallationManagerService(@Named("installation-manager.backup_dir") String backupDir,
-                                      IMArtifactLabeledFacade delegate,
+                                      IMCliFilteredFacade delegate,
                                       ConfigManager configManager) {
         this.delegate = delegate;
         this.configManager = configManager;
