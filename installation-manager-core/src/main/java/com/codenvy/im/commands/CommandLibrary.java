@@ -353,7 +353,8 @@ public class CommandLibrary {
     }
 
     public static Command createReadFileCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
-        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo), node);
+//        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo), node);
+        return SimpleCommand.createCommand(getReadFileCommand(file, lineNumber, needSudo), node);
     }
 
     private static String getReadFileCommand(Path file, int lineNumber, boolean needSudo) {

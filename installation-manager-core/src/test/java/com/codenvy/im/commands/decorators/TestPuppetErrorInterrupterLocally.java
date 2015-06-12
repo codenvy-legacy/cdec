@@ -27,6 +27,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 /** @author Dmytro Nochevnov */
-public class TestPuppetErrorInterrupter {
+public class TestPuppetErrorInterrupterLocally {
     public static final int WAIT_INTERRUPTER_MILLIS = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
 
     @Mock
@@ -219,11 +220,19 @@ public class TestPuppetErrorInterrupter {
         }
     }
 
-    @Test
-    public void testCheckPuppetError() {
-        // TODO [ndp]
+    @Test(dataProvider = "TestCheckPuppetErrorData")
+    public void testCheckPuppetError(String line, boolean expectedResult) {
+        assertEquals(testInterrupter.checkPuppetError(line), expectedResult);
     }
 
+    @DataProvider(name = "TestCheckPuppetErrorData")
+    public Object[][] getTestCheckPuppetErrorData() {
+        return new Object[][] {
+            {"", false},
+            {"any message", false},
+            {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy", true}
+        };
+    }
 
     @AfterMethod
     public void tearDown() throws InterruptedException {

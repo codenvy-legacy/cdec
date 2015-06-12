@@ -34,7 +34,7 @@ import static java.lang.String.format;
  */
 public class SecureShellAgent extends AbstractAgent {
 
-    private final Session session;
+    private Session session;
     private final JSch jsch = getJSch();
 
     /** Create ssh session object and try to connect to remote host using password. */
@@ -70,14 +70,20 @@ public class SecureShellAgent extends AbstractAgent {
     @Override
     public String execute(String command) throws AgentException {
         try {
+            // TODO [ndp] we need to recreate session each time to avoid error "com.jcraft.jsch.JSchException: socket is not established" in PuppetErrorInterrupter
+            String hostName = session.getHost();
+            int port = session.getPort();
+            String userName = session.getUserName();
+            session = getSession(hostName, port, userName);
+
             session.connect();
         } catch (Exception e) {
-            session.disconnect();
-            String errorMessage = format("Can't connect to host '%s@%s:%s'.",
-                                         session.getUserName(),
-                                         session.getHost(),
-                                         session.getPort());
-            throw makeAgentException(errorMessage, e);
+                session.disconnect();
+                String errorMessage = format("Can't connect to host '%s@%s:%s'.",
+                                             session.getUserName(),
+                                             session.getHost(),
+                                             session.getPort());
+                throw makeAgentException(errorMessage, e);
         }
 
         ChannelExec channel = null;
