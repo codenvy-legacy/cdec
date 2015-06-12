@@ -116,17 +116,24 @@ askPassword() {
     insertProperty "system_ldap_password" ${PASSWORD}
 }
 
-askDNS_single() {
-    printPrompt; echo -n "Please set the DNS hostname to be used by Codenvy: "
-    read DNS
-    insertProperty "aio_host_url" ${DNS}
-    insertProperty "host_url" ${DNS}
+updateHosts() {
+    HOSTNAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+
     if ! sudo grep -Eq "127.0.0.1.*puppet" /etc/hosts; then
         echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null
     fi
-    if ! sudo grep -Fq "${DNS}" /etc/hosts; then
-        echo "127.0.0.1 ${DNS}" | sudo tee --append /etc/hosts > /dev/null
+    if ! sudo grep -Fq "${HOSTNAME}" /etc/hosts; then
+        echo "127.0.0.1 ${HOSTNAME}" | sudo tee --append /etc/hosts > /dev/null
     fi
+}
+
+askDNS_single() {
+    printPrompt; echo -n "Please set the DNS hostname to be used by Codenvy: "
+    read HOSTNAME
+    insertProperty "aio_host_url" ${HOSTNAME}
+    insertProperty "host_url" ${HOSTNAME}
+
+    updateHosts
 }
 
 askDNS_multi() {
@@ -134,8 +141,8 @@ askDNS_multi() {
     VARIABLE=$2
     
     printPrompt; echo -n "${PROMPT}: "
-    read DNS
-    insertProperty "$2" ${DNS}
+    read HOSTNAME
+    insertProperty "$2" ${HOSTNAME}
 }
 
 downloadConfig() {
@@ -232,6 +239,7 @@ printPreInstallInfo_single() {
         if [ ! -f ${CONFIG} ]; then
             downloadConfig
         fi
+        updateHosts
 
         printPrompt; echo "Configuration File: "${CONFIG}
         printPrompt; echo
