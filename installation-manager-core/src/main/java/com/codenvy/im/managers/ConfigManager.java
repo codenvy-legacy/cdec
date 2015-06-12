@@ -117,30 +117,44 @@ public class ConfigManager {
     }
 
     /**
-     * Merges two bunches of the properties from old and new configurations.
-     * As a rule method keeps the values of old configuration
-     * except the {@link Config#VERSION} property
+     * Merges two bunches of the properties from current and new configurations.
+     * As a rule method keeps the values of the old configuration except the {@link Config#VERSION} property
+     * and cases where new default values came.
      */
-    public Map<String, String> merge(Map<String, String> oldProps, Map<String, String> newProps) {
-        Map<String, String> m = new HashMap<>(oldProps);
+    public Map<String, String> merge(Version curVersion,
+                                     Map<String, String> curProps,
+                                     Map<String, String> newProps) throws IOException {
+
+        InstallType installType = detectInstallationType();
+        Map<String, String> curDefaultProps = loadCodenvyDefaultProperties(curVersion, installType);
+
+        Map<String, String> props = new HashMap<>(curProps);
 
         for (Map.Entry<String, String> e : newProps.entrySet()) {
-            String aioOldKey = "aio_" + e.getKey();
+            String name = e.getKey();
+            String value = e.getValue();
 
-            if (m.containsKey(aioOldKey)) {
-                m.put(e.getKey(), m.get(aioOldKey));
-                m.remove(aioOldKey);
-            } else if (!m.containsKey(e.getKey())) {
-                m.put(e.getKey(), e.getValue());
+            if (!props.containsKey(name)) {
+                props.put(name, value);
+            } else {
+                if (curDefaultProps.containsKey(name) && curProps.get(name).equals(curDefaultProps.get(name))) {
+                    props.put(name, value);
+                }
+            }
+
+            String aioOldName = "aio_" + name;
+            if (props.containsKey(aioOldName)) {
+                props.put(name, props.get(aioOldName));
+                props.remove(aioOldName);
             }
         }
 
-        m.remove(Config.VERSION);
+        props.remove(Config.VERSION);
         if (newProps.containsKey(Config.VERSION)) {
-            m.put(Config.VERSION, newProps.get(Config.VERSION));
+            props.put(Config.VERSION, newProps.get(Config.VERSION));
         }
 
-        return m;
+        return props;
     }
 
     /**
@@ -383,7 +397,7 @@ public class ConfigManager {
      *         installation type
      * @param artifact
      *         artifact to load properties for
-     * @param version
+     * @param version2Install
      *         version of the artifact
      * @return installation properties
      * @throws IOException
@@ -392,7 +406,7 @@ public class ConfigManager {
     public Map<String, String> prepareInstallProperties(@Nullable String configFile,
                                                         InstallType installType,
                                                         Artifact artifact,
-                                                        Version version,
+                                                        Version version2Install,
                                                         boolean isInstall) throws IOException {
         switch (artifact.getName()) {
             case InstallManagerArtifact.NAME:
@@ -403,22 +417,23 @@ public class ConfigManager {
 
                 if (isInstall) {
                     properties = configFile != null ? loadConfigProperties(configFile)
-                                                    : loadCodenvyDefaultProperties(version, installType);
+                                                    : loadCodenvyDefaultProperties(version2Install, installType);
 
                     if (installType == InstallType.MULTI_SERVER) {
                         setSSHAccessProperties(properties);
                     }
                 } else { // update
-                    properties = merge(loadInstalledCodenvyProperties(installType),
+                    properties = merge(artifact.getInstalledVersion(),
+                                       loadInstalledCodenvyProperties(installType),
                                        configFile != null ? loadConfigProperties(configFile)
-                                                          : loadCodenvyDefaultProperties(version, installType));
+                                                          : loadCodenvyDefaultProperties(version2Install, installType));
 
                     if (installType == InstallType.MULTI_SERVER) {
                         properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, fetchMasterHostName());  // set puppet master host name
                     }
                 }
 
-                properties.put(Config.VERSION, version.toString());
+                properties.put(Config.VERSION, version2Install.toString());
                 setTemplatesProperties(properties);
 
                 return properties;

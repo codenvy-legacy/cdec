@@ -18,6 +18,7 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.BaseTest;
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
@@ -36,12 +37,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -122,15 +125,14 @@ public class TestConfigManager extends BaseTest {
     }
 
     @Test(expectedExceptions = IOException.class,
-          expectedExceptionsMessageRegExp = "Can't download installation properties. error")
+            expectedExceptionsMessageRegExp = "Can't download installation properties. error")
     public void testLoadDefaultCdecConfigTransportError() throws Exception {
         doThrow(new IOException("error")).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
         configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
 
-    @Test(expectedExceptions = ConfigException.class,
-          expectedExceptionsMessageRegExp = "Can't load properties: error")
+    @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Can't load properties: error")
     public void testLoadDefaultCdecConfigLoadError() throws Exception {
         Path properties = Paths.get("target/test.properties");
         FileUtils.write(properties.toFile(), "a=1\n" +
@@ -144,19 +146,31 @@ public class TestConfigManager extends BaseTest {
 
     @Test
     public void testMerge() throws Exception {
-        Map<String, String> properties1 = ImmutableMap.of("a", "1", "b", "2");
-        Map<String, String> properties2 = ImmutableMap.of("a", "2", "c", "3");
-        Map<String, String> m = configManager.merge(properties1, properties2);
+        Version curVersion = Version.valueOf("1.0.0");
+        Map<String, String> curProps = ImmutableMap.of("a", "1", "b", "1");
+        Map<String, String> newProps = ImmutableMap.of("a", "2", "b", "1", "c", "3");
+
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(ImmutableMap.of("a", "1", "b", "1")).when(configManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
+
+        Map<String, String> m = configManager.merge(curVersion, curProps, newProps);
 
         assertEquals(m.size(), 3);
-        assertEquals(m.get("a"), "1");
-        assertEquals(m.get("b"), "2");
+        assertEquals(m.get("a"), "2");
+        assertEquals(m.get("b"), "1");
         assertEquals(m.get("c"), "3");
     }
 
     @Test(dataProvider = "Versions")
     public void testMergeVersion(Map<String, String> properties1, Map<String, String> properties2, String expectedVersion) throws Exception {
-        Map<String, String> m = configManager.merge(properties1, properties2);
+        Version curVersion = Version.valueOf("1.0.0");
+        Version newVersion = Version.valueOf("1.0.1");
+
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
+        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(newVersion, InstallType.SINGLE_SERVER);
+
+        Map<String, String> m = configManager.merge(curVersion, properties1, properties2);
         assertEquals(m.get("version"), expectedVersion);
     }
 
@@ -172,18 +186,25 @@ public class TestConfigManager extends BaseTest {
     public void testMergeHostUrl(Map<String, String> properties1,
                                  Map<String, String> properties2,
                                  Map<String, String> expectedProperties) throws Exception {
-        Map<String, String> m = configManager.merge(properties1, properties2);
+        Version curVersion = Version.valueOf("1.0.0");
+        Version newVersion = Version.valueOf("1.0.1");
+
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
+        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(newVersion, InstallType.SINGLE_SERVER);
+
+        Map<String, String> m = configManager.merge(curVersion, properties1, properties2);
         assertEquals(m, expectedProperties);
     }
 
     @DataProvider(name = "HostUrls")
     public static Object[][] HostUrls() {
         return new Object[][]{
-            {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), ImmutableMap.of(Config.HOST_URL, "a")},
-            {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), ImmutableMap.of(Config.HOST_URL, "a")},
-            {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"), ImmutableMap.of(Config.AIO_HOST_URL, "a")},
-            {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"),
-             ImmutableMap.of(Config.HOST_URL, "a", Config.AIO_HOST_URL, "b")}};
+                {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), ImmutableMap.of(Config.HOST_URL, "a")},
+                {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), ImmutableMap.of(Config.HOST_URL, "a")},
+                {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"), ImmutableMap.of(Config.AIO_HOST_URL, "a")},
+                {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"),
+                 ImmutableMap.of(Config.HOST_URL, "a", Config.AIO_HOST_URL, "b")}};
     }
 
     @Test
@@ -228,7 +249,7 @@ public class TestConfigManager extends BaseTest {
     }
 
     @Test
-    public void testGetCssPropertiesFiles(){
+    public void testGetCssPropertiesFiles() {
         Iterator<Path> singleServerCssPropertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
         assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
                                                  .endsWith("target/puppet/manifests/nodes/single_server/single_server.pp"));
@@ -245,11 +266,11 @@ public class TestConfigManager extends BaseTest {
     @Test
     public void testGetPuppetNodesConfigReplacement() {
         List<NodeConfig> nodes = ImmutableList.of(
-            new NodeConfig(NodeConfig.NodeType.API, "api.dev.com", null),
-            new NodeConfig(NodeConfig.NodeType.DATA, "data.dev.com", null),
-            new NodeConfig(NodeConfig.NodeType.BUILDER, "builder2.dev.com", null),
-            new NodeConfig(NodeConfig.NodeType.RUNNER, "runner23.runner89.com", null)
-        );
+                new NodeConfig(NodeConfig.NodeType.API, "api.dev.com", null),
+                new NodeConfig(NodeConfig.NodeType.DATA, "data.dev.com", null),
+                new NodeConfig(NodeConfig.NodeType.BUILDER, "builder2.dev.com", null),
+                new NodeConfig(NodeConfig.NodeType.RUNNER, "runner23.runner89.com", null)
+                                                 );
 
         Map<String, String> expected = ImmutableMap.of("builder.*example.com", "builder\\\\d+\\\\.dev.com",
                                                        "runner.*example.com", "runner\\\\d+\\\\.runner89.com",
@@ -389,28 +410,39 @@ public class TestConfigManager extends BaseTest {
 
     @Test
     public void testPrepareInstallPropertiesLoadPropertiesFromConfigUpdateUseCase() throws Exception {
-        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
+        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "1"));
 
+        Artifact artifact = mock(Artifact.class);
+        doReturn(Version.valueOf("1.0.0")).when(artifact).getInstalledVersion();
+        doReturn(CDECArtifact.NAME).when(artifact).getName();
         doReturn(properties).when(configManager).loadConfigProperties("file");
-        doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        doReturn(new HashMap<String, String>() {{
+            put("a", "1");
+            put("b", "2");
+        }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
                                                                                       InstallType.SINGLE_SERVER,
-                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      artifact,
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
         assertEquals(actualProperties.size(), 3);
-        assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("c"), "d");
+        assertEquals(actualProperties.get("a"), "1");
+        assertEquals(actualProperties.get("b"), "2");
         assertEquals(actualProperties.get("version"), "3.1.0");
     }
 
     @Test
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateUseCase() throws Exception {
-        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
+        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "1"));
 
+        doReturn(new HashMap<String, String>() {{
+            put("a", "1");
+            put("b", "2");
+        }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
-        doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       InstallType.SINGLE_SERVER,
@@ -418,8 +450,8 @@ public class TestConfigManager extends BaseTest {
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
         assertEquals(actualProperties.size(), 3);
-        assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("c"), "d");
+        assertEquals(actualProperties.get("a"), "1");
+        assertEquals(actualProperties.get("b"), "2");
         assertEquals(actualProperties.get("version"), "3.1.0");
     }
 
@@ -445,10 +477,15 @@ public class TestConfigManager extends BaseTest {
 
     @Test
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateMultiServerUseCase() throws Exception {
-        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
+        Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "1"));
+
+        doReturn(new HashMap<String, String>() {{
+            put("a", "1");
+            put("b", "2");
+        }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
 
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
-        doReturn(ImmutableMap.of("c", "d")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+        doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
         doReturn("master").when(configManager).fetchMasterHostName();
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
@@ -457,8 +494,8 @@ public class TestConfigManager extends BaseTest {
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
         assertEquals(actualProperties.size(), 4);
-        assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("c"), "d");
+        assertEquals(actualProperties.get("a"), "1");
+        assertEquals(actualProperties.get("b"), "2");
         assertEquals(actualProperties.get("version"), "3.1.0");
         assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY), "master");
     }

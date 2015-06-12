@@ -347,7 +347,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).merge(anyMap(), anyMap());
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager)
+                                                                            .merge(any(Version.class), anyMap(), anyMap());
 
         doThrow(new RuntimeException("Server Error Exception"))
                 .when(facade)
