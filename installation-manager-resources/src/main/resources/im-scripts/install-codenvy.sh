@@ -138,21 +138,17 @@ askDNS_multi() {
     insertProperty "$2" ${DNS}
 }
 
-prepareConfig_single() {
-    if [ ! -f ${CONFIG} ]; then
-        curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
-    fi
+downloadConfig() {
+    curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
+}
 
+prepareConfig_single() {
     askProperty "System admin user name" "admin_ldap_user_name"
     askProperty "System admin password (might be changed after installation)" "system_ldap_password"
     askDNS_single
 }
 
 prepareConfig_multi() {
-    if [ ! -f ${CONFIG} ]; then
-        curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
-    fi
-
     askProperty "System admin user name" "admin_ldap_user_name"
     askProperty "System admin password (might be changed after installation)" "system_ldap_password"
 
@@ -233,9 +229,15 @@ printPreInstallInfo_single() {
     pressAnyKeyToContinueAndClearConsole
 
     if [[ -f ${CONFIG} ]] || [[ ${SILENT} == true ]]; then
+        if [ ! -f ${CONFIG} ]; then
+            downloadConfig
+        fi
+
         printPrompt; echo "Configuration File: "${CONFIG}
         printPrompt; echo
     else
+        downloadConfig
+
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
         printPrompt; echo "System admin user name : will prompt for entry"
@@ -288,6 +290,10 @@ printPreInstallInfo_multi() {
     pressAnyKeyToContinueAndClearConsole
 
     if [[ -f ${CONFIG} ]] || [[ ${SILENT} == true ]]; then
+        if [ ! -f ${CONFIG} ]; then
+            downloadConfig
+        fi
+
         HOST_NAME=`grep host_url=.* ${CONFIG} | cut -f2 -d '='`
         PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -312,6 +318,8 @@ printPreInstallInfo_multi() {
         printPrompt; echo
 
     else
+        downloadConfig
+
         printPrompt; echo "Configuration File: not detected - will download template"
         printPrompt; echo
         printPrompt; echo "System admin user name       : will prompt for entry"
