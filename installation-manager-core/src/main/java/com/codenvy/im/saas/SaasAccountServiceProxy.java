@@ -17,13 +17,13 @@
  */
 package com.codenvy.im.saas;
 
+import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
-import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -53,8 +53,6 @@ public class SaasAccountServiceProxy {
     public static final String CANNOT_RECOGNISE_ACCOUNT_NAME_MSG =
             "You are logged as a user which does not have an account/owner role in any account. " +
             "This likely means that you used the wrong credentials to access Codenvy.";
-
-    public static final String CANNOT_OBTAIN_SUBCRIPTION = "Cannot obtain subscription.";
 
     public static final String USE_ACCOUNT_MESSAGE_TEMPLATE = "Your Codenvy account '%s' will be used to verify on-premises subscription.";
 
@@ -132,7 +130,7 @@ public class SaasAccountServiceProxy {
     /** Deletes subscription */
     public void deleteSubscription(String accessToken,
                                    String subscriptionId) throws IOException {
-        String requestUrl = combinePaths(saasApiEndpoint, "account/subscriptions/" + subscriptionId);
+        String requestUrl = combinePaths(saasApiEndpoint, "subscription", subscriptionId);
         transport.doDelete(requestUrl, accessToken);
     }
 
@@ -154,7 +152,7 @@ public class SaasAccountServiceProxy {
 
     private List<SubscriptionDescriptor> getSubscriptions(String accessToken,
                                                           String accountId) throws IOException {
-        String requestUrl = combinePaths(saasApiEndpoint, "account/" + accountId + "/subscriptions");
+        String requestUrl = combinePaths(saasApiEndpoint, "subscription", "find", "account", accountId);
         return createListDtoFromJson(transport.doGet(requestUrl, accessToken), SubscriptionDescriptor.class);
     }
 

@@ -18,13 +18,13 @@
 
 package com.codenvy.im.saas;
 
+import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.HttpTransport;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
-import org.eclipse.che.api.account.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
@@ -68,7 +68,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
 
     @Test(expectedExceptions = AuthenticationException.class)
     public void testCheckSubscriptionErrorIfAuthenticationFailed() throws Exception {
-        doThrow(new AuthenticationException()).when(transport).doGet(endsWith("account/accountId/subscriptions"), eq(TOKEN));
+        doThrow(new AuthenticationException()).when(transport).doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN));
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
@@ -78,7 +78,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
     public void testCheckSubscriptionErrorIfStartDateIsAbsent() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq(TOKEN)))
+        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
@@ -89,7 +89,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
     public void testCheckSubscriptionErrorIfEndDateIsAbsent() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq(TOKEN)))
+        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"10/12/2012\"}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
@@ -100,7 +100,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
     public void testCheckSubscriptionErrorIfStartDateIsWrongFormat() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq(TOKEN)))
+        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"2014.11.21\",endDate:\"21/11/2015\"}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
@@ -111,7 +111,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
     public void testCheckSubscriptionErrorIfEndDateIsWrongFormat() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("account/accountId/subscriptions"), eq(TOKEN)))
+        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"11/21/2014\",endDate:\"2015.11.21\"}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
@@ -133,7 +133,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
         String testDescriptorJson = "{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                                     + ",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
         doReturn("[" + testDescriptorJson + "]").when(transport)
-                                                .doGet(endsWith("account/" + ACCOUNT_ID + "/subscriptions"), eq(TOKEN));
+                                                .doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(TOKEN));
 
         SubscriptionDescriptor descriptor = saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
         assertNotNull(descriptor);
@@ -147,7 +147,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
 
     @Test
     public void testGetSubscriptionWhenDescriptorNull() throws IOException {
-        doReturn("[]").when(transport).doGet(endsWith("account/" + ACCOUNT_ID + "/subscriptions"), eq(TOKEN));
+        doReturn("[]").when(transport).doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(TOKEN));
 
         SubscriptionDescriptor descriptor = saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
         assertNull(descriptor);
@@ -157,7 +157,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
             expectedExceptionsMessageRegExp = "error")
     public void testGetSubscriptionWhenException() throws IOException {
         doThrow(new HttpException(500, "error")).when(transport)
-                                                .doGet(endsWith("account/" + ACCOUNT_ID + "/subscriptions"), eq(TOKEN));
+                                                .doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(TOKEN));
         saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
 

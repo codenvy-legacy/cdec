@@ -30,7 +30,6 @@ import java.util.Calendar;
 
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -81,7 +80,7 @@ public class TestAccountUtils {
                                                                    + "accountReference:{id:\"" +
                                                                    ACCOUNT_ID + "\"}"
                                                                    + "}]");
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
         assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
@@ -172,7 +171,7 @@ public class TestAccountUtils {
                                                                        + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"]"
                                                                        + "}]");
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
@@ -186,7 +185,7 @@ public class TestAccountUtils {
                                                                        + "accountReference:{id:\"" + ACCOUNT_ID +
                                                                        "\"}"
                                                                        + "}]");
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:invalid}]");
 
         assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
@@ -197,7 +196,7 @@ public class TestAccountUtils {
     public void testInvalidAuthentication() throws IOException {
         doThrow(new HttpException(403, "auth error"))
                 .when(transport)
-                .doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN);
+                .doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN));
 
         saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
@@ -212,7 +211,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
         assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
@@ -228,7 +227,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, -1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
@@ -245,7 +244,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 2);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
@@ -259,7 +258,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",endDate:\"" + endDate + "\"}]");
 
@@ -273,7 +272,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, -1);
         String startDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\"}]");
 
@@ -293,7 +292,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 2);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
@@ -313,7 +312,7 @@ public class TestAccountUtils {
         cal.add(Calendar.DATE, 2);
         String endDate = subscriptionDateWrongFormat.format(cal.getTime());
 
-        when(transport.doGet("/account/" + ACCOUNT_ID + "/subscriptions", ACCESS_TOKEN))
+        when(transport.doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
                 .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                             + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
@@ -340,9 +339,8 @@ public class TestAccountUtils {
 
     @Test
     public void testDeleteSubscription() throws Exception {
-        doNothing().when(transport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
         saasAccountServiceProxy.deleteSubscription(ACCESS_TOKEN, "subscriptionId");
 
-        verify(transport).doDelete(endsWith("account/subscriptions/subscriptionId"), eq(ACCESS_TOKEN));
+        verify(transport).doDelete(endsWith("subscription/subscriptionId"), eq(ACCESS_TOKEN));
     }
 }

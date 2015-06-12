@@ -18,6 +18,7 @@
 package com.codenvy.im.update;
 
 
+import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
@@ -35,8 +36,6 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.che.api.account.server.dto.DtoServerImpls;
-import org.eclipse.che.api.account.shared.dto.NewSubscription;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;
@@ -485,15 +484,13 @@ public class RepositoryService {
     protected void doAddTrialSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
         try {
             final String planId = "opm-com-25u-y";
-            final int trialDuration = 30;
 
-            NewSubscription newSubscription = new DtoServerImpls.NewSubscriptionImpl();
+            NewSubscription newSubscription = new com.codenvy.api.subscription.server.dto.DtoServerImpls.NewSubscriptionImpl();
             newSubscription.setAccountId(accountId);
             newSubscription.setPlanId(planId);
-            newSubscription.setTrialDuration(trialDuration);
             newSubscription.setUsePaymentSystem(true);
 
-            Map m = asMap(httpTransport.doPost(combinePaths(saasApiEndpoint, "/account/subscriptions"), newSubscription, accessToken));
+            Map m = asMap(httpTransport.doPost(combinePaths(saasApiEndpoint, "subscription"), newSubscription, accessToken));
             if (!m.containsKey("id")) {
                 if (m.containsKey("message")) {
                     throw new IOException(CAN_NOT_ADD_TRIAL_SUBSCRIPTION);
