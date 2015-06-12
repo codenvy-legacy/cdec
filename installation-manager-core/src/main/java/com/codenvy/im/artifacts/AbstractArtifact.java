@@ -128,7 +128,7 @@ public abstract class AbstractArtifact implements Artifact {
 
         Version ver2Install = null;
 
-        Collection<Map.Entry<Artifact, Version>> allUpdates = getAllUpdates(installedVersion);
+        Collection<Map.Entry<Artifact, Version>> allUpdates = getAllUpdates();
 
         for (Map.Entry<Artifact, Version> entry : allUpdates) {
             Version version2Check = entry.getValue();
@@ -144,9 +144,9 @@ public abstract class AbstractArtifact implements Artifact {
         return ver2Install;
     }
 
-    protected Collection<Map.Entry<Artifact, Version>> getAllUpdates(Version installedVersion) throws IOException {
+    protected Collection<Map.Entry<Artifact, Version>> getAllUpdates() throws IOException {
         DownloadManager downloadManager = InjectorBootstrap.INJECTOR.getInstance(DownloadManager.class);
-        return downloadManager.getAllUpdates(this, installedVersion);
+        return downloadManager.getAllUpdates(this);
     }
 
 

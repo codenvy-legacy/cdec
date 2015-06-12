@@ -426,7 +426,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
             add(new AbstractMap.SimpleEntry<>(cdecArtifact, Version.valueOf("1.0.1")));
             add(new AbstractMap.SimpleEntry<>(cdecArtifact, Version.valueOf("1.0.2")));
-        }}).when(downloadManager).getAllUpdates(cdecArtifact, null);
+        }}).when(downloadManager).getAllUpdates(cdecArtifact);
 
         doReturn(new TreeMap<Version, Path>() {{
             put(Version.valueOf("1.0.1"), Paths.get("file1"));

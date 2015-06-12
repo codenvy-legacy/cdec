@@ -244,7 +244,7 @@ public class InstallationManagerService {
                            @ApiResponse(code = 500, message = "Server error")})
     public javax.ws.rs.core.Response getUpdates() {
         try {
-            Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(ArtifactFactory.createArtifact(CDECArtifact.NAME));
+            Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(createArtifact(CDECArtifact.NAME));
             return javax.ws.rs.core.Response.ok(updates).build();
         } catch (Exception e) {
             return handleException(e);

@@ -121,7 +121,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
 
     /** {@inheritDoc} */
     @Override
-    public Collection<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
+    public Collection<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
         Collection<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
         setVersionLabel(updates);
         return updates;

@@ -151,7 +151,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
     public void testGetAllUpdates() throws Exception {
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
             add(new AbstractMap.SimpleEntry<>(artifact, version));
-        }}).when(downloadManager).getAllUpdates(artifact, null);
+        }}).when(downloadManager).getAllUpdates(artifact);
         doReturn(new TreeMap<Version, Path>() {{
             put(version, Paths.get("path"));
         }}).when(downloadManager).getDownloadedVersions(artifact);

@@ -141,7 +141,7 @@ public class TestAbstractArtifact extends BaseTest {
             add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.1")));
             add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.2")));
             add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.3")));
-        }}).when(spyTestArtifact).getAllUpdates(Version.valueOf("1.0.0"));
+        }}).when(spyTestArtifact).getAllUpdates();
         doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.1"), PREVIOUS_VERSION_PROPERTY);
         doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.2"), PREVIOUS_VERSION_PROPERTY);
         doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
@@ -157,7 +157,7 @@ public class TestAbstractArtifact extends BaseTest {
         doReturn(Version.valueOf("1.0.0")).when(spyTestArtifact).getInstalledVersion();
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
             add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.3")));
-        }}).when(spyTestArtifact).getAllUpdates(Version.valueOf("1.0.0"));
+        }}).when(spyTestArtifact).getAllUpdates();
         doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
 
         Version version = spyTestArtifact.getLatestInstallableVersion();

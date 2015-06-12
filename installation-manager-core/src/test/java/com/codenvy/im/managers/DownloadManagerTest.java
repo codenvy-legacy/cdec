@@ -33,6 +33,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
@@ -563,8 +564,9 @@ public class DownloadManagerTest extends BaseTest {
     public void testGetAllUpdates() throws Exception {
         final Version cdecVersion = Version.valueOf("2.0.0");
         doReturn("[\"2.0.1\", \"2.0.2\"]").when(transport).doGet(endsWith("updates/codenvy?fromVersion=2.0.0"));
+        doReturn(cdecVersion).when(cdecArtifact).getInstalledVersion();
 
-        Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact, cdecVersion);
+        Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact);
 
         assertEquals(updates.size(), 2);
     }
@@ -572,8 +574,9 @@ public class DownloadManagerTest extends BaseTest {
     @Test
     public void testGetAllUpdatesNoStartVersion() throws Exception {
         doReturn("[\"2.0.1\"]").when(transport).doGet(endsWith("updates/codenvy"));
+        doReturn(null).when(cdecArtifact).getInstalledVersion();
 
-        Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact, null);
+        Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact);
         assertEquals(updates.size(), 1);
     }
 

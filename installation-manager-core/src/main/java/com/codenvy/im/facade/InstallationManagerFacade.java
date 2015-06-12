@@ -259,8 +259,7 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.managers.DownloadManager#getAllUpdates
      */
     public Collection<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
-        Version installedVersion = artifact.getInstalledVersion();
-        Collection<Map.Entry<Artifact, Version>> allUpdates = downloadManager.getAllUpdates(artifact, installedVersion);
+        Collection<Map.Entry<Artifact, Version>> allUpdates = downloadManager.getAllUpdates(artifact);
 
         Set<UpdatesArtifactInfo> infos = new TreeSet<>();
 
