@@ -124,15 +124,15 @@ doUpload() {
     rm .properties
 }
 
-uploadInstallationManagerCli
+#uploadInstallationManagerCli
 uploadCodenvyServerInstallMultiScript
 uploadCodenvyServerInstallInstalationManagerScript
 uploadCodenvyServerInstallScript
 
-for VERSION in 3.10.1-SNAPSHOT; do
-    uploadCodenvySingleServerInstallProperties ${VERSION}
-done
-
-for VERSION in 3.10.1-SNAPSHOT; do
-    uploadCodenvyMultiServerInstallProperties ${VERSION}
-done
+#for VERSION in 3.10.1-SNAPSHOT; do
+#    uploadCodenvySingleServerInstallProperties ${VERSION}
+#done
+#
+#for VERSION in 3.10.1-SNAPSHOT; do
+#    uploadCodenvyMultiServerInstallProperties ${VERSION}
+#done
