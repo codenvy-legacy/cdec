@@ -206,7 +206,7 @@ pressYKeyToContinue() {
 printPreInstallInfo_single() {
     checkOS
 
-    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f ",tmp}'`
+    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f",tmp}'`
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
@@ -263,7 +263,7 @@ printPreInstallInfo_single() {
 printPreInstallInfo_multi() {
     checkOS
 
-    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f ",tmp}'`
+    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f",tmp}'`
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
@@ -344,35 +344,31 @@ printPreInstallInfo_multi() {
 
 doInstallStep1() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 1: CONFIGURE SYSTEM"
+    printPrompt; echo "STEP 1: CONFIGURE SYSTEM"
 
     if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
     mkdir ${DIR}
-
-    printPrompt; echo "COMPLETED STEP 1: CONFIGURE SYSTEM"
 }
 
 doInstallStep2() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
+    printPrompt; echo "STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
     installPackageIfNeed tar
     installPackageIfNeed wget
     installPackageIfNeed unzip
     installJava
-    printPrompt; echo "COMPLETED STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
 }
 
 doInstallStep3() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER"
+    printPrompt; echo "STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER"
     installIm
     printPrompt; echo "Codenvy Installation Manager is installed into ${DIR}/codenvy-cli directory"
-    printPrompt; echo "COMPLETED STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER"
 }
 
 doInstallStep4() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 4: DOWNLOAD CODENVY"
+    printPrompt; echo "STEP 4: DOWNLOAD CODENVY"
 
     CODENVY_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
     CODENVY_ADMIN_PWD=`grep system_ldap_password ${CONFIG} | cut -d '=' -f2`
@@ -382,38 +378,32 @@ doInstallStep4() {
 
     printPrompt; echo "Checking the list of downloaded binaries"
     executeIMCommand im-download --list-local
-
-    printPrompt; echo "COMPLETED STEP 4: DOWNLOAD CODENVY"
 }
 
 doInstallStep5_single() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
+    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY"
     printPrompt; echo "Installing the latest Codenvy version. Watch progress in /var/log/messages"
     executeIMCommand im-install --step 1-8 --force --config ${CONFIG} ${ARTIFACT} ${VERSION}
-    printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_single() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY"
+    printPrompt; echo "STEP 6: BOOT CODENVY"
     executeIMCommand im-install --step 9 --force --config ${CONFIG} ${ARTIFACT} ${VERSION}
-    printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
 doInstallStep5_multi() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 5: INSTALL CODENVY ON MULTIPLE NODES"
-    printPrompt; echo "Installing the latest Codenvy version. Watch progress in /var/log/messages";
+    printPrompt; echo "STEP 5: INSTALL CODENVY ON MULTIPLE NODES"
+    printPrompt; echo "Installing the latest Codenvy version. Watch progress in /var/log/messages on each node";
     executeIMCommand im-install --step 1-8 --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
-    printPrompt; echo "COMPLETED STEP 5: INSTALL CODENVY BY INSTALLING PUPPET AND CONFIGURING SYSTEM PARAMETERS"
 }
 
 doInstallStep6_multi() {
     printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 6: BOOT CODENVY ON MULTIPLE NODES"
+    printPrompt; echo "STEP 6: BOOT CODENVY ON MULTIPLE NODES"
     executeIMCommand im-install --step 9 --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION}
-    printPrompt; echo "COMPLETED STEP 6: BOOT CODENVY"
 }
 
 printPostInstallInfo() {
