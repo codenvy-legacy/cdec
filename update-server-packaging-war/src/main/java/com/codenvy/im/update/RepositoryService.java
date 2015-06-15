@@ -39,6 +39,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.dto.server.JsonArrayImpl;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
@@ -485,7 +486,7 @@ public class RepositoryService {
         try {
             final String planId = "opm-com-25u-y";
 
-            NewSubscription newSubscription = new com.codenvy.api.subscription.server.dto.DtoServerImpls.NewSubscriptionImpl();
+            NewSubscription newSubscription = DtoFactory.getInstance().createDto(NewSubscription.class);
             newSubscription.setAccountId(accountId);
             newSubscription.setPlanId(planId);
             newSubscription.setUsePaymentSystem(true);
