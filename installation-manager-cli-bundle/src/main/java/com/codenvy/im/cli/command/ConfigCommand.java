@@ -38,13 +38,13 @@ import static com.google.api.client.repackaged.com.google.common.base.Strings.is
 @Command(scope = "codenvy", name = "im-config", description = "Configure installation manager")
 public class ConfigCommand extends AbstractIMCommand {
 
-    @Option(name = "--codenvy_dns", description = "new Codenvy DNS", required = false)
-    private String codenvyDNS;
+    @Option(name = "--hostname", description = "new Codenvy hostname", required = false)
+    private String hostname;
 
     /** {@inheritDoc} */
     @Override
     protected void doExecuteCommand() throws Exception {
-        if (!isNullOrEmpty(codenvyDNS)) {
+        if (!isNullOrEmpty(hostname)) {
             doUpdateCodenvyHostUrl();
             return;
         }
@@ -55,7 +55,7 @@ public class ConfigCommand extends AbstractIMCommand {
     private void doUpdateCodenvyHostUrl() throws IOException, JsonParseException {
         console.showProgressor();
         try {
-            facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of(Config.HOST_URL, codenvyDNS));
+            facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of(Config.HOST_URL, hostname));
             console.printResponse(BasicResponse.ok());
         } finally {
             console.hideProgressor();

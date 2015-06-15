@@ -82,7 +82,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         doNothing().when(managerFacade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), properties);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--codenvy_dns", testDns);
+        commandInvoker.option("--hostname", testDns);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -103,7 +103,7 @@ public class TestConfigCommand extends AbstractTestCommand {
                 .when(managerFacade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), properties);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--codenvy_dns", testDns);
+        commandInvoker.option("--hostname", testDns);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
