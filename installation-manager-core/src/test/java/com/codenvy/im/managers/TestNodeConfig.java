@@ -19,6 +19,8 @@ package com.codenvy.im.managers;
 
 import org.testng.annotations.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +34,7 @@ public class TestNodeConfig {
     private static final String              TEST_HOST     = "host";
     private static final int                 TEST_PORT     = 2222;
     private static final String              TEST_USER     = "user";
-    private static final String              TEST_KEY_PATH = "key";
+    private static final Path                TEST_KEY_PATH = Paths.get("key");
     private static final NodeConfig.NodeType TEST_TYPE     = NodeConfig.NodeType.API;
 
     @Test
@@ -58,7 +60,7 @@ public class TestNodeConfig {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Port number must be greater than zero")
+          expectedExceptionsMessageRegExp = "Port number must be greater than zero")
     public void testIllegalPortArgument() throws Exception {
         NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         config.setPort(0);
@@ -108,7 +110,7 @@ public class TestNodeConfig {
         assertNotEquals(config1.hashCode(), config2.hashCode());
         config1.setPort(TEST_PORT);
 
-        config2.setPrivateKeyFile("another3");
+        config2.setPrivateKeyFile(Paths.get("another3"));
         assertNotEquals(config1, config2);
         assertNotEquals(config1.hashCode(), config2.hashCode());
         config2.setPrivateKeyFile(TEST_KEY_PATH);
@@ -117,7 +119,7 @@ public class TestNodeConfig {
     @Test
     public void testPrivateKeyFileAbsolutePath() throws Exception {
         NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
-        assertEquals(config.getPrivateKeyFile(), "~/.ssh/id_rsa");
+        assertEquals(config.getPrivateKeyFile().toString(), "~/.ssh/id_rsa");
 
         config.setPrivateKeyFile(TEST_KEY_PATH);
         assertEquals(config.getPrivateKeyFile(), TEST_KEY_PATH);

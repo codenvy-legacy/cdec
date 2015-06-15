@@ -82,7 +82,7 @@ public class AdditionalNodesConfigUtil {
      * Result = IllegalArgumentException("Illegal DNS name 'builder2.dev.com' of additional node....)
      *
      * @throws IllegalArgumentException
-     *         if dns doesn't comply with convension '<supported_node_type><number>(base_node_domain)' where supported prefix
+     *         if dns doesn't comply with convention '<supported_node_type><number>(base_node_domain)' where supported prefix
      */
     public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException {
         for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {

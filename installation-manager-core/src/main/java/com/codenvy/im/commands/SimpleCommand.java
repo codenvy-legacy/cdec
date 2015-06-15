@@ -25,7 +25,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.InjectorBootstrap;
 
 import javax.annotation.Nullable;
-import java.util.logging.Level;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
@@ -66,10 +66,10 @@ public class SimpleCommand implements Command {
                                                  final String host,
                                                  final int port,
                                                  final String user,
-                                                 final String privateKeyFilePath,
+                                                 final Path privateKeyFilePath,
                                                  boolean logCommand) throws AgentException {
         return new SimpleCommand(command,
-                                 new SecureShellAgent(host, port, user, privateKeyFilePath, null),
+                                 new SecureShellAgent(host, port, user, privateKeyFilePath),
                                  null,
                                  logCommand);
     }
