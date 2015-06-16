@@ -3,21 +3,24 @@
 # bash <(curl -s https://codenvy.com/update/repository/public/download/install-im-cli)
 set -e
 
-DIR="${HOME}/codenvy-im"
-ARTIFACT="installation-manager-cli"
+setRunOptions() {
+    DIR="${HOME}/codenvy-im"
+    ARTIFACT="installation-manager-cli"
 
-if [ -z $1 ]; then
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*version"\w*:\w*"\([0-9.]*\|[0-9.]*-SNAPSHOT\)".*/\1/'`
-else
-    VERSION=$1
-fi
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*"version":"\([^"].*\)".*/\1/'`
+    for var in "$@"; do
+        if [[ "$var" =~ --version=.* ]]; then
+            VERSION=`echo "$var" | sed -e "s/--version=//g"`
+        fi
+    done
+}
 
-checkOS() {
+validateOS() {
     if [ -f /etc/redhat-release ]; then
         OS="Red Hat"
     else
-        printPrompt; echo "Operation system isn't supported."
-        exit
+        printLn "Operation system isn't supported."
+        exit 1
     fi
     OS_VERSION=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
 }
@@ -31,17 +34,17 @@ installPackageIfNeed() {
 }
 
 installJava() {
-    printPrompt; echo "Installing java"
-    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/7u17-b02/jre-7u17-linux-x64.tar.gz' --output-document=jre.tar.gz
+    printLn "Installing java"
+    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz' --output-document=jre.tar.gz
 
     tar -xf jre.tar.gz -C ${DIR}
-    mv ${DIR}/jre1.7.0_17 ${DIR}/jre
+    mv ${DIR}/jre1.8.0_45 ${DIR}/jre
 
     rm jre.tar.gz
 }
 
 installIm() {
-    printPrompt; echo "Downloading Installation Manager"
+    printLn "Downloading Installation Manager"
 
     IM_URL="https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION}"
     IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
@@ -58,55 +61,61 @@ printPrompt() {
     echo -en "\e[94m[CODENVY]\e[0m "
 }
 
+printLn() {
+    printPrompt; echo "$1"
+}
+
 printPreInstallInfo() {
     checkOS
 
-    printPrompt; echo "Welcome. This program installs Codenvy Installation Manager."
-    printPrompt; echo
-    printPrompt; echo "This program will:"
-    printPrompt; echo "1. Configure the system"
-    printPrompt; echo "2. Install Java and other required packages"
-    printPrompt; echo "3. Install the Codenvy Installation Manager"
-    printPrompt; echo
-    printPrompt; echo
-    printPrompt; echo "By continuing, you accept the Codenvy Agreement @ http://codenvy.com/legal"
-    printPrompt; echo
-    printPrompt; echo "Press any key to continue"
+    printLn "Welcome. This program installs Codenvy Installation Manager."
+    printLn ""
+    printLn "This program will:"
+    printLn "1. Configure the system"
+    printLn "2. Install Java and other required packages"
+    printLn "3. Install the Codenvy Installation Manager"
+    printLn ""
+    printLn ""
+    printLn "By continuing, you accept the Codenvy Agreement @ http://codenvy.com/legal"
+    printLn ""
+    printLn "Press any key to continue"
     read -n1 -s
 }
 
 preconfigureSystem() {
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
+
+    validateOS
+    setRunOptions
 }
 
 
 doInstallStep1() {
-    printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 1: CONFIGURE SYSTEM"
+    printLn ""
+    printLn "STEP 1: CONFIGURE SYSTEM"
 
     if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
     mkdir ${DIR}
-
-    printPrompt; echo "COMPLETED STEP 1: CONFIGURE SYSTEM"
 }
 
 doInstallStep2() {
-    printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
+    printLn ""
+    printLn "STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
+
     installPackageIfNeed tar
     installPackageIfNeed wget
     installPackageIfNeed unzip
     installJava
-    printPrompt; echo "COMPLETED STEP 2: INSTALL JAVA AND OTHER REQUIRED PACKAGES"
 }
 
 doInstallStep3() {
-    printPrompt; echo
-    printPrompt; echo "BEGINNING STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER"
+    printLn ""
+    printLn "STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER"
+
     installIm
-    printPrompt; echo "Codenvy Installation Manager is installed into ${DIR}/codenvy-cli directory"
-    printPrompt; echo "COMPLETED STEP 3: INSTALL THE CODENVY INSTALLATION MANAGER"
+
+    printLn "Codenvy Installation Manager is installed into ${DIR}/codenvy-cli directory"
 }
 
 
