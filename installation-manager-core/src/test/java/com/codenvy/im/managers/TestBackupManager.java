@@ -61,7 +61,6 @@ public class TestBackupManager {
 
     private BackupManager spyManager;
 
-    private static final Path   ORIGIN_BASE_TMP_DIRECTORY      = BackupConfig.BASE_TMP_DIRECTORY;
     private static final String ORIGIN_BACKUP_NAME_TIME_FORMAT = BackupConfig.BACKUP_NAME_TIME_FORMAT;
 
     private static final Path   TEST_DEFAULT_BACKUP_DIRECTORY = Paths.get("target/backups");
@@ -77,7 +76,6 @@ public class TestBackupManager {
         FileUtils.deleteDirectory(TEST_DEFAULT_BACKUP_DIRECTORY.toFile());
         FileUtils.deleteDirectory(TEST_BASE_TMP_DIRECTORY.toFile());
 
-        BackupConfig.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = TEST_BACKUP_NAME_TIME_FORMAT;
 
         spyManager = spy(new BackupManager(TEST_DEFAULT_BACKUP_DIRECTORY.toString()));
@@ -89,7 +87,6 @@ public class TestBackupManager {
 
     @AfterMethod
     public void tearDown() throws IOException {
-        BackupConfig.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
         BackupConfig.BACKUP_NAME_TIME_FORMAT = ORIGIN_BACKUP_NAME_TIME_FORMAT;
     }
 

@@ -348,15 +348,15 @@ public class CommandLibrary {
                "fi;";
     }
 
-    public static Command createReadFileCommand(Path file, int lineNumber, boolean needSudo) {
-        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo));
+    public static Command createTailCommand(Path file, int lineNumber, boolean needSudo) {
+        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, lineNumber, needSudo));
     }
 
-    public static Command createReadFileCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
-        return SimpleCommand.createCommandWithoutLogging(getReadFileCommand(file, lineNumber, needSudo), node);
+    public static Command createTailCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
+        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, lineNumber, needSudo), node);
     }
 
-    private static String getReadFileCommand(Path file, int lineNumber, boolean needSudo) {
+    private static String getTailCommand(Path file, int lineNumber, boolean needSudo) {
         String command = format("tail -n %s %s", lineNumber, file);
         if (needSudo) {
             command = "sudo " + command;

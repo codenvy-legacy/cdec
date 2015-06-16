@@ -23,6 +23,7 @@ import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.report.ErrorReport;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-    private static final Path PUPPET_LOG_FILE_PATH = Paths.get("/var/log/messages");
+    public static Path PUPPET_LOG_FILE_PATH = Paths.get("/var/log/messages");
     protected static final int READ_LOG_TIMEOUT_MILLIS = 100;
     public static final int SELECTION_LINE_NUMBER = 5;
 
@@ -150,10 +151,6 @@ public class PuppetErrorInterrupter implements Command {
         }
     }
 
-    protected Path getPuppetLog() {
-        return PUPPET_LOG_FILE_PATH;
-    }
-
     protected boolean checkPuppetError(String line) {
         for (Pattern errorPattern : errorPatterns) {
             Matcher m = errorPattern.matcher(line);
@@ -180,18 +177,31 @@ public class PuppetErrorInterrupter implements Command {
 
     protected Command createReadFileCommand(NodeConfig node) throws AgentException {
         if (node == null) {
-            return CommandLibrary.createReadFileCommand(getPuppetLog(), SELECTION_LINE_NUMBER, true);
+            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE_PATH, SELECTION_LINE_NUMBER, true);
         } else {
-            return CommandLibrary.createReadFileCommand(getPuppetLog(), SELECTION_LINE_NUMBER, node, true);
+            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE_PATH, SELECTION_LINE_NUMBER, node, true);
         }
     }
 
     private String getPuppetErrorMessage(NodeConfig node, String line) {
         if (node == null) {
-            return format("Puppet error: '%s'", line);
+            String message = format("Puppet error: '%s'", line);
+
+            Path errorReport = new ErrorReport().create();
+            if (errorReport != null) {
+                message += format(". Error report: %s", errorReport);
+            }
+
+            return message;
         }
 
-        return format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+        String message = format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+        Path errorReport = new ErrorReport().create(node);
+        if (errorReport != null) {
+            message += format(". Error report: %s", errorReport);
+        }
+
+        return message;
     }
 
     private String getRuntimeErrorMessage(NodeConfig node, IOException e) {
@@ -210,9 +220,9 @@ public class PuppetErrorInterrupter implements Command {
     @Override
     public String toString() {
         if (nodes == null) {
-            return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), getPuppetLog());
+            return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), PUPPET_LOG_FILE_PATH);
         }
 
-        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), getPuppetLog(), nodes.toString());
+        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), PUPPET_LOG_FILE_PATH, nodes.toString());
     }
 }
