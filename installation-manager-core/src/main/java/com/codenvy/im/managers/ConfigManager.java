@@ -138,7 +138,9 @@ public class ConfigManager {
                 props.put(name, value);
             } else {
                 if (curDefaultProps.containsKey(name) && curProps.get(name).equals(curDefaultProps.get(name))) {
-                    props.put(name, value);
+                    if (!name.contains("pass") && !name.contains("pwd") && !name.contains("client_id") && !name.contains("secret")) {
+                        props.put(name, value);
+                    }
                 }
             }
 
