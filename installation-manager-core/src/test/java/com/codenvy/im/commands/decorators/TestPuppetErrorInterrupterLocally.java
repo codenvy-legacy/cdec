@@ -20,7 +20,6 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
-import com.codenvy.im.report.ErrorReport;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -46,7 +45,7 @@ public class TestPuppetErrorInterrupterLocally {
     static final int WAIT_INTERRUPTER_MILLIS    = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
     static final Path TEST_BASE_TMP_DIRECTORY   = Paths.get("target/tmp_report");
     static final Path ORIGIN_PUPPET_LOG         = PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH;
-    static final Path ORIGIN_BASE_TMP_DIRECTORY = ErrorReport.BASE_TMP_DIRECTORY;
+    static final Path ORIGIN_BASE_TMP_DIRECTORY = PuppetErrorReport.BASE_TMP_DIRECTORY;
 
     @Mock
     Command mockCommand;
@@ -55,7 +54,7 @@ public class TestPuppetErrorInterrupterLocally {
 
     Thread testThread;
 
-    String logWithoutErrorMessages   =
+    String logWithoutErrorMessages =
         "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
         + "Jun  8 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
         + "Jun  8 15:17:31 test systemd[1]: Time has been changed\n"
@@ -85,12 +84,13 @@ public class TestPuppetErrorInterrupterLocally {
                                                                                    PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
         doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(null);
 
-        ErrorReport.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
+        PuppetErrorReport.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
     }
 
     @Test(expectedExceptions = CommandException.class,
           expectedExceptionsMessageRegExp = "Puppet error: 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
-                                            "Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
+                                            "Could not retrieve catalog from remote server: Error 400 on SERVER: " +
+                                            "Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
                                             "Error report: target/reports/error_report_.*.tar.gz",
           timeOut = 20000)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
@@ -237,7 +237,8 @@ public class TestPuppetErrorInterrupterLocally {
         return new Object[][] {
             {"", false},
             {"any message", false},
-            {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy", true}
+            {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy", true},
+            {"Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true", true}
         };
     }
 
@@ -249,6 +250,6 @@ public class TestPuppetErrorInterrupterLocally {
         }
 
         PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = ORIGIN_PUPPET_LOG;
-        ErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
+        PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
     }
 }

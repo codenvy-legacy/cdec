@@ -23,7 +23,6 @@ import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.NodeConfig;
-import com.codenvy.im.report.ErrorReport;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -40,7 +39,7 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-    public static Path PUPPET_LOG_FILE_PATH = Paths.get("/var/log/messages");
+    public static Path PUPPET_LOG_FILE_PATH = Paths.get("/var/log/messages");  // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
     protected static final int READ_LOG_TIMEOUT_MILLIS = 100;
     public static final int SELECTION_LINE_NUMBER = 5;
 
@@ -55,7 +54,8 @@ public class PuppetErrorInterrupter implements Command {
     private final List<NodeConfig> nodes;
 
     private List<Pattern> errorPatterns = ImmutableList.of(
-        Pattern.compile("puppet-agent[^:]*: Could not retrieve catalog from remote server")
+        Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server"),
+        Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency Exec\\[.*\\] has failures: true")
     );
 
     private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
@@ -187,7 +187,7 @@ public class PuppetErrorInterrupter implements Command {
         if (node == null) {
             String message = format("Puppet error: '%s'", line);
 
-            Path errorReport = new ErrorReport().create();
+            Path errorReport = new PuppetErrorReport().create();
             if (errorReport != null) {
                 message += format(". Error report: %s", errorReport);
             }
@@ -196,7 +196,7 @@ public class PuppetErrorInterrupter implements Command {
         }
 
         String message = format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
-        Path errorReport = new ErrorReport().create(node);
+        Path errorReport = new PuppetErrorReport().create(node);
         if (errorReport != null) {
             message += format(". Error report: %s", errorReport);
         }
