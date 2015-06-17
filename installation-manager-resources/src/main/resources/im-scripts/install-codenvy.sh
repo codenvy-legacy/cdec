@@ -198,7 +198,7 @@ printPreInstallInfo_single() {
     printLn "CPU           : 4 cores     : ${availableCores} cores"
     printLn "Disk Space    : 300 GB      : ${availableDiskSpace} GB"
     printLn ""
-    printLn "Sizing Guide       : http://docs.codenvy.com/onpremises"
+    printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     pressAnyKeyToContinueAndClearConsole
 
@@ -263,7 +263,7 @@ printPreInstallInfo_multi() {
     printLn "Disk Space  : 50 GB"
     printLn "OS          : CentOS 7"
     printLn ""
-    printLn "Sizing Guide       : http://docs.codenvy.com/onpremises"
+    printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     pressAnyKeyToContinueAndClearConsole
 
