@@ -189,15 +189,14 @@ printPreInstallInfo_single() {
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    printLn "Welcome. This program installs a single node version of Codenvy On-Prem."
+    printLn "Welcome. This program installs a single node Codenvy On-Prem."
     printLn ""
     printLn "Checking for system pre-requisites..."
-    printLn "We have detected that this node is a ${OS} distribution."
     printLn ""
-    printLn "RESOURCE      : RECOMENDED : AVAILABLE"
-    printLn "RAM           : 8GB        : ${availableRAM}GB"
-    printLn "CPU           : 4 cores    : ${availableCores} cores"
-    printLn "Disk Space    : 300GB      : ${availableDiskSpace}B"
+    printLn "RESOURCE      : RECOMMENDED : AVAILABLE"
+    printLn "RAM           : 8 GB        : ${availableRAM} GB"
+    printLn "CPU           : 4 cores     : ${availableCores} cores"
+    printLn "Disk Space    : 300 GB      : ${availableDiskSpace} GB"
     printLn ""
     printLn "Sizing Guide       : http://docs.codenvy.com/onpremises"
     printLn "Configuration File : "${CONFIG}
@@ -250,19 +249,18 @@ printPreInstallInfo_multi() {
     availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
-    printLn "Welcome. This program installs a multi-node version of Codenvy On-Prem."
+    printLn "Welcome. This program installs a multi-node Codenvy On-Prem."
     printLn ""
     printLn "Checking for system pre-requisites..."
-    printLn "We have detected that this node is a ${OS} distribution."
     printLn ""
-    printLn "Recomemnded requirements for the nodes:"
-    printLn "RAM         : 1GB"
-    printLn "Disk Space  : 14GB"
+    printLn "Recommended resources for the nodes:"
+    printLn "RAM         : 1 GB"
+    printLn "Disk Space  : 14 GB"
     printLn "OS          : CentOS 7"
     printLn ""
-    printLn "Recomemnded requirements for the Runner node:"
-    printLn "RAM         : 1.5GB"
-    printLn "Disk Space  : 50GB"
+    printLn "Recommended requirements for the runners:"
+    printLn "RAM         : 1.5 GB"
+    printLn "Disk Space  : 50 GB"
     printLn "OS          : CentOS 7"
     printLn ""
     printLn "Sizing Guide       : http://docs.codenvy.com/onpremises"
