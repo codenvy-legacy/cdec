@@ -25,9 +25,6 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FileUtils;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,7 +35,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import static com.codenvy.im.commands.CommandLibrary.createChmodCommand;
+import static com.codenvy.im.commands.CommandLibrary.createCopyCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromRemoteToLocalCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
@@ -48,11 +49,13 @@ import static java.lang.String.format;
 public class PuppetErrorReport {
     private static final Path   REPORT_DIR                 = Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
     private static final String ERROR_REPORT_NAME_TEMPLATE = "error_report_%s.tar.gz";
+    private static final Logger LOG                        = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
 
     protected static     String REPORT_NAME_TIME_FORMAT    = "dd-MMM-yyyy_HH-mm-ss";
+
     public static        Path   BASE_TMP_DIRECTORY         = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
-    private static final Logger LOG = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
+    protected static boolean useSudo = true;  // for testing
 
     /**
      * @return path to created error report, or null in case of problems with report creation
@@ -89,7 +92,7 @@ public class PuppetErrorReport {
         return reportFile;
     }
 
-    protected static Path createPathToErrorReport() {
+    private static Path createPathToErrorReport() {
         DateFormat dateFormat = new SimpleDateFormat(REPORT_NAME_TIME_FORMAT);
         String currentTime = dateFormat.format(new Date());
 
@@ -98,7 +101,25 @@ public class PuppetErrorReport {
         return REPORT_DIR.resolve(fileName);
     }
 
-    protected static Command createConsolidateLogsCommand(Path reportFile, @Nullable NodeConfig node) throws IOException {
+    /**
+     * Given:
+     * - path to report file
+     * - node config
+     * @return command which:
+     * I. If node == null:
+     * - copy puppet log file into local temp dir
+     * - pack temp dir into report file
+     *
+     * II. If node != null:
+     * - create local temp dir for puppet log file from node with name = type_of_node
+     * - create remote temp dir
+     * - copy file with puppet logs into the remote temp dir
+     * - change permission of file with puppet logs to the 666 to be able to copy it to local machine
+     * - copy remote puppet log file into the local_temp_dir/{node_type}/ directory
+     * - cleanup remote temp dir
+     * - pack local temp dir into report file
+     */
+    private static Command createConsolidateLogsCommand(Path reportFile, @Nullable NodeConfig node) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         if (node == null) {
@@ -106,28 +127,34 @@ public class PuppetErrorReport {
             commands.add(createCommand(format("cp %s %s", PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, BASE_TMP_DIRECTORY)));
 
         } else {
-            // copy remote puppet log file into the local_temp_dir/{node_type}/ directory
+            // create local temp dir for puppet log file from node with name = type_of_node
             Path tempDirForNodeLog = BASE_TMP_DIRECTORY.resolve(node.getType().toString().toLowerCase());
             commands.add(createCommand(format("mkdir -p %s", tempDirForNodeLog)));
 
+            // create remote temp dir
             Path remoteTempDir = Paths.get("/tmp/codenvy");
             commands.add(createCommand(format("mkdir -p %s", remoteTempDir), node));
 
-            commands.add(createCommand(format("sudo cp %s %s", PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, remoteTempDir), node));
+            // copy file with puppet logs into the remote temp dir
+            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, remoteTempDir, node, useSudo));
 
+            // change permission of file with puppet logs to the 666 to be able to copy it to local machine
             Path remoteLogFile = remoteTempDir.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
-            commands.add(createCommand(format("sudo chmod 774 %s", remoteLogFile), node));
+            commands.add(createChmodCommand("666", remoteLogFile, node, useSudo));
 
+            // copy remote puppet log file into the local_temp_dir/{node_type}/ directory
             commands.add(createCopyFromRemoteToLocalCommand(remoteLogFile,
                                                             tempDirForNodeLog,
                                                             node));
 
+            // cleanup remote temp dir
             commands.add(createCommand(format("rm -rf %s", remoteTempDir), node));
         }
 
-        // pack logs into report file
+        // pack local temp dir into report file
         commands.add(createPackCommand(BASE_TMP_DIRECTORY, reportFile, ".", false));
 
         return new MacroCommand(commands, "Commands to create error report");
     }
+
 }

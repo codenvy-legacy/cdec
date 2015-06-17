@@ -364,4 +364,32 @@ public class CommandLibrary {
 
         return command;
     }
+
+    public static Command createChmodCommand(String mode, Path file, NodeConfig node, boolean useSudo) throws AgentException {
+        return createCommand(getChmodCommand(mode, file, useSudo), node);
+    }
+
+    private static String getChmodCommand(String mode, Path file, boolean useSudo) {
+        String command = format("chmod %s %s", mode, file);
+
+        if (useSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
+    }
+
+    public static Command createCopyCommand(Path from, Path to, NodeConfig node, boolean useSudo) throws AgentException {
+        return createCommand(getCopyCommand(from, to, useSudo), node);
+    }
+
+    private static String getCopyCommand(Path from, Path to, boolean useSudo) {
+        String command = format("cp %s %s", from, to);
+
+        if (useSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
+    }
 }

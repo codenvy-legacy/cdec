@@ -31,15 +31,20 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterOnNode {
@@ -89,54 +94,86 @@ public class TestPuppetErrorInterrupterOnNode {
         doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(testNode);
 
         PuppetErrorReport.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
+
+        PuppetErrorReport.useSudo = false;  // prevent asking sudo password when running the tests
     }
 
-//    @Test(expectedExceptions = CommandException.class,
-//          expectedExceptionsMessageRegExp = "Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
-//                                            "Could not retrieve catalog from remote server: Error 400 on SERVER: " +
-//                                            "Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
-//                                            "Error report: target/reports/error_report_.*.tar.gz",
-//          timeOut = 20000)
-//    public void testInterruptWhenAddError() throws InterruptedException, IOException {
-//        final String[] failMessage = {null};
-//
-//        doAnswer(new Answer() {
-//            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-//                try {
-//                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 10);
-//                    failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
-//                    return null;
-//                } catch (InterruptedException e) {
-//                    // it's okay here
-//                    return null;
-//                }
-//            }
-//        }).when(mockCommand).execute();
-//
-//        testThread = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 5);
-//
-//                    // append error message into puppet log file
-//                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
-//
-//                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), errorMessage, true);
-//                } catch (Exception e) {
-//                    fail(e.getMessage());
-//                }
-//            }
-//        });
-//
-//        testThread.start();
-//
-//        testInterrupter.execute();
-//
-//        if (failMessage[0] != null) {
-//            fail(failMessage[0]);
-//        }
-//    }
+    @Test(timeOut = 20000)
+    public void testInterruptWhenAddError() throws InterruptedException, IOException {
+        final String[] failMessage = {null};
+
+        final String puppetErrorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+
+        doAnswer(new Answer() {
+            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 10);
+                    failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
+                    return null;
+                } catch (InterruptedException e) {
+                    // it's okay here
+                    return null;
+                }
+            }
+        }).when(mockCommand).execute();
+
+        testThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 5);
+
+                    // append error message into puppet log file
+                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), puppetErrorMessage, true);
+                } catch (Exception e) {
+                    fail(e.getMessage());
+                }
+            }
+        });
+
+        testThread.start();
+
+        try {
+            testInterrupter.execute();
+        } catch(Exception e) {
+            assertEquals(e.getClass(), CommandException.class);
+
+            String errorMessage = e.getMessage();
+            Pattern errorMessagePattern = Pattern.compile("Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
+                                                          "Could not retrieve catalog from remote server: Error 400 on SERVER: " +
+                                                          "Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
+                                                          "Error report: target/reports/error_report_.*.tar.gz");
+            assertTrue(errorMessagePattern.matcher(errorMessage).find());
+
+            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage, testNode);
+            return;
+        }
+
+        if (failMessage[0] != null) {
+            fail(failMessage[0]);
+        }
+
+        fail("testInterrupter.execute() should throw CommandException");
+    }
+
+    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode) throws IOException {
+        Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
+        Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
+        assertTrue(pathToReportMatcher.find());
+
+        Path pathToReport = Paths.get(pathToReportMatcher.group());
+        assertNotNull(pathToReport);
+        assertTrue(Files.exists(pathToReport));
+
+        FileUtils.deleteQuietly(TEST_BASE_TMP_DIRECTORY.toFile());
+        Files.createDirectory(TEST_BASE_TMP_DIRECTORY);
+        CommandLibrary.createUnpackCommand(pathToReport, TEST_BASE_TMP_DIRECTORY).execute();
+        Path logFile = TEST_BASE_TMP_DIRECTORY.resolve(testNode.getType().toString().toLowerCase()).resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        assertTrue(Files.exists(logFile));
+
+        String logFileContent = FileUtils.readFileToString(logFile.toFile());
+        assertEquals(logFileContent, expectedContentOfLogFile);
+    }
 
     @Test(timeOut = 20000)
     public void testNotInterruptWhenAddNoError() throws InterruptedException, IOException {

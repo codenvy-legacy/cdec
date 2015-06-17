@@ -20,6 +20,7 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
+import com.codenvy.im.utils.TarUtils;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -31,14 +32,19 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterLocally {
@@ -87,14 +93,11 @@ public class TestPuppetErrorInterrupterLocally {
         PuppetErrorReport.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
     }
 
-    @Test(expectedExceptions = CommandException.class,
-          expectedExceptionsMessageRegExp = "Puppet error: 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
-                                            "Could not retrieve catalog from remote server: Error 400 on SERVER: " +
-                                            "Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
-                                            "Error report: target/reports/error_report_.*.tar.gz",
-          timeOut = 20000)
+    @Test(timeOut = 20000)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
+
+        final String puppetErrorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -116,9 +119,7 @@ public class TestPuppetErrorInterrupterLocally {
                     Thread.sleep(WAIT_INTERRUPTER_MILLIS * 2);
 
                     // append error message into puppet log file
-                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
-
-                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), errorMessage, true);
+                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), puppetErrorMessage, true);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
@@ -127,11 +128,46 @@ public class TestPuppetErrorInterrupterLocally {
 
         testThread.start();
 
-        testInterrupter.execute();
+        try {
+            testInterrupter.execute();
+        } catch(Exception e) {
+            assertEquals(e.getClass(), CommandException.class);
+
+            String errorMessage = e.getMessage();
+            Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
+                                                          "Could not retrieve catalog from remote server: Error 400 on SERVER: " +
+                                                          "Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
+                                                          "Error report: target/reports/error_report_.*.tar.gz");
+            assertTrue(errorMessagePattern.matcher(errorMessage).find());
+
+            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage);
+            return;
+        }
 
         if (failMessage[0] != null) {
             fail(failMessage[0]);
         }
+
+        fail("testInterrupter.execute() should throw CommandException");
+    }
+
+    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException {
+        Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
+        Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
+        assertTrue(pathToReportMatcher.find());
+
+        Path pathToReport = Paths.get(pathToReportMatcher.group());
+        assertNotNull(pathToReport);
+        assertTrue(Files.exists(pathToReport));
+
+        FileUtils.deleteQuietly(TEST_BASE_TMP_DIRECTORY.toFile());
+        Files.createDirectory(TEST_BASE_TMP_DIRECTORY);
+        CommandLibrary.createUnpackCommand(pathToReport, TEST_BASE_TMP_DIRECTORY).execute();
+        Path logFile = TEST_BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        assertTrue(Files.exists(logFile));
+
+        String logFileContent = FileUtils.readFileToString(logFile.toFile());
+        assertEquals(logFileContent, expectedContentOfLogFile);
     }
 
     @Test(timeOut = 20000)
@@ -251,5 +287,6 @@ public class TestPuppetErrorInterrupterLocally {
 
         PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = ORIGIN_PUPPET_LOG;
         PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
+        FileUtils.deleteQuietly(TEST_BASE_TMP_DIRECTORY.toFile());
     }
 }

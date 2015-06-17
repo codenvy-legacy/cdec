@@ -389,4 +389,24 @@ public class TestCommandLibrary {
         command = CommandLibrary.createTailCommand(fileToRead, PuppetErrorInterrupter.SELECTION_LINE_NUMBER + 1, testNode, true);
         assertEquals(command.toString(), "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
     }
+
+    @Test
+    public void testCreateCopyCommand() throws AgentException {
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
+        Command command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, true);
+        assertEquals(command.toString(), "{'command'='sudo cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, false);
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+    }
+
+    @Test
+    public void testCreateChmodCommand() throws AgentException {
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
+        Command command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, true);
+        assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, false);
+        assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+    }
 }
