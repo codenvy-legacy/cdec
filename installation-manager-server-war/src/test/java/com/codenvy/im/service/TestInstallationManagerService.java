@@ -249,13 +249,13 @@ public class TestInstallationManagerService extends BaseTest {
                                                                                     Version.valueOf("3.1.0"),
                                                                                     false);
 
-        Response result = service.updateCodenvy(1);
+        Response result = service.updateCodenvy(0);
         assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        result = service.updateCodenvy(0);
+        result = service.updateCodenvy(-1);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
-        result = service.updateCodenvy(2);
+        result = service.updateCodenvy(1);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 

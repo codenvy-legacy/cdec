@@ -339,7 +339,7 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully updated"),
                            @ApiResponse(code = 400, message = "Binaries to install not found or installation step is out of range"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response updateCodenvy(@QueryParam("step") @ApiParam(name = "installation step") int installStep) {
+    public javax.ws.rs.core.Response updateCodenvy(@QueryParam("step") @ApiParam(value = "installation step starting from 0") int installStep) {
         try {
             InstallType installType = configManager.detectInstallationType();
             Artifact artifact = createArtifact(CDECArtifact.NAME);
@@ -354,8 +354,8 @@ public class InstallationManagerService {
             installOptions.setConfigProperties(properties);
 
             List<String> infos = delegate.getUpdateInfo(artifact, installType);
-            if (installStep <= 0 || installStep > infos.size()) {
-                return handleException(new IllegalArgumentException(format("Installation step is out of range [1..%d]", infos.size() + 1)),
+            if (installStep < 0 || installStep >= infos.size()) {
+                return handleException(new IllegalArgumentException(format("Installation step is out of range [0..%d]", infos.size() - 1)),
                                        javax.ws.rs.core.Response.Status.BAD_REQUEST);
             }
 
@@ -381,7 +381,7 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully updated"),
                            @ApiResponse(code = 404, message = "Updating step not found"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getUpdateStatus(@PathParam("id") @ApiParam(name = "updating step id") String stepId) {
+    public javax.ws.rs.core.Response getUpdateStatus(@PathParam("id") @ApiParam(value = "updating step id") String stepId) {
         try {
             InstallArtifactStepInfo info = delegate.getUpdateStepInfo(stepId);
             return javax.ws.rs.core.Response.ok(info).build();
