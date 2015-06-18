@@ -101,7 +101,7 @@ public class PasswordManager {
 
     private void updatePwd(byte[] newPassword, InitialDirContext ldapContext, Config config) throws NamingException {
         SSHAPasswordEncryptor sshaPasswordEncryptor = new SSHAPasswordEncryptor();
-        String encryptedPwd = sshaPasswordEncryptor.encryptPassword(newPassword);
+        String encryptedPwd = sshaPasswordEncryptor.encrypt(newPassword).toString();
 
         ModificationItem[] mods = new ModificationItem[]{
                 new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("userPassword", encryptedPwd))
