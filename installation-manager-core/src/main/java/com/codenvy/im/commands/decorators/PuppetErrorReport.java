@@ -47,20 +47,22 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorReport {
-    private static final Path   REPORT_DIR                 = Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
-    private static final String ERROR_REPORT_NAME_TEMPLATE = "error_report_%s.tar.gz";
-    private static final Logger LOG                        = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
+    public static final Path REPORT_DIR = Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
+    public static final String ERROR_REPORT_NAME_TEMPLATE = "error_report_%s.tar.gz";
 
-    protected static     String REPORT_NAME_TIME_FORMAT    = "dd-MMM-yyyy_HH-mm-ss";
+    public static final Logger LOG                        = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
 
-    public static        Path   BASE_TMP_DIRECTORY         = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+    public static final int REPORT_CREATION_TIMEOUT = 500;   // 0.5 second
 
-    private static final Path CLI_CLIENT_INTERACTIVE_MODE_LOG = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-interactive.log");
-    protected static final Path CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-non-interactive.log");
-    private static final Path INSTALLATION_MANAGER_SERVER_LOG = (System.getProperty("catalina.base") != null) ?
+    public static final Path CLI_CLIENT_INTERACTIVE_MODE_LOG     = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-interactive.log");
+    public static final Path CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-non-interactive.log");
+    public static final Path INSTALLATION_MANAGER_SERVER_LOG     = (System.getProperty("catalina.base") != null) ?
         Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out") : null;
 
-    protected static boolean useSudo = true;  // for testing
+    public static Path BASE_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+
+    protected static String  REPORT_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
+    protected static boolean useSudo                 = true;  // for testing
 
     /**
      * @return path to created error report, or null in case of problems with report creation
@@ -71,8 +73,8 @@ public class PuppetErrorReport {
     }
 
     @Nullable
-    public static Path create(@Nullable NodeConfig node) {
-        Path reportFile = createPathToErrorReport();
+    public static Path create(@Nullable final NodeConfig node) {
+        final Path reportFile = createPathToErrorReport();
 
         try {
             // create local temp dir
@@ -84,14 +86,28 @@ public class PuppetErrorReport {
                 Files.createDirectory(reportFile.getParent());
             }
 
-            Command createReportCommands = createConsolidateLogsCommand(reportFile, node);
-            createReportCommands.execute();
+            Thread thread = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(REPORT_CREATION_TIMEOUT); // wait until installation manager logs error message into the its logs
+                        Command createReportCommands = createConsolidateLogsCommand(reportFile, node);
+                        createReportCommands.execute();
+                    } catch (Exception e) {
+                        LOG.log(Level.SEVERE, format("Error report creation error: %s", e.getMessage()), e);
+                    } finally {
+                        // remove temp dir
+                        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+                    }
+                }
+            });
+
+            thread.start();
         } catch (IOException e) {
             LOG.log(Level.SEVERE, format("Error report creation error: %s", e.getMessage()), e);
-            return null;
-        } finally {
+
             // remove temp dir
             FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+            return null;
         }
 
         return reportFile;
@@ -131,7 +147,11 @@ public class PuppetErrorReport {
 
         if (node == null) {
             // copy puppet log file into temp dir
-            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, BASE_TMP_DIRECTORY));
+            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, BASE_TMP_DIRECTORY, useSudo));
+
+            // change permission of puppet log file with puppet logs to the 666 to be able to pack it
+            Path puppetLogFile = BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+            commands.add(createChmodCommand("666", puppetLogFile, useSudo));
 
         } else {
             // create local temp dir for puppet log file from node with name = type_of_node

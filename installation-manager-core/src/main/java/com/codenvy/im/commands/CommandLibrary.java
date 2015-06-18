@@ -365,6 +365,10 @@ public class CommandLibrary {
         return command;
     }
 
+    public static Command createChmodCommand(String mode, Path file, boolean useSudo) {
+        return createCommand(getChmodCommand(mode, file, useSudo));
+    }
+
     public static Command createChmodCommand(String mode, Path file, NodeConfig node, boolean useSudo) throws AgentException {
         return createCommand(getChmodCommand(mode, file, useSudo), node);
     }
@@ -379,12 +383,20 @@ public class CommandLibrary {
         return command;
     }
 
+
     public static Command createCopyCommand(Path from, Path to, NodeConfig node, boolean useSudo) throws AgentException {
         return createCommand(getCopyCommand(from, to, useSudo), node);
     }
 
+    /**
+     * @return copy bash command where sudo isn't used.
+     */
     public static Command createCopyCommand(Path from, Path to) {
-        return  createCommand(getCopyCommand(from, to, false));
+        return createCommand(getCopyCommand(from, to, false));
+    }
+
+    public static Command createCopyCommand(Path from, Path to, boolean useSudo) {
+        return createCommand(getCopyCommand(from, to, useSudo));
     }
 
     private static String getCopyCommand(Path from, Path to, boolean useSudo) {

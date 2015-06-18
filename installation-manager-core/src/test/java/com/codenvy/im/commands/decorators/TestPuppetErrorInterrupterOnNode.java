@@ -83,7 +83,7 @@ public class TestPuppetErrorInterrupterOnNode {
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        // create log file
+        // create puppet log file
         PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = Paths.get(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).resolve("../test-classes/messages");
         FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), logWithoutErrorMessages);
 
@@ -107,7 +107,7 @@ public class TestPuppetErrorInterrupterOnNode {
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 10);
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 8);
                     failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
                     return null;
                 } catch (InterruptedException e) {
@@ -121,7 +121,7 @@ public class TestPuppetErrorInterrupterOnNode {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 5);
+                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
 
                     // append error message into puppet log file
                     FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), puppetErrorMessage, true);
@@ -156,7 +156,9 @@ public class TestPuppetErrorInterrupterOnNode {
         fail("testInterrupter.execute() should throw CommandException");
     }
 
-    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode) throws IOException {
+    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode) throws IOException, InterruptedException {
+        Thread.sleep(PuppetErrorReport.REPORT_CREATION_TIMEOUT * 8);  // wait until error report creates
+
         Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
         assertTrue(pathToReportMatcher.find());

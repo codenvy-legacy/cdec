@@ -84,9 +84,6 @@ public class TestPuppetErrorInterrupterLocally {
         PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = Paths.get(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).resolve("../test-classes/messages");
         FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), logWithoutErrorMessages);
 
-        // create IM CLI client log
-        FileUtils.write(TEST_BASE_TMP_DIRECTORY.getParent().resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName()).toFile(), "");
-
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand));
 
         Command readPuppetLogCommandWithoutSudo = CommandLibrary.createTailCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH,
@@ -154,7 +151,12 @@ public class TestPuppetErrorInterrupterLocally {
         fail("testInterrupter.execute() should throw CommandException");
     }
 
-    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException {
+    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException, InterruptedException {
+        // create IM CLI client log
+        FileUtils.write(TEST_BASE_TMP_DIRECTORY.getParent().resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName()).toFile(), "");
+
+        Thread.sleep(PuppetErrorReport.REPORT_CREATION_TIMEOUT * 2);  // wait until error report creates
+
         Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
         assertTrue(pathToReportMatcher.find());

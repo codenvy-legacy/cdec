@@ -401,6 +401,12 @@ public class TestCommandLibrary {
 
         command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"));
         assertEquals(command.toString(), "{'command'='cp from to', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), true);
+        assertEquals(command.toString(), "{'command'='sudo cp from to', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), false);
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='LocalAgent'}");
     }
 
     @Test
@@ -411,5 +417,11 @@ public class TestCommandLibrary {
 
         command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, false);
         assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createChmodCommand("007", Paths.get("file"), true);
+        assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createChmodCommand("007", Paths.get("file"), false);
+        assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='LocalAgent'}");
     }
 }
