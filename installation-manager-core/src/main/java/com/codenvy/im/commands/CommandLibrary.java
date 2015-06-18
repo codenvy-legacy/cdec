@@ -383,6 +383,10 @@ public class CommandLibrary {
         return createCommand(getCopyCommand(from, to, useSudo), node);
     }
 
+    public static Command createCopyCommand(Path from, Path to) {
+        return  createCommand(getCopyCommand(from, to, false));
+    }
+
     private static String getCopyCommand(Path from, Path to, boolean useSudo) {
         String command = format("cp %s %s", from, to);
 

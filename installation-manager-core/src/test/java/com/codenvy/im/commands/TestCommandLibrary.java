@@ -398,6 +398,9 @@ public class TestCommandLibrary {
 
         command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, false);
         assertEquals(command.toString(), "{'command'='cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"));
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='LocalAgent'}");
     }
 
     @Test

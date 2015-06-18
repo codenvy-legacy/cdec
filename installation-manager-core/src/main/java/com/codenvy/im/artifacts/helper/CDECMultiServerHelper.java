@@ -343,7 +343,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                      "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
-                return new CheckInstalledVersionCommand(original, versionToUpdate);
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate));
 
             case 5:
                 return createPatchCommand(Paths.get("/etc/puppet/patches/"),

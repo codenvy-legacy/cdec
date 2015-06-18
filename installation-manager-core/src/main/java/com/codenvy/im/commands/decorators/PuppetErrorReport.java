@@ -55,6 +55,11 @@ public class PuppetErrorReport {
 
     public static        Path   BASE_TMP_DIRECTORY         = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
+    private static final Path CLI_CLIENT_INTERACTIVE_MODE_LOG = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-interactive.log");
+    protected static final Path CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-non-interactive.log");
+    private static final Path INSTALLATION_MANAGER_SERVER_LOG = (System.getProperty("catalina.base") != null) ?
+        Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out") : null;
+
     protected static boolean useSudo = true;  // for testing
 
     /**
@@ -108,6 +113,7 @@ public class PuppetErrorReport {
      * @return command which:
      * I. If node == null:
      * - copy puppet log file into local temp dir
+     * - copy installation manager logs
      * - pack temp dir into report file
      *
      * II. If node != null:
@@ -117,6 +123,7 @@ public class PuppetErrorReport {
      * - change permission of file with puppet logs to the 666 to be able to copy it to local machine
      * - copy remote puppet log file into the local_temp_dir/{node_type}/ directory
      * - cleanup remote temp dir
+     * - copy installation manager logs
      * - pack local temp dir into report file
      */
     private static Command createConsolidateLogsCommand(Path reportFile, @Nullable NodeConfig node) throws IOException {
@@ -124,7 +131,7 @@ public class PuppetErrorReport {
 
         if (node == null) {
             // copy puppet log file into temp dir
-            commands.add(createCommand(format("cp %s %s", PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, BASE_TMP_DIRECTORY)));
+            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, BASE_TMP_DIRECTORY));
 
         } else {
             // create local temp dir for puppet log file from node with name = type_of_node
@@ -149,6 +156,19 @@ public class PuppetErrorReport {
 
             // cleanup remote temp dir
             commands.add(createCommand(format("rm -rf %s", remoteTempDir), node));
+        }
+
+        // copy installation manager logs
+        if (Files.exists(CLI_CLIENT_INTERACTIVE_MODE_LOG)) {
+            commands.add(createCopyCommand(CLI_CLIENT_INTERACTIVE_MODE_LOG, BASE_TMP_DIRECTORY));
+        }
+
+        if (Files.exists(CLI_CLIENT_NON_INTERACTIVE_MODE_LOG)) {
+            commands.add(createCopyCommand(CLI_CLIENT_NON_INTERACTIVE_MODE_LOG, BASE_TMP_DIRECTORY));
+        }
+
+        if (INSTALLATION_MANAGER_SERVER_LOG != null && Files.exists(INSTALLATION_MANAGER_SERVER_LOG)) {
+            commands.add(createCopyCommand(INSTALLATION_MANAGER_SERVER_LOG, BASE_TMP_DIRECTORY));
         }
 
         // pack local temp dir into report file

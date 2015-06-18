@@ -80,9 +80,12 @@ public class TestPuppetErrorInterrupterLocally {
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        // create log file
+        // create puppet log file
         PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = Paths.get(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).resolve("../test-classes/messages");
         FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), logWithoutErrorMessages);
+
+        // create IM CLI client log
+        FileUtils.write(TEST_BASE_TMP_DIRECTORY.getParent().resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName()).toFile(), "");
 
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand));
 
@@ -163,11 +166,14 @@ public class TestPuppetErrorInterrupterLocally {
         FileUtils.deleteQuietly(TEST_BASE_TMP_DIRECTORY.toFile());
         Files.createDirectory(TEST_BASE_TMP_DIRECTORY);
         CommandLibrary.createUnpackCommand(pathToReport, TEST_BASE_TMP_DIRECTORY).execute();
-        Path logFile = TEST_BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
-        assertTrue(Files.exists(logFile));
+        Path puppetLogFile = TEST_BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        assertTrue(Files.exists(puppetLogFile));
+        String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
+        assertEquals(puppetLogFileContent, expectedContentOfLogFile);
 
-        String logFileContent = FileUtils.readFileToString(logFile.toFile());
-        assertEquals(logFileContent, expectedContentOfLogFile);
+        Path imLogfile = TEST_BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        assertTrue(Files.exists(imLogfile));
+
     }
 
     @Test(timeOut = 20000)
