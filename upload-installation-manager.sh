@@ -125,8 +125,8 @@ doUpload() {
 }
 
 #uploadInstallationManagerCli
-uploadCodenvyServerInstallMultiScript
-uploadCodenvyServerInstallInstalationManagerScript
+#uploadCodenvyServerInstallMultiScript
+#uploadCodenvyServerInstallInstalationManagerScript
 uploadCodenvyServerInstallScript
 
 #for VERSION in 3.10.1-SNAPSHOT; do

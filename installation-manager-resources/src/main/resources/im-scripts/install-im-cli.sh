@@ -87,7 +87,7 @@ preconfigureSystem() {
     installPackageIfNeed curl
 
     validateOS
-    setRunOptions
+    setRunOptions "$@"
 }
 
 
@@ -120,7 +120,7 @@ doInstallStep3() {
 
 
 clear
-preconfigureSystem
+preconfigureSystem "$@"
 
 printPreInstallInfo
 
