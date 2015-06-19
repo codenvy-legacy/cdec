@@ -41,7 +41,6 @@ import java.util.Collection;
 
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
 import static com.codenvy.im.utils.Commons.createVersionOrNull;
-import static com.codenvy.im.utils.Commons.toJson;
 import static java.lang.Thread.sleep;
 
 /**
@@ -92,7 +91,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
             if (downloadProgressResponse.getStatus() == DownloadArtifactStatus.FAILED) {
                 console.cleanCurrentLine();
-                console.printErrorAndExit(toJson(downloadResponse));
+                console.printResponseExitInError(downloadResponse);
                 break;
             }
 
@@ -110,11 +109,7 @@ public class DownloadCommand extends AbstractIMCommand {
 
             if (downloadProgressResponse.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
                 console.cleanCurrentLine();
-                if (downloadProgressResponse.getStatus() == DownloadArtifactStatus.FAILED) {
-                    console.printErrorAndExit(toJson(downloadResponse));
-                } else {
-                    console.println(toJson(downloadResponse));
-                }
+                console.printResponseExitInError(downloadResponse);
                 break;
             }
         }
@@ -125,7 +120,7 @@ public class DownloadCommand extends AbstractIMCommand {
         UpdatesResponse updatesResponse = new UpdatesResponse();
         updatesResponse.setArtifacts(updates);
         updatesResponse.setStatus(ResponseCode.OK);
-        console.printResponse(updatesResponse);
+        console.printResponseExitInError(updatesResponse);
     }
 
     private void doList() throws JsonParseException, IOException {
@@ -138,6 +133,6 @@ public class DownloadCommand extends AbstractIMCommand {
         downloadResponse.setStatus(ResponseCode.OK);
         downloadResponse.setArtifacts(downloads);
 
-        console.printResponse(downloadResponse);
+        console.printResponseExitInError(downloadResponse);
     }
 }

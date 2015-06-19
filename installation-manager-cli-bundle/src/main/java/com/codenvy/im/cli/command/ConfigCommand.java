@@ -56,7 +56,7 @@ public class ConfigCommand extends AbstractIMCommand {
         console.showProgressor();
         try {
             facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of(Config.HOST_URL, hostname));
-            console.printResponse(BasicResponse.ok());
+            console.printResponseExitInError(BasicResponse.ok());
         } finally {
             console.hideProgressor();
         }
@@ -66,6 +66,6 @@ public class ConfigCommand extends AbstractIMCommand {
         Map<String, String> properties = facade.getInstallationManagerProperties();
         BasicResponse response = BasicResponse.ok();
         response.setProperties(properties);
-        console.printResponse(response);
+        console.printResponseExitInError(response);
     }
 }

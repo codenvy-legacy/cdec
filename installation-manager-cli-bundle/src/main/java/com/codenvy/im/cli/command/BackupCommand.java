@@ -53,7 +53,7 @@ public class BackupCommand extends AbstractIMCommand {
             backupResponse.setBackup(backupInfo);
             backupResponse.setStatus(ResponseCode.OK);
 
-            console.printResponse(backupResponse);
+            console.printResponseExitInError(backupResponse);
         } finally {
             console.hideProgressor();
         }

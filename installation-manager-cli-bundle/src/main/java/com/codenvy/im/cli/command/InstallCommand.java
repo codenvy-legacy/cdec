@@ -191,7 +191,7 @@ public class InstallCommand extends AbstractIMCommand {
 
                 if (installResponse.getStatus() == ResponseCode.ERROR) {
                     console.printError(" [FAIL]", true);
-                    console.printErrorAndExit(toJson(installResponse));
+                    console.printResponseExitInError(installResponse);
                     return null;
                 } else {
                     console.printSuccessWithoutCodenvyPrompt(" [OK]");
@@ -219,7 +219,7 @@ public class InstallCommand extends AbstractIMCommand {
         InstallResponse installResponse = new InstallResponse();
         installResponse.setArtifacts(installedVersions);
         installResponse.setStatus(ResponseCode.OK);
-        console.printResponse(installResponse);
+        console.printResponseExitInError(installResponse);
         return null;
     }
 

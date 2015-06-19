@@ -37,6 +37,6 @@ public class ChangeAdminPasswordCommand extends AbstractIMCommand {
     @Override
     protected void doExecuteCommand() throws Exception {
         facade.changeAdminPassword(currentPassword.getBytes("UTF-8"), newPassword.getBytes("UTF-8"));
-        console.printResponse(BasicResponse.ok());
+        console.printResponseExitInError(BasicResponse.ok());
     }
 }

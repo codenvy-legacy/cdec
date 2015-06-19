@@ -9,20 +9,30 @@
 # --hostname=<CODENVY HOSTNAME>
 # --systemAdminName=<SYSTEM ADMIN NAME>
 # --systemAdminPassword=<SYSTEM ADMIN PASSWORD>
-set -e
 
-function cleanUp {
-    printLn
-    printLn
-    printLn
-    stopTimer
-}
 trap cleanUp EXIT
 
 unset HOST_NAME
 unset SYSTEM_ADMIN_NAME
 unset SYSTEM_ADMIN_PASSWORD
 unset PROGRESS_PID
+
+function cleanUp() {
+    killTimer
+
+    printLn
+    printLn
+}
+
+validateExitCode() {
+    EXIT_CODE=$1
+    if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
+        pauseTimer
+        printLn
+        printLn "Unexpected error occurred. See install.log for more details"
+        exit ${EXIT_CODE}
+    fi
+}
 
 setRunOptions() {
     START_TIME=`date +%s`
@@ -61,7 +71,7 @@ validateOS() {
     if [ -f /etc/redhat-release ]; then
         OS="Red Hat"
     else
-        printLn  "Operation system isn't supported."
+        printLn  "Operation system isnisn't supported."
         exit 1
     fi
     OS_VERSION=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
@@ -90,7 +100,9 @@ preconfigureSystem() {
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
 
-    [ ! -f ${CONFIG} ] && downloadConfig
+    if [[ ! -f ${CONFIG} ]]; then
+        downloadConfig
+    fi
 }
 
 installJava() {
@@ -199,36 +211,36 @@ printPreInstallInfo_single() {
 
     clear
     printLn "Welcome. This program installs a single node Codenvy On-Prem."
-    printLn ""
+    printLn
     printLn "Checking for system pre-requisites..."
 
     preconfigureSystem
 
-    printLn ""
+    printLn
     printLn "RESOURCE      : RECOMENDED : AVAILABLE"
     printLn "RAM           : 8 GB       : ${availableRAM} GB"
     printLn "CPU           : 4 cores    : ${availableCores} cores"
     printLn "Disk Space    : 300 GB     : ${availableDiskSpace} GB"
-    printLn ""
+    printLn
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     pressAnyKeyToContinueAndClearConsole
 
-    printLn ""
+    printLn
 
     if [[ ${SILENT} == true ]]; then
         [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
         [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
-        printLn ""
-        printLn ""
+        printLn
+        printLn
     else
         [ -z "${SYSTEM_ADMIN_NAME}" ] && printLn "System admin user name : will prompt for entry"
         [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password  : will prompt for entry"
         [ -z "${HOST_NAME}" ] && printLn "Codenvy DNS hostname   : will prompt for entry"
 
         pressAnyKeyToContinue
-        printLn ""
+        printLn
 
         if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
             print "System admin user name: "
@@ -249,9 +261,9 @@ printPreInstallInfo_single() {
         insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         insertProperty "host_url" ${HOST_NAME}
 
-        printLn ""
-        printLn ""
-        printLn ""
+        printLn
+        printLn
+        printLn
     fi
 
     updateHostsFile
@@ -262,27 +274,27 @@ printPreInstallInfo_single() {
 printPreInstallInfo_multi() {
     clear
     printLn "Welcome. This program installs a multi-node Codenvy On-Prem."
-    printLn ""
+    printLn
     printLn "Checking for system pre-requisites..."
 
     preconfigureSystem
 
-    printLn ""
+    printLn
     printLn "Recomemnded resources for the nodes:"
     printLn "RAM         : 1 GB"
     printLn "Disk Space  : 14 GB"
     printLn "OS          : CentOS 7"
-    printLn ""
+    printLn
     printLn "Recomemnded resources for the runners:"
     printLn "RAM         : 1.5 GB"
     printLn "Disk Space  : 50 GB"
     printLn "OS          : CentOS 7"
-    printLn ""
+    printLn
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     pressAnyKeyToContinueAndClearConsole
 
-    printLn ""
+    printLn
 
     if [[ ${SILENT} == true ]]; then
         [ ! -z ${SYSTEM_ADMIN_NAME} ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
@@ -308,9 +320,9 @@ printPreInstallInfo_multi() {
         printLn "Codenvy Datasource node DNS hostname    : "${DATASOURCE_HOST_NAME}
         printLn "Codenvy Analytics node DNS hostname     : "${ANALYTICS_HOST_NAME}
         printLn "Codenvy Site node DNS hostname          : "${SITE_HOST_NAME}
-        printLn ""
-        printLn ""
-        printLn ""
+        printLn
+        printLn
+        printLn
 
     else
         [ -z ${SYSTEM_ADMIN_NAME} ] && printLn "System admin user name : will prompt for entry"
@@ -318,7 +330,7 @@ printPreInstallInfo_multi() {
         printLn "Codenvy nodes' DNS hostnames : will prompt for entry"
 
         pressAnyKeyToContinue
-        printLn ""
+        printLn
 
         if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
             print "System admin user name: "
@@ -344,9 +356,9 @@ printPreInstallInfo_multi() {
         askAndInsertProperty "Please set the DNS hostname of the Analytics node" "analytics_host_name"
         askAndInsertProperty "Please set the DNS hostname of the Site node" "site_host_name"
 
-        printLn ""
-        printLn ""
-        printLn ""
+        printLn
+        printLn
+        printLn
     fi
 
     pressYKeyToContinue
@@ -380,10 +392,12 @@ doInstallImCli() {
 
 doDownloadBinaries() {
     nextStep 3 "Downloading Codenvy binaries... "
-    executeIMCommand im-download ${ARTIFACT} ${VERSION} 1> progress.tmp
+    executeIMCommand im-download ${ARTIFACT} ${VERSION} | sed 's/\[..................................................\]//g'  >> install.log
+    validateExitCode $?
 
     nextStep 4 "Checking binaries... "
-    executeIMCommand im-download --list-local 1> /dev/null
+    executeIMCommand im-download --list-local | sed 's/\[..................................................\]//g'  >> install.log
+    validateExitCode $?
 }
 
 doInstallCodenvy() {
@@ -395,9 +409,11 @@ doInstallCodenvy() {
         fi
 
         if [ ${CODENVY_TYPE} == "multi" ]; then
-            executeIMCommand im-install --step ${STEP}-${STEP} --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} 1> /dev/null
+            executeIMCommand im-install --step ${STEP}-${STEP} --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} | sed 's/[\/\\|-]//g' >> install.log
+            validateExitCode $?
         else
-            executeIMCommand im-install --step ${STEP}-${STEP} --force --config ${CONFIG} ${ARTIFACT} ${VERSION} 1> /dev/null
+            executeIMCommand im-install --step ${STEP}-${STEP} --force --config ${CONFIG} ${ARTIFACT} ${VERSION} | sed 's/[\/\\|-]//g' >> install.log
+            validateExitCode $?
         fi
     done
 
@@ -414,8 +430,6 @@ nextStep() {
     CURRENT_STEP=$1
     shift
 
-    sleep 1
-
     cursorUp
     cursorUp
     printLn "$@"
@@ -429,16 +443,17 @@ runTimer() {
     PROGRESS_PID=$!
 }
 
-stopTimer() {
-    kill ${PROGRESS_PID}
+killTimer() {
+    [ ! -z ${PROGRESS_PID} ] && kill ${PROGRESS_PID}
 }
 
 continueTimer() {
-    kill -SIGCONT ${PROGRESS_PID}
+    [ ! -z ${PROGRESS_PID} ] && kill -SIGCONT ${PROGRESS_PID}
 }
 
 pauseTimer() {
-    kill -SIGSTOP ${PROGRESS_PID}
+    [ ! -z ${PROGRESS_PID} ] && kill -SIGSTOP ${PROGRESS_PID}
+    sleep 2
 }
 
 updateTimer() {
@@ -476,17 +491,18 @@ printPostInstallInfo() {
     [ -z ${SYSTEM_ADMIN_PASSWORD} ] && SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
     [ -z ${HOST_NAME} ] && HOST_NAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
 
-    printLn ""
+    printLn
     printLn "Codenvy is ready at http://"${HOST_NAME}
-    printLn ""
+    printLn
     printLn "Administrator dashboard ready at http://"${HOST_NAME}"/admin"
     printLn "System admin user name : "${SYSTEM_ADMIN_NAME}
     printLn "System admin password  : "${SYSTEM_ADMIN_PASSWORD}
-    printLn ""
+    printLn
     printLn "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-${CODENVY_TYPE}-node/#install-troubleshooting"
     printLn "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-${CODENVY_TYPE}-node/#upgrades"
 }
 
+set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
 
@@ -495,8 +511,12 @@ runTimer
 doConfigureSystem
 doInstallPackages
 doInstallImCli
+
+set +e
+
 doDownloadBinaries
 doInstallCodenvy
 
+set -e
 printPostInstallInfo
 

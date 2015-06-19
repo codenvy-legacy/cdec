@@ -94,14 +94,6 @@ public class Console {
         print((Object)message, false);
     }
 
-    void printError(String message) {
-        printError(message, false);
-    }
-
-    public void printError(String message, boolean suppressCodenvyPrompt) {
-        print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
-    }
-
     public void printProgress(int percents) {
         printProgress(createProgressBar(percents));
     }
@@ -157,18 +149,6 @@ public class Console {
         consoleReader.readCharacter();
     }
 
-    public void printErrorAndExit(Exception ex) throws JsonProcessingException {
-        BasicResponse errorResponse = BasicResponse.error(ex.getMessage());
-        LOG.log(Level.SEVERE, ex.getMessage(), ex);
-
-        printError(toJson(errorResponse));
-
-        if (!interactive) {
-            exit(1);
-        }
-    }
-
-
     public void reset() throws IllegalStateException {
         try {
             consoleReader.getTerminal().restore();
@@ -177,7 +157,14 @@ public class Console {
         }
     }
 
-    public void printResponse(Response response) throws JsonParseException, JsonProcessingException {
+    public void printErrorAndExit(Exception ex) throws JsonProcessingException, JsonParseException {
+        LOG.log(Level.SEVERE, ex.getMessage(), ex);
+
+        BasicResponse errorResponse = BasicResponse.error(ex.getMessage());
+        printResponseExitInError(errorResponse);
+    }
+
+    public void printResponseExitInError(Response response) throws JsonParseException, JsonProcessingException {
         if (response.getStatus() == ResponseCode.OK) {
             println(toJson(response));
         } else {
@@ -191,12 +178,17 @@ public class Console {
     public void printErrorAndExit(String message) {
         LOG.log(Level.SEVERE, message);
 
-        printError(message);
+        printError(message, false);
 
         if (!interactive) {
             exit(1);
         }
     }
+
+    public void printError(String message, boolean suppressCodenvyPrompt) {
+        print(ansi().fg(RED).a(message).newline().reset(), suppressCodenvyPrompt);
+    }
+
 
     public void exit(int status) {
         reset();

@@ -85,15 +85,6 @@ public class TestConsole {
         Console spyConsole = createInteractiveConsole();
         String testErrorMessage = "error";
 
-        spyConsole.printError(testErrorMessage);
-        assertEquals(getOutputContent(), "\u001B[31m" + testErrorMessage + "\n\u001B[m");
-        verify(spyConsole, never()).exit(1);
-
-        spyConsole = createNonInteractiveConsole();
-        spyConsole.printError(testErrorMessage);
-        assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + testErrorMessage + "\n\u001B[m");
-        verify(spyConsole, never()).exit(1);
-
         spyConsole = createNonInteractiveConsole();
         spyConsole.printError(testErrorMessage, true);
         assertEquals(getOutputContent(), "\u001B[31m" + testErrorMessage + "\n\u001B[m");
@@ -308,11 +299,11 @@ public class TestConsole {
         response.setMessage("test");
 
         Console spyConsole = createInteractiveConsole();
-        spyConsole.printResponse(response);
+        spyConsole.printResponseExitInError(response);
         assertEquals(getOutputContent(), toJson(response) + "\n");
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.printResponse(response);
+        spyConsole.printResponseExitInError(response);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + toJson(response) + "\n");
     }
 
@@ -321,12 +312,12 @@ public class TestConsole {
         BasicResponse response = BasicResponse.error("error");
 
         Console spyConsole = createInteractiveConsole();
-        spyConsole.printResponse(response);
+        spyConsole.printResponseExitInError(response);
         assertEquals(getOutputContent(), "\u001B[31m" + toJson(response) + "\n\u001B[m");
         verify(spyConsole, never()).exit(1);
 
         spyConsole = createNonInteractiveConsole();
-        spyConsole.printResponse(response);
+        spyConsole.printResponseExitInError(response);
         assertEquals(getOutputContent(), CODENVY_PREFIX_WITH_ANSI + "\u001B[31m" + toJson(response) + "\n\u001B[m");
         verify(spyConsole).exit(1);
     }
@@ -394,7 +385,7 @@ public class TestConsole {
     }
 
     @Test
-    public void testPrintException() throws IOException {
+    public void testPrintException() throws Exception {
         Exception exception = new RuntimeException("runtime error");
         String expectedResult = "{\n"
                                 + "  \"message\" : \"runtime error\",\n"

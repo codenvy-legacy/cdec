@@ -45,7 +45,7 @@ public class RemoveNodeCommand extends AbstractIMCommand {
                 nodeManagerResponse.setStatus(ResponseCode.OK);
                 nodeManagerResponse.setNode(nodeInfo);
 
-                console.printResponse(nodeManagerResponse);
+                console.printResponseExitInError(nodeManagerResponse);
             } finally {
                 console.hideProgressor();
             }

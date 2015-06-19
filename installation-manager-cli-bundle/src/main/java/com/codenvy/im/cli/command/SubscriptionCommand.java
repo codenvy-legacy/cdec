@@ -50,6 +50,6 @@ public class SubscriptionCommand extends AbstractIMCommand {
             response.setProperties(ImmutableMap.of("subscription", subscription2check));
         }
 
-        console.printResponse(response);
+        console.printResponseExitInError(response);
     }
 }
