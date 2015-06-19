@@ -55,7 +55,8 @@ public class PuppetErrorInterrupter implements Command {
     private final List<NodeConfig> nodes;
     private final List<Pattern> errorPatterns = ImmutableList.of(
         Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server"),
-        Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency Exec\\[.*\\] has failures: true")
+        Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true"),
+        Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Skipping because of failed dependencies")
     );
 
 
