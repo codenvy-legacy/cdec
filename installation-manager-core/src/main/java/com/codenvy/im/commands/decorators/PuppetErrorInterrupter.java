@@ -31,6 +31,11 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -40,26 +45,25 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-    public static Path PUPPET_LOG_FILE_PATH = Paths.get("/var/log/messages");  // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
-    protected static final int READ_LOG_TIMEOUT_MILLIS = 100;
-    public static final int SELECTION_LINE_NUMBER = 5;
+    // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
+    public static Path PUPPET_LOG_FILE         = Paths.get("/var/log/messages");
 
-    private Thread monitorThread;
-    private boolean stop;
+    public static final int READ_LOG_TIMEOUT_MILLIS = 100;
+    public static final int SELECTION_LINE_NUMBER   = 5;
 
-    private String result;
-    private CommandException commandException;
-    private RuntimeException runtimeException;
-
-    private final Command command;
+    private final Command          command;
     private final List<NodeConfig> nodes;
-
-    private List<Pattern> errorPatterns = ImmutableList.of(
+    private final List<Pattern> errorPatterns = ImmutableList.of(
         Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server"),
         Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency Exec\\[.*\\] has failures: true")
     );
 
+
     private static final Logger LOG = Logger.getLogger(PuppetErrorInterrupter.class.getSimpleName());
+
+    private FutureTask<String> task;
+
+    protected static boolean useSudo = true;  // for testing propose
 
     public PuppetErrorInterrupter(Command command) {
         this(command, null);
@@ -74,52 +78,52 @@ public class PuppetErrorInterrupter implements Command {
     public String execute() throws CommandException {
         LOG.info(toString());
 
-        stop = false;
-        result = null;
-        commandException = null;
-
-        monitorThread = new Thread(new Runnable() {
+        task = new FutureTask<>(new Callable<String>() {
             @Override
-            public void run() {
-                try {
-                    result = command.execute();
-                } catch (CommandException ce) {
-                    commandException = ce;
-                } catch (RuntimeException re) {
-                    runtimeException = re;
-                } finally {
-                    stop = true;
-                }
+            public String call() throws Exception {
+                return command.execute();
             }
         });
 
-        monitorThread.start();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(task);
 
-        listenToPuppetError();
+        try {
+            for (; ; ) {
+                if (task.isDone()) {
+                    try {
+                        return task.get();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e.getMessage(), e);
 
-        if (commandException != null) {
-            throw commandException;
+                    } catch (ExecutionException e) {
+                        Exception originException = (Exception)e.getCause();
 
-        } else if (runtimeException != null) {
-            throw runtimeException;
+                        if (originException instanceof CommandException) {
+                            throw ((CommandException)originException);
+
+                        } else if (originException instanceof RuntimeException) {
+                            throw ((RuntimeException)originException);
+                        }
+
+                        throw new RuntimeException(originException.getMessage(), e);
+                    }
+                }
+
+                listenToPuppetError();
+            }
+        } finally {
+            executor.shutdown();
         }
-
-        return result;
     }
 
     private void listenToPuppetError() throws CommandException {
-        for (; ; ) {
-            if (stop) {
-                return;
-            }
+        if (nodes == null) {
+            lookingForPuppetError(null);
 
-            if (nodes == null) {
-                lookingForPuppetError(null);
-
-            } else {
-                for (NodeConfig node : nodes) {
-                    lookingForPuppetError(node);
-                }
+        } else {
+            for (NodeConfig node : nodes) {
+                lookingForPuppetError(node);
             }
         }
     }
@@ -138,10 +142,9 @@ public class PuppetErrorInterrupter implements Command {
             } else {
                 for (String line : lastLines) {
                     if (checkPuppetError(line)) {
-                        String errorMessage = getPuppetErrorMessage(node, line);
+                        task.cancel(false);
 
-                        monitorThread.interrupt();
-                        monitorThread.join();
+                        String errorMessage = getPuppetErrorMessage(node, line);
 
                         LOG.log(Level.SEVERE, errorMessage);
 
@@ -190,9 +193,9 @@ public class PuppetErrorInterrupter implements Command {
 
     protected Command createReadFileCommand(NodeConfig node) throws AgentException {
         if (node == null) {
-            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE_PATH, SELECTION_LINE_NUMBER, true);
+            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE, SELECTION_LINE_NUMBER, useSudo);
         } else {
-            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE_PATH, SELECTION_LINE_NUMBER, node, true);
+            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE, SELECTION_LINE_NUMBER, node, useSudo);
         }
     }
 
@@ -224,9 +227,9 @@ public class PuppetErrorInterrupter implements Command {
     @Override
     public String toString() {
         if (nodes == null) {
-            return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), PUPPET_LOG_FILE_PATH);
+            return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), PUPPET_LOG_FILE);
         }
 
-        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), PUPPET_LOG_FILE_PATH, nodes.toString());
+        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), PUPPET_LOG_FILE, nodes.toString());
     }
 }

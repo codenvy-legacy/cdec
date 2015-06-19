@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,10 +48,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterLocally {
-    static final int  WAIT_INTERRUPTER_MILLIS                    = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
-    static final Path BASE_TMP_DIRECTORY                         = Paths.get("target/tmp_report");
-    static final Path TEST_TMP_DIRECTORY                         = Paths.get("target/tmp_test_report");
-    static final Path ORIGIN_PUPPET_LOG                          = PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH;
+    static final int  MOCK_COMMAND_TIMEOUT_MILLIS = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 16;
+
+    static final Path BASE_TMP_DIRECTORY                         = Paths.get("target/tmp");
+    static final Path REPORT_TMP_DIRECTORY                       = Paths.get("target/tmp/report");
+    static final Path TEST_TMP_DIRECTORY                         = Paths.get("target/tmp/test");
+    static final Path LOG_TMP_DIRECTORY                          = Paths.get("target/tmp/log");
+
+    static final Path ORIGIN_PUPPET_LOG                          = PuppetErrorInterrupter.PUPPET_LOG_FILE;
+
     static final Path ORIGIN_BASE_TMP_DIRECTORY                  = PuppetErrorReport.BASE_TMP_DIRECTORY;
     static final Path ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
 
@@ -58,8 +64,6 @@ public class TestPuppetErrorInterrupterLocally {
     Command mockCommand;
 
     PuppetErrorInterrupter testInterrupter;
-
-    Thread testThread;
 
     String logWithoutErrorMessages =
         "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
@@ -81,36 +85,39 @@ public class TestPuppetErrorInterrupterLocally {
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
+        Files.createDirectory(BASE_TMP_DIRECTORY);
+        Files.createDirectory(REPORT_TMP_DIRECTORY);
+        Files.createDirectory(LOG_TMP_DIRECTORY);
+        Files.createDirectory(TEST_TMP_DIRECTORY);
+
         // create puppet log file
-        PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = TEST_TMP_DIRECTORY.resolve("messages");
-        FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), logWithoutErrorMessages);
+        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages");
+        FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand));
+        PuppetErrorInterrupter.PUPPET_LOG_FILE = puppetLogFile;
+        PuppetErrorInterrupter.useSudo = false;   // prevents asking sudo password when running the tests locally
 
-        Command readPuppetLogCommandWithoutSudo = CommandLibrary.createTailCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH,
-                                                                                   PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
-        doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(null);
+        // create IM CLI client log
+        Path imLogFile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
+        FileUtils.write(imLogFile.toFile(), "");
 
-        PuppetErrorReport.BASE_TMP_DIRECTORY = BASE_TMP_DIRECTORY;
+        PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = imLogFile;
+        PuppetErrorReport.BASE_TMP_DIRECTORY = REPORT_TMP_DIRECTORY;
+        PuppetErrorReport.useSudo = false;   // prevents asking sudo password when running the tests locally
     }
 
-    @Test(timeOut = 20000)
+    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
-
-        PuppetErrorReport.useSudo = false;
 
         final String puppetErrorMessage =
             "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
 
-        // create IM CLI client log
-        PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
-        FileUtils.write(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.toFile(), "");
-
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
+                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
                     return null;
                 } catch (InterruptedException e) {
@@ -120,21 +127,19 @@ public class TestPuppetErrorInterrupterLocally {
             }
         }).when(mockCommand).execute();
 
-        testThread = new Thread(new Runnable() {
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 2);
+                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
                     // append error message into puppet log file
-                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), puppetErrorMessage, true);
+                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), puppetErrorMessage, true);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
             }
         });
-
-        testThread.start();
 
         try {
             testInterrupter.execute();
@@ -164,23 +169,21 @@ public class TestPuppetErrorInterrupterLocally {
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
         assertTrue(pathToReportMatcher.find());
 
-        Path pathToReport = Paths.get(pathToReportMatcher.group());
-        assertNotNull(pathToReport);
-        assertTrue(Files.exists(pathToReport));
+        Path report = Paths.get(pathToReportMatcher.group());
+        assertNotNull(report);
+        assertTrue(Files.exists(report));
 
-        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
-        Files.createDirectory(BASE_TMP_DIRECTORY);
-        CommandLibrary.createUnpackCommand(pathToReport, BASE_TMP_DIRECTORY).execute();
-        Path puppetLogFile = BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
+        Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
         assertTrue(Files.exists(puppetLogFile));
         String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
         assertEquals(puppetLogFileContent, expectedContentOfLogFile);
 
-        Path imLogfile = BASE_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
+        Path imLogfile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
         assertTrue(Files.exists(imLogfile));
     }
 
-    @Test(timeOut = 20000)
+    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testNotInterruptWhenAddNoError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
         final String expectedResult = "okay";
@@ -188,7 +191,7 @@ public class TestPuppetErrorInterrupterLocally {
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 4);
+                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     return expectedResult;
                 } catch (InterruptedException e) {
                     failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
@@ -197,23 +200,21 @@ public class TestPuppetErrorInterrupterLocally {
             }
         }).when(mockCommand).execute();
 
-        testThread = new Thread(new Runnable() {
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS * 2);
+                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
                     // append non-error message into puppet log file
                     String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
 
-                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), errorMessage, true);
+                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), errorMessage, true);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
             }
         });
-
-        testThread.start();
 
         String result = testInterrupter.execute();
         assertEquals(result, expectedResult);
@@ -225,14 +226,14 @@ public class TestPuppetErrorInterrupterLocally {
 
     @Test(expectedExceptions = CommandException.class,
           expectedExceptionsMessageRegExp = "error",
-          timeOut = 20000)
+          timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testRethrowCommandExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     throw new CommandException("error");
                 } catch (InterruptedException e) {
                     failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
@@ -250,14 +251,14 @@ public class TestPuppetErrorInterrupterLocally {
 
     @Test(expectedExceptions = RuntimeException.class,
           expectedExceptionsMessageRegExp = "error",
-          timeOut = 20000)
+          timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testRethrowRuntimeExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
-                    Thread.sleep(WAIT_INTERRUPTER_MILLIS);
+                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     throw new RuntimeException("error");
                 } catch (InterruptedException e) {
                     failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
@@ -290,16 +291,13 @@ public class TestPuppetErrorInterrupterLocally {
 
     @AfterMethod
     public void tearDown() throws InterruptedException {
-        if (testThread != null) {
-            testThread.interrupt();
-            testThread.join();
-        }
+        PuppetErrorInterrupter.PUPPET_LOG_FILE = ORIGIN_PUPPET_LOG;
+        PuppetErrorInterrupter.useSudo = true;
 
-        PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = ORIGIN_PUPPET_LOG;
         PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
         PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
         PuppetErrorReport.useSudo = true;
+
         FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
-        FileUtils.deleteQuietly(TEST_TMP_DIRECTORY.toFile());
     }
 }

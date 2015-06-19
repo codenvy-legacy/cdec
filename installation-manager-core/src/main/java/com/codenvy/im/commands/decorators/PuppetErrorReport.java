@@ -52,8 +52,6 @@ public class PuppetErrorReport {
 
     public static final Logger LOG                        = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
 
-    public static final int REPORT_CREATION_TIMEOUT = 500;   // 0.5 second
-
     public static final Path INSTALLATION_MANAGER_SERVER_LOG     = (System.getProperty("catalina.base") != null) ?
         Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out") : null;
 
@@ -128,10 +126,10 @@ public class PuppetErrorReport {
 
         if (node == null) {
             // copy puppet log file into temp dir
-            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, BASE_TMP_DIRECTORY, useSudo));
+            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE, BASE_TMP_DIRECTORY, useSudo));
 
             // change permission of puppet log file with puppet logs to the 666 to be able to pack it
-            Path puppetLogFile = BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+            Path puppetLogFile = BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
             commands.add(createChmodCommand("666", puppetLogFile, useSudo));
 
         } else {
@@ -144,10 +142,10 @@ public class PuppetErrorReport {
             commands.add(createCommand(format("mkdir -p %s", remoteTempDir), node));
 
             // copy file with puppet logs into the remote temp dir
-            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH, remoteTempDir, node, useSudo));
+            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE, remoteTempDir, node, useSudo));
 
             // change permission of file with puppet logs to the 666 to be able to copy it to local machine
-            Path remoteLogFile = remoteTempDir.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+            Path remoteLogFile = remoteTempDir.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
             commands.add(createChmodCommand("666", remoteLogFile, node, useSudo));
 
             // copy remote puppet log file into the local_temp_dir/{node_type}/ directory
