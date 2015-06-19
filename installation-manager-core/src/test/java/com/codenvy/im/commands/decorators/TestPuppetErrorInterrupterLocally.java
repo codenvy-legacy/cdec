@@ -20,7 +20,6 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
-import com.codenvy.im.utils.TarUtils;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -48,10 +47,12 @@ import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterLocally {
-    static final int WAIT_INTERRUPTER_MILLIS    = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
-    static final Path TEST_BASE_TMP_DIRECTORY   = Paths.get("target/tmp_report");
-    static final Path ORIGIN_PUPPET_LOG         = PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH;
-    static final Path ORIGIN_BASE_TMP_DIRECTORY = PuppetErrorReport.BASE_TMP_DIRECTORY;
+    static final int  WAIT_INTERRUPTER_MILLIS                    = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
+    static final Path BASE_TMP_DIRECTORY                         = Paths.get("target/tmp_report");
+    static final Path TEST_TMP_DIRECTORY                         = Paths.get("target/tmp_test_report");
+    static final Path ORIGIN_PUPPET_LOG                          = PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH;
+    static final Path ORIGIN_BASE_TMP_DIRECTORY                  = PuppetErrorReport.BASE_TMP_DIRECTORY;
+    static final Path ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
 
     @Mock
     Command mockCommand;
@@ -81,7 +82,7 @@ public class TestPuppetErrorInterrupterLocally {
         MockitoAnnotations.initMocks(this);
 
         // create puppet log file
-        PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = Paths.get(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).resolve("../test-classes/messages");
+        PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = TEST_TMP_DIRECTORY.resolve("messages");
         FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.toFile(), logWithoutErrorMessages);
 
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand));
@@ -90,14 +91,21 @@ public class TestPuppetErrorInterrupterLocally {
                                                                                    PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
         doReturn(readPuppetLogCommandWithoutSudo).when(testInterrupter).createReadFileCommand(null);
 
-        PuppetErrorReport.BASE_TMP_DIRECTORY = TEST_BASE_TMP_DIRECTORY;
+        PuppetErrorReport.BASE_TMP_DIRECTORY = BASE_TMP_DIRECTORY;
     }
 
     @Test(timeOut = 20000)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        final String puppetErrorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+        PuppetErrorReport.useSudo = false;
+
+        final String puppetErrorMessage =
+            "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+
+        // create IM CLI client log
+        PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
+        FileUtils.write(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.toFile(), "");
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -131,7 +139,7 @@ public class TestPuppetErrorInterrupterLocally {
         try {
             testInterrupter.execute();
         } catch(Exception e) {
-            assertEquals(e.getClass(), CommandException.class);
+            assertEquals(e.getClass(), PuppetErrorException.class);
 
             String errorMessage = e.getMessage();
             Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
@@ -148,15 +156,10 @@ public class TestPuppetErrorInterrupterLocally {
             fail(failMessage[0]);
         }
 
-        fail("testInterrupter.execute() should throw CommandException");
+        fail("testInterrupter.execute() should throw PuppetErrorException");
     }
 
     private void assertErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException, InterruptedException {
-        // create IM CLI client log
-        FileUtils.write(TEST_BASE_TMP_DIRECTORY.getParent().resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName()).toFile(), "");
-
-        Thread.sleep(PuppetErrorReport.REPORT_CREATION_TIMEOUT * 2);  // wait until error report creates
-
         Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
         assertTrue(pathToReportMatcher.find());
@@ -165,17 +168,16 @@ public class TestPuppetErrorInterrupterLocally {
         assertNotNull(pathToReport);
         assertTrue(Files.exists(pathToReport));
 
-        FileUtils.deleteQuietly(TEST_BASE_TMP_DIRECTORY.toFile());
-        Files.createDirectory(TEST_BASE_TMP_DIRECTORY);
-        CommandLibrary.createUnpackCommand(pathToReport, TEST_BASE_TMP_DIRECTORY).execute();
-        Path puppetLogFile = TEST_BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+        Files.createDirectory(BASE_TMP_DIRECTORY);
+        CommandLibrary.createUnpackCommand(pathToReport, BASE_TMP_DIRECTORY).execute();
+        Path puppetLogFile = BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
         assertTrue(Files.exists(puppetLogFile));
         String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
         assertEquals(puppetLogFileContent, expectedContentOfLogFile);
 
-        Path imLogfile = TEST_BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH.getFileName());
+        Path imLogfile = BASE_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
         assertTrue(Files.exists(imLogfile));
-
     }
 
     @Test(timeOut = 20000)
@@ -295,6 +297,9 @@ public class TestPuppetErrorInterrupterLocally {
 
         PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = ORIGIN_PUPPET_LOG;
         PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
-        FileUtils.deleteQuietly(TEST_BASE_TMP_DIRECTORY.toFile());
+        PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
+        PuppetErrorReport.useSudo = true;
+        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+        FileUtils.deleteQuietly(TEST_TMP_DIRECTORY.toFile());
     }
 }

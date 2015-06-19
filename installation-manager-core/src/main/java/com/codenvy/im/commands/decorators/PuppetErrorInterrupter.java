@@ -21,16 +21,17 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
-import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,7 +59,7 @@ public class PuppetErrorInterrupter implements Command {
         Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency Exec\\[.*\\] has failures: true")
     );
 
-    private static final Logger LOG = Logger.getLogger(SimpleCommand.class.getSimpleName());
+    private static final Logger LOG = Logger.getLogger(PuppetErrorInterrupter.class.getSimpleName());
 
     public PuppetErrorInterrupter(Command command) {
         this(command, null);
@@ -142,13 +143,25 @@ public class PuppetErrorInterrupter implements Command {
                         monitorThread.interrupt();
                         monitorThread.join();
 
-                        throw new CommandException(errorMessage);
+                        LOG.log(Level.SEVERE, errorMessage);
+
+                        errorMessage = createErrorReport(node, errorMessage);
+
+                        throw new PuppetErrorException(errorMessage);
                     }
                 }
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String createErrorReport(NodeConfig node, String errorMessage) {
+        Path errorReport = PuppetErrorReport.create(node);
+        if (errorReport != null) {
+            errorMessage += format(". Error report: %s", errorReport);
+        }
+        return errorMessage;
     }
 
     protected boolean checkPuppetError(String line) {
@@ -183,23 +196,14 @@ public class PuppetErrorInterrupter implements Command {
         }
     }
 
-    private String getPuppetErrorMessage(NodeConfig node, String line) {
+    private String getPuppetErrorMessage(@Nullable NodeConfig node, String line) {
         if (node == null) {
             String message = format("Puppet error: '%s'", line);
-
-            Path errorReport = new PuppetErrorReport().create();
-            if (errorReport != null) {
-                message += format(". Error report: %s", errorReport);
-            }
 
             return message;
         }
 
         String message = format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
-        Path errorReport = new PuppetErrorReport().create(node);
-        if (errorReport != null) {
-            message += format(". Error report: %s", errorReport);
-        }
 
         return message;
     }

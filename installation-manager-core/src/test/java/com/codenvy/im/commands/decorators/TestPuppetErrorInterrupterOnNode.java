@@ -51,7 +51,7 @@ public class TestPuppetErrorInterrupterOnNode {
     static final int WAIT_INTERRUPTER_MILLIS    = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 2;
     static final Path TEST_BASE_TMP_DIRECTORY   = Paths.get("target/tmp_report");
     static final String SYSTEM_USER_NAME        = System.getProperty("user.name");
-    static final Path ORIGINAL_PUPPET_LOG       = PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH;
+    static final Path ORIGIN_PUPPET_LOG         = PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH;
     static final Path ORIGIN_BASE_TMP_DIRECTORY = PuppetErrorReport.BASE_TMP_DIRECTORY;
 
     @Mock
@@ -102,7 +102,8 @@ public class TestPuppetErrorInterrupterOnNode {
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        final String puppetErrorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+        final String puppetErrorMessage =
+            "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -136,7 +137,7 @@ public class TestPuppetErrorInterrupterOnNode {
         try {
             testInterrupter.execute();
         } catch(Exception e) {
-            assertEquals(e.getClass(), CommandException.class);
+            assertEquals(e.getClass(), PuppetErrorException.class);
 
             String errorMessage = e.getMessage();
             Pattern errorMessagePattern = Pattern.compile("Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
@@ -153,12 +154,10 @@ public class TestPuppetErrorInterrupterOnNode {
             fail(failMessage[0]);
         }
 
-        fail("testInterrupter.execute() should throw CommandException");
+        fail("testInterrupter.execute() should throw PuppetErrorException");
     }
 
     private void assertErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode) throws IOException, InterruptedException {
-        Thread.sleep(PuppetErrorReport.REPORT_CREATION_TIMEOUT * 8);  // wait until error report creates
-
         Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
         assertTrue(pathToReportMatcher.find());
@@ -277,7 +276,7 @@ public class TestPuppetErrorInterrupterOnNode {
             testThread.join();
         }
 
-        PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = ORIGINAL_PUPPET_LOG;
+        PuppetErrorInterrupter.PUPPET_LOG_FILE_PATH = ORIGIN_PUPPET_LOG;
         PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
     }
 }

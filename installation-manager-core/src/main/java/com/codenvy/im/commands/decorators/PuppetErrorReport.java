@@ -54,12 +54,12 @@ public class PuppetErrorReport {
 
     public static final int REPORT_CREATION_TIMEOUT = 500;   // 0.5 second
 
-    public static final Path CLI_CLIENT_INTERACTIVE_MODE_LOG     = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-interactive.log");
-    public static final Path CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = Paths.get(System.getProperty("java.io.tmpdir")).getParent().resolve("im-non-interactive.log");
     public static final Path INSTALLATION_MANAGER_SERVER_LOG     = (System.getProperty("catalina.base") != null) ?
         Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out") : null;
 
     public static Path BASE_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+    public static Path CLI_CLIENT_INTERACTIVE_MODE_LOG     = BASE_TMP_DIRECTORY.getParent().getParent().resolve("im-interactive.log");
+    public static Path CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = BASE_TMP_DIRECTORY.getParent().getParent().resolve("im-non-interactive.log");
 
     protected static String  REPORT_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
     protected static boolean useSudo                 = true;  // for testing
@@ -68,49 +68,30 @@ public class PuppetErrorReport {
      * @return path to created error report, or null in case of problems with report creation
      */
     @Nullable
-    public static Path create() {
-        return create(null);
-    }
-
-    @Nullable
     public static Path create(@Nullable final NodeConfig node) {
-        final Path reportFile = createPathToErrorReport();
+        final Path report = createPathToErrorReport();
 
         try {
-            // create local temp dir
+            // re-create local temp dir
             FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
             Files.createDirectory(BASE_TMP_DIRECTORY);
 
             // create report dir
-            if (!Files.exists(reportFile.getParent())) {
-                Files.createDirectory(reportFile.getParent());
+            if (!Files.exists(report.getParent())) {
+                Files.createDirectory(report.getParent());
             }
 
-            Thread thread = new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        Thread.sleep(REPORT_CREATION_TIMEOUT); // wait until installation manager logs error message into the its logs
-                        Command createReportCommands = createConsolidateLogsCommand(reportFile, node);
-                        createReportCommands.execute();
-                    } catch (Exception e) {
-                        LOG.log(Level.SEVERE, format("Error report creation error: %s", e.getMessage()), e);
-                    } finally {
-                        // remove temp dir
-                        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
-                    }
-                }
-            });
-
-            thread.start();
+            Command createReportCommands = createConsolidateLogsCommand(report, node);
+            createReportCommands.execute();
         } catch (IOException e) {
             LOG.log(Level.SEVERE, format("Error report creation error: %s", e.getMessage()), e);
-
+            return null;
+        } finally {
             // remove temp dir
             FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
-            return null;
         }
 
-        return reportFile;
+        return report;
     }
 
     private static Path createPathToErrorReport() {
