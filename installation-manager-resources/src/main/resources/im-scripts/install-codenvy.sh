@@ -193,12 +193,12 @@ pressYKeyToContinue() {
 }
 
 printPreInstallInfo_single() {
-    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f",tmp}'`
-    availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
+    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+    availableDiskSpace=$(( `sudo df ${HOME} | tail -1 | awk '{print $2}'` /1000/1000 ))
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
     clear
-    printLn "Welcome. This program installs a single node odenvy On-Prem."
+    printLn "Welcome. This program installs a single node Codenvy On-Prem."
     printLn ""
     printLn "Checking for system pre-requisites..."
 
@@ -206,9 +206,9 @@ printPreInstallInfo_single() {
 
     printLn ""
     printLn "RESOURCE      : RECOMENDED : AVAILABLE"
-    printLn "RAM           : 8GB        : ${availableRAM}GB"
+    printLn "RAM           : 8 GB       : ${availableRAM} GB"
     printLn "CPU           : 4 cores    : ${availableCores} cores"
-    printLn "Disk Space    : 300GB      : ${availableDiskSpace}B"
+    printLn "Disk Space    : 300 GB     : ${availableDiskSpace} GB"
     printLn ""
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
@@ -260,10 +260,6 @@ printPreInstallInfo_single() {
 }
 
 printPreInstallInfo_multi() {
-    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1024/1024; printf"%0.1f",tmp}'`
-    availableDiskSpace=`sudo df -h ${HOME} | tail -1 | awk '{print $2}'`
-    availableCores=`grep -c ^processor /proc/cpuinfo`
-
     clear
     printLn "Welcome. This program installs a multi-node Codenvy On-Prem."
     printLn ""
@@ -273,13 +269,13 @@ printPreInstallInfo_multi() {
 
     printLn ""
     printLn "Recomemnded resources for the nodes:"
-    printLn "RAM         : 1GB"
-    printLn "Disk Space  : 14GB"
+    printLn "RAM         : 1 GB"
+    printLn "Disk Space  : 14 GB"
     printLn "OS          : CentOS 7"
     printLn ""
     printLn "Recomemnded resources for the runners:"
-    printLn "RAM         : 1.5GB"
-    printLn "Disk Space  : 50GB"
+    printLn "RAM         : 1.5 GB"
+    printLn "Disk Space  : 50 GB"
     printLn "OS          : CentOS 7"
     printLn ""
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
@@ -406,6 +402,10 @@ doInstallCodenvy() {
     done
 
     nextStep 14 ""
+
+    sleep 2
+    pauseTimer
+    echo
 }
 
 nextStep() {

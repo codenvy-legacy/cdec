@@ -108,7 +108,7 @@ public class Console {
 
     public void printProgress(String message) {
         saveCursorPosition();
-        print(message);
+        printWithoutCodenvyPrompt(message);
         restoreCursorPosition();
     }
 
@@ -247,7 +247,7 @@ public class Console {
     }
 
     private void print(Object o) {
-        System.out.print(ansi().eraseLine());
+
         System.out.print(o);
         System.out.flush();
     }
