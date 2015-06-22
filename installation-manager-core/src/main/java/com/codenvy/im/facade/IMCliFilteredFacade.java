@@ -45,6 +45,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -84,7 +85,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
     /** {@inheritDoc} */
     @Override
     public Collection<InstallArtifactInfo> getInstalledVersions() throws IOException {
-        Collection<InstallArtifactInfo> installedVersions = super.getInstalledVersions();
+        Collection<InstallArtifactInfo> installedVersions = new ArrayList<>(super.getInstalledVersions());
         removeImCliArtifact(installedVersions);
         return installedVersions;
     }
@@ -92,7 +93,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
     /** {@inheritDoc} */
     @Override
     public Collection<UpdatesArtifactInfo> getUpdates() throws IOException {
-        Collection<UpdatesArtifactInfo> updates = super.getUpdates();
+        Collection<UpdatesArtifactInfo> updates = new ArrayList<>(super.getUpdates());
         removeImCliArtifact(updates);
         return updates;
     }
@@ -100,7 +101,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
     /** {@inheritDoc} */
     @Override
     public Collection<DownloadArtifactInfo> getDownloads(@Nullable Artifact artifact, @Nullable Version version) throws IOException {
-        Collection<DownloadArtifactInfo> downloads = super.getDownloads(artifact, version);
+        Collection<DownloadArtifactInfo> downloads = new ArrayList<>(super.getDownloads(artifact, version));
         removeImCliArtifact(downloads);
         return downloads;
     }
@@ -108,7 +109,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
     /** {@inheritDoc} */
     @Override
     public Collection<ArtifactInfo> getArtifacts() throws IOException {
-        Collection<ArtifactInfo> artifacts = super.getArtifacts();
+        Collection<ArtifactInfo> artifacts = new ArrayList<>(super.getArtifacts());
         removeImCliArtifact(artifacts);
         return artifacts;
     }
@@ -116,7 +117,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
     /** {@inheritDoc} */
     @Override
     public Collection<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
-        Collection<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
+        Collection<UpdatesArtifactInfo> updates = new ArrayList<>(super.getAllUpdates(artifact));
         removeImCliArtifact(updates);
         return updates;
     }
