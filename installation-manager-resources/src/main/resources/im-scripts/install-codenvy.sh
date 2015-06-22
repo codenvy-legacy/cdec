@@ -392,11 +392,12 @@ doInstallImCli() {
 
 doDownloadBinaries() {
     nextStep 3 "Downloading Codenvy binaries... "
-    executeIMCommand im-download ${ARTIFACT} ${VERSION} | sed 's/\[..................................................\]//g'  >> install.log
-    validateExitCode $?
+    OUTPUT=$(executeIMCommand im-download ${ARTIFACT} ${VERSION})
+    EXIT_CODE=$?
+    echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
+    validateExitCode ${EXIT_CODE}
 
-    nextStep 4 "Checking binaries... "
-    executeIMCommand im-download --list-local | sed 's/\[..................................................\]//g'  >> install.log
+    executeIMCommand im-download --list-local >> install.log
     validateExitCode $?
 }
 
@@ -409,10 +410,10 @@ doInstallCodenvy() {
         fi
 
         if [ ${CODENVY_TYPE} == "multi" ]; then
-            executeIMCommand im-install --step ${STEP}-${STEP} --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} | sed 's/[\/\\|-]//g' >> install.log
+            executeIMCommand im-install --step ${STEP}-${STEP} --force --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
             validateExitCode $?
         else
-            executeIMCommand im-install --step ${STEP}-${STEP} --force --config ${CONFIG} ${ARTIFACT} ${VERSION} | sed 's/[\/\\|-]//g' >> install.log
+            executeIMCommand im-install --step ${STEP}-${STEP} --force --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
             validateExitCode $?
         fi
     done
@@ -453,7 +454,6 @@ continueTimer() {
 
 pauseTimer() {
     [ ! -z ${PROGRESS_PID} ] && kill -SIGSTOP ${PROGRESS_PID}
-    sleep 2
 }
 
 updateTimer() {
