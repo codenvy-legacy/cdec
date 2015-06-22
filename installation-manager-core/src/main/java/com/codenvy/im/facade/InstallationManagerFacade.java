@@ -53,6 +53,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -295,16 +296,20 @@ public class InstallationManagerFacade {
     public Collection<InstallArtifactInfo> getInstalledVersions() throws IOException {
         Map<Artifact, Version> installedArtifacts = installManager.getInstalledArtifacts();
 
-        return FluentIterable.from(installedArtifacts.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactInfo>() {
-            @Override
-            public InstallArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
-                InstallArtifactInfo info = new InstallArtifactInfo();
-                info.setArtifact(entry.getKey().getName());
-                info.setVersion(entry.getValue().toString());
-                info.setStatus(InstallArtifactStatus.SUCCESS);
-                return info;
-            }
-        }).toList();
+        ImmutableList<InstallArtifactInfo> installedArtifactInfos =
+            FluentIterable.from(installedArtifacts.entrySet())
+                          .transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactInfo>() {
+                                @Override
+                                public InstallArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
+                                    InstallArtifactInfo info = new InstallArtifactInfo();
+                                    info.setArtifact(entry.getKey().getName());
+                                    info.setVersion(entry.getValue().toString());
+                                    info.setStatus(InstallArtifactStatus.SUCCESS);
+                                    return info;
+                                }
+                            }).toList();
+
+        return new ArrayList<>(installedArtifactInfos);
     }
 
     /**
