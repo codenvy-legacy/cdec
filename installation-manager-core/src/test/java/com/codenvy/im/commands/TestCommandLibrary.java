@@ -376,17 +376,17 @@ public class TestCommandLibrary {
     @Test
     public void testCreateReadFileCommand() throws AgentException {
         Path fileToRead = Paths.get("messages");
-        Command command = CommandLibrary.createTailCommand(fileToRead, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, false);
+        Command command = CommandLibrary.createTailCommand(fileToRead, 5, false);
         assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='LocalAgent'}");
 
-        command = CommandLibrary.createTailCommand(fileToRead, PuppetErrorInterrupter.SELECTION_LINE_NUMBER + 1, true);
+        command = CommandLibrary.createTailCommand(fileToRead, 6, true);
         assertEquals(command.toString(), "{'command'='sudo tail -n 6 messages', 'agent'='LocalAgent'}");
 
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
-        command = CommandLibrary.createTailCommand(fileToRead, PuppetErrorInterrupter.SELECTION_LINE_NUMBER, testNode, false);
+        command = CommandLibrary.createTailCommand(fileToRead, 5, testNode, false);
         assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
-        command = CommandLibrary.createTailCommand(fileToRead, PuppetErrorInterrupter.SELECTION_LINE_NUMBER + 1, testNode, true);
+        command = CommandLibrary.createTailCommand(fileToRead, 6, testNode, true);
         assertEquals(command.toString(), "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
     }
 

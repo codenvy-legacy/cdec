@@ -48,8 +48,8 @@ public class PuppetErrorInterrupter implements Command {
     // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
     public static Path PUPPET_LOG_FILE         = Paths.get("/var/log/messages");
 
-    public static final int READ_LOG_TIMEOUT_MILLIS = 100;
-    public static final int SELECTION_LINE_NUMBER   = 5;
+    public static final int READ_LOG_TIMEOUT_MILLIS = 700;
+    public static final int SELECTION_LINE_NUMBER   = 7;
 
     private final Command          command;
     private final List<NodeConfig> nodes;
@@ -130,11 +130,11 @@ public class PuppetErrorInterrupter implements Command {
     }
 
     private void lookingForPuppetError(NodeConfig node) throws CommandException {
-        List<String> lastLines;
+        List<String> lastLines = null;
         try {
             lastLines = readNLines(node);
         } catch (AgentException | CommandException e) {
-            throw new RuntimeException(getRuntimeErrorMessage(node, e), e);
+            LOG.log(Level.SEVERE, getRuntimeErrorMessage(node, e), e);    // ignore to don't interrupt installation process
         }
 
         try {

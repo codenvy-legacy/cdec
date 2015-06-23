@@ -288,10 +288,12 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                 "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
                                                 "    sleep 30; " +
                                                 "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
-                return new PuppetErrorInterrupter(command, nodeConfigs);
+//                return new PuppetErrorInterrupter(command, nodeConfigs);  // TODO [ndp] CDEC-264
+                return command;
 
             case 8:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), nodeConfigs);
+//                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), nodeConfigs); // TODO [ndp] CDEC-264
+                return new CheckInstalledVersionCommand(original, versionToInstall);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -343,7 +345,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                      "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate));
+//                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate));   // TODO [ndp] CDEC-264
+                return new CheckInstalledVersionCommand(original, versionToUpdate);
 
             case 5:
                 return createPatchCommand(Paths.get("/etc/puppet/patches/"),

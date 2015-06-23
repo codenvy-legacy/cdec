@@ -108,7 +108,7 @@ public class SecureShellAgent extends AbstractAgent {
         config.put("StrictHostKeyChecking", "no");
 
         session.setConfig(config);
-        session.setServerAliveInterval(15 * 1000);  // 15 sec
+        session.setServerAliveInterval(50 * 1000);  // 50 sec
         session.setServerAliveCountMax(150);
 
         return session;
