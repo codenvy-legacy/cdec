@@ -195,7 +195,7 @@ public class TestRepositoryService extends BaseTest {
         when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
-        when(httpTransport.doGet(endsWith("/subscription/find/account/accountId"), eq("token")))
+        when(httpTransport.doGet(endsWith("/subscription/find/account?id=accountId"), eq("token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
@@ -241,7 +241,7 @@ public class TestRepositoryService extends BaseTest {
     public void testDownloadPrivateErrorWhenUserWithoutSubscription() throws Exception {
         when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(httpTransport.doGet(endsWith("/subscription/find/account/accountId"), eq("token"))).thenReturn("[]");
+        when(httpTransport.doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"))).thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
@@ -393,7 +393,7 @@ public class TestRepositoryService extends BaseTest {
                  + "}]")
                 .when(httpTransport).doGet(endsWith("/account"), eq("token"));
         doReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:subscriptionId,startDate:\"01/01/2014\", endDate:\"01/01/2020\"}]")
-                .when(httpTransport).doGet(endsWith("/subscription/find/account/accountId"), eq("token"));
+                .when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -439,7 +439,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account/accountId"), eq("token"));
+        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
         doThrow(new IOException("Unexpected error.")).when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -455,7 +455,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account/accountId"), eq("token"));
+        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
         doReturn("{\"message\":\"Error.\"}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -471,7 +471,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account/accountId"), eq("token"));
+        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
         doReturn("{}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
 
         Response response = given()
@@ -487,7 +487,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account/accountId"), eq("token"));
+        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
         doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
         doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
         doThrow(MessagingException.class).when(mailUtil).sendNotificationLetter("accountId", "userEmail");
@@ -503,7 +503,7 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account/accountId"), eq("token"));
+        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
         doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
         doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
 

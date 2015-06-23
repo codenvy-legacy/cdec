@@ -68,51 +68,51 @@ public class SaasAccountServiceProxyTest extends BaseTest {
 
     @Test(expectedExceptions = AuthenticationException.class)
     public void testCheckSubscriptionErrorIfAuthenticationFailed() throws Exception {
-        doThrow(new AuthenticationException()).when(transport).doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN));
+        doThrow(new AuthenticationException()).when(transport).doGet(endsWith("subscription/find/account?id=accountId"), eq(TOKEN));
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute is absent")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute is absent")
     public void testCheckSubscriptionErrorIfStartDateIsAbsent() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
-                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
+            .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        when(transport.doGet(endsWith("subscription/find/account?id=accountId"), eq(TOKEN)))
+            .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute is absent")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute is absent")
     public void testCheckSubscriptionErrorIfEndDateIsAbsent() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
-                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"10/12/2012\"}]");
+            .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        when(transport.doGet(endsWith("subscription/find/account?id=accountId"), eq(TOKEN)))
+            .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"10/12/2012\"}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute has wrong format: 2014.11.21")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. Start date attribute has wrong format: 2014.11.21")
     public void testCheckSubscriptionErrorIfStartDateIsWrongFormat() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
-                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"2014.11.21\",endDate:\"21/11/2015\"}]");
+            .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        when(transport.doGet(endsWith("subscription/find/account?id=accountId"), eq(TOKEN)))
+            .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"2014.11.21\",endDate:\"21/11/2015\"}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute has wrong format: 2015.11.21")
+          expectedExceptionsMessageRegExp = "Can't validate subscription. End date attribute has wrong format: 2015.11.21")
     public void testCheckSubscriptionErrorIfEndDateIsWrongFormat() throws Exception {
         when(transport.doGet(endsWith("account"), eq(TOKEN)))
-                .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(transport.doGet(endsWith("subscription/find/account/accountId"), eq(TOKEN)))
-                .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"11/21/2014\",endDate:\"2015.11.21\"}]");
+            .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
+        when(transport.doGet(endsWith("subscription/find/account?id=accountId"), eq(TOKEN)))
+            .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"11/21/2014\",endDate:\"2015.11.21\"}]");
 
         saasAccountServiceProxy.hasValidSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
@@ -133,7 +133,7 @@ public class SaasAccountServiceProxyTest extends BaseTest {
         String testDescriptorJson = "{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                                     + ",startDate: \"" + startDate + "\",endDate:\"" + endDate + "\"}";
         doReturn("[" + testDescriptorJson + "]").when(transport)
-                                                .doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(TOKEN));
+                                                .doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(TOKEN));
 
         SubscriptionDescriptor descriptor = saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
         assertNotNull(descriptor);
@@ -147,17 +147,17 @@ public class SaasAccountServiceProxyTest extends BaseTest {
 
     @Test
     public void testGetSubscriptionWhenDescriptorNull() throws IOException {
-        doReturn("[]").when(transport).doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(TOKEN));
+        doReturn("[]").when(transport).doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(TOKEN));
 
         SubscriptionDescriptor descriptor = saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
         assertNull(descriptor);
     }
 
     @Test(expectedExceptions = HttpException.class,
-            expectedExceptionsMessageRegExp = "error")
+          expectedExceptionsMessageRegExp = "error")
     public void testGetSubscriptionWhenException() throws IOException {
         doThrow(new HttpException(500, "error")).when(transport)
-                                                .doGet(endsWith("subscription/find/account/" + ACCOUNT_ID), eq(TOKEN));
+                                                .doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(TOKEN));
         saasAccountServiceProxy.getSubscription(SUBSCRIPTION, TOKEN, ACCOUNT_ID);
     }
 
