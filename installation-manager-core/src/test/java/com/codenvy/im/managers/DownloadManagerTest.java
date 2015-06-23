@@ -149,7 +149,7 @@ public class DownloadManagerTest extends BaseTest {
 
     @Test
     public void testGetDownloadedArtifacts() throws Exception {
-        doReturn(new TreeMap<Version, Path>(new Version.ReverseOrder()) {{
+        doReturn(new TreeMap<Version, Path>(new Version.ReverseOrderComparator()) {{
             put(Version.valueOf("1.0.0"), Paths.get("file1"));
             put(Version.valueOf("1.0.1"), Paths.get("file2"));
         }}).when(downloadManager).getDownloadedVersions(cdecArtifact);

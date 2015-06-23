@@ -31,22 +31,26 @@ import static java.util.regex.Pattern.compile;
 public class Version implements Comparable<Version> {
 
     private static final String  MILESTONE_VERSION_PREFIX = "-M";
-    private static final Pattern VERSION =
-            compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)" +
-                    "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)(-SNAPSHOT|)$");
+    private static final Pattern VERSION                  =
+            compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(\\.0|\\.[1-9]+[0-9]*|)" +
+                    "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)(-RC|)(-SNAPSHOT|)$");
 
     private final int     major;
     private final int     minor;
     private final int     bugFix;
+    private final int     hotFix;
     private final int     milestone;
     private final boolean snapshot;
+    private final boolean rc;
 
-    public Version(int major, int minor, int bugFix, int milestone, boolean snapshot) {
+    public Version(int major, int minor, int bugFix, int hotFix, int milestone, boolean rc, boolean snapshot) {
         this.major = major;
         this.minor = minor;
         this.bugFix = bugFix;
+        this.hotFix = hotFix;
         this.milestone = milestone;
         this.snapshot = snapshot;
+        this.rc = rc;
     }
 
     /**
@@ -67,18 +71,27 @@ public class Version implements Comparable<Version> {
             throw new IllegalVersionException(version);
         }
 
+        int hotFix = 0;
         int milestone = 0;
 
-        String milestoneGroup = matcher.group(4);
+        String hotFixGroup = matcher.group(4);
+        if (!hotFixGroup.isEmpty()) {
+            hotFix = parseInt(hotFixGroup.substring(1));
+        }
+
+        String milestoneGroup = matcher.group(5);
         if (!milestoneGroup.isEmpty()) {
             milestone = parseInt(milestoneGroup.substring(MILESTONE_VERSION_PREFIX.length()));
         }
 
+
         return new Version(parseInt(matcher.group(1)),
                            parseInt(matcher.group(2)),
                            parseInt(matcher.group(3)),
+                           hotFix,
                            milestone,
-                           !matcher.group(5).isEmpty());
+                           !matcher.group(6).isEmpty(),
+                           !matcher.group(7).isEmpty());
     }
 
     /**
@@ -94,16 +107,19 @@ public class Version implements Comparable<Version> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Version)) return false;
 
         Version version = (Version)o;
 
         if (bugFix != version.bugFix) return false;
+        if (hotFix != version.hotFix) return false;
         if (major != version.major) return false;
-        if (minor != version.minor) return false;
         if (milestone != version.milestone) return false;
-        return snapshot == version.snapshot;
+        if (minor != version.minor) return false;
+        if (rc != version.rc) return false;
+        if (snapshot != version.snapshot) return false;
 
+        return true;
     }
 
     /** {@inheritDoc} */
@@ -112,8 +128,10 @@ public class Version implements Comparable<Version> {
         int result = major;
         result = 31 * result + minor;
         result = 31 * result + bugFix;
+        result = 31 * result + hotFix;
         result = 31 * result + milestone;
-        result = 31 * result + (snapshot ? 0 : 1);
+        result = 31 * result + (snapshot ? 1 : 0);
+        result = 31 * result + (rc ? 1 : 0);
         return result;
     }
 
@@ -123,10 +141,15 @@ public class Version implements Comparable<Version> {
         if (major > o.major
             || (major == o.major && minor > o.minor)
             || (major == o.major && minor == o.minor && bugFix > o.bugFix)
-            || (major == o.major && minor == o.minor && bugFix == o.bugFix && milestone > o.milestone)
-            || (major == o.major && minor == o.minor && bugFix == o.bugFix && milestone == o.milestone && !snapshot && o.snapshot)) {
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix > o.hotFix)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone > o.milestone)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
+                && !rc && o.rc)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
+                && rc == o.rc && !snapshot && o.snapshot)) {
             return 1;
-        } else if (major == o.major && minor == o.minor && bugFix == o.bugFix && milestone == o.milestone && snapshot == o.snapshot) {
+        } else if (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix
+                   && milestone == o.milestone && rc == o.rc && snapshot == o.snapshot) {
             return 0;
         } else {
             return -1;
@@ -136,12 +159,19 @@ public class Version implements Comparable<Version> {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return major + "." + minor + "." + bugFix + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "") + (snapshot ? "-SNAPSHOT" : "");
+        return major
+               + "." + minor
+               + "." + bugFix
+               + (hotFix != 0 ? "." + hotFix : "")
+               + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "")
+               + (rc ? "-RC" : "")
+               + (snapshot ? "-SNAPSHOT" : "");
 
     }
 
-    static public class ReverseOrder implements Comparator<Version> {
-        @Override public int compare(Version v1, Version v2) {
+    static public class ReverseOrderComparator implements Comparator<Version> {
+        @Override
+        public int compare(Version v1, Version v2) {
             return v2.compareTo(v1);
         }
     }

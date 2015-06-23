@@ -431,7 +431,7 @@ public class DownloadManager {
      *         if an I/O error occurs
      */
     public SortedMap<Version, Path> getDownloadedVersions(Artifact artifact) throws IOException {
-        SortedMap<Version, Path> versions = new TreeMap<>(new Version.ReverseOrder());
+        SortedMap<Version, Path> versions = new TreeMap<>(new Version.ReverseOrderComparator());
 
         Path artifactDir = getDownloadDirectory(artifact);
 
