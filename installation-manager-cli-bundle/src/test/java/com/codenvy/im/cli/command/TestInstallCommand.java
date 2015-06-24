@@ -282,7 +282,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testInstallErrorStepFailed() throws Exception {
+    public void testInstallErrorStepException() throws Exception {
         doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doThrow(new IOException("step failed")).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -304,6 +304,36 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"status\" : \"ERROR\"\n" +
                              "}\n");
     }
+
+    @Test
+    public void testInstallErrorStepFail() throws Exception {
+        InstallArtifactStepInfo testInstallArtifactStepInfo = new InstallArtifactStepInfo();
+        testInstallArtifactStepInfo.setStatus(InstallArtifactStatus.FAILURE);
+        testInstallArtifactStepInfo.setMessage("error");
+
+        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
+        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
+        doNothing().when(facade).waitForInstallStepCompleted(anyString());
+        doReturn(testInstallArtifactStepInfo).when(facade).getUpdateStepInfo(anyString());
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", "1.0.1");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "step 1 [FAIL]\n" +
+                             "{\n" +
+                             "  \"artifacts\" : [ {\n" +
+                             "    \"artifact\" : \"codenvy\",\n" +
+                             "    \"version\" : \"1.0.1\",\n" +
+                             "    \"status\" : \"FAILURE\"\n" +
+                             "  } ],\n" +
+                             "  \"message\" : \"error\",\n" +
+                             "  \"status\" : \"ERROR\"\n" +
+                             "}\n");
+    }
+
 
     @Test
     public void testInstallWhenServiceThrowsError2() throws Exception {

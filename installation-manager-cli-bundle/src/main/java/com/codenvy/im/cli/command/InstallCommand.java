@@ -182,6 +182,7 @@ public class InstallCommand extends AbstractIMCommand {
                     if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
                         installResponse.setStatus(ResponseCode.ERROR);
                         installResponse.setMessage(updateStepInfo.getMessage());
+                        installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
                     }
                 } catch (Exception e) {
                     installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
