@@ -47,7 +47,6 @@ public class TestInstallationManagerCli {
                 if (testFile.getFileName().toString().startsWith("test")) {
                     doExecute(dir.toFile(), "chmod", "+x", testFile.toString());
                     doExecute(dir.toFile(), "./" + testFile.getFileName().toString());
-                    doExecute(dir.toFile(), "vagrant", "destroy", "-f");
                 }
             }
         }
