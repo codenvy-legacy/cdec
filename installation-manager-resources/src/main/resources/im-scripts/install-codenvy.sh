@@ -440,7 +440,7 @@ runTimer() {
 }
 
 killTimer() {
-    [ ! -z ${PROGRESS_PID} ] && kill ${PROGRESS_PID}
+    [ ! -z ${PROGRESS_PID} ] && kill -KILL ${PROGRESS_PID}
 }
 
 continueTimer() {
@@ -512,6 +512,4 @@ set +e
 doDownloadBinaries
 doInstallCodenvy
 
-set -e
 printPostInstallInfo
-

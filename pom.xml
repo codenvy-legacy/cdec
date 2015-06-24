@@ -41,6 +41,7 @@
         <module>installation-manager-cli-features</module>
         <module>installation-manager-server-api-docs</module>
         <module>installation-manager-server-war</module>
+        <module>installation-manager-tests</module>
     </modules>
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>
