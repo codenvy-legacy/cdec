@@ -886,8 +886,7 @@ public class InstallationManagerService {
     /** @return true if only key matches one of the patterns from the PRIVATE_KEY_PATTERNS */
     private boolean isPrivateProperty(String key) {
         for (Pattern pattern : PRIVATE_KEY_PATTERNS) {
-            Matcher m = pattern.matcher(key);
-            if (m.find()) {
+            if (pattern.matcher(key).find()) {
                 return true;
             }
         }

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -97,10 +98,10 @@ public class CommandLibrary {
     }
 
     protected static String getFileBackupCommand(final String file) {
-        final String backupFile = file + ".back";
-        return format("sudo cp %s %s",
+        return format("sudo cp %1$s %1$s.back ; " +
+                      "sudo cp %1$s %1$s.back.%2$s ; ",
                       file,
-                      backupFile);
+                      new Date().getTime());
     }
 
     public static Command createPatchCommand(Path patchDir, PatchType patchType, InstallOptions installOptions) throws IOException {

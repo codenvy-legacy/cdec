@@ -24,23 +24,24 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.utils.Version;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 import static java.lang.String.format;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestNodeManager extends BaseTest {
@@ -124,23 +125,30 @@ public class TestNodeManager extends BaseTest {
         Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
         assertNotNull(result);
         assertTrue(result instanceof MacroCommand);
-        assertEquals(result.toString(), format("[" +
-                                        "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', 'agent'='LocalAgent'}, " +
-                                        "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"test_runner_node_url\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, " +
-                                        "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', 'agent'='LocalAgent'}, " +
-                                        "{'command'='yum list installed | grep puppetlabs-release.noarch; if [ $? -ne 0 ]; then sudo yum -y -q install null; fi', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo yum -y -q install null', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target.wants/puppet.service'; fi', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo systemctl enable puppet', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo sed -i 's/\\[main\\]/\\[main\\]\\n  server = null\\n  runinterval = 420\\n  configtimeout = 600\\n/g' /etc/puppet/puppet.conf', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n  show_diff = true\\n  pluginsync = true\\n  report = true\\n  default_schedules = false\\n  certname = localhost\\n/g' /etc/puppet/puppet.conf', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='sudo systemctl start puppet', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='doneState=\"Installing\"; testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; while [ \"${doneState}\" != \"Installed\" ]; do     if sudo test -f ${testFile}; then doneState=\"Installed\"; fi;     sleep 30; done', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'" +
-                                        "]", SYSTEM_USER_NAME));
+
+        List<Command> commands = ((MacroCommand) result).getCommands();
+        assertEquals(commands.size(), 15);
+
+        assertTrue(commands.get(0).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   commands.get(0).toString());
+
+        assertEquals(commands.get(1).toString(), "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"test_runner_node_url\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(2).toString(), "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(3).toString(), format("{'command'='yum list installed | grep puppetlabs-release.noarch; if [ $? -ne 0 ]; then sudo yum -y -q install null; fi', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(4).toString(), format("{'command'='sudo yum -y -q install null', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(5).toString(), format("{'command'='if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target.wants/puppet.service'; fi', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(6).toString(), format("{'command'='sudo systemctl enable puppet', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+
+        assertTrue(commands.get(7).toString().matches(format("\\{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back ; sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back.[0-9]+ ; ', 'agent'='\\{'host'='localhost', 'user'='%1$s', 'identity'='\\[~/.ssh/id_rsa\\]'\\}'\\}", SYSTEM_USER_NAME)),
+                   commands.get(7).toString());
+
+        assertEquals(commands.get(8).toString(), format("{'command'='sudo sed -i 's/\\[main\\]/\\[main\\]\\n  server = null\\n  runinterval = 420\\n  configtimeout = 600\\n/g' /etc/puppet/puppet.conf', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(9).toString(), format("{'command'='sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n  show_diff = true\\n  pluginsync = true\\n  report = true\\n  default_schedules = false\\n  certname = localhost\\n/g' /etc/puppet/puppet.conf', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(10).toString(), format("{'command'='sudo systemctl start puppet', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(11).toString(), format("{'command'='doneState=\"Installing\"; testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; while [ \"${doneState}\" != \"Installed\" ]; do     if sudo test -f ${testFile}; then doneState=\"Installed\"; fi;     sleep 30; done', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(12).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(13).toString(), format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(14).toString(), "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -187,18 +195,23 @@ public class TestNodeManager extends BaseTest {
         prepareMultiNodeEnv(configManager);
         Command removeNodeCommand =
                 spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
-        assertEquals(removeNodeCommand.toString(),
-                     format("[" +
-                            "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', 'agent'='LocalAgent'}, " +
-                            "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"null\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, " +
-                            "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                            "{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                            "Expected to be installed 'mockCdecArtifact' of the version '1.0.0', " +
-                            "{'command'='sudo puppet cert clean localhost', 'agent'='LocalAgent'}, " +
-                            "{'command'='sudo service puppetmaster restart', 'agent'='LocalAgent'}, " +
-                            "{'command'='sudo service puppet stop', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                            "{'command'='sudo rm -rf /var/lib/puppet/ssl', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
-                            "]", SYSTEM_USER_NAME));
+
+        List<Command> commands = ((MacroCommand) removeNodeCommand).getCommands();
+        assertEquals(commands.size(), 9);
+
+        assertTrue(commands.get(0).toString().matches(
+            "\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   commands.get(0).toString());
+
+        assertEquals(commands.get(1).toString(),
+                     "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"null\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(2).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(3).toString(), format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(4).toString(), "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'");
+        assertEquals(commands.get(5).toString(), "{'command'='sudo puppet cert clean localhost', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(6).toString(), "{'command'='sudo service puppetmaster restart', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(7).toString(), format("{'command'='sudo service puppet stop', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(8).toString(), format("{'command'='sudo rm -rf /var/lib/puppet/ssl', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = NodeException.class,

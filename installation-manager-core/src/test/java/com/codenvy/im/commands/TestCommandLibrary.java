@@ -40,6 +40,7 @@ import static com.codenvy.im.commands.CommandLibrary.getFileRestoreOrBackupComma
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestCommandLibrary {
@@ -141,7 +142,8 @@ public class TestCommandLibrary {
     @Test
     public void testCreateLocalAgentFileBackupCommand() {
         Command result = createFileBackupCommand("test_file");
-        assertEquals(result.toString(), "{'command'='sudo cp test_file test_file.back', 'agent'='LocalAgent'}");
+        assertTrue(result.toString().matches("\\{'command'='sudo cp test_file test_file.back ; sudo cp test_file test_file.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   result.toString());
     }
 
     @Test

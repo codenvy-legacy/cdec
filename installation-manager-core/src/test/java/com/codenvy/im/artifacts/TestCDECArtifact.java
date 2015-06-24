@@ -24,6 +24,7 @@ import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
+import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -458,19 +459,22 @@ public class TestCDECArtifact extends BaseTest {
         CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact, configManager);
 
         Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
-        assertEquals(command.toString(), "[" +
-                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/single_server.pp " +
-                                         "/etc/puppet/manifests/nodes/single_server/single_server.pp.back', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' " +
-                                         "/etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp " +
-                                         "/etc/puppet/manifests/nodes/single_server/base_config.pp.back', 'agent'='LocalAgent'}, " +
-                                         "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' " +
-                                         "/etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}, " +
-                                         "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent " +
-                                         "--onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='LocalAgent'}, " +
-                                         "Expected to be installed 'codenvy' of the version '1.0.0'" +
-                                         "]");
+
+        List<Command> commands = ((MacroCommand) command).getCommands();
+        assertEquals(commands.size(), 6);
+        assertTrue(commands.get(0).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/single_server.pp /etc/puppet/manifests/nodes/single_server/single_server.pp.back ; " +
+                                                      "sudo cp /etc/puppet/manifests/nodes/single_server/single_server.pp /etc/puppet/manifests/nodes/single_server/single_server.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   commands.get(0).toString());
+
+        assertEquals(commands.get(1).toString(), "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}");
+
+        assertTrue(commands.get(2).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp /etc/puppet/manifests/nodes/single_server/base_config.pp.back ; " +
+                                                      "sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp /etc/puppet/manifests/nodes/single_server/base_config.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   commands.get(2).toString());
+
+        assertEquals(commands.get(3).toString(), "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(4).toString(), "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(5).toString(), "Expected to be installed 'codenvy' of the version '1.0.0'");
     }
 
     @Test
@@ -487,22 +491,19 @@ public class TestCDECArtifact extends BaseTest {
         CDECMultiServerHelper testHelper = new CDECMultiServerHelper(spyCdecArtifact, configManager);
 
         Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
-        assertEquals(command.toString(), format("[" +
-                                                "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp " +
-                                                "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back', 'agent'='LocalAgent'}, " +
-                                                "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' " +
-                                                "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, " +
-                                                "{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp " +
-                                                "/etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back', 'agent'='LocalAgent'}, " +
-                                                "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' " +
-                                                "/etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, " +
-                                                "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet " +
-                                                "agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', " +
-                                                "'agent'='{'host'='data.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                                "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet " +
-                                                "agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', " +
-                                                "'agent'='{'host'='api.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                                "Expected to be installed 'codenvy' of the version '1.0.0'" +
-                                                "]", SYSTEM_USER_NAME));
+        List<Command> commands = ((MacroCommand) command).getCommands();
+        assertEquals(commands.size(), 7);
+        assertTrue(commands.get(0).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   commands.get(0).toString());
+        
+        assertEquals(commands.get(1).toString(), "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
+
+        assertTrue(commands.get(2).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   commands.get(2).toString());
+
+        assertEquals(commands.get(3).toString(), "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(4).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='data.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(5).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='api.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(6).toString(), "Expected to be installed 'codenvy' of the version '1.0.0'");
     }
 }

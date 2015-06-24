@@ -73,4 +73,8 @@ public class MacroCommand implements Command {
 
         return new MacroCommand(commands, description);
     }
+
+    public List<Command> getCommands() {   // for testing propose
+        return commands;
+    }
 }
