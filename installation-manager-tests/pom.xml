@@ -50,7 +50,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludes>
-                        <exclude>com/codenvy/analytics/**/*</exclude>
+                        <exclude>com/codenvy/im/**/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
