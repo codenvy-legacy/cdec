@@ -26,6 +26,11 @@ elif [ "$1" == "stg" ]; then
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater.codenvy-stg.com
     echo "=========> Uploading on staging"
+elif [ "$1" == "ngt" ]; then
+    SSH_KEY_NAME=as1-cldide_cl-server.skey
+    SSH_AS_USER_NAME=codenvy
+    AS_IP=updater-nightly.codenvy-dev.com
+    echo "============[ Nightly will be updated ]=============="
 else
     echo "Unknown server destination"
     exit 1
@@ -124,15 +129,15 @@ doUpload() {
     rm .properties
 }
 
-#uploadInstallationManagerCli
-#uploadCodenvyServerInstallMultiScript
-#uploadCodenvyServerInstallInstalationManagerScript
+uploadInstallationManagerCli
+uploadCodenvyServerInstallMultiScript
+uploadCodenvyServerInstallInstalationManagerScript
 uploadCodenvyServerInstallScript
 
-#for VERSION in 3.10.1-SNAPSHOT; do
-#    uploadCodenvySingleServerInstallProperties ${VERSION}
-#done
-#
-#for VERSION in 3.10.1-SNAPSHOT; do
-#    uploadCodenvyMultiServerInstallProperties ${VERSION}
-#done
+for VERSION in 3.10.1-SNAPSHOT; do
+    uploadCodenvySingleServerInstallProperties ${VERSION}
+done
+
+for VERSION in 3.10.1-SNAPSHOT; do
+    uploadCodenvyMultiServerInstallProperties ${VERSION}
+done

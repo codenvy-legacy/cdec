@@ -27,6 +27,11 @@ elif [ "$1" == "stg" ]; then
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater.codenvy-stg.com
     echo "============[ Staging will be updated ]=============="
+elif [ "$1" == "ngt" ]; then
+    SSH_KEY_NAME=as1-cldide_cl-server.skey
+    SSH_AS_USER_NAME=codenvy
+    AS_IP=updater-nightly.codenvy-dev.com
+    echo "============[ Nightly will be updated ]=============="
 else
     echo "Unknown server destination"
     exit 1
