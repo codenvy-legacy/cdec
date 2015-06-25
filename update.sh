@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # CODENVY CONFIDENTIAL
 # ________________
@@ -14,8 +15,6 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Codenvy S.A..
 #
-
-#!/bin/bash
 filename=`ls update-server-packaging-tomcat/target | grep update-server-packaging-tomcat`
 if [ -z "$1" ] || [ "$1" == "prod" ]; then
     SSH_KEY_NAME=cl-server-prod-20130219
