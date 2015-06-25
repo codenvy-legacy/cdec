@@ -69,6 +69,9 @@ vagrantUp() {
 }
 
 auth() {
+    log
+    log "TEST: authentication"
+
     USERNAME=$1
     PASSWORD=$2
 
@@ -78,12 +81,14 @@ auth() {
     log ${OUTPUT}
 
     if [[ ! ${OUTPUT} =~ .*value.* ]]; then
-        log ${OUTPUT}
         validateExitCode 1
     fi
 }
 
 executeIMCommand() {
-    ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@"
+    log
+    log "TEST: executing command "$@
+
+    ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@" >> ${TEST_LOG}
     validateExitCode $?
 }
