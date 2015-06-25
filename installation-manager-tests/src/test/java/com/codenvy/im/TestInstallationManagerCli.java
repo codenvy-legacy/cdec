@@ -22,15 +22,14 @@ package com.codenvy.im;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static java.nio.file.Files.newDirectoryStream;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -40,21 +39,24 @@ public class TestInstallationManagerCli {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestInstallationManagerCli.class);
 
-    @Test
-    public void test() throws Exception {
-        Path dir = Paths.get(getClass().getClassLoader().getResource("bin").getFile());
+    private Path dir;
+
+    @BeforeClass
+    public void setUp() throws Exception {
+        dir = Paths.get(getClass().getClassLoader().getResource("bin").getFile());
 
         doExecute(dir.toFile(), "chmod", "+x", "lib.sh");
         doExecute(dir.toFile(), "chmod", "+x", "config.sh");
+    }
 
-        try (DirectoryStream<Path> testFiles = newDirectoryStream(dir)) {
-            for (Path testFile : testFiles) {
-                if (testFile.getFileName().toString().startsWith("test")) {
-                    doExecute(dir.toFile(), "chmod", "+x", testFile.toString());
-                    doExecute(dir.toFile(), "./" + testFile.getFileName().toString());
-                }
-            }
-        }
+    @Test
+    public void testInstallSingleNodeAndChangePassword() throws Exception {
+        doTest("test-install-single-node-and-change-password.sh");
+    }
+
+    private void doTest(String testScript) throws Exception {
+        doExecute(dir.toFile(), "chmod", "+x", testScript);
+        doExecute(dir.toFile(), "./" + testScript);
     }
 
     private void doExecute(File directory, String... commands) throws IOException, InterruptedException {
