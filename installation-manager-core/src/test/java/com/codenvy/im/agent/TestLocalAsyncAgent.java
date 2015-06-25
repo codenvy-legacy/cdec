@@ -47,7 +47,7 @@ public class TestLocalAsyncAgent {
     public void testAsyncResult() throws Exception {
         Agent agent = new LocalAsyncAgent();
         assertNull(agent.execute("echo 'test' >> " + TEST_FILE_PATH.toAbsolutePath()));
-        Thread.sleep(2000);  // waiting for creating test file
+        Thread.sleep(8000);  // waiting for creating test file
         assertTrue(Files.exists(TEST_FILE_PATH));
     }
 
