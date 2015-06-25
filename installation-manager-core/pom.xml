@@ -257,5 +257,56 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>ngt</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <RedHatOSVersion>6</RedHatOSVersion>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>buildnumber</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <?SORTPOM IGNORE?>
+                                        <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
+                                            version = ${project.version}
+                                        </echo>
+                                        <?SORTPOM RESUME?>
+                                        <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
+                                            <replacetoken>https://codenvy.com</replacetoken>
+                                            <replacevalue>http://updater-nightly.codenvy-dev.com:8080</replacevalue>
+                                        </replace>
+                                        <tstamp>
+                                            <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute"/>
+                                        </tstamp>
+                                        <touch datetime="${touch.time}">
+                                            <fileset dir="${project.build.directory}/classes/codenvy"/>
+                                        </touch>
+                                        <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
+                                            <zipfileset dir="${project.build.directory}/classes/codenvy/" prefix="codenvy"/>
+                                        </jar>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
