@@ -24,8 +24,7 @@ printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-# install
-ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${PROTOCOL}'://'${SERVER}'/update/repository/public/download/install-codenvy) --silent' >> ${INSTALL_LOG}
+ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${PROTOCOL}'://'${SERVER}'/update/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
 validateExitCode $?
 
 auth "admin" "password"
@@ -35,3 +34,5 @@ auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
 
+retrieveInstallLog
+vagrantDestroy

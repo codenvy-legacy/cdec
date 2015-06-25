@@ -289,7 +289,8 @@
                                         <?SORTPOM RESUME?>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
                                             <replacetoken>installation-manager.update_server_endpoint=https://codenvy.com/update</replacetoken>
-                                            <replacevalue>installation-manager.update_server_endpoint=http://updater-nightly.codenvy-dev.com:8080
+                                            <replacevalue>
+                                                installation-manager.update_server_endpoint=http://updater-nightly.codenvy-dev.com:8080/update
                                             </replacevalue>
                                         </replace>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">

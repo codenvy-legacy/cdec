@@ -18,35 +18,53 @@
 
 . ./config.sh
 
+trap cleanUp EXIT
+
+cleanUp() {
+    vagrantDestroy
+}
+
 printAndLog() {
     echo "$@"
     log "$@"
 }
 
 log() {
-    echo "$@" >> ${INSTALL_LOG}
+    echo "$@" >> ${TEST_LOG}
 }
 
 validateExitCode() {
     EXIT_CODE=$1
     if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
 	    printAndLog "RESULT: FAILED"
-#	    vagrantDestroy
+	    retrieveInstallLog
+	    vagrantDestroy
         exit ${EXIT_CODE}
     fi
 }
 
 vagrantDestroy() {
-    vagrant destroy -f >> ${INSTALL_LOG}
+    vagrant destroy -f >> ${TEST_LOG}
 }
 
+retrieveInstallLog() {
+    scp -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem:install.log tmp.log
+    if [ -f "tmp.log" ]; then
+        if [ -f "install.log" ]; then
+            cat tmp.log >> install.log
+        else
+            cp tmp.log install.log
+        fi
+        rm tmp.log
+    fi
+}
 
 vagrantUp() {
     VAGRANT_FILE=$1
 
     cp ${VAGRANT_FILE} Vagrantfile
 
-    vagrant up >> ${INSTALL_LOG}
+    vagrant up >> ${TEST_LOG}
     validateExitCode $?
 }
 
