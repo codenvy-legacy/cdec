@@ -26,6 +26,8 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.PropertiesNotFoundException;
+import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
@@ -40,6 +42,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -176,10 +179,24 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public void updateConfig(Map<String, String> properties) throws IOException {
+    public void updateConfig(Map<String, String> propertiesToUpdate) throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
+        Map<String, String> actualProperties = config.getProperties();
+
+        // check if there are nonexistent property among propertiesToUpdate
+        List<String> nonexistentProperties = new ArrayList<>();
+        for (String property : propertiesToUpdate.keySet()) {
+            if (! actualProperties.containsKey(property)) {
+                nonexistentProperties.add(property);
+            }
+        }
+
+        if (nonexistentProperties.size() != 0) {
+            throw new PropertiesNotFoundException(nonexistentProperties);
+        }
+
         CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
-        Command commands = helper.getUpdateConfigCommand(config, properties);
+        Command commands = helper.getUpdateConfigCommand(config, propertiesToUpdate);
         commands.execute();
     }
 

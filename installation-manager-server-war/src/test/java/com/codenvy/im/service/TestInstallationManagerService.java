@@ -31,6 +31,7 @@ import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
@@ -59,10 +60,12 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.Principal;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -130,7 +133,6 @@ public class TestInstallationManagerService extends BaseTest {
     @Test
     public void testStartDownload() throws Exception {
         Response result = service.startDownload(ARTIFACT_NAME, VERSION_NUMBER);
-
         assertEquals(result.getStatus(), Response.Status.ACCEPTED.getStatusCode());
         assertTrue(result.getEntity() instanceof DownloadToken);
         assertNotNull(((DownloadToken)result.getEntity()).getId());
@@ -154,7 +156,6 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new DownloadAlreadyStartedException()).when(mockFacade).startDownload(artifact, version);
 
         Response result = service.startDownload(ARTIFACT_NAME, VERSION_NUMBER);
-
         assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
         verify(mockFacade).startDownload(artifact, version);
     }
@@ -170,7 +171,6 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new DownloadNotStartedException()).when(mockFacade).stopDownload();
 
         Response result = service.stopDownload("id");
-
         assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
@@ -180,7 +180,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(progressDescriptor).when(mockFacade).getDownloadProgress();
 
         Response result = service.getDownloadProgress("id");
-
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), progressDescriptor);
     }
@@ -190,7 +189,6 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new DownloadNotStartedException()).when(mockFacade).getDownloadProgress();
 
         Response result = service.getDownloadProgress("id");
-
         assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
@@ -199,16 +197,14 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(Collections.emptyList()).when(mockFacade).getAllUpdates(any(Artifact.class));
 
         Response result = service.getUpdates();
-
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void testGeUpdatesShouldReturnErrorStatus() throws Exception {
+    public void testGetUpdatesShouldReturnErrorStatus() throws Exception {
         doThrow(new IOException("error")).when(mockFacade).getAllUpdates(any(Artifact.class));
 
         Response result = service.getUpdates();
-
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
@@ -219,7 +215,6 @@ public class TestInstallationManagerService extends BaseTest {
                                                              .withStatus(InstallArtifactStatus.SUCCESS))).when(mockFacade).getInstalledVersions();
 
         Response result = service.getInstalledVersions();
-
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
     }
 
@@ -228,7 +223,6 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new IOException("error")).when(mockFacade).getInstalledVersions();
 
         Response result = service.getInstalledVersions();
-
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
@@ -264,7 +258,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(Collections.emptyMap()).when(mockFacade).getInstallationManagerProperties();
 
         Response response = service.getInstallationManagerServerConfig();
-
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
@@ -273,7 +266,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(new NodeInfo()).when(mockFacade).addNode("dns");
 
         Response result = service.addNode("dns");
-
         assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
@@ -282,7 +274,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(new NodeInfo()).when(mockFacade).removeNode("dns");
 
         Response result = service.removeNode("dns");
-
         assertEquals(result.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
     }
 
@@ -291,7 +282,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(new BackupInfo()).when(mockFacade).backup(any(BackupConfig.class));
 
         Response result = service.backup(ARTIFACT_NAME);
-
         assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
@@ -300,7 +290,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(new BackupInfo()).when(mockFacade).restore(any(BackupConfig.class));
 
         Response result = service.restore(ARTIFACT_NAME, "");
-
         assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
@@ -311,7 +300,6 @@ public class TestInstallationManagerService extends BaseTest {
         doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
 
         Response result = service.addTrialSubscription();
-
         assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
     }
 
@@ -321,7 +309,6 @@ public class TestInstallationManagerService extends BaseTest {
         doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
 
         Response result = service.addTrialSubscription();
-
         assertEquals(result.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
     }
 
@@ -579,7 +566,6 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response response = service.updateStorageProperty(key, value);
         assertOkResponse(response);
-
         verify(mockFacade).storeStorageProperty(key, value);
     }
 
@@ -656,7 +642,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(config).when(configManager).loadInstalledCodenvyConfig();
 
         Response response = service.getCodenvyProperty("x");
-
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(response.getEntity().toString(), "{x=y}");
     }
@@ -709,9 +694,7 @@ public class TestInstallationManagerService extends BaseTest {
         Map<String, String> properties = ImmutableMap.of("x", "y");
 
         Response response = service.updateCodenvyProperties(properties);
-
         assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
-
         verify(mockFacade).updateArtifactConfig(any(Artifact.class), anyMap());
     }
 
@@ -725,11 +708,20 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
+    public void testUpdateNonexistentCodenvyProperty() throws Exception {
+        List<String> nonexistentProperties = Arrays.asList("x1", "x2");
+        doThrow(new PropertiesNotFoundException(nonexistentProperties)).when(mockFacade).updateArtifactConfig(any(Artifact.class), anyMap());
+
+        Response response = service.updateCodenvyProperties(null);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getEntity().toString(), "{message=Properties not found, properties=[x1, x2]}");
+    }
+
+    @Test
     public void testGetDownloadsShouldReturnOkResponse() throws Exception {
         doReturn("id").when(mockFacade).getDownloadIdInProgress();
 
         Response response = service.getDownloads();
-
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
@@ -738,7 +730,6 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new DownloadNotStartedException()).when(mockFacade).getDownloadIdInProgress();
 
         Response result = service.getDownloads();
-
         assertEquals(result.getStatus(), Response.Status.CONFLICT.getStatusCode());
     }
 
@@ -786,7 +777,6 @@ public class TestInstallationManagerService extends BaseTest {
         doReturn(ImmutableList.of("a", "b")).when(mockFacade).getInstallInfo(artifact, InstallType.SINGLE_SERVER);
 
         Response response = service.getUpdateInfo();
-
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
@@ -797,7 +787,6 @@ public class TestInstallationManagerService extends BaseTest {
         doThrow(new IOException("error")).when(mockFacade).getUpdateInfo(artifact, InstallType.SINGLE_SERVER);
 
         Response response = service.getUpdateInfo();
-
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 

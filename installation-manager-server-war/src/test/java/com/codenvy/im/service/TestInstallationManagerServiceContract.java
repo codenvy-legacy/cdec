@@ -841,16 +841,17 @@ public class TestInstallationManagerServiceContract {
 
     private void testContract(String path,
                              Map<String, String> queryParameters,
-                             String body,
+                             String requestBody,
                              ContentType consumeContentType,
                              ContentType produceContentType,
                              HttpMethod httpMethod,
-                             String responseBody,
-                             Response.Status responseStatus,
-                             Function<Object, Object> beforeTest,
-                             Function<Object, Object> assertion) {
-        if (beforeTest != null) {
-            beforeTest.apply(null);
+                             String expectedResponseBody,
+                             Response.Status expectedResponseStatus,
+                             Function<Object, Object> doBeforeTest,
+                             Function<Object, Object> doAssertion) {
+
+        if (doBeforeTest != null) {
+            doBeforeTest.apply(null);
         }
 
         RequestSpecification requestSpec = getRequestSpecification();
@@ -860,8 +861,8 @@ public class TestInstallationManagerServiceContract {
             requestSpec.queryParameters(queryParameters);
         }
 
-        if (body != null) {
-            requestSpec.body(body);
+        if (requestBody != null) {
+            requestSpec.body(requestBody);
         }
 
         if (consumeContentType != null) {
@@ -889,10 +890,10 @@ public class TestInstallationManagerServiceContract {
                 throw new RuntimeException("Unknown HTTP method");
         }
 
-        assertResponse(response, produceContentType, responseBody, responseStatus);
+        assertResponse(response, produceContentType, expectedResponseBody, expectedResponseStatus);
 
-        if (assertion != null) {
-            assertion.apply(null);
+        if (doAssertion != null) {
+            doAssertion.apply(null);
         }
     }
 

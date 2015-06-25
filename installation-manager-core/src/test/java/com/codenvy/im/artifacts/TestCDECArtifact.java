@@ -30,6 +30,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
@@ -46,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +65,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * @author Anatoliy Bazko
@@ -293,7 +296,7 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Step number .* is out of update range")
-    public void testGetUpdateCommandUnexistedStepError() throws Exception {
+    public void testGetUpdateCommandNonexistentStepError() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
         OSUtils.VERSION = "7";
@@ -431,6 +434,30 @@ public class TestCDECArtifact extends BaseTest {
         spyCdecArtifact.updateConfig(properties);
         verify(mockHelper).getUpdateConfigCommand(testConfig, properties);
     }
+
+    @Test
+    public void testChangeNonexistentCodenvyConfigProperty() throws IOException {
+        Map<String, String> properties = ImmutableMap.of("property2", "a", "property3", "b", "property4", "c");
+
+        Config testConfig = new Config(ImmutableMap.of("property1", "a"));
+        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+
+        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testConfig, properties);
+        doReturn(mockHelper).when(spyCdecArtifact).getHelper(InstallType.MULTI_SERVER);
+
+        try {
+            spyCdecArtifact.updateConfig(properties);
+        } catch(PropertiesNotFoundException e) {
+            assertEquals(e.getMessage(), "Properties not found");
+            assertEquals(e.getProperties(), new ArrayList<>(properties.keySet()));
+            return;
+        }
+
+        fail("There should be PropertiesNotFoundExceptions thrown");
+    }
+
 
     @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = "error")
     public void testChangeCodenvyConfigWhenCommandException() throws IOException {

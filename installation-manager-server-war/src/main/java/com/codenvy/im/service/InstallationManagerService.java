@@ -35,6 +35,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.InstallationNotStartedException;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
@@ -64,6 +65,7 @@ import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.dto.server.JsonArrayImpl;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -835,6 +837,8 @@ public class InstallationManagerService {
         } else if (e instanceof AuthenticationException
                    || e instanceof IllegalVersionException) {
             status = javax.ws.rs.core.Response.Status.BAD_REQUEST;
+        } else if (e instanceof PropertiesNotFoundException) {
+            return handlePropertiesNotFoundException((PropertiesNotFoundException) e);
         } else {
             status = javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
         }
@@ -846,6 +850,18 @@ public class InstallationManagerService {
         LOG.error(e.getMessage(), e);
 
         JsonStringMapImpl<String> msgBody = new JsonStringMapImpl<>(ImmutableMap.of("message", e.getMessage()));
+        return javax.ws.rs.core.Response.status(status)
+                                        .entity(msgBody)
+                                        .type(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+    }
+
+    private javax.ws.rs.core.Response handlePropertiesNotFoundException(PropertiesNotFoundException e) {
+        LOG.error(e.getMessage(), e);
+
+        javax.ws.rs.core.Response.Status status = javax.ws.rs.core.Response.Status.NOT_FOUND;
+        JsonStringMapImpl msgBody = new JsonStringMapImpl(ImmutableMap.of("message", e.getMessage(),
+                                                                          "properties", new JsonArrayImpl(e.getProperties())));
         return javax.ws.rs.core.Response.status(status)
                                         .entity(msgBody)
                                         .type(MediaType.APPLICATION_JSON_TYPE)
