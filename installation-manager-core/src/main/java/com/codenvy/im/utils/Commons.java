@@ -174,7 +174,7 @@ public class Commons {
                         Version v = valueOf(item.getFileName().toString());
                         versions.add(v);
                     }
-                } catch (IllegalArgumentException e) {
+                } catch (IllegalVersionException e) {
                     // maybe it isn't a version directory
                 }
             }
