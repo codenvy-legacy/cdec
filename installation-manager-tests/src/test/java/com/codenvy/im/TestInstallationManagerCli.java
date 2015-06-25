@@ -20,6 +20,8 @@ package com.codenvy.im;
 
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -36,11 +38,14 @@ import static org.testng.Assert.assertEquals;
  */
 public class TestInstallationManagerCli {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TestInstallationManagerCli.class);
+
     @Test
     public void test() throws Exception {
         Path dir = Paths.get(getClass().getClassLoader().getResource("bin").getFile());
 
         doExecute(dir.toFile(), "chmod", "+x", "lib.sh");
+        doExecute(dir.toFile(), "chmod", "+x", "config.sh");
 
         try (DirectoryStream<Path> testFiles = newDirectoryStream(dir)) {
             for (Path testFile : testFiles) {
@@ -61,10 +66,14 @@ public class TestInstallationManagerCli {
         int exitCode = process.waitFor();
 
         String output = IOUtils.toString(process.getInputStream());
-        System.out.println(output);
+        if (!output.trim().isEmpty()) {
+            LOG.info(output);
+        }
 
         output = IOUtils.toString(process.getErrorStream());
-        System.out.println(output);
+        if (!output.trim().isEmpty()) {
+            LOG.error(output);
+        }
 
         assertEquals(exitCode, 0);
     }

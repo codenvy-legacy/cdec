@@ -15,21 +15,23 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Codenvy S.A..
 #
-if [ -z "$1" ] || [ "$1" == "prod" ]; then
+
+SERVER=$1
+if [ "${SERVER}" == "prod" ]; then
+    echo "============[ Production will be updated ]=============="
     SSH_KEY_NAME=~/.ssh/cl-server-prod-20130219
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater.codenvycorp.com
-    echo "============[ Production will be updated ]=============="
-elif [ "$1" == "stg" ]; then
+elif [ "${SERVER}" == "stg" ]; then
+    echo "============[ Staging will be updated ]=============="
     SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater.codenvy-stg.com
-    echo "============[ Staging will be updated ]=============="
-elif [ "$1" == "ngt" ]; then
+elif [ "${SERVER}" == "ngt" ]; then
+    echo "============[ Nightly will be updated ]=============="
     SSH_KEY_NAME=~/.ssh/as1-cldide_cl-server.skey
     SSH_AS_USER_NAME=codenvy
     AS_IP=updater-nightly.codenvy-dev.com
-    echo "============[ Nightly will be updated ]=============="
 else
     echo "Unknown server destination"
     exit 1
@@ -57,9 +59,8 @@ uploadCodenvyServerInstallScript() {
     DESCRIPTION="Script to install Codenvy in single-server configuration"
     doUpload
 
-    if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
-        ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    fi
+    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com:8080/g' ${DESTINATION}/${FILENAME}"
 }
 
 uploadCodenvyServerInstallMultiScript() {
@@ -69,9 +70,7 @@ uploadCodenvyServerInstallMultiScript() {
     DESCRIPTION="Script to install Codenvy in multi-server configuration"
     doUpload
 
-    if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
-        ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    fi
+    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
 }
 
 uploadCodenvyServerInstallInstalationManagerScript() {
@@ -81,9 +80,8 @@ uploadCodenvyServerInstallInstalationManagerScript() {
     DESCRIPTION="Script to install Codenvy installation manager"
     doUpload
 
-    if [ "${AS_IP}" == "updater.codenvy-stg.com" ]; then
-        ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    fi
+    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com:8080/g' ${DESTINATION}/${FILENAME}"
 }
 
 uploadCodenvySingleServerInstallProperties() {

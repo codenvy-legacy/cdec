@@ -70,16 +70,6 @@ printPreInstallInfo() {
 
     printLn "Welcome. This program installs Codenvy Installation Manager."
     printLn ""
-    printLn "This program will:"
-    printLn "1. Configure the system"
-    printLn "2. Install Java and other required packages"
-    printLn "3. Install the Codenvy Installation Manager"
-    printLn ""
-    printLn ""
-    printLn "By continuing, you accept the Codenvy Agreement @ http://codenvy.com/legal"
-    printLn ""
-    printLn "Press any key to continue"
-    read -n1 -s
 }
 
 preconfigureSystem() {

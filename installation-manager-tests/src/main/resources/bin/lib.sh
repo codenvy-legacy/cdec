@@ -16,7 +16,7 @@
 # from Codenvy S.A..
 #
 
-INSTALL_LOG="installation-manager-test.log"
+. ./config.sh
 
 printAndLog() {
     echo "$@"
