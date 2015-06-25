@@ -33,6 +33,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.ModificationItem;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Hashtable;
 
 import static com.codenvy.im.managers.NodeConfig.extractConfigFrom;
@@ -99,9 +100,9 @@ public class PasswordManager {
         }
     }
 
-    private void updatePwd(byte[] newPassword, InitialDirContext ldapContext, Config config) throws NamingException {
+    private void updatePwd(byte[] newPassword, InitialDirContext ldapContext, Config config) throws NamingException, UnsupportedEncodingException {
         SSHAPasswordEncryptor sshaPasswordEncryptor = new SSHAPasswordEncryptor();
-        String encryptedPwd = sshaPasswordEncryptor.encrypt(newPassword).toString();
+        String encryptedPwd = new String(sshaPasswordEncryptor.encrypt(newPassword), "UTF-8");
 
         ModificationItem[] mods = new ModificationItem[]{
                 new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("userPassword", encryptedPwd))
