@@ -43,7 +43,6 @@ import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.Response;
 import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -58,7 +57,6 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
@@ -83,6 +81,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -94,7 +93,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.createArtifactOrNull;
@@ -146,7 +144,7 @@ public class InstallationManagerService {
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
                            @ApiResponse(code = 409, message = "Downloading already in progress"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response startDownload(
+    public Response startDownload(
             @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
             @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
 
@@ -159,11 +157,11 @@ public class InstallationManagerService {
             Version version = createVersionOrNull(versionNumber);
 
             delegate.startDownload(artifact, version);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.ACCEPTED).entity(downloadToken).build();
+            return Response.status(Response.Status.ACCEPTED).entity(downloadToken).build();
         } catch (ArtifactNotFoundException | IllegalVersionException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+            return handleException(e, Response.Status.BAD_REQUEST);
         } catch (DownloadAlreadyStartedException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+            return handleException(e, Response.Status.CONFLICT);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -179,12 +177,12 @@ public class InstallationManagerService {
                            @ApiResponse(code = 404, message = "Downloading not found"),
                            @ApiResponse(code = 409, message = "Downloading not in progress"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response stopDownload(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
+    public Response stopDownload(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
         try {
             delegate.stopDownload();
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NO_CONTENT).build();
+            return Response.status(Response.Status.NO_CONTENT).build();
         } catch (DownloadNotStartedException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+            return handleException(e, Response.Status.CONFLICT);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -201,12 +199,12 @@ public class InstallationManagerService {
                            @ApiResponse(code = 409, message = "Downloading not in progress"),
                            @ApiResponse(code = 500, message = "Server error")})
     @Produces(MediaType.APPLICATION_JSON)
-    public javax.ws.rs.core.Response getDownloadProgress(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
+    public Response getDownloadProgress(@PathParam("id") @ApiParam(value = "Download Id") String downloadId) {
         try {
             DownloadProgressResponse downloadProgress = delegate.getDownloadProgress();
-            return javax.ws.rs.core.Response.ok(downloadProgress).build();
+            return Response.ok(downloadProgress).build();
         } catch (DownloadNotStartedException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+            return handleException(e, Response.Status.CONFLICT);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -221,7 +219,7 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response deleteDownloadedArtifact(
+    public Response deleteDownloadedArtifact(
             @PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,
             @PathParam("version") @ApiParam(value = "Artifact version") final String artifactVersion) {
 
@@ -230,7 +228,7 @@ public class InstallationManagerService {
             Version version = Version.valueOf(artifactVersion);
 
             delegate.deleteDownloadedArtifact(artifact, version);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NO_CONTENT).build();
+            return Response.status(Response.Status.NO_CONTENT).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -245,10 +243,10 @@ public class InstallationManagerService {
     @ApiOperation(value = "Gets the list of actual updates from Update Server", response = UpdatesArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getUpdates() {
+    public Response getUpdates() {
         try {
             Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(createArtifact(CDECArtifact.NAME));
-            return javax.ws.rs.core.Response.ok(updates).build();
+            return Response.ok(updates).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -263,14 +261,14 @@ public class InstallationManagerService {
     @ApiOperation(value = "Get download ID being in progress")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
                            @ApiResponse(code = 409, message = "Downloading not in progress")})
-    public javax.ws.rs.core.Response getDownloads() {
+    public Response getDownloads() {
         try {
             String id = delegate.getDownloadIdInProgress();
             Map<String, String> ids = ImmutableMap.of("id", id);
 
-            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(ids)).build();
+            return Response.ok(new JsonStringMapImpl<>(ids)).build();
         } catch (DownloadNotStartedException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.CONFLICT);
+            return handleException(e, Response.Status.CONFLICT);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -285,10 +283,10 @@ public class InstallationManagerService {
     @ApiOperation(value = "Gets the list of downloaded and installed artifacts", response = ArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getArtifacts() {
+    public Response getArtifacts() {
         try {
             Collection<ArtifactInfo> artifacts = delegate.getArtifacts();
-            return javax.ws.rs.core.Response.ok(artifacts).build();
+            return Response.ok(artifacts).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -303,10 +301,10 @@ public class InstallationManagerService {
     @ApiOperation(value = "Gets installed artifacts", response = InstallArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getInstalledVersions() {
+    public Response getInstalledVersions() {
         try {
             Collection<InstallArtifactInfo> installedVersions = delegate.getInstalledVersions();
-            return javax.ws.rs.core.Response.ok(installedVersions).build();
+            return Response.ok(installedVersions).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -321,11 +319,11 @@ public class InstallationManagerService {
     @ApiOperation(value = "Gets updates steps", responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Ok"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getUpdateInfo() {
+    public Response getUpdateInfo() {
         try {
             InstallType installType = configManager.detectInstallationType();
             List<String> infos = delegate.getUpdateInfo(createArtifact(CDECArtifact.NAME), installType);
-            return javax.ws.rs.core.Response.ok(infos).build();
+            return Response.ok(infos).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -341,14 +339,14 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully updated"),
                            @ApiResponse(code = 400, message = "Binaries to install not found or installation step is out of range"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response updateCodenvy(@QueryParam("step") @ApiParam(value = "installation step starting from 0") int installStep) {
+    public Response updateCodenvy(@QueryParam("step") @ApiParam(value = "installation step starting from 0") int installStep) {
         try {
             InstallType installType = configManager.detectInstallationType();
             Artifact artifact = createArtifact(CDECArtifact.NAME);
             Version version = delegate.getLatestInstallableVersion(artifact);
             if (version == null) {
                 return handleException(new IllegalStateException("There is no appropriate version to install"),
-                                       javax.ws.rs.core.Response.Status.BAD_REQUEST);
+                                       Response.Status.BAD_REQUEST);
             }
             Map<String, String> properties = configManager.prepareInstallProperties(null, installType, artifact, version, false);
             final InstallOptions installOptions = new InstallOptions();
@@ -358,16 +356,16 @@ public class InstallationManagerService {
             List<String> infos = delegate.getUpdateInfo(artifact, installType);
             if (installStep < 0 || installStep >= infos.size()) {
                 return handleException(new IllegalArgumentException(format("Installation step is out of range [0..%d]", infos.size() - 1)),
-                                       javax.ws.rs.core.Response.Status.BAD_REQUEST);
+                                       Response.Status.BAD_REQUEST);
             }
 
             installOptions.setStep(installStep);
             String id = delegate.update(artifact, version, installOptions);
 
             Map<String, String> m = ImmutableMap.of("id", id);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.ACCEPTED).entity(new JsonStringMapImpl<>(m)).build();
+            return Response.status(Response.Status.ACCEPTED).entity(new JsonStringMapImpl<>(m)).build();
         } catch (FileNotFoundException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+            return handleException(e, Response.Status.BAD_REQUEST);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -383,12 +381,12 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully updated"),
                            @ApiResponse(code = 404, message = "Updating step not found"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response getUpdateStatus(@PathParam("id") @ApiParam(value = "updating step id") String stepId) {
+    public Response getUpdateStatus(@PathParam("id") @ApiParam(value = "updating step id") String stepId) {
         try {
             InstallArtifactStepInfo info = delegate.getUpdateStepInfo(stepId);
-            return javax.ws.rs.core.Response.ok(info).build();
+            return Response.ok(info).build();
         } catch (InstallationNotStartedException e) {
-            return handleException(e, javax.ws.rs.core.Response.Status.NOT_FOUND);
+            return handleException(e, Response.Status.NOT_FOUND);
         } catch (Exception e) {
             return handleException(e);
         }
@@ -398,25 +396,25 @@ public class InstallationManagerService {
     @GET
     @Path("properties")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets Installation Manager Server configuration", response = Response.class)
-    public javax.ws.rs.core.Response getInstallationManagerServerConfig() {
+    @ApiOperation(value = "Gets Installation Manager Server configuration")
+    public Response getInstallationManagerServerConfig() {
         Map<String, String> properties = delegate.getInstallationManagerProperties();
-        return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+        return Response.ok(new JsonStringMapImpl<>(properties)).build();
     }
 
     /** Gets Codenvy nodes configuration */
     @GET
     @Path("nodes")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets Codenvy nodes configuration", response = Response.class)
-    public javax.ws.rs.core.Response getNodesList() {
+    @ApiOperation(value = "Gets Codenvy nodes configuration")
+    public Response getNodesList() {
         try {
             InstallType installType = configManager.detectInstallationType();
             Config config = configManager.loadInstalledCodenvyConfig(installType);
 
             if (InstallType.SINGLE_SERVER.equals(installType)) {
                 ImmutableMap<String, String> properties = ImmutableMap.of(Config.HOST_URL, config.getHostUrl());
-                return javax.ws.rs.core.Response.ok(toJson(properties)).build();
+                return Response.ok(toJson(properties)).build();
             }
 
             Map<String, Object> selectedProperties = new HashMap<>();
@@ -446,7 +444,7 @@ public class InstallationManagerService {
                 selectedProperties.put(Config.HOST_URL, hostUrl);
             }
 
-            return javax.ws.rs.core.Response.ok(toJson(selectedProperties)).build();
+            return Response.ok(toJson(selectedProperties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -461,10 +459,10 @@ public class InstallationManagerService {
     @ApiOperation(value = "Adds Codenvy node in the multi-node environment", response = NodeInfo.class)
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully added"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response addNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "node DNS to add") String dns) {
+    public Response addNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "node DNS to add") String dns) {
         try {
             NodeInfo nodeInfo = delegate.addNode(dns);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).entity(nodeInfo).build();
+            return Response.status(Response.Status.CREATED).entity(nodeInfo).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -479,10 +477,10 @@ public class InstallationManagerService {
     @ApiOperation(value = "Removes Codenvy node in the multi-node environment")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Successfully removed"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "node DNS to remove") String dns) {
+    public Response removeNode(@QueryParam(value = "dns") @ApiParam(required = true, value = "node DNS to remove") String dns) {
         try {
             delegate.removeNode(dns);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NO_CONTENT).build();
+            return Response.status(Response.Status.NO_CONTENT).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -497,7 +495,7 @@ public class InstallationManagerService {
     @ApiOperation(value = "Performs Codenvy backup", response = BackupInfo.class)
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully created"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response backup(@DefaultValue(CDECArtifact.NAME)
+    public Response backup(@DefaultValue(CDECArtifact.NAME)
                                             @QueryParam(value = "artifact")
                                             @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName) {
 
@@ -507,7 +505,7 @@ public class InstallationManagerService {
             config.setBackupDirectory(backupDir);
 
             BackupInfo backupInfo = delegate.backup(config);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).entity(backupInfo).build();
+            return Response.status(Response.Status.CREATED).entity(backupInfo).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -522,7 +520,7 @@ public class InstallationManagerService {
     @ApiOperation(value = "Performs Codenvy restoring", response = BackupInfo.class)
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully restored"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response restore(@DefaultValue(CDECArtifact.NAME)
+    public Response restore(@DefaultValue(CDECArtifact.NAME)
                                              @QueryParam(value = "artifact")
                                              @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName,
                                              @QueryParam(value = "backupFile")
@@ -535,7 +533,7 @@ public class InstallationManagerService {
             config.setBackupFile(backupFile);
 
             BackupInfo backupInfo = delegate.restore(config);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).entity(backupInfo).build();
+            return Response.status(Response.Status.CREATED).entity(backupInfo).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -550,14 +548,14 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Subscription added"),
                            @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
                            @ApiResponse(code = 500, message = "Server error")})
-    public javax.ws.rs.core.Response addTrialSubscription() throws IOException, CloneNotSupportedException {
+    public Response addTrialSubscription() throws IOException, CloneNotSupportedException {
         if (saasUserCredentials == null) {
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.FORBIDDEN).build();
+            return Response.status(Response.Status.FORBIDDEN).build();
         }
 
         try {
             delegate.addTrialSaasSubscription(saasUserCredentials.clone());
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
+            return Response.status(Response.Status.CREATED).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -575,21 +573,21 @@ public class InstallationManagerService {
                            @ApiResponse(code = 404, message = "Subscription not found"),
                            @ApiResponse(code = 500, message = "Server error")})
     @ApiOperation(value = "Gets OnPremises subscription for Codenvy SaaS user", response = SubscriptionDescriptor.class)
-    public javax.ws.rs.core.Response getOnPremisesSaasSubscription() {
+    public Response getOnPremisesSaasSubscription() {
         if (saasUserCredentials == null) {
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.FORBIDDEN).build();
+            return Response.status(Response.Status.FORBIDDEN).build();
         }
 
         try {
             SubscriptionDescriptor descriptor = delegate.getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, saasUserCredentials);
             if (descriptor == null) {
-                return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND).build();
+                return Response.status(Response.Status.NOT_FOUND).build();
             }
 
             // remove useless info, since links point to Codenvy SaaS API
             descriptor.setLinks(null);
 
-            return javax.ws.rs.core.Response.ok(toJson(descriptor)).build();
+            return Response.ok(toJson(descriptor)).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -604,7 +602,7 @@ public class InstallationManagerService {
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Login to Codenvy SaaS",
             notes = "After login is successful SaaS user credentials will be cached.")
-    public javax.ws.rs.core.Response loginToCodenvySaaS(Credentials credentials) {
+    public Response loginToCodenvySaaS(Credentials credentials) {
         try {
             logoutFromCodenvySaaS();
 
@@ -623,7 +621,7 @@ public class InstallationManagerService {
             // cache SaaS user credentials into the state of service
             this.saasUserCredentials = saasUserCredentials;
 
-            return javax.ws.rs.core.Response.ok().build();
+            return Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -635,13 +633,13 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Logout from Codenvy SaaS")
-    public javax.ws.rs.core.Response logoutFromCodenvySaaS() {
+    public Response logoutFromCodenvySaaS() {
         try {
             if (saasUserCredentials != null) {
                 delegate.logoutFromCodenvySaaS(saasUserCredentials.getToken());
             }
 
-            return javax.ws.rs.core.Response.ok().build();
+            return Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
         } finally {
@@ -658,7 +656,7 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Artifact not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets list of the specific artifact and version properties")
-    public javax.ws.rs.core.Response getArtifactProperties(@PathParam("artifact") final String artifactName,
+    public Response getArtifactProperties(@PathParam("artifact") final String artifactName,
                                                            @PathParam("version") final String artifactVersion) {
         try {
             Artifact artifact = createArtifact(artifactName);
@@ -676,7 +674,7 @@ public class InstallationManagerService {
                 properties.put(ArtifactProperties.BUILD_TIME_PROPERTY, valueInIso);
             }
 
-            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+            return Response.ok(new JsonStringMapImpl<>(properties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -689,11 +687,11 @@ public class InstallationManagerService {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Gets list of properties from the storage", response = Response.class)
-    public javax.ws.rs.core.Response getStorageProperties() {
+    @ApiOperation(value = "Gets list of properties from the storage")
+    public Response getStorageProperties() {
         try {
             Map<String, String> properties = delegate.loadStorageProperties();
-            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+            return Response.ok(new JsonStringMapImpl<>(properties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -707,10 +705,10 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Inserts new properties into the storage and update existed")
-    public javax.ws.rs.core.Response insertStorageProperties(Map<String, String> properties) {
+    public Response insertStorageProperties(Map<String, String> properties) {
         try {
             delegate.storeStorageProperties(properties);
-            return javax.ws.rs.core.Response.ok().build();
+            return Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -725,10 +723,10 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets property value from the storage")
-    public javax.ws.rs.core.Response getStorageProperty(@PathParam("key") String key) {
+    public Response getStorageProperty(@PathParam("key") String key) {
         try {
             String value = delegate.loadStorageProperty(key);
-            return javax.ws.rs.core.Response.ok(value).build();
+            return Response.ok(value).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -742,10 +740,10 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property in the storage")
-    public javax.ws.rs.core.Response updateStorageProperty(@PathParam("key") String key, String value) {
+    public Response updateStorageProperty(@PathParam("key") String key, String value) {
         try {
             delegate.storeStorageProperty(key, value);
-            return javax.ws.rs.core.Response.ok().build();
+            return Response.ok().build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -758,10 +756,10 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Deletes property from the storage")
-    public javax.ws.rs.core.Response deleteStorageProperty(@PathParam("key") String key) {
+    public Response deleteStorageProperty(@PathParam("key") String key) {
         try {
             delegate.deleteStorageProperty(key);
-            return javax.ws.rs.core.Response.noContent().build();
+            return Response.noContent().build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -775,11 +773,11 @@ public class InstallationManagerService {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets Codenvy configuration properties")
-    public javax.ws.rs.core.Response getCodenvyProperties() {
+    public Response getCodenvyProperties() {
         try {
             Config config = configManager.loadInstalledCodenvyConfig();
             Map<String, String> properties = maskPrivateProperties(config.getProperties());
-            return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(properties)).build();
+            return Response.ok(new JsonStringMapImpl<>(properties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
@@ -794,14 +792,14 @@ public class InstallationManagerService {
             @ApiResponse(code = 404, message = "Property not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets specific Codenvy configuration property")
-    public javax.ws.rs.core.Response getCodenvyProperty(@PathParam("key") String key) {
+    public Response getCodenvyProperty(@PathParam("key") String key) {
         try {
             Config config = configManager.loadInstalledCodenvyConfig();
             Map<String, String> properties = maskPrivateProperties(config.getProperties());
 
             if (properties.containsKey(key)) {
                 Map<String, String> m = ImmutableMap.of(key, properties.get(key));
-                return javax.ws.rs.core.Response.ok(new JsonStringMapImpl<>(m)).build();
+                return Response.ok(new JsonStringMapImpl<>(m)).build();
             } else {
                 throw PropertyNotFoundException.from(key);
             }
@@ -816,56 +814,58 @@ public class InstallationManagerService {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Successfully updated"),
+            @ApiResponse(code = 404, message = "Properties not found"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
-    public javax.ws.rs.core.Response updateCodenvyProperties(Map<String, String> properties) {
+    public Response updateCodenvyProperties(Map<String, String> properties) {
         try {
             delegate.updateArtifactConfig(createArtifact(CDECArtifact.NAME), properties);
-            return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.CREATED).build();
+            return Response.status(Response.Status.CREATED).build();
         } catch (Exception e) {
             return handleException(e);
         }
     }
 
-    private javax.ws.rs.core.Response handleException(Exception e) {
-        javax.ws.rs.core.Response.Status status;
+    private Response handleException(Exception e) {
+        Response.Status status;
 
         if (e instanceof ArtifactNotFoundException || e instanceof PropertyNotFoundException) {
-            status = javax.ws.rs.core.Response.Status.NOT_FOUND;
+            status = Response.Status.NOT_FOUND;
         } else if (e instanceof HttpException) {
-            status = javax.ws.rs.core.Response.Status.fromStatusCode(((HttpException)e).getStatus());
+            status = Response.Status.fromStatusCode(((HttpException)e).getStatus());
         } else if (e instanceof AuthenticationException
                    || e instanceof IllegalVersionException) {
-            status = javax.ws.rs.core.Response.Status.BAD_REQUEST;
+            status = Response.Status.BAD_REQUEST;
         } else if (e instanceof PropertiesNotFoundException) {
             return handlePropertiesNotFoundException((PropertiesNotFoundException) e);
         } else {
-            status = javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+            status = Response.Status.INTERNAL_SERVER_ERROR;
         }
 
         return handleException(e, status);
     }
 
-    private javax.ws.rs.core.Response handleException(Exception e, javax.ws.rs.core.Response.Status status) {
+    private Response handleException(Exception e, Response.Status status) {
         LOG.error(e.getMessage(), e);
 
         JsonStringMapImpl<String> msgBody = new JsonStringMapImpl<>(ImmutableMap.of("message", e.getMessage()));
-        return javax.ws.rs.core.Response.status(status)
-                                        .entity(msgBody)
-                                        .type(MediaType.APPLICATION_JSON_TYPE)
-                                        .build();
+        return createResponse(status, msgBody);
     }
 
-    private javax.ws.rs.core.Response handlePropertiesNotFoundException(PropertiesNotFoundException e) {
+    private Response handlePropertiesNotFoundException(PropertiesNotFoundException e) {
         LOG.error(e.getMessage(), e);
 
-        javax.ws.rs.core.Response.Status status = javax.ws.rs.core.Response.Status.NOT_FOUND;
+        Response.Status status = Response.Status.NOT_FOUND;
         JsonStringMapImpl msgBody = new JsonStringMapImpl(ImmutableMap.of("message", e.getMessage(),
                                                                           "properties", new JsonArrayImpl(e.getProperties())));
-        return javax.ws.rs.core.Response.status(status)
-                                        .entity(msgBody)
-                                        .type(MediaType.APPLICATION_JSON_TYPE)
-                                        .build();
+        return createResponse(status, msgBody);
+    }
+
+    private Response createResponse(Response.Status status, JsonStringMapImpl body) {
+        return Response.status(status)
+                       .entity(body)
+                       .type(MediaType.APPLICATION_JSON_TYPE)
+                       .build();
     }
 
     /**
