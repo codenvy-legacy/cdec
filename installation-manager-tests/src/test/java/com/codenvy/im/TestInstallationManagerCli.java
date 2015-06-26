@@ -59,6 +59,11 @@ public class TestInstallationManagerCli {
         doTest("test-update-single-node.sh");
     }
 
+    @Test
+    public void testInstallUpdateImCliClient() throws Exception {
+        doTest("test-install-update-im-cli-client.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(dir.toFile(), "chmod", "+x", testScript);
         doExecute(dir.toFile(), "./" + testScript);
@@ -68,7 +73,6 @@ public class TestInstallationManagerCli {
         ProcessBuilder builder = new ProcessBuilder(commands);
         builder.directory(directory);
         Process process = builder.start();
-        process.waitFor();
 
         int exitCode = process.waitFor();
 

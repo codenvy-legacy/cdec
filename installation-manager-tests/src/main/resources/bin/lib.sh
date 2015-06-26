@@ -44,17 +44,26 @@ validateExitCode() {
 }
 
 vagrantDestroy() {
-    echo
-#    vagrant destroy -f >> ${TEST_LOG}
+#    echo
+    vagrant destroy -f >> ${TEST_LOG}
 }
 
-validateInstalledVersion() {
+validateInstalledCodenvyVersion() {
     VERSION=$1
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
     if [[ ! ${OUTPUT} =~ .*"ideVersion":"${VERSION}".* ]]; then
         validateExitCode 1
     fi
 }
+
+validateInstalledImCliClientVersion() {
+    VERSION=$1
+    OUTPUT=$(executeIMCommand "im-install" "--list")
+    if [[ ! ${OUTPUT} =~ ".*\"version\" : \"${VERSION}\".*" ]]; then
+        validateExitCode 1
+    fi
+}
+
 retrieveInstallLog() {
     scp -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem:install.log tmp.log
     if [ -f "tmp.log" ]; then
@@ -73,6 +82,16 @@ installCodenvy() {
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
     else
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION} >> ${TEST_LOG}
+    fi
+    validateExitCode $?
+}
+
+installImCliClient() {
+    VERSION=$1
+    if [ -z ${VERSION} ]; then
+        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli)' >> ${TEST_LOG}
+    else
+        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli) --version='${VERSION} >> ${TEST_LOG}
     fi
     validateExitCode $?
 }

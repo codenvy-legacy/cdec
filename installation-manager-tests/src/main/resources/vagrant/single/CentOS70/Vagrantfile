@@ -1,5 +1,5 @@
-box      = 'centos7.0-preconfigured.v6'
-url      = 'https://install.codenvycorp.com/centos7.0-preconfigured.v6.box'
+box      = 'centos7.1-preconfigured.v7.box'
+url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v7.box'
 ram      = '3072'
 cpus     = '2'
 bridge   = 'eth0'
