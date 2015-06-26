@@ -66,8 +66,6 @@ printLn() {
 }
 
 printPreInstallInfo() {
-    checkOS
-
     printLn "Welcome. This program installs Codenvy Installation Manager."
     printLn ""
 }
