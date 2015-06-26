@@ -30,12 +30,12 @@ installCodenvy ${PREV_CODENVY_VERSION}
 auth "admin" "password"
 validateInstalledVersion ${PREV_CODENVY_VERSION}
 
-executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-auth "admin" "password"
-validateInstalledVersion ${LATEST_CODENVY_VERSION}
+#executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
+#executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
+#auth "admin" "password"
+#validateInstalledVersion ${LATEST_CODENVY_VERSION}
 
 printAndLog "RESULT: PASSED"
 retrieveInstallLog
 
-vagrantDestroy
+#vagrantDestroy
