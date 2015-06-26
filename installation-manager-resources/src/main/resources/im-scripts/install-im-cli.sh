@@ -7,7 +7,7 @@ setRunOptions() {
     DIR="${HOME}/codenvy-im"
     ARTIFACT="installation-manager-cli"
 
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*"version":"\([^"].*\)".*/\1/'`
+    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*"version":"\([^"]*\)".*/\1/'`
     for var in "$@"; do
         if [[ "$var" =~ --version=.* ]]; then
             VERSION=`echo "$var" | sed -e "s/--version=//g"`
