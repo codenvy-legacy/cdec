@@ -36,6 +36,5 @@ auth "admin" "password"
 validateInstalledVersion ${LATEST_CODENVY_VERSION}
 
 printAndLog "RESULT: PASSED"
-retrieveInstallLog
 
 vagrantDestroy

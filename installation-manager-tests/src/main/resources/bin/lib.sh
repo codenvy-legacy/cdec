@@ -37,7 +37,6 @@ validateExitCode() {
     EXIT_CODE=$1
     if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
 	    printAndLog "RESULT: FAILED"
-	    retrieveInstallLog
 	    vagrantDestroy
         exit ${EXIT_CODE}
     fi
@@ -61,13 +60,17 @@ validateInstalledCodenvyVersion() {
     log "OK"
 }
 
-
 validateInstalledImCliClientVersion() {
+    log ">>> validateInstalledImCliClientVersion()"
+
     VERSION=$1
-    OUTPUT=$(executeIMCommand "im-install" "--list")
-    if [[ ! ${OUTPUT} =~ ".*\"version\" : \"${VERSION}\".*" ]]; then
+    executeIMCommand "im-install" "--list"
+
+    if [[ ! ${OUTPUT} =~ .*\"version\".*\:.*\"${VERSION}\".* ]]; then
         validateExitCode 1
     fi
+
+    log "OK"
 }
 
 retrieveInstallLog() {
@@ -93,12 +96,16 @@ installCodenvy() {
     else
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION} >> ${TEST_LOG}
     fi
+
+    retrieveInstallLog
     validateExitCode $?
 
     log "OK"
 }
 
 installImCliClient() {
+    log ">>> installImCliClient()"
+
     VERSION=$1
     if [ -z ${VERSION} ]; then
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli)' >> ${TEST_LOG}
@@ -106,6 +113,8 @@ installImCliClient() {
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli) --version='${VERSION} >> ${TEST_LOG}
     fi
     validateExitCode $?
+
+    log "OK"
 }
 
 vagrantUp() {
@@ -140,7 +149,8 @@ executeIMCommand() {
     log
     log "executing command "$@
 
-    ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@" >> ${TEST_LOG}
+    OUTPUT=$(ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@")
+    log ${OUTPUT}
     validateExitCode $?
 
     log "OK"

@@ -28,13 +28,12 @@ log "Latest versions: "${LATEST_IM_CLI_CLIENT_VERSION}
 
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
-#
-#executeIMCommand "im-download" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
-#executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
-#
-#validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
-#
-#printAndLog "RESULT: PASSED"
-#retrieveInstallLog
 
-#vagrantDestroy
+executeIMCommand "im-download" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+
+validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
+
+printAndLog "RESULT: PASSED"
+
+vagrantDestroy
