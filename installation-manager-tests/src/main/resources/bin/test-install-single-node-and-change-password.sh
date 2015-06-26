@@ -18,9 +18,9 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+
+printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
 
 installCodenvy
 auth "admin" "password"

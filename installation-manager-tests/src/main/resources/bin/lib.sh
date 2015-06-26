@@ -44,17 +44,17 @@ validateExitCode() {
 }
 
 vagrantDestroy() {
-    echo
-#    vagrant destroy -f >> ${TEST_LOG}
+    vagrant destroy -f >> ${TEST_LOG}
 }
 
 validateInstalledVersion() {
     VERSION=$1
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    if [[ ! ${OUTPUT} =~ .*"ideVersion":"${VERSION}".* ]]; then
+    if [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]]; then
         validateExitCode 1
     fi
 }
+
 retrieveInstallLog() {
     scp -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem:install.log tmp.log
     if [ -f "tmp.log" ]; then
