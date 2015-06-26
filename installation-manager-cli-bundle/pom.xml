@@ -29,7 +29,7 @@
     <packaging>bundle</packaging>
     <name>Codenvy :: IM :: Installation Manager CLI Bundle</name>
     <properties>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.javadoc.jar.skip>true</maven.javadoc.jar.skip>
     </properties>
     <dependencies>
         <dependency>
