@@ -28,6 +28,9 @@
     <artifactId>installation-manager-cli-bundle</artifactId>
     <packaging>bundle</packaging>
     <name>Codenvy :: IM :: Installation Manager CLI Bundle</name>
+    <properties>
+        <maven.javadoc.jar.skip>true</maven.javadoc.jar.skip>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.cli</groupId>

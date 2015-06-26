@@ -44,17 +44,23 @@ validateExitCode() {
 }
 
 vagrantDestroy() {
-#    echo
     vagrant destroy -f >> ${TEST_LOG}
 }
 
 validateInstalledCodenvyVersion() {
     VERSION=$1
+
+    log
+    log "validation installed version "${VERSION}
+
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    if [[ ! ${OUTPUT} =~ .*"ideVersion":"${VERSION}".* ]]; then
+    if [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]]; then
         validateExitCode 1
     fi
+
+    log "OK"
 }
+
 
 validateInstalledImCliClientVersion() {
     VERSION=$1
@@ -78,12 +84,18 @@ retrieveInstallLog() {
 
 installCodenvy() {
     VERSION=$1
+
+    log
+    log "Codenvy installation "${VERSION}
+
     if [ -z ${VERSION} ]; then
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
     else
         ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION} >> ${TEST_LOG}
     fi
     validateExitCode $?
+
+    log "OK"
 }
 
 installImCliClient() {
@@ -106,11 +118,11 @@ vagrantUp() {
 }
 
 auth() {
-    log
-    log "authentication"
-
     USERNAME=$1
     PASSWORD=$2
+
+    log
+    log "authentication "${USERNAME}" "${PASSWORD}
 
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://codenvy.onprem/api/auth/login)
     validateExitCode $?
@@ -120,6 +132,8 @@ auth() {
     if [[ ! ${OUTPUT} =~ .*value.* ]]; then
         validateExitCode 1
     fi
+
+    log "OK"
 }
 
 executeIMCommand() {
@@ -128,4 +142,6 @@ executeIMCommand() {
 
     ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@" >> ${TEST_LOG}
     validateExitCode $?
+
+    log "OK"
 }

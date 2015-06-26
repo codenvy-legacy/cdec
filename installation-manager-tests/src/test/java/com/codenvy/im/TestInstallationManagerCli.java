@@ -49,7 +49,7 @@ public class TestInstallationManagerCli {
         doExecute(dir.toFile(), "chmod", "+x", "config.sh");
     }
 
-    @Test
+    //    @Test
     public void testInstallSingleNodeAndChangePassword() throws Exception {
         doTest("test-install-single-node-and-change-password.sh");
     }
