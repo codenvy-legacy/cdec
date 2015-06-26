@@ -25,12 +25,12 @@ cleanUp() {
 }
 
 printAndLog() {
-    echo "$@"
-    log "$@"
+    echo $@
+    log $@
 }
 
 log() {
-    echo "$@" >> ${TEST_LOG}
+    echo "TEST: "$@ >> ${TEST_LOG}
 }
 
 validateExitCode() {
@@ -45,9 +45,16 @@ validateExitCode() {
 
 vagrantDestroy() {
     echo
-    vagrant destroy -f >> ${TEST_LOG}
+#    vagrant destroy -f >> ${TEST_LOG}
 }
 
+validateInstalledVersion() {
+    VERSION=$1
+    OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
+    if [[ ! ${OUTPUT} =~ .*"ideVersion":"${VERSION}".* ]]; then
+        validateExitCode 1
+    fi
+}
 retrieveInstallLog() {
     scp -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem:install.log tmp.log
     if [ -f "tmp.log" ]; then
@@ -61,7 +68,12 @@ retrieveInstallLog() {
 }
 
 installCodenvy() {
-    ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
+    VERSION=$1
+    if [ -z ${VERSION} ]; then
+        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
+    else
+        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION} >> ${TEST_LOG}
+    fi
     validateExitCode $?
 }
 
@@ -76,7 +88,7 @@ vagrantUp() {
 
 auth() {
     log
-    log "TEST: authentication"
+    log "authentication"
 
     USERNAME=$1
     PASSWORD=$2
@@ -93,7 +105,7 @@ auth() {
 
 executeIMCommand() {
     log
-    log "TEST: executing command "$@
+    log "executing command "$@
 
     ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@" >> ${TEST_LOG}
     validateExitCode $?

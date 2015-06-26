@@ -54,6 +54,11 @@ public class TestInstallationManagerCli {
         doTest("test-install-single-node-and-change-password.sh");
     }
 
+    @Test
+    public void testUpdateSingleNode() throws Exception {
+        doTest("test-update-single-node.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(dir.toFile(), "chmod", "+x", testScript);
         doExecute(dir.toFile(), "./" + testScript);
