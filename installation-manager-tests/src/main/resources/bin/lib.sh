@@ -44,6 +44,7 @@ validateExitCode() {
 }
 
 vagrantDestroy() {
+    echo
     vagrant destroy -f >> ${TEST_LOG}
 }
 
@@ -57,6 +58,11 @@ retrieveInstallLog() {
         fi
         rm tmp.log
     fi
+}
+
+installCodenvy() {
+    ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
+    validateExitCode $?
 }
 
 vagrantUp() {

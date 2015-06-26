@@ -16,7 +16,6 @@
 # from Codenvy S.A..
 #
 
-PROTOCOL="http"
-SERVER="updater-nightly.codenvy-dev.com:8080"
+UPDATE_SERVER="http://updater-nightly.codenvy-dev.com:8080/update"
 TEST_LOG="installation-manager-test.log"
 SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS70/Vagrantfile"

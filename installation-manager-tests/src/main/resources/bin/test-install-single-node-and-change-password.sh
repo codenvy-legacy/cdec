@@ -18,21 +18,16 @@
 
 . ./lib.sh
 
-VAGRANT_FILE="../vagrant/single/CentOS70/Vagrantfile"
-
 printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${PROTOCOL}'://'${SERVER}'/update/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
-validateExitCode $?
-
+installCodenvy
 auth "admin" "password"
-
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
-
 retrieveInstallLog
+
 vagrantDestroy
