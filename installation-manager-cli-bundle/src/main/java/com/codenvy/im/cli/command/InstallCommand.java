@@ -39,6 +39,7 @@ import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -291,6 +292,7 @@ public class InstallCommand extends AbstractIMCommand {
         switch (artifactName) {
             case InstallManagerArtifact.NAME:
                 options.setCliUserHomeDir(System.getProperty("user.home"));
+                options.setConfigProperties(Collections.EMPTY_MAP);
                 break;
 
             case CDECArtifact.NAME:
