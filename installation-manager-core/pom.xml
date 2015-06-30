@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.10.2-SNAPSHOT</version>
+        <version>3.10.2</version>
     </parent>
     <artifactId>installation-manager-core</artifactId>
     <name>Codenvy :: IM :: Installation Manager Core</name>
@@ -298,13 +298,13 @@
                                             <replacevalue>saas.api.endpoint=http://nightly.codenvy-stg.com/api</replacevalue>
                                         </replace>
                                         <tstamp>
-                                            <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute"/>
+                                            <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />
                                         </tstamp>
                                         <touch datetime="${touch.time}">
-                                            <fileset dir="${project.build.directory}/classes/codenvy"/>
+                                            <fileset dir="${project.build.directory}/classes/codenvy" />
                                         </touch>
                                         <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
-                                            <zipfileset dir="${project.build.directory}/classes/codenvy/" prefix="codenvy"/>
+                                            <zipfileset dir="${project.build.directory}/classes/codenvy/" prefix="codenvy" />
                                         </jar>
                                     </target>
                                 </configuration>
