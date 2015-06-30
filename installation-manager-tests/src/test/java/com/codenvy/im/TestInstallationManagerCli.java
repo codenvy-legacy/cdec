@@ -55,8 +55,8 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testUpdateSingleNode() throws Exception {
-        doTest("test-update-single-node.sh");
+    public void testInstallMultiNodeAndChangePassword() throws Exception {
+        doTest("test-install-multi-node-and-change-password.sh");
     }
 
     @Test

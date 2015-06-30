@@ -87,14 +87,19 @@ retrieveInstallLog() {
 
 installCodenvy() {
     VERSION=$1
+    MULTI=$2
 
     log
-    log "Codenvy installation "${VERSION}
+    log "Codenvy installation "${VERSION}" "${MULTI}
+
+    if [ ! -z ${MULTI} ]; then
+        scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
+    fi
 
     if [ -z ${VERSION} ]; then
-        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent' >> ${TEST_LOG}
+        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent '${MULTI} >> ${TEST_LOG}
     else
-        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION} >> ${TEST_LOG}
+        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION}' '${MULTI} >> ${TEST_LOG}
     fi
 
     retrieveInstallLog
