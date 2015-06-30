@@ -68,7 +68,7 @@ public class TestHttpTransport {
     @Test
     public void testDoGet(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        Map value = Commons.asMap(httpTransport.doGet("http://0.0.0.0:" + port + "/rest/test/get"));
+        Map value = Commons.asMap(httpTransport.doGet("http://localhost:" + port + "/rest/test/get"));
 
         assertNotNull(value);
         assertEquals(value.size(), 1);
@@ -79,7 +79,7 @@ public class TestHttpTransport {
     public void testDoPost(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
-        Map value = Commons.asMap(httpTransport.doPost("http://0.0.0.0:" + port + "/rest/test/post", body, "token"));
+        Map value = Commons.asMap(httpTransport.doPost("http://localhost:" + port + "/rest/test/post", body, "token"));
 
         assertNotNull(value);
         assertEquals(value.size(), 1);
@@ -90,7 +90,7 @@ public class TestHttpTransport {
     public void testDoPostWithoutToken(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
-        Map value = Commons.asMap(httpTransport.doPost("http://0.0.0.0:" + port + "/rest/test/post", body));
+        Map value = Commons.asMap(httpTransport.doPost("http://localhost:" + port + "/rest/test/post", body));
 
         assertNotNull(value);
         assertEquals(value.size(), 1);
@@ -101,7 +101,7 @@ public class TestHttpTransport {
     public void testDoPostEmptyResponse(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
-        String response = httpTransport.doPost("http://0.0.0.0:" + port + "/rest/test/post-no-content", body, "token");
+        String response = httpTransport.doPost("http://localhost:" + port + "/rest/test/post-no-content", body, "token");
         assertTrue(response.isEmpty());
     }
 
@@ -111,7 +111,7 @@ public class TestHttpTransport {
         java.nio.file.Path destFile = destDir.resolve("tmp");
 
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/download", destDir);
+        httpTransport.download("http://localhost:" + port + "/rest/test/download", destDir);
 
         assertTrue(Files.exists(destFile));
         try (InputStream in = Files.newInputStream(destFile)) {
@@ -124,13 +124,13 @@ public class TestHttpTransport {
         java.nio.file.Path destDir = Paths.get("target", "download");
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
 
-        httpTransport.download("http://0.0.0.0:" + port + "/rest/test/throwException", destDir);
+        httpTransport.download("http://localhost:" + port + "/rest/test/throwException", destDir);
     }
 
     @Test
     public void testDoOption(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        Map value = Commons.asMap(httpTransport.doOption("http://0.0.0.0:" + port + "/rest/test", null));
+        Map value = Commons.asMap(httpTransport.doOption("http://localhost:" + port + "/rest/test", null));
 
         assertNotNull(value);
         assertEquals(value.size(), 1);
@@ -140,7 +140,7 @@ public class TestHttpTransport {
     @Test
     public void testDoDelete(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        httpTransport.doDelete("http://0.0.0.0:" + port + "/rest/test/delete", null);
+        httpTransport.doDelete("http://localhost:" + port + "/rest/test/delete", null);
     }
 
 
@@ -153,7 +153,7 @@ public class TestHttpTransport {
     @Test(expectedExceptions = HttpException.class)
     public void testRequestFailedWrongPath(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
-        httpTransport.doGet("http://0.0.0.0:" + port + "/rest/test/unknown");
+        httpTransport.doGet("http://localhost:" + port + "/rest/test/unknown");
     }
 
     @Path("test")
