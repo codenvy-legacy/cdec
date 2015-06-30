@@ -49,7 +49,7 @@ public class TestInstallationManagerCli {
         doExecute(dir.toFile(), "chmod", "+x", "config.sh");
     }
 
-        @Test
+    @Test
     public void testInstallSingleNodeAndChangePassword() throws Exception {
         doTest("test-install-single-node-and-change-password.sh");
     }
@@ -62,6 +62,21 @@ public class TestInstallationManagerCli {
     @Test
     public void testInstallUpdateImCliClient() throws Exception {
         doTest("test-install-update-im-cli-client.sh");
+    }
+
+    @Test
+    public void testInstallNonDownloadedArtifact() throws Exception {
+        doTest("im-install/test-install-non-downloaded-artifact.sh");
+    }
+
+    @Test
+    public void testInstallUnknownArtifact() throws Exception {
+        doTest("im-install/test-install-unknown-artifact.sh");
+    }
+
+    @Test
+    public void testInstallUnknownVersion() throws Exception {
+        doTest("im-install/test-install-unknown-version.sh");
     }
 
     private void doTest(String testScript) throws Exception {

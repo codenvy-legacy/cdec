@@ -66,7 +66,7 @@ validateInstalledImCliClientVersion() {
     VERSION=$1
     executeIMCommand "im-install" "--list"
 
-    if [[ ! ${OUTPUT} =~ .*\"version\".*\:.*\"${VERSION}\".* ]]; then
+    if [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]]; then
         validateExitCode 1
     fi
 
