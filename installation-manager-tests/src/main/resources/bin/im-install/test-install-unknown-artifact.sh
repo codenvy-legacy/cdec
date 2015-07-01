@@ -18,20 +18,18 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Install and update IM CLI client"
+printAndLog "TEST CASE: Install unknown artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Available versions: "${AVAILABLE_IM_CLI_CLIENT_VERSIONS}
-log "Previos versions: "${PREV_IM_CLI_CLIENT_VERSION}
-log "Latest versions: "${LATEST_IM_CLI_CLIENT_VERSION}
+log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
 
-installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
+installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
+validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
 executeIMCommand "im-install" "unknown"
 
-if [[ ! ${OUTPUT} =~ .*\"message\".*\:.*\"Artifact.*'unknown'.*not.*found\".* ]]; then
+if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".* ]]; then
     validateExitCode 1
 fi
 

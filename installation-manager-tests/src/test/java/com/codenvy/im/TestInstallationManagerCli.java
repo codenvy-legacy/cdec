@@ -79,6 +79,31 @@ public class TestInstallationManagerCli {
         doTest("im-install/test-install-unknown-version.sh");
     }
 
+    @Test
+    public void testCheckRemoteUpdate() throws Exception {
+        doTest("im-download/test-check-remote-update.sh");
+    }
+
+    @Test
+    public void testDownloadAllUpdates() throws Exception {
+        doTest("im-download/test-download-all-updates.sh");
+    }
+
+    @Test
+    public void testGetListOfDownloadedArtifacts() throws Exception {
+        doTest("im-download/test-get-list-of-downloaded-artifacts.sh");
+    }
+
+    @Test
+    public void testDownloadUnknownArtifact() throws Exception {
+        doTest("im-download/test-download-unknown-artifact.sh");
+    }
+
+    @Test
+    public void testDownloadUnknownVersion() throws Exception {
+        doTest("im-download/test-download-unknown-version.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(dir.toFile(), "chmod", "+x", testScript);
         doExecute(dir.toFile(), "./" + testScript);

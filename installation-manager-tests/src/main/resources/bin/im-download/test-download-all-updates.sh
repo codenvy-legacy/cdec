@@ -18,18 +18,19 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Install unknown version of artifact 'codenvy'"
+printAndLog "TEST CASE: Download all updates"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
+log "Latest Codenvy version: "${LATEST_CODENVY_VERSION}
 log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
 
 installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "im-install" "codenvy" "1.0.0"
+executeIMCommand "im-download"
 
-if [[ ! ${OUTPUT} =~ .*Can\'t.download.installation.properties\..*Unexpected.error\..Can\'t.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.* ]]; then
+if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"label\".\:.\"RC_UNSTABLE\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY_VERSION}.zip\".*\"status\".\:.\"DOWNLOADED\".*\"status\".\:.\"OK\".* ]]; then
     validateExitCode 1
 fi
 

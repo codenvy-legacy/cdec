@@ -18,20 +18,19 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Install and update IM CLI client"
+printAndLog "TEST CASE: Install version which is not downloaded"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Available versions: "${AVAILABLE_IM_CLI_CLIENT_VERSIONS}
-log "Previos versions: "${PREV_IM_CLI_CLIENT_VERSION}
-log "Latest versions: "${LATEST_IM_CLI_CLIENT_VERSION}
+log "Latest Codenvy version: "${LATEST_CODENVY_VERSION}
+log "Latest IM versions: "${LATEST_IM_CLI_CLIENT_VERSION}
 
-installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
+installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
+validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".*\:.*\"FAILURE\".*\"message\".*\:.*\"Binaries.*to.*install.*installation-manager-cli\:${LATEST_IM_CLI_CLIENT_VERSION}.*not.*found\".* ]]; then
+if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".* ]]; then
     validateExitCode 1
 fi
 

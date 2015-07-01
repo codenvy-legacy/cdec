@@ -61,7 +61,7 @@ validateInstalledCodenvyVersion() {
 }
 
 validateInstalledImCliClientVersion() {
-    log ">>> validateInstalledImCliClientVersion()"
+    log "validateInstalledImCliClientVersion() >>> start"
 
     VERSION=$1
     executeIMCommand "im-install" "--list"
@@ -70,7 +70,7 @@ validateInstalledImCliClientVersion() {
         validateExitCode 1
     fi
 
-    log "OK"
+    log "validateInstalledImCliClientVersion() >>> OK"
 }
 
 retrieveInstallLog() {
@@ -104,7 +104,7 @@ installCodenvy() {
 }
 
 installImCliClient() {
-    log ">>> installImCliClient()"
+    log "installImCliClient() >>> start"
 
     VERSION=$1
     if [ -z ${VERSION} ]; then
@@ -114,7 +114,7 @@ installImCliClient() {
     fi
     validateExitCode $?
 
-    log "OK"
+    log "installImCliClient() >>> OK"
 }
 
 vagrantUp() {
