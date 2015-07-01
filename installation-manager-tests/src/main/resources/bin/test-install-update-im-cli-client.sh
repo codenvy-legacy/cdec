@@ -31,6 +31,7 @@ validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
 executeIMCommand "im-download" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
 executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+executeIMCommand "help" # just to update itself
 
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 

@@ -17,7 +17,8 @@
 #
 
 
-. ../lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Install unknown CLI version"
 

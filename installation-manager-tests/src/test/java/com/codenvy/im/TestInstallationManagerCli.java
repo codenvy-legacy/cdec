@@ -64,17 +64,17 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testInstallNonDownloadedArtifact() throws Exception {
-        doTest("im-install", "test-install-non-downloaded-artifact.sh");
+        doTest("im-install/test-install-non-downloaded-artifact.sh");
     }
 
     @Test
     public void testInstallUnknownArtifact() throws Exception {
-        doTest("im-install", "test-install-unknown-artifact.sh");
+        doTest("im-install/test-install-unknown-artifact.sh");
     }
 
     @Test
     public void testInstallUnknownVersion() throws Exception {
-        doTest("im-install", "test-install-unknown-version.sh");
+        doTest("im-install/test-install-unknown-version.sh");
     }
 
     @Test
@@ -92,18 +92,9 @@ public class TestInstallationManagerCli {
         doTest("test-install-update-im-cli-client.sh");
     }
 
-    private void doTest(String relDir, String testScript) throws Exception {
-        Path dir = baseDir.resolve(relDir);
-        doTest(dir, testScript);
-    }
-
     private void doTest(String testScript) throws Exception {
-        doTest(baseDir, testScript);
-    }
-
-    private void doTest(Path dir, String testScript) throws Exception {
-        doExecute(dir.toFile(), "chmod", "+x", testScript);
-        doExecute(dir.toFile(), "./" + testScript);
+        doExecute(baseDir.toFile(), "chmod", "+x", testScript);
+        doExecute(baseDir.toFile(), "./" + testScript);
     }
 
     private void doExecute(File directory, String... commands) throws IOException, InterruptedException {

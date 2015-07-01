@@ -177,11 +177,11 @@ executeIMCommand() {
 }
 
 detectMasterNode() {
-    ping -c4 "master.codenvy.onprem" >> ${TEST_LOG}
+    ping -c1 "master.codenvy.onprem" >> ${TEST_LOG}
     if [[ $? == 0 ]]; then
         echo "master.codenvy.onprem"
     else
-        ping -c4 "codenvy.onprem" >> ${TEST_LOG}
+        ping -c1 "codenvy.onprem" >> ${TEST_LOG}
         if [[ $? == 0 ]]; then
             echo "codenvy.onprem"
         else

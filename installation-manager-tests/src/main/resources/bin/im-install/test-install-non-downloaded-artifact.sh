@@ -16,7 +16,8 @@
 # from Codenvy S.A..
 #
 
-. ../lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Install not downloaded artifact"
 
