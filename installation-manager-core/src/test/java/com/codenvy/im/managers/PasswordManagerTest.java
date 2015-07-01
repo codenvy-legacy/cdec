@@ -45,7 +45,7 @@ public class PasswordManagerTest extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        passwordManager = spy(new PasswordManager("", configManager, transport));
+        passwordManager = spy(new PasswordManager(configManager, transport));
     }
 
     @Test(expectedExceptions = IllegalStateException.class)

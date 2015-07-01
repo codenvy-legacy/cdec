@@ -24,7 +24,7 @@ printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
 
 installCodenvy
 auth "admin" "password"
-validateInstalledVersion ${LATEST_CODENVY_VERSION}
+validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"

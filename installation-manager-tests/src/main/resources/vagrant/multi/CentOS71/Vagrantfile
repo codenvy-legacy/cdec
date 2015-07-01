@@ -1,7 +1,6 @@
-# C7
-box      = 'centos7.1-preconfigured.v7.box'
-url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v7.box'
-    
+box      = 'centos7.1-preconfigured.v8.2.box'
+url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.2.box'
+
 ram = '1024'
 runner_ram = '1512' # should be > 1GB
 cpus = '2'
@@ -91,7 +90,7 @@ config.vm.define :site do |site_instance_config|
 hostname = 'site'
 domain = 'codenvy.onprem'
 site_instance_config.vm.host_name = hostname + '.' + domain
-site_instance_config.vm.network :private_network, ip: "192.168.56.14"
+site_instance_config.vm.network :private_network, ip: "192.168.56.110"
 site_instance_config.vm.provider :virtualbox do |vbox|
 vbox.customize [
 'modifyvm', :id,
@@ -214,188 +213,20 @@ end
 ##################
 # HOSTS RULES
 ##################
-config.vm.provision :hosts do |data_instance_config|
-#MANAGING HOSTS FOR DATA INSTANCE
-data_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-data_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-data_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-data_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-data_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-data_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-data_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-data_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-data_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-data_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-data_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-data_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
+config.vm.provision :hosts do |config|
+config.add_host '192.168.56.11', ['data.codenvy.onprem']
+config.add_host '192.168.56.13', ['api.codenvy.onprem']
+config.add_host '192.168.56.110', ['site.codenvy.onprem']
+config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
+config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
+config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
+config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
+config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
+config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
+config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
+config.add_host '192.168.56.110', ['codenvy.onprem']
+config.add_host '192.168.56.19', ['master.codenvy.onprem']
+config.add_host '127.0.0.1', ['localhost4'] # for zabbix server - to insure sending emails using IPv4 from 127.0.0.1
 end
 
-config.vm.provision :hosts do |api_instance_config|
-#MANAGING HOSTS FOR API INSTANCE
-api_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-api_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-api_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-api_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-api_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-api_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-api_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-api_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-api_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-api_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-api_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-api_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |site_instance_config|
-#MANAGING HOSTS FOR SITE INSTANCE
-site_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-site_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-site_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-site_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-site_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-site_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-site_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-site_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-site_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-site_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-site_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-site_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |runner1_instance_config|
-#MANAGING HOSTS FOR RUNNER 1 INSTANCE
-runner1_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-runner1_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |runner2_instance_config|
-#MANAGING HOSTS FOR RUNNER 2 INSTANCE
-runner2_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-runner2_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |runner3_instance_config|
-#MANAGING HOSTS FOR RUNNER 3 INSTANCE
-runner3_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-runner3_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |builder1_instance_config|
-#MANAGING HOSTS FOR BUILDER 1 INSTANCE
-builder1_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-builder1_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |builder2_instance_config|
-#MANAGING HOSTS FOR BUILDER 2 INSTANCE
-builder2_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-builder2_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-
-config.vm.provision :hosts do |datasource_instance_config|
-#MANAGING HOSTS FOR DATASOURCE INSTANCE
-datasource_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-datasource_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-end
-
-config.vm.provision :hosts do |analytics_instance_config|
-#MANAGING HOSTS FOR ANALYTICS INSTANCE
-analytics_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-analytics_instance_config.add_host '192.168.56.22', ['master.codenvy.onprem']
-analytics_instance_config.add_host '127.0.0.1', ['localhost4'] # for zabbix server - to insure sending emails using IPv4 from 127.0.0.1
-end
-
-config.vm.provision :hosts do |master_instance_config|
-#MANAGING HOSTS FOR MASTER INSTANCE
-master_instance_config.add_host '192.168.56.11', ['data.codenvy.onprem']
-master_instance_config.add_host '192.168.56.13', ['api.codenvy.onprem']
-master_instance_config.add_host '192.168.56.14', ['site.codenvy.onprem']
-master_instance_config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
-master_instance_config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-master_instance_config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
-master_instance_config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
-master_instance_config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
-master_instance_config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
-master_instance_config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
-master_instance_config.add_host '192.168.56.14', ['local.codenvy.onprem']
-master_instance_config.add_host '192.168.56.19', ['master.codenvy.onprem']
-end
-
-
-# config.vm.provision :puppet do |puppet|
-# puppet.manifests_path = '../manifests'
-# puppet.manifest_file = 'site.pp'
-# puppet.module_path = '../modules'
-# end
 end

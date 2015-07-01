@@ -58,7 +58,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -256,14 +255,6 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void getInstalledVersionShouldReturn310CodenvyVersion() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
-        when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"implementationVersion\":\"0.26.0\"}");
-
-        assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.1.0"));
-    }
-
-    @Test
     public void testGetUpdateSingleServerCommand() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
@@ -449,7 +440,7 @@ public class TestCDECArtifact extends BaseTest {
 
         try {
             spyCdecArtifact.updateConfig(properties);
-        } catch(PropertiesNotFoundException e) {
+        } catch (PropertiesNotFoundException e) {
             assertEquals(e.getMessage(), "Properties not found");
             assertEquals(e.getProperties(), new ArrayList<>(properties.keySet()));
             return;
@@ -511,7 +502,8 @@ public class TestCDECArtifact extends BaseTest {
                                                        "api_host_name", "api.dev.com",
                                                        "data_host_name", "data.dev.com"));
 
-        doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES);
+        doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(
+                Config.MULTI_SERVER_BASE_PROPERTIES);
         doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES);
         doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
 
@@ -522,7 +514,7 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.size(), 7);
         assertTrue(commands.get(0).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
                    commands.get(0).toString());
-        
+
         assertEquals(commands.get(1).toString(), "{'command'='sudo sed -i 's|$host_url = .*|$host_url = \"a\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
 
         assertTrue(commands.get(2).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),

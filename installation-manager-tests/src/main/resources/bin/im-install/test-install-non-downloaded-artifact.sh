@@ -16,9 +16,9 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+. ../lib.sh
 
-printAndLog "TEST CASE: Install and update IM CLI client"
+printAndLog "TEST CASE: Install not downloaded artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -29,7 +29,7 @@ log "Latest versions: "${LATEST_IM_CLI_CLIENT_VERSION}
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+executeIMCommand "--valid-exit-code=1" "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
 
 if [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".*\:.*\"FAILURE\".*\"message\".*\:.*\"Binaries.*to.*install.*installation-manager-cli\:${LATEST_IM_CLI_CLIENT_VERSION}.*not.*found\".* ]]; then
     validateExitCode 1

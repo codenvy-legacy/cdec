@@ -16,20 +16,17 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
 
-printAndLog "TEST CASE: Install and update IM CLI client"
+. ../lib.sh
+
+printAndLog "TEST CASE: Install unknown CLI version"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Available versions: "${AVAILABLE_IM_CLI_CLIENT_VERSIONS}
-log "Previos versions: "${PREV_IM_CLI_CLIENT_VERSION}
-log "Latest versions: "${LATEST_IM_CLI_CLIENT_VERSION}
+installImCliClient
+validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
-installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
-
-executeIMCommand "im-install" "codenvy" "1.0.0"
+executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "1.0.0"
 
 if [[ ! ${OUTPUT} =~ .*Can\'t.*download.*installation.*properties..*Unexpected.*error..*Can\'t.*download.*the.*artifact.*codenvy-single-server-properties\:1.0.0..*Artifact.*codenvy-single-server-properties\:1.0.0.*not.*found.* ]]; then
     validateExitCode 1

@@ -33,25 +33,28 @@ import java.nio.file.Paths;
 import static org.testng.Assert.assertEquals;
 
 /**
+ * Modify /etc/hosts:
+ *
+ * 192.168.56.110 codenvy.onprem
+ * 192.168.56.19 master.codenvy.onprem
+ * 192.168.56.15 runner1.codenvy.onprem
+ * 192.168.56.20 runner2.codenvy.onprem
+ * 192.168.56.21 runner3.codenvy.onprem
+ *
  * @author Anatoliy Bazko
  */
 public class TestInstallationManagerCli {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestInstallationManagerCli.class);
 
-    private Path dir;
+    private Path baseDir;
 
     @BeforeClass
     public void setUp() throws Exception {
-        dir = Paths.get(getClass().getClassLoader().getResource("bin").getFile());
+        baseDir = Paths.get(getClass().getClassLoader().getResource("bin").getFile());
 
-        doExecute(dir.toFile(), "chmod", "+x", "lib.sh");
-        doExecute(dir.toFile(), "chmod", "+x", "config.sh");
-    }
-
-    @Test
-    public void testInstallSingleNodeAndChangePassword() throws Exception {
-        doTest("test-install-single-node-and-change-password.sh");
+        doExecute(baseDir.toFile(), "chmod", "+x", "lib.sh");
+        doExecute(baseDir.toFile(), "chmod", "+x", "config.sh");
     }
 
     @Test
@@ -60,26 +63,45 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testInstallUpdateImCliClient() throws Exception {
-        doTest("test-install-update-im-cli-client.sh");
-    }
-
-    @Test
     public void testInstallNonDownloadedArtifact() throws Exception {
-        doTest("im-install/test-install-non-downloaded-artifact.sh");
+        doTest("im-install", "test-install-non-downloaded-artifact.sh");
     }
 
     @Test
     public void testInstallUnknownArtifact() throws Exception {
-        doTest("im-install/test-install-unknown-artifact.sh");
+        doTest("im-install", "test-install-unknown-artifact.sh");
     }
 
     @Test
     public void testInstallUnknownVersion() throws Exception {
-        doTest("im-install/test-install-unknown-version.sh");
+        doTest("im-install", "test-install-unknown-version.sh");
+    }
+
+    @Test
+    public void testInstallSingleNodeAndChangePassword() throws Exception {
+        doTest("test-install-single-node-and-change-password.sh");
+    }
+
+    @Test
+    public void testUpdateSingleNode() throws Exception {
+        doTest("test-update-single-node.sh");
+    }
+
+    @Test
+    public void testInstallUpdateImCliClient() throws Exception {
+        doTest("test-install-update-im-cli-client.sh");
+    }
+
+    private void doTest(String relDir, String testScript) throws Exception {
+        Path dir = baseDir.resolve(relDir);
+        doTest(dir, testScript);
     }
 
     private void doTest(String testScript) throws Exception {
+        doTest(baseDir, testScript);
+    }
+
+    private void doTest(Path dir, String testScript) throws Exception {
         doExecute(dir.toFile(), "chmod", "+x", testScript);
         doExecute(dir.toFile(), "./" + testScript);
     }

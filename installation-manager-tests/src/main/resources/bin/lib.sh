@@ -35,10 +35,21 @@ log() {
 
 validateExitCode() {
     EXIT_CODE=$1
-    if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
-	    printAndLog "RESULT: FAILED"
-	    vagrantDestroy
-        exit ${EXIT_CODE}
+    VALID_CODE=$2
+    if [[ ! -z ${VALID_CODE} ]]; then
+        if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
+            printAndLog "RESULT: FAILED"
+            retrieveInstallLog
+            vagrantDestroy
+            exit 1
+        fi
+    else
+        if [[ ! ${EXIT_CODE} == "0" ]];then
+            printAndLog "RESULT: FAILED"
+            retrieveInstallLog
+            vagrantDestroy
+            exit 1
+        fi
     fi
 }
 
@@ -61,9 +72,11 @@ validateInstalledCodenvyVersion() {
 }
 
 validateInstalledImCliClientVersion() {
-    log ">>> validateInstalledImCliClientVersion()"
-
     VERSION=$1
+    
+    log 
+    log "validation installed CLI version "${VERSION}
+
     executeIMCommand "im-install" "--list"
 
     if [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]]; then
@@ -86,37 +99,34 @@ retrieveInstallLog() {
 }
 
 installCodenvy() {
-    VERSION=$1
-    MULTI=$2
-
     log
-    log "Codenvy installation "${VERSION}" "${MULTI}
+    log "Codenvy installation "${VERSION}
 
-    if [ ! -z ${MULTI} ]; then
+    MULTI_OPTION=""
+    VERSION_OPTION=""
+    INSTALL_ON_NODE=$(detectMasterNode)
+
+    if [[ ${INSTALL_ON_NODE} == "master.codenvy.onprem" ]]; then
         scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
+        MULTI_OPTION="--multi"
     fi
 
-    if [ -z ${VERSION} ]; then
-        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent '${MULTI} >> ${TEST_LOG}
-    else
-        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent --version='${VERSION}' '${MULTI} >> ${TEST_LOG}
-    fi
+    VERSION=$1
+    [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
 
-    retrieveInstallLog
+    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
     log "OK"
 }
 
 installImCliClient() {
-    log ">>> installImCliClient()"
-
     VERSION=$1
-    if [ -z ${VERSION} ]; then
-        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli)' >> ${TEST_LOG}
-    else
-        ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli) --version='${VERSION} >> ${TEST_LOG}
-    fi
+    
+    log
+    log "CLI installation "${VERSION}
+    
+    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
     log "OK"
@@ -151,12 +161,36 @@ auth() {
 }
 
 executeIMCommand() {
+    VALID_CODE=0
+    if [[ $1 =~ --valid-exit-code=.* ]]; then
+        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
+        shift
+    fi
+
     log
     log "executing command "$@
 
-    OUTPUT=$(ssh -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@")
+    EXECUTE_ON_NODE=$(detectMasterNode)
+
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${EXECUTE_ON_NODE} "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@")
+    EXIT_CODE=$?
+
     log ${OUTPUT}
-    validateExitCode $?
+    validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
     log "OK"
+}
+
+detectMasterNode() {
+    ping -c4 "master.codenvy.onprem" >> ${TEST_LOG}
+    if [[ $? == 0 ]]; then
+        echo "master.codenvy.onprem"
+    else
+        ping -c4 "codenvy.onprem" >> ${TEST_LOG}
+        if [[ $? == 0 ]]; then
+            echo "codenvy.onprem"
+        else
+            validateExitCode 1
+        fi
+    fi
 }
