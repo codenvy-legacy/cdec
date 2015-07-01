@@ -60,22 +60,20 @@ vagrantDestroy() {
 validateInstalledCodenvyVersion() {
     VERSION=$1
 
-    log
-    log "validation installed version "${VERSION}
+    log "validateInstalledCodenvyVersion "${VERSION}
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
     if [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]]; then
         validateExitCode 1
     fi
 
-    log "OK"
+    log "validateInstalledCodenvyVersion: OK"
 }
 
 validateInstalledImCliClientVersion() {
     VERSION=$1
     
-    log 
-    log "validation installed CLI version "${VERSION}
+    log "validateInstalledImCliClientVersion "${VERSION}
 
     executeIMCommand "im-install" "--list"
 
@@ -83,7 +81,7 @@ validateInstalledImCliClientVersion() {
         validateExitCode 1
     fi
 
-    log "OK"
+    log "validateInstalledImCliClientVersion: OK"
 }
 
 retrieveInstallLog() {
@@ -99,9 +97,6 @@ retrieveInstallLog() {
 }
 
 installCodenvy() {
-    log
-    log "Codenvy installation "${VERSION}
-
     MULTI_OPTION=""
     VERSION_OPTION=""
     INSTALL_ON_NODE=$(detectMasterNode)
@@ -114,22 +109,25 @@ installCodenvy() {
     VERSION=$1
     [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
 
+    log "installCodenvy "$@
+
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
-    log "OK"
+    log "installCodenvy: OK"
 }
 
 installImCliClient() {
+    log "installImCliClient "$@
+
     VERSION=$1
-    
-    log
-    log "CLI installation "${VERSION}
-    
+    VERSION_OPTION=""
+    [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
+
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
-    log "OK"
+    log "installImCliClient: OK"
 }
 
 vagrantUp() {
@@ -142,11 +140,10 @@ vagrantUp() {
 }
 
 auth() {
+    log "auth "$@
+
     USERNAME=$1
     PASSWORD=$2
-
-    log
-    log "authentication "${USERNAME}" "${PASSWORD}
 
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://codenvy.onprem/api/auth/login)
     validateExitCode $?
@@ -157,19 +154,17 @@ auth() {
         validateExitCode 1
     fi
 
-    log "OK"
+    log "auth: OK"
 }
 
 executeIMCommand() {
+    log "executeIMCommand "$@
+
     VALID_CODE=0
     if [[ $1 =~ --valid-exit-code=.* ]]; then
         VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
         shift
     fi
-
-    log
-    log "executing command "$@
-
     EXECUTE_ON_NODE=$(detectMasterNode)
 
     OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${EXECUTE_ON_NODE} "/home/vagrant/codenvy-im/codenvy-cli/bin/codenvy $@")
@@ -178,7 +173,7 @@ executeIMCommand() {
     log ${OUTPUT}
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
-    log "OK"
+    log "executeIMCommand: OK"
 }
 
 detectMasterNode() {
