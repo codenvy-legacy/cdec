@@ -390,6 +390,21 @@ public class ConfigManager {
         }
     }
 
+
+    /**
+     * @return apiEndpoint
+     */
+    public String getApiEndpoint() throws IOException {
+        InstallType installType = detectInstallationType();
+        if (installType == InstallType.SINGLE_SERVER) {
+            // in single-node installation it's not required to modify '/etc/hosts' on the server where Codenvy is being installed
+            return "http://localhost/api";
+        } else {
+            Config config = loadInstalledCodenvyConfig(installType);
+            return format("http://%s/api", config.getHostUrl());
+        }
+    }
+
     /**
      * Prepares installation properties depending on artifact and installation type.
      *

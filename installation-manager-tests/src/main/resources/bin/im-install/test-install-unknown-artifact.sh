@@ -16,18 +16,17 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Install unknown artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
+installImCliClient
+validateInstalledImCliClientVersion
 
-installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
-
-executeIMCommand "im-install" "unknown"
+executeIMCommand "--valid-exit-code=1" "im-install" "unknown"
 
 if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".* ]]; then
     validateExitCode 1

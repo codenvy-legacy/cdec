@@ -22,10 +22,6 @@ printAndLog "TEST CASE: Check remote update"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Latest Codenvy version: "${LATEST_CODENVY_VERSION}
-log "Previos IM version: "${PREV_IM_CLI_CLIENT_VERSION}
-log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
-
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 

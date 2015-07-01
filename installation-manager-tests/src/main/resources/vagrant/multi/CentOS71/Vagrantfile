@@ -1,0 +1,232 @@
+box      = 'centos7.1-preconfigured.v8.2.box'
+url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.2.box'
+
+ram = '1024'
+runner_ram = '1512' # should be > 1GB
+cpus = '2'
+
+Vagrant.configure("2") do |config|
+config.vm.box = box
+# config.vm.box_url = url
+
+###################
+# PUPPET MASTER INSTANCE
+###################
+config.vm.define :master do |master_instance_config|
+hostname = 'master'
+domain = 'codenvy.onprem'
+master_instance_config.vm.host_name = hostname + '.' + domain
+master_instance_config.vm.network :private_network, ip: "192.168.56.19"
+master_instance_config.vm.network "forwarded_port", guest: 5005, host: 5005
+
+master_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+#####################
+# ANALYTICS INSTANCE
+#####################
+config.vm.define :analytics do |analytics_instance_config|
+hostname = 'analytics'
+domain = 'codenvy.onprem'
+analytics_instance_config.vm.host_name = hostname + '.' + domain
+analytics_instance_config.vm.network :private_network, ip: "192.168.56.18"
+analytics_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# DATA INSTANCE
+###################
+config.vm.define :data do |data_instance_config|
+hostname = 'data'
+domain = 'codenvy.onprem'
+data_instance_config.vm.host_name = hostname + '.' + domain
+data_instance_config.vm.network :private_network, ip: "192.168.56.11"
+data_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# API INSTANCE
+###################
+config.vm.define :api do |api_instance_config|
+hostname = 'api'
+domain = 'codenvy.onprem'
+api_instance_config.vm.host_name = hostname + '.' + domain
+api_instance_config.vm.network :private_network, ip: "192.168.56.13"
+api_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# SITE INSTANCE
+###################
+config.vm.define :site do |site_instance_config|
+hostname = 'site'
+domain = 'codenvy.onprem'
+site_instance_config.vm.host_name = hostname + '.' + domain
+site_instance_config.vm.network :private_network, ip: "192.168.56.110"
+site_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# RUNNER 1 INSTANCE
+###################
+config.vm.define :runner1 do |runner1_instance_config|
+hostname = 'runner1'
+domain = 'codenvy.onprem'
+runner1_instance_config.vm.host_name = hostname + '.' + domain
+runner1_instance_config.vm.network :private_network, ip: "192.168.56.15"
+runner1_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', runner_ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# RUNNER 2 INSTANCE
+###################
+config.vm.define :runner2 do |runner2_instance_config|
+hostname = 'runner2'
+domain = 'codenvy.onprem'
+runner2_instance_config.vm.host_name = hostname + '.' + domain
+runner2_instance_config.vm.network :private_network, ip: "192.168.56.20"
+runner2_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', runner_ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# RUNNER 3 INSTANCE
+###################
+config.vm.define :runner3 do |runner3_instance_config|
+hostname = 'runner3'
+domain = 'codenvy.onprem'
+runner3_instance_config.vm.host_name = hostname + '.' + domain
+runner3_instance_config.vm.network :private_network, ip: "192.168.56.21"
+runner3_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', runner_ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# BUILDER 1 INSTANCE
+###################
+config.vm.define :builder1 do |builder1_instance_config|
+hostname = 'builder1'
+domain = 'codenvy.onprem'
+builder1_instance_config.vm.host_name = hostname + '.' + domain
+builder1_instance_config.vm.network :private_network, ip: "192.168.56.16"
+builder1_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+###################
+# BUILDER 2 INSTANCE
+###################
+config.vm.define :builder2 do |builder2_instance_config|
+hostname = 'builder2'
+domain = 'codenvy.onprem'
+builder2_instance_config.vm.host_name = hostname + '.' + domain
+builder2_instance_config.vm.network :private_network, ip: "192.168.56.23"
+builder2_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+#####################
+# DATASOURCE INSTANCE
+#####################
+config.vm.define :datasource do |datasource_instance_config|
+hostname = 'datasource'
+domain = 'codenvy.onprem'
+datasource_instance_config.vm.host_name = hostname + '.' + domain
+datasource_instance_config.vm.network :private_network, ip: "192.168.56.17"
+datasource_instance_config.vm.provider :virtualbox do |vbox|
+vbox.customize [
+'modifyvm', :id,
+'--name', hostname,
+'--memory', ram,
+'--cpus', cpus
+]
+end
+end
+
+
+##################
+# HOSTS RULES
+##################
+config.vm.provision :hosts do |config|
+config.add_host '192.168.56.11', ['data.codenvy.onprem']
+config.add_host '192.168.56.13', ['api.codenvy.onprem']
+config.add_host '192.168.56.110', ['site.codenvy.onprem']
+config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
+config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
+config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
+config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
+config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
+config.add_host '192.168.56.17', ['datasource.codenvy.onprem']
+config.add_host '192.168.56.18', ['analytics.codenvy.onprem']
+config.add_host '192.168.56.110', ['codenvy.onprem']
+config.add_host '192.168.56.19', ['master.codenvy.onprem']
+config.add_host '127.0.0.1', ['localhost4'] # for zabbix server - to insure sending emails using IPv4 from 127.0.0.1
+end
+
+end

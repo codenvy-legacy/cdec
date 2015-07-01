@@ -18,19 +18,18 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Download unknown artifact"
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+printAndLog "TEST CASE: Install the latest multi-node Codenvy On Premise"
 
-installImCliClient
-validateInstalledImCliClientVersion
+installCodenvy
+auth "admin" "password"
+validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
-executeIMCommand "--valid-exit-code=1" "im-download" "unknown"
-
-if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".*\"status\".\:.\"ERROR\".* ]]; then
-    validateExitCode 1
-fi
+executeIMCommand "im-password" "password" "new-password"
+auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
+retrieveInstallLog
 
 vagrantDestroy

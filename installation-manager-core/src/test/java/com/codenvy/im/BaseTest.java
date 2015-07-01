@@ -78,6 +78,7 @@ public class BaseTest {
 
         createSingleNodeConf();
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn("http://localhost/api").when(configManager).getApiEndpoint();
         doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
     }
 

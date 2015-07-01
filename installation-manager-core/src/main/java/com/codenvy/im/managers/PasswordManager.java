@@ -25,7 +25,6 @@ import com.google.inject.Singleton;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 
-import javax.inject.Named;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.BasicAttribute;
@@ -49,15 +48,12 @@ public class PasswordManager {
 
     private final ConfigManager configManager;
     private final HttpTransport httpTransport;
-    private final String        apiEndpoint;
 
     @Inject
-    public PasswordManager(@Named("api.endpoint") String apiEndpoint,
-                           ConfigManager configManager,
+    public PasswordManager(ConfigManager configManager,
                            HttpTransport httpTransport) throws IOException {
         this.configManager = configManager;
         this.httpTransport = httpTransport;
-        this.apiEndpoint = apiEndpoint;
     }
 
     /**
@@ -92,7 +88,7 @@ public class PasswordManager {
         credentials.setUsername(config.getValue("admin_ldap_user_name"));
         credentials.setRealm("sysldap");
 
-        String requestUrl = combinePaths(apiEndpoint, "/auth/login");
+        String requestUrl = combinePaths(configManager.getApiEndpoint(), "/auth/login");
         try {
             httpTransport.doPost(requestUrl, credentials);
         } catch (IOException e) {

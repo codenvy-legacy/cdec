@@ -19,6 +19,7 @@
 UPDATE_SERVER="http://updater-nightly.codenvy-dev.com:8080/update"
 TEST_LOG="installation-manager-test.log"
 SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
+MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
 
 AVAILABLE_CODENVY_VERSIONS=$(curl -s -X GET ${UPDATE_SERVER}/repository/updates/codenvy)
 PREV_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`

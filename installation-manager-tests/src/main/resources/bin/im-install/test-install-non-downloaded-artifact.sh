@@ -16,9 +16,10 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Install version which is not downloaded"
+printAndLog "TEST CASE: Install not downloaded artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -28,7 +29,7 @@ log "Latest IM versions: "${LATEST_IM_CLI_CLIENT_VERSION}
 installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
+executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 
 if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".* ]]; then
     validateExitCode 1

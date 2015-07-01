@@ -499,5 +499,20 @@ public class TestConfigManager extends BaseTest {
         assertEquals(actualProperties.get("version"), "3.1.0");
         assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY), "master");
     }
+
+    @Test
+    public void testGetApiEndpointSingleServer() throws Exception {
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+
+        assertEquals(configManager.getApiEndpoint(), "http://localhost/api");
+    }
+
+    @Test
+    public void testGetApiEndpointMultiServer() throws Exception {
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(new Config(ImmutableMap.of("host_url", "codenvy.onprem"))).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+
+        assertEquals(configManager.getApiEndpoint(), "http://codenvy.onprem/api");
+    }
 }
 

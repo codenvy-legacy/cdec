@@ -22,13 +22,10 @@ printAndLog "TEST CASE: Cancel downloading artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Latest Codenvy version: "${LATEST_CODENVY_VERSION}
-log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
+installImCliClient
+validateInstalledImCliClientVersion
 
-installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
-
-executeIMCommand "im-download" "codenvy"
+executeIMCommand "--valid-exit-code=1" "im-download" "codenvy"
 
 if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Downloading was canceled\".*\"status\".\:.\"ERROR\".* ]]; then
     validateExitCode 1

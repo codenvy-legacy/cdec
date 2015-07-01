@@ -22,12 +22,10 @@ printAndLog "TEST CASE: Download unknown version of the artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
+installImCliClient
+validateInstalledImCliClientVersion
 
-installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
-
-executeIMCommand "im-download" "codenvy" "1.0.0"
+executeIMCommand "--valid-exit-code=1" "im-download" "codenvy" "1.0.0"
 
 if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Unexpected.error\..Can\'t.retrieve.the.info.of.the.artifact.codenvy:1.0.0\..Artifact.codenvy:1.0.0.not.found\".*\"status\".\:.\"ERROR\".* ]]; then
     validateExitCode 1
