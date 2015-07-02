@@ -91,6 +91,11 @@ public class TestInstallationManagerCli {
     public void testUpdateMultiNodes() throws Exception {
         doTest("test-update-multi-nodes.sh");
     }
+//
+//    @Test
+//    public void testInstallUpdateImCliClient() throws Exception {
+//        doTest("test-install-update-im-cli-client.sh");
+//    }
 
     @Test
     public void testInstallUpdateImCliClient() throws Exception {
@@ -120,6 +125,11 @@ public class TestInstallationManagerCli {
     @Test
     public void testDownloadUnknownVersion() throws Exception {
         doTest("im-download/test-download-unknown-version.sh");
+    }
+
+    @Test
+    public void testAddRemoveCodenvyNodes() throws Exception {
+        doTest("test-add-remove-codenvy-nodes.sh");
     }
 
     @Test

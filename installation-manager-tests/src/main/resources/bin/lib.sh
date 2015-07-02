@@ -38,13 +38,13 @@ validateExitCode() {
     VALID_CODE=$2
     if [[ ! -z ${VALID_CODE} ]]; then
         if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
-            printAndLog "RESULT: FAILED"
+            log "RESULT: FAILED"
             vagrantDestroy
             exit 1
         fi
     else
         if [[ ! ${EXIT_CODE} == "0" ]];then
-            printAndLog "RESULT: FAILED"
+            log "RESULT: FAILED"
             vagrantDestroy
             exit 1
         fi
@@ -58,6 +58,7 @@ vagrantDestroy() {
 validateInstalledCodenvyVersion() {
     VERSION=$1
 
+    [[ -z ${VERSION} ]] && VERSION=${LATEST_CODENVY_VERSION}
     log "validateInstalledCodenvyVersion "${VERSION}
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
