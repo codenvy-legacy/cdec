@@ -20,7 +20,6 @@
 . ./lib.sh
 
 printAndLog "TEST CASE: Install unknown CLI version"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
@@ -33,5 +32,4 @@ if [[ ! ${OUTPUT} =~ .*Can\'t.download.installation.properties\..*Unexpected.err
 fi
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

@@ -20,7 +20,6 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Connect to update server when there is system proxy"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 # Install and configure proxy-server Squid on port 3128:
@@ -45,5 +44,4 @@ fi
 executeSshCommand "sudo grep \"GET ${UPDATE_SERVER}\" /var/log/squid/access.log"
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

@@ -38,13 +38,13 @@ validateExitCode() {
     VALID_CODE=$2
     if [[ ! -z ${VALID_CODE} ]]; then
         if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
-            printAndLog "RESULT: FAILED"
+            log "RESULT: FAILED"
             vagrantDestroy
             exit 1
         fi
     else
         if [[ ! ${EXIT_CODE} == "0" ]];then
-            printAndLog "RESULT: FAILED"
+            log "RESULT: FAILED"
             vagrantDestroy
             exit 1
         fi
@@ -58,13 +58,11 @@ vagrantDestroy() {
 validateInstalledCodenvyVersion() {
     VERSION=$1
 
+    [[ -z ${VERSION} ]] && VERSION=${LATEST_CODENVY_VERSION}
     log "validateInstalledCodenvyVersion "${VERSION}
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    if [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]]; then
-        retrieveInstallLog
-        validateExitCode 1
-    fi
+    [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]] && validateExitCode 1
 
     log "validateInstalledCodenvyVersion: OK"
 }
@@ -78,9 +76,7 @@ validateInstalledImCliClientVersion() {
 
     executeIMCommand "im-install" "--list"
 
-    if [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]]; then
-        validateExitCode 1
-    fi
+    [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]] &&  validateExitCode 1
 
     log "validateInstalledImCliClientVersion: OK"
 }

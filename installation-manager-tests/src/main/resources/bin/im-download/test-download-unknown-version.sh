@@ -20,7 +20,6 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Download unknown version of the artifact"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
@@ -33,5 +32,4 @@ if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Unexpected.error\..Can\'t.retrieve.the.i
 fi
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy
