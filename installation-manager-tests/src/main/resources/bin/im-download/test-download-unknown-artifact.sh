@@ -18,7 +18,7 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Download unknown artifact"
+log "TEST CASE: Download unknown artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -31,6 +31,6 @@ if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".*\"stat
     validateExitCode 1
 fi
 
-printAndLog "RESULT: PASSED"
+log "RESULT: PASSED"
 
 vagrantDestroy

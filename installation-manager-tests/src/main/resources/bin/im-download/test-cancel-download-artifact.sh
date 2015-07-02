@@ -18,7 +18,7 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Cancel downloading artifact"
+log "TEST CASE: Cancel downloading artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -31,6 +31,6 @@ if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CO
     validateExitCode 1
 fi
 
-printAndLog "RESULT: PASSED"
+log "RESULT: PASSED"
 
 vagrantDestroy
