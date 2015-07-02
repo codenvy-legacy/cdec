@@ -168,7 +168,7 @@ public class TestVersion {
     public void testIsSuitedFor(String version, String pattern, boolean expected) throws Exception {
         boolean actual = Version.valueOf(version).isSuitedFor(pattern);
 
-        assertEquals(patter, expected, actual);
+        assertEquals(pattern, expected, actual);
     }
 
     @DataProvider(name = "testIsSuitedFor")
