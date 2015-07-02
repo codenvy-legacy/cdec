@@ -127,6 +127,16 @@ public class TestInstallationManagerCli {
         doTest("im-download/test-using-system-proxy.sh");
     }
 
+    @Test
+    public void testLoginWithUsernameAndPassword() throws Exception {
+        doTest("im-login/test-login-with-username-and-password.sh");
+    }
+
+    @Test
+    public void testLoginWithUsernamexPasswordAndAccount() throws Exception {
+        doTest("im-login/test-login-with-username-password-and-account.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
         doExecute(baseDir.toFile(), "./" + testScript);

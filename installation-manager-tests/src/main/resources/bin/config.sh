@@ -28,3 +28,8 @@ LATEST_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\([^"]*\)
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVER}/repository/updates/installation-manager-cli)
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
+
+# test account on the Codenvy SaaS http://nightly.codenvy-stg.com/
+CODENVY_SAAS_USERNAME="cdec.im.test@gmail.com"
+CODENVY_SAAS_PASSWORD="codenvy456"
+CODENVY_SAAS_ACCOUNT="cdec.im.test"
