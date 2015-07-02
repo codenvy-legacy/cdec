@@ -30,7 +30,6 @@ import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.invocation.InvocationOnMock;
@@ -44,7 +43,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
@@ -114,8 +112,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -142,8 +138,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -207,26 +201,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n" +
-                             "b: some value\n" +
-                             "\n" +
-                             "Codenvy parameters list:\n" +
-                             "{\n" +
-                             "  \"a\" : \"2\",\n" +
-                             "  \"b\" : \"some value\"\n" +
-                             "}\n" +
-                             "Do you confirm parameters above? [y/N]\n" +
-                             "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n" +
-                             "a (value='2'): some value\n" +
-                             "b (value='some value'): some value\n" +
-                             "\n" +
-                             "Codenvy parameters list:\n" +
-                             "{\n" +
-                             "  \"a\" : \"some value\",\n" +
-                             "  \"b\" : \"some value\"\n" +
-                             "}\n" +
-                             "Do you confirm parameters above? [y/N]\n" +
-                             "{\n" +
+        assertEquals(output, "{\n" +
                              "  \"artifacts\" : [ {\n" +
                              "    \"artifact\" : \"codenvy\",\n" +
                              "    \"version\" : \"1.0.2\",\n" +
@@ -242,8 +217,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -266,8 +239,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallWhenUnknownArtifact() throws Exception {
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
         doThrow(new IOException("Artifact 'any' not found")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -283,8 +254,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallErrorStepException() throws Exception {
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doThrow(new IOException("step failed")).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -311,8 +280,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         testInstallArtifactStepInfo.setStatus(InstallArtifactStatus.FAILURE);
         testInstallArtifactStepInfo.setMessage("error");
 
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doNothing().when(facade).waitForInstallStepCompleted(anyString());
         doReturn(testInstallArtifactStepInfo).when(facade).getUpdateStepInfo(anyString());
 
@@ -337,8 +304,6 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallWhenServiceThrowsError2() throws Exception {
-        doNothing().when(spyCommand).confirmOrReenterOptions(any(InstallOptions.class));
-        doReturn(new InstallOptions()).when(spyCommand).enterMandatoryOptions(any(InstallOptions.class));
         doThrow(new IOException("Property is missed")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -357,8 +322,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testListInstalledArtifacts() throws Exception {
         doReturn(ImmutableList.of(new InstallArtifactInfo().withArtifact("codenvy")
-                                                             .withVersion("1.0.1")
-                                                             .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();
+                                                           .withVersion("1.0.1")
+                                                           .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);
@@ -438,23 +403,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n" +
-                             "a: some value\n" +
-                             "\n" +
-                             "Codenvy parameters list:\n" +
-                             "{\n" +
-                             "  \"a\" : \"some value\"\n" +
-                             "}\n" +
-                             "Do you confirm parameters above? [y/N]\n" +
-                             "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n" +
-                             "a (value='some value'): some value\n" +
-                             "\n" +
-                             "Codenvy parameters list:\n" +
-                             "{\n" +
-                             "  \"a\" : \"some value\"\n" +
-                             "}\n" +
-                             "Do you confirm parameters above? [y/N]\n" +
-                             "{\n" +
+        assertEquals(output, "{\n" +
                              "  \"artifacts\" : [ {\n" +
                              "    \"artifact\" : \"codenvy\",\n" +
                              "    \"version\" : \"1.0.0\",\n" +
@@ -463,107 +412,4 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"status\" : \"OK\"\n" +
                              "}\n");
     }
-
-    @Test
-    public void testEnterEmptyMandatoryOptions() throws IOException {
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.SINGLE_SERVER);
-
-        Map<String, String> properties = ImmutableMap.of();
-        options.setConfigProperties(properties);
-
-        assertEquals(spyCommand.enterMandatoryOptions(options), options);
-    }
-
-    @Test
-    public void testEnterValidValuesOfMandatoryOptions() throws IOException {
-        spyCommand.artifactName = CDECArtifact.NAME;
-
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.SINGLE_SERVER);
-
-        Map<String, String> properties = ImmutableSortedMap.of("some property", "test");
-        options.setConfigProperties(properties);
-        Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
-        assertEquals(result.toString(), "{some property=test}");
-        assertEquals(outputStream.toString(), "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n");
-    }
-
-    @Test
-    public void testEnterInvalidValuesOfMandatoryOptions() throws IOException {
-        spyCommand.artifactName = CDECArtifact.NAME;
-
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.SINGLE_SERVER);
-
-        // firstly readLine() returns invalid "", then invalid "MANDATORY", then valid "new value"
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return "";
-            }
-        }).doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return "MANDATORY";
-            }
-        }).doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return "new value";
-            }
-        }).when(spyCommand.console).readLine();
-
-        Map<String, String> properties = ImmutableMap.of("property 1", "value 1", "property 2", "MANDATORY", "property 3", "");
-        options.setConfigProperties(properties);
-        Map<String, String> result = spyCommand.enterMandatoryOptions(options).getConfigProperties();
-        assertEquals(result.toString(), "{property 1=value 1, property 2=new value, property 3=}");
-        assertEquals(outputStream.toString(), "Please, enter mandatory Codenvy parameters (values cannot be left blank):\n"
-                                              + "property 2: property 2: property 2: ");
-    }
-
-    @Test
-    public void testEnterEmptyAllOptions() throws IOException {
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.SINGLE_SERVER);
-
-        Map<String, String> properties = ImmutableMap.of();
-        options.setConfigProperties(properties);
-
-        assertEquals(spyCommand.enterAllOptions(options), options);
-    }
-
-    @Test
-    public void testEnterAllOptions() throws IOException {
-        spyCommand.artifactName = CDECArtifact.NAME;
-
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.SINGLE_SERVER);
-
-        // firstly readLine() returns invalid "", then invalid "MANDATORY", then valid "new value"
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return "";
-            }
-        }).doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return "MANDATORY";
-            }
-        }).doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return "new value";
-            }
-        }).when(spyCommand.console).readLine();
-
-        Map<String, String> properties = ImmutableMap.of("property 1", "value 1", "property 2", "value 2", "property 3", "");
-        options.setConfigProperties(properties);
-        Map<String, String> result = spyCommand.enterAllOptions(options).getConfigProperties();
-        assertEquals(result.toString(), "{property 1=value 1, property 2=value 2, property 3=new value}");
-        assertEquals(outputStream.toString(), "Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):\n"
-                                              + "property 1 (value='value 1'): property 2 (value='value 2'): property 3 (value=''): ");
-    }
-
 }

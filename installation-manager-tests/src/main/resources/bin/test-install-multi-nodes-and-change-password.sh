@@ -20,7 +20,7 @@
 
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-printAndLog "TEST CASE: Install the latest multi-node Codenvy On Premise"
+log "TEST CASE: Install the latest multi-node Codenvy On Premise"
 
 installCodenvy
 auth "admin" "password"
@@ -29,7 +29,7 @@ validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
-printAndLog "RESULT: PASSED"
-retrieveInstallLog
+log "RESULT: PASSED"
 
+retrieveInstallLog
 vagrantDestroy

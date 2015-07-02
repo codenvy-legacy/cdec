@@ -16,10 +16,11 @@
 # from Codenvy S.A..
 #
 
+
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Install unknown version of artifact 'codenvy'"
+log "TEST CASE: Install unknown CLI version"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -32,6 +33,6 @@ if [[ ! ${OUTPUT} =~ .*Can\'t.download.installation.properties\..*Unexpected.err
     validateExitCode 1
 fi
 
-printAndLog "RESULT: PASSED"
+log "RESULT: PASSED"
 
 vagrantDestroy

@@ -57,40 +57,45 @@ public class TestInstallationManagerCli {
         doExecute(baseDir.toFile(), "chmod", "+x", "config.sh");
     }
 
+    //    @Test
+//    public void testInstallMultiNodeAndChangePassword() throws Exception {
+//        doTest("test-install-multi-nodes-and-change-password.sh");
+//    }
+//
+//    @Test
+//    public void testInstallNonDownloadedArtifact() throws Exception {
+//        doTest("im-install/test-install-non-downloaded-artifact.sh");
+//    }
+//
+//    @Test
+//    public void testInstallUnknownArtifact() throws Exception {
+//        doTest("im-install/test-install-unknown-artifact.sh");
+//    }
+//
+//    @Test
+//    public void testInstallUnknownVersion() throws Exception {
+//        doTest("im-install/test-install-unknown-version.sh");
+//    }
+//
+//    @Test
+//    public void testInstallSingleNodeAndChangePassword() throws Exception {
+//        doTest("test-install-single-node-and-change-password.sh");
+//    }
+//
+//    @Test
+//    public void testUpdateSingleNode() throws Exception {
+//        doTest("test-update-single-node.sh");
+//    }
+//
     @Test
-    public void testInstallMultiNodeAndChangePassword() throws Exception {
-        doTest("test-install-multi-node-and-change-password.sh");
+    public void testUpdateMultiNodes() throws Exception {
+        doTest("test-update-multi-nodes.sh");
     }
-
-    @Test
-    public void testInstallNonDownloadedArtifact() throws Exception {
-        doTest("im-install/test-install-non-downloaded-artifact.sh");
-    }
-
-    @Test
-    public void testInstallUnknownArtifact() throws Exception {
-        doTest("im-install/test-install-unknown-artifact.sh");
-    }
-
-    @Test
-    public void testInstallUnknownVersion() throws Exception {
-        doTest("im-install/test-install-unknown-version.sh");
-    }
-
-    @Test
-    public void testInstallSingleNodeAndChangePassword() throws Exception {
-        doTest("test-install-single-node-and-change-password.sh");
-    }
-
-    @Test
-    public void testUpdateSingleNode() throws Exception {
-        doTest("test-update-single-node.sh");
-    }
-
-    @Test
-    public void testInstallUpdateImCliClient() throws Exception {
-        doTest("test-install-update-im-cli-client.sh");
-    }
+//
+//    @Test
+//    public void testInstallUpdateImCliClient() throws Exception {
+//        doTest("test-install-update-im-cli-client.sh");
+//    }
 
     @Test
     public void testCheckRemoteUpdate() throws Exception {

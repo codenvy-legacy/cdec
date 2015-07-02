@@ -19,7 +19,7 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Install not downloaded artifact"
+log "TEST CASE: Install not downloaded artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -35,6 +35,6 @@ if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CO
     validateExitCode 1
 fi
 
-printAndLog "RESULT: PASSED"
+log "RESULT: PASSED"
 
 vagrantDestroy

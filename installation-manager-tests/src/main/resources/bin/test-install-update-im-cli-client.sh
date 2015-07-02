@@ -18,7 +18,7 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Install and update IM CLI client"
+log "TEST CASE: Install and update IM CLI client"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
@@ -35,6 +35,6 @@ executeIMCommand "help" # just to update itself
 
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
-printAndLog "RESULT: PASSED"
+log "RESULT: PASSED"
 
 vagrantDestroy

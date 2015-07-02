@@ -19,6 +19,7 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
+log "TEST CASE: Install unknow artifact"
 printAndLog "TEST CASE: Install unknown artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
@@ -32,6 +33,6 @@ if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".* ]]; t
     validateExitCode 1
 fi
 
-printAndLog "RESULT: PASSED"
+log "RESULT: PASSED"
 
 vagrantDestroy

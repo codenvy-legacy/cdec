@@ -24,11 +24,6 @@ cleanUp() {
     vagrantDestroy
 }
 
-printAndLog() {
-    echo $@
-    log $@
-}
-
 log() {
     echo "TEST: "$@ >> ${TEST_LOG}
 }

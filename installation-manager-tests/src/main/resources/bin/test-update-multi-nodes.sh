@@ -18,16 +18,22 @@
 
 . ./lib.sh
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-log "TEST CASE: Install the latest single-node Codenvy On Premise"
+log "TEST CASE: Update multi-nodes Codenvy"
 
-installCodenvy
+log "Available versions: "${AVAILABLE_CODENVY_VERSIONS}
+log "Previos versions: "${PREV_CODENVY_VERSION}
+log "Latest versions: "${LATEST_CODENVY_VERSION}
+
+installCodenvy ${PREV_CODENVY_VERSION}
+auth "admin" "password"
+validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
+
+executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
+executeIMCommand "im-install" "--multi" "codenvy" "${LATEST_CODENVY_VERSION}"
 auth "admin" "password"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
-
-executeIMCommand "im-password" "password" "new-password"
-auth "admin" "new-password"
 
 log "RESULT: PASSED"
 
