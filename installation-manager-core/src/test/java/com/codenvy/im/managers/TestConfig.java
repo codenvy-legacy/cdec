@@ -28,12 +28,9 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -44,60 +41,6 @@ public class TestConfig {
     @After
     public void tearDown() {
         OSUtils.VERSION = INITIAL_OS_VERSION;
-    }
-
-    @Test
-    public void testIsValid() throws Exception {
-        assertFalse(Config.isValid(null));
-        assertTrue(Config.isValid(""));
-        assertFalse(Config.isValid(Config.MANDATORY));
-        assertTrue(Config.isValid("test"));
-    }
-
-    @Test
-    public void testIsMandatory() throws Exception {
-        assertFalse(Config.isMandatory(null));
-        assertFalse(Config.isMandatory(""));
-        assertTrue(Config.isMandatory(Config.MANDATORY));
-        assertFalse(Config.isMandatory("test"));
-    }
-
-    @Test
-    public void testIsValidForMandatoryProperty() throws Exception {
-        assertFalse(Config.isValidForMandatoryProperty(null));
-        assertFalse(Config.isValidForMandatoryProperty(""));
-        assertFalse(Config.isValidForMandatoryProperty(Config.MANDATORY));
-        assertTrue(Config.isValidForMandatoryProperty("test"));
-    }
-
-    @Test
-    public void testIsEmpty() throws Exception {
-        assertTrue(Config.isEmpty(null));
-        assertTrue(Config.isEmpty(""));
-        assertFalse(Config.isEmpty(Config.MANDATORY));
-        assertFalse(Config.isEmpty("test"));
-    }
-
-    @Test
-    public void testIsValidDefaultConfig() throws Exception {
-        Config config = new Config(Collections.<String, String>emptyMap());
-        assertTrue(config.isValid());
-    }
-
-    @Test
-    public void testIsValidCSSConfig() throws Exception {
-        Map<String, String> properties = ImmutableMap.of("some property", "some value");
-
-        Config config = new Config(properties);
-        assertTrue(config.isValid());
-    }
-
-    @Test
-    public void testIsValidCSSConfigError() throws Exception {
-        Map<String, String> properties = ImmutableMap.of("some property", "MANDATORY");
-
-        Config config = new Config(properties);
-        assertFalse(config.isValid());
     }
 
     @Test
@@ -131,13 +74,13 @@ public class TestConfig {
     @DataProvider(name = "GetValues")
     public static Object[][] GetValues() {
         return new Object[][]{
-            {"property", null, "6", null},
-            {"property", "", "6", new ArrayList<String>()},
-            {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
-            {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},
-            {"property", "value1,value2,value3", "6", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
-            {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
-            {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+                {"property", null, "6", null},
+                {"property", "", "6", new ArrayList<String>()},
+                {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
+                {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+                {"property", "value1,value2,value3", "6", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
+                {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
+                {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
     }
 

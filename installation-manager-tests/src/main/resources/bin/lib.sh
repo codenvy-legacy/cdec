@@ -33,26 +33,6 @@ log() {
     echo "TEST: "$@ >> ${TEST_LOG}
 }
 
-validateExitCodeWithRetrievingInstallLog() {
-    EXIT_CODE=$1
-    VALID_CODE=$2
-    if [[ ! -z ${VALID_CODE} ]]; then
-        if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
-            printAndLog "RESULT: FAILED"
-            retrieveInstallLog
-            vagrantDestroy
-            exit 1
-        fi
-    else
-        if [[ ! ${EXIT_CODE} == "0" ]];then
-            printAndLog "RESULT: FAILED"
-            retrieveInstallLog
-            vagrantDestroy
-            exit 1
-        fi
-    fi
-}
-
 validateExitCode() {
     EXIT_CODE=$1
     VALID_CODE=$2
@@ -82,7 +62,8 @@ validateInstalledCodenvyVersion() {
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
     if [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]]; then
-        validateExitCodeWithRetrievingInstallLog 1
+        retrieveInstallLog
+        validateExitCode 1
     fi
 
     log "validateInstalledCodenvyVersion: OK"
@@ -132,7 +113,9 @@ installCodenvy() {
     log "installCodenvy "$@
 
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
-    validateExitCodeWithRetrievingInstallLog $?
+    EXIT_CODE=$?
+    retrieveInstallLog
+    validateExitCode ${EXIT_CODE}
 
     log "installCodenvy: OK"
 }

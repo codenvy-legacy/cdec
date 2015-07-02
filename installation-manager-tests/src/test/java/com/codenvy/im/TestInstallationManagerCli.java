@@ -59,7 +59,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testInstallMultiNodeAndChangePassword() throws Exception {
-        doTest("test-install-multi-node-and-change-password.sh");
+        doTest("test-install-multi-nodes-and-change-password.sh");
     }
 
     @Test
@@ -85,6 +85,11 @@ public class TestInstallationManagerCli {
     @Test
     public void testUpdateSingleNode() throws Exception {
         doTest("test-update-single-node.sh");
+    }
+
+    @Test
+    public void testUpdateMultiNodes() throws Exception {
+        doTest("test-update-multi-nodes.sh");
     }
 
     @Test

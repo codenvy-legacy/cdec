@@ -30,6 +30,6 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
-retrieveInstallLog
 
+retrieveInstallLog
 vagrantDestroy

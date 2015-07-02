@@ -16,15 +16,11 @@
 # from Codenvy S.A..
 #
 
-[ -f "./lib.sh" ] && . ./lib.sh
-[ -f "../lib.sh" ] && . ../lib.sh
+. ./lib.sh
 
 printAndLog "TEST CASE: Install not downloaded artifact"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-
-log "Latest Codenvy version: "${LATEST_CODENVY_VERSION}
-log "Latest IM versions: "${LATEST_IM_CLI_CLIENT_VERSION}
 
 installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}

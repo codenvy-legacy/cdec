@@ -42,18 +42,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-import static com.codenvy.im.managers.Config.isEmpty;
-import static com.codenvy.im.managers.Config.isMandatory;
-import static com.codenvy.im.managers.Config.isValidForMandatoryProperty;
 import static com.codenvy.im.utils.Commons.toJson;
-import static com.codenvy.im.utils.Commons.toJsonWithSortedAndAlignedProperties;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
 import static java.lang.String.format;
-import static java.lang.Thread.sleep;
 
 /**
  * @author Alexander Reshetnyak
@@ -128,12 +122,6 @@ public class InstallCommand extends AbstractIMCommand {
 
         installOptions.setInstallType(installType);
         setInstallProperties(installOptions, isInstall);
-
-        if (!installOptions.checkValid()) {
-            enterMandatoryOptions(installOptions);
-            confirmOrReenterOptions(installOptions);
-        }
-
 
         List<String> infos;
         if (isInstall) {
@@ -225,69 +213,6 @@ public class InstallCommand extends AbstractIMCommand {
         return null;
     }
 
-    protected InstallOptions enterMandatoryOptions(InstallOptions options) throws IOException {
-        if (options.getConfigProperties().isEmpty()) {
-            return options;
-        }
-
-        Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
-        switch (artifactName) {
-            case CDECArtifact.NAME:
-                console.println("Please, enter mandatory Codenvy parameters (values cannot be left blank):");
-                for (Map.Entry<String, String> e : m.entrySet()) {
-                    String propName = e.getKey().toLowerCase();
-                    String currentValue = e.getValue();
-
-                    if (isMandatory(currentValue)) {
-                        String newValue = "";
-                        while (!isValidForMandatoryProperty(newValue)) {
-                            console.print(propName);
-                            console.printWithoutCodenvyPrompt(": ");
-                            newValue = console.readLine();
-                        }
-                        m.put(propName, newValue);
-                    } else {
-                        m.put(propName, currentValue);
-                    }
-                }
-
-                options.setConfigProperties(m);
-        }
-
-        return options;
-    }
-
-    protected InstallOptions enterAllOptions(InstallOptions options) throws IOException {
-        if (options.getConfigProperties().isEmpty()) {
-            return options;
-        }
-
-        Map<String, String> m = new TreeMap<>(options.getConfigProperties());    // ask properties in alphabetical order
-        switch (artifactName) {
-            case CDECArtifact.NAME:
-                console.println("Please, enter Codenvy parameters (just press 'Enter' key to keep value as is):");
-
-                for (Map.Entry<String, String> e : m.entrySet()) {
-                    String propName = e.getKey().toLowerCase();
-                    String currentValue = e.getValue();
-
-                    console.print(propName);
-                    console.printWithoutCodenvyPrompt(format(" (value='%s'): ", currentValue));
-
-                    String newValue = console.readLine();
-                    if (!isEmpty(newValue) && !isMandatory(newValue)) {
-                        m.put(propName, newValue);
-                    } else {
-                        m.put(propName, currentValue);
-                    }
-                }
-
-                options.setConfigProperties(m);
-        }
-
-        return options;
-    }
-
     protected void setInstallProperties(InstallOptions options, boolean isInstall) throws IOException {
         switch (artifactName) {
             case InstallManagerArtifact.NAME:
@@ -310,25 +235,6 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected boolean isInstall(Artifact artifact) throws IOException {
         return (installStep != null && force) || artifact.getInstalledVersion() == null;
-    }
-
-    public void confirmOrReenterOptions(InstallOptions installOptions) throws IOException, InterruptedException {
-        if (installOptions.getConfigProperties() == null) {
-            return;
-        }
-
-        for (; ; ) {
-            console.println();
-            console.println("Codenvy parameters list:");
-            console.println(toJsonWithSortedAndAlignedProperties(installOptions.getConfigProperties()));
-            sleep(1500);   // pause reading keyboard 1,5 sec to allow user to stop before confirming parameters list
-            console.reset();
-            if (console.askUser("Do you confirm parameters above?")) {
-                break;
-            }
-
-            enterAllOptions(installOptions);
-        }
     }
 
     private int getFirstInstallStep() {

@@ -31,4 +31,5 @@ auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
 
+retrieveInstallLog
 vagrantDestroy

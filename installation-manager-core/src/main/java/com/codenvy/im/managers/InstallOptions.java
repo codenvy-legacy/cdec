@@ -78,20 +78,6 @@ public class InstallOptions {
         return this;
     }
 
-    /** Indicates if all necessary options are set. */
-    public boolean checkValid() {
-        if (getInstallType() != null) {
-            if (configProperties == null) {
-                return false;
-            }
-
-            Config config = new Config(configProperties);
-            return config.isValid();
-        }
-
-        return true;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
