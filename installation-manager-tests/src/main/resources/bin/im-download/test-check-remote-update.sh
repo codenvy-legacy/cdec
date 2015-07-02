@@ -16,7 +16,8 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Check remote update"
 
@@ -27,7 +28,7 @@ validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
 executeIMCommand "im-download" "--check-remote"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"label\".\:.\"RC_UNSTABLE\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"artifact\".\:.\"installation-manager-cli\".*\"version\".\:.\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"status\".\:.\"OK\".* ]]; then
+if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"artifact\".\:.\"installation-manager-cli\".*\"version\".\:.\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"status\".\:.\"OK\".* ]]; then
     validateExitCode 1
 fi
 

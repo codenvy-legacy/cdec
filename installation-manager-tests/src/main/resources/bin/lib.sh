@@ -196,6 +196,25 @@ executeIMCommand() {
     log "executeIMCommand: OK"
 }
 
+executeSshCommand() {
+    log "executeSshCommand "$@
+
+    VALID_CODE=0
+    if [[ $1 =~ --valid-exit-code=.* ]]; then
+        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
+        shift
+    fi
+    EXECUTE_ON_NODE=$(detectMasterNode)
+
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${EXECUTE_ON_NODE} "$@")
+    EXIT_CODE=$?
+
+    log ${OUTPUT}
+    validateExitCode ${EXIT_CODE} ${VALID_CODE}
+
+    log "executeSshCommand: OK"
+}
+
 detectMasterNode() {
     ping -c1 -q "master.codenvy.onprem" >> ${TEST_LOG}
     if [[ $? == 0 ]]; then

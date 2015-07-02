@@ -117,6 +117,11 @@ public class TestInstallationManagerCli {
         doTest("im-download/test-download-unknown-version.sh");
     }
 
+    @Test
+    public void testUsingSystemProxy() throws Exception {
+        doTest("im-download/test-using-system-proxy.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
         doExecute(baseDir.toFile(), "./" + testScript);
