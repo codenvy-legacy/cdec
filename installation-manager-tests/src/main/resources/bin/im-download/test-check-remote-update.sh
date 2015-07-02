@@ -20,7 +20,6 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Check remote update"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
@@ -33,5 +32,4 @@ if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CO
 fi
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

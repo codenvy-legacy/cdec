@@ -62,10 +62,7 @@ validateInstalledCodenvyVersion() {
     log "validateInstalledCodenvyVersion "${VERSION}
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    if [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]]; then
-        retrieveInstallLog
-        validateExitCode 1
-    fi
+    [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]] && validateExitCode 1
 
     log "validateInstalledCodenvyVersion: OK"
 }
@@ -79,9 +76,7 @@ validateInstalledImCliClientVersion() {
 
     executeIMCommand "im-install" "--list"
 
-    if [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]]; then
-        validateExitCode 1
-    fi
+    [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]] &&  validateExitCode 1
 
     log "validateInstalledImCliClientVersion: OK"
 }

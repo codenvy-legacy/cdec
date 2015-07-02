@@ -23,8 +23,6 @@ vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 printAndLog "TEST CASE: Add and remove Codenvy nodes"
 
 installCodenvy
-retrieveInstallLog
-
 validateInstalledCodenvyVersion
 
 auth "admin" "password"
@@ -67,5 +65,4 @@ executeIMCommand "--valid-exit-code=1" "im-remove-node" "runner2.codenvy.onprem"
 [[ ! ${OUTPUT} =~ .*Node..runner2.codenvy.onprem..is.not.found.* ]] && validateExitCode 1
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

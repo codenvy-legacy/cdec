@@ -20,7 +20,6 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Download unknown artifact"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
@@ -33,5 +32,4 @@ if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".*\"stat
 fi
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

@@ -20,7 +20,6 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Get list of downloaded artifacts"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
@@ -34,5 +33,4 @@ if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CO
 fi
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

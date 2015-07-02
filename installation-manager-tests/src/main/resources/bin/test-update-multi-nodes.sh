@@ -21,21 +21,20 @@
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
 printAndLog "TEST CASE: Update multi-nodes Codenvy"
+retrieveInstallLog
 
 log "Available versions: "${AVAILABLE_CODENVY_VERSIONS}
 log "Previos versions: "${PREV_CODENVY_VERSION}
 log "Latest versions: "${LATEST_CODENVY_VERSION}
 
 installCodenvy ${PREV_CODENVY_VERSION}
-auth "admin" "password"
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
+auth "admin" "password"
 
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
 executeIMCommand "im-install" "--multi" "codenvy" "${LATEST_CODENVY_VERSION}"
-auth "admin" "password"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
+auth "admin" "password"
 
 printAndLog "RESULT: PASSED"
-
-retrieveInstallLog
 vagrantDestroy

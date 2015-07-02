@@ -20,7 +20,6 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Connect to update server when there is system proxy"
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 executeSshCommand "sudo yum install squid -y -q"
@@ -42,5 +41,4 @@ fi
 executeSshCommand "sudo grep \"GET ${UPDATE_SERVER}\" /var/log/squid/access.log"
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy
