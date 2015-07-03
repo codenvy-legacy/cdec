@@ -38,13 +38,13 @@ validateExitCode() {
     VALID_CODE=$2
     if [[ ! -z ${VALID_CODE} ]]; then
         if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
-            log "RESULT: FAILED"
+            printAndLog "RESULT: FAILED"
             vagrantDestroy
             exit 1
         fi
     else
         if [[ ! ${EXIT_CODE} == "0" ]];then
-            log "RESULT: FAILED"
+            printAndLog "RESULT: FAILED"
             vagrantDestroy
             exit 1
         fi

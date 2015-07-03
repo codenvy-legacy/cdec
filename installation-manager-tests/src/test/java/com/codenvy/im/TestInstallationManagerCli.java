@@ -148,8 +148,28 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testLoginWithUsernamexPasswordAndAccount() throws Exception {
+    public void testLoginWithUsernamePasswordAndAccount() throws Exception {
         doTest("im-login/test-login-with-username-password-and-account.sh");
+    }
+
+    @Test
+    public void testLoginWithWrongUsername() throws Exception {
+        doTest("im-login/test-login-with-wrong-username.sh");
+    }
+
+    @Test
+    public void testLoginWithWrongPassword() throws Exception {
+        doTest("im-login/test-login-with-wrong-password.sh");
+    }
+
+    @Test
+    public void testLoginWithWrongAccount() throws Exception {
+        doTest("im-login/test-login-with-wrong-account.sh");
+    }
+
+    @Test
+    public void testLoginWithUserNotAccountOwner() throws Exception {
+        doTest("im-login/test-login-as-user-not-account-owner.sh");
     }
 
     private void doTest(String testScript) throws Exception {

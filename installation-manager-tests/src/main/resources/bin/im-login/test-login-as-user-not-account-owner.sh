@@ -19,16 +19,16 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Login with username and password"
+printAndLog "TEST CASE: Login as where user which doesn't have own account"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "login" "${CODENVY_SAAS_USERNAME}" "${CODENVY_SAAS_PASSWORD}"
+executeIMCommand "--valid-exit-code=1" "login" "${CODENVY_SAAS_USER_WITHOUT_OWN_ACCOUNT_NAME}" "${CODENVY_SAAS_USER_WITHOUT_OWN_ACCOUNT_PASSWORD}"
 
-if [[ ! ${OUTPUT} =~ .*Your.Codenvy.account.\'${CODENVY_SAAS_ACCOUNT}\'.will.be.used.to.verify.on-premises.subscription\..*Login.success\..* ]]; then
+if [[ ! ${OUTPUT} =~ .*You.are.logged.as.a.user.which.does.not.have.an.account/owner.role.in.any.account\..This.likely.means.that.you.used.the.wrong.credentials.to.access.Codenvy\..* ]]; then
     validateExitCode 1
 fi
 

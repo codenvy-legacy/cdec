@@ -19,16 +19,16 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Login with username and password"
+printAndLog "TEST CASE: Login with wrong account"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "login" "${CODENVY_SAAS_USERNAME}" "${CODENVY_SAAS_PASSWORD}"
+executeIMCommand "--valid-exit-code=1" "login" "${CODENVY_SAAS_USERNAME}" "${CODENVY_SAAS_PASSWORD}" "wrong"
 
-if [[ ! ${OUTPUT} =~ .*Your.Codenvy.account.\'${CODENVY_SAAS_ACCOUNT}\'.will.be.used.to.verify.on-premises.subscription\..*Login.success\..* ]]; then
+if [[ ! ${OUTPUT} =~ .*Account.\'wrong\'.is.not.yours.or.may.be.you.aren\'t.owner.of.this.account\..* ]]; then
     validateExitCode 1
 fi
 
