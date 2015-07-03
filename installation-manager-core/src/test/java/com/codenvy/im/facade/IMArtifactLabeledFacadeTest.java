@@ -100,6 +100,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
 
         facade = spy(new IMArtifactLabeledFacade(DOWNLOAD_DIR,
                                                  UPDATE_API_ENDPOINT,
+                                                 SAAS_API_ENDPOINT,
                                                  transport,
                                                  saasAuthServiceProxy,
                                                  saasAccountServiceProxy,

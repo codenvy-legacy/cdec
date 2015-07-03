@@ -58,27 +58,27 @@ public class TestAbstractIMCommand {
     @Mock
     private MultiRemoteCodenvy      mockMultiRemoteCodenvy;
     @Mock
-    private Remote                  mockUpdateServerRemote;
+    private Remote mockSaasServerRemote;
     @Mock
-    private Remote                  mockAnotherRemote;
+    private Remote mockAnotherRemote;
 
-    private final static String UPDATE_SERVER_REMOTE_NAME = "update-server";
-    private final static String UPDATE_SERVER_URL         = "https://test.com";
-    private final static String TEST_ACCOUNT_ID           = "test-account-id";
-    private static final String TEST_ACCOUNT_NAME         = "test-account-name";
-    private static final String TEST_ACCOUNT_REFERENCE    =
-            "{\"name\":\"" + TEST_ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}";
-    private final static String TEST_TOKEN                = "authToken";
+    private final static String SAAS_SERVER_REMOTE_NAME = "saas-server";
+    private final static String SAAS_SERVER_URL         = "https://test.com";
+    private final static String TEST_ACCOUNT_ID         = "test-account-id";
+    private static final String TEST_ACCOUNT_NAME       = "test-account-name";
+    private static final String TEST_ACCOUNT_REFERENCE  =
+        "{\"name\":\"" + TEST_ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}";
+    private final static String TEST_TOKEN              = "authToken";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
     private static final String ANOTHER_REMOTE_URL  = "another remote url";
 
     private String DEFAULT_PREFERENCES_FILE                          = "default-preferences.json";
-    private String PREFERENCES_WITH_UPDATE_SERVER_FILE               = "preferences-with-update-server-remote.json";
-    private String PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-update-server-remote-without-login.json";
-    private String PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE = "preferences-with-update-server-remote-without-accountid.json";
+    private String PREFERENCES_WITH_SAAS_SERVER_FILE                 = "preferences-with-saas-server-remote.json";
+    private String PREFERENCES_WITH_SAAS_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-saas-server-remote-without-login.json";
+    private String PREFERENCES_SAAS_SERVER_WITHOUT_ACCOUNT_ID_FILE = "preferences-with-saas-server-remote-without-accountid.json";
 
-    private Remote updateServerRemote;
+    private Remote saasServerRemote;
 
     @BeforeMethod
     public void initMocks() {
@@ -89,25 +89,25 @@ public class TestAbstractIMCommand {
         doReturn(true).when(spyCommand).isInteractive();
         doNothing().when(spyCommand).initConsole();
 
-        updateServerRemote = new Remote();
-        updateServerRemote.setUrl(UPDATE_SERVER_URL);
+        saasServerRemote = new Remote();
+        saasServerRemote.setUrl(SAAS_SERVER_URL);
 
-        doReturn(UPDATE_SERVER_URL).when(service).getUpdateServerEndpoint();
+        doReturn(SAAS_SERVER_URL).when(service).getSaasServerEndpoint();
     }
 
     @Test
-    public void testGetUpdateServerUrl() {
-        assertEquals(spyCommand.getUpdateServerEndpoint(), UPDATE_SERVER_URL);
+    public void testGetSaasServerUrl() {
+        assertEquals(spyCommand.getSaasServerEndpoint(), SAAS_SERVER_URL);
     }
 
     @Test
     public void testGetAccountId() throws Exception {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
         doReturn(Commons.createDtoFromJson(TEST_ACCOUNT_REFERENCE, AccountReference.class))
-                .when(service).getAccountWhereUserIsOwner("accountName", TEST_TOKEN);
+            .when(service).getAccountWhereUserIsOwner("accountName", TEST_TOKEN);
 
         AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner("accountName");
         assertNotNull(accountReference);
@@ -116,17 +116,17 @@ public class TestAbstractIMCommand {
     }
 
     @Test
-    public void testGetRemoteNameForUpdateServer() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+    public void testGetRemoteNameForSaasServer() {
+        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
-        assertEquals(spyCommand.getOrCreateRemoteNameForUpdateServer(), UPDATE_SERVER_REMOTE_NAME);
+        assertEquals(spyCommand.getOrCreateRemoteNameForSaasServer(), SAAS_SERVER_REMOTE_NAME);
     }
 
     @Test
     public void testValidateIfUserLoggedIn() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
@@ -134,18 +134,18 @@ public class TestAbstractIMCommand {
     }
 
     @Test
-    public void testCreateUpdateServerRemote() {
+    public void testCreateSaasServerRemote() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         doNothing().when(spyCommand).validateIfUserLoggedIn();
         spyCommand.init();
 
-        assertNotNull(spyCommand.getOrCreateRemoteNameForUpdateServer());
+        assertNotNull(spyCommand.getOrCreateRemoteNameForSaasServer());
     }
 
     @Test
     public void testInit() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
@@ -155,7 +155,7 @@ public class TestAbstractIMCommand {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Please log in into 'update-server' remote.")
+          expectedExceptionsMessageRegExp = "Please log in into 'saas-server' remote.")
     public void testInitWhenUpdateServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         prepareTestAbstractIMCommand(spyCommand);
@@ -164,18 +164,18 @@ public class TestAbstractIMCommand {
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Please log in into 'update-server' remote.")
+          expectedExceptionsMessageRegExp = "Please log in into 'saas-server' remote.")
     public void testInitWhenUserDidNotLogin() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_WITHOUT_LOGIN_FILE);
+        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_WITHOUT_LOGIN_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
         spyCommand.validateIfUserLoggedIn();
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Please log in into 'update-server' remote.")
+            expectedExceptionsMessageRegExp = "Please log in into 'saas-server' remote.")
     public void testInitWhenUserDidNotObtainAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_UPDATE_SERVER_WITHOUT_ACCOUNT_ID_FILE);
+        globalPreferences = loadPreferences(PREFERENCES_SAAS_SERVER_WITHOUT_ACCOUNT_ID_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
         spyCommand.validateIfUserLoggedIn();
@@ -183,7 +183,7 @@ public class TestAbstractIMCommand {
 
     @Test
     public void testGetCredentialsRep() throws IOException {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_UPDATE_SERVER_FILE);
+        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
@@ -202,18 +202,18 @@ public class TestAbstractIMCommand {
         doNothing().when(spyCommand).validateIfUserLoggedIn();
         spyCommand.init();
 
-        String remoteNameForUpdateServer = spyCommand.getOrCreateRemoteNameForUpdateServer();
-        assertTrue(spyCommand.isRemoteForUpdateServer(remoteNameForUpdateServer));
-        assertFalse(spyCommand.isRemoteForUpdateServer("another remote"));
+        String remoteNameForUpdateServer = spyCommand.getOrCreateRemoteNameForSaasServer();
+        assertTrue(spyCommand.isRemoteForSaasServer(remoteNameForUpdateServer));
+        assertFalse(spyCommand.isRemoteForSaasServer("another remote"));
     }
 
     @Test
     public void testGetRemoteUrlByName() {
         doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
 
-        doReturn(UPDATE_SERVER_URL).when(mockUpdateServerRemote).getUrl();
-        doReturn(mockUpdateServerRemote).when(mockMultiRemoteCodenvy).getRemote(UPDATE_SERVER_REMOTE_NAME);
-        assertEquals(spyCommand.getRemoteUrlByName(UPDATE_SERVER_REMOTE_NAME), UPDATE_SERVER_URL);
+        doReturn(SAAS_SERVER_URL).when(mockSaasServerRemote).getUrl();
+        doReturn(mockSaasServerRemote).when(mockMultiRemoteCodenvy).getRemote(SAAS_SERVER_REMOTE_NAME);
+        assertEquals(spyCommand.getRemoteUrlByName(SAAS_SERVER_REMOTE_NAME), SAAS_SERVER_URL);
 
         doReturn(ANOTHER_REMOTE_URL).when(mockAnotherRemote).getUrl();
         doReturn(mockAnotherRemote).when(mockMultiRemoteCodenvy).getRemote(ANOTHER_REMOTE_NAME);

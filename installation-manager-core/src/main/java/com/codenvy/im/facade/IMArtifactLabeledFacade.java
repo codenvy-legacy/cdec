@@ -64,6 +64,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
     @Inject
     public IMArtifactLabeledFacade(@Named("installation-manager.download_dir") String downloadDir,
                                    @Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
+                                   @Named("saas.api.endpoint") String saasServerEndpoint,
                                    HttpTransport transport,
                                    SaasAuthServiceProxy saasAuthServiceProxy,
                                    SaasAccountServiceProxy saasAccountServiceProxy,
@@ -75,6 +76,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    DownloadManager downloadManager) {
         super(downloadDir,
               updateServerEndpoint,
+              saasServerEndpoint,
               transport,
               saasAuthServiceProxy,
               saasAccountServiceProxy,

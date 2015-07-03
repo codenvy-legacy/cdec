@@ -48,7 +48,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     protected PreferencesStorage      preferencesStorage;
     protected Console                 console;
 
-    private static final String DEFAULT_UPDATE_SERVER_REMOTE_NAME = "update-server";
+    private static final String DEFAULT_SAAS_SERVER_REMOTE_NAME = "saas-server";
 
     public AbstractIMCommand() {
         facade = INJECTOR.getInstance(IMArtifactLabeledFacade.class);
@@ -81,7 +81,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void initPreferencesStorage() {
-        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForUpdateServer());
+        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForSaasServer());
     }
 
     protected void initConsole() {
@@ -107,7 +107,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
      *         if user isn't logged in
      */
     protected void validateIfUserLoggedIn() throws IllegalStateException {
-        String remoteName = getOrCreateRemoteNameForUpdateServer();
+        String remoteName = getOrCreateRemoteNameForSaasServer();
 
         Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
         if (!readyRemotes.containsKey(remoteName)) {
@@ -124,31 +124,31 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     /**
-     * Find out remote for update server.
+     * Find out remote for saas server.
      * Creates new one with default name if there is no such remote stored in preferences.
      */
     @Nonnull
-    protected String getOrCreateRemoteNameForUpdateServer() {
+    protected String getOrCreateRemoteNameForSaasServer() {
         URL url;
         try {
-            url = new URL(getUpdateServerEndpoint());
+            url = new URL(getSaasServerEndpoint());
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }
-        String updateServerUrl = url.getProtocol() + "://" + url.getHost();
+        String saasServerUrl = url.getProtocol() + "://" + url.getHost();
 
-        String remoteName = getRemoteNameByUrl(updateServerUrl);
+        String remoteName = getRemoteNameByUrl(saasServerUrl);
 
         if (remoteName == null) {
-            createRemote(DEFAULT_UPDATE_SERVER_REMOTE_NAME, updateServerUrl);
-            return DEFAULT_UPDATE_SERVER_REMOTE_NAME;
+            createRemote(DEFAULT_SAAS_SERVER_REMOTE_NAME, saasServerUrl);
+            return DEFAULT_SAAS_SERVER_REMOTE_NAME;
         }
 
         return remoteName;
     }
 
-    protected String getUpdateServerEndpoint() {
-        return facade.getUpdateServerEndpoint();
+    protected String getSaasServerEndpoint() {
+        return facade.getSaasServerEndpoint();
     }
 
     @Nullable
@@ -189,9 +189,9 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /** Returns true if only remoteName = name of remote which has url = {update server url} */
-    protected boolean isRemoteForUpdateServer(@Nonnull String remoteName) {
-        return remoteName.equals(getOrCreateRemoteNameForUpdateServer());
+    /** Returns true if only remoteName = name of remote which has url = {saas server url} */
+    protected boolean isRemoteForSaasServer(@Nonnull String remoteName) {
+        return remoteName.equals(getOrCreateRemoteNameForSaasServer());
     }
 
     @Nullable

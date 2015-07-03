@@ -111,6 +111,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
         installationManagerFacade = spy(new InstallationManagerFacade("target/download",
                                                                       "update/endpoint",
+                                                                      "saas/endpoint",
                                                                       transport,
                                                                       saasAuthServiceProxy,
                                                                       saasAccountServiceProxy,
@@ -373,10 +374,12 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Test
     public void testGetConfig() throws Exception {
         doReturn("update/endpoint").when(installationManagerFacade).extractServerUrl("update/endpoint");
+        doReturn("saas/endpoint").when(installationManagerFacade).extractServerUrl("saas/endpoint");
         Map<String, String> m = installationManagerFacade.getInstallationManagerProperties();
-        assertEquals(m.size(), 2);
+        assertEquals(m.size(), 3);
         assertTrue(m.containsValue("target/download"));
         assertTrue(m.containsValue("update/endpoint"));
+        assertTrue(m.containsValue("saas/endpoint"));
     }
 
 

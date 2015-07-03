@@ -6,12 +6,11 @@
             "defaultRemote" : true,
             "url" : "http://codenvy-next.com"
         },
-        "update-server" : {
+        "saas-server" : {
             "token" : "authToken",
             "defaultRemote" : false,
             "username" : "test@test.com",
-            "url" : "https://test.com",
-            "accountId" : "test-account-id"
+            "url" : "https://test.com"
         }
     }
 }

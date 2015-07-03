@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 public class BaseTest {
     protected static final String DOWNLOAD_DIR        = "target/download";
     protected static final String UPDATE_API_ENDPOINT = "update/endpoint";
-    protected static final String SAAS_API_ENDPOINT   = "api/endpoint";
+    protected static final String SAAS_API_ENDPOINT   = "saas/endpoint";
     public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
 
     @BeforeMethod

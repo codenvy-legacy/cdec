@@ -60,6 +60,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
     @Inject
     public IMCliFilteredFacade(@Named("installation-manager.download_dir") String downloadDir,
                                @Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
+                               @Named("saas.api.endpoint") String saasServerEndpoint,
                                HttpTransport transport,
                                SaasAuthServiceProxy saasAuthServiceProxy,
                                SaasAccountServiceProxy saasAccountServiceProxy,
@@ -71,6 +72,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
                                DownloadManager downloadManager) {
         super(downloadDir,
               updateServerEndpoint,
+              saasServerEndpoint,
               transport,
               saasAuthServiceProxy,
               saasAccountServiceProxy,

@@ -52,8 +52,8 @@ public class TestLoginCommand extends AbstractTestCommand {
             "{\"name\":\"" + TEST_USER_ACCOUNT_NAME + "\",\"id\":\"" + TEST_USER_ACCOUNT_ID + "\",\"links\":[]}";
     private static final String TEST_USER_PASSWORD          = "testUserPassword";
     private static final String TEST_USER                   = "testUser";
-    private final static String UPDATE_SERVER_URL           = "http://codenvy-stg.com";
-    private final static String UPDATE_SERVER_REMOTE_NAME   = "update-server";
+    private final static String SAAS_SERVER_URL             = "http://codenvy-stg.com";
+    private final static String SAAS_SERVER_REMOTE_NAME     = "saas-server";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
     private static final String ANOTHER_REMOTE_URL  = "another remote url";
@@ -74,7 +74,7 @@ public class TestLoginCommand extends AbstractTestCommand {
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        doReturn(UPDATE_SERVER_URL).when(service).getUpdateServerEndpoint();
+        doReturn(SAAS_SERVER_URL).when(service).getSaasServerEndpoint();
 
         doNothing().when(mockPreferencesStorage).setAccountId(TEST_USER_ACCOUNT_ID);
 
@@ -84,11 +84,11 @@ public class TestLoginCommand extends AbstractTestCommand {
 
         performBaseMocks(spyCommand, true);
 
-        doReturn(UPDATE_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(UPDATE_SERVER_URL);
-        doReturn(true).when(spyCommand).isRemoteForUpdateServer(UPDATE_SERVER_REMOTE_NAME);
-        doReturn(false).when(spyCommand).isRemoteForUpdateServer(ANOTHER_REMOTE_NAME);
+        doReturn(SAAS_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(SAAS_SERVER_URL);
+        doReturn(true).when(spyCommand).isRemoteForSaasServer(SAAS_SERVER_REMOTE_NAME);
+        doReturn(false).when(spyCommand).isRemoteForSaasServer(ANOTHER_REMOTE_NAME);
 
-        doReturn(UPDATE_SERVER_URL).when(spyCommand).getRemoteUrlByName(UPDATE_SERVER_REMOTE_NAME);
+        doReturn(SAAS_SERVER_URL).when(spyCommand).getRemoteUrlByName(SAAS_SERVER_REMOTE_NAME);
         doReturn(ANOTHER_REMOTE_URL).when(spyCommand).getRemoteUrlByName(ANOTHER_REMOTE_NAME);
     }
 
@@ -99,9 +99,9 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
         doNothing().when(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
-        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
-                .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
+            .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -119,7 +119,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
         doThrow(IOException.class).when(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
-        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
                 .when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
@@ -141,11 +141,11 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
         // simulate fail login
-        doReturn(false).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(false).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Login failed on remote '%s'.\n", UPDATE_SERVER_REMOTE_NAME));
+        assertEquals(output, String.format("Login failed on remote '%s'.\n", SAAS_SERVER_REMOTE_NAME));
         verify(service, never()).addTrialSaasSubscription(any(SaasUserCredentials.class));
     }
 
@@ -155,7 +155,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("username", TEST_USER);
         commandInvoker.argument("password", TEST_USER_PASSWORD);
 
-        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
 
         doReturn(null).when(spyCommand).getAccountReferenceWhereUserIsOwner(null);
 
@@ -173,7 +173,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
 
         doNothing().when(service).addTrialSaasSubscription(any(SaasUserCredentials.class));
-        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(Commons.createDtoFromJson(TEST_USER_ACCOUNT_REFERENCE, AccountReference.class))
                 .when(spyCommand).getAccountReferenceWhereUserIsOwner(TEST_USER_ACCOUNT_NAME);
 
@@ -192,7 +192,7 @@ public class TestLoginCommand extends AbstractTestCommand {
         commandInvoker.argument("password", TEST_USER_PASSWORD);
         commandInvoker.argument("accountName", TEST_USER_ACCOUNT_NAME);
 
-        doReturn(true).when(mockMultiRemoteCodenvy).login(UPDATE_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
         doReturn(null).when(spyCommand).getAccountReferenceWhereUserIsOwner(TEST_USER_ACCOUNT_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -208,7 +208,7 @@ public class TestLoginCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-            .when(service).getUpdateServerEndpoint();
+            .when(service).getSaasServerEndpoint();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 

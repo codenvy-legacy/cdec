@@ -99,10 +99,12 @@ public class InstallationManagerFacade {
 
     private final String updateServerEndpoint;
     private final Path downloadDir;
+    private final String saasServerEndpoint;
 
     @Inject
     public InstallationManagerFacade(@Named("installation-manager.download_dir") String downloadDir,
                                      @Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
+                                     @Named("saas.api.endpoint") String saasServerEndpoint,
                                      HttpTransport transport,
                                      SaasAuthServiceProxy saasAuthServiceProxy,
                                      SaasAccountServiceProxy saasAccountServiceProxy,
@@ -123,10 +125,11 @@ public class InstallationManagerFacade {
         this.nodeManager = nodeManager;
         this.backupManager = backupManager;
         this.storageManager = storageManager;
+        this.saasServerEndpoint = saasServerEndpoint;
     }
 
-    public String getUpdateServerEndpoint() {
-        return updateServerEndpoint;
+    public String getSaasServerEndpoint() {
+        return saasServerEndpoint;
     }
 
     /**
@@ -433,7 +436,8 @@ public class InstallationManagerFacade {
     public Map<String, String> getInstallationManagerProperties() {
         return new LinkedHashMap<String, String>() {{
             put("download directory", downloadDir.toString());
-            put("base url", extractServerUrl(updateServerEndpoint));
+            put("update server url", extractServerUrl(updateServerEndpoint));
+            put("saas server url", extractServerUrl(saasServerEndpoint));
         }};
     }
 

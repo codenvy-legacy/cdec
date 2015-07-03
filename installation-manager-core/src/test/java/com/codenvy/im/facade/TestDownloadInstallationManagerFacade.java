@@ -89,6 +89,7 @@ public class TestDownloadInstallationManagerFacade {
         initMocks(this);
         installationManagerService = new InstallationManagerFacade("target/download",
                                                                    "update/endpoint",
+                                                                   "saas/endpoint",
                                                                    transport,
                                                                    saasAuthServiceProxy,
                                                                    saasAccountServiceProxy,

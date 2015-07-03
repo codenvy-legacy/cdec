@@ -48,7 +48,7 @@ public class LoginCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         try {
             if (remoteName == null) {
-                remoteName = getOrCreateRemoteNameForUpdateServer();
+                remoteName = getOrCreateRemoteNameForSaasServer();
             }
 
             if (username == null) {
@@ -66,7 +66,7 @@ public class LoginCommand extends AbstractIMCommand {
                 return;
             }
 
-            if (!isRemoteForUpdateServer(remoteName)) {
+            if (!isRemoteForSaasServer(remoteName)) {
                 console.printSuccess(format("Login success on remote '%s' [%s].",
                                             remoteName,
                                             getRemoteUrlByName(remoteName)));
