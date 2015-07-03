@@ -26,7 +26,6 @@ installCodenvy
 validateInstalledCodenvyVersion
 
 auth "admin" "password"
-TOKEN=`echo ${OUTPUT} | sed 's/.*{"value":"\(.*\)"}/\1/'`
 
 # add runner
 executeIMCommand "im-add-node" "runner2.codenvy.onprem"

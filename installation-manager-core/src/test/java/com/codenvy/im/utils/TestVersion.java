@@ -168,7 +168,7 @@ public class TestVersion {
     public void testIsSuitedFor(String version, String pattern, boolean expected) throws Exception {
         boolean actual = Version.valueOf(version).isSuitedFor(pattern);
 
-        assertEquals(expected, actual);
+        assertEquals(pattern, expected, actual);
     }
 
     @DataProvider(name = "testIsSuitedFor")
@@ -180,8 +180,10 @@ public class TestVersion {
                 {"1.0.1", "(.*)\\.0\\.1", true},
                 {"1.0.1", "(.*)\\.(.*)\\.1", true},
                 {"1.0.1", "(.*)\\.(.*)\\.(.*)", true},
+                {"1.1.1-SNAPSHOT", "1\\.1\\.0|1\\.1\\.1\\-SNAPSHOT", true},
+                {"1.1.0", "1\\.1\\.0|1\\.\\1\\.1-SNAPSHOT", true},
                 {"1.0.1", "1\\.0\\.2", false},
-                {"1.0.1", "1\\.1\\.(.*)", false},
+                {"1.0.1", "1\\.1\\.(.*)", false}
         };
     }
 }
