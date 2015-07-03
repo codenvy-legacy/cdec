@@ -45,6 +45,7 @@ log ${OUTPUT}
 OUTPUT=$(curl -H "Content-Type: application/json" -d '{"type":"blank", "visibility":"public"}' -X POST 'http://codenvy.onprem/api/project/'${WORKSPACE_ID}'?name=project-1&token='${TOKEN})
 log ${OUTPUT}
 
+BOUNDARY="----WebKitFormBoundary9zsnEVSuJC5kDWIq"
 FACTORY_DATA='{
   "v": "2.1",
   "project": {
@@ -58,8 +59,11 @@ FACTORY_DATA='{
     }
   }
 }'
-echo "${FACTORY_DATA}" > f
-OUTPUT=$(curl -H "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary9zsnEVSuJC5kDWIq" --data-binary @f -X POST 'http://codenvy.onprem/api/factory?token='${TOKEN})
+echo "${BOUNDARY}" > f
+echo "${FACTORY_DATA}" >> f
+echo "${BOUNDARY}" >> f
+
+OUTPUT=$(curl -H "Content-Type: multipart/form-data; boundary=-${BOUNDARY}" --data-binary @f -X POST 'http://codenvy.onprem/api/factory?token='${TOKEN})
 FACTORY_ID=$(fetchJsonParameter "id")
 log ${OUTPUT}
 
@@ -69,8 +73,14 @@ executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
 executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
+# check data
+# TODO
+
 # restore
 executeIMCommand "im-restore" ${BACKUP}
+
+# check data
+# TODO
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy
