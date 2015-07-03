@@ -401,7 +401,7 @@ public class ConfigManager {
             return "http://localhost/api";
         } else {
             Config config = loadInstalledCodenvyConfig(installType);
-            return format("http://%s/api", config.getHostUrl());
+            return config.getValue("api_endpoint");
         }
     }
 

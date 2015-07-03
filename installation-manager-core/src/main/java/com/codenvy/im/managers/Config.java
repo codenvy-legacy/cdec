@@ -79,7 +79,6 @@ public class Config {
     /** @return the property value */
     @Nullable
     public String getValue(String property) {
-        property = property.toLowerCase();
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
             return PROPERTIES_BY_VERSION.get(property).get(getVersion());
         }
