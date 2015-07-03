@@ -145,13 +145,13 @@ auth() {
     PASSWORD=$2
 
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://codenvy.onprem/api/auth/login)
-    validateExitCode $?
+    EXIT_CODE=$?
 
     log ${OUTPUT}
+    validateExitCode $?
 
-    if [[ ! ${OUTPUT} =~ .*value.* ]]; then
-        validateExitCode 1
-    fi
+    [[ ! ${OUTPUT} =~ .*value.* ]] && validateExitCode 1
+    TOKEN=$(fetchJsonParameter "value")
 
     log "auth: OK"
 }
@@ -206,4 +206,8 @@ detectMasterNode() {
             validateExitCode 1
         fi
     fi
+}
+
+fetchJsonParameter() {
+    echo `echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
 }

@@ -138,6 +138,11 @@ public class TestInstallationManagerCli {
     }
 
     @Test
+    public void testBackupRestoreSingleNode() throws Exception {
+        doTest("test-backup-restore-single-node.sh");
+    }
+
+    @Test
     public void testLoginWithUsernameAndPassword() throws Exception {
         doTest("im-login/test-login-with-username-and-password.sh");
     }
