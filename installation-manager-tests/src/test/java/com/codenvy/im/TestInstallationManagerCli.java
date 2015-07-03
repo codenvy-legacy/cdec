@@ -172,6 +172,11 @@ public class TestInstallationManagerCli {
         doTest("im-login/test-login-as-user-not-account-owner.sh");
     }
 
+    @Test
+    public void testCheckOnpremisesSubscription() throws Exception {
+        doTest("im-subscription/test-check-onpremises-subscription.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
         doExecute(baseDir.toFile(), "./" + testScript);

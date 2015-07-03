@@ -38,3 +38,8 @@ CODENVY_SAAS_ACCOUNT="cdec.im.test"
 # test account on the SAAS_SERVER which doesn't have an account as owner, but is a member of some corporate account like 'codenvy.com'
 CODENVY_SAAS_USER_WITHOUT_OWN_ACCOUNT_NAME="dnochevnov@codenvy.com"
 CODENVY_SAAS_USER_WITHOUT_OWN_ACCOUNT_PASSWORD="codenvy123"
+
+# test account on the SAAS_SERVER which didn't have onPremises subscription before to be added OnPremises subscription
+CODENVY_SAAS_USER_WITHOUT_SUBSCRIPTION_NAME="cdec.im.test1@gmail.com"
+CODENVY_SAAS_USER_WITHOUT_SUBSCRIPTION_PASSWORD="codenvy123"
+
