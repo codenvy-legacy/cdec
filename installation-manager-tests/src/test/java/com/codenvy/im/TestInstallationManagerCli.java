@@ -177,6 +177,11 @@ public class TestInstallationManagerCli {
         doTest("im-subscription/test-check-onpremises-subscription.sh");
     }
 
+    @Test
+    public void testHelpCommand() throws Exception {
+        doTest("help/test-help.sh");
+    }
+
     private void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
         doExecute(baseDir.toFile(), "./" + testScript);
