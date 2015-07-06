@@ -120,6 +120,8 @@ public class ConfigManager {
      * Merges two bunches of the properties from current and new configurations.
      * As a rule method keeps the values of the old configuration except the {@link Config#VERSION} property
      * and cases where new default values came.
+     *
+     * @return the only properties are needed to be updated
      */
     public Map<String, String> merge(Version curVersion,
                                      Map<String, String> curProps,
@@ -128,26 +130,20 @@ public class ConfigManager {
         InstallType installType = detectInstallationType();
         Map<String, String> curDefaultProps = loadCodenvyDefaultProperties(curVersion, installType);
 
-        Map<String, String> props = new HashMap<>(curProps);
+        Map<String, String> props = new HashMap<>();
 
         for (Map.Entry<String, String> e : newProps.entrySet()) {
-            String name = e.getKey();
-            String value = e.getValue();
+            String newName = e.getKey();
+            String newValue = e.getValue();
 
-            if (!props.containsKey(name)) {
-                props.put(name, value);
+            if (!curProps.containsKey(newName)) {
+                props.put(newName, newValue);
             } else {
-                if (curDefaultProps.containsKey(name) && curProps.get(name).equals(curDefaultProps.get(name))) {
-                    if (!name.contains("pass") && !name.contains("pwd") && !name.contains("client_id") && !name.contains("secret")) {
-                        props.put(name, value);
+                if (curDefaultProps.containsKey(newName) && curProps.get(newName).equals(curDefaultProps.get(newName))) {
+                    if (!newName.contains("pass") && !newName.contains("pwd") && !newName.contains("client_id") && !newName.contains("secret")) {
+                        props.put(newName, newValue);
                     }
                 }
-            }
-
-            String aioOldName = "aio_" + name;
-            if (props.containsKey(aioOldName)) {
-                props.put(name, props.get(aioOldName));
-                props.remove(aioOldName);
             }
         }
 
