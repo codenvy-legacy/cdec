@@ -39,6 +39,7 @@ fi
 #Class path
 [ -z "${CLASSPATH}" ]  && CLASSPATH="${CATALINA_HOME}/conf/:${JAVA_HOME}/lib/tools.jar"
 
+export CATALINA_HOME
 export JAVA_OPTS="$JAVA_OPTS  -Dcodenvy.logs.dir=${CODENVY_LOGS_DIR}"
 
 echo "Using LOCAL_CONF_DIR:  $CODENVY_LOCAL_CONF_DIR"
