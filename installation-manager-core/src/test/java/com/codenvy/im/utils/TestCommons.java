@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
 import org.eclipse.che.dto.server.DtoFactory;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
@@ -290,4 +291,24 @@ public class TestCommons {
         assertNull(Commons.createVersionOrNull(null));
         assertNotNull(Commons.createVersionOrNull("1.0.1"));
     }
+
+    @Test(dataProvider = "TestExtractServerUrlData")
+    public void testExtractServerUrl(String testUrl, String extractedUrl) {
+        assertEquals(Commons.extractServerUrl(testUrl), extractedUrl);
+    }
+
+    @DataProvider(name = "TestExtractServerUrlData")
+    public Object[][] getTestExtractServerUrlData() {
+        return new Object[][] {
+            {"http://test.com/path", "http://test.com"},
+            {"https://test-path.com:8080/path", "https://test-path.com:8080"},
+            {"http://test.com", "http://test.com"}
+        };
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testExtractServerUrlFromIncorrectUrl() {
+        Commons.extractServerUrl("123");
+    }
+
 }
