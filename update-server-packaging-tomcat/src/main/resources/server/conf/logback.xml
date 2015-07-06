@@ -21,19 +21,22 @@
 <configuration>
     <jmxConfigurator/>
 
-    <timestamp key="date" datePattern="yyyy-MM-dd"/>
-
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%-41(%date[%.15thread]) %-45([%-5level] [%.30logger{30} %L]) - %msg%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
             <fileNamePattern>${codenvy.logs.dir}/%d{yyyy/MM/dd}/catalina-%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
+                <!-- or whenever the file size reaches 2MB -->
+                <maxFileSize>20MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <encoder>
@@ -41,7 +44,10 @@
         </encoder>
     </appender>
 
-    <logger name="org.apache.catalina.loader.WebappClassLoader" level="OFF"/>
+    <logger name="org.apache.catalina.loader" level="OFF"/>
+    <logger name="org.apache.catalina.session.PersistentManagerBase" level="OFF"/>
+    <logger name="org.apache.jasper.servlet.TldScanner" level="OFF"/>
+
     <include file="${codenvy.logback.smtp.appender}"/>
     <include file="${codenvy.syslog.appender}"/>
 
