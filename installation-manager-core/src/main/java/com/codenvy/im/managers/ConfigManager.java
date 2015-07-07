@@ -133,17 +133,15 @@ public class ConfigManager {
         Map<String, String> props = new HashMap<>();
 
         for (Map.Entry<String, String> e : newProps.entrySet()) {
-            String newName = e.getKey();
+            String name = e.getKey();
             String newValue = e.getValue();
 
-            if (!curProps.containsKey(newName)) {
-                props.put(newName, newValue);
-            } else {
-                if (curDefaultProps.containsKey(newName) && curProps.get(newName).equals(curDefaultProps.get(newName))) {
-                    if (!newName.contains("pass") && !newName.contains("pwd") && !newName.contains("client_id") && !newName.contains("secret")) {
-                        props.put(newName, newValue);
-                    }
-                }
+            if (!curProps.containsKey(name)) {
+                props.put(name, newValue);
+            } else if (name.contains("pass") || name.contains("pwd") || name.contains("client_id") || name.contains("secret")) {
+                props.put(name, curProps.get(name));
+            } else if (curDefaultProps.containsKey(name) && curProps.get(name).equals(curDefaultProps.get(name))) {
+                props.put(name, newValue);
             }
         }
 
@@ -448,7 +446,6 @@ public class ConfigManager {
 
                 properties.put(Config.VERSION, version2Install.toString());
                 setTemplatesProperties(properties);
-
                 return properties;
             default:
                 throw new ArtifactNotFoundException(artifact);
