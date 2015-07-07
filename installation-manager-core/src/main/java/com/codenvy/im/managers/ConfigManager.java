@@ -384,7 +384,7 @@ public class ConfigManager {
             return "http://localhost/api";
         } else {
             Config config = loadInstalledCodenvyConfig(installType);
-            return config.getValue("api_endpoint");
+            return format("%s://%s/api", config.getValue("host_protocol"), config.getValue("host_url"));
         }
     }
 

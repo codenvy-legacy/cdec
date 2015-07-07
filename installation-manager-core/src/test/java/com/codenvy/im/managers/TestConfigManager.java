@@ -456,7 +456,7 @@ public class TestConfigManager extends BaseTest {
     @Test
     public void testGetApiEndpointMultiServer() throws Exception {
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
-        doReturn(new Config(ImmutableMap.of("api_endpoint", "http://codenvy.onprem/api")))
+        doReturn(new Config(ImmutableMap.of("host_protocol", "http", "host_url", "codenvy.onprem")))
                 .when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         assertEquals(configManager.getApiEndpoint(), "http://codenvy.onprem/api");
