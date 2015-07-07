@@ -41,7 +41,7 @@ if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CO
 fi
 
 # Ensure, there is record with info about request in the log of Squid proxy-server
-executeSshCommand "sudo grep \"GET ${UPDATE_SERVER}\" /var/log/squid/access.log"
+executeSshCommand "sudo grep \"GET ${UPDATE_SERVICE}\" /var/log/squid/access.log"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

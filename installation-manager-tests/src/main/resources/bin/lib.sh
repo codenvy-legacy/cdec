@@ -52,7 +52,8 @@ validateExitCode() {
 }
 
 vagrantDestroy() {
-    vagrant destroy -f >> ${TEST_LOG}
+echo
+#    vagrant destroy -f >> ${TEST_LOG}
 }
 
 validateInstalledCodenvyVersion() {
@@ -108,7 +109,7 @@ installCodenvy() {
 
     log "installCodenvy "$@
 
-    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
+    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     EXIT_CODE=$?
     retrieveInstallLog
     validateExitCode ${EXIT_CODE}
@@ -123,7 +124,7 @@ installImCliClient() {
     VERSION_OPTION=""
     [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
 
-    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVER}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
+    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
     log "installImCliClient: OK"
@@ -143,8 +144,13 @@ auth() {
 
     USERNAME=$1
     PASSWORD=$2
+    SERVER_DNS=$3
 
-    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://codenvy.onprem/api/auth/login)
+    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
+
+    log ">>> SERVER_DNS = ${SERVER_DNS}"
+
+    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
     log ${OUTPUT}

@@ -16,17 +16,18 @@
 # from Codenvy S.A..
 #
 
-UPDATE_SERVER="http://updater-nightly.codenvy-dev.com:8080/update"
+UPDATE_SERVER="http://updater-nightly.codenvy-dev.com:8080"
+UPDATE_SERVICE="${UPDATE_SERVER}/update"
 SAAS_SERVER="http://nightly.codenvy-stg.com"
 TEST_LOG="installation-manager-test.log"
 SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
 MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
 
-AVAILABLE_CODENVY_VERSIONS=$(curl -s -X GET ${UPDATE_SERVER}/repository/updates/codenvy)
+AVAILABLE_CODENVY_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/codenvy)
 PREV_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
 
-AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVER}/repository/updates/installation-manager-cli)
+AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
 

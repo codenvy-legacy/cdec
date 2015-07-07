@@ -41,6 +41,7 @@ import static org.testng.Assert.assertEquals;
  * 192.168.56.20 runner2.codenvy.onprem
  * 192.168.56.21 runner3.codenvy.onprem
  *
+ *
  * @author Anatoliy Bazko
  */
 public class TestInstallationManagerCli {
@@ -181,6 +182,21 @@ public class TestInstallationManagerCli {
     public void testHelpCommand() throws Exception {
         doTest("help/test-help.sh");
     }
+
+    @Test
+    public void testCheckImConfigCommand() throws Exception {
+        doTest("im-config/test-check-im-config.sh");
+    }
+
+    @Test
+    public void testSetupNewHostnameOfSingleServer() throws Exception {
+        doTest("im-config/test-setup-new-hostname-of-single-server.sh");
+    }
+
+//    @Test
+//    public void testSetupNewHostnameOfMultiServer() throws Exception {
+//        doTest("im-config/test-setup-new-hostname-of-multi-server.sh");
+//    }
 
     private void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
