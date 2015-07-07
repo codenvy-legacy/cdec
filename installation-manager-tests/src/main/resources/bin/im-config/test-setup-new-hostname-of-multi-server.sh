@@ -21,6 +21,7 @@
 
 # Add next host into the /etc/hosts
 # 192.168.56.110 test.codenvy.onprem
+# 192.168.56.13 api.codenvy.onprem
 
 NEW_HOSTNAME=test.codenvy.onprem
 
@@ -28,15 +29,23 @@ printAndLog "TEST CASE: Change hostname of Codenvy OnPremises Multi Server"
 
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-installCodenvy
+#installCodenvy
 validateInstalledCodenvyVersion
 auth "admin" "password"
 
-executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
+# add new host into hosts file at the site node
+executeSshCommand "sudo sed -i '1i192.168.56.110 test.codenvy.onprem' /etc/hosts" "codenvy.onprem"
 
+executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
 if [[ ! ${OUTPUT} =~ .*\"status\".\:.\"OK\".* ]]; then
     validateExitCode 1
 fi
+
+# verify changes on api node
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy.onprem"
+
+# verify changes on installation-manager service
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
 auth "admin" "password" "${NEW_HOSTNAME}"
 

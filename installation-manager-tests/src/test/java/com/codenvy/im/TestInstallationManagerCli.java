@@ -193,10 +193,10 @@ public class TestInstallationManagerCli {
         doTest("im-config/test-setup-new-hostname-of-single-server.sh");
     }
 
-//    @Test
-//    public void testSetupNewHostnameOfMultiServer() throws Exception {
-//        doTest("im-config/test-setup-new-hostname-of-multi-server.sh");
-//    }
+    @Test
+    public void testSetupNewHostnameOfMultiServer() throws Exception {
+        doTest("im-config/test-setup-new-hostname-of-multi-server.sh");
+    }
 
     private void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);

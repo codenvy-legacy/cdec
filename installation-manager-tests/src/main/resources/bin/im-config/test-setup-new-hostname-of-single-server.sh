@@ -33,10 +33,15 @@ validateInstalledCodenvyVersion
 auth "admin" "password"
 
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
-
 if [[ ! ${OUTPUT} =~ .*\"status\".\:.\"OK\".* ]]; then
     validateExitCode 1
 fi
+
+# verify changes on api node
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties"
+
+# verify changes on installation-manager service
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
 auth "admin" "password" "${NEW_HOSTNAME}"
 

@@ -52,8 +52,7 @@ validateExitCode() {
 }
 
 vagrantDestroy() {
-echo
-#    vagrant destroy -f >> ${TEST_LOG}
+    vagrant destroy -f >> ${TEST_LOG}
 }
 
 validateInstalledCodenvyVersion() {
@@ -148,8 +147,6 @@ auth() {
 
     [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
 
-    log ">>> SERVER_DNS = ${SERVER_DNS}"
-
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
@@ -184,18 +181,16 @@ executeIMCommand() {
 executeSshCommand() {
     log "executeSshCommand "$@
 
-    VALID_CODE=0
-    if [[ $1 =~ --valid-exit-code=.* ]]; then
-        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
-        shift
-    fi
-    EXECUTE_ON_NODE=$(detectMasterNode)
+    COMMAND=$1
 
-    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${EXECUTE_ON_NODE} "$@")
+    EXECUTE_ON_NODE=$2
+    [[ -z ${EXECUTE_ON_NODE} ]] && EXECUTE_ON_NODE=$(detectMasterNode)
+
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${EXECUTE_ON_NODE} "${COMMAND}")
     EXIT_CODE=$?
 
     log ${OUTPUT}
-    validateExitCode ${EXIT_CODE} ${VALID_CODE}
+    validateExitCode ${EXIT_CODE} 0
 
     log "executeSshCommand: OK"
 }
