@@ -118,10 +118,6 @@ public class ConfigManager {
 
     /**
      * Merges two bunches of the properties from current and new configurations.
-     * As a rule method keeps the values of the old configuration except the {@link Config#VERSION} property
-     * and cases where new default values came.
-     *
-     * @return the only properties are needed to be updated
      */
     public Map<String, String> merge(Version curVersion,
                                      Map<String, String> curProps,
@@ -130,20 +126,16 @@ public class ConfigManager {
         InstallType installType = detectInstallationType();
         Map<String, String> curDefaultProps = loadCodenvyDefaultProperties(curVersion, installType);
 
-        Map<String, String> props = new HashMap<>(curProps);
+        Map<String, String> props = new HashMap<>(newProps);
 
-        for (Map.Entry<String, String> e : newProps.entrySet()) {
+        for (Map.Entry<String, String> e : curProps.entrySet()) {
             String name = e.getKey();
-            String newValue = e.getValue();
+            String value = e.getValue();
 
-            // keep passwords
-
-            if (!curProps.containsKey(name)) {
-                props.put(name, newValue);
-            } else if (name.contains("pass") || name.contains("pwd") || name.contains("client_id") || name.contains("secret")) {
-                continue;
-            } else if (curDefaultProps.containsKey(name) && curProps.get(name).equals(curDefaultProps.get(name))) {
-                props.put(name, newValue);
+            if (props.containsKey(name)) {
+                if (curDefaultProps.containsKey(name) && !value.equals(curDefaultProps.get(name))) {
+                    props.put(name, value);
+                }
             }
         }
 
