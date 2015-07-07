@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
@@ -37,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -159,50 +157,6 @@ public class TestConfigManager extends BaseTest {
         assertEquals(m.get("a"), "2");
         assertEquals(m.get("b"), "1");
         assertEquals(m.get("c"), "3");
-    }
-
-    @Test(dataProvider = "Versions")
-    public void testMergeVersion(Map<String, String> properties1, Map<String, String> properties2, String expectedVersion) throws Exception {
-        Version curVersion = Version.valueOf("1.0.0");
-        Version newVersion = Version.valueOf("1.0.1");
-
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
-        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(newVersion, InstallType.SINGLE_SERVER);
-
-        Map<String, String> m = configManager.merge(curVersion, properties1, properties2);
-        assertEquals(m.get("version"), expectedVersion);
-    }
-
-    @DataProvider(name = "Versions")
-    public static Object[][] Versions() {
-        return new Object[][]{{ImmutableMap.of(Config.VERSION, "1"), ImmutableMap.of(Config.VERSION, "2"), "2"},
-                              {ImmutableMap.of(), ImmutableMap.of(Config.VERSION, "2"), "2"},
-                              {ImmutableMap.of(Config.VERSION, "1"), ImmutableMap.of(), null},
-                              {ImmutableMap.of(), ImmutableMap.of(), null}};
-    }
-
-    @Test(dataProvider = "HostUrls")
-    public void testMergeHostUrl(Map<String, String> properties1,
-                                 Map<String, String> properties2,
-                                 Map<String, String> expectedProperties) throws Exception {
-        Version curVersion = Version.valueOf("1.0.0");
-        Version newVersion = Version.valueOf("1.0.1");
-
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
-        doReturn(Collections.emptyMap()).when(configManager).loadCodenvyDefaultProperties(newVersion, InstallType.SINGLE_SERVER);
-
-        Map<String, String> m = configManager.merge(curVersion, properties1, properties2);
-        assertEquals(m, expectedProperties);
-    }
-
-    @DataProvider(name = "HostUrls")
-    public static Object[][] HostUrls() {
-        return new Object[][]{
-                {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), ImmutableMap.of(Config.HOST_URL, "b")},
-                {ImmutableMap.of(Config.HOST_URL, "a"), ImmutableMap.of(Config.HOST_URL, "b"), Collections.emptyMap()},
-                {ImmutableMap.of(Config.AIO_HOST_URL, "a"), ImmutableMap.of(Config.AIO_HOST_URL, "b"), Collections.emptyMap()}};
     }
 
     @Test
@@ -385,9 +339,8 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       true);
-        assertEquals(actualProperties.size(), 2);
+        assertEquals(actualProperties.size(), 1);
         assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("version"), "3.1.0");
     }
 
     @Test
@@ -401,9 +354,8 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       true);
-        assertEquals(actualProperties.size(), 2);
+        assertEquals(actualProperties.size(), 1);
         assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("version"), "3.1.0");
     }
 
     @Test
@@ -425,10 +377,9 @@ public class TestConfigManager extends BaseTest {
                                                                                       artifact,
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
-        assertEquals(actualProperties.size(), 3);
+        assertEquals(actualProperties.size(), 2);
         assertEquals(actualProperties.get("a"), "1");
         assertEquals(actualProperties.get("b"), "2");
-        assertEquals(actualProperties.get("version"), "3.1.0");
     }
 
     @Test
@@ -447,10 +398,9 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
-        assertEquals(actualProperties.size(), 3);
+        assertEquals(actualProperties.size(), 2);
         assertEquals(actualProperties.get("a"), "1");
         assertEquals(actualProperties.get("b"), "2");
-        assertEquals(actualProperties.get("version"), "3.1.0");
     }
 
     @Test
@@ -465,10 +415,9 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       true);
-        assertEquals(actualProperties.size(), 5);
+        assertEquals(actualProperties.size(), 4);
         assertEquals(actualProperties.get("a"), "b");
         assertEquals(actualProperties.get("c"), "b");
-        assertEquals(actualProperties.get("version"), "3.1.0");
         assertEquals(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY), System.getProperty("user.name"));
         assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
@@ -491,10 +440,9 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
-        assertEquals(actualProperties.size(), 4);
+        assertEquals(actualProperties.size(), 3);
         assertEquals(actualProperties.get("a"), "1");
         assertEquals(actualProperties.get("b"), "2");
-        assertEquals(actualProperties.get("version"), "3.1.0");
         assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY), "master");
     }
 

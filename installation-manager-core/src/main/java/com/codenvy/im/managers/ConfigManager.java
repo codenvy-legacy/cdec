@@ -130,24 +130,21 @@ public class ConfigManager {
         InstallType installType = detectInstallationType();
         Map<String, String> curDefaultProps = loadCodenvyDefaultProperties(curVersion, installType);
 
-        Map<String, String> props = new HashMap<>();
+        Map<String, String> props = new HashMap<>(curProps);
 
         for (Map.Entry<String, String> e : newProps.entrySet()) {
             String name = e.getKey();
             String newValue = e.getValue();
 
+            // keep passwords
+
             if (!curProps.containsKey(name)) {
                 props.put(name, newValue);
             } else if (name.contains("pass") || name.contains("pwd") || name.contains("client_id") || name.contains("secret")) {
-                props.put(name, curProps.get(name));
+                continue;
             } else if (curDefaultProps.containsKey(name) && curProps.get(name).equals(curDefaultProps.get(name))) {
                 props.put(name, newValue);
             }
-        }
-
-        props.remove(Config.VERSION);
-        if (newProps.containsKey(Config.VERSION)) {
-            props.put(Config.VERSION, newProps.get(Config.VERSION));
         }
 
         return props;
@@ -444,7 +441,6 @@ public class ConfigManager {
                     }
                 }
 
-                properties.put(Config.VERSION, version2Install.toString());
                 setTemplatesProperties(properties);
                 return properties;
             default:
