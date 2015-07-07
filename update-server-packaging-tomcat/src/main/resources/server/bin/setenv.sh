@@ -31,16 +31,16 @@ fi
 #Tomcat options
 [ -z "${CATALINA_OPTS}" ]  && CATALINA_OPTS="-Dcom.sun.management.jmxremote  \
                                              -Dcom.sun.management.jmxremote.ssl=false \
-                                             -Dcom.sun.management.jmxremote.authenticate=false \
-                                             -Dcodenvy.local.conf.dir=${CODENVY_LOCAL_CONF_DIR} \
-                                             -Dcodenvy.logback.smtp.appender=${CODENVY_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
-                                             -Dcodenvy.syslog.appender=${CODENVY_LOCAL_CONF_DIR}/syslog-appender.xml"
+                                             -Dcom.sun.management.jmxremote.authenticate=false"
 
 #Class path
 [ -z "${CLASSPATH}" ]  && CLASSPATH="${CATALINA_HOME}/conf/:${JAVA_HOME}/lib/tools.jar"
 
 export CATALINA_HOME
-export JAVA_OPTS="$JAVA_OPTS  -Dcodenvy.logs.dir=${CODENVY_LOGS_DIR}"
+export JAVA_OPTS="$JAVA_OPTS -Dcodenvy.local.conf.dir=${CODENVY_LOCAL_CONF_DIR} \
+                             -Dcodenvy.logback.smtp.appender=${CODENVY_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
+                             -Dcodenvy.syslog.appender=${CODENVY_LOCAL_CONF_DIR}/syslog-appender.xml \
+                             -Dcodenvy.logs.dir=${CODENVY_LOGS_DIR}"
 
 echo "Using LOCAL_CONF_DIR:  $CODENVY_LOCAL_CONF_DIR"
 
