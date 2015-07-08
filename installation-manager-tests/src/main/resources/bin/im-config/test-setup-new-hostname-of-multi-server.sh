@@ -29,7 +29,7 @@ printAndLog "TEST CASE: Change hostname of Codenvy OnPremises Multi Server"
 
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-#installCodenvy
+installCodenvy
 validateInstalledCodenvyVersion
 auth "admin" "password"
 
