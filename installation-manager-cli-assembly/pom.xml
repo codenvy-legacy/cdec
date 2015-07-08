@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.11.0-SNAPSHOT</version>
+        <version>3.11.0</version>
     </parent>
     <artifactId>installation-manager-cli-assembly</artifactId>
     <name>Codenvy :: IM :: Installation Manager Assembly</name>
@@ -183,8 +183,7 @@ cellar       =]]></replacevalue>
                                     <regexp pattern="&lt;command&gt;[^&lt;]*&lt;action class=&quot;com.codenvy.cli.command.builtin.LoginCommand&quot; /&gt;[^&lt;]*&lt;/command&gt;" />
                                     <substitution expression="" />
                                 </replaceregexp>
-                                <zip basedir="${project.build.directory}/archive-tmp/jar"
-                                     destfile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cli/cli-command/${codenvy.cli.version}/cli-command-${codenvy.cli.version}.jar"/>
+                                <zip basedir="${project.build.directory}/archive-tmp/jar" destfile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cli/cli-command/${codenvy.cli.version}/cli-command-${codenvy.cli.version}.jar" />
                             </target>
                         </configuration>
                     </execution>
