@@ -441,14 +441,14 @@ public class TestInstallationManagerFacade extends BaseTest {
         Iterator<UpdatesArtifactInfo> iter = updates.iterator();
 
         UpdatesArtifactInfo info = iter.next();
-        assertEquals(info.getVersion(), "1.0.2");
-        assertEquals(info.getArtifact(), cdecArtifact.getName());
-        assertEquals(info.getStatus(), UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-
-        info = iter.next();
         assertEquals(info.getVersion(), "1.0.1");
         assertEquals(info.getArtifact(), cdecArtifact.getName());
         assertEquals(info.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+
+        info = iter.next();
+        assertEquals(info.getVersion(), "1.0.2");
+        assertEquals(info.getArtifact(), cdecArtifact.getName());
+        assertEquals(info.getStatus(), UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
     }
 
 

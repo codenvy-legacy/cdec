@@ -153,11 +153,10 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     public Map<String, String> getProperties(Version version) throws IOException {
-//  TODO [ndp] comment to don't read properties from the local file within the downloading updates directory so as label field of artifact properties is mutable
-//        Map<String, String> propertiesMap = fetchPropertiesFromLocalFile(version);
-//        if (propertiesMap != null) {
-//            return propertiesMap;
-//        }
+        Map<String, String> propertiesMap = fetchPropertiesFromLocalFile(version);
+        if (propertiesMap != null) {
+            return propertiesMap;
+        }
 
         return fetchPropertiesFromUpdateServer(version);
     }

@@ -38,7 +38,6 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nonnull;
@@ -48,6 +47,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Get rids of any references to {@link com.codenvy.im.artifacts.InstallManagerArtifact} from REST service
@@ -118,8 +118,8 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public Collection<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
-        Collection<UpdatesArtifactInfo> updates = new ArrayList<>(super.getAllUpdates(artifact));
+    public List<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
+        List<UpdatesArtifactInfo> updates = new ArrayList<>(super.getAllUpdates(artifact));
         removeImCliArtifact(updates);
         return updates;
     }

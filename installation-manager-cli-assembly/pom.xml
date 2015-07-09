@@ -130,24 +130,6 @@
                                     <replacetoken>codenvy:$COMMAND "$*"</replacetoken>
                                     <replacevalue>codenvy:$COMMAND $(for arg in "$@"; do echo "\"$arg\""; done)</replacevalue>
                                 </replace>
-                                <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
-                                    <replacetoken>main "$@"</replacetoken>
-                                    <replacevalue>CURRENT_DIR=$(pwd)
-                                        cd ~/codenvy-im
-
-                                        if [ -f "codenvy-cli-update-script.sh" ]; then
-                                        echo "Installation Manager CLI is being updated ..."
-                                        bash -c "$(cat codenvy-cli-update-script.sh)"
-                                        fi
-
-                                        cd ${CURRENT_DIR}
-
-                                        if [ -f ~/.bashrc ]; then
-                                        source ~/.bashrc
-                                        fi
-                                        main "$@"
-                                        fi</replacevalue>
-                                </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.apache.karaf.features.cfg">
                                     <replacetoken><![CDATA[featuresBoot=]]></replacetoken>
                                     <replacevalue><![CDATA[featuresBoot=installation-manager-cli-features,]]></replacevalue>

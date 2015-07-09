@@ -49,6 +49,7 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -123,8 +124,8 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
 
     /** {@inheritDoc} */
     @Override
-    public Collection<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
-        Collection<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
+    public List<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
+        List<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
         setVersionLabel(updates);
         return updates;
     }

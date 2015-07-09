@@ -261,10 +261,10 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#getAllUpdates
      */
-    public Collection<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
+    public List<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
         Collection<Map.Entry<Artifact, Version>> allUpdates = downloadManager.getAllUpdates(artifact);
 
-        Set<UpdatesArtifactInfo> infos = new TreeSet<>();
+        List<UpdatesArtifactInfo> infos = new ArrayList<>();
 
         infos.addAll(FluentIterable.from(allUpdates).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactInfo>() {
             @Override

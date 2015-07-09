@@ -22,11 +22,21 @@ import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.client.Codenvy;
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
+import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.response.DownloadProgressResponse;
+import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactStepInfo;
+import com.codenvy.im.response.UpdatesArtifactInfo;
+import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasUserCredentials;
-
+import com.codenvy.im.utils.Version;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.dto.server.DtoFactory;
 
@@ -35,10 +45,16 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
+import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
@@ -50,6 +66,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     private static final String DEFAULT_SAAS_SERVER_REMOTE_NAME = "saas-server";
 
+    private static final Logger LOG = Logger.getLogger(AbstractIMCommand.class.getSimpleName());  // use java.util.logging instead of slf4j
+
     public AbstractIMCommand() {
         facade = INJECTOR.getInstance(IMArtifactLabeledFacade.class);
     }
@@ -58,6 +76,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     protected Void execute() throws Exception {
         try {
             init();
+            updateImCliClientIfNeeded();
             doExecuteCommand();
 
         } catch (Exception e) {
@@ -67,6 +86,55 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
 
         return null;
+    }
+
+    protected void updateImCliClientIfNeeded() {
+        try {
+            Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
+            List<UpdatesArtifactInfo> updates = facade.getAllUpdates(imArtifact);
+            if (updates.isEmpty()) {
+                return;
+            }
+
+            UpdatesArtifactInfo update = updates.get(updates.size() - 1);  // get latest update of IM CLI client
+            Version versionToUpdate = Version.valueOf(update.getVersion());
+            if (update.getStatus().equals(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD)) {
+                // download update of IM CLI client
+                facade.startDownload(imArtifact, versionToUpdate);
+
+                while (true) {
+                    DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
+
+                    if (downloadProgressResponse.getStatus().equals(DownloadArtifactStatus.DOWNLOADED)) {
+                        break;
+                    }
+                }
+            }
+
+            // Update IM CLI client.
+            // 1) set install options
+            InstallOptions installOptions = new InstallOptions();
+            installOptions.setCliUserHomeDir(System.getProperty("user.home"));
+            installOptions.setConfigProperties(Collections.EMPTY_MAP);
+            installOptions.setInstallType(InstallType.SINGLE_SERVER);
+
+            // 2) update
+            installOptions.setStep(0);
+            String stepId = facade.update(imArtifact, versionToUpdate, installOptions);
+            facade.waitForInstallStepCompleted(stepId);
+            InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
+            if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
+                // just log error
+                LOG.log(Level.SEVERE, format("Fail of automatic update of IM CLI client. Error: %s", updateStepInfo.getMessage()));
+            }
+
+            console.pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
+            console.exit(0);
+
+        } catch (Exception e) {
+            // just log error
+            LOG.log(Level.SEVERE, format("Fail of automatic update of IM CLI client. Error: %s", e.getMessage()));
+        }
     }
 
     protected abstract void doExecuteCommand() throws Exception;
@@ -185,7 +253,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     /** Adds into preferences remote with certain name and url */
     protected void createRemote(String name, String url) {
         if (!getMultiRemoteCodenvy().addRemote(name, url)) {
-            throw new IllegalStateException(String.format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
+            throw new IllegalStateException(format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
         }
     }
 
