@@ -157,7 +157,7 @@ insertProperty() {
 }
 
 updateHostsFile() {
-    [ -z ${HOST_NAME} ] && HOST_NAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\W*=\\W*.* ${CONFIG} | sed 's/host_url\W*=\W*\(.*\)/\1/')
 
     if ! sudo grep -Eq "127.0.0.1.*puppet" /etc/hosts; then
         echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null
