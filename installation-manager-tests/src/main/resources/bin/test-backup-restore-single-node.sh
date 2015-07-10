@@ -31,57 +31,56 @@ auth "admin" "password"
 executeIMCommand "im-backup"
 BACKUP=$(fetchJsonParameter "file")
 
-# modify data
+# modify data: add accout, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
-OUTPUT=$(curl -H "Content-Type: application/json" -d '{"name":"account-1"}' -X POST 'http://codenvy.onprem/api/account?token='${TOKEN})
+doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
 ACCOUNT_ID=$(fetchJsonParameter "id")
-log ${OUTPUT}
 
-OUTPUT=$(curl -H "Content-Type: application/json" -d '{"name":"workspace-1", "accountId":"'${ACCOUNT_ID}'"}' -X POST 'http://codenvy.onprem/api/workspace?token='${TOKEN})
+doPost "application/json" "{\"name\":\"workspace-1\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy.onprem/api/workspace?token=${TOKEN}"
 WORKSPACE_ID=$(fetchJsonParameter "id")
+
+doPost "application/json" "{\"type\":\"blank\",\"visibility\":\"public\"}" "http://codenvy.onprem/api/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
 log ${OUTPUT}
 
-OUTPUT=$(curl -H "Content-Type: application/json" -d '{"type":"blank", "visibility":"public"}' -X POST 'http://codenvy.onprem/api/project/'${WORKSPACE_ID}'?name=project-1&token='${TOKEN})
-log ${OUTPUT}
+doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://codenvy.onprem/api/user/create?token=${TOKEN}"
+USER_ID=$(fetchJsonParameter "id")
 
-BOUNDARY="----WebKitFormBoundary9zsnEVSuJC5kDWIq"
-FACTORY_DATA='{
-  "v": "2.1",
-  "project": {
-    "name": "my-minimalistic-factory",
-    "description": "Minimalistic Template"
-  },
-  "source": {
-    "project": {
-      "location": "https://github.com/codenvy/sdk",
-      "type": "git"
-    }
-  }
-}'
-echo "${BOUNDARY}" > f
-echo "${FACTORY_DATA}" >> f
-echo "${BOUNDARY}" >> f
+doPost "application/json" "{\"userId\":\"${USER_ID}\",\"roles\":[\"account/owner\"]}" "http://codenvy.onprem/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
+ACCOUNT_ID=$(fetchJsonParameter "id")
 
-OUTPUT=$(curl -H "Content-Type: multipart/form-data; boundary=-${BOUNDARY}" --data-binary @f -X POST 'http://codenvy.onprem/api/factory?token='${TOKEN})
+authOnSite "user-1" "pwd123ABC"
+
+OUTPUT=$(curl 'http://codenvy.onprem/api/factory/?token='${TOKEN} -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7yqwdS1Jq8TWiUAE'  --data-binary $'------WebKitFormBoundary7yqwdS1Jq8TWiUAE\r\nContent-Disposition: form-data; name="factoryUrl"\r\n\r\n{\r\n  "v": "2.1",\r\n  "project": {\r\n    "name": "my-minimalistic-factory",\r\n    "description": "Minimalistic Template"\r\n  },\r\n  "source": {\r\n    "project": {\r\n      "location": "https://github.com/codenvy/sdk",\r\n      "type": "git"\r\n    }\r\n  }\r\n}\r\n------WebKitFormBoundary7yqwdS1Jq8TWiUAE--\r\n')
 FACTORY_ID=$(fetchJsonParameter "id")
 log ${OUTPUT}
 
+# restore
+executeIMCommand "im-restore" ${BACKUP}
+
+# check data
+auth "admin" "new-password"
+
+doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
+[[ ! ${OUTPUT} =~ .*Account.*not.found.* ]] && validateExitCode 1
+
+doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
+[[ ! ${OUTPUT} =~ .*Workspace.*not.found.* ]] && validateExitCode 1
+
+doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
+[[ ! ${OUTPUT} =~ .*User.*not.found.* ]] && validateExitCode 1
+
+doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
+[[ ! ${OUTPUT} =~ .*Factory.*not.found.* ]] && validateExitCode 1
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
 executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
-# check data
-# TODO
-
 # restore
-executeIMCommand "im-restore" ${BACKUP}
-
-# check data
-# TODO
+executeIMCommand "valid-exit-code=1" "im-restore" ${BACKUP}
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

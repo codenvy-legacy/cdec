@@ -139,15 +139,24 @@ vagrantUp() {
 }
 
 auth() {
+    doAuth $1 $2 "sysldap" $3
+}
+
+authOnSite() {
+    doAuth $1 $2 "org" $3
+}
+
+doAuth() {
     log "auth "$@
 
     USERNAME=$1
     PASSWORD=$2
-    SERVER_DNS=$3
+    REALM=$3
+    SERVER_DNS=$4
 
     [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
 
-    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://${SERVER_DNS}/api/auth/login)
+    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' http://${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
     log ${OUTPUT}
@@ -158,6 +167,7 @@ auth() {
 
     log "auth: OK"
 }
+
 
 executeIMCommand() {
     log "executeIMCommand "$@
@@ -210,5 +220,33 @@ detectMasterNode() {
 }
 
 fetchJsonParameter() {
+    if [[ ! ${OUTPUT} =~ .*"$1".* ]]; then
+        validateExitCode 1
+    fi
     echo `echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
 }
+
+doPost() {
+    log "POST "$@
+
+    CONTENT_TYPE=$1
+    BODY=$2
+    URL=$3
+
+    OUTPUT=$(curl -H "Content-Type: ${CONTENT_TYPE}" -d ${BODY} -X POST ${URL})
+    log ${OUTPUT}
+
+    log "curl: OK"
+}
+
+doGet() {
+    log "GET "$@
+
+    URL=$1
+
+    OUTPUT=$(curl -X GET ${URL})
+    log ${OUTPUT}
+
+    log "curl: OK"
+}
+
