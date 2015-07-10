@@ -48,6 +48,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestDownloadCommand extends AbstractTestCommand {
@@ -211,17 +212,12 @@ public class TestDownloadCommand extends AbstractTestCommand {
         installStepInfo.setStatus(InstallArtifactStatus.SUCCESS);
         doReturn(installStepInfo).when(spyCommand.facade).getUpdateStepInfo(stepId);
 
-        doNothing().when(spyCommand.console).pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
-
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
         CommandInvoker.Result result = commandInvoker.invoke();
 
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n"
-                             + "  \"artifacts\" : [ ],\n"
-                             + "  \"status\" : \"OK\"\n"
-                             + "}\n");
+        assertTrue(output.startsWith("This CLI client was out-dated so automatic update has being started. It will be finished at the next launch.\n"));
 
         verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
         verify(spyCommand.facade).waitForInstallStepCompleted(stepId);

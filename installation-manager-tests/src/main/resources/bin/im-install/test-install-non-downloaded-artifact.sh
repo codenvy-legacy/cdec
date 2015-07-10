@@ -21,8 +21,8 @@
 printAndLog "TEST CASE: Install not downloaded artifact"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
+installImCliClient
+validateInstalledImCliClientVersion
 
 executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 

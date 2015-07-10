@@ -22,12 +22,12 @@
 printAndLog "TEST CASE: Check remote update"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
+installImCliClient
+validateInstalledImCliClientVersion
 
 executeIMCommand "im-download" "--check-remote"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"artifact\".\:.\"installation-manager-cli\".*\"version\".\:.\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"status\".\:.\"OK\".* ]]; then
+if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"status\".\:.\"OK\".* ]]; then
     validateExitCode 1
 fi
 

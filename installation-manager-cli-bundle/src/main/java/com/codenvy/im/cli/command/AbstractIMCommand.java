@@ -138,7 +138,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
                 return;
             }
 
-            console.pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
+            console.println("This CLI client was out-dated so automatic update has being started. It will be finished at the next launch.\n");
             console.exit(0);
 
         } catch (Exception e) {

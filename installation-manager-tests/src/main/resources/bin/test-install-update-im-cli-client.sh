@@ -27,13 +27,17 @@ log "Previos IM version: "${PREV_IM_CLI_CLIENT_VERSION}
 log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
 
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "im-download" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
-executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
-executeIMCommand "help" # just to update itself
+# test auto-update at the start of executing some command
+executeIMCommand "im-download" "-c"
+if [[ ! ${OUTPUT} =~ .*This.CLI.client.was.out-dated.so.automatic.update.has.being.started\..It.will.be.finished.at.the.next.launch.* ]]; then
+    validateExitCode 1
+fi
 
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
+if [[ ! ${OUTPUT} =~ .*Installation.Manager.CLI.is.being.updated.\.\.\..* ]]; then
+    validateExitCode 1
+fi
 
 printAndLog "RESULT: PASSED"
 
