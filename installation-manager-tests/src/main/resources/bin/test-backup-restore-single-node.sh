@@ -33,6 +33,7 @@ BACKUP=$(fetchJsonParameter "file")
 
 # modify data
 executeIMCommand "im-password" "password" "new-password"
+auth "admin" "new-password"
 
 OUTPUT=$(curl -H "Content-Type: application/json" -d '{"name":"account-1"}' -X POST 'http://codenvy.onprem/api/account?token='${TOKEN})
 ACCOUNT_ID=$(fetchJsonParameter "id")
