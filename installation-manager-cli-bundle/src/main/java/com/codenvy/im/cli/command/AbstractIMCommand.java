@@ -89,21 +89,31 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void updateImCliClientIfNeeded() {
+        final String UPDATE_FAIL_MESSAGE = "WARNING: automatic update of IM CLI client has been failed. See logs for details.\n";
+
         try {
+            // get latest update of IM CLI client
             Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
             List<UpdatesArtifactInfo> updates = facade.getAllUpdates(imArtifact);
             if (updates.isEmpty()) {
                 return;
             }
-
-            UpdatesArtifactInfo update = updates.get(updates.size() - 1);  // get latest update of IM CLI client
+            UpdatesArtifactInfo update = updates.get(updates.size() - 1);
             Version versionToUpdate = Version.valueOf(update.getVersion());
+
+            // download update of IM CLI client
             if (update.getStatus().equals(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD)) {
-                // download update of IM CLI client
                 facade.startDownload(imArtifact, versionToUpdate);
 
                 while (true) {
                     DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
+
+                    if (downloadProgressResponse.getStatus().equals(DownloadArtifactStatus.FAILED)) {
+                        // log error and continue working
+                        LOG.log(Level.SEVERE, format("Fail of automatic download of update of IM CLI client. Error: %s", downloadProgressResponse.getMessage()));
+                        console.printError(UPDATE_FAIL_MESSAGE, isInteractive());
+                        return;
+                    }
 
                     if (downloadProgressResponse.getStatus().equals(DownloadArtifactStatus.DOWNLOADED)) {
                         break;
@@ -111,29 +121,30 @@ public abstract class AbstractIMCommand extends AbsCommand {
                 }
             }
 
-            // Update IM CLI client.
-            // 1) set install options
+            // update IM CLI client
             InstallOptions installOptions = new InstallOptions();
             installOptions.setCliUserHomeDir(System.getProperty("user.home"));
             installOptions.setConfigProperties(Collections.EMPTY_MAP);
             installOptions.setInstallType(InstallType.SINGLE_SERVER);
-
-            // 2) update
             installOptions.setStep(0);
+
             String stepId = facade.update(imArtifact, versionToUpdate, installOptions);
             facade.waitForInstallStepCompleted(stepId);
             InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
             if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
-                // just log error
-                LOG.log(Level.SEVERE, format("Fail of automatic update of IM CLI client. Error: %s", updateStepInfo.getMessage()));
+                // log error and continue working
+                LOG.log(Level.SEVERE, format("Fail of automatic install of update of IM CLI client. Error: %s", updateStepInfo.getMessage()));
+                console.printError(UPDATE_FAIL_MESSAGE, isInteractive());
+                return;
             }
 
             console.pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
             console.exit(0);
 
         } catch (Exception e) {
-            // just log error
+            // log error and continue working
             LOG.log(Level.SEVERE, format("Fail of automatic update of IM CLI client. Error: %s", e.getMessage()));
+            console.printError(UPDATE_FAIL_MESSAGE, isInteractive());
         }
     }
 

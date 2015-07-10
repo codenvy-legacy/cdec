@@ -137,6 +137,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdatesWhenErrorInResponse() throws Exception {
+        doNothing().when(spyCommand).updateImCliClientIfNeeded();
+
         doThrow(new IOException("Some error")).when(service).getAllUpdates(any(Artifact.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -152,6 +154,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testCheckUpdatesWhenServiceThrowsError() throws Exception {
+        doNothing().when(spyCommand).updateImCliClientIfNeeded();
+
         String expectedOutput = "{\n"
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
@@ -182,8 +186,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
     }
 
     @Test
-    public void testAutomaticUpdateCli() throws
-                                         Exception {
+    public void testAutomaticUpdateCli() throws Exception {
         final Version versionToUpdate = Version.valueOf("1.0.0");
         final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
 
@@ -212,10 +215,110 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
-        commandInvoker.invoke();
+        CommandInvoker.Result result = commandInvoker.invoke();
+
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"artifacts\" : [ ],\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}\n");
 
         verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
         verify(spyCommand.facade).waitForInstallStepCompleted(stepId);
         verify(spyCommand.console).exit(0);
     }
+
+    @Test
+    public void testAutomaticUpdateCliWhenException() throws Exception {
+        final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
+
+        doThrow(new RuntimeException("Error")).when(spyCommand.facade).getAllUpdates(imArtifact);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list-local", Boolean.TRUE);
+        CommandInvoker.Result result = commandInvoker.invoke();
+
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "WARNING: automatic update of IM CLI client has been failed. See logs for details.\n"
+                             + "\n"
+                             + "{\n"
+                             + "  \"artifacts\" : [ ],\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}\n");
+    }
+
+    @Test
+    public void testAutomaticUpdateCliWhenDownloadIsFailing() throws Exception {
+        final Version versionToUpdate = Version.valueOf("1.0.0");
+        final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
+
+        UpdatesArtifactInfo updateInfo = new UpdatesArtifactInfo();
+        updateInfo.setArtifact(imArtifact.getName());
+        updateInfo.setVersion(versionToUpdate.toString());
+        updateInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+        doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdates(imArtifact);
+
+        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.FAILED, "Download error.", 100, Collections.EMPTY_LIST))
+            .when(spyCommand.facade).getDownloadProgress();
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list-local", Boolean.TRUE);
+        CommandInvoker.Result result = commandInvoker.invoke();
+
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "WARNING: automatic update of IM CLI client has been failed. See logs for details.\n"
+                             + "\n"
+                             + "{\n"
+                             + "  \"artifacts\" : [ ],\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}\n");
+
+        verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
+    }
+
+    @Test
+    public void testAutomaticUpdateCliWhenInstallIsFailing() throws Exception {
+        final Version versionToUpdate = Version.valueOf("1.0.0");
+        final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
+
+        UpdatesArtifactInfo updateInfo = new UpdatesArtifactInfo();
+        updateInfo.setArtifact(imArtifact.getName());
+        updateInfo.setVersion(versionToUpdate.toString());
+        updateInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+        doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdates(imArtifact);
+
+        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
+            .when(spyCommand.facade).getDownloadProgress();
+
+        InstallOptions installOptions = new InstallOptions();
+        installOptions.setCliUserHomeDir(System.getProperty("user.home"));
+        installOptions.setConfigProperties(Collections.EMPTY_MAP);
+        installOptions.setInstallType(InstallType.SINGLE_SERVER);
+        installOptions.setStep(0);
+
+        String stepId = "1";
+        doReturn(stepId).when(spyCommand.facade).update(imArtifact, versionToUpdate, installOptions);
+        InstallArtifactStepInfo installStepInfo = new InstallArtifactStepInfo();
+        installStepInfo.setStatus(InstallArtifactStatus.FAILURE);
+        installStepInfo.setMessage("Install error.");
+        doReturn(installStepInfo).when(spyCommand.facade).getUpdateStepInfo(stepId);
+
+        doNothing().when(spyCommand.console).pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--list-local", Boolean.TRUE);
+        CommandInvoker.Result result = commandInvoker.invoke();
+
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "WARNING: automatic update of IM CLI client has been failed. See logs for details.\n"
+                             + "\n"
+                             + "{\n"
+                             + "  \"artifacts\" : [ ],\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}\n");
+
+        verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
+        verify(spyCommand.facade).waitForInstallStepCompleted(stepId);
+    }
+
 }
