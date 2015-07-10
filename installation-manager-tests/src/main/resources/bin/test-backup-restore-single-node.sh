@@ -62,9 +62,6 @@ executeIMCommand "im-restore" ${BACKUP}
 # check data
 auth "admin" "new-password"
 
-doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Account.*not.found.* ]] && validateExitCode 1
-
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 [[ ! ${OUTPUT} =~ .*Account.*not.found.* ]] && validateExitCode 1
 
