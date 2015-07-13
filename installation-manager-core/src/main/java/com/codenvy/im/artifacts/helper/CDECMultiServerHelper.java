@@ -288,12 +288,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                 "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
                                                 "    sleep 30; " +
                                                 "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
-//                return new PuppetErrorInterrupter(command, nodeConfigs);  // TODO [ndp] CDEC-264
-                return command;
+                return new PuppetErrorInterrupter(command, nodeConfigs);
 
             case 8:
-//                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), nodeConfigs); // TODO [ndp] CDEC-264
-                return new CheckInstalledVersionCommand(original, versionToInstall);
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), nodeConfigs);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));

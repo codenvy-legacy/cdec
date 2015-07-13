@@ -22,6 +22,7 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.managers.NodeConfig;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nullable;
@@ -45,18 +46,47 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-    // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
-    public static Path PUPPET_LOG_FILE         = Paths.get("/var/log/messages");
+    private static final Pattern PATTERN_COULD_NOT_RETRIEVE_CATALOG           = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
+    private static final Pattern PATTERN_DEPENDENCY_HAS_FAILURES              = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
+    private static final Pattern PATTERN_SKIPPING_BECAUSE_FAILED_DEPENDENCIES = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Skipping because of failed dependencies");
 
-    public static final int READ_LOG_TIMEOUT_MILLIS = 700;
-    public static final int SELECTION_LINE_NUMBER   = 7;
+    // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
+    public static Path PUPPET_LOG_FILE = Paths.get("/var/log/messages");
+
+    public static final int READ_LOG_TIMEOUT_MILLIS = 200;
+    public static final int SELECTION_LINE_NUMBER   = 20;
 
     private final Command          command;
     private final List<NodeConfig> nodes;
-    private final List<Pattern> errorPatterns = ImmutableList.of(
-        Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server"),
-        Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true"),
-        Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Skipping because of failed dependencies")
+    private final List<Function<String, Boolean>> errorMatchers = ImmutableList.of(
+        new Function<String, Boolean>() {
+            @Nullable
+            @Override
+            public Boolean apply(@Nullable String line) {
+                return (line != null)
+                       && PATTERN_COULD_NOT_RETRIEVE_CATALOG.matcher(line).find();
+            }
+        },
+
+        new Function<String, Boolean>() {
+            @Nullable
+            @Override
+            public Boolean apply(@Nullable String line) {
+                return (line != null)
+                       && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")  // issue CDEC-264
+                       && PATTERN_DEPENDENCY_HAS_FAILURES.matcher(line).find();
+            }
+        },
+
+        new Function<String, Boolean>() {
+            @Nullable
+            @Override
+            public Boolean apply(@Nullable String line) {
+                return (line != null)
+                       && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")  // issue CDEC-264;
+                       && PATTERN_SKIPPING_BECAUSE_FAILED_DEPENDENCIES.matcher(line).find();
+            }
+        }
     );
 
 
@@ -169,9 +199,9 @@ public class PuppetErrorInterrupter implements Command {
     }
 
     protected boolean checkPuppetError(String line) {
-        for (Pattern errorPattern : errorPatterns) {
-            Matcher m = errorPattern.matcher(line);
-            if (m.find()) {
+        for (Function<String, Boolean> errorMatcher : errorMatchers) {
+            Boolean match = errorMatcher.apply(line);
+            if (match != null && match) {
                 return true;
             }
         }
@@ -192,7 +222,11 @@ public class PuppetErrorInterrupter implements Command {
         return Arrays.asList(lines);
     }
 
-    protected Command createReadFileCommand(NodeConfig node) throws AgentException {
+    /**
+     * If node != null : create command to read from certain node of multi-node codenvy
+     * If node == null : create command to read from single-node codenvy
+     */
+    protected Command createReadFileCommand(@Nullable NodeConfig node) throws AgentException {
         if (node == null) {
             return CommandLibrary.createTailCommand(PUPPET_LOG_FILE, SELECTION_LINE_NUMBER, useSudo);
         } else {
@@ -202,17 +236,13 @@ public class PuppetErrorInterrupter implements Command {
 
     private String getPuppetErrorMessage(@Nullable NodeConfig node, String line) {
         if (node == null) {
-            String message = format("Puppet error: '%s'", line);
-
-            return message;
+            return format("Puppet error: '%s'", line);
         }
 
-        String message = format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
-
-        return message;
+        return format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
     }
 
-    private String getRuntimeErrorMessage(NodeConfig node, IOException e) {
+    private String getRuntimeErrorMessage(@Nullable NodeConfig node, IOException e) {
         if (node == null) {
             return format("It is impossible to read puppet log locally: %s", e.getMessage());
         }
