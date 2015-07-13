@@ -18,9 +18,9 @@
 
 . ./lib.sh
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise"
+printAndLog "TEST CASE: Backup and restore multi-nodes Codenvy On Premise"
 
 # install Codenvy
 installCodenvy ${PREV_CODENVY_VERSION}
@@ -53,6 +53,14 @@ authOnSite "user-1" "pwd123ABC"
 
 createDefaultFactory ${TOKEN}
 FACTORY_ID=$(fetchJsonParameter "id")
+
+# analytics data
+DATE=`date --date="yesterday" +"%Y%m%d"`
+auth "admin" "new-password"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
 
 # restore
 executeIMCommand "im-restore" ${BACKUP}

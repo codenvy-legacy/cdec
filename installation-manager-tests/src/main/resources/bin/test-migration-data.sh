@@ -20,16 +20,12 @@
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise"
+printAndLog "TEST CASE: Migration Data"
 
 # install Codenvy
-installCodenvy ${PREV_CODENVY_VERSION}
-validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
+installCodenvy
+validateInstalledCodenvyVersion
 auth "admin" "password"
-
-# backup
-executeIMCommand "im-backup"
-BACKUP=$(fetchJsonParameter "file")
 
 # modify data: add accout, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
@@ -54,34 +50,38 @@ authOnSite "user-1" "pwd123ABC"
 createDefaultFactory ${TOKEN}
 FACTORY_ID=$(fetchJsonParameter "id")
 
+# backup
+executeIMCommand "im-backup"
+BACKUP=$(fetchJsonParameter "file")
+
+executeSshCommand "cp ${BACKUP} /vagrant/backup.tar.gz"
+vagrantDestroy
+
 # restore
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
+installCodenvy
+validateInstalledCodenvyVersion
+executeSshCommand "mkdir /home/vagrant/codenvy-im-data/backups"
+executeSshCommand "cp /vagrant/backup.tar.gz ${BACKUP}"
 executeIMCommand "im-restore" ${BACKUP}
 
 # check data
-auth "admin" "new-password"
+auth "admin" "password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Account.*not.found.* ]] && validateExitCode 1
+fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Workspace.*not.found.* ]] && validateExitCode 1
+[[ ! ${OUTPUT} =~ .*project-1.* ]] && validateExitCode 1
 
 doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Workspace.*not.found.* ]] && validateExitCode 1
+fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*User.*not.found.* ]] && validateExitCode 1
+fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Factory.*not.found.* ]] && validateExitCode 1
-
-# update
-executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
-
-# restore
-executeIMCommand "valid-exit-code=1" "im-restore" ${BACKUP}
+fetchJsonParameter "id"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

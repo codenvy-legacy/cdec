@@ -144,6 +144,11 @@ public class TestInstallationManagerCli {
     }
 
     @Test
+    public void testBackupRestoreMultiNodes() throws Exception {
+        doTest("test-backup-restore-multi-nodes.sh");
+    }
+
+    @Test
     public void testLoginWithUsernameAndPassword() throws Exception {
         doTest("im-login/test-login-with-username-and-password.sh");
     }
@@ -196,6 +201,11 @@ public class TestInstallationManagerCli {
     @Test
     public void testSetupNewHostnameOfMultiServer() throws Exception {
         doTest("im-config/test-setup-new-hostname-of-multi-server.sh");
+    }
+
+    @Test
+    public void testMigrationData() throws Exception {
+        doTest("test-migration-data.sh");
     }
 
     private void doTest(String testScript) throws Exception {
