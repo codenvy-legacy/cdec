@@ -23,7 +23,7 @@
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>org.eclipse.che.depmgt</groupId>
-        <version>3.11.2</version>
+        <version>3.11.3-SNAPSHOT</version>
         <relativePath />
     </parent>
     <groupId>com.codenvy.im</groupId>
