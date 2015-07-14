@@ -32,27 +32,33 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
-ACCOUNT_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+ACCOUNT_ID=${OUTPUT}
 
 doPost "application/json" "{\"name\":\"workspace-1\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy.onprem/api/workspace?token=${TOKEN}"
-WORKSPACE_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+WORKSPACE_ID=${OUTPUT}
 
 doPost "application/json" "{\"type\":\"blank\",\"visibility\":\"public\"}" "http://codenvy.onprem/api/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
 
 doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://codenvy.onprem/api/user/create?token=${TOKEN}"
-USER_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+USER_ID=${OUTPUT}
 
 doPost "application/json" "{\"userId\":\"${USER_ID}\",\"roles\":[\"account/owner\"]}" "http://codenvy.onprem/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
-ACCOUNT_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+ACCOUNT_ID=${OUTPUT}
 
 authOnSite "user-1" "pwd123ABC"
 
 createDefaultFactory ${TOKEN}
-FACTORY_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+FACTORY_ID=${OUTPUT}
 
 # backup
 executeIMCommand "im-backup"
-BACKUP=$(fetchJsonParameter "file")
+fetchJsonParameter "file"
+BACKUP=${OUTPUT}
 
 executeSshCommand "cp ${BACKUP} /vagrant/backup.tar.gz"
 vagrantDestroy
@@ -72,7 +78,7 @@ doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*project-1.* ]] && validateExitCode 1
+[[ ${OUTPUT} =~ .*project-1.* ]] || validateExitCode 1
 
 doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 fetchJsonParameter "id"

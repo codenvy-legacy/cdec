@@ -108,6 +108,12 @@ installCodenvy() {
     VERSION_OPTION=""
     INSTALL_ON_NODE=$(detectMasterNode)
 
+    VALID_CODE=0
+    if [[ $1 =~ --valid-exit-code=.* ]]; then
+        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
+        shift
+    fi
+
     if [[ ${INSTALL_ON_NODE} == "master.codenvy.onprem" ]]; then
         scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
         MULTI_OPTION="--multi"
@@ -121,7 +127,7 @@ installCodenvy() {
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     EXIT_CODE=$?
     retrieveInstallLog
-    validateExitCode ${EXIT_CODE}
+    validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
     logEndCommand "installCodenvy: OK"
 }
@@ -166,14 +172,15 @@ doAuth() {
 
     [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
 
+    doPost "Content-Type: application/json" "{\"username\":\"${USERNAME}\", \"password\":\"${PASSWORD}\", \"realm\":\"${REALM}\"}" "http://${SERVER_DNS}/api/auth/login"
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' http://${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
     log ${OUTPUT}
     validateExitCode $?
 
-    [[ ! ${OUTPUT} =~ .*value.* ]] && validateExitCode 1
-    TOKEN=$(fetchJsonParameter "value")
+    fetchJsonParameter "value"
+    TOKEN=${OUTPUT}
 
     logEndCommand "auth: OK"
 }
@@ -201,6 +208,12 @@ executeIMCommand() {
 executeSshCommand() {
     logStartCommand "executeSshCommand "$@
 
+    VALID_CODE=0
+    if [[ $1 =~ --valid-exit-code=.* ]]; then
+        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
+        shift
+    fi
+
     COMMAND=$1
 
     EXECUTE_ON_NODE=$2
@@ -210,7 +223,7 @@ executeSshCommand() {
     EXIT_CODE=$?
 
     log ${OUTPUT}
-    validateExitCode ${EXIT_CODE} 0
+    validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
     logEndCommand "executeSshCommand: OK"
 }
@@ -230,10 +243,8 @@ detectMasterNode() {
 }
 
 fetchJsonParameter() {
-    if [[ ! ${OUTPUT} =~ .*"$1".* ]]; then
-        validateExitCode 1
-    fi
-    echo `echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
+    [[ ${OUTPUT} =~ .*.$1..* ]] || validateExitCode 1
+    OUTPUT=`echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
 }
 
 doPost() {

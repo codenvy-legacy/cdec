@@ -16,19 +16,20 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Install not downloaded artifact"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
+printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
 
-executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
+installCodenvy
+validateInstalledCodenvyVersion
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".* ]]; then
-    validateExitCode 1
-fi
+auth "admin" "password"
+
+executeIMCommand "im-password" "password" "new-password"
+auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

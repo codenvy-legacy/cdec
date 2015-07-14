@@ -60,27 +60,27 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testInstallMultiNodeAndChangePassword() throws Exception {
-        doTest("test-install-multi-nodes-and-change-password.sh");
+        doTest("im-install/test-install-multi-nodes-and-change-password.sh");
     }
 
     @Test
-    public void testInstallNonDownloadedArtifact() throws Exception {
-        doTest("im-install/test-install-non-downloaded-artifact.sh");
-    }
-
-    @Test
-    public void testInstallUnknownArtifact() throws Exception {
-        doTest("im-install/test-install-unknown-artifact.sh");
-    }
-
-    @Test
-    public void testInstallUnknownVersion() throws Exception {
-        doTest("im-install/test-install-unknown-version.sh");
+    public void testInstallExceptionCases() throws Exception {
+        doTest("im-install/test-install-exception-cases.sh");
     }
 
     @Test
     public void testInstallSingleNodeAndChangePassword() throws Exception {
-        doTest("test-install-single-node-and-change-password.sh");
+        doTest("im-install/test-install-single-node-and-change-password.sh");
+    }
+
+    @Test
+    public void testInstallUpdateImCliClient() throws Exception {
+        doTest("im-install/test-install-update-im-cli-client.sh");
+    }
+
+    @Test
+    public void testInstallSudoPasswordRequired() throws Exception {
+        doTest("im-install/test-sudo-password-required.sh");
     }
 
     @Test
@@ -92,16 +92,7 @@ public class TestInstallationManagerCli {
     public void testUpdateMultiNodes() throws Exception {
         doTest("test-update-multi-nodes.sh");
     }
-//
-//    @Test
-//    public void testInstallUpdateImCliClient() throws Exception {
-//        doTest("test-install-update-im-cli-client.sh");
-//    }
 
-    @Test
-    public void testInstallUpdateImCliClient() throws Exception {
-        doTest("test-install-update-im-cli-client.sh");
-    }
 
     @Test
     public void testCheckRemoteUpdate() throws Exception {
@@ -114,28 +105,13 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testGetListOfDownloadedArtifacts() throws Exception {
-        doTest("im-download/test-get-list-of-downloaded-artifacts.sh");
-    }
-
-    @Test
-    public void testDownloadUnknownArtifact() throws Exception {
-        doTest("im-download/test-download-unknown-artifact.sh");
-    }
-
-    @Test
-    public void testDownloadUnknownVersion() throws Exception {
-        doTest("im-download/test-download-unknown-version.sh");
+    public void testUsingSystemProxy() throws Exception {
+        doTest("im-download/test-using-system-proxy.sh");
     }
 
     @Test
     public void testAddRemoveCodenvyNodes() throws Exception {
         doTest("test-add-remove-codenvy-nodes.sh");
-    }
-
-    @Test
-    public void testUsingSystemProxy() throws Exception {
-        doTest("im-download/test-using-system-proxy.sh");
     }
 
     @Test
@@ -150,32 +126,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testLoginWithUsernameAndPassword() throws Exception {
-        doTest("im-login/test-login-with-username-and-password.sh");
-    }
-
-    @Test
-    public void testLoginWithUsernamePasswordAndAccount() throws Exception {
-        doTest("im-login/test-login-with-username-password-and-account.sh");
-    }
-
-    @Test
-    public void testLoginWithWrongUsername() throws Exception {
-        doTest("im-login/test-login-with-wrong-username.sh");
-    }
-
-    @Test
-    public void testLoginWithWrongPassword() throws Exception {
-        doTest("im-login/test-login-with-wrong-password.sh");
-    }
-
-    @Test
-    public void testLoginWithWrongAccount() throws Exception {
-        doTest("im-login/test-login-with-wrong-account.sh");
-    }
-
-    @Test
-    public void testLoginWithUserNotAccountOwner() throws Exception {
-        doTest("im-login/test-login-as-user-not-account-owner.sh");
+        doTest("im-login/test-login.sh");
     }
 
     @Test

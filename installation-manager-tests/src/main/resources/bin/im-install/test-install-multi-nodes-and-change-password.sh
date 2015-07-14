@@ -16,20 +16,19 @@
 # from Codenvy S.A..
 #
 
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
-. ./lib.sh
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-printAndLog "TEST CASE: Install unknown CLI version"
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+printAndLog "TEST CASE: Install the latest multi-node Codenvy On Premise"
 
-installImCliClient
-validateInstalledImCliClientVersion
+installCodenvy
+validateInstalledCodenvyVersion
 
-executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "1.0.0"
-
-if [[ ! ${OUTPUT} =~ .*Can\'t.download.installation.properties\..*Unexpected.error\..Can\'t.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.* ]]; then
-    validateExitCode 1
-fi
+auth "admin" "password"
+executeIMCommand "im-password" "password" "new-password"
+auth "admin" "new-password"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

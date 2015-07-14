@@ -23,7 +23,7 @@
 # 192.168.56.110 test.codenvy.onprem
 # 192.168.56.13 api.codenvy.onprem
 
-NEW_HOSTNAME=test.codenvy.onprem
+NEW_HOSTNAME="test.codenvy.onprem"
 
 printAndLog "TEST CASE: Change hostname of Codenvy OnPremises Multi Server"
 
@@ -37,9 +37,6 @@ auth "admin" "password"
 executeSshCommand "sudo sed -i '1i192.168.56.110 test.codenvy.onprem' /etc/hosts" "codenvy.onprem"
 
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
-if [[ ! ${OUTPUT} =~ .*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
 
 # verify changes on api node
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy.onprem"

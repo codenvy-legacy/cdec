@@ -21,11 +21,6 @@
 
 printAndLog "TEST CASE: Check current installation-manager config"
 
-# Add next hosts into the /etc/hosts
-# 192.168.56.110 test.codenvy.onprem
-
-NEW_HOSTNAME=test.codenvy.onprem
-
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
@@ -33,9 +28,14 @@ validateInstalledImCliClientVersion
 
 executeIMCommand "im-config"
 
-if [[ ! ${OUTPUT} =~ .*\"properties\".\:.*\"download.directory\".\:.\"/home/vagrant/codenvy-im-data/updates\".*\"update.server.url\".\:.\"${UPDATE_SERVER}\".*\"saas.server.url\".\:.\"${SAAS_SERVER}\".*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
+log "Regex validation download.directory property"
+[[ ${OUTPUT} =~ .*\"download.directory\".\:.\"/home/vagrant/codenvy-im-data/updates\".* ]] || validateExitCode 1
+
+log "Regex validation update.server.url property"
+[[ ${OUTPUT} =~ .*\"update.server.url\".\:.\"${UPDATE_SERVER}\".* ]] || validateExitCode 1
+
+log "Regex validation saas.server.url property"
+[[ ${OUTPUT} =~ .*\"saas.server.url\".\:.\"${SAAS_SERVER}\".* ]] || validateExitCode 1
 
 printAndLog "RESULT: PASSED"
 
