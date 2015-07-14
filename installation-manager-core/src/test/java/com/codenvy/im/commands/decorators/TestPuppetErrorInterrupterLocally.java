@@ -286,9 +286,7 @@ public class TestPuppetErrorInterrupterLocally {
             {"any message", false},
             {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r", true},
             {"Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true\r", true},
-            {"Jun 19 07:41:03 runner1 puppet-agent[17978]: (/Stage[main]/Multi_server::Runner_instance::Service/Service[codenvy]) Skipping because of failed dependencies\r", true},
-            {"Jun 22 18:26:22 api puppet-agent[5867]: (/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]) Dependency Service[codenvy] has failures: true\r", false},
-            {"Jun 22 18:26:22 api puppet-agent[5867]: (/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]) Skipping because of failed dependencies\r", false}
+            {"Jun 22 18:26:22 api puppet-agent[5867]: (/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]) Dependency Service[codenvy] has failures: true\r", false}
         };
     }
 

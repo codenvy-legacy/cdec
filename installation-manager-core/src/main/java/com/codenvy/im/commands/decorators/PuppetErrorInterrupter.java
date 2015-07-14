@@ -48,7 +48,6 @@ import static java.lang.String.format;
 public class PuppetErrorInterrupter implements Command {
     private static final Pattern PATTERN_COULD_NOT_RETRIEVE_CATALOG           = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
     private static final Pattern PATTERN_DEPENDENCY_HAS_FAILURES              = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
-    private static final Pattern PATTERN_SKIPPING_BECAUSE_FAILED_DEPENDENCIES = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Skipping because of failed dependencies");
 
     // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
     public static Path PUPPET_LOG_FILE = Paths.get("/var/log/messages");
@@ -75,16 +74,6 @@ public class PuppetErrorInterrupter implements Command {
                 return (line != null)
                        && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")  // issue CDEC-264
                        && PATTERN_DEPENDENCY_HAS_FAILURES.matcher(line).find();
-            }
-        },
-
-        new Function<String, Boolean>() {
-            @Nullable
-            @Override
-            public Boolean apply(@Nullable String line) {
-                return (line != null)
-                       && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")  // issue CDEC-264;
-                       && PATTERN_SKIPPING_BECAUSE_FAILED_DEPENDENCIES.matcher(line).find();
             }
         }
     );
