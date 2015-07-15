@@ -80,7 +80,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testInstallSudoPasswordRequired() throws Exception {
-        doTest("im-install/test-sudo-password-required.sh");
+        doTest("im-install/test-install-sudo-password-required.sh");
     }
 
     @Test
@@ -95,7 +95,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testCheckRemoteUpdate() throws Exception {
-        doTest("im-download/test-check-remote-update.sh");
+        doTest("im-download/test-download-check-remote-update.sh");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testUsingSystemProxy() throws Exception {
-        doTest("im-download/test-using-system-proxy.sh");
+        doTest("im-download/test-download-using-system-proxy.sh");
     }
 
     @Test
@@ -140,17 +140,17 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testCheckImConfigCommand() throws Exception {
-        doTest("im-config/test-check-im-config.sh");
+        doTest("im-config/test-config-check-im-config.sh");
     }
 
     @Test
     public void testSetupNewHostnameOfSingleServer() throws Exception {
-        doTest("im-config/test-setup-new-hostname-of-single-server.sh");
+        doTest("im-config/test-config-setup-new-hostname-of-single-server.sh");
     }
 
     @Test
     public void testSetupNewHostnameOfMultiServer() throws Exception {
-        doTest("im-config/test-setup-new-hostname-of-multi-server.sh");
+        doTest("im-config/test-config-setup-new-hostname-of-multi-server.sh");
     }
 
     @Test
