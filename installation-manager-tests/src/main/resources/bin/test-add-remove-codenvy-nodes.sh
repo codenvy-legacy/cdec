@@ -29,12 +29,12 @@ auth "admin" "password"
 
 # add runner
 executeIMCommand "im-add-node" "runner2.codenvy.onprem"
-doGet "curl 'http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
+doGet "curl http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
 [[ ${OUTPUT} =~ .*http://runner2.codenvy.onprem:8080/runner/internal/runner.* ]] || validateExitCode 1
 
 # add builder
 executeIMCommand "im-add-node" "builder2.codenvy.onprem"
-doGet "curl 'http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
+doGet "curl http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
 [[ ${OUTPUT} =~ .*http://builder2.codenvy.onprem:8080/builder/internal/builder.* ]] || validateExitCode 1
 
 # Incorrect name
@@ -51,12 +51,12 @@ executeIMCommand "--valid-exit-code=1" "im-add-node" "runner2.codenvy.onprem"
 
 # remove runner
 executeIMCommand "im-remove-node" "runner2.codenvy.onprem"
-doGet "curl 'http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
+doGet "curl http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
 [[ ${OUTPUT} =~ .*http://runner2.codenvy.onprem:8080/runner/internal/runner.* ]] && validateExitCode 1
 
 # remove builder
 executeIMCommand "im-remove-node" "builder2.codenvy.onprem"
-doGet "curl 'http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
+doGet "curl http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
 [[ ${OUTPUT} =~ .*http://builder2.codenvy.onprem:8080/builder/internal/builder.* ]] && validateExitCode 1
 
 # remove already removed runner

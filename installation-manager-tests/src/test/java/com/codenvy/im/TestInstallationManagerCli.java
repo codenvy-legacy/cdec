@@ -93,7 +93,6 @@ public class TestInstallationManagerCli {
         doTest("test-update-multi-nodes.sh");
     }
 
-
     @Test
     public void testCheckRemoteUpdate() throws Exception {
         doTest("im-download/test-check-remote-update.sh");
