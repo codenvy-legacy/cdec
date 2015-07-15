@@ -333,4 +333,23 @@ public class TestCommandLibrary {
                                              "fi;', " +
                                              "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
+
+    @Test
+    public void testCreateUnpackCommand() throws AgentException {
+        Path packFile = Paths.get("packFile");
+        Path toDir = Paths.get("toDir");
+        String pathWithinThePack = "pathWithinThePack";
+
+        Command testCommand = CommandLibrary.createUnpackCommand(packFile, toDir);
+        assertEquals(testCommand.toString(), "{'command'='tar -xf packFile -C toDir', 'agent'='LocalAgent'}");
+
+        testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack);
+        assertEquals(testCommand.toString(), "{'command'='tar -xf packFile -C toDir pathWithinThePack', 'agent'='LocalAgent'}");
+
+        testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack, true);
+        assertEquals(testCommand.toString(), "{'command'='sudo tar -xf packFile -C toDir pathWithinThePack', 'agent'='LocalAgent'}");
+
+        testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack, testApiNode);
+        assertEquals(testCommand.toString(), "{'command'='sudo tar -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}");
+    }
 }

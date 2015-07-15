@@ -213,6 +213,10 @@ public class CommandLibrary {
         return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, needSudo));
     }
 
+    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, false));
+    }
+
     public static Command createUnpackCommand(Path packFile, Path toDir) {
         return createCommand(getUnpackCommand(packFile, toDir, null, false));
     }
