@@ -367,8 +367,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
      * - copy backup file into api node, pack filesystem data of API node to the {backup_file}/fs folder into backup file, and then copy it to local temp dir
      * - create dump of MONGO at the DATA node, copy it to {local_backup_dir}/mongo
      * - create dump of MONGO_ANALYTICS at the ANALYTICS node, copy it to {local_backup_dir}/mongo_analytics
-     * - create dump of ANALYTICS_DATA at the ANALYTICS node, copy it to {local_backup_dir}/analytics_data
-     * - create dump of ANALYTICS_LOGS at the ANALYTICS node, copy it to {local_backup_dir}/analytics_logs
+     * - compress analytics data dir of ANALYTICS node into analytics_data.tar.gz, copy pack into local temp dir and unpack into {local_backup_dir}/analytics_data
+     * - copy logs dir of ANALYTICS node into remote temp dir, compress them into analytics_logs.tar.gz, copy pack into local temp dir and unpack into {local_backup_dir}/analytics_logs
      * - create dump of LDAP user db at the DATA node, copy it to {local_backup_dir}/ldap
      * - create dump of LDAP_ADMIN db at the DATA node, copy it to {local_backup_dir}/ldap_admin
      * - add dumps to the local backup file
@@ -407,6 +407,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("slapd", dataNode));
 
         // stop services on ANALYTICS node
+        commands.add(createStopServiceCommand("codenvy", analyticsNode));
         commands.add(createStopServiceCommand("puppet", analyticsNode));
 
         // copy backup file into api node, pack filesystem data of API node to the {backup_file}/api/fs folder into backup file, and then copy it to local temp dir
@@ -456,19 +457,30 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                         localMongoAnalyticsBackupPath.getParent(),
                                                         analyticsNode));
 
-        // copy analytics data dir of ANALYTICS node into remote temp dir, and than into local temp dir
-        Path remoteAnalyticsDataBackupPath = getComponentTempPath(remoteTempDir, ANALYTICS_DATA);
-        commands.add(createCommand(format("sudo cp -r /home/codenvy/analytics_data %s", remoteTempDir), analyticsNode));
-        commands.add(createCommand(format("sudo chmod -R 777 %s", remoteAnalyticsDataBackupPath), analyticsNode));
-        commands.add(createCopyFromRemoteToLocalCommand(remoteAnalyticsDataBackupPath,
+        // compress analytics data dir of ANALYTICS node into analytics_data.tar.gz, copy pack into local temp dir and unpack into {local_backup_dir}/analytics_data
+        String tempAnalyticsDataBackupFileName = ANALYTICS_DATA.toString().toLowerCase() + ".tar.gz";
+        Path remoteAnalyticsDataBackupFile = remoteTempDir.resolve(tempAnalyticsDataBackupFileName);
+        Path localAnalyticsDataBackupFile = localTempDir.resolve(tempAnalyticsDataBackupFileName);
+        Path localAnalyticsDataBackupPath = getComponentTempPath(localTempDir, ANALYTICS_DATA);
+
+        commands.add(createCompressCommand(Paths.get("/home/codenvy/analytics_data"), remoteAnalyticsDataBackupFile, ".", analyticsNode));
+        commands.add(createCopyFromRemoteToLocalCommand(remoteAnalyticsDataBackupFile,
                                                         localTempDir,
                                                         analyticsNode));
 
-        // copy analytics logs dir of ANALYTICS node into remote temp dir, and than into local temp dir
-        Path remoteAnalyticsLogsBackupFile = remoteTempDir.resolve("analytics_logs.tar.gz");
-        Path localAnalyticsLogsBackupFile = localTempDir.resolve("analytics_logs.tar.gz");
+        commands.add(createCommand(format("mkdir -p %s", localAnalyticsDataBackupPath)));
+        commands.add(createUncompressCommand(localAnalyticsDataBackupFile, localAnalyticsDataBackupPath));
+        commands.add(createCommand(format("rm -rf %s", localAnalyticsDataBackupFile)));
+
+
+        // copy logs dir of ANALYTICS node into remote temp dir, compress them into analytics_logs.tar.gz, copy pack into local temp dir and unpack into {local_backup_dir}/analytics_logs
+        commands.add(createCommand(format("sudo cp -r /home/codenvy/logs %s", remoteTempDir), analyticsNode));  // we need to make copy to avoid error "tar: ./2015/07/17/messages: file changed as we read it"
+
+        String tempAnalyticsLogsBackupFileName = ANALYTICS_LOGS.toString().toLowerCase() + ".tar.gz";
+        Path remoteAnalyticsLogsBackupFile = remoteTempDir.resolve(tempAnalyticsLogsBackupFileName);
+        Path localAnalyticsLogsBackupFile = localTempDir.resolve(tempAnalyticsLogsBackupFileName);
         Path localAnalyticsLogsBackupPath = getComponentTempPath(localTempDir, ANALYTICS_LOGS);
-        commands.add(createCompressCommand(Paths.get("/home/codenvy/logs"), remoteAnalyticsLogsBackupFile, ".", analyticsNode));
+        commands.add(createCompressCommand(remoteTempDir.resolve("logs"), remoteAnalyticsLogsBackupFile, ".", analyticsNode));
         commands.add(createCopyFromRemoteToLocalCommand(remoteAnalyticsLogsBackupFile,
                                                         localTempDir,
                                                         analyticsNode));
@@ -522,10 +534,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("rm -rf %s", localTempDir)));
 
         // remove remote temp dirs
-        commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));
-        commands.add(createCommand(format("rm -rf %s", remoteTempDir), analyticsNode));
-        commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));
-        commands.add(createCommand(format("rm -rf %s", remoteTempDir), apiNode));
+        commands.add(createCommand(format("sudo rm -rf %s", remoteTempDir), dataNode));
+        commands.add(createCommand(format("sudo rm -rf %s", remoteTempDir), analyticsNode));
+        commands.add(createCommand(format("sudo rm -rf %s", remoteTempDir), dataNode));
+        commands.add(createCommand(format("sudo rm -rf %s", remoteTempDir), apiNode));
 
         return new MacroCommand(commands, "Backup data commands");
     }

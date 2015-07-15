@@ -42,7 +42,8 @@ vbox.customize [
 'modifyvm', :id,
 '--name', hostname,
 '--memory', ram,
-'--cpus', cpus
+'--cpus', cpus,
+'guestproperty', 'set', :id, '/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold', 1000000  # it's needed to set yesterday data in test test-backup-restore-multi-nodes.sh
 ]
 end
 end

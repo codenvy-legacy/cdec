@@ -92,11 +92,6 @@ public class TestInstallationManagerCli {
     public void testUpdateMultiNodes() throws Exception {
         doTest("test-update-multi-nodes.sh");
     }
-//
-//    @Test
-//    public void testInstallUpdateImCliClient() throws Exception {
-//        doTest("test-install-update-im-cli-client.sh");
-//    }
 
     @Test
     public void testInstallUpdateImCliClient() throws Exception {
