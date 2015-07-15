@@ -172,7 +172,6 @@ doAuth() {
 
     [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
 
-    doPost "Content-Type: application/json" "{\"username\":\"${USERNAME}\", \"password\":\"${PASSWORD}\", \"realm\":\"${REALM}\"}" "http://${SERVER_DNS}/api/auth/login"
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' http://${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
