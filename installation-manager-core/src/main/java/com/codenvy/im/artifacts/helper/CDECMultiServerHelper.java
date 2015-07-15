@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.commands.CommandLibrary.createCompressCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromLocalToRemoteCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromRemoteToLocalCommand;
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
@@ -51,6 +52,7 @@ import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceComman
 import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStartServiceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStopServiceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createUncompressCommand;
 import static com.codenvy.im.commands.CommandLibrary.createUnpackCommand;
 import static com.codenvy.im.commands.MacroCommand.createCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
@@ -419,8 +421,6 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                         backupFile,
                                                         apiNode));
 
-        commands.add(createCommand(format("rm -rf %s", remoteTempDir), apiNode));  // cleanup api node
-
         // create dump of MONGO at the DATA node, copy it to {local_backup_dir}/mongo
         Path remoteMongoBackupPath = getComponentTempPath(remoteTempDir, MONGO);
         Path localMongoBackupPath = getComponentTempPath(localTempDir, MONGO);
@@ -465,13 +465,17 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                         analyticsNode));
 
         // copy analytics logs dir of ANALYTICS node into remote temp dir, and than into local temp dir
-        Path remoteAnalyticsLogsBackupPath = getComponentTempPath(remoteTempDir, ANALYTICS_LOGS);
-        commands.add(createCommand(format("sudo cp -r /home/codenvy/logs %s", remoteTempDir), analyticsNode));
-        commands.add(createCommand(format("mv %s %s", remoteTempDir.resolve("logs"), remoteAnalyticsLogsBackupPath), analyticsNode));
-        commands.add(createCommand(format("sudo chmod -R 777 %s", remoteAnalyticsLogsBackupPath), analyticsNode));
-        commands.add(createCopyFromRemoteToLocalCommand(remoteAnalyticsLogsBackupPath,
+        Path remoteAnalyticsLogsBackupFile = remoteTempDir.resolve("analytics_logs.tar.gz");
+        Path localAnalyticsLogsBackupFile = localTempDir.resolve("analytics_logs.tar.gz");
+        Path localAnalyticsLogsBackupPath = getComponentTempPath(localTempDir, ANALYTICS_LOGS);
+        commands.add(createCompressCommand(Paths.get("/home/codenvy/logs"), remoteAnalyticsLogsBackupFile, ".", analyticsNode));
+        commands.add(createCopyFromRemoteToLocalCommand(remoteAnalyticsLogsBackupFile,
                                                         localTempDir,
                                                         analyticsNode));
+
+        commands.add(createCommand(format("mkdir -p %s", localAnalyticsLogsBackupPath)));
+        commands.add(createUncompressCommand(localAnalyticsLogsBackupFile, localAnalyticsLogsBackupPath));
+        commands.add(createCommand(format("rm -rf %s", localAnalyticsLogsBackupFile)));
 
         // create dump of LDAP user db at the DATA node, copy it to {local_backup_dir}/ldap
         Path remoteLdapUserBackupPath = getComponentTempPath(remoteTempDir, LDAP);
