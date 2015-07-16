@@ -26,12 +26,8 @@ installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
 executeIMCommand "im-download" "--check-remote"
-
-log "Regex validation codenvy artifact is available to download"
-[[ ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".* ]] || validateExitCode 1
-
-log "Regex validation CLI artifact is available to download"
-[[ ${OUTPUT} =~ .*\"artifact\".\:.\"installation-manager-cli\".*\"version\".\:.\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".* ]] || validateExitCode 1
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
+validateExpectedString ".*\"artifact\".\:.\"installation-manager-cli\".*\"version\".\:.\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

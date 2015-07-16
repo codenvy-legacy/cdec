@@ -78,7 +78,7 @@ doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*project-1.* ]] || validateExitCode 1
+validateExpectedString ".*project-1.*"
 
 doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 fetchJsonParameter "id"

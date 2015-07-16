@@ -28,14 +28,9 @@ validateInstalledImCliClientVersion
 
 executeIMCommand "help"
 
-log "Regex validation login command"
-[[ ${OUTPUT} =~ .*login.* ]] || validateExitCode 1
-
-log "Regex validation help command"
-[[ ${OUTPUT} =~ .*help.* ]] || validateExitCode 1
-
-log "Regex validation im commands"
-[[ ${OUTPUT} =~ .*im-.* ]] || validateExitCode 1
+validateExpectedString ".*login.*"
+validateExpectedString ".*help.*"
+validateExpectedString ".*im-.*"
 
 printAndLog "RESULT: PASSED"
 

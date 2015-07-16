@@ -30,44 +30,44 @@ executeIMCommand "im-add-node" "runner2.codenvy.onprem"
 
 auth "admin" "password"
 doGet "http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*http://runner2.codenvy.onprem:8080/runner/internal/runner.* ]] || validateExitCode 1
+validateExpectedString ".*http://runner2.codenvy.onprem:8080/runner/internal/runner.*"
 
 # add builder
 executeIMCommand "im-add-node" "builder2.codenvy.onprem"
 
 auth "admin" "password"
 doGet "http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*http://builder2.codenvy.onprem:8080/builder/internal/builder.* ]] || validateExitCode 1
+validateExpectedString ".*http://builder2.codenvy.onprem:8080/builder/internal/builder.*"
 
 # Incorrect name
 executeIMCommand "--valid-exit-code=1" "im-add-node" "bla-bla-bla"
-[[ ${OUTPUT} =~ .*Correct.name.template.is..\<prefix\>\<number\>\<base_node_domain\>..* ]] || validateExitCode 1
+validateExpectedString ".*Correct.name.template.is..\<prefix\>\<number\>\<base_node_domain\>..*"
 
 # Host is not reachiable
 executeIMCommand "--valid-exit-code=1" "im-add-node" "builder3.codenvy.onprem"
-[[ ${OUTPUT} =~ .*Can.t.connect.to.host..vagrant@builder3.codenvy.onprem:22.*socket.is.not.established.* ]] || validateExitCode 1
+validateExpectedString ".*Can.t.connect.to.host..vagrant@builder3.codenvy.onprem:22.*socket.is.not.established.*"
 
 # Runner has been already set up
 executeIMCommand "--valid-exit-code=1" "im-add-node" "runner2.codenvy.onprem"
-[[ ${OUTPUT} =~ .*Node..runner2.codenvy.onprem..has.been.already.used.* ]] || validateExitCode 1
+validateExpectedString ".*Node..runner2.codenvy.onprem..has.been.already.used.*"
 
 # remove runner
 executeIMCommand "im-remove-node" "runner2.codenvy.onprem"
 
 auth "admin" "password"
 doGet "http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*http://runner2.codenvy.onprem:8080/runner/internal/runner.* ]] && validateExitCode 1
+validateUnExpectedString ".*http://runner2.codenvy.onprem:8080/runner/internal/runner.*"
 
 # remove builder
 executeIMCommand "im-remove-node" "builder2.codenvy.onprem"
 
 auth "admin" "password"
 doGet "http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*http://builder2.codenvy.onprem:8080/builder/internal/builder.* ]] && validateExitCode 1
+validateUnExpectedString ".*http://builder2.codenvy.onprem:8080/builder/internal/builder.*"
 
 # remove already removed runner
 executeIMCommand "--valid-exit-code=1" "im-remove-node" "runner2.codenvy.onprem"
-[[ ${OUTPUT} =~ .*Node..runner2.codenvy.onprem..is.not.found.* ]] || validateExitCode 1
+validateExpectedString ".*Node..runner2.codenvy.onprem..is.not.found.*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

@@ -72,7 +72,7 @@ validateInstalledCodenvyVersion() {
     logStartCommand "validateInstalledCodenvyVersion "${VERSION}
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]] && validateExitCode 1
+    validateExpectedString ".*\"ideVersion\"\:\"${VERSION}\".*"
 
     logEndCommand "validateInstalledCodenvyVersion: OK"
 }
@@ -85,8 +85,7 @@ validateInstalledImCliClientVersion() {
     logStartCommand "validateInstalledImCliClientVersion "${VERSION}
 
     executeIMCommand "im-install" "--list"
-
-    [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]] &&  validateExitCode 1
+    validateExpectedString ".*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".*"
 
     logEndCommand "validateInstalledImCliClientVersion: OK"
 }
@@ -184,7 +183,6 @@ doAuth() {
     logEndCommand "auth: OK"
 }
 
-
 executeIMCommand() {
     logStartCommand "executeIMCommand "$@
 
@@ -242,7 +240,7 @@ detectMasterNode() {
 }
 
 fetchJsonParameter() {
-    [[ ${OUTPUT} =~ .*.$1..* ]] || validateExitCode 1
+    validateExpectedString ".*.$1..*"
     OUTPUT=`echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
 }
 
@@ -288,4 +286,20 @@ createDefaultFactory() {
     validateExitCode ${EXIT_CODE}
 
     logEndCommand "createDefaultFactory: OK"
+}
+
+validateExpectedString() {
+    logStartCommand "validateRegex "$@
+
+    [[ ${OUTPUT} =~ $1 ]] || validateExitCode 1
+
+    logEndCommand "validateRegex: OK"
+}
+
+validateUnExpectedString() {
+    logStartCommand "validateRegex "$@
+
+    [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
+
+    logEndCommand "validateRegex: OK"
 }

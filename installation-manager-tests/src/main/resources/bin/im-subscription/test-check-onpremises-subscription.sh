@@ -47,13 +47,13 @@ doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account
 
 # test im-subscription without login
 executeIMCommand "--valid-exit-code=1" "im-subscription"
-[[ ${OUTPUT} =~ .*\"message\".\:.\"Please.log.in.into.\'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".* ]] || validateExitCode 1
+validateExpectedString ".*\"message\".\:.\"Please.log.in.into.\'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".*"
 
 executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
 
 # test im-subscription after login and adding OnPremises subscription
 executeIMCommand "im-subscription"
-[[ ! ${OUTPUT} =~ .*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription is valid\".*\"status\".\:.\"OK\".* ]] || validateExitCode 1
+validateUnExpectedString ".*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription is valid\".*\"status\".\:.\"OK\".*"
 
 printAndLog "RESULT: PASSED"
 

@@ -67,19 +67,19 @@ executeIMCommand "im-restore" ${BACKUP}
 auth "admin" "new-password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*Account.*not.found.* ]] || validateExitCode 1
+validateExpectedString ".*project-1.*"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*Workspace.*not.found.* ]] || validateExitCode 1
+validateExpectedString ".*Workspace.*not.found.*"
 
 doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*Workspace.*not.found.* ]] || validateExitCode 1
+validateExpectedString ".*Workspace.*not.found.*"
 
 doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*User.*not.found.* ]] || validateExitCode 1
+validateExpectedString ".*User.*not.found.*"
 
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
-[[ ${OUTPUT} =~ .*Factory.*not.found.* ]] || validateExitCode 1
+validateExpectedString ".*Factory.*not.found.*"
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"

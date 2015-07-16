@@ -28,14 +28,9 @@ validateInstalledImCliClientVersion
 
 executeIMCommand "im-config"
 
-log "Regex validation download.directory property"
-[[ ${OUTPUT} =~ .*\"download.directory\".\:.\"/home/vagrant/codenvy-im-data/updates\".* ]] || validateExitCode 1
-
-log "Regex validation update.server.url property"
-[[ ${OUTPUT} =~ .*\"update.server.url\".\:.\"${UPDATE_SERVER}\".* ]] || validateExitCode 1
-
-log "Regex validation saas.server.url property"
-[[ ${OUTPUT} =~ .*\"saas.server.url\".\:.\"${SAAS_SERVER}\".* ]] || validateExitCode 1
+validateExpectedString ".*\"download.directory\".\:.\"/home/vagrant/codenvy-im-data/updates\".*"
+validateExpectedString ".*\"update.server.url\".\:.\"${UPDATE_SERVER}\".*"
+validateExpectedString ".*\"saas.server.url\".\:.\"${SAAS_SERVER}\".*"
 
 printAndLog "RESULT: PASSED"
 

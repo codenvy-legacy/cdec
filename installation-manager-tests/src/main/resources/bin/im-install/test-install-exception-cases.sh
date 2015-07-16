@@ -26,19 +26,13 @@ installImCliClient
 validateInstalledImCliClientVersion
 
 executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-
-log "Regex validation codenvy artifact is not downloaded"
-[[ ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".* ]] || validateExitCode 1
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".*"
 
 executeIMCommand "--valid-exit-code=1" "im-install" "unknown"
-
-log "Regex validation unknown artifact"
-[[ ${OUTPUT} =~ .*\"message\".\:.\"Artifact.\'unknown\'.not.found\".* ]] || validateExitCode 1
+validateExpectedString ".*\"message\".\:.\"Artifact.\'unknown\'.not.found\".*"
 
 executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "1.0.0"
-
-log "Regex validation unknown version"
-[[ ${OUTPUT} =~ .*Can\'t.download.installation.properties\..*Unexpected.error\..Can\'t.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.* ]] || validateExitCode 1
+validateExpectedString ".*Can\'t.download.installation.properties\..*Unexpected.error\..Can\'t.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy
