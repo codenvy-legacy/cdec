@@ -60,7 +60,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testInstallMultiNodeAndChangePassword() throws Exception {
-        doTest("im-install/test-install-multi-nodes-and-change-password.sh");
+        doTest("im-install/test-install-multi-nodes-and-change-config.sh");
     }
 
     @Test
@@ -70,7 +70,7 @@ public class TestInstallationManagerCli {
 
     @Test
     public void testInstallSingleNodeAndChangePassword() throws Exception {
-        doTest("im-install/test-install-single-node-and-change-password.sh");
+        doTest("im-install/test-install-single-node-and-change-config.sh");
     }
 
     @Test
@@ -141,16 +141,6 @@ public class TestInstallationManagerCli {
     @Test
     public void testCheckImConfigCommand() throws Exception {
         doTest("im-config/test-config-check-im-config.sh");
-    }
-
-    @Test
-    public void testSetupNewHostnameOfSingleServer() throws Exception {
-        doTest("im-config/test-config-setup-new-hostname-of-single-server.sh");
-    }
-
-    @Test
-    public void testSetupNewHostnameOfMultiServer() throws Exception {
-        doTest("im-config/test-config-setup-new-hostname-of-multi-server.sh");
     }
 
     @Test

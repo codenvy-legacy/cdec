@@ -19,24 +19,19 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-# Add next host into the /etc/hosts
-# 192.168.56.110 test.codenvy.onprem
-# 192.168.56.13 api.codenvy.onprem
-
-NEW_HOSTNAME="test.codenvy.onprem"
-
-printAndLog "TEST CASE: Change hostname of Codenvy OnPremises Multi Server"
-
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
+
+printAndLog "TEST CASE: Install the latest multi-node Codenvy On Premise"
 
 installCodenvy
 validateInstalledCodenvyVersion
-auth "admin" "password"
 
-# add new host into hosts file at the site node
-executeSshCommand "sudo sed -i '1i192.168.56.110 test.codenvy.onprem' /etc/hosts" "codenvy.onprem"
+auth "admin" "password"
+executeIMCommand "im-password" "password" "new-password"
+auth "admin" "new-password"
 
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
+executeSshCommand "sudo sed -i '1i192.168.56.110 test.codenvy.onprem' /etc/hosts" "codenvy.onprem"
 
 # verify changes on api node
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy.onprem"
@@ -44,8 +39,8 @@ executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/c
 # verify changes on installation-manager service
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
-auth "admin" "password" "${NEW_HOSTNAME}"
+auth "admin" "new-password" "${NEW_HOSTNAME}"
+
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

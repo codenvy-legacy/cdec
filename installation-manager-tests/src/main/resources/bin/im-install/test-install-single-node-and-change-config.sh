@@ -31,5 +31,16 @@ auth "admin" "password"
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
+executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
+executeSshCommand "sudo sed -i 's/codenvy.onprem/test.codenvy.onprem/' /etc/hosts"
+
+# verify changes on api node
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties"
+
+# verify changes on installation-manager service
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
+
+auth "admin" "password" "${NEW_HOSTNAME}"
+
 printAndLog "RESULT: PASSED"
 vagrantDestroy
