@@ -350,7 +350,7 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='LocalAgent'}");
 
         testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack, testApiNode);
-        assertEquals(testCommand.toString(), "{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(testCommand.toString(), format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test
@@ -360,7 +360,7 @@ public class TestCommandLibrary {
         String pathWithinThePack = "pathWithinThePack";
 
         Command testCommand = CommandLibrary.createCompressCommand(fromDir, packFile, pathWithinThePack, testApiNode);
-        assertEquals(testCommand.toString(), "{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='ndp', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(testCommand.toString(), format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test

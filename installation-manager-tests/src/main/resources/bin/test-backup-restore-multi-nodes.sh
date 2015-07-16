@@ -37,8 +37,7 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 # set date on yesterday
-executeSshCommand "sudo service ntpd stop"
-executeSshCommand "sudo date -s \"$(date -d '-1 day')\""
+executeSshCommand "sudo date -s \"$(date -d '-1 day')\"" "analytics.codenvy.onprem"
 
 doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
 fetchJsonParameter "id"
@@ -65,7 +64,7 @@ fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
 # set date on today
-executeSshCommand "sudo date -s \"$(date -d '1 day')\""
+executeSshCommand "sudo date -s \"$(date -d '1 day')\"" "analytics.codenvy.onprem"
 
 # analytics data
 DATE=`date --date="yesterday" +"%Y%m%d"`
