@@ -19,18 +19,22 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Login with wrong password"
+printAndLog "TEST CASE: Install and update IM CLI client"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installImCliClient
-validateInstalledImCliClientVersion
+log "Available IM versions: "${AVAILABLE_IM_CLI_CLIENT_VERSIONS}
+log "Previos IM version: "${PREV_IM_CLI_CLIENT_VERSION}
+log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "--valid-exit-code=1" "login" "${CODENVY_SAAS_USERNAME}" "wrong"
+installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
+validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
-if [[ ! ${OUTPUT} =~ .*Unable.to.authenticate.for.the.given.credentials.on.URL.\'${SAAS_SERVER}\'\..Check.the.username.and.password\..*Login.failed.on.remote.\'saas-server\'\..* ]]; then
-    validateExitCode 1
-fi
+executeIMCommand "im-download" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+executeIMCommand "im-install" "installation-manager-cli" "${LATEST_IM_CLI_CLIENT_VERSION}"
+executeIMCommand "help" # just to update itself
+
+validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
 
 printAndLog "RESULT: PASSED"
 

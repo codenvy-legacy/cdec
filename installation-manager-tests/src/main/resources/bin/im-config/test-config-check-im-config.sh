@@ -16,20 +16,22 @@
 # from Codenvy S.A..
 #
 
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
-. ./lib.sh
+printAndLog "TEST CASE: Check current installation-manager config"
 
-printAndLog "TEST CASE: Install unknown CLI version"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "1.0.0"
+executeIMCommand "im-config"
 
-if [[ ! ${OUTPUT} =~ .*Can\'t.download.installation.properties\..*Unexpected.error\..Can\'t.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.* ]]; then
-    validateExitCode 1
-fi
+validateExpectedString ".*\"download.directory\".\:.\"/home/vagrant/codenvy-im-data/updates\".*"
+validateExpectedString ".*\"update.server.url\".\:.\"${UPDATE_SERVER}\".*"
+validateExpectedString ".*\"saas.server.url\".\:.\"${SAAS_SERVER}\".*"
 
 printAndLog "RESULT: PASSED"
+
 vagrantDestroy

@@ -22,10 +22,6 @@ vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 printAndLog "TEST CASE: Update single-node Codenvy"
 
-log "Available versions: "${AVAILABLE_CODENVY_VERSIONS}
-log "Previos versions: "${PREV_CODENVY_VERSION}
-log "Latest versions: "${LATEST_CODENVY_VERSION}
-
 installCodenvy ${PREV_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
 auth "admin" "password"

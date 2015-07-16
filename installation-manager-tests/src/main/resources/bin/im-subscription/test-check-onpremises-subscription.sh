@@ -19,26 +19,41 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Login with username and password"
+printAndLog "TEST CASE: Check subscription"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
 validateInstalledImCliClientVersion
 
+UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
+PASSWORD="pwd123ABC"
+
+# create account
+doPost "application/json" "{\"name\":\"account-${UUID_OWNER}\"}" "${SAAS_SERVER}/api/account?token=${TOKEN}"
+TMP=${OUTPUT}
+fetchJsonParameter "id"
+ACCOUNT_ID=${OUTPUT}
+
+OUTPUT=${TMP}
+fetchJsonParameter "name"
+ACCOUNT_NAME=${OUTPUT}
+
+# add user with [account/owner] role
+doPost "application/json" "{\"name\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${PASSWORD}\"}" "${SAAS_SERVER}/api/user/create?token=${TOKEN}"
+fetchJsonParameter "id"
+USER_OWNER_ID=${OUTPUT}
+doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account/owner\"]}" "${SAAS_SERVER}/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
+
 # test im-subscription without login
 executeIMCommand "--valid-exit-code=1" "im-subscription"
-if [[ ! ${OUTPUT} =~ .*\"message\".\:.\"Please.log.in.into.\'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".* ]]; then
-    validateExitCode 1
-fi
+validateExpectedString ".*\"message\".\:.\"Please.log.in.into.\'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".*"
 
-executeIMCommand "login" "${CODENVY_SAAS_USER_WITHOUT_SUBSCRIPTION_NAME}" "${CODENVY_SAAS_USER_WITHOUT_SUBSCRIPTION_PASSWORD}"
+executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
 
 # test im-subscription after login and adding OnPremises subscription
 executeIMCommand "im-subscription"
-if [[ ! ${OUTPUT} =~ .*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription is valid\".*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
+validateUnExpectedString ".*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription is valid\".*\"status\".\:.\"OK\".*"
 
 printAndLog "RESULT: PASSED"
 

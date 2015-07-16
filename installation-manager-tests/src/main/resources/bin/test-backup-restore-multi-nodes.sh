@@ -29,7 +29,8 @@ auth "admin" "password"
 
 # backup
 executeIMCommand "im-backup"
-BACKUP=$(fetchJsonParameter "file")
+fetchJsonParameter "file"
+BACKUP=${OUTPUT}
 
 # modify data: add accout, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
@@ -39,24 +40,29 @@ auth "admin" "new-password"
 executeSshCommand "sudo service ntpd stop"
 executeSshCommand "sudo date -s \"$(date -d '-1 day')\""
 
-doPost "application/json" "{\"name\":\"account-4\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
-ACCOUNT_ID=$(fetchJsonParameter "id")
+doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
+fetchJsonParameter "id"
+ACCOUNT_ID=${OUTPUT}
 
-doPost "application/json" "{\"name\":\"workspace-4\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy.onprem/api/workspace?token=${TOKEN}"
-WORKSPACE_ID=$(fetchJsonParameter "id")
+doPost "application/json" "{\"name\":\"workspace-1\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy.onprem/api/workspace?token=${TOKEN}"
+fetchJsonParameter "id"
+WORKSPACE_ID=${OUTPUT}
 
 doPost "application/json" "{\"type\":\"blank\",\"visibility\":\"public\"}" "http://codenvy.onprem/api/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
 
 doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://codenvy.onprem/api/user/create?token=${TOKEN}"
-USER_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+USER_ID=${OUTPUT}
 
 doPost "application/json" "{\"userId\":\"${USER_ID}\",\"roles\":[\"account/owner\"]}" "http://codenvy.onprem/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
-ACCOUNT_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+ACCOUNT_ID=${OUTPUT}
 
 authOnSite "user-1" "pwd123ABC"
 
 createDefaultFactory ${TOKEN}
-FACTORY_ID=$(fetchJsonParameter "id")
+fetchJsonParameter "id"
+FACTORY_ID=${OUTPUT}
 
 # set date on today
 executeSshCommand "sudo date -s \"$(date -d '1 day')\""
@@ -71,7 +77,7 @@ doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.
 
 # check analytics: request total users = 1
 doGet "http://codenvy.onprem/api/analytics/metric/total_users?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*\"value\"\:\"3\".* ]] && validateExitCode 1
+validateExpectedString ".*\"value\"\:\"1\".*"
 
 # restore
 executeIMCommand "im-restore" ${BACKUP}
@@ -80,23 +86,23 @@ executeIMCommand "im-restore" ${BACKUP}
 auth "admin" "new-password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Account.*not.found.* ]] && validateExitCode 1
+validateExpectedString ".*Account.*not.found.*"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Workspace.*not.found.* ]] && validateExitCode 1
+validateExpectedString ".*Workspace.*not.found.*"
 
 doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Workspace.*not.found.* ]] && validateExitCode 1
+validateExpectedString ".*Workspace.*not.found.*"
 
 doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*User.*not.found.* ]] && validateExitCode 1
+validateExpectedString ".*User.*not.found.*"
 
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*Factory.*not.found.* ]] && validateExitCode 1
+validateExpectedString ".*Factory.*not.found.*"
 
 # check analytics: request total users = 0
 doGet "http://codenvy.onprem/api/analytics/metric/total_users?token=${TOKEN}"
-[[ ! ${OUTPUT} =~ .*\"value\"\:\"0\".* ]] && validateExitCode 1
+validateExpectedString ".*\"value\"\:\"0\".*"
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"

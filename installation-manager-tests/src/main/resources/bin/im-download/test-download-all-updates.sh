@@ -26,10 +26,13 @@ installImCliClient
 validateInstalledImCliClientVersion
 
 executeIMCommand "im-download"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY_VERSION}.zip\".*\"status\".\:.\"DOWNLOADED\".*"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY_VERSION}.zip\".*\"status\".\:.\"DOWNLOADED\".*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
+executeIMCommand "im-download" "--list-local"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY_VERSION}.zip\".*\"status\".\:.\"READY_TO_INSTALL\".*"
+
+executeIMCommand "--valid-exit-code=1" "im-download" "unknown"
+executeIMCommand "--valid-exit-code=1" "im-download" "codenvy" "1.0.0"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

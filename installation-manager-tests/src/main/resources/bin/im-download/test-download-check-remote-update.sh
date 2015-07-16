@@ -16,19 +16,18 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Install not downloaded artifact"
+printAndLog "TEST CASE: Check remote update"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installImCliClient ${LATEST_IM_CLI_CLIENT_VERSION}
-validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
+installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
+validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
-executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".* ]]; then
-    validateExitCode 1
-fi
+executeIMCommand "im-download" "--check-remote"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
+validateExpectedString ".*\"artifact\".\:.\"installation-manager-cli\".*\"version\".\:.\"${LATEST_IM_CLI_CLIENT_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

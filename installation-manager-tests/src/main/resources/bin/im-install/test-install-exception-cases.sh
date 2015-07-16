@@ -19,18 +19,20 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Get list of downloaded artifacts"
+printAndLog "TEST CASE: Install exception cases"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "im-download"
-executeIMCommand "im-download" "--list-local"
+executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".*"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY_VERSION}.zip\".*\"status\".\:.\"READY_TO_INSTALL\".*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
+executeIMCommand "--valid-exit-code=1" "im-install" "unknown"
+validateExpectedString ".*\"message\".\:.\"Artifact.\'unknown\'.not.found\".*"
+
+executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "1.0.0"
+validateExpectedString ".*Can\'t.download.installation.properties\..*Unexpected.error\..Can\'t.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

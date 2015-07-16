@@ -36,9 +36,8 @@ validateInstalledImCliClientVersion
 
 executeIMCommand "im-download" "--check-remote"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
+log "Regex validation codenvy is available to download"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
 
 # Ensure, there is record with info about request in the log of Squid proxy-server
 executeSshCommand "sudo grep \"GET ${UPDATE_SERVICE}\" /var/log/squid/access.log"

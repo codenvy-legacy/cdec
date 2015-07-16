@@ -42,8 +42,11 @@ vbox.customize [
 'modifyvm', :id,
 '--name', hostname,
 '--memory', ram,
-'--cpus', cpus,
-'guestproperty', 'set', :id, '/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold', 1000000  # it's needed to set yesterday data in test test-backup-restore-multi-nodes.sh
+'--cpus', cpus
+]
+# it's needed to set yesterday data in test test-backup-restore-multi-nodes.sh
+vbox.customize [
+'setextradata', :id, 'VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled', 1
 ]
 end
 end
