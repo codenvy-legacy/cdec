@@ -19,7 +19,7 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Install not downloaded artifact"
+printAndLog "TEST CASE: Install exception cases"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient

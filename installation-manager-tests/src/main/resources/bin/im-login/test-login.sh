@@ -71,7 +71,7 @@ executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PA
 [[ ${OUTPUT} =~ .*Account.\'wrong_account\'.is.not.yours.or.may.be.you.aren\'t.owner.of.this.account\..* ]] || validateExitCode 1
 
 # login with wrong username
-executeIMCommand "--valid-exit-code=1" "login" "wrong_username" "${CODENVY_SAAS_PASSWORD}"
+executeIMCommand "--valid-exit-code=1" "login" "wrong_username" "${PASSWORD}"
 [[ ${OUTPUT} =~ .*Unable.to.authenticate.for.the.given.credentials.on.URL.\'${SAAS_SERVER}\'\..Check.the.username.and.password\..*Login.failed.on.remote.\'saas-server\'\..* ]] || validateExitCode 1
 
 # login with user is not owner of his account

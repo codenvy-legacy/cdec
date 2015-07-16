@@ -67,8 +67,6 @@ doGet "http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
 
 # remove already removed runner
 executeIMCommand "--valid-exit-code=1" "im-remove-node" "runner2.codenvy.onprem"
-
-auth "admin" "password"
 [[ ${OUTPUT} =~ .*Node..runner2.codenvy.onprem..is.not.found.* ]] || validateExitCode 1
 
 printAndLog "RESULT: PASSED"
