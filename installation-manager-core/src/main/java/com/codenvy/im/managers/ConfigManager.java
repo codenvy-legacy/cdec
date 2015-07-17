@@ -130,11 +130,15 @@ public class ConfigManager {
 
         for (Map.Entry<String, String> e : curProps.entrySet()) {
             String name = e.getKey();
-            String value = e.getValue();
+            String curValue = e.getValue();
 
             if (props.containsKey(name)) {
-                if (curDefaultProps.containsKey(name) && !value.equals(curDefaultProps.get(name))) {
-                    props.put(name, value);
+                if (curDefaultProps.containsKey(name) && !curValue.equals(curDefaultProps.get(name))) {
+                    props.put(name, curValue);
+                } else if (name.contains("pass") || name.contains("pwd") || name.contains("client_id")
+                           || name.contains("secret") || name.contains("private_key") || name.contains("username")
+                           || name.contains("user_name")) {
+                    props.put(name, curValue);
                 }
             }
         }
