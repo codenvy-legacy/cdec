@@ -369,9 +369,11 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetRestoreSingleServerCommand() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar.test").getPath());
+
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                      .setBackupFile("dummyFile")
-                                                      .setBackupDirectory("dummyDirectory");
+                                                      .setBackupFile(testingBackup.toString())
+                                                      .setBackupDirectory(testingBackup.getParent().toString());
 
         assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig));
     }

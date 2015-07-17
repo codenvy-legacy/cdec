@@ -595,7 +595,6 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         // restore filesystem data at the API node from {backup_file}/fs folder
         String backupFileName = Paths.get(backupConfig.getBackupFile()).getFileName().toString();
         Path remoteBackupFile = remoteTempDir.resolve(backupFileName);
-
         Path localFsBackupPath = getComponentTempPath(localTempDir, FS);
         if (Files.exists(localFsBackupPath)) {
             commands.add(createCommand(format("mkdir -p %s", remoteBackupFile.getParent()), apiNode));
@@ -605,12 +604,12 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
             commands.add(createCommand("sudo rm -rf /home/codenvy/codenvy-data/data/fs", apiNode));
             commands.add(createUnpackCommand(remoteBackupFile, Paths.get("/home/codenvy/codenvy-data/data"), "fs", apiNode));
+            commands.add(createCommand("sudo chown -R codenvy:codenvy /home/codenvy/codenvy-data/data/fs", apiNode));
         }
 
         // restore MONGO data at the DATA node from {temp_backup_directory}/mongo folder
         Path remoteMongoBackupPath = getComponentTempPath(remoteTempDir, MONGO);
         Path localMongoBackupPath = getComponentTempPath(localTempDir, MONGO);
-
         if (Files.exists(localMongoBackupPath)) {
             commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
             commands.add(createCopyFromLocalToRemoteCommand(localMongoBackupPath,
@@ -621,20 +620,17 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             commands.add(createCommand(format("/usr/bin/mongo -u %s -p %s --authenticationDatabase admin --quiet --eval " +
                                               "'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)
-            ), dataNode));
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), dataNode));
 
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoBackupPath.getParent()
-            ), dataNode));
+                                              remoteMongoBackupPath.getParent()), dataNode));
         }
 
         // restore MONGO data at the ANALYTICS node from {temp_backup_directory}/mongo_analytics folder
         Path remoteMongoAnalyticsBackupPath = getComponentTempPath(remoteTempDir, MONGO_ANALYTICS);
         Path localMongoAnalyticsBackupPath = getComponentTempPath(localTempDir, MONGO_ANALYTICS);
-
         if (Files.exists(localMongoAnalyticsBackupPath)) {
             commands.add(createCommand(format("mkdir -p %s", remoteMongoAnalyticsBackupPath), analyticsNode));
             commands.add(createCopyFromLocalToRemoteCommand(localMongoAnalyticsBackupPath,
@@ -661,46 +657,45 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                             analyticsNode));
             commands.add(createCommand("sudo rm -rf /home/codenvy/analytics_data", analyticsNode));
             commands.add(createCommand(format("sudo cp -r %s /home/codenvy", remoteAnalyticsDataBackupPath), analyticsNode));
+            commands.add(createCommand("sudo chown -R codenvy:codenvy /home/codenvy/analytics_data", analyticsNode));
         }
 
-        // restore LDAP at the DATA node
+        // restore LDAP user db from {temp_backup_directory}/ldap/ladp.ldif file
         Path localLdapUserBackupPath = getComponentTempPath(localTempDir, LDAP);
         Path remoteLdapUserBackupPath = getComponentTempPath(remoteTempDir, LDAP);
-
-        Path localLdapAdminBackupPath = getComponentTempPath(localTempDir, LDAP_ADMIN);
-        Path remoteLdapAdminBackupPath = getComponentTempPath(remoteTempDir, LDAP_ADMIN);
-
-        if (Files.exists(localLdapUserBackupPath) || Files.exists(localLdapAdminBackupPath)) {
+        if (Files.exists(localLdapUserBackupPath)) {
             commands.add(createCommand("sudo rm -rf /var/lib/ldap", dataNode));
             commands.add(createCommand("sudo mkdir -p /var/lib/ldap", dataNode));
 
-            // - restore LDAP user db from {temp_backup_directory}/ldap/ladp.ldif file
             commands.add(createCommand(format("mkdir -p %s", remoteLdapUserBackupPath.getParent()), dataNode));
             commands.add(createCopyFromLocalToRemoteCommand(localLdapUserBackupPath,
                                                             remoteLdapUserBackupPath,
                                                             dataNode));
-            commands.add(createCommand(format("if sudo test -f %1$s; then " +
-                                              "  sudo slapadd -q <%s ;" +
-                                              "fi", remoteLdapUserBackupPath), dataNode));
+            commands.add(createCommand(format("sudo slapadd -q <%s", remoteLdapUserBackupPath), dataNode));
 
-            // - restore LDAP_ADMIN db from {temp_backup_directory}/ldap_admin/ladp.ldif file
+            commands.add(createCommand("sudo chown -R ldap:ldap /var/lib/ldap", dataNode));
+        }
+
+        // restore LDAP_ADMIN db from {temp_backup_directory}/ldap_admin/ladp.ldif file
+        Path localLdapAdminBackupPath = getComponentTempPath(localTempDir, LDAP_ADMIN);
+        Path remoteLdapAdminBackupPath = getComponentTempPath(remoteTempDir, LDAP_ADMIN);
+        if (Files.exists(localLdapAdminBackupPath)) {
+            commands.add(createCommand("sudo rm -rf /var/lib/ldapcorp", dataNode));
+            commands.add(createCommand("sudo mkdir -p /var/lib/ldapcorp", dataNode));
+
             commands.add(createCommand(format("mkdir -p %s", remoteLdapAdminBackupPath.getParent()), dataNode));
             commands.add(createCopyFromLocalToRemoteCommand(localLdapAdminBackupPath,
                                                             remoteLdapAdminBackupPath,
                                                             dataNode));
-            commands.add(createCommand(format("if sudo test -f %1$s; then " +
-                                              "   sudo slapadd -q -b '%2$s' <%1$s ; " +
-                                              "fi",
-                                              remoteLdapAdminBackupPath,
-                                              codenvyConfig.getValue(Config.ADMIN_LDAP_DN))));
+            commands.add(createCommand(format("sudo slapadd -q -b '%s' <%s",
+                                              codenvyConfig.getValue(Config.ADMIN_LDAP_DN),
+                                              remoteLdapAdminBackupPath)));
 
-            commands.add(createCommand("sudo chown ldap:ldap /var/lib/ldap", dataNode));
-            commands.add(createCommand("sudo chown ldap:ldap /var/lib/ldap/*", dataNode));
-
-            commands.add(createCommand(format("rm -rf %s", remoteTempDir), dataNode));  // cleanup data node
+            commands.add(createCommand("sudo chown -R ldap:ldap /var/lib/ldapcorp", dataNode));
         }
 
         // start services
+        commands.add(createStartServiceCommand("slapd", dataNode));
         commands.add(createStartServiceCommand("puppet", dataNode));
         commands.add(createStartServiceCommand("puppet", analyticsNode));
         commands.add(createStartServiceCommand("puppet", apiNode));
