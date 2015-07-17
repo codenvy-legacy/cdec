@@ -32,7 +32,7 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
-executeSshCommand "sudo sed -i 's/codenvy.onprem/test.codenvy.onprem/' /etc/hosts"
+executeSshCommand "sudo sed -i 's/ codenvy.onprem/ test.codenvy.onprem/' /etc/hosts"
 
 # verify changes on api node
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties"

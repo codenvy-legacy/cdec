@@ -27,7 +27,9 @@ installImCliClient
 validateInstalledImCliClientVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
-PASSWORD="pwd123ABC"
+
+
+auth "admin" "password" ${SAAS_DNS}
 
 # create account
 doPost "application/json" "{\"name\":\"account-${UUID_OWNER}\"}" "${SAAS_SERVER}/api/account?token=${TOKEN}"
@@ -38,6 +40,8 @@ ACCOUNT_ID=${OUTPUT}
 OUTPUT=${TMP}
 fetchJsonParameter "name"
 ACCOUNT_NAME=${OUTPUT}
+
+PASSWORD="pwd123ABC"
 
 # add user with [account/owner] role
 doPost "application/json" "{\"name\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${PASSWORD}\"}" "${SAAS_SERVER}/api/user/create?token=${TOKEN}"

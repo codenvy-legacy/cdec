@@ -36,7 +36,6 @@ validateInstalledImCliClientVersion
 
 executeIMCommand "im-download" "--check-remote"
 
-log "Regex validation codenvy is available to download"
 validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
 
 # Ensure, there is record with info about request in the log of Squid proxy-server

@@ -128,6 +128,7 @@ installCodenvy() {
     retrieveInstallLog
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
+    sleep 5m
     logEndCommand "installCodenvy: OK"
 }
 

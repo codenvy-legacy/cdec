@@ -105,7 +105,7 @@ validateExpectedString ".*\"value\"\:\"0\".*"
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
+executeIMCommand "im-install" "--multi" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
 # restore

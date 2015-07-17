@@ -23,10 +23,6 @@ printAndLog "TEST CASE: Install and update IM CLI client"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Available IM versions: "${AVAILABLE_IM_CLI_CLIENT_VERSIONS}
-log "Previos IM version: "${PREV_IM_CLI_CLIENT_VERSION}
-log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
-
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 validateInstalledImCliClientVersion ${PREV_IM_CLI_CLIENT_VERSION}
 
