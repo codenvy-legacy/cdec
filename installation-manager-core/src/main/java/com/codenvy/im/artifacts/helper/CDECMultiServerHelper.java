@@ -689,7 +689,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                             dataNode));
             commands.add(createCommand(format("sudo slapadd -q -b '%s' <%s",
                                               codenvyConfig.getValue(Config.ADMIN_LDAP_DN),
-                                              remoteLdapAdminBackupPath)));
+                                              remoteLdapAdminBackupPath), dataNode));
 
             commands.add(createCommand("sudo chown -R ldap:ldap /var/lib/ldapcorp", dataNode));
         }

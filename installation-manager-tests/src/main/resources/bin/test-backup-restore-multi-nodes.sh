@@ -36,9 +36,6 @@ BACKUP=${OUTPUT}
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
-# set date on yesterday
-executeSshCommand "sudo date -s \"$(date -d '-1 day')\"" "analytics.codenvy.onprem"
-
 doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
 fetchJsonParameter "id"
 ACCOUNT_ID=${OUTPUT}
@@ -63,13 +60,13 @@ createDefaultFactory ${TOKEN}
 fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
-# set date on today
+# set date on tomorrow
 executeSshCommand "sudo date -s \"$(date -d '1 day')\"" "analytics.codenvy.onprem"
 
 # analytics data
 DATE=`date --date="yesterday" +"%Y%m%d"`
 auth "admin" "new-password"
-doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 40 minutes
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
