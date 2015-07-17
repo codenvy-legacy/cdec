@@ -49,8 +49,8 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-    private static final Pattern PATTERN_COULD_NOT_RETRIEVE_CATALOG           = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
-    private static final Pattern PATTERN_DEPENDENCY_HAS_FAILURES              = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
+    private static final Pattern PATTERN_COULD_NOT_RETRIEVE_CATALOG = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
+    private static final Pattern PATTERN_DEPENDENCY_HAS_FAILURES = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
 
     // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
     public static Path PUPPET_LOG_FILE = Paths.get("/var/log/messages");
@@ -175,11 +175,13 @@ public class PuppetErrorInterrupter implements Command {
                         LOG.log(Level.SEVERE, errorMessage);
 
                         Path errorReport = PuppetErrorReport.create(node);
-                        
+
                         throw new PuppetErrorException(getPuppetErrorMessageForOutput(node, line, errorReport));
                     }
                 }
             }
+        } catch (PuppetErrorException pe) {
+            throw pe;
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
@@ -234,19 +236,20 @@ public class PuppetErrorInterrupter implements Command {
 
         Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         String hostUrl = codenvyConfig.getHostUrl();
-        String systemAdminName = codenvyConfig.getValue(codenvyConfig.getValue("admin_ldap_user_name"));
-        char[] systemAdminPassword = codenvyConfig.getValue("system_ldap_password").toCharArray();
+        String systemAdminName = codenvyConfig.getValue(Config.ADMIN_LDAP_USER_NAME);
+        char[] systemAdminPassword = codenvyConfig.getValue(Config.SYSTEM_LDAP_PASSWORD).toCharArray();
         InstallType installType = configManager.detectInstallationType();
         String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
         
 
-        return  puppetErrorMessage + format(" At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
+        return  puppetErrorMessage + format(".\n"
+                                            + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue.\n"
                                             + "Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s).\n"
                                             + "In the installation eventually fails, contact support with error report %s.\n"
                                             + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-%s-node/#install-troubleshooting.",
                                             hostUrl,
                                             systemAdminName,
-                                            systemAdminPassword,
+                                            String.valueOf(systemAdminPassword),
                                             errorReport.toString(),
                                             docsUrlToken
         );

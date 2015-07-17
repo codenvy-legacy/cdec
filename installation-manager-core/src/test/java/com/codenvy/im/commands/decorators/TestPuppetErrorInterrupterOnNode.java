@@ -20,8 +20,11 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -41,6 +44,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -64,6 +68,7 @@ public class TestPuppetErrorInterrupterOnNode {
     @Mock
     Command mockCommand;
 
+    @Mock
     ConfigManager mockConfigManager;
 
     PuppetErrorInterrupter testInterrupter;
@@ -105,6 +110,15 @@ public class TestPuppetErrorInterrupterOnNode {
 
         PuppetErrorReport.BASE_TMP_DIRECTORY = REPORT_TMP_DIRECTORY;
         PuppetErrorReport.useSudo = false;  // prevents asking sudo password when running the tests locally
+
+        // prepare Codenvy Config
+        doReturn(InstallType.MULTI_SERVER).when(mockConfigManager).detectInstallationType();
+        doReturn(new Config(ImmutableMap.of(
+            Config.HOST_URL, "localhost",
+            Config.ADMIN_LDAP_USER_NAME, "admin",
+            Config.SYSTEM_LDAP_PASSWORD, "password"
+        )))
+            .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
@@ -147,10 +161,13 @@ public class TestPuppetErrorInterrupterOnNode {
             assertEquals(e.getClass(), PuppetErrorException.class);
 
             String errorMessage = e.getMessage();
-            Pattern errorMessagePattern = Pattern.compile("Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: " +
-                                                          "Could not retrieve catalog from remote server: Error 400 on SERVER: " +
-                                                          "Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. " +
-                                                          "Error report: target/reports/error_report_.*.tar.gz");
+
+            Pattern errorMessagePattern = Pattern.compile("Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'.\\n"
+                                                          + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue.\\n"
+                                                          + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)].\\n"
+                                                          + "In the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz.\\n"
+                                                          + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node/#install-troubleshooting.");
+
             assertTrue(errorMessagePattern.matcher(errorMessage).find());
 
             assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage, testNode);
