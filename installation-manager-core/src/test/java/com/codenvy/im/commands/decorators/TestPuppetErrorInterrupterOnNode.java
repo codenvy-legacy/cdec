@@ -20,6 +20,7 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
+import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
@@ -40,7 +41,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -63,6 +63,8 @@ public class TestPuppetErrorInterrupterOnNode {
 
     @Mock
     Command mockCommand;
+
+    ConfigManager mockConfigManager;
 
     PuppetErrorInterrupter testInterrupter;
 
@@ -97,7 +99,7 @@ public class TestPuppetErrorInterrupterOnNode {
         Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages").toAbsolutePath();  // abolute path is needed to execute ssh commands
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
-        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, Collections.singletonList(testNode)));
+        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, Collections.singletonList(testNode), mockConfigManager));
         PuppetErrorInterrupter.PUPPET_LOG_FILE = puppetLogFile;
         PuppetErrorInterrupter.useSudo = false;  // prevents asking sudo password when running the tests locally
 

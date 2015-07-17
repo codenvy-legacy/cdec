@@ -21,6 +21,9 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -55,8 +58,10 @@ public class PuppetErrorInterrupter implements Command {
     public static final int READ_LOG_TIMEOUT_MILLIS = 200;
     public static final int SELECTION_LINE_NUMBER   = 20;
 
+
     private final Command          command;
     private final List<NodeConfig> nodes;
+    private final ConfigManager    configManager;
     private final List<Function<String, Boolean>> errorMatchers = ImmutableList.of(
         new Function<String, Boolean>() {
             @Nullable
@@ -85,13 +90,14 @@ public class PuppetErrorInterrupter implements Command {
 
     protected static boolean useSudo = true;  // for testing propose
 
-    public PuppetErrorInterrupter(Command command) {
-        this(command, null);
+    public PuppetErrorInterrupter(Command command, ConfigManager configManager) {
+        this(command, null, configManager);
     }
 
-    public PuppetErrorInterrupter(Command command, List<NodeConfig> nodes) {
+    public PuppetErrorInterrupter(Command command, List<NodeConfig> nodes, ConfigManager configManager) {
         this.command = command;
         this.nodes = nodes;
+        this.configManager = configManager;
     }
 
     @Override
@@ -164,27 +170,19 @@ public class PuppetErrorInterrupter implements Command {
                     if (checkPuppetError(line)) {
                         task.cancel(false);
 
-                        String errorMessage = getPuppetErrorMessage(node, line);
+                        String errorMessage = getPuppetErrorMessageForLog(node, line);
 
                         LOG.log(Level.SEVERE, errorMessage);
 
-                        errorMessage = createErrorReport(node, errorMessage);
-
-                        throw new PuppetErrorException(errorMessage);
+                        Path errorReport = PuppetErrorReport.create(node);
+                        
+                        throw new PuppetErrorException(getPuppetErrorMessageForOutput(node, line, errorReport));
                     }
                 }
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private String createErrorReport(NodeConfig node, String errorMessage) {
-        Path errorReport = PuppetErrorReport.create(node);
-        if (errorReport != null) {
-            errorMessage += format(". Error report: %s", errorReport);
-        }
-        return errorMessage;
     }
 
     protected boolean checkPuppetError(String line) {
@@ -223,12 +221,35 @@ public class PuppetErrorInterrupter implements Command {
         }
     }
 
-    private String getPuppetErrorMessage(@Nullable NodeConfig node, String line) {
-        if (node == null) {
-            return format("Puppet error: '%s'", line);
-        }
+    private String getPuppetErrorMessageForLog(@Nullable NodeConfig node, String line) {
+        return (node == null) ? format("Puppet error: '%s'", line) :
+                                format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+    }
 
-        return format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+
+
+    private String getPuppetErrorMessageForOutput(@Nullable NodeConfig node, String line, Path errorReport) throws IOException {
+        String puppetErrorMessage = (node == null) ? format("Puppet error: '%s'", line) :
+                                                     format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+
+        Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
+        String hostUrl = codenvyConfig.getHostUrl();
+        String systemAdminName = codenvyConfig.getValue(codenvyConfig.getValue("admin_ldap_user_name"));
+        char[] systemAdminPassword = codenvyConfig.getValue("system_ldap_password").toCharArray();
+        InstallType installType = configManager.detectInstallationType();
+        String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
+        
+
+        return  puppetErrorMessage + format(" At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
+                                            + "Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s).\n"
+                                            + "In the installation eventually fails, contact support with error report %s.\n"
+                                            + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-%s-node/#install-troubleshooting.",
+                                            hostUrl,
+                                            systemAdminName,
+                                            systemAdminPassword,
+                                            errorReport.toString(),
+                                            docsUrlToken
+        );
     }
 
     private String getRuntimeErrorMessage(@Nullable NodeConfig node, IOException e) {

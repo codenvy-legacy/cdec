@@ -20,6 +20,7 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
+import com.codenvy.im.managers.ConfigManager;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -39,7 +40,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -62,6 +62,8 @@ public class TestPuppetErrorInterrupterLocally {
 
     @Mock
     Command mockCommand;
+
+    ConfigManager mockConfigManager;
 
     PuppetErrorInterrupter testInterrupter;
 
@@ -94,7 +96,7 @@ public class TestPuppetErrorInterrupterLocally {
         Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages");
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
-        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand));
+        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, mockConfigManager));
         PuppetErrorInterrupter.PUPPET_LOG_FILE = puppetLogFile;
         PuppetErrorInterrupter.useSudo = false;   // prevents asking sudo password when running the tests locally
 

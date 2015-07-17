@@ -200,10 +200,10 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                                 "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
                                                 "    sleep 30; " +
                                                 "done");
-                return new PuppetErrorInterrupter(command);
+                return new PuppetErrorInterrupter(command, configManager);
 
             case 8:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall));
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), configManager);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -251,7 +251,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                      "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate));
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate), configManager);
 
             case 5:
                 return createPatchCommand(Paths.get("/etc/puppet/patches/"),
