@@ -242,11 +242,10 @@ public class PuppetErrorInterrupter implements Command {
         String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
         
 
-        return  puppetErrorMessage + format(".\n"
-                                            + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue.\n"
-                                            + "Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s).\n"
-                                            + "In the installation eventually fails, contact support with error report %s.\n"
-                                            + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-%s-node/#install-troubleshooting.",
+        return  puppetErrorMessage + format(". At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
+                                            + " Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s)."
+                                            + " If the installation eventually fails, contact support with error report %s."
+                                            + " Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-%s-node/#install-troubleshooting.",
                                             hostUrl,
                                             systemAdminName,
                                             String.valueOf(systemAdminPassword),

@@ -162,10 +162,10 @@ public class TestPuppetErrorInterrupterOnNode {
 
             String errorMessage = e.getMessage();
 
-            Pattern errorMessagePattern = Pattern.compile("Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'.\\n"
-                                                          + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue.\\n"
-                                                          + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)].\\n"
-                                                          + "In the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz.\\n"
+            Pattern errorMessagePattern = Pattern.compile("Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. "
+                                                          + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. "
+                                                          + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. "
+                                                          + "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. "
                                                           + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node/#install-troubleshooting.");
 
             assertTrue(errorMessagePattern.matcher(errorMessage).find());
