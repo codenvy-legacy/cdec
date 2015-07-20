@@ -64,7 +64,7 @@ FACTORY_ID=${OUTPUT}
 executeSshCommand "sudo date -s \"$(date -d '1 day')\"" "analytics.codenvy.onprem"
 
 # analytics data
-DATE=`date --date="yesterday" +"%Y%m%d"`
+DATE=`date "%Y%m%d"`
 auth "admin" "new-password"
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
