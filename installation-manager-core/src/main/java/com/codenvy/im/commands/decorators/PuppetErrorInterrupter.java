@@ -25,8 +25,6 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -42,15 +40,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-    private static final Pattern PATTERN_COULD_NOT_RETRIEVE_CATALOG = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
-    private static final Pattern PATTERN_DEPENDENCY_HAS_FAILURES = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
 
     // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
     public static Path PUPPET_LOG_FILE = Paths.get("/var/log/messages");
@@ -62,27 +56,6 @@ public class PuppetErrorInterrupter implements Command {
     private final Command          command;
     private final List<NodeConfig> nodes;
     private final ConfigManager    configManager;
-    private final List<Function<String, Boolean>> errorMatchers = ImmutableList.of(
-        new Function<String, Boolean>() {
-            @Nullable
-            @Override
-            public Boolean apply(@Nullable String line) {
-                return (line != null)
-                       && PATTERN_COULD_NOT_RETRIEVE_CATALOG.matcher(line).find();
-            }
-        },
-
-        new Function<String, Boolean>() {
-            @Nullable
-            @Override
-            public Boolean apply(@Nullable String line) {
-                return (line != null)
-                       && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")  // issue CDEC-264
-                       && PATTERN_DEPENDENCY_HAS_FAILURES.matcher(line).find();
-            }
-        }
-    );
-
 
     private static final Logger LOG = Logger.getLogger(PuppetErrorInterrupter.class.getSimpleName());
 
@@ -167,7 +140,8 @@ public class PuppetErrorInterrupter implements Command {
                 Thread.sleep(READ_LOG_TIMEOUT_MILLIS);
             } else {
                 for (String line : lastLines) {
-                    if (checkPuppetError(line)) {
+                    PuppetError error = checkPuppetError(line);
+                    if (error != null) {
                         task.cancel(false);
 
                         String errorMessage = getPuppetErrorMessageForLog(node, line);
@@ -176,7 +150,9 @@ public class PuppetErrorInterrupter implements Command {
 
                         Path errorReport = PuppetErrorReport.create(node);
 
-                        throw new PuppetErrorException(getPuppetErrorMessageForOutput(node, line, errorReport));
+                        String logMessage = error.getLineToDisplay(line);
+
+                        throw new PuppetErrorException(getPuppetErrorMessageForOutput(node, logMessage, errorReport));
                     }
                 }
             }
@@ -187,15 +163,16 @@ public class PuppetErrorInterrupter implements Command {
         }
     }
 
-    protected boolean checkPuppetError(String line) {
-        for (Function<String, Boolean> errorMatcher : errorMatchers) {
-            Boolean match = errorMatcher.apply(line);
+    @Nullable
+    protected PuppetError checkPuppetError(String line) {
+        for (PuppetError error : PuppetError.values()) {
+            Boolean match = error.match(line);
             if (match != null && match) {
-                return true;
+                return error;
             }
         }
 
-        return false;
+        return null;
     }
 
     private List<String> readNLines(NodeConfig node) throws CommandException, AgentException {
@@ -230,9 +207,9 @@ public class PuppetErrorInterrupter implements Command {
 
 
 
-    private String getPuppetErrorMessageForOutput(@Nullable NodeConfig node, String line, Path errorReport) throws IOException {
-        String puppetErrorMessage = (node == null) ? format("Puppet error: '%s'", line) :
-                                                     format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+    private String getPuppetErrorMessageForOutput(@Nullable NodeConfig node, String lineOfLog, Path errorReport) throws IOException {
+        String puppetErrorMessage = (node == null) ? format("Puppet error: '%s'", lineOfLog) :
+                                                     format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), lineOfLog);
 
         Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         String hostUrl = codenvyConfig.getHostUrl();
@@ -240,7 +217,6 @@ public class PuppetErrorInterrupter implements Command {
         char[] systemAdminPassword = codenvyConfig.getValue(Config.SYSTEM_LDAP_PASSWORD).toCharArray();
         InstallType installType = configManager.detectInstallationType();
         String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
-        
 
         return  puppetErrorMessage + format(". At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
                                             + " Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s)."

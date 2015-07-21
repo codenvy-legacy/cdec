@@ -31,7 +31,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -43,6 +42,9 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.PUPPET_LOG_FILE;
+import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS;
+import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.useSudo;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -53,14 +55,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterLocally {
-    static final int  MOCK_COMMAND_TIMEOUT_MILLIS = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 16;
+    static final int  MOCK_COMMAND_TIMEOUT_MILLIS = READ_LOG_TIMEOUT_MILLIS * 16;
 
     static final Path BASE_TMP_DIRECTORY                         = Paths.get("target/tmp");
     static final Path REPORT_TMP_DIRECTORY                       = Paths.get("target/tmp/report");
     static final Path TEST_TMP_DIRECTORY                         = Paths.get("target/tmp/test");
     static final Path LOG_TMP_DIRECTORY                          = Paths.get("target/tmp/log");
 
-    static final Path ORIGIN_PUPPET_LOG                          = PuppetErrorInterrupter.PUPPET_LOG_FILE;
+    static final Path ORIGIN_PUPPET_LOG                          = PUPPET_LOG_FILE;
 
     static final Path ORIGIN_BASE_TMP_DIRECTORY                  = PuppetErrorReport.BASE_TMP_DIRECTORY;
     static final Path ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
@@ -103,8 +105,8 @@ public class TestPuppetErrorInterrupterLocally {
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, mockConfigManager));
-        PuppetErrorInterrupter.PUPPET_LOG_FILE = puppetLogFile;
-        PuppetErrorInterrupter.useSudo = false;   // prevents asking sudo password when running the tests locally
+        PUPPET_LOG_FILE = puppetLogFile;
+        useSudo = false;   // prevents asking sudo password when running the tests locally
 
         // create IM CLI client log
         Path imLogFile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
@@ -129,7 +131,7 @@ public class TestPuppetErrorInterrupterLocally {
         final String[] failMessage = {null};
 
         final String puppetErrorMessage =
-            "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+            "Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true\r";
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -151,7 +153,7 @@ public class TestPuppetErrorInterrupterLocally {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
                     // append error message into puppet log file
-                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), puppetErrorMessage, true);
+                    FileUtils.write(PUPPET_LOG_FILE.toFile(), puppetErrorMessage, true);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
@@ -165,7 +167,7 @@ public class TestPuppetErrorInterrupterLocally {
 
             String errorMessage = e.getMessage();
 
-            Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy'. "
+            Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Dependency Exec\\[set-mysql-password\\] has failures: true'. "
                                                           + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. "
                                                           + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. "
                                                           + "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. "
@@ -194,7 +196,7 @@ public class TestPuppetErrorInterrupterLocally {
         assertTrue(Files.exists(report));
 
         CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
-        Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
+        Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(PUPPET_LOG_FILE.getFileName());
         assertTrue(Files.exists(puppetLogFile));
         String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
         assertEquals(puppetLogFileContent, expectedContentOfLogFile);
@@ -229,7 +231,7 @@ public class TestPuppetErrorInterrupterLocally {
                     // append non-error message into puppet log file
                     String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
 
-                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), errorMessage, true);
+                    FileUtils.write(PUPPET_LOG_FILE.toFile(), errorMessage, true);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
@@ -294,26 +296,10 @@ public class TestPuppetErrorInterrupterLocally {
         }
     }
 
-    @Test(dataProvider = "TestCheckPuppetErrorData")
-    public void testCheckPuppetError(String line, boolean expectedResult) {
-        assertEquals(testInterrupter.checkPuppetError(line), expectedResult);
-    }
-
-    @DataProvider(name = "TestCheckPuppetErrorData")
-    public Object[][] getTestCheckPuppetErrorData() {
-        return new Object[][] {
-            {"", false},
-            {"any message", false},
-            {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r", true},
-            {"Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true\r", true},
-            {"Jun 22 18:26:22 api puppet-agent[5867]: (/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]) Dependency Service[codenvy] has failures: true\r", false}
-        };
-    }
-
     @AfterMethod
     public void tearDown() throws InterruptedException {
-        PuppetErrorInterrupter.PUPPET_LOG_FILE = ORIGIN_PUPPET_LOG;
-        PuppetErrorInterrupter.useSudo = true;
+        PUPPET_LOG_FILE = ORIGIN_PUPPET_LOG;
+        useSudo = true;
 
         PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
         PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;

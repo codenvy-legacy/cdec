@@ -126,7 +126,7 @@ public class TestPuppetErrorInterrupterOnNode {
         final String[] failMessage = {null};
 
         final String puppetErrorMessage =
-            "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy";
+            "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r";
 
         doAnswer(new Answer() {
             @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
