@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.11.4</version>
+        <version>3.11.5-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-server-war</artifactId>
     <packaging>war</packaging>
