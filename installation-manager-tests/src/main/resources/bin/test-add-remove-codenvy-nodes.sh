@@ -40,7 +40,7 @@ validateExpectedString ".*http://builder2.codenvy.onprem:8080/builder/internal/b
 
 # Incorrect name
 executeIMCommand "--valid-exit-code=1" "im-add-node" "bla-bla-bla"
-validateExpectedString ".*Correct.name.template.is..\<prefix\>\<number\>\<base_node_domain\>..*"
+validateExpectedString ".*Correct.name.template.is...prefix..number..base_node_domain.*"
 
 # Host is not reachiable
 executeIMCommand "--valid-exit-code=1" "im-add-node" "builder3.codenvy.onprem"

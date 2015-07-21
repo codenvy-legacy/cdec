@@ -29,10 +29,10 @@ executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_
 validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".*"
 
 executeIMCommand "--valid-exit-code=1" "im-install" "unknown"
-validateExpectedString ".*\"message\".\:.\"Artifact.'unknown'.not.found\".*"
+validateExpectedString ".*Artifact..unknown..not.found*"
 
 executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "1.0.0"
-validateExpectedString ".*Can't.download.installation.properties\..*Unexpected.error\..Can't.download.the.artifact.codenvy-single-server-properties\:1.0.0\..Artifact.codenvy-single-server-properties\:1.0.0.not.found.*"
+validateExpectedString ".*Can.t.download.installation.properties.*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

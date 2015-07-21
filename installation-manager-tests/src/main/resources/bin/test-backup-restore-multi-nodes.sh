@@ -78,7 +78,7 @@ validateExpectedString ".*\"value\"\:\"1\".*"
 executeIMCommand "im-restore" ${BACKUP}
 
 # check data
-auth "admin" "new-password"
+auth "admin" "password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 validateExpectedString ".*Account.*not.found.*"
@@ -97,7 +97,7 @@ validateExpectedString ".*Factory.*not.found.*"
 
 # check analytics: request total users = 0
 doGet "http://codenvy.onprem/api/analytics/metric/total_users?token=${TOKEN}"
-validateExpectedString ".*\"value\"\:\"0\".*"
+validateExpectedString ".*value\"\:\"0\".*"
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
