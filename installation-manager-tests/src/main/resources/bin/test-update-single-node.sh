@@ -18,9 +18,8 @@
 
 . ./lib.sh
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-
 printAndLog "TEST CASE: Update single-node Codenvy"
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installCodenvy ${PREV_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}

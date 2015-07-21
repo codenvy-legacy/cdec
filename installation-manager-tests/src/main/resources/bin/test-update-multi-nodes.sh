@@ -18,9 +18,9 @@
 
 . ./lib.sh
 
+printAndLog "TEST CASE: Update multi-nodes Codenvy"
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-printAndLog "TEST CASE: Update multi-nodes Codenvy"
 retrieveInstallLog
 
 installCodenvy ${PREV_CODENVY_VERSION}

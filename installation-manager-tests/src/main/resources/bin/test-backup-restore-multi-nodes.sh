@@ -18,9 +18,8 @@
 
 . ./lib.sh
 
-vagrantUp ${MULTI_NODE_VAGRANT_FILE}
-
 printAndLog "TEST CASE: Backup and restore multi-nodes Codenvy On Premise"
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
 # install Codenvy
 installCodenvy ${PREV_CODENVY_VERSION}

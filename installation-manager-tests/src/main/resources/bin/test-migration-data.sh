@@ -18,9 +18,8 @@
 
 . ./lib.sh
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-
 printAndLog "TEST CASE: Migration Data"
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 # install Codenvy
 installCodenvy
