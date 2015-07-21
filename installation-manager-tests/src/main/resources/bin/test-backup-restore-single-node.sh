@@ -23,7 +23,7 @@ vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise"
 
 # install Codenvy
-#installCodenvy ${PREV_CODENVY_VERSION}
+installCodenvy ${PREV_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
 auth "admin" "password"
 

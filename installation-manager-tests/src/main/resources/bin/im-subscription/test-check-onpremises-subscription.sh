@@ -29,7 +29,7 @@ validateInstalledImCliClientVersion
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
 
-auth "admin" "password" ${SAAS_DNS}
+auth "prodadmin" "CodenvyAdmin" "${SAAS_DNS}"
 
 # create account
 doPost "application/json" "{\"name\":\"account-${UUID_OWNER}\"}" "${SAAS_SERVER}/api/account?token=${TOKEN}"
@@ -51,7 +51,7 @@ doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account
 
 # test im-subscription without login
 executeIMCommand "--valid-exit-code=1" "im-subscription"
-validateExpectedString ".*\"message\".\:.\"Please.log.in.into.\'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".*"
+validateExpectedString ".*\"message\".\:.\"Please.log.in.into.'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".*"
 
 executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
 

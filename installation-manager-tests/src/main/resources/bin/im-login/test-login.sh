@@ -64,15 +64,15 @@ validateExpectedString ".*Login.success.*"
 
 # login with wrong password
 executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "wrong_password"
-validateExpectedString ".*Unable.to.authenticate.for.the.given.credentials.on.URL.\'${SAAS_SERVER}\'\..Check.the.username.and.password\..*Login.failed.on.remote.\'saas-server\'\..*"
+validateExpectedString ".*Unable.to.authenticate.for.the.given.credentials.on.URL.'${SAAS_SERVER}'\..Check.the.username.and.password\..*Login.failed.on.remote.'saas-server'\..*"
 
 # login with wrong account
 executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "wrong_account"
-validateExpectedString ".*Account.\'wrong_account\'.is.not.yours.or.may.be.you.aren\'t.owner.of.this.account\..*"
+validateExpectedString ".*Account.'wrong_account'.is.not.yours.or.may.be.you.aren't.owner.of.this.account\..*"
 
 # login with wrong username
 executeIMCommand "--valid-exit-code=1" "login" "wrong_username" "${PASSWORD}"
-validateExpectedString ".*Unable.to.authenticate.for.the.given.credentials.on.URL.\'${SAAS_SERVER}\'\..Check.the.username.and.password\..*Login.failed.on.remote.\'saas-server\'\..*"
+validateExpectedString ".*Unable.to.authenticate.for.the.given.credentials.on.URL.'${SAAS_SERVER}'\..Check.the.username.and.password\..*Login.failed.on.remote.'saas-server'\..*"
 
 # login with user is not owner of his account
 executeIMCommand "--valid-exit-code=1" "login" "${UUID_MEMBER}@codenvy.com" "${PASSWORD}"
