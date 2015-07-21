@@ -125,10 +125,10 @@ installCodenvy() {
 
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     EXIT_CODE=$?
-    retrieveInstallLog
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
     sleep 5m
+    retrieveInstallLog
     logEndCommand "installCodenvy: OK"
 }
 

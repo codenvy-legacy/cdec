@@ -3,6 +3,7 @@ url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.2.box'
 
 ram = '1024'
 runner_ram = '1512' # should be > 1GB
+analytics_ram = '1512'
 cpus = '2'
 
 Vagrant.configure("2") do |config|
@@ -41,7 +42,7 @@ analytics_instance_config.vm.provider :virtualbox do |vbox|
 vbox.customize [
 'modifyvm', :id,
 '--name', hostname,
-'--memory', ram,
+'--memory', analytics_ram,
 '--cpus', cpus
 ]
 # it's needed to set yesterday data in test test-backup-restore-multi-nodes.sh

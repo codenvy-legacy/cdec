@@ -28,7 +28,6 @@ validateInstalledImCliClientVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
-
 auth "prodadmin" "CodenvyAdmin" "${SAAS_DNS}"
 
 # create account

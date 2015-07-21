@@ -85,7 +85,7 @@ public class CDECArtifact extends AbstractArtifact {
             }
 
             if (apiInfo.getIdeVersion().contains("codenvy.ide.version")) {
-                Config config = configManager.loadInstalledCodenvyConfig();
+                Config config = configManager.loadInstalledCodenvyConfig(); // TODO
                 return Version.valueOf(config.getValue(Config.VERSION));
             }
 
