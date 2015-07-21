@@ -114,7 +114,7 @@ executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
 # restore state after modifications
-executeIMCommand "--valid-exit-code=1" "im-restore" /home/vagrant/codenvy-im-data/backups/codenvy_backup_20-Jul-2015_14-51-23.tar.gz
+executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP_AT_START}
 validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"

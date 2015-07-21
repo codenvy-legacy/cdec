@@ -59,26 +59,29 @@ createDefaultFactory ${TOKEN}
 fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
-# set date on tomorrow
-executeSshCommand "sudo date -s \"$(date -d '1 day')\"" "analytics.codenvy.onprem"
+# set date on tomorrow (repeate 3 times for sure)
+TOMORROW_DATE=`date -d '1 day'`
+executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
+executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
+executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
 
 # analytics data
-DATE=`date "%Y%m%d"`
+DATE=`date +"%Y%m%d"`
 auth "admin" "new-password"
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
 doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
 
-# check analytics: request total users = 1
-doGet "http://codenvy.onprem/api/analytics/metric/total_users?token=${TOKEN}"
+# check analytics: request users profiles = 1
+doGet "http://codenvy.onprem/api/analytics/metric/users_profiles?token=${TOKEN}"
 validateExpectedString ".*\"value\"\:\"1\".*"
 
 # restore
 executeIMCommand "im-restore" ${BACKUP}
 
 # check data
-auth "admin" "new-password"
+auth "admin" "password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 validateExpectedString ".*Account.*not.found.*"
@@ -95,8 +98,8 @@ validateExpectedString ".*User.*not.found.*"
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
 validateExpectedString ".*Factory.*not.found.*"
 
-# check analytics: request total users = 0
-doGet "http://codenvy.onprem/api/analytics/metric/total_users?token=${TOKEN}"
+# check analytics: request users profiles  = 0
+doGet "http://codenvy.onprem/api/analytics/metric/users_profiles?token=${TOKEN}"
 validateExpectedString ".*\"value\"\:\"0\".*"
 
 # update
@@ -106,6 +109,7 @@ validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
 # restore
 executeIMCommand "valid-exit-code=1" "im-restore" ${BACKUP}
+validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy
