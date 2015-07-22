@@ -61,7 +61,7 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testInstallMultiNodeAndChangePassword() throws Exception {
+    public void testInstallMultiNodeAndChangeConfig() throws Exception {
         doTest("im-install/test-install-multi-nodes-and-change-config.sh");
     }
 
@@ -71,7 +71,7 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testInstallSingleNodeAndChangePassword() throws Exception {
+    public void testInstallSingleNodeAndChangeConfig() throws Exception {
         doTest("im-install/test-install-single-node-and-change-config.sh");
     }
 

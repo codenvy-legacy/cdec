@@ -71,7 +71,7 @@ executeSshCommand "cp /vagrant/backup.tar.gz ${BACKUP}"
 executeIMCommand "im-restore" ${BACKUP}
 
 # check data
-auth "admin" "password"
+auth "admin" "new-password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 fetchJsonParameter "id"
@@ -87,6 +87,8 @@ fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
 fetchJsonParameter "id"
+
+authOnSite "user-1" "pwd123ABC"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy
