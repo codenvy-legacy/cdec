@@ -41,7 +41,7 @@ executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/c
 # verify changes on installation-manager service
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
-auth "admin" "new-password" "${NEW_HOSTNAME}"
+auth "admin" "new-password" "http://${NEW_HOSTNAME}"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

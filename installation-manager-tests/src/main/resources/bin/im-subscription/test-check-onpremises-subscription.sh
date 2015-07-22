@@ -23,12 +23,25 @@ printAndLog "TEST CASE: Check subscription"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
+UPDATE_SERVER="http://updater.codenvy-stg.com"
+UPDATE_SERVICE="https://codenvy-stg.com/update"
+SAAS_SERVER="https://codenvy-stg.com"
+
+AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
+PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
+LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
+
 installImCliClient
 validateInstalledImCliClientVersion
 
+executeSshCommand "echo 'export CODENVY_LOCAL_CONF_DIR=/home/vagrant/codenvy_conf' >> .bashrc"
+executeSshCommand "mkdir /home/vagrant/codenvy_conf"
+executeSshCommand "echo 'saas.api.endpoint=https://codenvy-stg.com/api' > /home/vagrant/codenvy_conf/im.properties"
+executeSshCommand "echo 'installation-manager.update_server_endpoint=https://codenvy-stg.com/update' >> /home/vagrant/codenvy_conf/im.properties"
+
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
-auth "prodadmin" "CodenvyAdmin" "${SAAS_DNS}"
+auth "prodadmin" "CodenvyAdmin" "${SAAS_SERVER}"
 
 # create account
 doPost "application/json" "{\"name\":\"account-${UUID_OWNER}\"}" "${SAAS_SERVER}/api/account?token=${TOKEN}"
@@ -50,9 +63,9 @@ doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account
 
 # test im-subscription without login
 executeIMCommand "--valid-exit-code=1" "im-subscription"
-validateExpectedString ".*\"message\".\:.\"Please.log.in.into.'saas-server\'.remote\.\".*\"status\".\:.\"ERROR\".*"
+validateExpectedString ".*Please.log.in.into..saas-server..remote.*"
 
-executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
+executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
 
 # test im-subscription after login and adding OnPremises subscription
 executeIMCommand "im-subscription"

@@ -18,8 +18,7 @@
 
 UPDATE_SERVER="http://updater-nightly.codenvy-dev.com:8080"
 UPDATE_SERVICE="${UPDATE_SERVER}/update"
-SAAS_DNS="nightly.codenvy-stg.com"
-SAAS_SERVER="http://${SAAS_DNS}"
+SAAS_SERVER="http://nightly.codenvy-stg.com"
 TEST_LOG="installation-manager-test.log"
 SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
 MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"

@@ -170,9 +170,9 @@ doAuth() {
     REALM=$3
     SERVER_DNS=$4
 
-    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
+    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="http://codenvy.onprem"
 
-    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' http://${SERVER_DNS}/api/auth/login)
+    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' ${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
     log ${OUTPUT}
