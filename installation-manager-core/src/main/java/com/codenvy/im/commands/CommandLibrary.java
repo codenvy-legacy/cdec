@@ -174,7 +174,7 @@ public class CommandLibrary {
      * Don't gzip to be able to update pack in future.
      */
     public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean needSudo) {
-        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, needSudo));
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, needSudo, false));
     }
 
     /**
@@ -184,51 +184,75 @@ public class CommandLibrary {
      * Don't gzip to be able to update pack in future.
      */
     public static Command createPackCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, true), node);
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, true, false), node);
     }
 
-    private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean needSudo) {
+    /**
+     * @return for certain node, the command "sudo tar -C {fromDir} -z -rf {packFile} {pathWithinThePack}", if packFile exists, or
+     * command "sudo tar -C {fromDir} -z -cf {packFile} {pathWithinThePack}", if packFile doesn't exists.
+     */
+    public static Command createCompressCommand(Path fromDir, Path packFile, String pathWithinThePack, NodeConfig node) throws AgentException {
+        return createCommand(getPackCommand(fromDir, packFile, pathWithinThePack, true, true), node);
+    }
+
+    private static String getPackCommand(Path fromDir, Path packFile, String pathWithinThePack, boolean needSudo, boolean useCompression) {
+        String compressionOption = useCompression ? "-z" : "";
+
         if (needSudo) {
             return format("if sudo test -f %2$s; then " +
-                          "   sudo tar -C %1$s -rf %2$s %3$s;" +
+                          "   sudo tar -C %1$s %4$s -rf %2$s %3$s;" +
                           "else " +
-                          "   sudo tar -C %1$s -cf %2$s %3$s;" +
+                          "   sudo tar -C %1$s %4$s -cf %2$s %3$s;" +
                           "fi;",
                           fromDir,
                           packFile,
-                          pathWithinThePack);
+                          pathWithinThePack,
+                          compressionOption);
         } else {
             return format("if test -f %2$s; then " +
-                          "   tar -C %1$s -rf %2$s %3$s;" +
+                          "   tar -C %1$s %4$s -rf %2$s %3$s;" +
                           "else " +
-                          "   tar -C %1$s -cf %2$s %3$s;" +
+                          "   tar -C %1$s %4$s -cf %2$s %3$s;" +
                           "fi;",
                           fromDir,
                           packFile,
-                          pathWithinThePack);
+                          pathWithinThePack,
+                          compressionOption);
         }
     }
 
     public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, boolean needSudo) {
-        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, needSudo));
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, needSudo, false));
+    }
+
+    public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack) {
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, false, false));
     }
 
     public static Command createUnpackCommand(Path packFile, Path toDir) {
-        return createCommand(getUnpackCommand(packFile, toDir, null, false));
+        return createCommand(getUnpackCommand(packFile, toDir, null, false, false));
+    }
+
+    public static Command createUncompressCommand(Path packFile, Path toDir) {
+        return createCommand(getUnpackCommand(packFile, toDir, null, false, true));
     }
 
     public static Command createUnpackCommand(Path packFile, Path toDir, String pathWithinThePack, NodeConfig node) throws AgentException {
-        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, true), node);
+        return createCommand(getUnpackCommand(packFile, toDir, pathWithinThePack, true, false), node);
     }
 
-    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack, boolean needSudo) {
+    private static String getUnpackCommand(Path packFile, Path toDir, @Nullable String pathWithinThePack, boolean needSudo, boolean useCompression) {
         String command;
+        String compressionOptions = useCompression ? "-z" : "";
+
         if (pathWithinThePack == null) {
-            command = format("tar -xf %s -C %s",
+            command = format("tar %s -xf %s -C %s",
+                             compressionOptions,
                              packFile,
                              toDir);
         } else {
-            command = format("tar -xf %s -C %s %s",
+            command = format("tar %s -xf %s -C %s %s",
+                             compressionOptions,
                              packFile,
                              toDir,
                              pathWithinThePack);

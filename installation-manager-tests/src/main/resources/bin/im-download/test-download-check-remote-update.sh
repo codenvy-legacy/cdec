@@ -19,19 +19,14 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Login with wrong account"
-
+printAndLog "TEST CASE: Check remote update"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "--valid-exit-code=1" "login" "${CODENVY_SAAS_USERNAME}" "${CODENVY_SAAS_PASSWORD}" "wrong"
-
-if [[ ! ${OUTPUT} =~ .*Account.\'wrong\'.is.not.yours.or.may.be.you.aren\'t.owner.of.this.account\..* ]]; then
-    validateExitCode 1
-fi
+executeIMCommand "im-download" "--check-remote"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
 
 printAndLog "RESULT: PASSED"
-
 vagrantDestroy

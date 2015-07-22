@@ -83,10 +83,4 @@ public class TestConfig {
                 {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
     }
-
-    @Test
-    public void testGetMongoAdminPassword() {
-        Config config = new Config(ImmutableMap.of(Config.MONGO_ADMIN_PASSWORD_PROPERTY, "pswd"));
-        assertEquals(config.getMongoAdminPassword(), "pswd");
-    }
 }

@@ -19,18 +19,27 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Get list of downloaded artifacts"
+printAndLog "TEST CASE: Connect to update server when there is system proxy"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+
+# Install and configure proxy-server Squid on port 3128:
+executeSshCommand "sudo yum install squid -y -q"
+executeSshCommand "sudo squid start"
+executeSshCommand "sudo chkconfig --levels 235 squid on"
+
+# Setup system proxy parameters
+executeSshCommand "sed -i '2iexport http_proxy=http://127.0.0.1:3128/' ~/.bashrc"
+executeSshCommand "sed -i '2iexport https_proxy=http://127.0.0.1:3128/' ~/.bashrc"
 
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "im-download"
-executeIMCommand "im-download" "--list-local"
+executeIMCommand "im-download" "--check-remote"
 
-if [[ ! ${OUTPUT} =~ .*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY_VERSION}.zip\".*\"status\".\:.\"READY_TO_INSTALL\".*\"status\".\:.\"OK\".* ]]; then
-    validateExitCode 1
-fi
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
+
+# Ensure, there is record with info about request in the log of Squid proxy-server
+executeSshCommand "sudo grep \"GET ${UPDATE_SERVICE}\" /var/log/squid/access.log"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

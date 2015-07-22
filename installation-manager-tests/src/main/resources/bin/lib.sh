@@ -29,6 +29,16 @@ printAndLog() {
     log $@
 }
 
+logStartCommand() {
+    log
+    log "================== COMMAND STARTED: "$@
+}
+
+logEndCommand() {
+    log "================== COMMAND COMPLETED: "$@
+    log
+}
+
 log() {
     echo "TEST: "$@ >> ${TEST_LOG}
 }
@@ -59,12 +69,12 @@ validateInstalledCodenvyVersion() {
     VERSION=$1
 
     [[ -z ${VERSION} ]] && VERSION=${LATEST_CODENVY_VERSION}
-    log "validateInstalledCodenvyVersion "${VERSION}
+    logStartCommand "validateInstalledCodenvyVersion "${VERSION}
 
     OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    [[ ! ${OUTPUT} =~ .*\"ideVersion\"\:\"${VERSION}\".* ]] && validateExitCode 1
+    validateExpectedString ".*\"ideVersion\"\:\"${VERSION}\".*"
 
-    log "validateInstalledCodenvyVersion: OK"
+    logEndCommand "validateInstalledCodenvyVersion: OK"
 }
 
 validateInstalledImCliClientVersion() {
@@ -72,13 +82,12 @@ validateInstalledImCliClientVersion() {
 
     [[ -z ${VERSION} ]] && VERSION=${LATEST_IM_CLI_CLIENT_VERSION}
 
-    log "validateInstalledImCliClientVersion "${VERSION}
+    logStartCommand "validateInstalledImCliClientVersion "${VERSION}
 
     executeIMCommand "im-install" "--list"
+    validateExpectedString ".*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".*"
 
-    [[ ! ${OUTPUT} =~ .*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".* ]] &&  validateExitCode 1
-
-    log "validateInstalledImCliClientVersion: OK"
+    logEndCommand "validateInstalledImCliClientVersion: OK"
 }
 
 retrieveInstallLog() {
@@ -98,6 +107,12 @@ installCodenvy() {
     VERSION_OPTION=""
     INSTALL_ON_NODE=$(detectMasterNode)
 
+    VALID_CODE=0
+    if [[ $1 =~ --valid-exit-code=.* ]]; then
+        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
+        shift
+    fi
+
     if [[ ${INSTALL_ON_NODE} == "master.codenvy.onprem" ]]; then
         scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
         MULTI_OPTION="--multi"
@@ -106,18 +121,19 @@ installCodenvy() {
     VERSION=$1
     [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
 
-    log "installCodenvy "$@
+    logStartCommand "installCodenvy "$@
 
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     EXIT_CODE=$?
-    retrieveInstallLog
-    validateExitCode ${EXIT_CODE}
+    validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
-    log "installCodenvy: OK"
+    sleep 5m
+    retrieveInstallLog
+    logEndCommand "installCodenvy: OK"
 }
 
 installImCliClient() {
-    log "installImCliClient "$@
+    logStartCommand "installImCliClient "$@
 
     VERSION=$1
     VERSION_OPTION=""
@@ -126,7 +142,7 @@ installImCliClient() {
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
-    log "installImCliClient: OK"
+    logEndCommand "installImCliClient: OK"
 }
 
 vagrantUp() {
@@ -139,28 +155,37 @@ vagrantUp() {
 }
 
 auth() {
-    log "auth "$@
+    doAuth $1 $2 "sysldap" $3
+}
+
+authOnSite() {
+    doAuth $1 $2 "org" $3
+}
+
+doAuth() {
+    logStartCommand "auth "$@
 
     USERNAME=$1
     PASSWORD=$2
-    SERVER_DNS=$3
+    REALM=$3
+    SERVER_DNS=$4
 
     [[ -z ${SERVER_DNS} ]] && SERVER_DNS="codenvy.onprem"
 
-    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"sysldap"}' http://${SERVER_DNS}/api/auth/login)
+    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' http://${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
 
     log ${OUTPUT}
     validateExitCode $?
 
-    [[ ! ${OUTPUT} =~ .*value.* ]] && validateExitCode 1
-    TOKEN=$(fetchJsonParameter "value")
+    fetchJsonParameter "value"
+    TOKEN=${OUTPUT}
 
-    log "auth: OK"
+    logEndCommand "auth: OK"
 }
 
 executeIMCommand() {
-    log "executeIMCommand "$@
+    logStartCommand "executeIMCommand "$@
 
     VALID_CODE=0
     if [[ $1 =~ --valid-exit-code=.* ]]; then
@@ -175,11 +200,17 @@ executeIMCommand() {
     log ${OUTPUT}
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
-    log "executeIMCommand: OK"
+    logEndCommand "executeIMCommand: OK"
 }
 
 executeSshCommand() {
-    log "executeSshCommand "$@
+    logStartCommand "executeSshCommand "$@
+
+    VALID_CODE=0
+    if [[ $1 =~ --valid-exit-code=.* ]]; then
+        VALID_CODE=`echo "$1" | sed -e "s/--valid-exit-code=//g"`
+        shift
+    fi
 
     COMMAND=$1
 
@@ -190,9 +221,9 @@ executeSshCommand() {
     EXIT_CODE=$?
 
     log ${OUTPUT}
-    validateExitCode ${EXIT_CODE} 0
+    validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
-    log "executeSshCommand: OK"
+    logEndCommand "executeSshCommand: OK"
 }
 
 detectMasterNode() {
@@ -210,5 +241,66 @@ detectMasterNode() {
 }
 
 fetchJsonParameter() {
-    echo `echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
+    validateExpectedString ".*.$1..*"
+    OUTPUT=`echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
+}
+
+doPost() {
+    logStartCommand "POST "$@
+
+    CONTENT_TYPE=$1
+    BODY=$2
+    URL=$3
+
+    OUTPUT=$(curl -H "Content-Type: ${CONTENT_TYPE}" -d ${BODY} -X POST ${URL})
+    EXIT_CODE=$?
+    log ${OUTPUT}
+
+    validateExitCode ${EXIT_CODE}
+
+    logEndCommand "curl: OK"
+}
+
+doGet() {
+    logStartCommand "GET "$@
+
+    URL=$1
+
+    OUTPUT=$(curl -X GET ${URL})
+    EXIT_CODE=$?
+    log ${OUTPUT}
+
+    validateExitCode ${EXIT_CODE}
+
+    logEndCommand "curl: OK"
+}
+
+createDefaultFactory() {
+    logStartCommand "createDefaultFactory"
+
+    TOKEN=$1
+
+    OUTPUT=$(curl 'http://codenvy.onprem/api/factory/?token='${TOKEN} -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7yqwdS1Jq8TWiUAE'  --data-binary $'------WebKitFormBoundary7yqwdS1Jq8TWiUAE\r\nContent-Disposition: form-data; name="factoryUrl"\r\n\r\n{\r\n  "v": "2.1",\r\n  "project": {\r\n    "name": "my-minimalistic-factory",\r\n    "description": "Minimalistic Template"\r\n  },\r\n  "source": {\r\n    "project": {\r\n      "location": "https://github.com/codenvy/sdk",\r\n      "type": "git"\r\n    }\r\n  }\r\n}\r\n------WebKitFormBoundary7yqwdS1Jq8TWiUAE--\r\n')
+    EXIT_CODE=$?
+    log ${OUTPUT}
+
+    validateExitCode ${EXIT_CODE}
+
+    logEndCommand "createDefaultFactory: OK"
+}
+
+validateExpectedString() {
+    logStartCommand "validateRegex "$@
+
+    [[ ${OUTPUT} =~ $1 ]] || validateExitCode 1
+
+    logEndCommand "validateRegex: OK"
+}
+
+validateUnExpectedString() {
+    logStartCommand "validateRegex "$@
+
+    [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
+
+    logEndCommand "validateRegex: OK"
 }

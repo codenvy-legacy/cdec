@@ -259,7 +259,7 @@ public class TestBackupManager {
         spyManager.checkBackup(mockCdecArtifact, checkingConfig);
     }
 
-    @Test
+    @Test(dataProvider = "CheckBackupIllegalArgumentExceptionData")
     public void testCheckBackupIllegalArgumentException(BackupConfig checkingConfig, String expectedExceptionMessage) {
         try {
             spyManager.checkBackup(mockCdecArtifact, checkingConfig);
@@ -271,14 +271,14 @@ public class TestBackupManager {
         fail(format("Here should be IllegalArgumentException with message '%s'", expectedExceptionMessage));
     }
 
-    @DataProvider()
+    @DataProvider(name = "CheckBackupIllegalArgumentExceptionData")
     public Object[][] GetCheckBackupIllegalArgumentExceptionData() {
         return new Object[][] {
             {new BackupConfig().setArtifactName("anotherArtifact"),
-             "Backed up artifact 'anotherArtifact' doesn't equal restoring artifact 'codenvy'"},
+             "Backed up artifact 'anotherArtifact' doesn't equal to restoring artifact 'codenvy'"},
 
             {new BackupConfig().setArtifactName("codenvy").setArtifactVersion("0.0.1"),
-             "Backed up artifact version '0.0.1' doesn't equal to restoring artifact version '1.0.0'"},
+             "Version of backed up artifact '0.0.1' doesn't equal to restoring version '1.0.0'"},
         };
     }
 

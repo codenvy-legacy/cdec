@@ -43,10 +43,13 @@ public class BackupConfig {
     protected static final String BACKUP_CONFIG_FILE = "backup.config.json";
 
     public enum Component {
-        LDAP("ldap.ldif"),
+        LDAP("ldap.ldif"),        // ldap user db
+        LDAP_ADMIN("ldap.ldif"),  // ldap admin db
         MONGO,
         MONGO_ANALYTICS,
-        FS;
+        FS,
+        ANALYTICS_DATA,
+        ANALYTICS_LOGS;
 
         private String filename;
 

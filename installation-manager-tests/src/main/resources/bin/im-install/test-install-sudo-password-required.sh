@@ -16,18 +16,17 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
-vagrantUp ${MULTI_NODE_VAGRANT_FILE}
+printAndLog "TEST CASE: Install when sudo password is required"
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-printAndLog "TEST CASE: Install the latest multi-node Codenvy On Premise"
+executeSshCommand "sudo sed -i -e 's/vagrant.*/vagrant ALL=\(ALL\) ALL/g' /etc/sudoers"
+executeSshCommand "sudo -k"
+executeSshCommand "--valid-exit-code=1" "sudo -n -k true"
 
-installCodenvy
-validateInstalledCodenvyVersion
-
-auth "admin" "password"
-executeIMCommand "im-password" "password" "new-password"
-auth "admin" "new-password"
+installCodenvy "--valid-exit-code=1"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

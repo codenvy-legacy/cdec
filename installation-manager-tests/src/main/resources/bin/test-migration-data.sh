@@ -18,18 +18,13 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise"
+printAndLog "TEST CASE: Migration Data"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 # install Codenvy
-installCodenvy ${PREV_CODENVY_VERSION}
-validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
+installCodenvy
+validateInstalledCodenvyVersion
 auth "admin" "password"
-
-# backup at start
-executeIMCommand "im-backup"
-fetchJsonParameter "file"
-BACKUP_AT_START=${OUTPUT}
 
 # modify data: add accout, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
@@ -59,63 +54,41 @@ createDefaultFactory ${TOKEN}
 fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
-# backup with modifications
+# backup
 executeIMCommand "im-backup"
 fetchJsonParameter "file"
-BACKUP_WITH_MODIFICATIONS=${OUTPUT}
+BACKUP=${OUTPUT}
 
-# restore initial state
-executeIMCommand "im-restore" ${BACKUP_AT_START}
+executeSshCommand "cp ${BACKUP} /vagrant/backup.tar.gz"
+vagrantDestroy
 
-# check if data at start was restored correctly
-auth "admin" "password"
+# restore
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
+installCodenvy
+validateInstalledCodenvyVersion
+executeSshCommand "mkdir /home/vagrant/codenvy-im-data/backups"
+executeSshCommand "cp /vagrant/backup.tar.gz ${BACKUP}"
+executeIMCommand "im-restore" ${BACKUP}
 
-doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-validateExpectedString ".*Account.with.id.${ACCOUNT_ID}.was.not.found.*"
-
-doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-validateExpectedString ".*Workspace.*not.found.*"
-
-doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-validateExpectedString ".*Workspace.*not.found.*"
-
-doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
-validateExpectedString ".*User.*not.found.*"
-
-doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
-validateExpectedString ".*Factory.*not.found.*"
-
-# restore state after modifications
-executeIMCommand "im-restore" ${BACKUP_WITH_MODIFICATIONS}
-
-# check if modified data was restored correctly
+# check data
 auth "admin" "new-password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-validateExpectedString ".*account-1.*"
+fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*project-1.*"
 
 doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-validateExpectedString ".*workspace-1.*"
+fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
-validateExpectedString ".*user-1.*"
+fetchJsonParameter "id"
 
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
-validateExpectedString ".*\"name\"\:\"my-minimalistic-factory\".*"
+fetchJsonParameter "id"
 
 authOnSite "user-1" "pwd123ABC"
-
-# update
-executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
-
-# restore state at start
-executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP_AT_START}
-validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

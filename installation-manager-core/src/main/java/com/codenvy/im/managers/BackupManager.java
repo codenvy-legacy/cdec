@@ -145,7 +145,7 @@ public class BackupManager {
         }
 
         if (!restoringArtifactVersion.toString().equals(backedUpArtifactVersion)) {
-            throw new IllegalArgumentException(format("Version of backed up artifact '%s' doesn't equal to restoring restoring version '%s'",
+            throw new IllegalArgumentException(format("Version of backed up artifact '%s' doesn't equal to restoring version '%s'",
                                                       backedUpArtifactVersion,
                                                       restoringArtifactVersion));
         }

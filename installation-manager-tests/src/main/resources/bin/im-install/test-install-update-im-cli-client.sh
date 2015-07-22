@@ -16,28 +16,21 @@
 # from Codenvy S.A..
 #
 
-. ./lib.sh
+[ -f "./lib.sh" ] && . ./lib.sh
+[ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Install and update IM CLI client"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-log "Available IM versions: "${AVAILABLE_IM_CLI_CLIENT_VERSIONS}
-log "Previos IM version: "${PREV_IM_CLI_CLIENT_VERSION}
-log "Latest IM version: "${LATEST_IM_CLI_CLIENT_VERSION}
-
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 
 # test auto-update at the start of executing some command
 executeIMCommand "im-download" "-c"
-if [[ ! ${OUTPUT} =~ .*This.CLI.client.was.out-dated.so.automatic.update.has.being.started\..It.will.be.finished.at.the.next.launch.* ]]; then
-    validateExitCode 1
-fi
+validateExpectedString ".*This.CLI.client.was.out-dated.so.automatic.update.has.being.started\..It.will.be.finished.at.the.next.launch.*"
 
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
-if [[ ! ${OUTPUT} =~ .*Installation.Manager.CLI.is.being.updated.\.\.\..* ]]; then
-    validateExitCode 1
-fi
+validateExpectedString ".*Installation.Manager.CLI.is.being.updated.\.\.\..*"
 
 printAndLog "RESULT: PASSED"
 

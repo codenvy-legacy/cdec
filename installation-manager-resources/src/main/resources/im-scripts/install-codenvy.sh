@@ -157,7 +157,7 @@ insertProperty() {
 }
 
 updateHostsFile() {
-    [ -z ${HOST_NAME} ] && HOST_NAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\W*=\\W*.* ${CONFIG} | sed 's/host_url\W*=\W*\(.*\)/\1/')
 
     if ! sudo grep -Eq "127.0.0.1.*puppet" /etc/hosts; then
         echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null
@@ -298,7 +298,7 @@ printPreInstallInfo_multi() {
         [ ! -z ${SYSTEM_ADMIN_PASSWORD} ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         [ ! -z ${HOST_NAME} ] && insertProperty "host_url" ${HOST_NAME}
 
-        HOST_NAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+        HOST_NAME=$(grep host_url\\W*=\\W*.* ${CONFIG} | sed 's/host_url\W*=\W*\(.*\)/\1/')
         PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
         DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
         API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
@@ -484,7 +484,7 @@ updateProgress() {
 printPostInstallInfo() {
     [ -z ${SYSTEM_ADMIN_NAME} ] && SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
     [ -z ${SYSTEM_ADMIN_PASSWORD} ] && SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
-    [ -z ${HOST_NAME} ] && HOST_NAME=`grep host[_url]*=.* ${CONFIG} | cut -f2 -d '='`
+    [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\W*=\\W*.* ${CONFIG} | sed 's/host_url\W*=\W*\(.*\)/\1/')
 
     printLn
     printLn "Codenvy is ready at http://"${HOST_NAME}

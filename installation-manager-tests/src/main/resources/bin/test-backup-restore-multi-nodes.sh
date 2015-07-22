@@ -18,18 +18,18 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise"
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+printAndLog "TEST CASE: Backup and restore multi-nodes Codenvy On Premise"
+vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
 # install Codenvy
 installCodenvy ${PREV_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
 auth "admin" "password"
 
-# backup at start
+# backup
 executeIMCommand "im-backup"
 fetchJsonParameter "file"
-BACKUP_AT_START=${OUTPUT}
+BACKUP=${OUTPUT}
 
 # modify data: add accout, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
@@ -59,19 +59,32 @@ createDefaultFactory ${TOKEN}
 fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
-# backup with modifications
-executeIMCommand "im-backup"
-fetchJsonParameter "file"
-BACKUP_WITH_MODIFICATIONS=${OUTPUT}
+# set date on tomorrow (repeate 3 times for sure)
+TOMORROW_DATE=`date -d '1 day'`
+executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
+executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
+executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
 
-# restore initial state
-executeIMCommand "im-restore" ${BACKUP_AT_START}
+# analytics data
+DATE=`date +"%Y%m%d"`
+auth "admin" "new-password"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
 
-# check if data at start was restored correctly
+# check analytics: request users profiles = 1
+doGet "http://codenvy.onprem/api/analytics/metric/users_profiles?token=${TOKEN}"
+validateExpectedString ".*\"value\"\:\"1\".*"
+
+# restore
+executeIMCommand "im-restore" ${BACKUP}
+
+# check data
 auth "admin" "password"
 
 doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-validateExpectedString ".*Account.with.id.${ACCOUNT_ID}.was.not.found.*"
+validateExpectedString ".*Account.*not.found.*"
 
 doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*Workspace.*not.found.*"
@@ -85,36 +98,17 @@ validateExpectedString ".*User.*not.found.*"
 doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
 validateExpectedString ".*Factory.*not.found.*"
 
-# restore state after modifications
-executeIMCommand "im-restore" ${BACKUP_WITH_MODIFICATIONS}
-
-# check if modified data was restored correctly
-auth "admin" "new-password"
-
-doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-validateExpectedString ".*account-1.*"
-
-doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-validateExpectedString ".*project-1.*"
-
-doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-validateExpectedString ".*workspace-1.*"
-
-doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
-validateExpectedString ".*user-1.*"
-
-doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
-validateExpectedString ".*\"name\"\:\"my-minimalistic-factory\".*"
-
-authOnSite "user-1" "pwd123ABC"
+# check analytics: request users profiles  = 0
+doGet "http://codenvy.onprem/api/analytics/metric/users_profiles?token=${TOKEN}"
+validateExpectedString ".*\"value\"\:\"0\".*"
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
+executeIMCommand "im-install" "--multi" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
-# restore state at start
-executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP_AT_START}
+# restore
+executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP}
 validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"

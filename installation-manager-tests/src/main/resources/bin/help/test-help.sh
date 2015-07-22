@@ -28,9 +28,9 @@ validateInstalledImCliClientVersion
 
 executeIMCommand "help"
 
-if [[ ! ${OUTPUT} =~ .*build.*create-factory.*create-project.*im-add-node.*Add.new.Codenvy.node.*login.*Login.to.a.remote.Codenvy.cloud.*update-factory.*REMOTES.*default*.*https://codenvy.com.*saas-server.*${SAAS_SERVER}.* ]]; then
-    validateExitCode 1
-fi
+validateExpectedString ".*login.*"
+validateExpectedString ".*help.*"
+validateExpectedString ".*im-.*"
 
 printAndLog "RESULT: PASSED"
 
