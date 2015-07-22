@@ -31,13 +31,13 @@ AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/u
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
 
-installImCliClient
-validateInstalledImCliClientVersion
-
 executeSshCommand "echo 'export CODENVY_LOCAL_CONF_DIR=/home/vagrant/codenvy_conf' >> .bashrc"
 executeSshCommand "mkdir /home/vagrant/codenvy_conf"
 executeSshCommand "echo 'saas.api.endpoint=https://codenvy-stg.com/api' > /home/vagrant/codenvy_conf/im.properties"
 executeSshCommand "echo 'installation-manager.update_server_endpoint=https://codenvy-stg.com/update' >> /home/vagrant/codenvy_conf/im.properties"
+
+installImCliClient
+validateInstalledImCliClientVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
@@ -65,11 +65,11 @@ doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account
 executeIMCommand "--valid-exit-code=1" "im-subscription"
 validateExpectedString ".*Please.log.in.into..saas-server..remote.*"
 
-executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
+executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NAME}"
 
 # test im-subscription after login and adding OnPremises subscription
 executeIMCommand "im-subscription"
-validateUnExpectedString ".*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription is valid\".*\"status\".\:.\"OK\".*"
+validateUnExpectedString ".*subscription.*OnPremises.*message.*Subscription is valid.*"
 
 printAndLog "RESULT: PASSED"
 
