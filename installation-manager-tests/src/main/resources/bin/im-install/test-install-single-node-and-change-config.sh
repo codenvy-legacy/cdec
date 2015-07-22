@@ -19,18 +19,19 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-
 printAndLog "TEST CASE: Install the latest single-node Codenvy On Premise"
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installCodenvy
 validateInstalledCodenvyVersion
 
 auth "admin" "password"
 
+# change admin's password
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
+# change Codenvy hostname
 executeSshCommand "sudo sed -i 's/ codenvy.onprem/ test.codenvy.onprem/' /etc/hosts"
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
 
@@ -40,7 +41,7 @@ executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/c
 # verify changes on installation-manager service
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
-auth "admin" "password" "${NEW_HOSTNAME}"
+auth "admin" "new-password" "${NEW_HOSTNAME}"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy
