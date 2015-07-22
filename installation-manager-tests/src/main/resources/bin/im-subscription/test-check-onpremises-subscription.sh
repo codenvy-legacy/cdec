@@ -65,6 +65,7 @@ doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account
 executeIMCommand "--valid-exit-code=1" "im-subscription"
 validateExpectedString ".*Please.log.in.into..saas-server..remote.*"
 
+log "Expected failure"
 executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NAME}"
 
 # test im-subscription after login and adding OnPremises subscription
