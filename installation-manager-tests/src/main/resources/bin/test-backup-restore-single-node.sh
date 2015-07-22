@@ -113,7 +113,7 @@ executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
 executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
-# restore state after modifications
+# restore state at start
 executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP_AT_START}
 validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 

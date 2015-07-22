@@ -108,7 +108,7 @@ executeIMCommand "im-install" "--multi" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
 # restore
-executeIMCommand "valid-exit-code=1" "im-restore" ${BACKUP}
+executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP}
 validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"
