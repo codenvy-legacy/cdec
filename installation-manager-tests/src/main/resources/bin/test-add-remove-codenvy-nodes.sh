@@ -44,7 +44,7 @@ validateExpectedString ".*Correct.name.template.is...prefix..number..base_node_d
 
 # Host is not reachiable
 executeIMCommand "--valid-exit-code=1" "im-add-node" "builder3.codenvy.onprem"
-validateExpectedString ".*Can.t.connect.to.host..vagrant@builder3.codenvy.onprem:22.*socket.is.not.established.*"
+validateExpectedString ".*Can.t.connect.to.host..vagrant@builder3.codenvy.onprem:22.*"
 
 # Runner has been already set up
 executeIMCommand "--valid-exit-code=1" "im-add-node" "runner2.codenvy.onprem"
