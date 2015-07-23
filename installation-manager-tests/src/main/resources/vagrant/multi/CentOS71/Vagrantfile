@@ -3,8 +3,9 @@ url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.2.box'
 
 ram = '1024'
 runner_ram = '1512' # should be > 1GB
-analytics_ram = '1512'
+analytics_ram = '3024'
 cpus = '2'
+analytics_cpus = '3'
 
 Vagrant.configure("2") do |config|
 config.vm.box = box
@@ -43,7 +44,7 @@ vbox.customize [
 'modifyvm', :id,
 '--name', hostname,
 '--memory', analytics_ram,
-'--cpus', cpus
+'--cpus', analytics_cpus
 ]
 # it's needed to set yesterday data in test test-backup-restore-multi-nodes.sh
 vbox.customize [
@@ -143,24 +144,6 @@ end
 end
 
 ###################
-# RUNNER 3 INSTANCE
-###################
-config.vm.define :runner3 do |runner3_instance_config|
-hostname = 'runner3'
-domain = 'codenvy.onprem'
-runner3_instance_config.vm.host_name = hostname + '.' + domain
-runner3_instance_config.vm.network :private_network, ip: "192.168.56.21"
-runner3_instance_config.vm.provider :virtualbox do |vbox|
-vbox.customize [
-'modifyvm', :id,
-'--name', hostname,
-'--memory', runner_ram,
-'--cpus', cpus
-]
-end
-end
-
-###################
 # BUILDER 1 INSTANCE
 ###################
 config.vm.define :builder1 do |builder1_instance_config|
@@ -224,7 +207,6 @@ config.add_host '192.168.56.13', ['api.codenvy.onprem']
 config.add_host '192.168.56.110', ['site.codenvy.onprem']
 config.add_host '192.168.56.15', ['runner1.codenvy.onprem']
 config.add_host '192.168.56.20', ['runner2.codenvy.onprem']
-config.add_host '192.168.56.21', ['runner3.codenvy.onprem']
 config.add_host '192.168.56.16', ['builder1.codenvy.onprem']
 config.add_host '192.168.56.23', ['builder2.codenvy.onprem']
 config.add_host '192.168.56.17', ['datasource.codenvy.onprem']

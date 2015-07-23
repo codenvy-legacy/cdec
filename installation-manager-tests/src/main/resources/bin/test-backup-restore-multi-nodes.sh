@@ -60,6 +60,7 @@ fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
 # set date on tomorrow (repeate 3 times for sure)
+executeSshCommand "sudo service ntpd stop" "analytics.codenvy.onprem"
 TOMORROW_DATE=`date -d '1 day'`
 executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
 executeSshCommand "sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
