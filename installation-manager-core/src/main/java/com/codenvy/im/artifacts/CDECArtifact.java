@@ -128,6 +128,16 @@ public class CDECArtifact extends AbstractArtifact {
         return getHelper(installOptions.getInstallType()).getUpdateCommand(versionToUpdate, pathToBinaries, installOptions);
     }
 
+    /**
+     * "Prepare puppet to reinstall"  (remove /home/codenvy/archives on nodes, and /home/codenvy-im/archives on master)
+     * "Stop Codenvy API server",
+     * "Re-install Codenvy binaries"
+     */
+    @Override
+    public Command getReinstallCommand() throws IOException {
+        return null;
+    }
+
     /** {@inheritDoc} */
     @Override
     public List<String> getInstallInfo(InstallType installType) throws IOException {

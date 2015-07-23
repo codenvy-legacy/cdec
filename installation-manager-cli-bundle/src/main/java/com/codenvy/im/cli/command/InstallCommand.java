@@ -80,6 +80,9 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--force", aliases = "-f", description = "Force installation in case of splitting process by steps", required = false)
     private boolean force;
 
+    @Option(name = "--reinstall", aliases = "-f", description = "Reinstall Codenvy (binaries only)", required = false)
+    private boolean reinstall;
+
     public InstallCommand() {
         this.configManager = INJECTOR.getInstance(ConfigManager.class);
     }
