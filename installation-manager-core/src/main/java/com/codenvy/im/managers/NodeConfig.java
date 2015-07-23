@@ -18,6 +18,8 @@
 package com.codenvy.im.managers;
 
 import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +43,7 @@ public class NodeConfig {
     private String host;
     private int port = 22;
     private String user;
-    private String privateKeyFile = "~/.ssh/id_rsa";  // there should be absolute path to file
+    private Path privateKeyFile = Paths.get("~/.ssh/id_rsa");  // there should be absolute path to file
     private NodeType type;
 
     public NodeConfig(NodeType type, String host, @Nullable String user) {
@@ -84,11 +86,11 @@ public class NodeConfig {
         return this;
     }
 
-    public String getPrivateKeyFile() {
+    public Path getPrivateKeyFile() {
         return privateKeyFile;
     }
 
-    public NodeConfig setPrivateKeyFile(String privateKeyFile) {
+    public NodeConfig setPrivateKeyFile(Path privateKeyFile) {
         this.privateKeyFile = privateKeyFile;
         return this;
     }

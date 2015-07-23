@@ -142,7 +142,8 @@ public class TestCommandLibrary {
     @Test
     public void testCreateLocalAgentFileBackupCommand() {
         Command result = createFileBackupCommand("test_file");
-        assertTrue(result.toString().matches("\\{'command'='sudo cp test_file test_file.back ; sudo cp test_file test_file.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+        assertTrue(result.toString().matches(
+                "\\{'command'='sudo cp test_file test_file.back ; sudo cp test_file test_file.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
                    result.toString());
     }
 
@@ -239,7 +240,8 @@ public class TestCommandLibrary {
 
     @Test
     public void testCreateCopyFromLocalToRemoteCommand() {
-        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testApiNode.setUser(SYSTEM_USER_NAME));
+        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"),
+                                                                                testApiNode.setUser(SYSTEM_USER_NAME));
         assertEquals(testCommand.toString(), format("{" +
                                                     "'command'='scp -r -q -o StrictHostKeyChecking=no local/path %s@localhost:remote/path', " +
                                                     "'agent'='LocalAgent'" +
@@ -350,7 +352,9 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='LocalAgent'}");
 
         testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack, testApiNode);
-        assertEquals(testCommand.toString(), format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(),
+                     format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                            SYSTEM_USER_NAME));
     }
 
     @Test
@@ -360,7 +364,9 @@ public class TestCommandLibrary {
         String pathWithinThePack = "pathWithinThePack";
 
         Command testCommand = CommandLibrary.createCompressCommand(fromDir, packFile, pathWithinThePack, testApiNode);
-        assertEquals(testCommand.toString(), format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(),
+                     format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                            SYSTEM_USER_NAME));
     }
 
     @Test
@@ -370,5 +376,58 @@ public class TestCommandLibrary {
 
         Command testCommand = CommandLibrary.createUncompressCommand(packFile, toDir);
         assertEquals(testCommand.toString(), "{'command'='tar -z -xf packFile -C toDir', 'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testCreateReadFileCommand() throws AgentException {
+        Path fileToRead = Paths.get("messages");
+        Command command = CommandLibrary.createTailCommand(fileToRead, 5, false);
+        assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createTailCommand(fileToRead, 6, true);
+        assertEquals(command.toString(), "{'command'='sudo tail -n 6 messages', 'agent'='LocalAgent'}");
+
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
+        command = CommandLibrary.createTailCommand(fileToRead, 5, testNode, false);
+        assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createTailCommand(fileToRead, 6, testNode, true);
+        assertEquals(command.toString(),
+                     "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+    }
+
+    @Test
+    public void testCreateCopyCommand() throws AgentException {
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
+        Command command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, true);
+        assertEquals(command.toString(), "{'command'='sudo cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, false);
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"));
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), true);
+        assertEquals(command.toString(), "{'command'='sudo cp from to', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), false);
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testCreateChmodCommand() throws AgentException {
+        NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
+        Command command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, true);
+        assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, false);
+        assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+
+        command = CommandLibrary.createChmodCommand("007", Paths.get("file"), true);
+        assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='LocalAgent'}");
+
+        command = CommandLibrary.createChmodCommand("007", Paths.get("file"), false);
+        assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='LocalAgent'}");
     }
 }

@@ -36,6 +36,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;

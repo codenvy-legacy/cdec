@@ -24,16 +24,20 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.lang.String.format;
+
 /**
  * Command runs until expected version is installed.
  *
  * @author Anatoliy Bazko
  */
 public class CheckInstalledVersionCommand implements Command {
+    public static final int CHECK_VERSION_TIMEOUT_MILLIS = 500;
     private final Artifact artifact;
-    private final Version  expectedVersion;
+    private final Version expectedVersion;
 
     private static final Logger LOG = Logger.getLogger(CheckInstalledVersionCommand.class.getSimpleName());
+
 
     public CheckInstalledVersionCommand(Artifact artifact, Version expectedVersion) {
         this.artifact = artifact;
@@ -44,19 +48,21 @@ public class CheckInstalledVersionCommand implements Command {
     @Override
     public String execute() throws CommandException {
         LOG.log(Level.INFO, toString());
+
         for (; ; ) {
             try {
                 if (checkExpectedVersion()) {
                     break;
                 }
             } catch (IOException e) {
-                continue;
+                // ignore because it is correct exception until Codenvy API server starts
             }
 
             try {
-                Thread.sleep(1000);
+                Thread.sleep(CHECK_VERSION_TIMEOUT_MILLIS);
             } catch (InterruptedException e) {
-                // do nothing
+                // ignore to allow being successful interrupted by PuppetErrorInterrupter
+                break;
             }
         }
 
@@ -77,6 +83,7 @@ public class CheckInstalledVersionCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return String.format("Expected to be installed '%s' of the version '%s'", artifact, expectedVersion);
+        return format("Expected to be installed '%s' of the version '%s'", artifact, expectedVersion);
     }
+
 }

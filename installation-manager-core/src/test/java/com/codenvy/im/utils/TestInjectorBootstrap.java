@@ -54,7 +54,7 @@ public class TestInjectorBootstrap {
     public void testInjector() {
         Injector injector = InjectorBootstrap.INJECTOR;
         Map<Key<?>, Binding<?>> bindings = injector.getBindings();
-        assertEquals(bindings.size(), 14);
+        assertEquals(bindings.size(), 15);
     }
 
     @Test(dataProvider = "testProperties")
@@ -68,6 +68,7 @@ public class TestInjectorBootstrap {
             {"installation-manager.download_dir", "target/updates"},
             {"installation-manager.backup_dir", "target/backups"},
             {"installation-manager.storage_dir", "target/storage"},
+            {"installation-manager.report_dir", "target/reports"},
             {"installation-manager.update_server_endpoint", "/update/endpoint"},
             {"api.endpoint", "/api/endpoint"},
             {"saas.api.endpoint", "/saas/api/endpoint"},

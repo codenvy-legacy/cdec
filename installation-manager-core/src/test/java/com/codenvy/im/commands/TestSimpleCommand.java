@@ -27,6 +27,9 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import static java.lang.String.format;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -104,11 +107,11 @@ public class TestSimpleCommand {
         String host = "localhost";
         int port = 22;
         String user = System.getProperty("user.name");
-        String privateKeyFile = format("/home/%s/.ssh/id_rsa", System.getProperty("user.name"));
+        Path privateKeyFile = Paths.get(format("/home/%s/.ssh/id_rsa", System.getProperty("user.name")));
 
         String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
 
-        Command testCommand = SimpleCommand.createCommand(command, host, port, user, privateKeyFile);
+        Command testCommand = SimpleCommand.createCommand(command, host, port, user, privateKeyFile, false);
         assertEquals(testCommand.toString(), expectedResult);
     }
 

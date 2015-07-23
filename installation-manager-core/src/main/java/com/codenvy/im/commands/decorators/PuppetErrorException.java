@@ -15,17 +15,13 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.commands;
+package com.codenvy.im.commands.decorators;
 
-import java.io.IOException;
+import com.codenvy.im.commands.CommandException;
 
 /** @author Dmytro Nochevnov */
-public class CommandException extends IOException {
-    public CommandException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public CommandException(String message) {
+public class PuppetErrorException extends CommandException {
+    public PuppetErrorException(String message) {
         super(message);
     }
 }

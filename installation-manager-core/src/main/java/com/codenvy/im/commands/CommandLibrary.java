@@ -347,4 +347,65 @@ public class CommandLibrary {
                "   sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " +  // make sure there is no "--detailed-exitcodes" option
                "fi;";
     }
+
+    public static Command createTailCommand(Path file, int lineNumber, boolean needSudo) {
+        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, lineNumber, needSudo));
+    }
+
+    public static Command createTailCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
+        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, lineNumber, needSudo), node);
+    }
+
+    private static String getTailCommand(Path file, int lineNumber, boolean needSudo) {
+        String command = format("tail -n %s %s", lineNumber, file);
+        if (needSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
+    }
+
+    public static Command createChmodCommand(String mode, Path file, boolean useSudo) {
+        return createCommand(getChmodCommand(mode, file, useSudo));
+    }
+
+    public static Command createChmodCommand(String mode, Path file, NodeConfig node, boolean useSudo) throws AgentException {
+        return createCommand(getChmodCommand(mode, file, useSudo), node);
+    }
+
+    private static String getChmodCommand(String mode, Path file, boolean useSudo) {
+        String command = format("chmod %s %s", mode, file);
+
+        if (useSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
+    }
+
+
+    public static Command createCopyCommand(Path from, Path to, NodeConfig node, boolean useSudo) throws AgentException {
+        return createCommand(getCopyCommand(from, to, useSudo), node);
+    }
+
+    /**
+     * @return copy bash command where sudo isn't used.
+     */
+    public static Command createCopyCommand(Path from, Path to) {
+        return createCommand(getCopyCommand(from, to, false));
+    }
+
+    public static Command createCopyCommand(Path from, Path to, boolean useSudo) {
+        return createCommand(getCopyCommand(from, to, useSudo));
+    }
+
+    private static String getCopyCommand(Path from, Path to, boolean useSudo) {
+        String command = format("cp %s %s", from, to);
+
+        if (useSudo) {
+            command = "sudo " + command;
+        }
+
+        return command;
+    }
 }

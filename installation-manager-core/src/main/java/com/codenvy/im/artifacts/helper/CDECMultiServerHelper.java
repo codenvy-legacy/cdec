@@ -22,6 +22,7 @@ import com.codenvy.im.commands.CheckInstalledVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -261,7 +262,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                       "  pluginsync = true\\n" +
                                                       "  report = true\\n" +
                                                       "  default_schedules = false\\n" +
-                                                      "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
+                                                      "  certname = %s\\n" +
+                                                      "  syslogfacility = local6\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
                 }
 
                 return new MacroCommand(commands, "Configure puppet agents on each node");
@@ -280,15 +282,16 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     throw new IllegalArgumentException("Site node config not found.");
                 }
 
-                return createCommand("doneState=\"Installing\"; " +
-                                     "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                     "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                     "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                     "    sleep 30; " +
-                                     "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
+                Command command = createCommand("doneState=\"Installing\"; " +
+                                                "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                                "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                                "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                                "    sleep 30; " +
+                                                "done", extractConfigFrom(config, NodeConfig.NodeType.SITE));
+                return new PuppetErrorInterrupter(command, nodeConfigs, configManager);
 
             case 8:
-                return new CheckInstalledVersionCommand(original, versionToInstall);
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), nodeConfigs, configManager);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -340,7 +343,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                      "sudo mv /tmp/codenvy/* /etc/puppet");
 
             case 4:
-                return new CheckInstalledVersionCommand(original, versionToUpdate);
+                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate), configManager);
 
             case 5:
                 return createPatchCommand(Paths.get("/etc/puppet/patches/"),

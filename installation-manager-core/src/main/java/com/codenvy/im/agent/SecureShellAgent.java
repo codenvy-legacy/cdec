@@ -24,6 +24,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Properties;
 
 import static java.lang.String.format;
@@ -34,32 +35,17 @@ import static java.lang.String.format;
  */
 public class SecureShellAgent extends AbstractAgent {
 
-    private final Session session;
+    private Session session;
     private final JSch jsch = getJSch();
-
-    /** Create ssh session object and try to connect to remote host using password. */
-    public SecureShellAgent(final String host,
-                            final int port,
-                            final String user,
-                            final String password) throws AgentException {
-        try {
-            session = getSession(host, port, user);
-            session.setPassword(password);
-        } catch (Exception e) {
-            String errorMessage = format("Can't connect to host '%s@%s:%s'.", user, host, port);
-            throw makeAgentException(errorMessage, e);
-        }
-    }
 
     /** Create ssh session object and try to connect to remote host by using auth key. */
     public SecureShellAgent(final String host,
                             final int port,
                             final String user,
-                            final String privateKeyFileAbsolutePath,
-                            final String passPhrase) throws AgentException {
+                            final Path privateKeyFileAbsolutePath) throws AgentException {
         try {
             session = getSession(host, port, user);
-            jsch.addIdentity(privateKeyFileAbsolutePath, passPhrase);
+            jsch.addIdentity(privateKeyFileAbsolutePath.toString());
         } catch (Exception e) {
             String errorMessage = format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
             throw makeAgentException(errorMessage, e);
@@ -70,6 +56,9 @@ public class SecureShellAgent extends AbstractAgent {
     @Override
     public String execute(String command) throws AgentException {
         try {
+            // we need to recreate session each execute time to avoid error "com.jcraft.jsch.JSchException: socket is not established" in
+            // PuppetErrorInterrupter
+            session = getSession(session.getHost(), session.getPort(), session.getUserName());
             session.connect();
         } catch (Exception e) {
             session.disconnect();
@@ -120,15 +109,20 @@ public class SecureShellAgent extends AbstractAgent {
         config.put("StrictHostKeyChecking", "no");
 
         session.setConfig(config);
-        session.setServerAliveInterval(15 * 1000);  // 15 sec
+        session.setServerAliveInterval(50 * 1000);  // 50 sec
         session.setServerAliveCountMax(150);
 
         return session;
     }
 
-    private void waitForChannelClosed(Channel channel) throws InterruptedException {
+    private void waitForChannelClosed(Channel channel) {
         while (!channel.isClosed()) {
-            Thread.sleep(100);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // ignore to allow being successful interrupted by PuppetErrorInterrupter
+                return;
+            }
         }
     }
 
