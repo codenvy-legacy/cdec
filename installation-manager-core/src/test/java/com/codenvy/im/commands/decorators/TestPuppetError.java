@@ -40,12 +40,19 @@ public class TestPuppetError {
 
     @DataProvider(name = "TestCheckPuppetErrorData")
     public Object[][] getTestCheckPuppetErrorData() {
-        return new Object[][] {
-            {"", null},
-            {"any message", null},
-            {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r", PuppetError.COULD_NOT_RETRIEVE_CATALOG},
-            {"Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true\r", PuppetError.DEPENDENCY_HAS_FAILURES},
-            {"Jun 22 18:26:22 api puppet-agent[5867]: (/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]) Dependency Service[codenvy] has failures: true\r", null}
+        return new Object[][]{
+                {"", null},
+                {"any message", null},
+                {"Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
+                 "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r",
+                 PuppetError.COULD_NOT_RETRIEVE_CATALOG},
+                {"Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency " +
+                 "Exec[set-mysql-password] has failures: true\r",
+                 PuppetError.DEPENDENCY_HAS_FAILURES},
+                {"Jun 22 18:26:22 api puppet-agent[5867]: " +
+                 "(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]) Dependency Service[codenvy] has " +
+                 "failures: true\r",
+                 null}
         };
     }
 
@@ -53,23 +60,30 @@ public class TestPuppetError {
     public void testGetLineToDisplay(PuppetError puppetError, String logLine, String lineToDisplay) {
         assertEquals(puppetError.getLineToDisplay(logLine), lineToDisplay);
 
-        assertEquals(PuppetError.COULD_NOT_RETRIEVE_CATALOG.getLineToDisplay("Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r"),
-                     "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy");
+        assertEquals(PuppetError.COULD_NOT_RETRIEVE_CATALOG.getLineToDisplay(
+                             "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: " +
+                             "Unrecognized " +
+                             "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r"),
+                     "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
+                     "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy");
 
     }
 
     @DataProvider(name = "TestGetLineToDisplay")
     public Object[][] getTestGetLineToDisplay() {
-        return new Object[][] {
-            {PuppetError.COULD_NOT_RETRIEVE_CATALOG, "test", "test"},
-            {PuppetError.COULD_NOT_RETRIEVE_CATALOG,
-             "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r",
-             "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy"},
+        return new Object[][]{
+                {PuppetError.COULD_NOT_RETRIEVE_CATALOG, "test", "test"},
+                {PuppetError.COULD_NOT_RETRIEVE_CATALOG,
+                 "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
+                 "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r",
+                 "Apr 26 03:46:41 WR7N1 puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
+                 "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy"},
 
-            {PuppetError.DEPENDENCY_HAS_FAILURES, "test", "test"},
-            {PuppetError.DEPENDENCY_HAS_FAILURES,
-             "Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true\r",
-             "Dependency Exec[set-mysql-password] has failures: true"}
+                {PuppetError.DEPENDENCY_HAS_FAILURES, "test", "test"},
+                {PuppetError.DEPENDENCY_HAS_FAILURES,
+                 "Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency " +
+                 "Exec[set-mysql-password] has failures: true\r",
+                 "Dependency Exec[set-mysql-password] has failures: true"}
         };
     }
 }

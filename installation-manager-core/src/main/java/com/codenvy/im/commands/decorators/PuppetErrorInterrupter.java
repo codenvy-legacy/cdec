@@ -202,14 +202,13 @@ public class PuppetErrorInterrupter implements Command {
 
     private String getPuppetErrorMessageForLog(@Nullable NodeConfig node, String line) {
         return (node == null) ? format("Puppet error: '%s'", line) :
-                                format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
+               format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), line);
     }
-
 
 
     private String getPuppetErrorMessageForOutput(@Nullable NodeConfig node, String lineOfLog, Path errorReport) throws IOException {
         String puppetErrorMessage = (node == null) ? format("Puppet error: '%s'", lineOfLog) :
-                                                     format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), lineOfLog);
+                                    format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), lineOfLog);
 
         Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         String hostUrl = codenvyConfig.getHostUrl();
@@ -218,16 +217,19 @@ public class PuppetErrorInterrupter implements Command {
         InstallType installType = configManager.detectInstallationType();
         String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
 
-        return  puppetErrorMessage + format(". At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
-                                            + " Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s)."
-                                            + " If the installation eventually fails, contact support with error report %s."
-                                            + " Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-%s-node/#install-troubleshooting.",
-                                            hostUrl,
-                                            systemAdminName,
-                                            String.valueOf(systemAdminPassword),
-                                            errorReport.toString(),
-                                            docsUrlToken
-        );
+        return puppetErrorMessage + format(". At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
+                                           +
+                                           " Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s)."
+                                           + " If the installation eventually fails, contact support with error report %s."
+                                           +
+                                           " Installation & Troubleshooting Docs: http://docs.codenvy" +
+                                           ".com/onpremises/installation-%s-node/#install-troubleshooting.",
+                                           hostUrl,
+                                           systemAdminName,
+                                           String.valueOf(systemAdminPassword),
+                                           errorReport.toString(),
+                                           docsUrlToken
+                                          );
     }
 
     private String getRuntimeErrorMessage(@Nullable NodeConfig node, IOException e) {
@@ -249,6 +251,7 @@ public class PuppetErrorInterrupter implements Command {
             return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), PUPPET_LOG_FILE);
         }
 
-        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), PUPPET_LOG_FILE, nodes.toString());
+        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), PUPPET_LOG_FILE,
+                      nodes.toString());
     }
 }

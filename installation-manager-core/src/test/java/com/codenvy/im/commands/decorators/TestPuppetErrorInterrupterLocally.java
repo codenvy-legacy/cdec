@@ -24,6 +24,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -55,14 +56,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterLocally {
-    static final int  MOCK_COMMAND_TIMEOUT_MILLIS = READ_LOG_TIMEOUT_MILLIS * 16;
+    static final int MOCK_COMMAND_TIMEOUT_MILLIS = READ_LOG_TIMEOUT_MILLIS * 16;
 
-    static final Path BASE_TMP_DIRECTORY                         = Paths.get("target/tmp");
-    static final Path REPORT_TMP_DIRECTORY                       = Paths.get("target/tmp/report");
-    static final Path TEST_TMP_DIRECTORY                         = Paths.get("target/tmp/test");
-    static final Path LOG_TMP_DIRECTORY                          = Paths.get("target/tmp/log");
+    static final Path BASE_TMP_DIRECTORY   = Paths.get("target/tmp");
+    static final Path REPORT_TMP_DIRECTORY = Paths.get("target/tmp/report");
+    static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test");
+    static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log");
 
-    static final Path ORIGIN_PUPPET_LOG                          = PUPPET_LOG_FILE;
+    static final Path ORIGIN_PUPPET_LOG = PUPPET_LOG_FILE;
 
     static final Path ORIGIN_BASE_TMP_DIRECTORY                  = PuppetErrorReport.BASE_TMP_DIRECTORY;
     static final Path ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
@@ -76,20 +77,20 @@ public class TestPuppetErrorInterrupterLocally {
     PuppetErrorInterrupter testInterrupter;
 
     String logWithoutErrorMessages =
-        "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
-        + "Jun  8 15:17:31 test systemd[1]: Time has been changed\n"
-        + "Jun  8 15:17:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:17:42 test puppet-agent[22754]: Finished catalog run in 1.83 seconds\n"
-        + "Jun  8 15:22:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.23 seconds\n"
-        + "Jun  8 15:22:42 test puppet-agent[23240]: Finished catalog run in 1.95 seconds\n"
-        + "Jun  8 15:27:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.12 seconds\n"
-        + "Jun  8 15:27:42 test puppet-agent[23713]: Finished catalog run in 2.01 seconds\n"
-        + "Jun  8 15:51:51 test systemd[1]: Time has been changed\n"
-        + "Jun  8 15:51:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
-        + "Jun  8 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
+            "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
+            + "Jun  8 15:17:31 test systemd[1]: Time has been changed\n"
+            + "Jun  8 15:17:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 15:17:42 test puppet-agent[22754]: Finished catalog run in 1.83 seconds\n"
+            + "Jun  8 15:22:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.23 seconds\n"
+            + "Jun  8 15:22:42 test puppet-agent[23240]: Finished catalog run in 1.95 seconds\n"
+            + "Jun  8 15:27:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.12 seconds\n"
+            + "Jun  8 15:27:42 test puppet-agent[23713]: Finished catalog run in 2.01 seconds\n"
+            + "Jun  8 15:51:51 test systemd[1]: Time has been changed\n"
+            + "Jun  8 15:51:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
+            + "Jun  8 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
 
     @BeforeMethod
     public void setup() throws IOException {
@@ -119,11 +120,11 @@ public class TestPuppetErrorInterrupterLocally {
         // prepare Codenvy Config
         doReturn(InstallType.SINGLE_SERVER).when(mockConfigManager).detectInstallationType();
         doReturn(new Config(ImmutableMap.of(
-            Config.HOST_URL, "localhost",
-            Config.ADMIN_LDAP_USER_NAME, "admin",
-            Config.SYSTEM_LDAP_PASSWORD, "password"
-        )))
-        .when(mockConfigManager).loadInstalledCodenvyConfig();
+                Config.HOST_URL, "localhost",
+                Config.ADMIN_LDAP_USER_NAME, "admin",
+                Config.SYSTEM_LDAP_PASSWORD, "password"
+                                           )))
+                .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
@@ -131,10 +132,12 @@ public class TestPuppetErrorInterrupterLocally {
         final String[] failMessage = {null};
 
         final String puppetErrorMessage =
-            "Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency Exec[set-mysql-password] has failures: true\r";
+                "Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency " +
+                "Exec[set-mysql-password] has failures: true\r";
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
@@ -162,16 +165,24 @@ public class TestPuppetErrorInterrupterLocally {
 
         try {
             testInterrupter.execute();
-        } catch(Exception e) {
+        } catch (Exception e) {
             assertEquals(e.getClass(), PuppetErrorException.class, Arrays.toString(e.getStackTrace()));
 
             String errorMessage = e.getMessage();
 
             Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Dependency Exec\\[set-mysql-password\\] has failures: true'. "
-                                                          + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. "
-                                                          + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. "
-                                                          + "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. "
-                                                          + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-single-node/#install-troubleshooting.");
+                                                          +
+                                                          "At the time puppet is continue Codenvy installation in background and is trying to fix " +
+                                                          "this issue. "
+                                                          +
+                                                          "Check administrator dashboard page http://localhost/admin to verify installation success" +
+                                                          " [(]credentials: admin/password[)]. "
+                                                          +
+                                                          "If the installation eventually fails, contact support with error report " +
+                                                          "target/reports/error_report_.*.tar.gz. "
+                                                          +
+                                                          "Installation & Troubleshooting Docs: http://docs.codenvy" +
+                                                          ".com/onpremises/installation-single-node/#install-troubleshooting.");
 
             assertTrue(errorMessagePattern.matcher(errorMessage).find());
 
@@ -211,7 +222,8 @@ public class TestPuppetErrorInterrupterLocally {
         final String expectedResult = "okay";
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     return expectedResult;
@@ -247,13 +259,14 @@ public class TestPuppetErrorInterrupterLocally {
     }
 
     @Test(expectedExceptions = CommandException.class,
-          expectedExceptionsMessageRegExp = "error",
-          timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+            expectedExceptionsMessageRegExp = "error",
+            timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testRethrowCommandExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     throw new CommandException("error");
@@ -272,13 +285,14 @@ public class TestPuppetErrorInterrupterLocally {
     }
 
     @Test(expectedExceptions = RuntimeException.class,
-          expectedExceptionsMessageRegExp = "error",
-          timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+            expectedExceptionsMessageRegExp = "error",
+            timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testRethrowRuntimeExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
         doAnswer(new Answer() {
-            @Override public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 try {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     throw new RuntimeException("error");

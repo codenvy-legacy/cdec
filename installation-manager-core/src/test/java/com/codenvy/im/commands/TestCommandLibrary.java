@@ -18,7 +18,6 @@
 package com.codenvy.im.commands;
 
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
@@ -143,7 +142,8 @@ public class TestCommandLibrary {
     @Test
     public void testCreateLocalAgentFileBackupCommand() {
         Command result = createFileBackupCommand("test_file");
-        assertTrue(result.toString().matches("\\{'command'='sudo cp test_file test_file.back ; sudo cp test_file test_file.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+        assertTrue(result.toString().matches(
+                "\\{'command'='sudo cp test_file test_file.back ; sudo cp test_file test_file.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
                    result.toString());
     }
 
@@ -240,7 +240,8 @@ public class TestCommandLibrary {
 
     @Test
     public void testCreateCopyFromLocalToRemoteCommand() {
-        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testApiNode.setUser(SYSTEM_USER_NAME));
+        Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"),
+                                                                                testApiNode.setUser(SYSTEM_USER_NAME));
         assertEquals(testCommand.toString(), format("{" +
                                                     "'command'='scp -r -q -o StrictHostKeyChecking=no local/path %s@localhost:remote/path', " +
                                                     "'agent'='LocalAgent'" +
@@ -351,7 +352,9 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='LocalAgent'}");
 
         testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack, testApiNode);
-        assertEquals(testCommand.toString(), format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(),
+                     format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                            SYSTEM_USER_NAME));
     }
 
     @Test
@@ -361,7 +364,9 @@ public class TestCommandLibrary {
         String pathWithinThePack = "pathWithinThePack";
 
         Command testCommand = CommandLibrary.createCompressCommand(fromDir, packFile, pathWithinThePack, testApiNode);
-        assertEquals(testCommand.toString(), format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(),
+                     format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                            SYSTEM_USER_NAME));
     }
 
     @Test
@@ -387,7 +392,8 @@ public class TestCommandLibrary {
         assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
         command = CommandLibrary.createTailCommand(fileToRead, 6, testNode, true);
-        assertEquals(command.toString(), "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(command.toString(),
+                     "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
     }
 
     @Test

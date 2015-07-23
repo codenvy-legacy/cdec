@@ -23,6 +23,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.InjectorBootstrap;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+
 import org.apache.commons.io.FileUtils;
 
 import javax.annotation.Nullable;
@@ -47,13 +48,15 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorReport {
-    public static final Path REPORT_DIR = Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
+    public static final Path REPORT_DIR =
+            Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
     public static final String ERROR_REPORT_NAME_TEMPLATE = "error_report_%s.tar.gz";
 
-    public static final Logger LOG                        = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
+    public static final Logger LOG = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
 
-    public static final Path INSTALLATION_MANAGER_SERVER_LOG     = (System.getProperty("catalina.base") != null) ?
-        Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out") : null;
+    public static final Path INSTALLATION_MANAGER_SERVER_LOG = (System.getProperty("catalina.base") != null) ?
+                                                               Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out")
+                                                                                                             : null;
 
     public static Path BASE_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
     public static Path CLI_CLIENT_INTERACTIVE_MODE_LOG     = BASE_TMP_DIRECTORY.getParent().getParent().resolve("im-interactive.log");
@@ -105,12 +108,13 @@ public class PuppetErrorReport {
      * Given:
      * - path to report file
      * - node config
+     *
      * @return command which:
      * I. If node == null:
      * - copy puppet log file into local temp dir
      * - copy installation manager logs
      * - pack temp dir into report file
-     *
+     * <p/>
      * II. If node != null:
      * - create local temp dir for puppet log file from node with name = type_of_node
      * - create remote temp dir

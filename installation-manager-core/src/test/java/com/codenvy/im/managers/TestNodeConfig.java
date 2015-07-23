@@ -34,7 +34,7 @@ public class TestNodeConfig {
     private static final String              TEST_HOST     = "host";
     private static final int                 TEST_PORT     = 2222;
     private static final String              TEST_USER     = "user";
-    private static final Path                TEST_KEY_PATH = Paths.get("key");
+    private static final Path TEST_KEY_PATH = Paths.get("key");
     private static final NodeConfig.NodeType TEST_TYPE     = NodeConfig.NodeType.API;
 
     @Test
@@ -60,7 +60,7 @@ public class TestNodeConfig {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Port number must be greater than zero")
+            expectedExceptionsMessageRegExp = "Port number must be greater than zero")
     public void testIllegalPortArgument() throws Exception {
         NodeConfig config = new NodeConfig(TEST_TYPE, TEST_HOST, null);
         config.setPort(0);

@@ -26,31 +26,32 @@ import java.util.regex.Pattern;
 /** @author Dmytro Nochevnov */
 public enum PuppetError {
     COULD_NOT_RETRIEVE_CATALOG(
-        new Function<String, Boolean>() {
-            final Pattern identifyPattern = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
+            new Function<String, Boolean>() {
+                final Pattern identifyPattern = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
 
-            @Nullable
-            @Override
-            public Boolean apply(@Nullable String line) {
-                return (line != null)
-                       && identifyPattern.matcher(line).find();
+                @Nullable
+                @Override
+                public Boolean apply(@Nullable String line) {
+                    return (line != null)
+                           && identifyPattern.matcher(line).find();
+                }
             }
-        }
     ),
 
     DEPENDENCY_HAS_FAILURES(
-        Pattern.compile("Dependency .* has failures: true"),
-        new Function<String, Boolean>() {
-            final Pattern identifyPattern = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
+            Pattern.compile("Dependency .* has failures: true"),
+            new Function<String, Boolean>() {
+                final Pattern identifyPattern = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
 
-            @Nullable
-            @Override
-            public Boolean apply(@Nullable String line) {
-                return (line != null)
-                       && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")  // issue CDEC-264
-                       && identifyPattern.matcher(line).find();
+                @Nullable
+                @Override
+                public Boolean apply(@Nullable String line) {
+                    return (line != null)
+                           && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")
+                           // issue CDEC-264
+                           && identifyPattern.matcher(line).find();
+                }
             }
-        }
     );
 
     private final Pattern                   DISPLAY_PATTERN;

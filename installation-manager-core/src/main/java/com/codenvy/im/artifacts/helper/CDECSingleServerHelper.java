@@ -48,7 +48,6 @@ import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStartServiceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStopServiceCommand;
-import static com.codenvy.im.commands.CommandLibrary.createUnpackCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.managers.BackupConfig.Component.FS;
 import static com.codenvy.im.managers.BackupConfig.Component.LDAP;
