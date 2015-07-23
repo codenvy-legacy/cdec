@@ -23,7 +23,6 @@ import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
@@ -39,7 +38,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,8 +59,6 @@ public class TestPuppetErrorInterrupterOnNode {
     static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test");
     static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log");
 
-    static final String SYSTEM_USER_NAME = System.getProperty("user.name");
-
     static final Path ORIGIN_PUPPET_LOG         = PuppetErrorInterrupter.PUPPET_LOG_FILE;
     static final Path ORIGIN_BASE_TMP_DIRECTORY = PuppetErrorReport.BASE_TMP_DIRECTORY;
 
@@ -73,8 +69,6 @@ public class TestPuppetErrorInterrupterOnNode {
     ConfigManager mockConfigManager;
 
     PuppetErrorInterrupter testInterrupter;
-
-    NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "127.0.0.1", SYSTEM_USER_NAME);
 
     String logWithoutErrorMessages =
             "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
@@ -102,10 +96,10 @@ public class TestPuppetErrorInterrupterOnNode {
         Files.createDirectory(TEST_TMP_DIRECTORY);
 
         // create puppet log file
-        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages").toAbsolutePath();  // abolute path is needed to execute ssh commands
+        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages").toAbsolutePath();  // absolute path is needed to execute ssh commands
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
-        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, Collections.singletonList(testNode), mockConfigManager));
+        testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, null, mockConfigManager));
         PuppetErrorInterrupter.PUPPET_LOG_FILE = puppetLogFile;
         PuppetErrorInterrupter.useSudo = false;  // prevents asking sudo password when running the tests locally
 
@@ -164,7 +158,7 @@ public class TestPuppetErrorInterrupterOnNode {
             String errorMessage = e.getMessage();
 
             Pattern errorMessagePattern = Pattern.compile(
-                    "Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from " +
+                    "Could not retrieve catalog from " +
                     "remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service" +
                     ".pp:5 on node hwcodenvy'. "
                     + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. "
@@ -174,7 +168,7 @@ public class TestPuppetErrorInterrupterOnNode {
 
             assertTrue(errorMessagePattern.matcher(errorMessage).find());
 
-            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage, testNode);
+            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage);
             return;
         }
 
@@ -185,7 +179,7 @@ public class TestPuppetErrorInterrupterOnNode {
         fail("testInterrupter.execute() should throw PuppetErrorException");
     }
 
-    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode)
+    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile)
             throws IOException, InterruptedException {
         Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
@@ -196,8 +190,7 @@ public class TestPuppetErrorInterrupterOnNode {
         assertTrue(Files.exists(report));
 
         CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
-        Path puppetLogFile =
-                TEST_TMP_DIRECTORY.resolve(testNode.getType().toString().toLowerCase()).resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
+        Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
         assertTrue(Files.exists(puppetLogFile));
 
         String logFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
