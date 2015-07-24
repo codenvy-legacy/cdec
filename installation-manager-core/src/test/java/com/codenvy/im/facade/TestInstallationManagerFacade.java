@@ -524,4 +524,9 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         verify(installManager).getUpdateStepInfo("id");
     }
+
+    @Test
+    public void testReinstallCodenvy() {
+        // TODO [ndp]
+    }
 }

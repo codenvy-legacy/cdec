@@ -80,7 +80,7 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--force", aliases = "-f", description = "Force installation in case of splitting process by steps", required = false)
     private boolean force;
 
-    @Option(name = "--reinstall", aliases = "-f", description = "Reinstall Codenvy (binaries only)", required = false)
+    @Option(name = "--reinstall", aliases = "-r", description = "Re-install Codenvy (binaries only)", required = false)
     private boolean reinstall;
 
     public InstallCommand() {
@@ -97,8 +97,24 @@ public class InstallCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         if (list) {
             doExecuteListInstalledArtifacts();
+        } if (reinstall) {
+            doExecuteReinstall();
         } else {
             doExecuteInstall();
+        }
+    }
+
+    private void doExecuteReinstall() throws IOException {
+        if (artifactName == null) {
+            artifactName = CDECArtifact.NAME;
+        }
+
+        console.showProgressor();
+
+        try {
+            facade.reinstall(createArtifact(artifactName));
+        } finally {
+            console.hideProgressor();
         }
     }
 
@@ -150,7 +166,6 @@ public class InstallCommand extends AbstractIMCommand {
         InstallResponse installResponse = new InstallResponse();
         installResponse.setStatus(ResponseCode.OK);
         installResponse.setArtifacts(ImmutableList.of(installArtifactInfo));
-
 
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);

@@ -179,6 +179,15 @@ public class InstallManager {
         return artifact.isInstallable(version);
     }
 
+    /**
+     * Reinstall artifact.
+     */
+    public void performReinstall(Artifact artifact) throws IOException {
+        Command command = artifact.getReinstallCommand();
+        executeCommand(command);
+
+    }
+
     protected String executeCommand(Command command) throws CommandException {
         return command.execute();
     }

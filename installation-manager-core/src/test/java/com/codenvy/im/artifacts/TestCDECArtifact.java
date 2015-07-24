@@ -527,4 +527,15 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(5).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='api.dev.com', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(6).toString(), "Expected to be installed 'codenvy' of the version '1.0.0'");
     }
+
+    @Test
+    public void testGetReinstallCodenvyCommandSingleServer() {
+        // TODO [ndp]
+    }
+
+    @Test
+    public void testGetReinstallCodenvyCommandMultiServer() {
+        // TODO [ndp]
+    }
+
 }

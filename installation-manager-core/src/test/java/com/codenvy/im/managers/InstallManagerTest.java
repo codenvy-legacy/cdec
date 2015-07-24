@@ -288,7 +288,7 @@ public class InstallManagerTest extends BaseTest {
         assertEquals(info.getStep(), 1);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "codenvy:1.0.0 is not installable")
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "codenvy:1.0.0 is not installable")  // TODO [ndp] there could be another message about "im-install --reinstall" command
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
@@ -301,4 +301,13 @@ public class InstallManagerTest extends BaseTest {
 
         installManager.performInstallStep(artifact, version, pathToBinaries, options);
     }
+
+    @Test
+    public void testReInstallCodenvy() throws Exception {
+        // TODO [ndp]
+
+        Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
+        installManager.performReinstall(artifact);
+    }
+
 }

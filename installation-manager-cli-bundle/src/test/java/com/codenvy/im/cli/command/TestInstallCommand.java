@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
@@ -44,6 +45,7 @@ import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -54,6 +56,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -411,5 +414,18 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  } ],\n" +
                              "  \"status\" : \"OK\"\n" +
                              "}\n");
+    }
+
+    @Test
+    public void testReinstallCodenvy() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.option("--reinstall", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "");
+
+        verify(facade).reinstall(createArtifact(CDECArtifact.NAME));
     }
 }

@@ -32,6 +32,7 @@ import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -462,5 +463,33 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         }
 
         return new MacroCommand(commands, "Change config commands");
+    }
+
+    /**
+     * - remove /home/codenvy/archives and /home/codenvy-im/archives
+     * - stop Codenvy API server
+     * - force applying puppet config for puppet agent
+     * - wait until Codenvy API server be started
+     */
+    @Override
+    public Command getReinstallCommand(Config config, @Nullable Version installedVersion) throws IOException {
+        List<Command> commands = new ArrayList<>();
+
+        // remove /home/codenvy/archives and /home/codenvy-im/archives
+        commands.add(createCommand("sudo rm -rf /home/codenvy/archives"));
+        commands.add(createCommand("sudo rm -rf /home/codenvy-im/archives"));
+
+        // stop Codenvy API server
+        commands.add(createStopServiceCommand("codenvy"));
+
+        // force applying puppet config for puppet agent
+        commands.add(createForcePuppetAgentCommand());
+
+        if (installedVersion != null) {
+            // wait until API server starts
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion));
+        }
+
+        return new MacroCommand(commands, "Re-install Codenvy binaries");
     }
 }
