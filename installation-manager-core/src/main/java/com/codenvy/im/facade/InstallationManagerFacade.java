@@ -57,7 +57,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.account.shared.dto.AccountReference;
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;

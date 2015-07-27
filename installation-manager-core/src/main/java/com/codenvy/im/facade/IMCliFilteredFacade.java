@@ -38,6 +38,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.commons.json.JsonParseException;
 
 import javax.annotation.Nonnull;

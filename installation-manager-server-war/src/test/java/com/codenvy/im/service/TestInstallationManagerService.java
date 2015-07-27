@@ -46,7 +46,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;

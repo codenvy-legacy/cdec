@@ -73,17 +73,17 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"another-id\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"" +
                                                                    ACCOUNT_ID + "\"}"
                                                                    + "}]");
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
-        assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -92,10 +92,10 @@ public class TestAccountUtils {
                                                                    + "roles:[\"account/member\"],"
                                                                    + "accountReference:{id:\"member-id\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                    + "}]");
         AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner(null, ACCESS_TOKEN);
@@ -126,10 +126,10 @@ public class TestAccountUtils {
                                                                    + "roles:[\"account/member\"],"
                                                                    + "accountReference:{id:\"member-id\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                    + "}]");
         AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner("name2", ACCESS_TOKEN);
@@ -144,10 +144,10 @@ public class TestAccountUtils {
                                                                    + "roles:[\"account/member\"],"
                                                                    + "accountReference:{id:\"member-id\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                    + "},{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id2\",name:\"name2\"}"
                                                                    + "}]");
         AccountReference accountReference = saasAccountServiceProxy.getAccountWhereUserIsOwner("name3", ACCESS_TOKEN);
@@ -168,27 +168,27 @@ public class TestAccountUtils {
                                                                    + "links:[{\"rel\":\"subscriptions\",\"href\":\"/account/"
                                                                    + ACCOUNT_ID
                                                                    + "/subscriptions\"}],"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"]"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"]"
                                                                    + "}]");
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
     public void testInvalidSubscription() throws IOException {
         when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"" + ACCOUNT_ID +
                                                                    "\"}"
                                                                    + "}]");
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
             .thenReturn("[{serviceId:invalid}]");
 
-        assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test(expectedExceptions = AuthenticationException.class,
@@ -198,7 +198,7 @@ public class TestAccountUtils {
             .when(transport)
             .doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN));
 
-        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test
@@ -212,9 +212,9 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
-        assertTrue(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertTrue(saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -228,10 +228,10 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test
@@ -245,10 +245,10 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        assertFalse(saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
+        assertFalse(saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -259,10 +259,10 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",endDate:\"" + endDate + "\"}]");
 
-        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -273,10 +273,10 @@ public class TestAccountUtils {
         String startDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\"}]");
 
-        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -293,10 +293,10 @@ public class TestAccountUtils {
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -313,16 +313,16 @@ public class TestAccountUtils {
         String endDate = subscriptionDateWrongFormat.format(cal.getTime());
 
         when(transport.doGet(endsWith("subscription/find/account?id=" + ACCOUNT_ID), eq(ACCESS_TOKEN)))
-            .thenReturn("[{serviceId:" + saasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
+                .thenReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:" + SUBSCRIPTION_ID
                         + ",startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
-        saasAccountServiceProxy.hasValidSubscription(saasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
+        saasAccountServiceProxy.hasValidSubscription(SaasAccountServiceProxy.ON_PREMISES, ACCESS_TOKEN, ACCOUNT_ID);
     }
 
     @Test
     public void checkIfUserIsOwnerOfAccountShouldReturnTrue() throws IOException {
         when(transport.doGet("/account", ACCESS_TOKEN)).thenReturn("[{"
-                                                                   + "roles:[\"" + saasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
+                                                                   + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                                                                    + "accountReference:{id:\"id1\",name:\"name1\"}"
                                                                    + "}]");
         assertTrue(saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(ACCESS_TOKEN, "id1"));
