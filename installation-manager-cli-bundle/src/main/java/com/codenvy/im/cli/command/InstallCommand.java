@@ -30,6 +30,7 @@ import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.InstallResponse;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.utils.Version;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -97,22 +98,37 @@ public class InstallCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         if (list) {
             doExecuteListInstalledArtifacts();
-        } if (reinstall) {
+        } else if (reinstall) {
             doExecuteReinstall();
         } else {
             doExecuteInstall();
         }
     }
 
-    private void doExecuteReinstall() throws IOException {
+    private void doExecuteReinstall() throws JsonParseException, JsonProcessingException {
         if (artifactName == null) {
             artifactName = CDECArtifact.NAME;
         }
 
         console.showProgressor();
 
+        InstallArtifactInfo installArtifactInfo = new InstallArtifactInfo();
+        installArtifactInfo.setArtifact(artifactName);
+
+        InstallResponse installResponse = new InstallResponse();
+        installResponse.setArtifacts(ImmutableList.of(installArtifactInfo));
+
         try {
             facade.reinstall(createArtifact(artifactName));
+            installArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
+            installResponse.setStatus(ResponseCode.OK);
+            console.println(toJson(installResponse));
+
+        } catch (Exception e) {
+            installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
+            installResponse.setStatus(ResponseCode.ERROR);
+            installResponse.setMessage(e.getMessage());
+            console.printResponseExitInError(installResponse);
         } finally {
             console.hideProgressor();
         }

@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -424,8 +425,34 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "");
+        assertEquals(output, "{\n"
+                             + "  \"artifacts\" : [ {\n"
+                             + "    \"artifact\" : \"codenvy\",\n"
+                             + "    \"status\" : \"SUCCESS\"\n"
+                             + "  } ],\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}\n");
 
         verify(facade).reinstall(createArtifact(CDECArtifact.NAME));
+    }
+
+    @Test
+    public void testReinstallImCli() throws Exception {
+        doThrow(new UnsupportedOperationException("error message")).when(facade).reinstall(createArtifact(InstallManagerArtifact.NAME));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", InstallManagerArtifact.NAME);
+        commandInvoker.option("--reinstall", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"artifacts\" : [ {\n"
+                             + "    \"artifact\" : \"installation-manager-cli\",\n"
+                             + "    \"status\" : \"FAILURE\"\n"
+                             + "  } ],\n"
+                             + "  \"message\" : \"error message\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
     }
 }

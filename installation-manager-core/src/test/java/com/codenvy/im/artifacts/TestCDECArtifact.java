@@ -529,13 +529,49 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetReinstallCodenvyCommandSingleServer() {
-        // TODO [ndp]
+    public void testGetReinstallCodenvyCommandSingleServer() throws IOException {
+        Map<String, String> properties = ImmutableMap.of(Config.VERSION, "1.0.0");
+
+        Config config = new Config(properties);
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+
+        Command command = spyCdecArtifact.getReinstallCommand();
+        List<Command> commands = ((MacroCommand) command).getCommands();
+        assertEquals(commands.size(), 5);
+
+        assertEquals(commands.get(0).toString(), "{'command'='sudo rm -rf /home/codenvy/archives', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(1).toString(), "{'command'='sudo rm -rf /home/codenvy-im/archives', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(2).toString(), "{'command'='sudo service codenvy status | grep 'Active: active (running)'; if [ $? -eq 0 ]; then   sudo service codenvy stop; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(3).toString(), "{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(4).toString(), "PuppetErrorInterrupter{ Expected to be installed 'codenvy' of the version '1.0.0' }; looking on errors in file /var/log/messages locally");
     }
 
     @Test
-    public void testGetReinstallCodenvyCommandMultiServer() {
-        // TODO [ndp]
+    public void testGetReinstallCodenvyCommandMultiServer() throws IOException {
+        Map<String, String> properties = ImmutableMap.of(Config.VERSION, "1.0.0",
+                                                         Config.HOST_URL, "host",
+                                                         "api_host_name", "api.dev.com",
+                                                         "puppet_master_host_name", "master.dev.com",
+                                                         "node_ssh_user_name", SYSTEM_USER_NAME
+                                                         );
+
+        Config config = new Config(properties);
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+
+        Command command = spyCdecArtifact.getReinstallCommand();
+        List<Command> commands = ((MacroCommand) command).getCommands();
+        assertEquals(commands.size(), 6);
+        assertEquals(commands.get(0).toString(), format("{'command'='sudo rm -rf /home/codenvy-im/archives', 'agent'='{'host'='master.dev.com', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(1).toString(), format("{'command'='sudo rm -rf /home/codenvy/archives', 'agent'='{'host'='api.dev.com', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(2).toString(), format("{'command'='sudo service codenvy status | grep 'Active: active (running)'; if [ $? -eq 0 ]; then   sudo service codenvy stop; fi; ', 'agent'='{'host'='api.dev.com', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(3).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='master.dev.com', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(4).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='api.dev.com', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(5).toString(), format("PuppetErrorInterrupter{ Expected to be installed 'codenvy' of the version '1.0.0' }; looking on errors in file /var/log/messages of nodes: [" +
+                                                        "{'host':'master.dev.com', 'port':'22', 'user':'%1$s', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'PUPPET_MASTER'}, " +
+                                                        "{'host':'api.dev.com', 'port':'22', 'user':'%1$s', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'API'}]", SYSTEM_USER_NAME));
+
     }
 
 }

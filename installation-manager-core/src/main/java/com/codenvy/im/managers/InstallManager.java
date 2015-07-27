@@ -180,12 +180,11 @@ public class InstallManager {
     }
 
     /**
-     * Reinstall artifact.
+     * Re-install artifact.
      */
     public void performReinstall(Artifact artifact) throws IOException {
         Command command = artifact.getReinstallCommand();
         executeCommand(command);
-
     }
 
     protected String executeCommand(Command command) throws CommandException {

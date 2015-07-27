@@ -526,7 +526,8 @@ public class TestInstallationManagerFacade extends BaseTest {
     }
 
     @Test
-    public void testReinstallCodenvy() {
-        // TODO [ndp]
+    public void testReinstallCodenvy() throws IOException {
+        installationManagerFacade.reinstall(cdecArtifact);
+        verify(installManager).performReinstall(cdecArtifact);
     }
 }

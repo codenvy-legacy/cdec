@@ -788,7 +788,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         if (installedVersion != null) {
             // wait until API server starts
-            commands.add(new CheckInstalledVersionCommand(original, installedVersion));
+            commands.add(new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, installedVersion), nodes, configManager));
         }
 
         return new MacroCommand(commands, "Re-install Codenvy binaries");

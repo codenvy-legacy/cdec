@@ -288,7 +288,7 @@ public class InstallManagerTest extends BaseTest {
         assertEquals(info.getStep(), 1);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "codenvy:1.0.0 is not installable")  // TODO [ndp] there could be another message about "im-install --reinstall" command
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "codenvy:1.0.0 is not installable")
     public void testReInstallAlreadyInstalledArtifact() throws Exception {
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
@@ -303,11 +303,20 @@ public class InstallManagerTest extends BaseTest {
     }
 
     @Test
-    public void testReInstallCodenvy() throws Exception {
-        // TODO [ndp]
+    public void testReinstallCodenvy() throws Exception {
+        Command mockCommand = mock(Command.class);
 
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
+        doReturn(mockCommand).when(artifact).getReinstallCommand();
         installManager.performReinstall(artifact);
+
+        verify(installManager).executeCommand(mockCommand);
     }
 
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = "Re-install of installation manager CLI client isn't supported")
+    public void testReinstallInstallationManagerCli() throws Exception {
+        Artifact artifact = spy(createArtifact(InstallManagerArtifact.NAME));
+        installManager.performReinstall(artifact);
+    }
 }
