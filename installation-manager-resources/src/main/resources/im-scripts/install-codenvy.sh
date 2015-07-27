@@ -178,7 +178,7 @@ askAndInsertProperty() {
 }
 
 executeIMCommand() {
-    ${DIR}/codenvy-cli/bin/codenvy $1 $2 $3 $4 $5 $6 $7 $8 $9
+    ${DIR}/codenvy-cli/bin/codenvy $@
 }
 
 pressAnyKeyToContinueAndClearConsole() {
