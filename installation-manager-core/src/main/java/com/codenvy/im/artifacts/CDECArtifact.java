@@ -21,6 +21,8 @@ import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
 import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandException;
+import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -45,7 +47,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
+import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
@@ -53,18 +57,21 @@ import static com.codenvy.im.utils.Commons.createDtoFromJson;
  */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
+    public static final String NAME = "codenvy";
     private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of(
             InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this, configManager),
             InstallType.MULTI_SERVER, new CDECMultiServerHelper(this, configManager));
 
-    public static final String NAME = "codenvy";
+    protected final String assemblyProperties;
 
     @Inject
     public CDECArtifact(@Named("installation-manager.update_server_endpoint") String updateEndpoint,
                         @Named("installation-manager.download_dir") String downloadDir,
+                        @Named("installation-manager.assembly_properties") String assemblyProperties,
                         HttpTransport transport,
                         ConfigManager configManager) {
         super(NAME, updateEndpoint, downloadDir, transport, configManager);
+        this.assemblyProperties = assemblyProperties;
     }
 
     /** {@inheritDoc} */
@@ -72,27 +79,53 @@ public class CDECArtifact extends AbstractArtifact {
     @Nullable
     public Version getInstalledVersion() throws IOException {
         try {
-            String response;
+            ApiInfo apiInfo;
             try {
-                response = transport.doOption(configManager.getApiEndpoint() + "/", null);
+                String response = transport.doOption(configManager.getApiEndpoint() + "/", null);
+                apiInfo = createDtoFromJson(response, ApiInfo.class);
+                if (apiInfo == null) {
+                    return null; // server is down
+                }
             } catch (IOException e) {
-                return null;
+                return null; // server is down
             }
 
-            ApiInfo apiInfo = createDtoFromJson(response, ApiInfo.class);
-            if (apiInfo == null) {
-                return null;
+            Version version = fetchAssemblyVersion();
+            if (version != null) {
+                return version;
             }
 
             if (apiInfo.getIdeVersion().contains("codenvy.ide.version")) {
-                Config config = configManager.loadInstalledCodenvyConfig();
-                return Version.valueOf(config.getValue(Config.VERSION));
+                return fetchVersionFromPuppetConfig(); // workaround
+            } else {
+                return Version.valueOf(apiInfo.getIdeVersion());
             }
-
-            return Version.valueOf(apiInfo.getIdeVersion());
         } catch (UnknownInstallationTypeException | IOException e) {
             return null;
         }
+    }
+
+    @Nullable
+    protected Version fetchVersionFromPuppetConfig() throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+        String value = config.getValue(Config.VERSION);
+        return value == null ? null : Version.valueOf(value);
+    }
+
+    @Nullable
+    protected Version fetchAssemblyVersion() throws CommandException {
+        String cmd = format("if sudo test -f %1$s; then " +
+                            "   sudo cat %1$s " +
+                            "       | grep assembly.version " +
+                            "       | sed 's/assembly.version\\W*=\\W*\\(.*\\)/\\1/';" +
+                            "fi", assemblyProperties);
+        if (!assemblyProperties.startsWith("/")) { // make it works for tests
+            cmd = cmd.replace("sudo", "");
+        }
+
+        SimpleCommand command = createCommand(cmd);
+        String result = command.execute().trim();
+        return result.isEmpty() ? null : Version.valueOf(result);
     }
 
     /** {@inheritDoc} */

@@ -18,6 +18,7 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
@@ -41,12 +42,16 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -54,6 +59,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -64,7 +70,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
     private IMArtifactLabeledFacade facade;
-    private ConfigManager           mockConfigManager;
+    private ConfigManager configManager;
     private CommandSession          commandSession;
 
     private ByteArrayOutputStream outputStream;
@@ -75,17 +81,17 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws Exception {
-        mockConfigManager = mock(ConfigManager.class);
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
-                                                                                                                        InstallType.SINGLE_SERVER);
-        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
+        configManager = mock(ConfigManager.class);
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
+                                                                                                                    InstallType.SINGLE_SERVER);
+        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(configManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(IMArtifactLabeledFacade.class);
         doReturn(ImmutableList.of("step 1", "step 2")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
         commandSession = mock(CommandSession.class);
 
-        spyCommand = spy(new InstallCommand(mockConfigManager));
+        spyCommand = spy(new InstallCommand(configManager));
         spyCommand.facade = facade;
 
         performBaseMocks(spyCommand, true);
@@ -162,7 +168,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn(false).when(spyCommand).isInstall(any(Artifact.class));
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configManager).prepareInstallProperties(anyString(),
+                                                                                                                          any(Path.class),
                                                                                                                               any(InstallType.class),
                                                                                                                               any(Artifact.class),
                                                                                                                               any(Version.class),
@@ -342,7 +349,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager)
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configManager)
                                                                             .merge(any(Version.class), anyMap(), anyMap());
 
         doThrow(new RuntimeException("Server Error Exception"))
@@ -362,7 +369,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForInstall() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configManager).prepareInstallProperties(anyString(),
+                                                                                                                any(Path.class),
                                                                                                                     any(InstallType.class),
                                                                                                                     any(Artifact.class),
                                                                                                                     any(Version.class),
@@ -411,5 +419,57 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  } ],\n" +
                              "  \"status\" : \"OK\"\n" +
                              "}\n");
+    }
+
+    @Test
+    public void testInstallArtifactFromLocalBinariesFailedIfVersionMissed() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--binaries", "/path/to/file");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"message\" : \"Parameter 'version' is missed\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
+    }
+
+    @Test
+    public void testInstallArtifactFromLocalBinariesFailedIfArtifactMissed() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--binaries", "/path/to/file");
+        commandInvoker.argument("version", "3.10.1");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"message\" : \"Parameter 'artifact' is missed\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
+    }
+
+    @Test
+    public void testInstallArtifactFromLocalBinaries() throws Exception {
+        String versionNumber = "3.10.1";
+        String binaries = "/path/to/file";
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--binaries", binaries);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", versionNumber);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+
+        verify(configManager).prepareInstallProperties(isNull(String.class),
+                                                       eq(Paths.get(binaries)),
+                                                       eq(InstallType.SINGLE_SERVER),
+                                                       eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
+                                                       eq(Version.valueOf(versionNumber)),
+                                                       eq(Boolean.TRUE));
+
+        verify(spyCommand.facade).install(eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
+                                          eq(Version.valueOf(versionNumber)),
+                                          eq(Paths.get(binaries)),
+                                          any(InstallOptions.class));
     }
 }
