@@ -89,7 +89,7 @@ public class TestCDECArtifact extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact("", "", transport, configManager));
+        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager));
 
         // cleanup temp directory
         File remoteTempDir = new File("/tmp/codenvy");
@@ -218,13 +218,13 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void getInstalledVersionShouldReturnNullIfPuppetConfigAbsent() throws Exception {
+    public void testGetInstalledVersionShouldReturnNullIfPuppetConfigAbsent() throws Exception {
         doThrow(UnknownInstallationTypeException.class).when(configManager).loadInstalledCodenvyConfig();
         assertNull(spyCdecArtifact.getInstalledVersion());
     }
 
     @Test
-    public void getInstalledVersionShouldReturnNullIfConfigAbsent() throws Exception {
+    public void testGetInstalledVersionShouldReturnNullIfConfigAbsent() throws Exception {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doThrow(IOException.class).when(configManager).loadInstalledCodenvyConfig();
 
@@ -232,7 +232,7 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void getInstalledVersionShouldReturnNullIfRequestThrowException() throws Exception {
+    public void testGetInstalledVersionShouldReturnNullIfRequestThrowException() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
         doThrow(IOException.class).when(transport).doOption("http://localhost/api/", null);
 
@@ -240,18 +240,26 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void getInstalledVersionShouldReturnVersion() throws Exception {
+    public void testGetInstalledVersionShouldReturnVersion() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
         assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.3.0"));
     }
 
     @Test
-    public void getInstalledVersionShouldReturnNullIfRequestEmpty() throws Exception {
+    public void testGetInstalledVersionShouldReturnNullIfRequestEmpty() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
         doReturn("").when(transport).doOption("http://localhost/api/", null);
 
         assertNull(spyCdecArtifact.getInstalledVersion());
+    }
+
+    @Test
+    public void testGetInstalledVersionFromAssemblyPropertiesFile() throws Exception {
+        prepareSingleNodeEnv(configManager, transport);
+        FileUtils.write(Paths.get(ASSEMBLY_PROPERTIES).toFile(), "assembly.version  =3.11.3.2");
+
+        assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.11.3.2"));
     }
 
     @Test

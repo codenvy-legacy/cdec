@@ -94,7 +94,7 @@ public class DownloadManagerTest extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, transport, configManager));
+        cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager));
         installManagerArtifact = spy(new InstallManagerArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, transport, configManager));
         downloadManager = spy(new DownloadManager(UPDATE_API_ENDPOINT,
                                                   DOWNLOAD_DIR,

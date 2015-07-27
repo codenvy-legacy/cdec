@@ -104,28 +104,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>build-number</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <tasks>
-                                <?SORTPOM IGNORE?>
-                                <echo append="false" file="${project.build.directory}/classes/codenvy/ClientBuildInfo.properties">
-                                    version = ${project.version}
-                                </echo>
-                                <?SORTPOM RESUME?>
-                            </tasks>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
                     <execution>
@@ -156,8 +134,11 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <target>
+                            <tasks>
                                 <?SORTPOM IGNORE?>
+                                <echo append="false" file="${project.build.directory}/classes/codenvy/ClientBuildInfo.properties">
+                                    version = ${project.version}
+                                </echo>
                                 <echo append="false" file="${project.build.directory}/classes/META-INF/services/org.eclipse.che.dto.server.DtoFactoryVisitor">
                                     org.eclipse.che.api.account.server.dto.DtoServerImpls
                                     org.eclipse.che.api.core.server.dto.DtoServerImpls
@@ -172,7 +153,7 @@
                                 <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
                                     <zipfileset dir="${project.build.directory}/classes/META-INF/services/" prefix="META-INF/services" />
                                 </jar>
-                            </target>
+                            </tasks>
                         </configuration>
                     </execution>
                 </executions>

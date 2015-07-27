@@ -403,6 +403,18 @@ public class InstallationManagerFacade {
     /**
      * @throws java.io.FileNotFoundException
      *         if binaries to install given artifact not found
+     * @see com.codenvy.im.managers.InstallManager#performInstallStep
+     */
+    public String install(@Nonnull Artifact artifact,
+                          @Nonnull Version version,
+                          @Nonnull Path binaries,
+                          @Nonnull InstallOptions installOptions) throws IOException {
+        return installManager.performInstallStep(artifact, version, binaries, installOptions);
+    }
+
+    /**
+     * @throws java.io.FileNotFoundException
+     *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performUpdateStep
      */
     public String update(@Nonnull Artifact artifact,
@@ -415,6 +427,19 @@ public class InstallationManagerFacade {
 
         return installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions);
     }
+
+    /**
+     * @throws java.io.FileNotFoundException
+     *         if binaries to install given artifact not found
+     * @see com.codenvy.im.managers.InstallManager#performUpdateStep
+     */
+    public String update(@Nonnull Artifact artifact,
+                         @Nonnull Version version,
+                         @Nonnull Path binaries,
+                         @Nonnull InstallOptions installOptions) throws IOException {
+        return installManager.performUpdateStep(artifact, version, binaries, installOptions);
+    }
+
 
     /**
      * @see com.codenvy.im.managers.InstallManager#waitForStepCompleted(String)
@@ -550,21 +575,25 @@ public class InstallationManagerFacade {
      */
     @Nullable
     public String loadStorageProperty(@Nullable String key) throws IOException {
-        return storageManager.loadProperty(key);
+        return key != null ? storageManager.loadProperty(key) : null;
     }
 
     /**
      * @see com.codenvy.im.managers.StorageManager#storeProperty(String, String)
      */
     public void storeStorageProperty(@Nullable String key, @Nullable String value) throws IOException {
-        storageManager.storeProperty(key, value);
+        if (key != null && value != null) {
+            storageManager.storeProperty(key, value);
+        }
     }
 
     /**
      * @see com.codenvy.im.managers.StorageManager#deleteProperty(String)
      */
     public void deleteStorageProperty(@Nullable String name) throws IOException {
-        storageManager.deleteProperty(name);
+        if (name != null) {
+            storageManager.deleteProperty(name);
+        }
     }
 
     /** Update artifact config property */

@@ -40,8 +40,10 @@ import static org.mockito.Mockito.when;
  * @author Anatoliy Bazko
  */
 public class BaseTest {
+    protected static final String TEST_DIR            = "target";
     protected static final String DOWNLOAD_DIR        = "target/download";
     protected static final String UPDATE_API_ENDPOINT = "update/endpoint";
+    protected static final String ASSEMBLY_PROPERTIES = "target/assembly.properties";
     protected static final String SAAS_API_ENDPOINT   = "saas/endpoint";
     public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
 
@@ -49,6 +51,11 @@ public class BaseTest {
     public void clear() throws Exception {
         if (exists(PUPPET_CONF_FILE)) {
             delete(PUPPET_CONF_FILE);
+        }
+
+        Path props = Paths.get(ASSEMBLY_PROPERTIES);
+        if (exists(props)) {
+            delete(props);
         }
 
         FileUtils.deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());

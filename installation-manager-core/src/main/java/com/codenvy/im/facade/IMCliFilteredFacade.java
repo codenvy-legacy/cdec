@@ -44,6 +44,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -135,6 +136,20 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
+    public String install(@Nonnull Artifact artifact,
+                          @Nonnull Version version,
+                          @Nonnull Path binaries,
+                          @Nonnull InstallOptions installOptions) throws IOException {
+        if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
+            throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be installed");
+        }
+        return super.install(artifact, version, binaries, installOptions);
+    }
+
+    /** {@inheritDoc} */
+
+    /** {@inheritDoc} */
+    @Override
     public String update(@Nonnull Artifact artifact, @Nonnull Version version, @Nonnull InstallOptions installOptions) throws IOException {
         if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
             throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be updated");
@@ -142,6 +157,20 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
         return super.update(artifact, version, installOptions);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String update(@Nonnull Artifact artifact,
+                         @Nonnull Version version,
+                         @Nonnull Path binaries,
+                         @Nonnull InstallOptions installOptions) throws IOException {
+        if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
+            throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be updated");
+        }
+
+        return super.update(artifact, version, binaries, installOptions);
+    }
+
+    /** {@inheritDoc} */
     @Override
     public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
         if (artifact.getName().equals(InstallManagerArtifact.NAME)) {

@@ -239,6 +239,7 @@ public class TestInstallationManagerService extends BaseTest {
         testConfigProperties.put("property2", "value2");
 
         doReturn(testConfigProperties).when(configManager).prepareInstallProperties(null,
+                                                                                    null,
                                                                                     InstallType.SINGLE_SERVER,
                                                                                     createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"),
