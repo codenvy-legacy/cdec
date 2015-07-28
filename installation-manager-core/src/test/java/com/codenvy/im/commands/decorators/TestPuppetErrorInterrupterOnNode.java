@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.nio.file.Files.createDirectory;
+import static java.nio.file.Files.deleteIfExists;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -97,6 +98,8 @@ public class TestPuppetErrorInterrupterOnNode {
     @BeforeMethod
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
+
+        deleteIfExists(BASE_TMP_DIRECTORY);
 
         createDirectory(BASE_TMP_DIRECTORY);
         createDirectory(REPORT_TMP_DIRECTORY);

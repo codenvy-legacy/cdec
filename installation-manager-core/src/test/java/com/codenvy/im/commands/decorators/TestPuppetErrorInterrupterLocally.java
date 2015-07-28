@@ -46,6 +46,7 @@ import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.PUPPET_L
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS;
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.useSudo;
 import static java.nio.file.Files.createDirectory;
+import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.Files.exists;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
@@ -97,6 +98,8 @@ public class TestPuppetErrorInterrupterLocally {
     @BeforeMethod
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
+
+        deleteIfExists(BASE_TMP_DIRECTORY);
 
         createDirectory(BASE_TMP_DIRECTORY);
         createDirectory(REPORT_TMP_DIRECTORY);
