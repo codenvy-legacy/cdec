@@ -60,7 +60,7 @@ uploadCodenvyServerInstallScript() {
     doUpload
 
     [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com:8080/g' ${DESTINATION}/${FILENAME}"
+    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com/g' ${DESTINATION}/${FILENAME}"
 }
 
 uploadCodenvyServerInstallMultiScript() {
@@ -81,7 +81,7 @@ uploadCodenvyServerInstallInstalationManagerScript() {
     doUpload
 
     [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com:8080/g' ${DESTINATION}/${FILENAME}"
+    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com/g' ${DESTINATION}/${FILENAME}"
 }
 
 uploadCodenvySingleServerInstallProperties() {

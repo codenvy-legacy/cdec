@@ -16,7 +16,7 @@
 # from Codenvy S.A..
 #
 
-UPDATE_SERVER="http://updater-nightly.codenvy-dev.com:8080"
+UPDATE_SERVER="http://updater-nightly.codenvy-dev.com"
 UPDATE_SERVICE="${UPDATE_SERVER}/update"
 SAAS_SERVER="http://nightly.codenvy-stg.com"
 TEST_LOG="installation-manager-test.log"
