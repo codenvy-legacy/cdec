@@ -542,6 +542,7 @@ public class TestCDECArtifact extends BaseTest {
 
         Config config = new Config(properties);
         doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig();
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
 
         Command command = spyCdecArtifact.getReinstallCommand();
@@ -566,6 +567,7 @@ public class TestCDECArtifact extends BaseTest {
 
         Config config = new Config(properties);
         doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig();
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
         Command command = spyCdecArtifact.getReinstallCommand();

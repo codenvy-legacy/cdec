@@ -80,15 +80,9 @@ public class CDECArtifact extends AbstractArtifact {
     @Nullable
     public Version getInstalledVersion() throws IOException {
         try {
-            ApiInfo apiInfo;
-            try {
-                String response = transport.doOption(configManager.getApiEndpoint() + "/", null);
-                apiInfo = createDtoFromJson(response, ApiInfo.class);
-                if (apiInfo == null) {
-                    return null; // server is down
-                }
-            } catch (IOException e) {
-                return null; // server is down
+            ApiInfo apiInfo = getApiInfo();
+            if (apiInfo == null) {
+                return null; // API server is down
             }
 
             Version version = fetchAssemblyVersion();
@@ -96,13 +90,23 @@ public class CDECArtifact extends AbstractArtifact {
                 return version;
             }
 
-            if (apiInfo.getIdeVersion().contains("codenvy.ide.version")) {
-                return fetchVersionFromPuppetConfig(); // workaround
-            } else {
+            if (! apiInfo.getIdeVersion().contains("codenvy.ide.version")) {  // workaround
                 return Version.valueOf(apiInfo.getIdeVersion());
             }
+
+            return fetchVersionFromPuppetConfig();
         } catch (UnknownInstallationTypeException | IOException e) {
             return null;
+        }
+    }
+
+    @Nullable
+    private ApiInfo getApiInfo() {
+        try {
+            String response = transport.doOption(configManager.getApiEndpoint() + "/", null);
+            return createDtoFromJson(response, ApiInfo.class);
+        } catch (IOException e) {
+            return null;  // API server is down
         }
     }
 
@@ -219,12 +223,15 @@ public class CDECArtifact extends AbstractArtifact {
     @Override
     public Command getReinstallCommand() throws IOException {
         InstallType installType = configManager.detectInstallationType();
-
         Config config = configManager.loadInstalledCodenvyConfig(installType);
-        String versionProperty = config.getValue(Config.VERSION);
-        Version installedVersion = null;
-        if (versionProperty != null) {
-            installedVersion = Version.valueOf(versionProperty);
+
+        Version installedVersion = getInstalledVersion();
+        if (installedVersion == null) {   // get version info outside API server if it is down
+            installedVersion = fetchAssemblyVersion();
+        }
+
+        if (installedVersion == null) {
+            installedVersion = fetchVersionFromPuppetConfig();
         }
 
         return getHelper(installType).getReinstallCommand(config, installedVersion);
