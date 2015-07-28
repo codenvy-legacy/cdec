@@ -21,8 +21,6 @@
 printAndLog "TEST CASE: Update multi-nodes Codenvy"
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-retrieveInstallLog
-
 installCodenvy ${PREV_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
 auth "admin" "password"
