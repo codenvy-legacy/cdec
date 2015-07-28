@@ -18,7 +18,6 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.ConfigManager;
@@ -39,8 +38,8 @@ import org.apache.karaf.shell.commands.Option;
 import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -75,11 +74,14 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--config", aliases = "-c", description = "Path to the configuration file", required = false)
     private String configFilePath;
 
+    @Option(name = "--binaries", aliases = "-b", description = "Path to binaries to install", required = false)
+    private String binaries;
+
     @Option(name = "--step", aliases = "-s", description = "Particular installation step to perform", required = false)
     private String installStep;
 
-    @Option(name = "--force", aliases = "-f", description = "Force installation in case of splitting process by steps", required = false)
-    private boolean force;
+    @Option(name = "--forceInstall", aliases = "-fi", description = "Force installation in case of splitting process by steps", required = false)
+    private boolean forceInstall;
 
     @Option(name = "--reinstall", aliases = "-r", description = "Re-install Codenvy (binaries only)", required = false)
     private boolean reinstall;
@@ -135,6 +137,14 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected Void doExecuteInstall() throws IOException, JsonParseException, InterruptedException {
+        if (binaries != null) {
+            if (versionNumber == null) {
+                throw new IllegalStateException("Parameter 'version' is missed");
+            } else if (artifactName == null) {
+                throw new IllegalStateException("Parameter 'artifact' is missed");
+            }
+        }
+
         if (artifactName == null) {
             artifactName = CDECArtifact.NAME;
         }
@@ -196,9 +206,11 @@ public class InstallCommand extends AbstractIMCommand {
                 try {
                     String stepId;
                     if (isInstall) {
-                        stepId = facade.install(artifact, version, installOptions);
+                        stepId = binaries != null ? facade.install(artifact, version, Paths.get(binaries), installOptions)
+                                                  : facade.install(artifact, version, installOptions);
                     } else {
-                        stepId = facade.update(artifact, version, installOptions);
+                        stepId = binaries != null ? facade.update(artifact, version, Paths.get(binaries), installOptions)
+                                                  : facade.update(artifact, version, installOptions);
                     }
                     facade.waitForInstallStepCompleted(stepId);
                     InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
@@ -248,27 +260,21 @@ public class InstallCommand extends AbstractIMCommand {
     }
 
     protected void setInstallProperties(InstallOptions options, boolean isInstall) throws IOException {
-        switch (artifactName) {
-            case InstallManagerArtifact.NAME:
-                options.setCliUserHomeDir(System.getProperty("user.home"));
-                options.setConfigProperties(Collections.EMPTY_MAP);
-                break;
-
-            case CDECArtifact.NAME:
-                Map<String, String> properties = configManager.prepareInstallProperties(configFilePath,
-                                                                                        installType,
-                                                                                        createArtifact(artifactName),
-                                                                                        Version.valueOf(versionNumber),
-                                                                                        isInstall);
-                options.setConfigProperties(properties);
-                break;
-            default:
-                throw ArtifactNotFoundException.from(artifactName);
+        if (artifactName.equals(InstallManagerArtifact.NAME)) {
+            options.setCliUserHomeDir(System.getProperty("user.home"));
         }
+
+        Map<String, String> properties = configManager.prepareInstallProperties(configFilePath,
+                                                                                binaries == null ? null : Paths.get(binaries),
+                                                                                installType,
+                                                                                createArtifact(artifactName),
+                                                                                Version.valueOf(versionNumber),
+                                                                                isInstall);
+        options.setConfigProperties(properties);
     }
 
     protected boolean isInstall(Artifact artifact) throws IOException {
-        return (installStep != null && force) || artifact.getInstalledVersion() == null;
+        return (installStep != null && forceInstall) || artifact.getInstalledVersion() == null;
     }
 
     private int getFirstInstallStep() {

@@ -40,7 +40,6 @@ import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.specification.RequestSpecification;
 
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -56,6 +55,7 @@ import org.testng.annotations.Test;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 
@@ -397,6 +397,7 @@ public class TestInstallationManagerServiceContract {
                     try {
                         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
                         doReturn(null).when(configManager).prepareInstallProperties(anyString(),
+                                                                                    any(Path.class),
                                                                                     any(InstallType.class),
                                                                                     any(Artifact.class),
                                                                                     any(Version.class),

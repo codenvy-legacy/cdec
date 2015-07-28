@@ -43,6 +43,8 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -50,6 +52,8 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -167,6 +171,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn(false).when(spyCommand).isInstall(any(Artifact.class));
         doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+                                                                                                                              any(Path.class),
                                                                                                                               any(InstallType.class),
                                                                                                                               any(Artifact.class),
                                                                                                                               any(Version.class),
@@ -367,6 +372,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testEnterInstallOptionsForInstall() throws Exception {
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+                                                                                                                    any(Path.class),
                                                                                                                     any(InstallType.class),
                                                                                                                     any(Artifact.class),
                                                                                                                     any(Version.class),
@@ -415,6 +421,58 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  } ],\n" +
                              "  \"status\" : \"OK\"\n" +
                              "}\n");
+    }
+
+    @Test
+    public void testInstallArtifactFromLocalBinariesFailedIfVersionMissed() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--binaries", "/path/to/file");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"message\" : \"Parameter 'version' is missed\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
+    }
+
+    @Test
+    public void testInstallArtifactFromLocalBinariesFailedIfArtifactMissed() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--binaries", "/path/to/file");
+        commandInvoker.argument("version", "3.10.1");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"message\" : \"Parameter 'artifact' is missed\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
+    }
+
+    @Test
+    public void testInstallArtifactFromLocalBinaries() throws Exception {
+        String versionNumber = "3.10.1";
+        String binaries = "/path/to/file";
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.option("--binaries", binaries);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("version", versionNumber);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+
+        verify(mockConfigManager).prepareInstallProperties(isNull(String.class),
+                                                       eq(Paths.get(binaries)),
+                                                       eq(InstallType.SINGLE_SERVER),
+                                                       eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
+                                                       eq(Version.valueOf(versionNumber)),
+                                                       eq(Boolean.TRUE));
+
+        verify(spyCommand.facade).install(eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
+                                          eq(Version.valueOf(versionNumber)),
+                                          eq(Paths.get(binaries)),
+                                          any(InstallOptions.class));
     }
 
     @Test

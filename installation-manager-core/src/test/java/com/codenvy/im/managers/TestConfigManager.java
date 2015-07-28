@@ -22,6 +22,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -41,6 +42,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static com.codenvy.im.commands.SimpleCommand.createCommand;
+import static java.lang.String.format;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.createFile;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.endsWith;
@@ -189,6 +194,32 @@ public class TestConfigManager extends BaseTest {
         assertEquals(m.get("builder_max_execution_time"), "600");
     }
 
+    @Test
+    public void testLoadCodenvyPropertiesFromBinaries() throws Exception {
+        createDirectories(Paths.get(TEST_DIR, "codenvy", "manifests", "nodes", "single_server"));
+
+        Path parent = Paths.get(TEST_DIR, "codenvy");
+        Path binaries = Paths.get(TEST_DIR, "binaries.zip");
+
+        Path singleServerProps = parent.resolve(Config.SINGLE_SERVER_PROPERTIES);
+        Path singleServerBaseProps = parent.resolve(Config.SINGLE_SERVER_BASE_PROPERTIES);
+
+        createFile(singleServerProps);
+        createFile(singleServerBaseProps);
+        FileUtils.write(singleServerProps.toFile(), "$prop1 = \"1\"\n");
+        FileUtils.write(singleServerBaseProps.toFile(), "$prop2 = \"2\"\n");
+
+        SimpleCommand command = createCommand(format("cd %s; ", parent.toString())
+                                              + format("zip -r %s .", binaries.toAbsolutePath().toString()));
+        command.execute();
+
+        Map<String, String> m = configManager.loadConfigProperties(binaries, InstallType.SINGLE_SERVER);
+
+        assertEquals(m.size(), 2);
+        assertEquals(m.get("prop1"), "1");
+        assertEquals(m.get("prop2"), "2");
+    }
+
     @Test(expectedExceptions = ConfigException.class)
     public void testLoadInstalledCodenvyPropertiesErrorIfFileAbsent() throws Exception {
         Path properties = Paths.get("target/unexisted");
@@ -322,6 +353,7 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesIMArtifact() throws Exception {
         Map<String, String> properties = configManager.prepareInstallProperties(null,
                                                                                 null,
+                                                                                null,
                                                                                 ArtifactFactory.createArtifact(InstallManagerArtifact.NAME),
                                                                                 null,
                                                                                 true);
@@ -335,6 +367,7 @@ public class TestConfigManager extends BaseTest {
         doReturn(properties).when(configManager).loadConfigProperties("file");
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+                                                                                      null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
@@ -350,6 +383,7 @@ public class TestConfigManager extends BaseTest {
         doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+                                                                                      null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
@@ -373,6 +407,7 @@ public class TestConfigManager extends BaseTest {
         }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+                                                                                      null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       artifact,
                                                                                       Version.valueOf("3.1.0"),
@@ -394,6 +429,7 @@ public class TestConfigManager extends BaseTest {
         doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+                                                                                      null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
@@ -411,6 +447,7 @@ public class TestConfigManager extends BaseTest {
         doReturn("key").when(configManager).readSSHKey(any(Path.class));
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+                                                                                      null,
                                                                                       InstallType.MULTI_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
@@ -436,6 +473,7 @@ public class TestConfigManager extends BaseTest {
         doReturn("master").when(configManager).fetchMasterHostName();
 
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+                                                                                      null,
                                                                                       InstallType.MULTI_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),

@@ -46,7 +46,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -239,6 +238,7 @@ public class TestInstallationManagerService extends BaseTest {
         testConfigProperties.put("property2", "value2");
 
         doReturn(testConfigProperties).when(configManager).prepareInstallProperties(null,
+                                                                                    null,
                                                                                     InstallType.SINGLE_SERVER,
                                                                                     createArtifact(ARTIFACT_NAME),
                                                                                     Version.valueOf("3.1.0"),

@@ -57,8 +57,8 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -349,7 +349,12 @@ public class InstallationManagerService {
                 return handleException(new IllegalStateException("There is no appropriate version to install"),
                                        Response.Status.BAD_REQUEST);
             }
-            Map<String, String> properties = configManager.prepareInstallProperties(null, installType, artifact, version, false);
+            Map<String, String> properties = configManager.prepareInstallProperties(null,
+                                                                                    null,
+                                                                                    installType,
+                                                                                    artifact,
+                                                                                    version,
+                                                                                    false);
             final InstallOptions installOptions = new InstallOptions();
             installOptions.setInstallType(installType);
             installOptions.setConfigProperties(properties);
@@ -857,8 +862,8 @@ public class InstallationManagerService {
         LOG.error(e.getMessage(), e);
 
         Response.Status status = Response.Status.NOT_FOUND;
-        JsonStringMapImpl msgBody = new JsonStringMapImpl(ImmutableMap.of("message", e.getMessage(),
-                                                                          "properties", new JsonArrayImpl(e.getProperties())));
+        JsonStringMapImpl msgBody = new JsonStringMapImpl<>(ImmutableMap.of("message", e.getMessage(),
+                                                                            "properties", new JsonArrayImpl<>(e.getProperties())));
         return createResponse(status, msgBody);
     }
 

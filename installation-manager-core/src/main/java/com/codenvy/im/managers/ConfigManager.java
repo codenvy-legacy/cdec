@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
@@ -52,6 +53,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
@@ -397,6 +399,8 @@ public class ConfigManager {
      *
      * @param configFile
      *         file to read properties from, if absent the default properties will be loaded from the update server
+     * @param binaries
+     *          binaries to read codenvy properties from
      * @param installType
      *         installation type
      * @param artifact
@@ -408,6 +412,7 @@ public class ConfigManager {
      *         if any I/O error occurred
      */
     public Map<String, String> prepareInstallProperties(@Nullable String configFile,
+                                                        @Nullable Path binaries,
                                                         InstallType installType,
                                                         Artifact artifact,
                                                         Version version2Install,
@@ -420,17 +425,26 @@ public class ConfigManager {
                 Map<String, String> properties;
 
                 if (isInstall) {
-                    properties = configFile != null ? loadConfigProperties(configFile)
-                                                    : loadCodenvyDefaultProperties(version2Install, installType);
+                    if (binaries != null) {
+                        properties = loadConfigProperties(binaries, installType);
+                    } else if (configFile != null) {
+                        properties = loadConfigProperties(configFile);
+                    } else {
+                        properties = loadCodenvyDefaultProperties(version2Install, installType);
+                    }
 
                     if (installType == InstallType.MULTI_SERVER) {
                         setSSHAccessProperties(properties);
                     }
                 } else { // update
-                    properties = merge(artifact.getInstalledVersion(),
-                                       loadInstalledCodenvyProperties(installType),
-                                       configFile != null ? loadConfigProperties(configFile)
-                                                          : loadCodenvyDefaultProperties(version2Install, installType));
+                    if (binaries != null) {
+                        properties = loadConfigProperties(binaries, installType);
+                    } else {
+                        properties = merge(artifact.getInstalledVersion(),
+                                           loadInstalledCodenvyProperties(installType),
+                                           configFile != null ? loadConfigProperties(configFile)
+                                                              : loadCodenvyDefaultProperties(version2Install, installType));
+                    }
 
                     if (installType == InstallType.MULTI_SERVER) {
                         properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, fetchMasterHostName());  // set puppet master host name
@@ -442,6 +456,20 @@ public class ConfigManager {
             default:
                 throw new ArtifactNotFoundException(artifact);
         }
+    }
+
+    /**
+     * Loads properties from the binaries archive.
+     */
+    protected Map<String, String> loadConfigProperties(Path binaries, InstallType installType) throws IOException {
+        SimpleCommand command = createCommand(format("rm -rf /tmp/codenvy; " +
+                                                     "mkdir /tmp/codenvy/; " +
+                                                     "unzip -o %s -d /tmp/codenvy", binaries.toString()));
+        command.execute();
+
+
+        ConfigManager configManager = new ConfigManager(updateEndpoint, "/tmp/codenvy", transport);
+        return configManager.loadInstalledCodenvyProperties(installType);
     }
 
     public Path getPuppetConfigFile(String configFilename) {
