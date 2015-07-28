@@ -43,14 +43,14 @@ executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/c
 
 auth "admin" "new-password" "http://${NEW_HOSTNAME}"
 
-# verify re-install
+# test re-install
 # remove codenvy binary
 executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps"
 executeSshCommand "sudo rm -rf /home/codenvy-im/codenvy-im-tomcat/webapps"
 
-# re-install
+# preform re-install
 executeIMCommand "im-install" "--reinstall" "codenvy"
-validateExpectedString ".*\"status\"\:\"OK\".*"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"status\".\:.\"SUCCESS\".*\"status\".\:.\"OK\".*"
 
 validateInstalledCodenvyVersion
 
