@@ -28,7 +28,24 @@ validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
 auth "admin" "password"
 
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "--multi" "codenvy" "${LATEST_CODENVY_VERSION}"
+
+# put correct config into binaries
+BINARIES="/home/vagrant/codenvy-im-data/updates/codenvy/${LATEST_CODENVY_VERSION}/codenvy-${LATEST_CODENVY_VERSION}.zip"
+executeSshCommand "rm -rf /tmp/codenvy"
+executeSshCommand "unzip ${BINARIES} -d /tmp/codenvy"
+
+executeSshCommand "cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | grep '$version\\W' | sed 's/\\W*\$version\\W*=\\W*\"\\(.*\\)\"/\\1/'"
+LATEST_PUPPET_VERSION=${OUTPUT}
+
+executeSshCommand "cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp"
+executeSshCommand "cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp"
+executeSshCommand "cp /etc/puppet/manifests/nodes/multi_server/nodes.pp /tmp/codenvy/manifests/nodes/multi_server/nodes.pp"
+executeSshCommand "sed -i s/${PREV_CODENVY_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp"
+executeSshCommand "sed -i s/${PREV_CODENVY_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp"
+executeSshCommand "cd /tmp/codenvy && zip -r /tmp/codenvy.zip ."
+
+# install from local folder
+executeIMCommand "im-install" "--multi" "--binaries=/tmp/codenvy.zip" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 auth "admin" "password"
 
