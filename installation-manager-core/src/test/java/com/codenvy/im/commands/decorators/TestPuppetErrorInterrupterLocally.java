@@ -35,7 +35,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -46,6 +45,9 @@ import java.util.regex.Pattern;
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.PUPPET_LOG_FILE;
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS;
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.useSudo;
+import static java.nio.file.Files.createDirectory;
+import static java.nio.file.Files.exists;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -58,10 +60,10 @@ import static org.testng.AssertJUnit.assertTrue;
 public class TestPuppetErrorInterrupterLocally {
     static final int MOCK_COMMAND_TIMEOUT_MILLIS = READ_LOG_TIMEOUT_MILLIS * 16;
 
-    static final Path BASE_TMP_DIRECTORY   = Paths.get("target/tmp");
-    static final Path REPORT_TMP_DIRECTORY = Paths.get("target/tmp/report");
-    static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test");
-    static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log");
+    static final Path BASE_TMP_DIRECTORY   = Paths.get("target/tmp").toAbsolutePath();
+    static final Path REPORT_TMP_DIRECTORY = Paths.get("target/tmp/report").toAbsolutePath();
+    static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test").toAbsolutePath();
+    static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log").toAbsolutePath();
 
     static final Path ORIGIN_PUPPET_LOG = PUPPET_LOG_FILE;
 
@@ -96,10 +98,10 @@ public class TestPuppetErrorInterrupterLocally {
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        Files.createDirectory(BASE_TMP_DIRECTORY);
-        Files.createDirectory(REPORT_TMP_DIRECTORY);
-        Files.createDirectory(LOG_TMP_DIRECTORY);
-        Files.createDirectory(TEST_TMP_DIRECTORY);
+        createDirectory(BASE_TMP_DIRECTORY);
+        createDirectory(REPORT_TMP_DIRECTORY);
+        createDirectory(LOG_TMP_DIRECTORY);
+        createDirectory(TEST_TMP_DIRECTORY);
 
         // create puppet log file
         Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages");
@@ -204,16 +206,16 @@ public class TestPuppetErrorInterrupterLocally {
 
         Path report = Paths.get(pathToReportMatcher.group());
         assertNotNull(report);
-        assertTrue(Files.exists(report));
+        assertTrue(exists(report));
 
         CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
         Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(PUPPET_LOG_FILE.getFileName());
-        assertTrue(Files.exists(puppetLogFile));
+        assertTrue(exists(puppetLogFile));
         String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
         assertEquals(puppetLogFileContent, expectedContentOfLogFile);
 
         Path imLogfile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
-        assertTrue(Files.exists(imLogfile));
+        assertTrue(exists(imLogfile));
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
@@ -311,7 +313,7 @@ public class TestPuppetErrorInterrupterLocally {
     }
 
     @AfterMethod
-    public void tearDown() throws InterruptedException {
+    public void tearDown() throws InterruptedException, IOException {
         PUPPET_LOG_FILE = ORIGIN_PUPPET_LOG;
         useSudo = true;
 
@@ -319,6 +321,6 @@ public class TestPuppetErrorInterrupterLocally {
         PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
         PuppetErrorReport.useSudo = true;
 
-        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+        deleteDirectory(BASE_TMP_DIRECTORY.toFile());
     }
 }

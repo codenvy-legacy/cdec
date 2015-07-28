@@ -25,6 +25,7 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -43,6 +44,8 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.nio.file.Files.createDirectory;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -55,10 +58,10 @@ import static org.testng.AssertJUnit.assertTrue;
 public class TestPuppetErrorInterrupterOnNode {
     static final int MOCK_COMMAND_TIMEOUT_MILLIS = PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS * 16;
 
-    static final Path BASE_TMP_DIRECTORY   = Paths.get("target/tmp");
-    static final Path REPORT_TMP_DIRECTORY = Paths.get("target/tmp/report");
-    static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test");
-    static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log");
+    static final Path BASE_TMP_DIRECTORY   = Paths.get("target/tmp").toAbsolutePath();
+    static final Path REPORT_TMP_DIRECTORY = Paths.get("target/tmp/report").toAbsolutePath();
+    static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test").toAbsolutePath();
+    static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log").toAbsolutePath();
 
     static final String SYSTEM_USER_NAME = System.getProperty("user.name");
 
@@ -76,29 +79,29 @@ public class TestPuppetErrorInterrupterOnNode {
     NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "127.0.0.1", SYSTEM_USER_NAME);
 
     String logWithoutErrorMessages =
-        "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
-        + "Jun  8 15:17:31 test systemd[1]: Time has been changed\n"
-        + "Jun  8 15:17:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:17:42 test puppet-agent[22754]: Finished catalog run in 1.83 seconds\n"
-        + "Jun  8 15:22:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.23 seconds\n"
-        + "Jun  8 15:22:42 test puppet-agent[23240]: Finished catalog run in 1.95 seconds\n"
-        + "Jun  8 15:27:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.12 seconds\n"
-        + "Jun  8 15:27:42 test puppet-agent[23713]: Finished catalog run in 2.01 seconds\n"
-        + "Jun  8 15:51:51 test systemd[1]: Time has been changed\n"
-        + "Jun  8 15:51:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
-        + "Jun  8 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
+            "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
+            + "Jun  8 15:17:31 test systemd[1]: Time has been changed\n"
+            + "Jun  8 15:17:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 15:17:42 test puppet-agent[22754]: Finished catalog run in 1.83 seconds\n"
+            + "Jun  8 15:22:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.23 seconds\n"
+            + "Jun  8 15:22:42 test puppet-agent[23240]: Finished catalog run in 1.95 seconds\n"
+            + "Jun  8 15:27:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.12 seconds\n"
+            + "Jun  8 15:27:42 test puppet-agent[23713]: Finished catalog run in 2.01 seconds\n"
+            + "Jun  8 15:51:51 test systemd[1]: Time has been changed\n"
+            + "Jun  8 15:51:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
+            + "Jun  8 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+            + "Jun  8 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
 
     @BeforeMethod
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        Files.createDirectory(BASE_TMP_DIRECTORY);
-        Files.createDirectory(REPORT_TMP_DIRECTORY);
-        Files.createDirectory(LOG_TMP_DIRECTORY);
-        Files.createDirectory(TEST_TMP_DIRECTORY);
+        createDirectory(BASE_TMP_DIRECTORY);
+        createDirectory(REPORT_TMP_DIRECTORY);
+        createDirectory(LOG_TMP_DIRECTORY);
+        createDirectory(TEST_TMP_DIRECTORY);
 
         // create puppet log file
         Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages").toAbsolutePath();  // absolute path is needed to execute ssh commands
@@ -114,11 +117,11 @@ public class TestPuppetErrorInterrupterOnNode {
         // prepare Codenvy Config
         doReturn(InstallType.MULTI_SERVER).when(mockConfigManager).detectInstallationType();
         doReturn(new Config(ImmutableMap.of(
-            Config.HOST_URL, "localhost",
-            Config.ADMIN_LDAP_USER_NAME, "admin",
-            Config.SYSTEM_LDAP_PASSWORD, "password"
-        )))
-            .when(mockConfigManager).loadInstalledCodenvyConfig();
+                Config.HOST_URL, "localhost",
+                Config.ADMIN_LDAP_USER_NAME, "admin",
+                Config.SYSTEM_LDAP_PASSWORD, "password"
+                                           )))
+                .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
@@ -126,8 +129,8 @@ public class TestPuppetErrorInterrupterOnNode {
         final String[] failMessage = {null};
 
         final String puppetErrorMessage =
-            "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
-            "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r";
+                "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
+                "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r";
 
         doAnswer(new Answer() {
             @Override
@@ -298,13 +301,13 @@ public class TestPuppetErrorInterrupterOnNode {
     }
 
     @AfterMethod
-    public void tearDown() throws InterruptedException {
+    public void tearDown() throws InterruptedException, IOException {
         PuppetErrorInterrupter.PUPPET_LOG_FILE = ORIGIN_PUPPET_LOG;
         PuppetErrorInterrupter.useSudo = true;
 
         PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
         PuppetErrorReport.useSudo = true;
 
-        FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+        deleteDirectory(BASE_TMP_DIRECTORY.toFile());
     }
 }
