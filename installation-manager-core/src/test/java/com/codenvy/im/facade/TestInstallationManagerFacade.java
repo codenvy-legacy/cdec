@@ -524,4 +524,10 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         verify(installManager).getUpdateStepInfo("id");
     }
+
+    @Test
+    public void testReinstallCodenvy() throws IOException {
+        installationManagerFacade.reinstall(cdecArtifact);
+        verify(installManager).performReinstall(cdecArtifact);
+    }
 }

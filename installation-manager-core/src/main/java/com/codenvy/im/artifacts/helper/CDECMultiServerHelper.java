@@ -33,6 +33,7 @@ import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -752,5 +753,44 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             commands.add(new CheckInstalledVersionCommand(original, installedVersion));
         }
         return new MacroCommand(commands, "Change config commands");
+    }
+
+    /**
+     * - stop Codenvy API server
+     * - remove /home/codenvy/archives on nodes
+     * - remove /home/codenvy-im/archives on puppet master node
+     * - force applying updated puppet config for puppet agent on API node
+     * - wait until Codenvy API server be started
+     */
+    @Override
+    public Command getReinstallCommand(Config config, @Nullable Version installedVersion) throws IOException {
+        final List<NodeConfig> nodes = extractConfigsFrom(config);
+        NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
+
+        List<Command> commands = new ArrayList<>();
+
+        // remove /home/codenvy/archives and /home/codenvy-im/archives
+        for (NodeConfig node : nodes) {
+            if (node.getType() == NodeConfig.NodeType.PUPPET_MASTER) {
+                commands.add(createCommand("sudo rm -rf /home/codenvy-im/archives", node));
+            } else {
+                commands.add(createCommand("sudo rm -rf /home/codenvy/archives", node));
+            }
+        }
+
+        // stop Codenvy API server
+        commands.add(createStopServiceCommand("codenvy", apiNode));
+
+        // force applying puppet config for puppet agent
+        for (NodeConfig node : nodes) {
+            commands.add(createForcePuppetAgentCommand(node));
+        }
+
+        if (installedVersion != null) {
+            // wait until API server starts
+            commands.add(new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, installedVersion), nodes, configManager));
+        }
+
+        return new MacroCommand(commands, "Re-install Codenvy binaries");
     }
 }

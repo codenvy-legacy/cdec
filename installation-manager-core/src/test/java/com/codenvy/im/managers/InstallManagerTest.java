@@ -301,4 +301,22 @@ public class InstallManagerTest extends BaseTest {
 
         installManager.performInstallStep(artifact, version, pathToBinaries, options);
     }
+
+    @Test
+    public void testReinstallCodenvy() throws Exception {
+        Command mockCommand = mock(Command.class);
+
+        Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
+        doReturn(mockCommand).when(artifact).getReinstallCommand();
+        installManager.performReinstall(artifact);
+
+        verify(installManager).executeCommand(mockCommand);
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = "Re-install of installation manager CLI client isn't supported")
+    public void testReinstallInstallationManagerCli() throws Exception {
+        Artifact artifact = spy(createArtifact(InstallManagerArtifact.NAME));
+        installManager.performReinstall(artifact);
+    }
 }
