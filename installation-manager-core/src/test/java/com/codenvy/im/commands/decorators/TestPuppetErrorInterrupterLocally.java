@@ -107,7 +107,7 @@ public class TestPuppetErrorInterrupterLocally {
         createDirectory(TEST_TMP_DIRECTORY);
 
         // create puppet log file
-        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages");
+        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve(PUPPET_LOG_FILE.getFileName());
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, mockConfigManager));

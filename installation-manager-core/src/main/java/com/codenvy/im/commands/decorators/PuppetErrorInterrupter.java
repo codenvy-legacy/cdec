@@ -46,8 +46,7 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
 
-    // TODO [ndp] Roman is going to change puppet to log into file '/var/log/puppet/puppet-agent.log'
-    public static Path PUPPET_LOG_FILE = Paths.get("/var/log/messages");
+    public static Path PUPPET_LOG_FILE = Paths.get("/var/log/puppet/puppet-agent.log");
 
     public static final int READ_LOG_TIMEOUT_MILLIS = 200;
     public static final int SELECTION_LINE_NUMBER   = 20;

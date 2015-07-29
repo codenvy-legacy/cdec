@@ -44,6 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.PUPPET_LOG_FILE;
 import static java.nio.file.Files.createDirectory;
 import static java.nio.file.Files.deleteIfExists;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -107,7 +108,7 @@ public class TestPuppetErrorInterrupterOnNode {
         createDirectory(TEST_TMP_DIRECTORY);
 
         // create puppet log file
-        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve("messages").toAbsolutePath();  // absolute path is needed to execute ssh commands
+        Path puppetLogFile = LOG_TMP_DIRECTORY.resolve(PUPPET_LOG_FILE.getFileName()).toAbsolutePath();  // absolute path is needed to execute ssh commands
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
 
         testInterrupter = spy(new PuppetErrorInterrupter(mockCommand, Collections.singletonList(testNode), mockConfigManager));
@@ -127,7 +128,7 @@ public class TestPuppetErrorInterrupterOnNode {
                 .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
-    //    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+//      @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public enum PuppetError {
     COULD_NOT_RETRIEVE_CATALOG(
             new Function<String, Boolean>() {
-                final Pattern identifyPattern = Pattern.compile("puppet-agent\\[\\d*\\]: Could not retrieve catalog from remote server");
+                final Pattern identifyPattern = Pattern.compile("Could not retrieve catalog from remote server");
 
                 @Nullable
                 @Override
@@ -41,14 +41,13 @@ public enum PuppetError {
     DEPENDENCY_HAS_FAILURES(
             Pattern.compile("Dependency .* has failures: true"),
             new Function<String, Boolean>() {
-                final Pattern identifyPattern = Pattern.compile("puppet-agent\\[\\d*\\]: (.*) Dependency .* has failures: true");
+                final Pattern identifyPattern = Pattern.compile("Dependency .* has failures: true");
 
                 @Nullable
                 @Override
                 public Boolean apply(@Nullable String line) {
                     return (line != null)
-                           && !line.contains("(/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant])")
-                           // issue CDEC-264
+                           && !line.contains("/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]")   // issue CDEC-264
                            && identifyPattern.matcher(line).find();
                 }
             }

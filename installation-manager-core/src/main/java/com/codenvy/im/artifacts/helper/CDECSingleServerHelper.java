@@ -168,8 +168,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                          "  default_schedules = false\\n" +
                                          "  certname = %s\\n" +
                                          "  runinterval = 300\\n" +
-                                         "  configtimeout = 600\\n" +
-                                         "  syslogfacility = local6\\n/g' /etc/puppet/puppet.conf", config.getHostUrl()))),
+                                         "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
+                    // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
+                    createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'")),
                                         "Configure puppet agent");
 
             case 5:

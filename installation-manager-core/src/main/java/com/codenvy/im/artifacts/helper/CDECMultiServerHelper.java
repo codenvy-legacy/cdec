@@ -262,8 +262,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                       "  pluginsync = true\\n" +
                                                       "  report = true\\n" +
                                                       "  default_schedules = false\\n" +
-                                                      "  certname = %s\\n" +
-                                                      "  syslogfacility = local6\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
+                                                      "  certname = %s\\n/g' /etc/puppet/puppet.conf", node.getHost()), node));
+
+                    // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
+                    commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'", node));
                 }
 
                 return new MacroCommand(commands, "Configure puppet agents on each node");
