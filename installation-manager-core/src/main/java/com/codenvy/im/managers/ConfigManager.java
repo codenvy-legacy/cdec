@@ -63,8 +63,7 @@ import static org.apache.commons.io.FileUtils.readFileToString;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigManager {
-    public static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
-    public static final Pattern PROP_TEMPLATE     = Pattern.compile("\\s*\\$([^\\s]*)\\s*=\\s*\"([^\"]*)\".*");
+    public static final Pattern PROP_TEMPLATE = Pattern.compile("\\s*\\$([^\\s]*)\\s*=\\s*\"([^\"]*)\".*");
 
     private final HttpTransport transport;
     private final String        updateEndpoint;
@@ -397,7 +396,7 @@ public class ConfigManager {
      * @param configFile
      *         file to read properties from, if absent the default properties will be loaded from the update server
      * @param binaries
-     *          binaries to read codenvy properties from
+     *         binaries to read codenvy properties from
      * @param installType
      *         installation type
      * @param artifact
@@ -448,7 +447,6 @@ public class ConfigManager {
                     }
                 }
 
-                setTemplatesProperties(properties);
                 return properties;
             default:
                 throw new ArtifactNotFoundException(artifact);
@@ -471,22 +469,6 @@ public class ConfigManager {
 
     public Path getPuppetConfigFile(String configFilename) {
         return Paths.get(puppetBaseDir).resolve(configFilename);
-    }
-
-    /**
-     * It's allowed to use ${} templates to set properties values.
-     */
-    private void setTemplatesProperties(Map<String, String> properties) {
-        for (Map.Entry<String, String> e : properties.entrySet()) {
-            String key = e.getKey();
-            String value = e.getValue();
-
-            Matcher matcher = VARIABLE_TEMPLATE.matcher(value);
-            if (matcher.find()) {
-                String newValue = properties.get(matcher.group(1));
-                properties.put(key, newValue);
-            }
-        }
     }
 
     /**
