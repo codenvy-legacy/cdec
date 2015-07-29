@@ -448,26 +448,6 @@ public class TestConfigManager extends BaseTest {
     }
 
     @Test
-    public void testPrepareInstallPropertiesLoadPropertiesUseTemplates() throws Exception {
-        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b", "c", "${a}"));
-
-        doReturn(properties).when(configManager).loadConfigProperties("file");
-        doReturn("key").when(configManager).readSSHKey(any(Path.class));
-
-        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
-                                                                                      null,
-                                                                                      InstallType.MULTI_SERVER,
-                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"),
-                                                                                      true);
-        assertEquals(actualProperties.size(), 4);
-        assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("c"), "b");
-        assertEquals(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY), System.getProperty("user.name"));
-        assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
-    }
-
-    @Test
     public void testPrepareInstallPropertiesLoadDefaultPropertiesUpdateMultiServerUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "1"));
 
