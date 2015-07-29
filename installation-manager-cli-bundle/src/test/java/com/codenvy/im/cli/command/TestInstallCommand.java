@@ -20,6 +20,7 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -47,6 +48,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -70,7 +72,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
     private IMArtifactLabeledFacade facade;
-    private ConfigManager configManager;
+    private ConfigManager           mockConfigManager;
     private CommandSession          commandSession;
 
     private ByteArrayOutputStream outputStream;
@@ -81,17 +83,17 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws Exception {
-        configManager = mock(ConfigManager.class);
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
-                                                                                                                    InstallType.SINGLE_SERVER);
-        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(configManager)
+        mockConfigManager = mock(ConfigManager.class);
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
+                                                                                                                        InstallType.SINGLE_SERVER);
+        doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(IMArtifactLabeledFacade.class);
         doReturn(ImmutableList.of("step 1", "step 2")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
         commandSession = mock(CommandSession.class);
 
-        spyCommand = spy(new InstallCommand(configManager));
+        spyCommand = spy(new InstallCommand(mockConfigManager));
         spyCommand.facade = facade;
 
         performBaseMocks(spyCommand, true);
@@ -168,8 +170,8 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void testEnterInstallOptionsForUpdate() throws Exception {
         doReturn(false).when(spyCommand).isInstall(any(Artifact.class));
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configManager).prepareInstallProperties(anyString(),
-                                                                                                                          any(Path.class),
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+                                                                                                                              any(Path.class),
                                                                                                                               any(InstallType.class),
                                                                                                                               any(Artifact.class),
                                                                                                                               any(Version.class),
@@ -349,7 +351,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testListInstalledArtifactsWhenServiceError() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(configManager)
+        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager)
                                                                             .merge(any(Version.class), anyMap(), anyMap());
 
         doThrow(new RuntimeException("Server Error Exception"))
@@ -369,8 +371,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForInstall() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(configManager).prepareInstallProperties(anyString(),
-                                                                                                                any(Path.class),
+        doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
+                                                                                                                    any(Path.class),
                                                                                                                     any(InstallType.class),
                                                                                                                     any(Artifact.class),
                                                                                                                     any(Version.class),
@@ -460,7 +462,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         CommandInvoker.Result result = commandInvoker.invoke();
 
-        verify(configManager).prepareInstallProperties(isNull(String.class),
+        verify(mockConfigManager).prepareInstallProperties(isNull(String.class),
                                                        eq(Paths.get(binaries)),
                                                        eq(InstallType.SINGLE_SERVER),
                                                        eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
@@ -471,5 +473,44 @@ public class TestInstallCommand extends AbstractTestCommand {
                                           eq(Version.valueOf(versionNumber)),
                                           eq(Paths.get(binaries)),
                                           any(InstallOptions.class));
+    }
+
+    @Test
+    public void testReinstallCodenvy() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.option("--reinstall", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"artifacts\" : [ {\n"
+                             + "    \"artifact\" : \"codenvy\",\n"
+                             + "    \"status\" : \"SUCCESS\"\n"
+                             + "  } ],\n"
+                             + "  \"status\" : \"OK\"\n"
+                             + "}\n");
+
+        verify(facade).reinstall(createArtifact(CDECArtifact.NAME));
+    }
+
+    @Test
+    public void testReinstallImCli() throws Exception {
+        doThrow(new UnsupportedOperationException("error message")).when(facade).reinstall(createArtifact(InstallManagerArtifact.NAME));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", InstallManagerArtifact.NAME);
+        commandInvoker.option("--reinstall", Boolean.TRUE);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n"
+                             + "  \"artifacts\" : [ {\n"
+                             + "    \"artifact\" : \"installation-manager-cli\",\n"
+                             + "    \"status\" : \"FAILURE\"\n"
+                             + "  } ],\n"
+                             + "  \"message\" : \"error message\",\n"
+                             + "  \"status\" : \"ERROR\"\n"
+                             + "}\n");
     }
 }

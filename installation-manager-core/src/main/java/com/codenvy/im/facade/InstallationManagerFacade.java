@@ -624,4 +624,11 @@ public class InstallationManagerFacade {
     public Version getLatestInstallableVersion(Artifact artifact) throws IOException {
         return artifact.getLatestInstallableVersion();
     }
+
+    /**
+     * @see com.codenvy.im.managers.InstallManager#performReinstall(com.codenvy.im.artifacts.Artifact)
+     */
+    public void reinstall(Artifact artifact) throws IOException {
+        installManager.performReinstall(artifact);
+    }
 }

@@ -34,7 +34,6 @@ import org.testng.annotations.Test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -97,7 +96,7 @@ public class TestConfigManager extends BaseTest {
         Path confFile = Paths.get("target", "conf.properties");
         FileUtils.write(confFile.toFile(), "user=1\npwd=2\n");
 
-        doThrow(new IOException("error")).when(configManager).doLoad(any(InputStream.class));
+        doThrow(new IOException("error")).when(configManager).doLoadCodenvyProperties(any(Path.class));
         configManager.loadConfigProperties(confFile);
     }
 
@@ -142,7 +141,7 @@ public class TestConfigManager extends BaseTest {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        doThrow(new IOException("error")).when(configManager).doLoad(any(InputStream.class));
+        doThrow(new IOException("error")).when(configManager).doLoadCodenvyProperties(any(Path.class));
 
         configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
@@ -184,14 +183,23 @@ public class TestConfigManager extends BaseTest {
                                              "  # (Mandatory) builder_max_execution_time -  max execution time in seconds for build process.\n" +
                                              "  # If process doesn't end before this time it may be terminated forcibly.\n" +
                                              "  $builder_max_execution_time = \"600\"\n" +
-                                             "\n");
+                                             "  $empty = \"\"\n" +
+                                             "  #\n" +
+                                             "  $node_ssh_user_private_key = \"-----BEGIN RSA PRIVATE KEY-----\n" +
+                                             "aaasdf3adsfasfasfasfdsafsafasdfasdfasdfasfdasdfasdfasdfasdfasdff\n" +
+                                             "\"\n" +
+                                             "  #\n" +
+                                             "  #\n");
 
         doReturn(ImmutableList.of(properties).iterator()).when(configManager)
                                                          .getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
         Map<String, String> m = configManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
-        assertEquals(m.size(), 2);
+        assertEquals(m.size(), 4);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
+        assertEquals(m.get("empty"), "");
+        assertEquals(m.get("node_ssh_user_private_key"),
+                     "-----BEGIN RSA PRIVATE KEY-----\naaasdf3adsfasfasfasfdsafsafasdfasdfasdfasfdasdfasdfasdfasdfasdff\n");
     }
 
     @Test
@@ -437,26 +445,6 @@ public class TestConfigManager extends BaseTest {
         assertEquals(actualProperties.size(), 2);
         assertEquals(actualProperties.get("a"), "1");
         assertEquals(actualProperties.get("b"), "2");
-    }
-
-    @Test
-    public void testPrepareInstallPropertiesLoadPropertiesUseTemplates() throws Exception {
-        Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b", "c", "${a}"));
-
-        doReturn(properties).when(configManager).loadConfigProperties("file");
-        doReturn("key").when(configManager).readSSHKey(any(Path.class));
-
-        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
-                                                                                      null,
-                                                                                      InstallType.MULTI_SERVER,
-                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                      Version.valueOf("3.1.0"),
-                                                                                      true);
-        assertEquals(actualProperties.size(), 4);
-        assertEquals(actualProperties.get("a"), "b");
-        assertEquals(actualProperties.get("c"), "b");
-        assertEquals(actualProperties.get(Config.NODE_SSH_USER_NAME_PROPERTY), System.getProperty("user.name"));
-        assertEquals(actualProperties.get(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY), "key");
     }
 
     @Test

@@ -29,6 +29,7 @@ import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.InstallResponse;
 import com.codenvy.im.response.ResponseCode;
 import com.codenvy.im.utils.Version;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.karaf.shell.commands.Argument;
@@ -82,6 +83,9 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--forceInstall", aliases = "-fi", description = "Force installation in case of splitting process by steps", required = false)
     private boolean forceInstall;
 
+    @Option(name = "--reinstall", aliases = "-r", description = "Re-install Codenvy (binaries only)", required = false)
+    private boolean reinstall;
+
     public InstallCommand() {
         this.configManager = INJECTOR.getInstance(ConfigManager.class);
     }
@@ -96,8 +100,39 @@ public class InstallCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         if (list) {
             doExecuteListInstalledArtifacts();
+        } else if (reinstall) {
+            doExecuteReinstall();
         } else {
             doExecuteInstall();
+        }
+    }
+
+    private void doExecuteReinstall() throws JsonParseException, JsonProcessingException {
+        if (artifactName == null) {
+            artifactName = CDECArtifact.NAME;
+        }
+
+        console.showProgressor();
+
+        InstallArtifactInfo installArtifactInfo = new InstallArtifactInfo();
+        installArtifactInfo.setArtifact(artifactName);
+
+        InstallResponse installResponse = new InstallResponse();
+        installResponse.setArtifacts(ImmutableList.of(installArtifactInfo));
+
+        try {
+            facade.reinstall(createArtifact(artifactName));
+            installArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
+            installResponse.setStatus(ResponseCode.OK);
+            console.println(toJson(installResponse));
+
+        } catch (Exception e) {
+            installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
+            installResponse.setStatus(ResponseCode.ERROR);
+            installResponse.setMessage(e.getMessage());
+            console.printResponseExitInError(installResponse);
+        } finally {
+            console.hideProgressor();
         }
     }
 
@@ -157,7 +192,6 @@ public class InstallCommand extends AbstractIMCommand {
         InstallResponse installResponse = new InstallResponse();
         installResponse.setStatus(ResponseCode.OK);
         installResponse.setArtifacts(ImmutableList.of(installArtifactInfo));
-
 
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);

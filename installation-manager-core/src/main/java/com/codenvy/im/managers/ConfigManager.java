@@ -58,11 +58,12 @@ import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
+import static org.apache.commons.io.FileUtils.readFileToString;
 
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigManager {
-    private static final Pattern VARIABLE_TEMPLATE = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
+    public static final Pattern PROP_TEMPLATE = Pattern.compile("\\s*\\$([^\\s]*)\\s*=\\s*\"([^\"]*)\".*");
 
     private final HttpTransport transport;
     private final String        updateEndpoint;
@@ -85,8 +86,8 @@ public class ConfigManager {
             throw new FileNotFoundException(format("Configuration file '%s' not found", confFile.toString()));
         }
 
-        try (InputStream in = newInputStream(confFile)) {
-            return doLoad(in);
+        try {
+            return doLoadCodenvyProperties(confFile);
         } catch (IOException e) {
             throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
@@ -111,8 +112,8 @@ public class ConfigManager {
             throw new IOException("Can't download installation properties. " + e.getMessage(), e);
         }
 
-        try (InputStream in = newInputStream(properties)) {
-            return doLoad(in);
+        try {
+            return doLoadCodenvyProperties(properties);
         } catch (IOException e) {
             throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
@@ -164,19 +165,8 @@ public class ConfigManager {
         while (files.hasNext()) {
             Path propertiesFile = files.next();
 
-            try (InputStream in = newInputStream(propertiesFile)) {
-                Map<String, String> m = doLoad(in);
-
-                for (Map.Entry<String, String> e : m.entrySet()) {
-                    String key = e.getKey().trim();
-                    if (key.startsWith("$")) {
-                        key = key.substring(1); // removes '$'
-                        String value = e.getValue().substring(1, e.getValue().length() - 1); // removes "
-
-                        properties.put(key, value);
-                    }
-                }
-
+            try {
+                properties.putAll(doLoadInstalledCodenvyProperties(propertiesFile));
             } catch (IOException e) {
                 throw new ConfigException(format("Can't load Codenvy properties: %s", e.getMessage()), e);
             }
@@ -198,19 +188,25 @@ public class ConfigManager {
         }
     }
 
-    protected Map<String, String> doLoad(InputStream in) throws IOException {
-        Properties properties = new Properties();
-        properties.load(in);
-
+    protected Map<String, String> doLoadInstalledCodenvyProperties(Path file) throws IOException {
         Map<String, String> m = new HashMap<>();
-        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            String key = entry.getKey().toString().toLowerCase();
-            String value = entry.getValue().toString();
 
-            m.put(key, value);
+        String data = readFileToString(file.toFile());
+        Matcher matcher = PROP_TEMPLATE.matcher(data);
+        while (matcher.find()) {
+            m.put(matcher.group(1), matcher.group(2));
         }
 
         return m;
+    }
+
+    protected Map<String, String> doLoadCodenvyProperties(Path file) throws IOException {
+        try (InputStream in = newInputStream(file)) {
+            Properties properties = new Properties();
+            properties.load(in);
+
+            return (Map)properties;
+        }
     }
 
     /** @return list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs. */
@@ -400,7 +396,7 @@ public class ConfigManager {
      * @param configFile
      *         file to read properties from, if absent the default properties will be loaded from the update server
      * @param binaries
-     *          binaries to read codenvy properties from
+     *         binaries to read codenvy properties from
      * @param installType
      *         installation type
      * @param artifact
@@ -451,7 +447,6 @@ public class ConfigManager {
                     }
                 }
 
-                setTemplatesProperties(properties);
                 return properties;
             default:
                 throw new ArtifactNotFoundException(artifact);
@@ -474,22 +469,6 @@ public class ConfigManager {
 
     public Path getPuppetConfigFile(String configFilename) {
         return Paths.get(puppetBaseDir).resolve(configFilename);
-    }
-
-    /**
-     * It's allowed to use ${} templates to set properties values.
-     */
-    private void setTemplatesProperties(Map<String, String> properties) {
-        for (Map.Entry<String, String> e : properties.entrySet()) {
-            String key = e.getKey();
-            String value = e.getValue();
-
-            Matcher matcher = VARIABLE_TEMPLATE.matcher(value);
-            if (matcher.find()) {
-                String newValue = properties.get(matcher.group(1));
-                properties.put(key, newValue);
-            }
-        }
     }
 
     /**

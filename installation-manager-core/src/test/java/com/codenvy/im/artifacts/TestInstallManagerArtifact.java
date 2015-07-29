@@ -130,4 +130,9 @@ public class TestInstallManagerArtifact {
     public void testUpdateConfig() throws IOException {
         imArtifact.updateConfig(null);
     }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testGetReinstallCodenvyCommandSingleServer() throws IOException {
+        imArtifact.getReinstallCommand();
+    }
 }

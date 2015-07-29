@@ -58,6 +58,9 @@ public interface Artifact extends Comparable<Artifact> {
     /** @return list of commands to perform installation. */
     Command getUpdateCommand(Version versionToUpdate, Path pathToBinaries, InstallOptions installOptions) throws IOException;
 
+    /** @return list of commands to perform re-installation. */
+    Command getReinstallCommand() throws IOException;
+
     /**
      * @return the latest version to install
      */

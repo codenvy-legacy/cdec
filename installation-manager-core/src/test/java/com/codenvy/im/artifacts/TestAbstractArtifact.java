@@ -205,6 +205,10 @@ public class TestAbstractArtifact extends BaseTest {
             return null;
         }
 
+        @Override public Command getReinstallCommand() throws IOException {
+            return null;
+        }
+
         @Override
         public Command getBackupCommand(BackupConfig backupConfig) throws IOException {
             return null;
