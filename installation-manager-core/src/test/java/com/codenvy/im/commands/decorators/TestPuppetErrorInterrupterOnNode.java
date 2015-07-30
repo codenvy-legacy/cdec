@@ -130,7 +130,7 @@ public class TestPuppetErrorInterrupterOnNode {
                 .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
-//    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 

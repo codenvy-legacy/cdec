@@ -71,7 +71,7 @@ public class TestInjectorBootstrap {
             {"installation-manager.report_dir", "target/reports"},
             {"installation-manager.update_server_endpoint", "/update/endpoint"},
             {"installation-manager.assembly_properties", "target/assembly.properties"},
-            {"installation-manager.min_puppet_errors_to_interrupt_imPuppetError.Type", "3"},
+            {"installation-manager.min_puppet_errors_to_interrupt_im", "3"},
             {"api.endpoint", "/api/endpoint"},
             {"saas.api.endpoint", "/saas/api/endpoint"},
             {"puppet.base_dir", "target/puppet"},
