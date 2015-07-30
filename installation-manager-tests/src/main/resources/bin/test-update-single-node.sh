@@ -32,7 +32,7 @@ BINARIES="/home/vagrant/codenvy-im-data/updates/codenvy/${LATEST_CODENVY_VERSION
 executeSshCommand "rm -rf /tmp/codenvy"
 executeSshCommand "unzip ${BINARIES} -d /tmp/codenvy"
 
-executeSshCommand "cat /tmp/codenvy/manifests/nodes/single_server/base_config.pp | grep '$version' | sed 's/\\W*\$version\\W*=\\W*\"\\(.*\\)\"/\\1/'"
+executeSshCommand "cat /tmp/codenvy/manifests/nodes/single_server/base_config.pp | grep '$version' | sed 's/\\s*\$version\\s*=\\s*\"\\(.*\\)\"/\\1/'"
 LATEST_PUPPET_VERSION=${OUTPUT}
 
 executeSshCommand "cp /etc/puppet/manifests/nodes/single_server/base_config.pp /tmp/codenvy/manifests/nodes/single_server/base_config.pp"

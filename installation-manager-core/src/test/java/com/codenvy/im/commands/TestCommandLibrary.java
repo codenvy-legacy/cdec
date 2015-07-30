@@ -28,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -57,15 +58,22 @@ public class TestCommandLibrary {
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
         Command testCommand = createPropertyReplaceCommand("testFile", "property", "newValue");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's|property = .*|property = \"newValue\"|g' testFile', " +
+        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's|property\\s*=.*|property = \"newValue\"|g' testFile', " +
                                              "'agent'='LocalAgent'}");
     }
 
     @Test
-    public void testCreateLocalReplaceCommand() {
-        Command testCommand = createReplaceCommand("testFile", "old\n/", "new\n/");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's|old\\n/|new\\n/|g' testFile', " +
+    public void testCreateLocalReplaceCommand() throws IOException {
+        Path testFile = Paths.get("target/testFile");
+        FileUtils.write(testFile.toFile(), "old\n");
+
+        Command testCommand = createReplaceCommand(testFile.toString(), "old", "\\$new", false);
+        assertEquals(testCommand.toString(), "{'command'='sed -i 's|old|\\\\$new|g' target/testFile', " +
                                              "'agent'='LocalAgent'}");
+        testCommand.execute();
+
+        String content = FileUtils.readFileToString(testFile.toFile());
+        assertEquals(content, "\\$new\n");
     }
 
     @Test

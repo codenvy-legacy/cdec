@@ -242,7 +242,7 @@ detectMasterNode() {
 
 fetchJsonParameter() {
     validateExpectedString ".*.$1..*"
-    OUTPUT=`echo ${OUTPUT} | sed 's/.*"'$1'"\W*:\W*"\([^"]*\)*".*/\1/'`
+    OUTPUT=`echo ${OUTPUT} | sed 's/.*"'$1'"\s*:\s*"\([^"]*\)*".*/\1/'`
 }
 
 doPost() {

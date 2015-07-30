@@ -52,16 +52,21 @@ public class CommandLibrary {
     }
 
     public static Command createPropertyReplaceCommand(String file, String property, String value) {
-        String replacingToken = format("%s = .*", property);
+        String replacingToken = format("%s\\s*=.*", property);
         String replacement = format("%s = \"%s\"", property, value);
         return createReplaceCommand(file, replacingToken, replacement);
     }
 
     public static Command createReplaceCommand(String file, String replacingToken, String replacement) {
-        return createCommand(format("sudo sed -i 's|%s|%s|g' %s",
-                                    replacingToken.replace("\n", "\\n"),
-                                    replacement.replace("\n", "\\n"),
-                                    file));
+        return createReplaceCommand(file, replacingToken, replacement, true);
+    }
+
+    public static Command createReplaceCommand(String file, String replacingToken, String replacement, boolean withSudo) {
+        String cmd = format("sed -i 's|%s|%s|g' %s",
+                            replacingToken.replace("\n", "\\n"),
+                            replacement.replace("\\", "\\\\"),
+                            file);
+        return createCommand((withSudo ? "sudo " : "") + cmd);
     }
 
     public static Command createFileRestoreOrBackupCommand(final String file) {

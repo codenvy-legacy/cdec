@@ -40,7 +40,6 @@ import javax.inject.Named;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -48,7 +47,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,13 +55,13 @@ import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
-import static java.nio.file.Files.newInputStream;
 import static org.apache.commons.io.FileUtils.readFileToString;
 
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigManager {
-    public static final Pattern PROP_TEMPLATE = Pattern.compile("\\s*\\$([^\\s]*)\\s*=\\s*\"([^\"]*)\".*");
+    public static final Pattern PUPPET_PROP_TEMPLATE  = Pattern.compile("\\s*\\$([^\\s]*)\\s*=\\s*\"([^\"]*)\".*");
+    public static final Pattern CODENVY_PROP_TEMPLATE = Pattern.compile("\\s*([^\\s]*)\\s*=\\s*([^\n]*).*\n");
 
     private final HttpTransport transport;
     private final String        updateEndpoint;
@@ -87,7 +85,7 @@ public class ConfigManager {
         }
 
         try {
-            return doLoadCodenvyProperties(confFile);
+            return doLoad(confFile, CODENVY_PROP_TEMPLATE);
         } catch (IOException e) {
             throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
@@ -113,7 +111,7 @@ public class ConfigManager {
         }
 
         try {
-            return doLoadCodenvyProperties(properties);
+            return doLoad(properties, CODENVY_PROP_TEMPLATE);
         } catch (IOException e) {
             throw new ConfigException(format("Can't load properties: %s", e.getMessage()), e);
         }
@@ -166,7 +164,7 @@ public class ConfigManager {
             Path propertiesFile = files.next();
 
             try {
-                properties.putAll(doLoadInstalledCodenvyProperties(propertiesFile));
+                properties.putAll(doLoad(propertiesFile, PUPPET_PROP_TEMPLATE));
             } catch (IOException e) {
                 throw new ConfigException(format("Can't load Codenvy properties: %s", e.getMessage()), e);
             }
@@ -185,27 +183,6 @@ public class ConfigManager {
             default:
                 return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_PROPERTIES),
                                         Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
-        }
-    }
-
-    protected Map<String, String> doLoadInstalledCodenvyProperties(Path file) throws IOException {
-        Map<String, String> m = new HashMap<>();
-
-        String data = readFileToString(file.toFile());
-        Matcher matcher = PROP_TEMPLATE.matcher(data);
-        while (matcher.find()) {
-            m.put(matcher.group(1), matcher.group(2));
-        }
-
-        return m;
-    }
-
-    protected Map<String, String> doLoadCodenvyProperties(Path file) throws IOException {
-        try (InputStream in = newInputStream(file)) {
-            Properties properties = new Properties();
-            properties.load(in);
-
-            return (Map)properties;
         }
     }
 
@@ -254,6 +231,18 @@ public class ConfigManager {
         }
 
         return replacements;
+    }
+
+    protected Map<String, String> doLoad(Path file, Pattern propPattern) throws IOException {
+        Map<String, String> m = new HashMap<>();
+
+        String data = readFileToString(file.toFile());
+        Matcher matcher = propPattern.matcher(data);
+        while (matcher.find()) {
+            m.put(matcher.group(1), matcher.group(2));
+        }
+
+        return m;
     }
 
     public static String getBaseNodeDomain(NodeConfig node) {

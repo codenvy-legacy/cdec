@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommandWithoutLogging;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
@@ -122,7 +121,7 @@ public class CDECArtifact extends AbstractArtifact {
         String cmd = format("if sudo test -f %1$s; then " +
                             "   sudo cat %1$s " +
                             "       | grep assembly.version " +
-                            "       | sed 's/assembly.version\\W*=\\W*\\(.*\\)/\\1/';" +
+                            "       | sed 's/assembly.version\\s*=\\s*\\(.*\\)/\\1/';" +
                             "fi", assemblyProperties);
         if (!assemblyProperties.startsWith("/")) { // make it works for tests
             cmd = cmd.replace("sudo", "");

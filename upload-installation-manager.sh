@@ -131,10 +131,10 @@ uploadCodenvyServerInstallMultiScript
 uploadCodenvyServerInstallInstalationManagerScript
 uploadCodenvyServerInstallScript
 
-for VERSION in 3.10.3.2; do
-    uploadCodenvySingleServerInstallProperties ${VERSION}
-done
-
-for VERSION in 3.10.3.2; do
-    uploadCodenvyMultiServerInstallProperties ${VERSION}
-done
+#for VERSION in 3.10.3.2; do
+#    uploadCodenvySingleServerInstallProperties ${VERSION}
+#done
+#
+#for VERSION in 3.10.3.2; do
+#    uploadCodenvyMultiServerInstallProperties ${VERSION}
+#done

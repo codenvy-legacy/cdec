@@ -24,6 +24,7 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.utils.Version;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -132,7 +133,9 @@ public class TestNodeManager extends BaseTest {
         assertTrue(commands.get(0).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
                    commands.get(0).toString());
 
-        assertEquals(commands.get(1).toString(), "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"test_runner_node_url\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(1).toString(),
+                     "{'command'='sudo sed -i 's|$additional_runners\\s*=.*|$additional_runners = \"test_runner_node_url\"|g' " +
+                     "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
         assertEquals(commands.get(2).toString(), "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', 'agent'='LocalAgent'}");
         assertEquals(commands.get(3).toString(), format("{'command'='yum list installed | grep puppetlabs-release.noarch; if [ $? -ne 0 ]; then sudo yum -y -q install null; fi', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(4).toString(), format("{'command'='sudo yum -y -q install null', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
@@ -204,7 +207,8 @@ public class TestNodeManager extends BaseTest {
                    commands.get(0).toString());
 
         assertEquals(commands.get(1).toString(),
-                     "{'command'='sudo sed -i 's|$additional_runners = .*|$additional_runners = \"null\"|g' /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
+                     "{'command'='sudo sed -i 's|$additional_runners\\s*=.*|$additional_runners = \"null\"|g' " +
+                     "/etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
         assertEquals(commands.get(2).toString(), format("{'command'='if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then    sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; fi;', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(3).toString(), format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(4).toString(), "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'");
