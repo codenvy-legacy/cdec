@@ -28,12 +28,12 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoDatabase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,8 +56,8 @@ import java.nio.file.Paths;
 public class MongoStorage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoStorage.class);
 
-    private final DB             db;
-    private final Path dir;
+    private final MongoDatabase db;
+    private final Path          dir;
     private final MongoClientURI uri;
 
     @Inject
@@ -79,22 +79,18 @@ public class MongoStorage {
         db = connectToDB();
     }
 
-    protected DB getDb() {
+    protected MongoDatabase getDb() {
         return db;
     }
 
-    private DB connectToDB() throws IOException {
+    private MongoDatabase connectToDB() throws IOException {
         final MongoClient mongoClient = new MongoClient(uri);
 
-        DB db;
+        MongoDatabase db;
         try {
-            db = mongoClient.getDB(uri.getDatabase());
-            db.setWriteConcern(WriteConcern.ACKNOWLEDGED);
-            db.setReadPreference(ReadPreference.primaryPreferred());
-
-            if (isAuthRequired(uri)) {
-                db.authenticate(uri.getUsername(), uri.getPassword());
-            }
+            db = mongoClient.getDatabase(uri.getDatabase());
+            db.withWriteConcern(WriteConcern.ACKNOWLEDGED);
+            db.withReadPreference(ReadPreference.primaryPreferred());
         } catch (MongoException e) {
             mongoClient.close();
             throw new IOException(e);
@@ -109,10 +105,6 @@ public class MongoStorage {
 
         LOG.info("Connection to MongoDB has been initialized");
         return db;
-    }
-
-    private boolean isAuthRequired(MongoClientURI clientURI) {
-        return clientURI.getUsername() != null && !clientURI.getUsername().isEmpty();
     }
 
     private void initEmbeddedStorage() throws IOException {

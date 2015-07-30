@@ -18,7 +18,7 @@
 
 package com.codenvy.im.update;
 
-import com.mongodb.DB;
+import com.mongodb.client.MongoDatabase;
 
 import org.testng.annotations.Test;
 
@@ -33,7 +33,7 @@ public class MongoStorageTest {
     @Test
     public void testInitMongo() throws Exception {
         MongoStorage mongoStorage = new MongoStorage("mongodb://localhost:12000/test", true, "target");
-        DB db = mongoStorage.getDb();
+        MongoDatabase db = mongoStorage.getDb();
 
         assertNotNull(db);
     }
