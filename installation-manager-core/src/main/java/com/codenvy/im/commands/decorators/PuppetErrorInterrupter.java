@@ -25,6 +25,9 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.utils.InjectorBootstrap;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -32,7 +35,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -51,6 +58,9 @@ public class PuppetErrorInterrupter implements Command {
     public static final int READ_LOG_TIMEOUT_MILLIS = 200;
     public static final int SELECTION_LINE_NUMBER   = 20;
 
+    /** minimum number of similar errors at the same node to interrupt installation manager */
+    public static int MIN_ERROR_EVENTS_TO_INTERRUPT_IM = Integer.parseInt(
+        InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.min_puppet_errors_to_interrupt_imPuppetError.Type"))));
 
     private final Command          command;
     private final List<NodeConfig> nodes;
@@ -61,6 +71,9 @@ public class PuppetErrorInterrupter implements Command {
     private FutureTask<String> task;
 
     protected static boolean useSudo = true;  // for testing propose
+
+    /** Map PuppetError{node, type, shortMessage} -> Set<logLine>  */
+    protected Map<PuppetError, Set<String>> registeredErrors = new HashMap<>();   // protected access for testing propose
 
     public PuppetErrorInterrupter(Command command, ConfigManager configManager) {
         this(command, null, configManager);
@@ -139,19 +152,15 @@ public class PuppetErrorInterrupter implements Command {
                 Thread.sleep(READ_LOG_TIMEOUT_MILLIS);
             } else {
                 for (String line : lastLines) {
-                    PuppetError error = checkPuppetError(line);
+                    PuppetError error = checkPuppetError(node, line);
                     if (error != null) {
                         task.cancel(false);
 
-                        String errorMessage = getPuppetErrorMessageForLog(node, line);
+                        LOG.log(Level.SEVERE, getPuppetErrorMessageForLog(node, line));
 
-                        LOG.log(Level.SEVERE, errorMessage);
+                        Path errorReport = PuppetErrorReport.create(node);  // do it after the logging into the IM log
 
-                        Path errorReport = PuppetErrorReport.create(node);
-
-                        String logMessage = error.getLineToDisplay(line);
-
-                        throw new PuppetErrorException(getPuppetErrorMessageForOutput(node, logMessage, errorReport));
+                        throw new PuppetErrorException(getMessageForImOutput(error, errorReport));
                     }
                 }
             }
@@ -163,12 +172,22 @@ public class PuppetErrorInterrupter implements Command {
     }
 
     @Nullable
-    protected PuppetError checkPuppetError(String line) {
-        for (PuppetError error : PuppetError.values()) {
-            Boolean match = error.match(line);
-            if (match != null && match) {
-                return error;
-            }
+    protected PuppetError checkPuppetError(NodeConfig node, String line) {
+        PuppetError error = PuppetError.match(line, node);
+        if (error == null) {
+            return null;
+        }
+
+        Set<String> lines = registeredErrors.get(error);
+        if (lines == null) {
+            lines = new HashSet<>(Arrays.asList(line));
+            registeredErrors.put(error, lines);
+        } else {
+            lines.add(line);
+        }
+
+        if (lines.size() == MIN_ERROR_EVENTS_TO_INTERRUPT_IM) {
+            return error;
         }
 
         return null;
@@ -205,9 +224,12 @@ public class PuppetErrorInterrupter implements Command {
     }
 
 
-    private String getPuppetErrorMessageForOutput(@Nullable NodeConfig node, String lineOfLog, Path errorReport) throws IOException {
-        String puppetErrorMessage = (node == null) ? format("Puppet error: '%s'", lineOfLog) :
-                                    format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), lineOfLog);
+    private String getMessageForImOutput(PuppetError error, Path errorReport) throws IOException {
+        NodeConfig node = error.getNode();
+        String shortErrorMessage = error.getShortMessage();
+
+        String puppetErrorMessage = (node == null) ? format("Puppet error: '%s'", shortErrorMessage) :
+                                    format("Puppet error at the %s node '%s': '%s'", node.getType(), node.getHost(), shortErrorMessage);
 
         Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         String hostUrl = codenvyConfig.getHostUrl();

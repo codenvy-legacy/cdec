@@ -24,7 +24,6 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -32,12 +31,14 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -125,20 +126,20 @@ public class TestPuppetErrorInterrupterLocally {
         // prepare Codenvy Config
         doReturn(InstallType.SINGLE_SERVER).when(mockConfigManager).detectInstallationType();
         doReturn(new Config(ImmutableMap.of(
-                Config.HOST_URL, "localhost",
-                Config.ADMIN_LDAP_USER_NAME, "admin",
-                Config.SYSTEM_LDAP_PASSWORD, "password"
-                                           )))
-                .when(mockConfigManager).loadInstalledCodenvyConfig();
+            Config.HOST_URL, "localhost",
+            Config.ADMIN_LDAP_USER_NAME, "admin",
+            Config.SYSTEM_LDAP_PASSWORD, "password"
+        )))
+            .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        final String puppetErrorMessage =
-                "Jun 17 10:03:40 ns2 puppet-agent[23932]: (/Stage[main]/Third_party::Zabbix::Server_config/Exec[init_zabbix_db]) Dependency " +
-                "Exec[set-mysql-password] has failures: true\r";
+        final String puppetErrorMessages = "2015-07-29 16:01:00 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+                                          + "2015-07-29 16:02:00 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+                                          + "2015-07-29 16:03:00 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n";
 
         doAnswer(new Answer() {
             @Override
@@ -160,8 +161,8 @@ public class TestPuppetErrorInterrupterLocally {
                 try {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
-                    // append error message into puppet log file
-                    FileUtils.write(PUPPET_LOG_FILE.toFile(), puppetErrorMessage, true);
+                    // append error messages to puppet log file
+                    FileUtils.write(PUPPET_LOG_FILE.toFile(), puppetErrorMessages, true);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
@@ -175,7 +176,7 @@ public class TestPuppetErrorInterrupterLocally {
 
             String errorMessage = e.getMessage();
 
-            Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Dependency Exec\\[set-mysql-password\\] has failures: true'. "
+            Pattern errorMessagePattern = Pattern.compile("Puppet error: 'Dependency Package\\[openldap\\] has failures: true'. "
                                                           +
                                                           "At the time puppet is continue Codenvy installation in background and is trying to fix " +
                                                           "this issue. "
@@ -191,7 +192,7 @@ public class TestPuppetErrorInterrupterLocally {
 
             assertTrue(errorMessagePattern.matcher(errorMessage).find());
 
-            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage);
+            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessages);
             return;
         }
 
@@ -325,5 +326,80 @@ public class TestPuppetErrorInterrupterLocally {
         PuppetErrorReport.useSudo = true;
 
         deleteDirectory(BASE_TMP_DIRECTORY.toFile());
+    }
+
+    @Test(dataProvider = "dataForCheckPuppetError")
+    public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
+        List<String> lines = Arrays.asList(puppetLog.split("\n"));
+
+        PuppetError error = null;
+        for (String line : lines) {
+            error = testInterrupter.checkPuppetError(null, line);
+        }
+
+        assertEquals(error, expectedError);
+    }
+
+    @DataProvider(name = "dataForCheckPuppetError")
+    public Object[][] getDataToCheckPuppetError() {
+        return new Object[][] {
+            {// only 1 error message
+             "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (notice): Using cached catalog\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog; skipping run\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not send report: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:18:34 +0100 Puppet (warning): Unable to fetch my node definition, but the agent run will continue:\n"
+             + "2015-07-30 13:18:34 +0100 Puppet (warning): getaddrinfo: Name or service not known",
+            null},
+
+            // 3 (= min_error_events_to_interrupt_im) the equal error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n",
+             null},
+
+            // 3 different error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::yet-another (notice): Dependency Package[yet-another] has failures: true\n",
+             null},
+
+            // 2 similar error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n",
+             null},
+
+            // 3 similar error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-29 16:17:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:18:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n",
+             new PuppetError(null, "Dependency Package[openldap] has failures: true")}
+        };
     }
 }

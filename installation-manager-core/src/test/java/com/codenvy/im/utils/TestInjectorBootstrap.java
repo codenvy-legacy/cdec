@@ -54,7 +54,7 @@ public class TestInjectorBootstrap {
     public void testInjector() {
         Injector injector = InjectorBootstrap.INJECTOR;
         Map<Key<?>, Binding<?>> bindings = injector.getBindings();
-        assertEquals(bindings.size(), 16);
+        assertEquals(bindings.size(), 17);
     }
 
     @Test(dataProvider = "testProperties")
@@ -70,6 +70,8 @@ public class TestInjectorBootstrap {
             {"installation-manager.storage_dir", "target/storage"},
             {"installation-manager.report_dir", "target/reports"},
             {"installation-manager.update_server_endpoint", "/update/endpoint"},
+            {"installation-manager.assembly_properties", "target/assembly.properties"},
+            {"installation-manager.min_puppet_errors_to_interrupt_imPuppetError.Type", "3"},
             {"api.endpoint", "/api/endpoint"},
             {"saas.api.endpoint", "/saas/api/endpoint"},
             {"puppet.base_dir", "target/puppet"},

@@ -25,7 +25,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,13 +32,16 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,13 +130,13 @@ public class TestPuppetErrorInterrupterOnNode {
                 .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
-//      @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+//    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        final String puppetErrorMessage =
-                "Jun  8 15:56:59 test puppet-agent[10240]: Could not retrieve catalog from remote server: Error 400 on SERVER: Unrecognized " +
-                "operating system at /etc/puppet/modules/third_party/manifests/puppet/service.pp:5 on node hwcodenvy\r";
+        final String puppetErrorMessage = "2015-07-29 16:01:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n"
+                                          + "2015-07-29 16:02:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n"
+                                          + "2015-07-29 16:03:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n";
 
         doAnswer(new Answer() {
             @Override
@@ -170,15 +172,13 @@ public class TestPuppetErrorInterrupterOnNode {
             String errorMessage = e.getMessage();
 
             Pattern errorMessagePattern = Pattern.compile(
-                "Puppet error at the API node '127.0.0.1': 'Jun  8 15:56:59 test puppet-agent\\[10240\\]: Could not retrieve catalog from " +
-                "remote server: Error 400 on SERVER: Unrecognized operating system at /etc/puppet/modules/third_party/manifests/puppet/service" +
-                ".pp:5 on node hwcodenvy'. "
+                "Puppet error at the API node '127.0.0.1': 'Could not retrieve catalog from remote server: No route to host - connect[(]2[)]'. "
                 + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. "
                 + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. "
                 + "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. "
                 + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node/#install-troubleshooting.");
 
-            assertTrue(errorMessagePattern.matcher(errorMessage).find());
+            assertTrue(errorMessage, errorMessagePattern.matcher(errorMessage).find());
 
             assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage, testNode);
             return;
@@ -302,6 +302,81 @@ public class TestPuppetErrorInterrupterOnNode {
         if (failMessage[0] != null) {
             fail(failMessage[0]);
         }
+    }
+
+    @Test(dataProvider = "dataForCheckPuppetError")
+    public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
+        List<String> lines = Arrays.asList(puppetLog.split("\n"));
+
+        PuppetError error = null;
+        for (String line : lines) {
+            error = testInterrupter.checkPuppetError(testNode, line);
+        }
+
+        assertEquals(error, expectedError);
+    }
+
+    @DataProvider(name = "dataForCheckPuppetError")
+    public Object[][] getDataToCheckPuppetError() {
+        return new Object[][] {
+            {// only 1 error message
+             "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (notice): Using cached catalog\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog; skipping run\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not send report: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:18:34 +0100 Puppet (warning): Unable to fetch my node definition, but the agent run will continue:\n"
+             + "2015-07-30 13:18:34 +0100 Puppet (warning): getaddrinfo: Name or service not known",
+             null},
+
+            // 3 (= min_error_events_to_interrupt_im) the equal error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n",
+             null},
+
+            // 3 different error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::yet-another (notice): Dependency Package[yet-another] has failures: true\n",
+             null},
+
+            // 2 similar error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n",
+             null},
+
+            // 3 similar error messages
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-29 16:17:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:18:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n",
+             new PuppetError(testNode, "Dependency Package[openldap] has failures: true")}
+        };
     }
 
     @AfterMethod

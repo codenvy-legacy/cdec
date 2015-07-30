@@ -17,71 +17,115 @@
  */
 package com.codenvy.im.commands.decorators;
 
-import com.google.common.base.Function;
+import com.codenvy.im.managers.NodeConfig;
 
 import javax.annotation.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** @author Dmytro Nochevnov */
-public enum PuppetError {
-    COULD_NOT_RETRIEVE_CATALOG(
-            new Function<String, Boolean>() {
-                final Pattern identifyPattern = Pattern.compile("Could not retrieve catalog from remote server");
+public class PuppetError {
 
-                @Nullable
-                @Override
-                public Boolean apply(@Nullable String line) {
-                    return (line != null)
-                           && identifyPattern.matcher(line).find();
-                }
+    private NodeConfig node;
+
+    private String shortMessage;
+
+    private enum Type {
+        COULD_NOT_RETRIEVE_CATALOG("Could not retrieve catalog from remote server.*"),
+
+        DEPENDENCY_HAS_FAILURES("Dependency .* has failures: true") {
+            @Override
+            boolean match(String line, Pattern messagePattern) {
+                       return !line.contains("/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]")   // issue CDEC-264
+                              && messagePattern.matcher(line).find();
             }
-    ),
+        };
 
-    DEPENDENCY_HAS_FAILURES(
-            Pattern.compile("Dependency .* has failures: true"),
-            new Function<String, Boolean>() {
-                final Pattern identifyPattern = Pattern.compile("Dependency .* has failures: true");
+        private Pattern messagePattern;
 
-                @Nullable
-                @Override
-                public Boolean apply(@Nullable String line) {
-                    return (line != null)
-                           && !line.contains("/Stage[main]/Multi_server::Api_instance::Service_codeassistant/Service[codenvy-codeassistant]")   // issue CDEC-264
-                           && identifyPattern.matcher(line).find();
-                }
+        private Type(String messagePattern) {
+            this.messagePattern = Pattern.compile(messagePattern);
+        }
+
+        private String extractShortMessage(String logLine) {
+            if (messagePattern == null) {
+                return logLine;
             }
-    );
 
-    private final Pattern                   DISPLAY_PATTERN;
-    private final Function<String, Boolean> MATCHER;
+            Matcher m = messagePattern.matcher(logLine);
+            if (m.find()) {
+                return m.group();
+            }
 
-    PuppetError(Pattern displayPattern, Function<String, Boolean> matcher) {
-        this.DISPLAY_PATTERN = displayPattern;
-        this.MATCHER = matcher;
-    }
-
-    PuppetError(Function<String, Boolean> matcher) {
-        this(null, matcher);
-    }
-
-    String getLineToDisplay(String logLine) {
-        logLine = logLine.replace("\r", "");  // remove end of line symbol
-
-        if (DISPLAY_PATTERN == null) {
             return logLine;
         }
 
-        Matcher m = DISPLAY_PATTERN.matcher(logLine);
-        if (m.find()) {
-            return m.group();
+        boolean match(@Nullable String line) {
+            return line != null && match(line, messagePattern);
         }
 
-        return logLine;
+        boolean match(String line, Pattern messagePattern) {
+            return messagePattern.matcher(line).find();
+        }
     }
 
-    public Boolean match(String line) {
-        return MATCHER.apply(line);
+    PuppetError(NodeConfig node, String shortMessage) {
+        this.node = node;
+        this.shortMessage = shortMessage;
     }
 
+    public NodeConfig getNode() {
+        return node;
+    }
+
+    public String getShortMessage() {
+        return shortMessage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PuppetError that = (PuppetError)o;
+
+        if (shortMessage != null ? !shortMessage.equals(that.shortMessage) : that.shortMessage != null) {
+            return false;
+        }
+        if (node != null ? !node.equals(that.node) : that.node != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = node != null ? node.hashCode() : 0;
+        result = 31 * result + (shortMessage != null ? shortMessage.hashCode() : 0);
+        return result;
+    }
+
+    @Override public String toString() {
+        return "PuppetError{" +
+               "node=" + node +
+               ", message='" + shortMessage + '\'' +
+               '}';
+    }
+
+    @Nullable
+    public static PuppetError match(String logLine, NodeConfig node) {
+        for (Type type : Type.values()) {
+            Boolean match = type.match(logLine);
+            if (match != null && match) {
+                return new PuppetError(node, type.extractShortMessage(logLine));
+            }
+        }
+
+        return null;
+    }
 }
