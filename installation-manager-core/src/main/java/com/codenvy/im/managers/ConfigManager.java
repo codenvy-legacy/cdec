@@ -60,8 +60,8 @@ import static org.apache.commons.io.FileUtils.readFileToString;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigManager {
-    public static final Pattern PUPPET_PROP_TEMPLATE  = Pattern.compile("\\s*\\$([^\\s]*)\\s*=\\s*\"([^\"]*)\".*");
-    public static final Pattern CODENVY_PROP_TEMPLATE = Pattern.compile("\\s*([^\\s]*)\\s*=\\s*([^\n]*).*\n");
+    public static final Pattern PUPPET_PROP_TEMPLATE  = Pattern.compile(" *\\$([^\\s]+) *= *\"([^\"]*)\"");
+    public static final Pattern CODENVY_PROP_TEMPLATE = Pattern.compile(" *([^\\s]+) *= *([^\\s]*)\n");
 
     private final HttpTransport transport;
     private final String        updateEndpoint;

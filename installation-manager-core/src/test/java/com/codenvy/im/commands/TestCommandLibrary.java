@@ -77,6 +77,22 @@ public class TestCommandLibrary {
     }
 
     @Test
+    public void testCreateLocalReplaceMultiplyLineCommand() throws IOException {
+        Path testFile = Paths.get("target/testFile");
+        FileUtils.write(testFile.toFile(), "old\n");
+
+        Command testCommand = createReplaceCommand(testFile.toString(), "old", "new\nnew\nnew\n", false);
+        assertEquals(testCommand.toString(), "{'command'='sed -i 's|old|new\\nnew\\nnew\\n|g' target/testFile', 'agent'='LocalAgent'}");
+        testCommand.execute();
+
+        String content = FileUtils.readFileToString(testFile.toFile());
+        assertEquals(content, "new\n" +
+                              "new\n" +
+                              "new\n" +
+                              "\n");
+    }
+
+    @Test
     public void testGetRestoreOrBackupCommand() {
         String testCommand = getFileRestoreOrBackupCommand("testFile");
         assertEquals(testCommand, "if sudo test -f testFile; then" +

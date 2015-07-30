@@ -373,7 +373,7 @@ doInstallPackages() {
     nextStep 1 "Installing required packages... [wget]"
     installPackageIfNeed wget
 
-    nextStep 1 "Installing required packages... [uzip]"
+    nextStep 1 "Installing required packages... [unzip]"
     installPackageIfNeed unzip
 
     nextStep 1 "Installing required packages... [java]"
