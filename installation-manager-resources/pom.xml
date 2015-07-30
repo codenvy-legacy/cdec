@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.11.6</version>
+        <version>3.11.7-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-resources</artifactId>
     <name>Codenvy :: IM :: Installation Manager Resources</name>
