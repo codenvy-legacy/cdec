@@ -64,7 +64,7 @@ public class CommandLibrary {
     public static Command createReplaceCommand(String file, String replacingToken, String replacement, boolean withSudo) {
         String cmd = format("sed -i 's|%s|%s|g' %s",
                             replacingToken.replace("\n", "\\n"),
-                            replacement.replace("\\", "\\\\").replace("\n", "\\n"),
+                            replacement.replace("\\$", "\\\\$").replace("\n", "\\n"),
                             file);
         return createCommand((withSudo ? "sudo " : "") + cmd);
     }
