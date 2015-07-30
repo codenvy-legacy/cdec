@@ -105,13 +105,17 @@ public class TestConfigManager extends BaseTest {
     public void testLoadDefaultSingleServerCdecConfig() throws Exception {
         Path properties = Paths.get("target/test.properties");
         FileUtils.write(properties.toFile(), "a=1\n" +
-                                             "b=2\n");
+                                             "b=2\n" +
+                                             "c=\n" +
+                                             "d=\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
         Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
-        assertEquals(m.size(), 2);
+        assertEquals(m.size(), 4);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
+        assertEquals(m.get("c"), "");
+        assertEquals(m.get("d"), "");
     }
 
     @Test
