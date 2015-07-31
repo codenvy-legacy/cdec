@@ -40,6 +40,8 @@ import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.getFileRestoreOrBackupCommand;
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
+import static org.apache.commons.io.FileUtils.readFileToString;
+import static org.apache.commons.io.FileUtils.write;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -58,34 +60,71 @@ public class TestCommandLibrary {
     @Test
     public void testCreateLocalPropertyReplaceCommand() {
         Command testCommand = createPropertyReplaceCommand("testFile", "property", "newValue");
-        assertEquals(testCommand.toString(), "{'command'='sudo sed -i 's|property\\s*=.*|property = \"newValue\"|g' testFile', " +
+        assertEquals(testCommand.toString(), "{'command'='sudo cat testFile " +
+                                             "| sed ':a;N;$!ba;s/\\n/~n/g' " +
+                                             "| sed 's|property *= *\"[^\"]*\"|property = \"newValue\"|g' " +
+                                             "| sed 's|~n|\\n|g' > tmp " +
+                                             "&& sudo mv tmp testFile', 'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testCreateLocalPropertyReplaceMultiplyLineCommand() throws IOException {
+        Path testFile = Paths.get("target/testFile");
+        write(testFile.toFile(), "$property=\"a\n" +
+                                 "b\n" +
+                                 "c\n" +
+                                 "\"\n");
+
+        Command testCommand = createPropertyReplaceCommand(testFile.toString(), "$property", "1\n" +
+                                                                                             "2\n" +
+                                                                                             "3\n", false);
+        assertEquals(testCommand.toString(), "{'command'='cat target/testFile " +
+                                             "| sed ':a;N;$!ba;s/\\n/~n/g' " +
+                                             "| sed 's|$property *= *\"[^\"]*\"|$property = \"1\\n2\\n3\\n\"|g' " +
+                                             "| sed 's|~n|\\n|g' > tmp " +
+                                             "&& mv tmp target/testFile', " +
                                              "'agent'='LocalAgent'}");
+
+        testCommand.execute();
+
+        String content = readFileToString(testFile.toFile());
+        assertEquals(content, "$property = \"1\n" +
+                              "2\n" +
+                              "3\n" +
+                              "\"\n");
     }
 
     @Test
     public void testCreateLocalReplaceCommand() throws IOException {
         Path testFile = Paths.get("target/testFile");
-        FileUtils.write(testFile.toFile(), "old\n");
+        write(testFile.toFile(), "old\n");
 
         Command testCommand = createReplaceCommand(testFile.toString(), "old", "\\$new", false);
-        assertEquals(testCommand.toString(), "{'command'='sed -i 's|old|\\\\$new|g' target/testFile', " +
-                                             "'agent'='LocalAgent'}");
+        assertEquals(testCommand.toString(), "{'command'='cat target/testFile " +
+                                             "| sed ':a;N;$!ba;s/\\n/~n/g' " +
+                                             "| sed 's|old|\\\\$new|g' " +
+                                             "| sed 's|~n|\\n|g' > tmp " +
+                                             "&& mv tmp target/testFile', 'agent'='LocalAgent'}");
         testCommand.execute();
 
-        String content = FileUtils.readFileToString(testFile.toFile());
+        String content = readFileToString(testFile.toFile());
         assertEquals(content, "\\$new\n");
     }
 
     @Test
     public void testCreateLocalReplaceMultiplyLineCommand() throws IOException {
         Path testFile = Paths.get("target/testFile");
-        FileUtils.write(testFile.toFile(), "old\n");
+        write(testFile.toFile(), "old\n");
 
         Command testCommand = createReplaceCommand(testFile.toString(), "old", "new\nnew\nnew\n", false);
-        assertEquals(testCommand.toString(), "{'command'='sed -i 's|old|new\\nnew\\nnew\\n|g' target/testFile', 'agent'='LocalAgent'}");
+        assertEquals(testCommand.toString(), "{'command'='cat target/testFile " +
+                                             "| sed ':a;N;$!ba;s/\\n/~n/g' " +
+                                             "| sed 's|old|new\\nnew\\nnew\\n|g' " +
+                                             "| sed 's|~n|\\n|g' > tmp " +
+                                             "&& mv tmp target/testFile', 'agent'='LocalAgent'}");
         testCommand.execute();
 
-        String content = FileUtils.readFileToString(testFile.toFile());
+        String content = readFileToString(testFile.toFile());
         assertEquals(content, "new\n" +
                               "new\n" +
                               "new\n" +
@@ -182,10 +221,12 @@ public class TestCommandLibrary {
         FileUtils.writeStringToFile(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_before_update.sh").toFile(), "echo -n \"$test_property1\"");
 
         Command command = CommandLibrary.createPatchCommand(patchDir, CommandLibrary.PatchType.BEFORE_UPDATE, installOptions);
-        assertEquals(command.toString(), "[" +
-                                         "{'command'='sudo sed -i 's|$test_property1|property1|g' target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
-                                         "{'command'='bash target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}" +
-                                         "]");
+        assertEquals(command.toString(), "[{'command'='sudo cat target/patches/multi_server/patch_before_update.sh " +
+                                         "| sed ':a;N;$!ba;s/\\n/~n/g' " +
+                                         "| sed 's|$test_property1|property1|g' " +
+                                         "| sed 's|~n|\\n|g' > tmp " +
+                                         "&& sudo mv tmp target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
+                                         "{'command'='bash target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}]");
     }
 
 //    @Test

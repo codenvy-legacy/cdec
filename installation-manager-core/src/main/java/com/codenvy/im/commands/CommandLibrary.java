@@ -52,21 +52,28 @@ public class CommandLibrary {
     }
 
     public static Command createPropertyReplaceCommand(String file, String property, String value) {
-        String replacingToken = format("%s\\s*=.*", property);
+        return createPropertyReplaceCommand(file, property, value, true);
+    }
+
+    public static Command createPropertyReplaceCommand(String file, String property, String value, boolean withSudo) {
+        String replacingToken = format("%s *= *\"[^\"]*\"", property);
         String replacement = format("%s = \"%s\"", property, value);
-        return createReplaceCommand(file, replacingToken, replacement);
+        return createReplaceCommand(file, replacingToken, replacement, withSudo);
     }
 
     public static Command createReplaceCommand(String file, String replacingToken, String replacement) {
         return createReplaceCommand(file, replacingToken, replacement, true);
     }
 
+    /**
+     * The idea is to treat file as a single line and replace text respectively.
+     */
     public static Command createReplaceCommand(String file, String replacingToken, String replacement, boolean withSudo) {
-        String cmd = format("sed -i 's|%s|%s|g' %s",
-                            replacingToken.replace("\n", "\\n"),
+        String cmd = format("sudo cat %3$s | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|%1$s|%2$2s|g' | sed 's|~n|\\n|g' > tmp && sudo mv tmp %3$s",
+                            replacingToken,
                             replacement.replace("\\$", "\\\\$").replace("\n", "\\n"),
                             file);
-        return createCommand((withSudo ? "sudo " : "") + cmd);
+        return createCommand(withSudo ? cmd : cmd.replace("sudo ", ""));
     }
 
     public static Command createFileRestoreOrBackupCommand(final String file) {
