@@ -20,6 +20,7 @@ package com.codenvy.im.update;
 
 import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
@@ -36,7 +37,6 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;
@@ -98,8 +98,7 @@ public class RepositoryService {
     public static final  Pattern VALID_EMAIL_ADDRESS_RFC822     =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
     public static final  String  CAN_NOT_ADD_TRIAL_SUBSCRIPTION =
-            "You do not have a valid subscription to install Codenvy. You previously had a 30 day trial subscription, but it has " +
-            "also expired. Please contact sales@codenvy.com to extend your trial or to make a purchase.";
+            "You do not have a valid subscription to install Codenvy. Please contact sales@codenvy.com to add subscription.";
 
     private final String                  saasApiEndpoint;
     private final ArtifactStorage         artifactStorage;
@@ -180,7 +179,8 @@ public class RepositoryService {
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(properties)).build();
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                           .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'. " + e.getMessage()).build();
+                           .entity("Unexpected error. Can't retrieve the latest version of the '" + artifact + "'. " + e.getMessage())
+                           .build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -276,7 +276,8 @@ public class RepositoryService {
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
+                           .entity("Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage())
+                           .build();
         }
     }
 
@@ -303,7 +304,8 @@ public class RepositoryService {
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage()).build();
+                           .entity("Unexpected error. Can't download the artifact " + artifact + ":" + version + ". " + e.getMessage())
+                           .build();
         }
     }
 
@@ -384,10 +386,8 @@ public class RepositoryService {
 
     /**
      * Uploads artifact into the repository. If the same artifact exists then it will be replaced.
-     * If {@value com.codenvy.im.artifacts.ArtifactProperties#AUTHENTICATION_REQUIRED_PROPERTY} isn't set then artifact will be treated as private,
-     * which requires user to be authenticated to download it. If {@value com.codenvy.im.artifacts.ArtifactProperties#SUBSCRIPTION_PROPERTY}
-     * is set then user has to have specific valid subscription to download artifact. If artifact is public then subscription won't be taken into
-     * account.
+     * If {@value ArtifactProperties#AUTHENTICATION_REQUIRED_PROPERTY} isn't set then artifact will be treated as private, which requires
+     * user to be authenticated to download it. If {@value ArtifactProperties#SUBSCRIPTION_PROPERTY}  is set then     * user has to have specific valid subscription to download artifact. If artifact is public then subscription won't be taken into account.
      *
      * @param artifact
      *         the name of the artifact
@@ -453,13 +453,13 @@ public class RepositoryService {
         }
     }
 
-    /** Adds trial subscription to user if it hadn't one. */
+    /** Adds onpremises subscription to user if it hadn't one. */
     @GenerateLink(rel = "add trial subscription")
     @POST
     @Path("/subscription/{accountId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({"user", "system/admin"})
-    public Response addTrialSubscription(@PathParam("accountId") String accountId) {
+    public Response addOnpremisesSubscription(@PathParam("accountId") String accountId) {
         final String userId = userManager.getCurrentUser().getId();
         final String accessToken = userManager.getCurrentUser().getToken();
 
@@ -474,7 +474,7 @@ public class RepositoryService {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-            doAddTrialSubscription(userId, accountId, accessToken);
+            doAddOnpremisesSubscription(userId, accountId, accessToken);
             sendNotificationLetter(accountId, userManager.getCurrentUser());
 
             return Response.status(Response.Status.OK).build();
@@ -484,14 +484,13 @@ public class RepositoryService {
         }
     }
 
-    protected void doAddTrialSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
+    protected void doAddOnpremisesSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
         try {
-            final String planId = "opm-com-25u-y";
-
-            NewSubscription newSubscription = DtoFactory.getInstance().createDto(NewSubscription.class);
-            newSubscription.setAccountId(accountId);
-            newSubscription.setPlanId(planId);
-            newSubscription.setUsePaymentSystem(true);
+            final String planId = "opm-free";
+            NewSubscription newSubscription = DtoFactory.newDto(NewSubscription.class)
+                                                        .withAccountId(accountId)
+                                                        .withPlanId(planId)
+                                                        .withUsePaymentSystem(true);
 
             Map m = asMap(httpTransport.doPost(combinePaths(saasApiEndpoint, "subscription"), newSubscription, accessToken));
             if (!m.containsKey("id")) {

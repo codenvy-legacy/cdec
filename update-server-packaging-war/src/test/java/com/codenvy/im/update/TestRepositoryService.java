@@ -386,7 +386,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfUserHasSubscriptionAddedByManager() throws Exception {
+    public void testAddOnpremisesSubscriptionFailedIfUserHasSubscriptionAddedByManager() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
@@ -402,7 +402,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfUserIsNotOwnerOfAccount() throws Exception {
+    public void testAddOnpremisesSubscriptionFailedIfUserIsNotOwnerOfAccount() throws Exception {
         doReturn("[{"
                  + "roles:[\"account/member\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
@@ -418,7 +418,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfWrongAccount() throws Exception {
+    public void testAddOnpremisesSubscriptionFailedIfWrongAccount() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
@@ -434,7 +434,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase1() throws Exception {
+    public void testAddOnpremisesSubscriptionFailedIfApiServerReturnErrorUserCase1() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
@@ -450,7 +450,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase2() throws Exception {
+    public void testAddOnpremisesSubscriptionFailedIfApiServerReturnErrorUserCase2() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
@@ -466,7 +466,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddTrialSubscriptionFailedIfApiServerReturnErrorUserCase3() throws Exception {
+    public void testAddOnpremisesSubscriptionFailedIfApiServerReturnErrorUserCase3() throws Exception {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
