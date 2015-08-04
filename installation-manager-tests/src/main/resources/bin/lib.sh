@@ -90,18 +90,6 @@ validateInstalledImCliClientVersion() {
     logEndCommand "validateInstalledImCliClientVersion: OK"
 }
 
-retrieveInstallLog() {
-    scp -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem:install.log tmp.log
-    if [ -f "tmp.log" ]; then
-        if [ -f "install.log" ]; then
-            cat tmp.log >> install.log
-        else
-            cp tmp.log install.log
-        fi
-        rm tmp.log
-    fi
-}
-
 installCodenvy() {
     MULTI_OPTION=""
     VERSION_OPTION=""
@@ -128,7 +116,6 @@ installCodenvy() {
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
     sleep 5m
-    retrieveInstallLog
     logEndCommand "installCodenvy: OK"
 }
 
