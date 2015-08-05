@@ -489,7 +489,7 @@ printPostInstallInfo() {
     printLn
     printLn "Codenvy is ready at http://"${HOST_NAME}
     printLn
-    printLn "Administrator dashboard ready at http://"${HOST_NAME}"/admin"
+    printLn "Administrator dashboard ready at http://${HOST_NAME}/admin"
     printLn "System admin user name : "${SYSTEM_ADMIN_NAME}
     printLn "System admin password  : "${SYSTEM_ADMIN_PASSWORD}
     printLn
