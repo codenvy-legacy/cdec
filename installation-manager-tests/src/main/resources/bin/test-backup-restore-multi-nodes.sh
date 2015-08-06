@@ -61,9 +61,8 @@ FACTORY_ID=${OUTPUT}
 
 # set date on tomorrow (repeate 3 times for sure)
 executeSshCommand "sudo service ntpd stop" "analytics.codenvy.onprem"
-LC_TIME="uk_US.UTF-8" date
-TOMORROW_DATE=`date -d '1 day'`
-executeSshCommand "LC_TIME=\"uk_US.UTF-8\" date && sudo date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
+TOMORROW_DATE=$(LC_TIME="uk_US.UTF-8" date -d '1 day')
+executeSshCommand "sudo LC_TIME=\"uk_US.UTF-8\" date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
 
 # analytics data
 DATE=`date +"%Y%m%d"`

@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static java.lang.String.format;
@@ -97,7 +96,7 @@ public class TestConfigManager extends BaseTest {
         Path confFile = Paths.get("target", "conf.properties");
         FileUtils.write(confFile.toFile(), "user=1\npwd=2\n");
 
-        doThrow(new IOException("error")).when(configManager).doLoad(any(Path.class), any(Pattern.class));
+        doThrow(new IOException("error")).when(configManager).doLoadCodenvyProperties(any(Path.class));
         configManager.loadConfigProperties(confFile);
     }
 
@@ -122,13 +121,22 @@ public class TestConfigManager extends BaseTest {
     public void testLoadDefaultMultiServerCdecConfig() throws Exception {
         Path properties = Paths.get("target/test.properties");
         FileUtils.write(properties.toFile(), "a=1\n" +
-                                             "b=\\$2\n");
+                                             "b=\\$2\n" +
+                                             "custom_ldap=false\n" +
+                                             "\n" +
+                                             "# ldap dn configurations\n" +
+                                             "# those properties will be used only with default codenvy ldap i.e. $custom_ldap=\"false\"\n" +
+                                             "user_ldap_dn=dc=codenvy-enterprise,dc=com\n" +
+                                             "admin_ldap_dn=dc=codenvycorp,dc=com\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
         Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
-        assertEquals(m.size(), 2);
+        assertEquals(m.size(), 5);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "\\$2");
+        assertEquals(m.get("custom_ldap"), "false");
+        assertEquals(m.get("user_ldap_dn"), "dc=codenvy-enterprise,dc=com");
+        assertEquals(m.get("admin_ldap_dn"), "dc=codenvycorp,dc=com");
     }
 
     @Test(expectedExceptions = IOException.class,
@@ -146,7 +154,7 @@ public class TestConfigManager extends BaseTest {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        doThrow(new IOException("error")).when(configManager).doLoad(any(Path.class), any(Pattern.class));
+        doThrow(new IOException("error")).when(configManager).doLoadCodenvyProperties(any(Path.class));
 
         configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
@@ -185,6 +193,16 @@ public class TestConfigManager extends BaseTest {
                                              "  ###############################\n" +
                                              "  # Codenvy Builder configurations\n" +
                                              "  #\n" +
+                                             "  $admin_ldap_password = \"$system_ldap_password\"\n" +
+                                             "  # custom ldap\n" +
+                                             "  # false by default which means that default ldap (installed on codenvy servers) will be used.\n" +
+                                             "  # In in order to connect codenvy to any third-party ldap please set this to true and change any " +
+                                             "  $custom_ldap = \"false\"\n" +
+                                             "  \n" +
+                                             "  # ldap dn configurations\n" +
+                                             "  # those properties will be used only with default codenvy ldap i.e. $custom_ldap = \"false\"\n" +
+                                             "  $user_ldap_dn = \"dc=codenvy-enterprise,dc=com\"\n" +
+                                             "  $admin_ldap_dn = \"dc=codenvycorp,dc=com\"\n" +
                                              "  # (Mandatory) builder_max_execution_time -  max execution time in seconds for build process.\n" +
                                              "  # If process doesn't end before this time it may be terminated forcibly.\n" +
                                              "  $builder_max_execution_time = \"600\"\n" +
@@ -200,10 +218,14 @@ public class TestConfigManager extends BaseTest {
         doReturn(ImmutableList.of(properties).iterator()).when(configManager)
                                                          .getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
         Map<String, String> m = configManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
-        assertEquals(m.size(), 5);
+        assertEquals(m.size(), 9);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
         assertEquals(m.get("empty"), "");
+        assertEquals(m.get("admin_ldap_password"), "$system_ldap_password");
+        assertEquals(m.get("custom_ldap"), "false");
+        assertEquals(m.get("user_ldap_dn"), "dc=codenvy-enterprise,dc=com");
+        assertEquals(m.get("admin_ldap_dn"), "dc=codenvycorp,dc=com");
         assertEquals(m.get("builder_base_directory"), "\\${catalina.base}/temp/builder");
         assertEquals(m.get("node_ssh_user_private_key"),
                      "-----BEGIN RSA PRIVATE KEY-----\naaasdf3adsfasfasfasfdsafsafasdfasdfasdfasfdasdfasdfasdfasdfasdff\n");
