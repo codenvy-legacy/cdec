@@ -63,7 +63,7 @@ import static org.apache.commons.io.FileUtils.readFileToString;
 @Singleton
 public class ConfigManager {
     public static final Pattern PUPPET_PROP_TEMPLATE  = Pattern.compile(" *\\$([^\\s]+) *= *\"([^\"]*)\"");
-    public static final Pattern CODENVY_PROP_TEMPLATE = Pattern.compile("^([^\\s=]+)=([^\\s]*)");
+    public static final Pattern CODENVY_PROP_TEMPLATE = Pattern.compile("^([^\\s=]+)=(.*)");
 
     private final HttpTransport transport;
     private final String        updateEndpoint;

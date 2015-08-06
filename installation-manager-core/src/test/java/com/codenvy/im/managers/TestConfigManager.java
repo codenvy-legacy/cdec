@@ -127,13 +127,15 @@ public class TestConfigManager extends BaseTest {
                                              "# ldap dn configurations\n" +
                                              "# those properties will be used only with default codenvy ldap i.e. $custom_ldap=\"false\"\n" +
                                              "user_ldap_dn=dc=codenvy-enterprise,dc=com\n" +
+                                             "billing_resources_refill_cron=0 15 0 * * ?\n" +
                                              "admin_ldap_dn=dc=codenvycorp,dc=com\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
         Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
-        assertEquals(m.size(), 5);
+        assertEquals(m.size(), 6);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "\\$2");
+        assertEquals(m.get("billing_resources_refill_cron"), "0 15 0 * * ?");
         assertEquals(m.get("custom_ldap"), "false");
         assertEquals(m.get("user_ldap_dn"), "dc=codenvy-enterprise,dc=com");
         assertEquals(m.get("admin_ldap_dn"), "dc=codenvycorp,dc=com");
