@@ -87,7 +87,7 @@ public class TestInstallManagerArtifact {
                                          "/home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \n" +
                                          "rm -f /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh \n" +
                                          "rm -f /home/dummy-user/codenvy-im/child \n" +
-                                         "/home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy $@' > " +
+                                         "/home/dummy-user/codenvy-im/codenvy-cli/bin/codenvy \\$@' > " +
                                          "/home/dummy-user/codenvy-im/codenvy-cli-update-script.sh\"', 'agent'='LocalAgent'}, {'command'='sudo " +
                                          "chmod 775 /home/dummy-user/codenvy-im/codenvy-cli-update-script.sh', 'agent'='LocalAgent'}, " +
                                          "{'command'='sudo cp /parent/child /home/dummy-user/codenvy-im/child', 'agent'='LocalAgent'}]");

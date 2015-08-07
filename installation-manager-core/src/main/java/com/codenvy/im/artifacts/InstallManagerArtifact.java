@@ -139,7 +139,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                                // setup java home path
                                                                "rm -f %4$s \n" +             // remove update script
                                                                "rm -f %2$s \n" +             // remove update binaries
-                                                               "%1$s/bin/codenvy $@",        // run script from updated directory
+                                                               "%1$s/bin/codenvy \\$@",      // run script from updated directory
                                                                cliClientDir.toAbsolutePath(),
                                                                newPlacementOfUpdateBinaries,
                                                                absolutePathToJava,
