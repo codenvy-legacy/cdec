@@ -115,7 +115,8 @@
 
                                         if [ -f "codenvy-cli-update-script.sh" ]; then
                                         echo "Installation Manager CLI is being updated ..."
-                                        bash -c "$(cat codenvy-cli-update-script.sh)"
+                                        bash codenvy-cli-update-script.sh $@
+                                        exit
                                         fi
 
                                         cd ${CURRENT_DIR}
