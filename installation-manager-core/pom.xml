@@ -192,13 +192,13 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <?SORTPOM IGNORE?>
                                         <echo append="false" file="${project.build.directory}/classes/codenvy/BuildInfo.properties">
                                             version = ${project.version}
                                         </echo>
                                         <?SORTPOM RESUME?>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>
@@ -289,8 +289,7 @@
                                         <?SORTPOM RESUME?>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
                                             <replacetoken>installation-manager.update_server_endpoint=https://codenvy.com/update</replacetoken>
-                                            <replacevalue>
-                                                installation-manager.update_server_endpoint=http://updater-nightly.codenvy-dev.com/update
+                                            <replacevalue>installation-manager.update_server_endpoint=http://updater-nightly.codenvy-dev.com/update
                                             </replacevalue>
                                         </replace>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">

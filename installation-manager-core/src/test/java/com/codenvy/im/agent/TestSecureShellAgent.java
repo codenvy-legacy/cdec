@@ -46,8 +46,8 @@ public class TestSecureShellAgent {
     private static final String TEST_USER             = "testUser";
     private static final String TEST_HOST             = "127.0.0.1";
     private static final int    TEST_PORT             = 2223;
-    private static final Path TEST_AUTH_PRIVATE_KEY =
-            Paths.get(TestSecureShellAgent.class.getClassLoader().getResource("../test-classes/test_rsa").getFile());
+    private static final Path   TEST_AUTH_PRIVATE_KEY =
+            Paths.get(TestSecureShellAgent.class.getClassLoader().getResource("../test-classes/test_rsa.txt").getFile());
 
     private static final String TEST_COMMAND        = "echo test";
     private static final String TEST_COMMAND_OUTPUT = "test";

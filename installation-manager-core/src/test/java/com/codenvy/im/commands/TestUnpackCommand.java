@@ -38,7 +38,7 @@ import static org.testng.Assert.assertTrue;
 public class TestUnpackCommand {
     private static final Path TEST_RESOURCE_ROOT = Paths.get(TestUnpackCommand.class.getClassLoader().getResource("../test-classes/").getPath());
 
-    private static final String PACK_NAME = "installation-manager-1.0.0-binary.tar.gz.test";
+    private static final String PACK_NAME = "installation-manager-1.0.0-binary.tar.gz";
     private static final Path PATH_TO_PACK = TEST_RESOURCE_ROOT.resolve(PACK_NAME);
 
     private static final String DIR_TO_UNPACK_NAME = "unpack";

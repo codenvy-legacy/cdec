@@ -234,7 +234,7 @@ public class TestBackupConfig {
 
     @Test
     public void testExtractConfigFromBackup() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backups/empty_backup.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/empty_backup.tar").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                     .setArtifactVersion("1.0.0")
                                                     .setBackupFile(testingBackup);
@@ -249,9 +249,10 @@ public class TestBackupConfig {
     }
 
     @Test(expectedExceptions = BackupException.class,
-          expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_without_config.tar.test/backup.config.json'")
+            expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_without_config" +
+                                              ".tar/backup.config.json'")
     public void testExtractAbsenceConfigFromBackupError() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backups/backup_without_config.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/backup_without_config.tar").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                       .setArtifactVersion("1.0.0")
                                                       .setBackupFile(testingBackup);
@@ -260,9 +261,9 @@ public class TestBackupConfig {
     }
 
     @Test(expectedExceptions = BackupException.class,
-          expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_empty_config.tar.test/backup.config.json'")
+            expectedExceptionsMessageRegExp = "There was a problem with config of backup which should be placed in file 'backup_empty_config.tar/backup.config.json'")
     public void testExtractEmptyConfigFromBackupError() throws IOException {
-        String testingBackup = getClass().getClassLoader().getResource("backups/backup_empty_config.tar.test").getPath();
+        String testingBackup = getClass().getClassLoader().getResource("backups/backup_empty_config.tar").getPath();
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy")
                                                       .setArtifactVersion("1.0.0")
                                                       .setBackupFile(testingBackup);
