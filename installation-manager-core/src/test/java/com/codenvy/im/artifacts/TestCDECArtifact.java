@@ -377,7 +377,7 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetRestoreSingleServerCommand() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
-        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar.test").getPath());
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupFile(testingBackup.toString())
@@ -388,7 +388,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetRestoreMultiServerCommandFromFullBackup() throws Exception {
-        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar.test").getPath());
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
 
         prepareMultiNodeEnv(configManager, transport);
 
@@ -405,7 +405,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetRestoreMultiServerCommandFromEmptyBackup() throws Exception {
-        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/empty_backup.tar.test").getPath());
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/empty_backup.tar").getPath());
 
         prepareMultiNodeEnv(configManager, transport);
 

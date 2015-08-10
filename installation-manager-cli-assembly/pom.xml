@@ -150,8 +150,10 @@ cellar       =]]></replacevalue>
                                 </replace>
                                 <copy file="${project.build.directory}/packager-conf/jar/installation-manager-cli-bundle-${project.version}.jar" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-bundle/${project.version}/installation-manager-cli-bundle-${project.version}.jar" />
                                 <copy file="${project.build.directory}/packager-conf/xml/installation-manager-cli-features-${project.version}-features.xml" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/im/installation-manager-cli-features/${project.version}/installation-manager-cli-features-${project.version}-features.xml" />
-                                <copy file="${project.build.directory}/classes/codenvy-cli/etc/org.ops4j.pax.logging.cfg.template" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.ops4j.pax.logging.cfg" />
-                                <copy file="${project.build.directory}/classes/codenvy-cli/etc/java.util.logging.properties.template" tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/java.util.logging.properties" />
+                                <copy file="${project.build.directory}/classes/codenvy-cli/etc/org.ops4j.pax.logging.cfg"
+                                      tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/org.ops4j.pax.logging.cfg"/>
+                                <copy file="${project.build.directory}/classes/codenvy-cli/etc/java.util.logging.properties"
+                                      tofile="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/etc/java.util.logging.properties"/>
                                 <!-- turn off login command in the codenvy cli command jar-->
                                 <unzip dest="${project.build.directory}/archive-tmp/jar" src="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/system/com/codenvy/cli/cli-command/${codenvy.cli.version}/cli-command-${codenvy.cli.version}.jar" />
                                 <replace file="${project.build.directory}/archive-tmp/jar/META-INF/services/org/apache/karaf/shell/commands">
@@ -185,6 +187,7 @@ cellar       =]]></replacevalue>
                 </executions>
                 <configuration>
                     <descriptor>src/main/assemblies/assembly.xml</descriptor>
+                    <tarLongFileMode>posix</tarLongFileMode>
                 </configuration>
             </plugin>
         </plugins>

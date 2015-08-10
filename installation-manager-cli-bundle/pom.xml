@@ -41,6 +41,12 @@
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-core</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jsr305</artifactId>
+                    <groupId>com.google.code.findbugs</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.codenvy.cli</groupId>
@@ -134,7 +140,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <?SORTPOM IGNORE?>
                                 <echo append="false" file="${project.build.directory}/classes/codenvy/ClientBuildInfo.properties">
                                     version = ${project.version}
@@ -153,7 +159,7 @@
                                 <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar" update="true">
                                     <zipfileset dir="${project.build.directory}/classes/META-INF/services/" prefix="META-INF/services" />
                                 </jar>
-                            </tasks>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
