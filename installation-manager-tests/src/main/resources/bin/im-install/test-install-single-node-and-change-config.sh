@@ -45,9 +45,9 @@ auth "admin" "new-password" "http://${NEW_HOSTNAME}"
 
 # test re-install
 # remove codenvy binary
-# TODO [AB]
-#executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps"
-#executeSshCommand "sudo rm -rf /home/codenvy-im/codenvy-im-tomcat/webapps"
+
+executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps"
+executeSshCommand "sudo rm -rf /home/codenvy-im/codenvy-im-tomcat/webapps"
 
 # preform re-install
 executeIMCommand "im-install" "--reinstall" "codenvy"
