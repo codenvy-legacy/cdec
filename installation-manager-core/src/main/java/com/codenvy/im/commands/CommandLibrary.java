@@ -69,7 +69,7 @@ public class CommandLibrary {
      * The idea is to treat file as a single line and replace text respectively.
      */
     public static Command createReplaceCommand(String file, String replacingToken, String replacement, boolean withSudo) {
-        String cmd = format("sudo cat %3$s | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|%1$s|%2$2s|g' | sed 's|~n|\\n|g' > tmp && sudo mv tmp %3$s",
+        String cmd = format("sudo cat %3$s | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|%1$s|%2$2s|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp %3$s",
                             replacingToken,
                             replacement.replace("\\$", "\\\\$").replace("\n", "\\n"),
                             file);

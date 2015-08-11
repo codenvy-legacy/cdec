@@ -57,7 +57,6 @@ import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
-import static org.apache.commons.io.FileUtils.readFileToString;
 
 /** @author Dmytro Nochevnov */
 @Singleton
@@ -254,8 +253,18 @@ public class ConfigManager {
     protected Map<String, String> doLoadInstalledCodenvyProperties(Path file) throws IOException {
         Map<String, String> m = new HashMap<>();
 
-        String data = readFileToString(file.toFile());
-        Matcher matcher = PUPPET_PROP_TEMPLATE.matcher(data);
+        StringBuilder data = new StringBuilder();
+        try (BufferedReader reader = Files.newReader(file.toFile(), Charset.forName("UTF-8"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().startsWith("#")) {
+                    data.append(line);
+                    data.append('\n');
+                }
+            }
+        }
+
+        Matcher matcher = PUPPET_PROP_TEMPLATE.matcher(data.toString());
         while (matcher.find()) {
             m.put(matcher.group(1), matcher.group(2));
         }
