@@ -71,7 +71,7 @@ validateOS() {
     if [ -f /etc/redhat-release ]; then
         OS="Red Hat"
     else
-        printLn  "Operation system isnisn't supported."
+        printLn  "Operation system isn't supported."
         exit 1
     fi
     OS_VERSION=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
