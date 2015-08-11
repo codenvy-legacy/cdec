@@ -191,6 +191,7 @@ public class TestConfigManager extends BaseTest {
                                              "node \"test.com\" inherits \"base_config\" {\n" +
                                              "  # enter dns name of your single server installation, same as above.\n" +
                                              "  $aio_host_url = \"test.com\"\n" +
+                                             "  # $aio_host_url = \"codenvy.com\"\n" +
                                              "\n" +
                                              "  ###############################\n" +
                                              "  # Codenvy Builder configurations\n" +
@@ -198,7 +199,7 @@ public class TestConfigManager extends BaseTest {
                                              "  $admin_ldap_password = \"$system_ldap_password\"\n" +
                                              "  # custom ldap\n" +
                                              "  # false by default which means that default ldap (installed on codenvy servers) will be used.\n" +
-                                             "  # In in order to connect codenvy to any third-party ldap please set this to true and change any " +
+                                             "  # In in order to connect codenvy to any third-party ldap please set this to true and change any \n" +
                                              "  $custom_ldap = \"false\"\n" +
                                              "  \n" +
                                              "  # ldap dn configurations\n" +

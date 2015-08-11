@@ -63,8 +63,8 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='sudo cat testFile " +
                                              "| sed ':a;N;$!ba;s/\\n/~n/g' " +
                                              "| sed 's|property *= *\"[^\"]*\"|property = \"newValue\"|g' " +
-                                             "| sed 's|~n|\\n|g' > tmp " +
-                                             "&& sudo mv tmp testFile', 'agent'='LocalAgent'}");
+                                             "| sed 's|~n|\\n|g' > tmp.tmp " +
+                                             "&& sudo mv tmp.tmp testFile', 'agent'='LocalAgent'}");
     }
 
     @Test
@@ -81,8 +81,8 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='cat target/testFile " +
                                              "| sed ':a;N;$!ba;s/\\n/~n/g' " +
                                              "| sed 's|$property *= *\"[^\"]*\"|$property = \"1\\n2\\n3\\n\"|g' " +
-                                             "| sed 's|~n|\\n|g' > tmp " +
-                                             "&& mv tmp target/testFile', " +
+                                             "| sed 's|~n|\\n|g' > tmp.tmp " +
+                                             "&& mv tmp.tmp target/testFile', " +
                                              "'agent'='LocalAgent'}");
 
         testCommand.execute();
@@ -103,8 +103,8 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='cat target/testFile " +
                                              "| sed ':a;N;$!ba;s/\\n/~n/g' " +
                                              "| sed 's|old|\\\\$new|g' " +
-                                             "| sed 's|~n|\\n|g' > tmp " +
-                                             "&& mv tmp target/testFile', 'agent'='LocalAgent'}");
+                                             "| sed 's|~n|\\n|g' > tmp.tmp " +
+                                             "&& mv tmp.tmp target/testFile', 'agent'='LocalAgent'}");
         testCommand.execute();
 
         String content = readFileToString(testFile.toFile());
@@ -120,8 +120,8 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), "{'command'='cat target/testFile " +
                                              "| sed ':a;N;$!ba;s/\\n/~n/g' " +
                                              "| sed 's|old|new\\nnew\\nnew\\n|g' " +
-                                             "| sed 's|~n|\\n|g' > tmp " +
-                                             "&& mv tmp target/testFile', 'agent'='LocalAgent'}");
+                                             "| sed 's|~n|\\n|g' > tmp.tmp " +
+                                             "&& mv tmp.tmp target/testFile', 'agent'='LocalAgent'}");
         testCommand.execute();
 
         String content = readFileToString(testFile.toFile());
@@ -224,8 +224,8 @@ public class TestCommandLibrary {
         assertEquals(command.toString(), "[{'command'='sudo cat target/patches/multi_server/patch_before_update.sh " +
                                          "| sed ':a;N;$!ba;s/\\n/~n/g' " +
                                          "| sed 's|$test_property1|property1|g' " +
-                                         "| sed 's|~n|\\n|g' > tmp " +
-                                         "&& sudo mv tmp target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
+                                         "| sed 's|~n|\\n|g' > tmp.tmp " +
+                                         "&& sudo mv tmp.tmp target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
                                          "{'command'='bash target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}]");
     }
 
