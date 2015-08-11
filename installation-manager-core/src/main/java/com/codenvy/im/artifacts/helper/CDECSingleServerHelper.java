@@ -101,6 +101,12 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
+                    add(createCommand("if ! sudo grep -Eq \"127.0.0.1.*puppet\" /etc/hosts; then\n" +
+                                      " echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null\n" +
+                                      "fi"));
+                    add(createCommand(format("if ! sudo grep -Fq \"%1$s\" /etc/hosts; then\n" +
+                                             "  echo \"127.0.0.1 %1$s\" | sudo tee --append /etc/hosts > /dev/null\n" +
+                                             "fi", config.getHostUrl())));
                     add(createCommand(
                         "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
                         + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))

@@ -156,17 +156,6 @@ insertProperty() {
     sed -i s/$1=.*/$1=$2/g ${CONFIG}
 }
 
-updateHostsFile() {
-    [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
-
-    if ! sudo grep -Eq "127.0.0.1.*puppet" /etc/hosts; then
-        echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null
-    fi
-    if ! sudo grep -Fq "${HOST_NAME}" /etc/hosts; then
-        echo "127.0.0.1 ${HOST_NAME}" | sudo tee --append /etc/hosts > /dev/null
-    fi
-}
-
 askAndInsertProperty() {
     PROMPT=$1
     VARIABLE=$2
@@ -264,8 +253,6 @@ printPreInstallInfo_single() {
         printLn
         printLn
     fi
-
-    updateHostsFile
 
     pressYKeyToContinue
 }
