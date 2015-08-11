@@ -45,10 +45,10 @@ auth "admin" "new-password" "http://${NEW_HOSTNAME}"
 
 # test re-install
 # remove codenvy binaries
-# TODO [AB]
-#executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "api.codenvy.onprem"
-#executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "runner1.codenvy.onprem"
-#executeSshCommand "sudo rm -rf /home/codenvy-im/codenvy-im-tomcat/webapps"
+
+executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "api.codenvy.onprem"
+executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "runner1.codenvy.onprem"
+executeSshCommand "sudo rm -rf /home/codenvy-im/codenvy-im-tomcat/webapps"
 
 # perform re-install
 executeIMCommand "im-install" "--reinstall" "codenvy"
