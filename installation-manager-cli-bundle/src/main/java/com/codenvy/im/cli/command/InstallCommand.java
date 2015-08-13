@@ -159,10 +159,15 @@ public class InstallCommand extends AbstractIMCommand {
         final InstallOptions installOptions = new InstallOptions();
         final boolean isInstall = isInstall(artifact);
 
-        if (multi) {
-            installType = InstallType.MULTI_SERVER;
+
+        if (isInstall) {
+            if (multi) {
+                installType = InstallType.MULTI_SERVER;
+            } else {
+                installType = InstallType.SINGLE_SERVER;
+            }
         } else {
-            installType = InstallType.SINGLE_SERVER;
+            installType = configManager.detectInstallationType();
         }
 
         installOptions.setInstallType(installType);

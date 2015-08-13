@@ -44,7 +44,7 @@ executeSshCommand "sudo yum install zip -y -q"
 executeSshCommand "cd /tmp/codenvy && zip -r /tmp/codenvy.zip ."
 
 # install from local folder
-executeIMCommand "im-install" "--multi" "--binaries=/tmp/codenvy.zip" "codenvy" "${LATEST_CODENVY_VERSION}"
+executeIMCommand "im-install" "--binaries=/tmp/codenvy.zip" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 auth "admin" "password"
 
