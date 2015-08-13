@@ -336,7 +336,7 @@ public class CommandLibrary {
     }
 
     /**
-     * Creates command to force running puppet agent if no lock file exists.
+     * Creates command to force running puppet agent.
      */
     public static Command createForcePuppetAgentCommand(NodeConfig node) throws AgentException {
         return createCommand(getForcePuppetAgentCommand(), node);
@@ -344,20 +344,18 @@ public class CommandLibrary {
 
 
     /**
-     * Creates command to force running puppet agent if no lock file exists.
+     * Creates command to force running puppet agent.
      */
     public static Command createForcePuppetAgentCommand() throws AgentException {
         return createCommand(getForcePuppetAgentCommand());
     }
 
     /**
-     * Creates command to force running puppet agent if no lock file exists.
-     * Lock file is placed at /var/lib/puppet/state/agent_catalog_run.lock
+     * Creates command to force running puppet agent.
      */
     private static String getForcePuppetAgentCommand() {
-        return "if ! sudo test -f /var/lib/puppet/state/agent_catalog_run.lock; then " +
-               "   sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " +  // make sure there is no "--detailed-exitcodes" option
-               "fi;";
+        return "sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " + // make sure there is no "--detailed-exitcodes" option
+               "exit 0;";
     }
 
     public static Command createTailCommand(Path file, int lineNumber, boolean needSudo) {
