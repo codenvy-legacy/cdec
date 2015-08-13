@@ -118,7 +118,6 @@ public class SimpleCommand implements Command {
     @Override
     public String toString() {
         return format("{'command'='%s', 'agent'='%s'}", command, agent);
-//        return format("{command='%s', agent=%s, logCommand=%s}", command, agent, logCommand);   // TODO [ndp]
     }
 
     protected CommandException makeCommandException(Exception e) {
