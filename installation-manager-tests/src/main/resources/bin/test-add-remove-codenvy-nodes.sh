@@ -55,14 +55,14 @@ executeIMCommand "im-remove-node" "runner2.codenvy.onprem"
 
 auth "admin" "password"
 doGet "http://codenvy.onprem/api/admin/runner/server?token=${TOKEN}"
-validateUnExpectedString ".*http://runner2.codenvy.onprem:8080/runner/internal/runner.*"
+validateErrorString ".*http://runner2.codenvy.onprem:8080/runner/internal/runner.*"
 
 # remove builder
 executeIMCommand "im-remove-node" "builder2.codenvy.onprem"
 
 auth "admin" "password"
 doGet "http://codenvy.onprem/api/admin/builder/server?token=${TOKEN}"
-validateUnExpectedString ".*http://builder2.codenvy.onprem:8080/builder/internal/builder.*"
+validateErrorString ".*http://builder2.codenvy.onprem:8080/builder/internal/builder.*"
 
 # remove already removed runner
 executeIMCommand "--valid-exit-code=1" "im-remove-node" "runner2.codenvy.onprem"

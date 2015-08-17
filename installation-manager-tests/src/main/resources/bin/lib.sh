@@ -284,7 +284,7 @@ validateExpectedString() {
     logEndCommand "validateRegex: OK"
 }
 
-validateUnExpectedString() {
+validateErrorString() {
     logStartCommand "validateRegex "$@
 
     [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1

@@ -70,7 +70,7 @@ executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NA
 
 # test im-subscription after login and adding OnPremises subscription
 executeIMCommand "im-subscription"
-validateUnExpectedString ".*subscription.*OnPremises.*message.*Subscription is valid.*"
+validateExpectedString ".*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription.is.valid\".*"
 
 printAndLog "RESULT: PASSED"
 
