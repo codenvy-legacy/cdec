@@ -490,7 +490,7 @@ public class RepositoryService {
             NewSubscription newSubscription = DtoFactory.newDto(NewSubscription.class)
                                                         .withAccountId(accountId)
                                                         .withPlanId(planId)
-                                                        .withUsePaymentSystem(true);
+                                                        .withUsePaymentSystem(false);
 
             Map m = asMap(httpTransport.doPost(combinePaths(saasApiEndpoint, "subscription"), newSubscription, accessToken));
             if (!m.containsKey("id")) {

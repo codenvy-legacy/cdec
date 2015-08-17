@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.update;
 
+import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
@@ -28,6 +29,7 @@ import com.jayway.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.che.commons.user.UserImpl;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.testng.MockitoTestNGListener;
@@ -499,12 +501,18 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testAddSubscription() throws Exception {
+        final String planId = "opm-free";
+        NewSubscription expectedSubscription = DtoFactory.newDto(NewSubscription.class)
+                                                    .withAccountId("accountId")
+                                                    .withPlanId(planId)
+                                                    .withUsePaymentSystem(false);
+
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]").when(httpTransport).doGet("/account", "token");
         doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
-        doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
+        doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("subscription"), eq(expectedSubscription), eq("token"));
         doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
 
         Response response = given()
