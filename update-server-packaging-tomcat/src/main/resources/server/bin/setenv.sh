@@ -15,8 +15,8 @@
 # from Codenvy S.A..
 #
 
-if [ -z "${CODENVY_LOCAL_CONF_DIR}" ]; then
-    echo "Need to set CODENVY_LOCAL_CONF_DIR"
+if [ -z "${CHE_LOCAL_CONF_DIR}" ]; then
+    echo "Need to set CHE_LOCAL_CONF_DIR"
     exit 1
 fi
 
@@ -37,12 +37,12 @@ fi
 [ -z "${CLASSPATH}" ]  && CLASSPATH="${CATALINA_HOME}/conf/:${JAVA_HOME}/lib/tools.jar"
 
 export CATALINA_HOME
-export JAVA_OPTS="$JAVA_OPTS -Dcodenvy.local.conf.dir=${CODENVY_LOCAL_CONF_DIR} \
-                             -Dcodenvy.logback.smtp.appender=${CODENVY_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
-                             -Dcodenvy.syslog.appender=${CODENVY_LOCAL_CONF_DIR}/syslog-appender.xml \
+export JAVA_OPTS="$JAVA_OPTS -Dche.local.conf.dir=${CHE_LOCAL_CONF_DIR} \
+                             -Dcodenvy.logback.smtp.appender=${CHE_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
+                             -Dcodenvy.syslog.appender=${CHE_LOCAL_CONF_DIR}/syslog-appender.xml \
                              -Dcodenvy.logs.dir=${CODENVY_LOGS_DIR}"
 
-echo "Using LOCAL_CONF_DIR:  $CODENVY_LOCAL_CONF_DIR"
+echo "Using LOCAL_CONF_DIR:  $CHE_LOCAL_CONF_DIR"
 
 
 
