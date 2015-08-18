@@ -23,6 +23,10 @@ printAndLog "TEST CASE: Check subscription"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
+# TODO [ndp] test on SAAS_SERVER="http://nightly.codenvy-stg.com" after this server is moved to https://nightly.codenvy-stg.com
+# so as when updater uses http autorization doesn't work, that is
+# POST requests to adding subscription method http://updater-nightly.codenvy-dev.com/update/repository/subscription return error message about invalid token.
+
 UPDATE_SERVER="http://updater.codenvy-stg.com"
 UPDATE_SERVICE="https://codenvy-stg.com/update"
 SAAS_SERVER="https://codenvy-stg.com"
