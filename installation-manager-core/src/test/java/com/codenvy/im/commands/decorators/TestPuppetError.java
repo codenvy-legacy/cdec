@@ -36,13 +36,13 @@ public class TestPuppetError {
         MockitoAnnotations.initMocks(this);
     }
 
-    @Test(dataProvider = "TestGetLineToDisplay")
+    @Test(dataProvider = "getTestGetLineToDisplay")
     public void testMatchPuppetError(String logLine, NodeConfig node, PuppetError expectedPuppetError) {
         PuppetError testError = PuppetError.match(logLine, node);
         assertEquals(testError, expectedPuppetError);
     }
 
-    @DataProvider(name = "TestGetLineToDisplay")
+    @DataProvider
     public Object[][] getTestGetLineToDisplay() {
         return new Object[][]{
             {null, null, null},

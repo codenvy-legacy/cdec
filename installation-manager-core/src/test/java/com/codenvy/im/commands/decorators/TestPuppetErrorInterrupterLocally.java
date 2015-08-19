@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.commands.decorators;
 
+import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.CommandLibrary;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -141,31 +143,25 @@ public class TestPuppetErrorInterrupterLocally {
                                           + "2015-07-29 16:02:00 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
                                           + "2015-07-29 16:03:00 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n";
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
-                    return null;
-                } catch (InterruptedException e) {
-                    // it's okay here
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
+                return null;
+            } catch (InterruptedException e) {
+                // it's okay here
+                return null;
             }
         }).when(mockCommand).execute();
 
-        Executors.newSingleThreadExecutor().submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
+        Executors.newSingleThreadExecutor().submit(() -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
-                    // append error messages to puppet log file
-                    FileUtils.write(PUPPET_LOG_FILE.toFile(), puppetErrorMessages, true);
-                } catch (Exception e) {
-                    fail(e.getMessage());
-                }
+                // append error messages to puppet log file
+                FileUtils.write(PUPPET_LOG_FILE.toFile(), puppetErrorMessages, true);
+            } catch (Exception e) {
+                fail(e.getMessage());
             }
         });
 
@@ -227,9 +223,7 @@ public class TestPuppetErrorInterrupterLocally {
         final String[] failMessage = {null};
         final String expectedResult = "okay";
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+        doAnswer(invocationOnMock -> {
                 try {
                     Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                     return expectedResult;
@@ -237,22 +231,18 @@ public class TestPuppetErrorInterrupterLocally {
                     failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
                     return null;
                 }
-            }
         }).when(mockCommand).execute();
 
-        Executors.newSingleThreadExecutor().submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
+        Executors.newSingleThreadExecutor().submit(() -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
-                    // append non-error message into puppet log file
-                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
+                // append non-error message into puppet log file
+                String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
 
-                    FileUtils.write(PUPPET_LOG_FILE.toFile(), errorMessage, true);
-                } catch (Exception e) {
-                    fail(e.getMessage());
-                }
+                FileUtils.write(PUPPET_LOG_FILE.toFile(), errorMessage, true);
+            } catch (Exception e) {
+                fail(e.getMessage());
             }
         });
 
@@ -270,16 +260,13 @@ public class TestPuppetErrorInterrupterLocally {
     public void testRethrowCommandExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    throw new CommandException("error");
-                } catch (InterruptedException e) {
-                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                throw new CommandException("error");
+            } catch (InterruptedException e) {
+                failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                return null;
             }
         }).when(mockCommand).execute();
 
@@ -296,16 +283,13 @@ public class TestPuppetErrorInterrupterLocally {
     public void testRethrowRuntimeExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    throw new RuntimeException("error");
-                } catch (InterruptedException e) {
-                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                throw new RuntimeException("error");
+            } catch (InterruptedException e) {
+                failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                return null;
             }
         }).when(mockCommand).execute();
 
@@ -314,6 +298,25 @@ public class TestPuppetErrorInterrupterLocally {
         if (failMessage[0] != null) {
             fail(failMessage[0]);
         }
+    }
+
+    @Test(dataProvider = "getDataForTestReadNLines")
+    public void testReadNLines(String lines, List<String> expectedLines) throws CommandException, AgentException {
+        doReturn(lines).when(mockCommand).execute();
+        doReturn(mockCommand).when(testInterrupter).createReadFileCommand(null);
+
+        List<String> result = testInterrupter.readNLines(null);
+        assertEquals(result, expectedLines);
+    }
+
+    @DataProvider
+    public Object[][] getDataForTestReadNLines() {
+        return new Object[][] {
+            {null, Collections.emptyList()},
+            {"", Collections.singletonList("")},
+            {"line1", Collections.singletonList("line1")},
+            {"line1\nline2", Arrays.asList("line1", "line2")}
+        };
     }
 
     @AfterMethod
@@ -328,7 +331,7 @@ public class TestPuppetErrorInterrupterLocally {
         deleteDirectory(BASE_TMP_DIRECTORY.toFile());
     }
 
-    @Test(dataProvider = "dataForCheckPuppetError")
+    @Test(dataProvider = "getDataToCheckPuppetError")
     public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
         List<String> lines = Arrays.asList(puppetLog.split("\n"));
 
@@ -340,7 +343,7 @@ public class TestPuppetErrorInterrupterLocally {
         assertEquals(error, expectedError);
     }
 
-    @DataProvider(name = "dataForCheckPuppetError")
+    @DataProvider
     public Object[][] getDataToCheckPuppetError() {
         return new Object[][] {
             {// only 1 error message

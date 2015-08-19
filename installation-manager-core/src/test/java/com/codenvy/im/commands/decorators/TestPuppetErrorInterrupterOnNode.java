@@ -130,7 +130,7 @@ public class TestPuppetErrorInterrupterOnNode {
                 .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
 
-    //@Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
     public void testInterruptWhenAddError() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
@@ -138,31 +138,25 @@ public class TestPuppetErrorInterrupterOnNode {
                                           + "2015-07-29 16:02:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n"
                                           + "2015-07-29 16:03:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n";
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
-                    return null;
-                } catch (InterruptedException e) {
-                    // it's okay here
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                failMessage[0] = "mockCommand should be interrupted by testInterrupter, but wasn't";
+                return null;
+            } catch (InterruptedException e) {
+                // it's okay here
+                return null;
             }
         }).when(mockCommand).execute();
 
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
-                    FileUtils.writeStringToFile(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), puppetErrorMessage, true);
-                } catch (Exception e) {
-                    fail(e.getMessage());
-                }
+        Executors.newSingleThreadExecutor().submit(() -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
+                FileUtils.writeStringToFile(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), puppetErrorMessage, true);
+            } catch (Exception e) {
+                fail(e.getMessage());
             }
-        }.start();
+        });
 
         try {
             testInterrupter.execute();
@@ -215,32 +209,26 @@ public class TestPuppetErrorInterrupterOnNode {
         final String[] failMessage = {null};
         final String expectedResult = "okay";
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    return expectedResult;
-                } catch (InterruptedException e) {
-                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                return expectedResult;
+            } catch (InterruptedException e) {
+                failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                return null;
             }
         }).when(mockCommand).execute();
 
-        Executors.newSingleThreadExecutor().submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
+        Executors.newSingleThreadExecutor().submit(() -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
-                    // append non-error message into puppet log file
-                    String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
+                // append non-error message into puppet log file
+                String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
 
-                    FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), errorMessage, true);
-                } catch (Exception e) {
-                    fail(e.getMessage());
-                }
+                FileUtils.write(PuppetErrorInterrupter.PUPPET_LOG_FILE.toFile(), errorMessage, true);
+            } catch (Exception e) {
+                fail(e.getMessage());
             }
         });
 
@@ -258,16 +246,13 @@ public class TestPuppetErrorInterrupterOnNode {
     public void testRethrowCommandExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    throw new CommandException("error");
-                } catch (InterruptedException e) {
-                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                throw new CommandException("error");
+            } catch (InterruptedException e) {
+                failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                return null;
             }
         }).when(mockCommand).execute();
 
@@ -284,16 +269,13 @@ public class TestPuppetErrorInterrupterOnNode {
     public void testRethrowRuntimeExceptionByInterrupter() throws InterruptedException, IOException {
         final String[] failMessage = {null};
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                try {
-                    Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
-                    throw new RuntimeException("error");
-                } catch (InterruptedException e) {
-                    failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
-                    return null;
-                }
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                throw new RuntimeException("error");
+            } catch (InterruptedException e) {
+                failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                return null;
             }
         }).when(mockCommand).execute();
 

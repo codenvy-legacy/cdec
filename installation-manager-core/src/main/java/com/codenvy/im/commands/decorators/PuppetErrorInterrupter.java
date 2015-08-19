@@ -40,7 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -89,12 +88,7 @@ public class PuppetErrorInterrupter implements Command {
     public String execute() throws CommandException {
         LOG.info(toString());
 
-        task = new FutureTask<>(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return command.execute();
-            }
-        });
+        task = new FutureTask<>(command::execute);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(task);
@@ -193,13 +187,13 @@ public class PuppetErrorInterrupter implements Command {
         return null;
     }
 
-    private List<String> readNLines(NodeConfig node) throws CommandException, AgentException {
+    protected List<String> readNLines(NodeConfig node) throws CommandException, AgentException {
         Command readFileCommand = createReadFileCommand(node);
 
         String allLines = readFileCommand.execute();
 
         if (allLines == null) {
-            Collections.singletonList(String.class);
+            return Collections.emptyList();
         }
 
         String[] lines = allLines.split("[\n]+");
