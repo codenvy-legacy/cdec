@@ -75,7 +75,7 @@ public class InjectorBootstrap {
         bindFileProperties("codenvy/update-server.properties");
         bindFileProperties("codenvy/installation-manager.properties");
 
-        String confDir = System.getenv("CODENVY_LOCAL_CONF_DIR");
+        String confDir = System.getenv("CHE_LOCAL_CONF_DIR");
         if (confDir != null) {
             overrideDefaultProperties(confDir);
         }
@@ -122,7 +122,7 @@ public class InjectorBootstrap {
         }
     }
 
-    /** Override default properties from jar with values from CODENVY_LOCAL_CONF_DIR directory */
+    /** Override default properties from jar with values from CHE_LOCAL_CONF_DIR directory */
     protected static void overrideDefaultProperties(@Nonnull String localConfDir) {
         Path confDirPath = Paths.get(localConfDir);
 
