@@ -24,7 +24,7 @@ fi
 [ -z "${JAVA_OPTS}" ]  && JAVA_OPTS="-Xms128m -Xmx512M -XX:MaxPermSize=128m -XX:+UseCompressedOops"
 
 #Global LOGS DIR
-[ -z "${CODENVY_LOGS_DIR}" ]  && CODENVY_LOGS_DIR="$CATALINA_HOME/logs"
+[ -z "${CHE_LOGS_DIR}" ]  && CHE_LOGS_DIR="$CATALINA_HOME/logs"
 
 [ -z "${JPDA_ADDRESS}" ]  && JPDA_ADDRESS="8000"
 
@@ -40,7 +40,7 @@ export CATALINA_HOME
 export JAVA_OPTS="$JAVA_OPTS -Dcodenvy.local.conf.dir=${CODENVY_LOCAL_CONF_DIR} \
                              -Dcodenvy.logback.smtp.appender=${CODENVY_LOCAL_CONF_DIR}/logback-smtp-appender.xml \
                              -Dcodenvy.syslog.appender=${CODENVY_LOCAL_CONF_DIR}/syslog-appender.xml \
-                             -Dcodenvy.logs.dir=${CODENVY_LOGS_DIR}"
+                             -Dche.logs.dir=${CHE_LOGS_DIR}"
 
 echo "Using LOCAL_CONF_DIR:  $CODENVY_LOCAL_CONF_DIR"
 

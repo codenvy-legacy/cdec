@@ -33,7 +33,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>${codenvy.logs.dir}/%d{yyyy/MM/dd}/catalina-%i.log</fileNamePattern>
+            <fileNamePattern>${che.logs.dir}/%d{yyyy/MM/dd}/catalina-%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <!-- or whenever the file size reaches 2MB -->
                 <maxFileSize>20MB</maxFileSize>
