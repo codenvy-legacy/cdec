@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 public class SshServerFactory {
     public static final String TEST_SSH_USER = "testUser";
     public static final String TEST_SSH_HOST = "127.0.0.1";
-    public static final int    TEST_SSH_PORT = 2050;
+    public static final int    TEST_SSH_PORT = 2223;
 
     private static final Path TEST_SSH_AUTH_PUBLIC_KEY =
         Paths.get(BaseTest.class.getClassLoader().getResource("../test-classes/test_rsa.pub.txt").getFile());
@@ -39,7 +39,7 @@ public class SshServerFactory {
         Paths.get(BaseTest.class.getClassLoader().getResource("../test-classes/test_rsa.txt").getFile());
 
     /**
-     * Get SSH server with shell support bound to port 2050
+     * Get SSH server with shell support bound to separate port
      */
     public static SshServer createSshd() {
         SshServer sshd = SshServer.setUpDefaultServer();
