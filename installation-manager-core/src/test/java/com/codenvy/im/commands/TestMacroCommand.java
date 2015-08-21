@@ -92,8 +92,8 @@ public class TestMacroCommand {
 
         String user = System.getProperty("user.name");
         String expectedCommand = format("[" +
-                                        "{'command'='command', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
-                                        "{'command'='command', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                        "{'command'='command', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                        "{'command'='command', 'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
                                         "]", user);
 
         Command testMacroCommand = MacroCommand.createCommand(command, description, nodes);
@@ -103,9 +103,9 @@ public class TestMacroCommand {
     @Test
     public void testCreateShellCommandForNodeList() throws AgentException {
         String expectedCommandString = format("[" +
-                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/" +
+                                              "{'command'='testCommand', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/" +
                                               ".ssh/id_rsa]'}'}, " +
-                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/" +
+                                              "{'command'='testCommand', 'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/" +
                                               ".ssh/id_rsa]'}'}" +
                                               "]",
                                               SYSTEM_USER_NAME);

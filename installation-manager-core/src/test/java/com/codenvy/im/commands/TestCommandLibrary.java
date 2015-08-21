@@ -163,7 +163,7 @@ public class TestCommandLibrary {
                                               "     else" +
                                               "         sudo cp testFile.back testFile;" +
                                               "     fi fi', " +
-                                              "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
                                               "]",
                                               SYSTEM_USER_NAME);
 
@@ -182,14 +182,14 @@ public class TestCommandLibrary {
                                               "     else" +
                                               "         sudo cp testFile.back testFile;" +
                                               "     fi fi', " +
-                                              "'agent'='{'host'='localhost', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
+                                              "'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}, " +
                                               "{'command'='if sudo test -f testFile; then " +
                                               "    if ! sudo test -f testFile.back; then" +
                                               "         sudo cp testFile testFile.back;" +
                                               "     else" +
                                               "         sudo cp testFile.back testFile;" +
                                               "     fi fi', " +
-                                              "'agent'='{'host'='127.0.0.1', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
+                                              "'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}" +
                                               "]",
                                               SYSTEM_USER_NAME);
 
@@ -272,7 +272,7 @@ public class TestCommandLibrary {
                                                     "if [ $? -eq 0 ]; then" +
                                                     "   sudo service test-service stop; " +
                                                     "fi; ', " +
-                                                    "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                                    "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
                                                     "}", SYSTEM_USER_NAME));
     }
 
@@ -293,7 +293,7 @@ public class TestCommandLibrary {
                                                     "if [ $? -ne 0 ]; then" +
                                                     "   sudo service test-service start; " +
                                                     "fi; ', " +
-                                                    "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                                    "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
                                                     "}", SYSTEM_USER_NAME));
     }
 
@@ -308,20 +308,17 @@ public class TestCommandLibrary {
         Command testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"),
                                                                                 testApiNode.setUser(SYSTEM_USER_NAME));
         assertEquals(testCommand.toString(), format("{" +
-                                                    "'command'='scp -r -q -o StrictHostKeyChecking=no local/path %s@localhost:remote/path', " +
-                                                    "'agent'='LocalAgent'" +
+                                                    "'command'='scp -P 22 -i '~/.ssh/id_rsa' -r -q -o StrictHostKeyChecking=no local/path %s@localhost:remote/path', 'agent'='LocalAgent'" +
                                                     "}", SYSTEM_USER_NAME));
 
         testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testDataNode.setUser(null));
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o StrictHostKeyChecking=no local/path 127.0.0.1:remote/path', " +
-                                             "'agent'='LocalAgent'" +
+                                             "'command'='scp -P 22 -i '~/.ssh/id_rsa' -r -q -o StrictHostKeyChecking=no local/path 127.0.0.1:remote/path', 'agent'='LocalAgent'" +
                                              "}");
 
         testCommand = CommandLibrary.createCopyFromLocalToRemoteCommand(Paths.get("local/path"), Paths.get("remote/path"), testDataNode.setUser(""));
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o StrictHostKeyChecking=no local/path 127.0.0.1:remote/path', " +
-                                             "'agent'='LocalAgent'" +
+                                             "'command'='scp -P 22 -i '~/.ssh/id_rsa' -r -q -o StrictHostKeyChecking=no local/path 127.0.0.1:remote/path', 'agent'='LocalAgent'" +
                                              "}");
     }
 
@@ -329,20 +326,17 @@ public class TestCommandLibrary {
     public void testCreateCopyFromRemoteToLocalCommand() {
         Command testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), testApiNode.setUser(SYSTEM_USER_NAME));
         assertEquals(testCommand.toString(), format("{" +
-                                                    "'command'='scp -r -q -o StrictHostKeyChecking=no %s@localhost:remote/path local/path', " +
-                                                    "'agent'='LocalAgent'" +
+                                                    "'command'='scp -P 22 -i '~/.ssh/id_rsa' -r -q -o StrictHostKeyChecking=no %s@localhost:remote/path local/path', 'agent'='LocalAgent'" +
                                                     "}", SYSTEM_USER_NAME));
 
         testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), testDataNode.setUser(null));
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o StrictHostKeyChecking=no 127.0.0.1:remote/path local/path', " +
-                                             "'agent'='LocalAgent'" +
+                                             "'command'='scp -P 22 -i '~/.ssh/id_rsa' -r -q -o StrictHostKeyChecking=no 127.0.0.1:remote/path local/path', 'agent'='LocalAgent'" +
                                              "}");
 
         testCommand = CommandLibrary.createCopyFromRemoteToLocalCommand(Paths.get("remote/path"), Paths.get("local/path"), testDataNode.setUser(""));
         assertEquals(testCommand.toString(), "{" +
-                                             "'command'='scp -r -q -o StrictHostKeyChecking=no 127.0.0.1:remote/path local/path', " +
-                                             "'agent'='LocalAgent'" +
+                                             "'command'='scp -P 22 -i '~/.ssh/id_rsa' -r -q -o StrictHostKeyChecking=no 127.0.0.1:remote/path local/path', 'agent'='LocalAgent'" +
                                              "}");
     }
 
@@ -369,7 +363,7 @@ public class TestCommandLibrary {
                                              "     else sleep 5;" +
                                              "     fi; " +
                                              "done', " +
-                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
+                                             "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
                                              "}", SYSTEM_USER_NAME));
     }
 
@@ -397,7 +391,7 @@ public class TestCommandLibrary {
         assertEquals(testCommand.toString(), format("{" +
                                              "'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay;" +
                                              " exit 0;', " +
-                                             "'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+                                             "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test
@@ -417,7 +411,7 @@ public class TestCommandLibrary {
 
         testCommand = CommandLibrary.createUnpackCommand(packFile, toDir, pathWithinThePack, testApiNode);
         assertEquals(testCommand.toString(),
-                     format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                     format("{'command'='sudo tar  -xf packFile -C toDir pathWithinThePack', 'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
     }
 
@@ -429,7 +423,7 @@ public class TestCommandLibrary {
 
         Command testCommand = CommandLibrary.createCompressCommand(fromDir, packFile, pathWithinThePack, testApiNode);
         assertEquals(testCommand.toString(),
-                     format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                     format("{'command'='if sudo test -f packFile; then    sudo tar -C fromDir -z -rf packFile pathWithinThePack;else    sudo tar -C fromDir -z -cf packFile pathWithinThePack;fi;', 'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
     }
 
@@ -453,21 +447,21 @@ public class TestCommandLibrary {
 
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
         command = CommandLibrary.createTailCommand(fileToRead, 5, testNode, false);
-        assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
         command = CommandLibrary.createTailCommand(fileToRead, 6, testNode, true);
         assertEquals(command.toString(),
-                     "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+                     "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
     }
 
     @Test
     public void testCreateCopyCommand() throws AgentException {
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
         Command command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, true);
-        assertEquals(command.toString(), "{'command'='sudo cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(command.toString(), "{'command'='sudo cp from to', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
         command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"), testNode, false);
-        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(command.toString(), "{'command'='cp from to', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
         command = CommandLibrary.createCopyCommand(Paths.get("from"), Paths.get("to"));
         assertEquals(command.toString(), "{'command'='cp from to', 'agent'='LocalAgent'}");
@@ -483,10 +477,10 @@ public class TestCommandLibrary {
     public void testCreateChmodCommand() throws AgentException {
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
         Command command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, true);
-        assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
         command = CommandLibrary.createChmodCommand("007", Paths.get("file"), testNode, false);
-        assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='{'host'='host', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        assertEquals(command.toString(), "{'command'='chmod 007 file', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
         command = CommandLibrary.createChmodCommand("007", Paths.get("file"), true);
         assertEquals(command.toString(), "{'command'='sudo chmod 007 file', 'agent'='LocalAgent'}");

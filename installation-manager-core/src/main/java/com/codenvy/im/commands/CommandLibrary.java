@@ -285,7 +285,7 @@ public class CommandLibrary {
         }
 
         String fromRemotePath = format("%s%s:%s", userNamePrefix, remote.getHost(), fromPath);
-        return createCommand(getScpCommand(fromRemotePath, toPath.toString()));
+        return createCommand(getScpCommand(fromRemotePath, toPath.toString(), remote.getPort(), remote.getPrivateKeyFile()));
     }
 
     public static Command createCopyFromLocalToRemoteCommand(Path fromPath, Path toPath, NodeConfig remote) {
@@ -296,11 +296,11 @@ public class CommandLibrary {
         }
 
         String toRemotePath = format("%s%s:%s", userNamePrefix, remote.getHost(), toPath);
-        return createCommand(getScpCommand(fromPath.toString(), toRemotePath));
+        return createCommand(getScpCommand(fromPath.toString(), toRemotePath, remote.getPort(), remote.getPrivateKeyFile()));
     }
 
-    private static String getScpCommand(String fromPath, String toPath) {
-        return format("scp -r -q -o StrictHostKeyChecking=no %s %s", fromPath, toPath);
+    private static String getScpCommand(String fromPath, String toPath, int port, Path privateKeyFile) {
+        return format("scp -P %s -i '%s' -r -q -o StrictHostKeyChecking=no %s %s", port, privateKeyFile, fromPath, toPath);
     }
 
     public static Command createWaitServiceActiveCommand(String service) {

@@ -109,7 +109,7 @@ public class TestSimpleCommand {
         String user = System.getProperty("user.name");
         Path privateKeyFile = Paths.get(format("/home/%s/.ssh/id_rsa", System.getProperty("user.name")));
 
-        String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
+        String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'port'='22', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
 
         Command testCommand = SimpleCommand.createCommand(command, host, port, user, privateKeyFile, false);
         assertEquals(testCommand.toString(), expectedResult);
@@ -121,7 +121,7 @@ public class TestSimpleCommand {
         NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
 
         String user = System.getProperty("user.name");
-        String expectedCommand = format("{'command'='%s', 'agent'='{'host'='localhost', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", command, user);
+        String expectedCommand = format("{'command'='%s', 'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", command, user);
 
         Command testMacroCommand = SimpleCommand.createCommand(command, node);
         assertEquals(testMacroCommand.toString(), expectedCommand);
