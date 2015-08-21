@@ -300,8 +300,7 @@ public class CommandLibrary {
     }
 
     private static String getScpCommand(String fromPath, String toPath, int port, Path privateKeyFile) {
-//        return format("scp -P %s -i '%s' -r -q -o StrictHostKeyChecking=no %s %s", port, privateKeyFile, fromPath, toPath);  // TODO [ndp] uncomment
-        return format("scp -P %s -i '%s' -r -o StrictHostKeyChecking=no %s %s", port, privateKeyFile, fromPath, toPath);   // TODO [ndp] remove
+        return format("scp -P %s -i '%s' -r -q -o StrictHostKeyChecking=no %s %s", port, privateKeyFile, fromPath, toPath);
     }
 
     public static Command createWaitServiceActiveCommand(String service) {
