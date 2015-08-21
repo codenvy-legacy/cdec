@@ -23,22 +23,20 @@ printAndLog "TEST CASE: Check subscription"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-# TODO [ndp] test on SAAS_SERVER="http://nightly.codenvy-stg.com" after this server is moved to https://nightly.codenvy-stg.com
-# so as when updater uses http autorization doesn't work, that is
-# POST requests to adding subscription method http://updater-nightly.codenvy-dev.com/update/repository/subscription return error message about invalid token.
+# TODO [ndp] Test is failing so as on hosted Codenvy server "https://nightly.codenvy-stg.com" autorization doesn't work:
+# POST requests to adding subscription method https://updater-nightly.codenvy-dev.com/update/repository/subscription return error message about invalid token.
 
-UPDATE_SERVER="http://updater.codenvy-stg.com"
-UPDATE_SERVICE="https://codenvy-stg.com/update"
-SAAS_SERVER="https://codenvy-stg.com"
+#UPDATE_SERVER="http://updater.codenvy-stg.com"
+#UPDATE_SERVICE="https://codenvy-stg.com/update"
+#SAAS_SERVER="https://codenvy-stg.com"
 
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
-PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
 
-executeSshCommand "echo 'export CHE_LOCAL_CONF_DIR=/home/vagrant/codenvy_conf' >> .bashrc"
-executeSshCommand "mkdir /home/vagrant/codenvy_conf"
-executeSshCommand "echo 'saas.api.endpoint=https://codenvy-stg.com/api' > /home/vagrant/codenvy_conf/im.properties"
-executeSshCommand "echo 'installation-manager.update_server_endpoint=https://codenvy-stg.com/update' >> /home/vagrant/codenvy_conf/im.properties"
+#executeSshCommand "echo 'export CHE_LOCAL_CONF_DIR=/home/vagrant/codenvy_conf' >> .bashrc"
+#executeSshCommand "mkdir /home/vagrant/codenvy_conf"
+#executeSshCommand "echo 'saas.api.endpoint=https://codenvy-stg.com/api' > /home/vagrant/codenvy_conf/im.properties"
+#executeSshCommand "echo 'installation-manager.update_server_endpoint=https://codenvy-stg.com/update' >> /home/vagrant/codenvy_conf/im.properties"
 
 installImCliClient
 validateInstalledImCliClientVersion
