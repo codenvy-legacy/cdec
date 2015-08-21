@@ -17,12 +17,16 @@
  */
 package com.codenvy.im;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.shell.ProcessShellFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 
 /**
  * Create SSH server for testing proposes.
@@ -37,6 +41,21 @@ public class SshServerFactory {
 
     public static final Path TEST_SSH_AUTH_PRIVATE_KEY =
         Paths.get(BaseTest.class.getClassLoader().getResource("../test-classes/test_rsa.txt").getFile());
+
+    static {
+        restrictPremissionToPrivateKey();
+    }
+
+    private static void restrictPremissionToPrivateKey() {
+        try {
+            Files.setPosixFilePermissions(TEST_SSH_AUTH_PRIVATE_KEY, ImmutableSet.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE
+            ));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Get SSH server with shell support bound to separate port
