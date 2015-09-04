@@ -29,7 +29,7 @@ import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
-
+import com.google.common.collect.ImmutableMap;
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -94,11 +94,20 @@ import static java.lang.String.format;
 @Path("repository")
 public class RepositoryService {
 
-    private static final Logger  LOG                            = LoggerFactory.getLogger(RepositoryService.class);
-    public static final  Pattern VALID_EMAIL_ADDRESS_RFC822     =
-            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-    public static final  String  CAN_NOT_ADD_TRIAL_SUBSCRIPTION =
-            "You do not have a valid subscription to install Codenvy. Please contact sales@codenvy.com to add subscription.";
+    public static final Pattern VALID_EMAIL_ADDRESS_RFC822     =
+        Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+    public static final String  CAN_NOT_ADD_TRIAL_SUBSCRIPTION =
+        "You do not have a valid subscription to install Codenvy. Please contact sales@codenvy.com to add subscription.";
+
+    public static final String TIME                   = "TIME";
+    public static final String USER                   = "USER";
+    public static final String PLAN                   = "PLAN";
+    public static final String ARTIFACT               = "ARTIFACT";
+    public static final String VERSION                = "VERSION";
+    public static final String IM_ARTIFACT_DOWNLOADED = "im-artifact-downloaded";
+    public static final String IM_SUBSCRIPTION_ADDED  = "im-subscription-added";
+
+    static Logger LOG = LoggerFactory.getLogger(RepositoryService.class);  // with default access and is not final for testing propose
 
     private final String                  saasApiEndpoint;
     private final ArtifactStorage         artifactStorage;
@@ -362,11 +371,10 @@ public class RepositoryService {
                 try (InputStream input = new FileInputStream(path.toFile())) {
                     IOUtils.copyLarge(input, output);
 
-                    LOG.info("EVENT#im-artifact-downloaded# TIME#{}# USER#{}# ARTIFACT#{}# VERSION#{}#",
-                             System.currentTimeMillis(),
-                             userId == null ? "" : userId,
-                             artifact.toLowerCase(),
-                             version);
+                    logEvent(IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(TIME, String.valueOf(System.currentTimeMillis()),
+                                                                       USER, userId == null ? "" : userId,
+                                                                       ARTIFACT, artifact.toLowerCase(),
+                                                                       VERSION, version));
 
                 } catch (ClientAbortException e) {
                     // do nothing
@@ -484,6 +492,50 @@ public class RepositoryService {
         }
     }
 
+    /** Log event. */
+    @GenerateLink(rel = "log event")
+    @POST
+    @Path("/log-event/{eventName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response logEvent(@Context HttpServletRequest requestContext,
+                             @PathParam("eventName") String eventName,
+                             Map<String, String> initialEventParameters) {
+        try {
+            if (initialEventParameters == null) {
+                initialEventParameters = new HashMap<>();
+            }
+
+            Map<String, String> eventParameters = new HashMap<>(initialEventParameters);
+            
+            eventParameters.put("TIME", String.valueOf(System.currentTimeMillis()));
+
+            String userId = userManager.getCurrentUser().getId();
+            eventParameters.put("USER", userId == null ? "" : userId);
+
+            String userIp = requestContext.getRemoteAddr();
+            eventParameters.put("USER-IP", userIp);
+
+            logEvent(eventName, eventParameters);
+
+            return Response.status(Response.Status.OK).build();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. " + e.getMessage()).build();
+        }
+    }
+
+
+    private void logEvent(String eventName, Map<String, String> eventParameters) {
+        StringBuilder record = new StringBuilder("EVENT#" + eventName);
+
+        for (Map.Entry<String, String> entry: eventParameters.entrySet()) {
+            record.append(format(" %s#%s#", entry.getKey(), entry.getValue()));
+        }
+
+        LOG.info(record.toString());
+    }
+
     protected void doAddOnpremisesSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
         try {
             final String planId = "opm-free";
@@ -500,10 +552,10 @@ public class RepositoryService {
                     throw new IOException("Malformed response. 'id' key is missed.");
                 }
             }
-            LOG.info("EVENT#im-subscription-added# TIME#{}# USER#{}# PLAN#{}#",
-                     System.currentTimeMillis(),
-                     userId,
-                     planId);
+
+            logEvent(IM_SUBSCRIPTION_ADDED, ImmutableMap.of(TIME, String.valueOf(System.currentTimeMillis()),
+                                                              USER, userId,
+                                                              PLAN, planId));
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
         }
@@ -521,4 +573,5 @@ public class RepositoryService {
             LOG.error("Error of sending email with subscription info to sales.", e);
         }
     }
+
 }

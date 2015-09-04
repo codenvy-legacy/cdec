@@ -24,20 +24,26 @@ import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.Response;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.che.commons.user.UserImpl;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.testng.MockitoTestNGListener;
+import org.slf4j.Logger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import javax.inject.Named;
 import javax.mail.MessagingException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -63,8 +69,10 @@ import static com.codenvy.im.saas.SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORM
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -81,11 +89,22 @@ import static org.testng.Assert.assertTrue;
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class TestRepositoryService extends BaseTest {
 
+    public static final javax.ws.rs.core.Response OK_RESPONSE = javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).build();
+    static final long TEST_TIME = System.currentTimeMillis();
     private ArtifactStorage   artifactStorage;
     private RepositoryService repositoryService;
-    private HttpTransport     httpTransport;
-    private UserManager       userManager;
+
+    @Mock
+    private HttpTransport httpTransport;
+
+    @Mock
+    private UserManager userManager;
+
+    @Mock
     private MailUtil mailUtil;
+
+    @Mock
+    private Logger testLog;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -99,9 +118,8 @@ public class TestRepositoryService extends BaseTest {
     @Override
     @BeforeMethod
     public void setUp() throws Exception {
-        httpTransport = mock(HttpTransport.class);
-        userManager = mock(UserManager.class);
-        mailUtil = mock(MailUtil.class);
+        MockitoAnnotations.initMocks(this);
+
         saasAccountServiceProxy = new SaasAccountServiceProxy("", httpTransport);
         saasUserServiceProxy = new SaasUserServiceProxy("", httpTransport);
         artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
@@ -113,6 +131,8 @@ public class TestRepositoryService extends BaseTest {
                                                   saasUserServiceProxy,
                                                   saasAccountServiceProxy);
 
+        repositoryService.LOG = testLog;
+
         when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         super.setUp();
     }
@@ -123,7 +143,7 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
 
         Response response = given().when().get("repository/properties/" + InstallManagerArtifact.NAME);
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         Map value = Commons.asMap(response.body().asString());
 
@@ -147,7 +167,7 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", testPropertiesContainer);
 
         Response response = given().when().get("repository/properties/" + InstallManagerArtifact.NAME + "/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         Map value = Commons.asMap(response.body().asString());
 
@@ -164,8 +184,9 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
+        verify(testLog).info(matches("EVENT#im-artifact-downloaded TIME#\\d*# USER## ARTIFACT#installation-manager-cli# VERSION#1.0.1#"));
     }
 
     @Test
@@ -179,7 +200,7 @@ public class TestRepositoryService extends BaseTest {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME);
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
@@ -205,7 +226,7 @@ public class TestRepositoryService extends BaseTest {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
@@ -227,7 +248,7 @@ public class TestRepositoryService extends BaseTest {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
@@ -276,7 +297,7 @@ public class TestRepositoryService extends BaseTest {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
@@ -301,12 +322,12 @@ public class TestRepositoryService extends BaseTest {
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy/1.0.1-SNAPSHOT");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .get("/repository/public/download/codenvy");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
     }
 
@@ -319,7 +340,7 @@ public class TestRepositoryService extends BaseTest {
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy/1.0.1-SNAPSHOT");
 
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         Path artifact = Paths.get("target", "download", "codenvy", "1.0.1-SNAPSHOT", "tmp-1.0.1.txt");
         assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
@@ -346,7 +367,7 @@ public class TestRepositoryService extends BaseTest {
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .multiPart(tmp.toFile()).post(JettyHttpServer.SECURE_PATH + "/repository/upload/codenvy/1.0.1?revision=abcd&build-time=20140930");
 
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         Path artifact = Paths.get("target", "download", "codenvy", "1.0.1", "tmp-1.0.1.txt");
         assertEquals(FileUtils.readFileToString(artifact.toFile()), "content");
@@ -496,7 +517,7 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                                    .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
     }
 
     @Test
@@ -519,8 +540,9 @@ public class TestRepositoryService extends BaseTest {
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
 
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         verify(mailUtil).sendNotificationLetter("accountId", "userEmail");
+        verify(testLog).info(matches("EVENT#im-subscription-added TIME#\\d*# USER#id# PLAN#opm-free#"));
     }
 
     @Test
@@ -545,11 +567,30 @@ public class TestRepositoryService extends BaseTest {
 
         Response response = given().when().get("/repository/updates/codenvy?fromVersion=1.0.1");
 
-        assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.OK.getStatusCode());
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         List l = response.getBody().as(List.class);
         assertEquals(l.size(), 1);
         assertEquals(l.get(0), "1.0.2");
     }
+
+    @Test
+    public void testLogEvent() {
+        Map<String,String> testEventParameters = ImmutableMap.of(
+            "PARAM1", "param1-value",
+            "PARAM2", "param2-value"
+        );
+
+        String testEventName = "name";
+
+        HttpServletRequest requestContext = mock(HttpServletRequest.class);
+        doReturn("10.20.30.40").when(requestContext).getRemoteAddr();
+
+        javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEventName, testEventParameters);
+        assertEquals(response.getStatus(), OK_RESPONSE.getStatus());
+
+        verify(testLog).info(matches("EVENT#name PARAM2#param2-value# PARAM1#param1-value# TIME#\\d*# USER#id# USER-IP#10.20.30.40#"));
+    }
+
 }
 
