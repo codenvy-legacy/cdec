@@ -223,7 +223,7 @@ printPreInstallInfo_single() {
 
     if [[ ${MIN_RAM} > ${availableRAM} ]] || [[ ${MIN_CORES} > ${availableCores} ]] || [[ ${MIN_DISK_SPACE} > ${availableDiskSpace} ]]; then
         if [[ ${SILENT} == false ]]; then
-            printLn "WARNING: available resources doesn't meet recomended"
+            printLn "WARNING: available resources doesn't meet recommended"
             pressYKeyToContinue
         fi
     fi
