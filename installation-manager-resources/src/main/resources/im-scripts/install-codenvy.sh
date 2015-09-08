@@ -196,10 +196,6 @@ pressYKeyToContinue() {
 }
 
 printPreInstallInfo_single() {
-    MIN_RAM=8
-    MIN_CORES=4
-    MIN_DISK_SPACE=300
-
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
     availableDiskSpace=$(( `sudo df ${HOME} | tail -1 | awk '{print $2}'` /1000/1000 ))
     availableCores=`grep -c ^processor /proc/cpuinfo`
@@ -213,21 +209,13 @@ printPreInstallInfo_single() {
 
     printLn
     printLn "RESOURCE      : RECOMENDED : AVAILABLE"
-    printLn "RAM           : ${MIN_RAM} GB       : ${availableRAM} GB"
-    printLn "CPU           : ${MIN_CORES} cores    : ${availableCores} cores"
-    printLn "Disk Space    : ${MIN_DISK_SPACE} GB     : ${availableDiskSpace} GB"
+    printLn "RAM           : 8 GB       : ${availableRAM} GB"
+    printLn "CPU           : 4 cores    : ${availableCores} cores"
+    printLn "Disk Space    : 300 GB     : ${availableDiskSpace} GB"
     printLn
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     printLn
-
-    if [[ ${MIN_RAM} > ${availableRAM} ]] || [[ ${MIN_CORES} > ${availableCores} ]] || [[ ${MIN_DISK_SPACE} > ${availableDiskSpace} ]]; then
-        if [[ ${SILENT} == false ]]; then
-            printLn "WARNING: available resources doesn't meet recommended"
-            pressYKeyToContinue
-            printLn
-        fi
-    fi
 
     if [[ ${SILENT} == true ]]; then
         [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
@@ -267,6 +255,24 @@ printPreInstallInfo_single() {
     fi
 
     pressYKeyToContinue
+    printLn
+}
+
+doCheckAvailableResources_single() {
+    MIN_RAM=8000000
+    MIN_CORES=4
+    MIN_DISK_SPACE=300000000
+
+    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
+    availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
+    availableCores=`grep -c ^processor /proc/cpuinfo`
+
+    if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_CORES} > ${availableCores} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
+        printLn "WARNING: available resources don't meet recommended"
+        pressYKeyToContinue
+        printLn
+    fi
+    cursorUp
 }
 
 printPreInstallInfo_multi() {
@@ -356,6 +362,48 @@ printPreInstallInfo_multi() {
     fi
 
     pressYKeyToContinue
+    printLn
+    printLn
+}
+
+
+doCheckAvailableResources_multi() {
+    HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
+    PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    RUNNER_HOST_NAME=`grep runner_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    DATASOURCE_HOST_NAME=`grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
+
+    for HOST_NAME in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+        if [[ ${HOST_NAME} == ${RUNNER_HOST_NAME} ]]; then
+            MIN_RAM=1500000 # in KB
+            MIN_DISK_SPACE=50000000 # in KB
+        else
+            MIN_RAM=1000000 # in KB
+            MIN_DISK_SPACE=14000000 # in KB
+        fi
+
+        availableRAM=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no ${HOST_NAME} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        availableDiskSpace=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no ${HOST_NAME} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
+            printLn "WARNING: available resources at ${HOST_NAME} don't meet recommended"
+            printLn
+            printLn "RESOURCE      : AVAILABLE"
+            printLn "RAM           : `echo ${availableRAM} | awk '{tmp = $1/1000/1000; printf"%0.1f",tmp}'` GB"
+            printLn "Disk Space    : $(( ${availableDiskSpace} / 1000 /1000 )) GB"
+            printLn
+            pressYKeyToContinue
+
+            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
+            printLn; printLn; printLn; printLn; printLn; printLn; printLn;
+            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
+        fi
+    done
+    printLn
 }
 
 doConfigureSystem() {
@@ -499,6 +547,9 @@ printPostInstallInfo() {
 set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
+if [[ ${SILENT} == false ]]; then
+    doCheckAvailableResources_${CODENVY_TYPE}
+fi
 
 runTimer
 
