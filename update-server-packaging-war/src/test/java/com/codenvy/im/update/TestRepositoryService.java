@@ -43,6 +43,7 @@ import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -570,7 +571,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testLogEvent() {
+    public void testLogEvent() throws UnsupportedEncodingException {
         Map<String,String> testEventParameters = ImmutableMap.of(
             "PARAM1", "param1-value",
             "PARAM2", "param2-value"
