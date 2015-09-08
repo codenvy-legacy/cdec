@@ -32,16 +32,13 @@ import org.eclipse.che.commons.user.UserImpl;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.testng.MockitoTestNGListener;
-import org.slf4j.Logger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import javax.inject.Named;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
@@ -69,10 +66,8 @@ import static com.codenvy.im.saas.SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORM
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -90,21 +85,20 @@ import static org.testng.Assert.assertTrue;
 public class TestRepositoryService extends BaseTest {
 
     public static final javax.ws.rs.core.Response OK_RESPONSE = javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).build();
-    static final long TEST_TIME = System.currentTimeMillis();
     private ArtifactStorage   artifactStorage;
     private RepositoryService repositoryService;
 
     @Mock
-    private HttpTransport httpTransport;
+    private HttpTransport mockHttpTransport;
 
     @Mock
-    private UserManager userManager;
+    private UserManager mockUserManager;
 
     @Mock
-    private MailUtil mailUtil;
+    private MailUtil mockMailUtil;
 
     @Mock
-    private Logger testLog;
+    private EventLogger mockEventLogger;
 
     private final Properties authenticationRequiredProperties = new Properties() {{
         put(AUTHENTICATION_REQUIRED_PROPERTY, "true");
@@ -120,20 +114,19 @@ public class TestRepositoryService extends BaseTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        saasAccountServiceProxy = new SaasAccountServiceProxy("", httpTransport);
-        saasUserServiceProxy = new SaasUserServiceProxy("", httpTransport);
+        saasAccountServiceProxy = new SaasAccountServiceProxy("", mockHttpTransport);
+        saasUserServiceProxy = new SaasUserServiceProxy("", mockHttpTransport);
         artifactStorage = new ArtifactStorage(DOWNLOAD_DIRECTORY.toString());
         repositoryService = new RepositoryService("",
-                                                  userManager,
+                                                  mockUserManager,
                                                   artifactStorage,
-                                                  httpTransport,
-                                                  mailUtil,
+                                                  mockHttpTransport,
+                                                  mockMailUtil,
                                                   saasUserServiceProxy,
-                                                  saasAccountServiceProxy);
+                                                  saasAccountServiceProxy,
+                                                  mockEventLogger);
 
-        repositoryService.LOG = testLog;
-
-        when(userManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
+        when(mockUserManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
         super.setUp();
     }
 
@@ -186,7 +179,9 @@ public class TestRepositoryService extends BaseTest {
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
-        verify(testLog).info(matches("EVENT#im-artifact-downloaded TIME#\\d*# USER## ARTIFACT#installation-manager-cli# VERSION#1.0.1#"));
+
+        verify(mockEventLogger).log(EventLogger.IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(EventLogger.ARTIFACT_PARAM, "installation-manager-cli",
+                                                                                        EventLogger.VERSION_PARAM, "1.0.1"));
     }
 
     @Test
@@ -215,10 +210,10 @@ public class TestRepositoryService extends BaseTest {
         cal.add(Calendar.DATE, 1);
         String endDate = subscriptionDateFormat.format(cal.getTime());
 
-        when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
+        when(mockHttpTransport.doGet("/account", mockUserManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
-        when(httpTransport.doGet(endsWith("/subscription/find/account?id=accountId"), eq("token")))
+        when(mockHttpTransport.doGet(endsWith("/subscription/find/account?id=accountId"), eq("token")))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId,startDate:\"" + startDate + "\",endDate:\"" + endDate + "\"}]");
 
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
@@ -240,9 +235,9 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateArtifactWithoutSubscription() throws Exception {
-        when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
+        when(mockHttpTransport.doGet("/account", mockUserManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(httpTransport.doGet("/account/accountId/subscriptions")).thenReturn("[]");
+        when(mockHttpTransport.doGet("/account/accountId/subscriptions")).thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
 
         Response response = given()
@@ -262,9 +257,9 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPrivateErrorWhenUserWithoutSubscription() throws Exception {
-        when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
+        when(mockHttpTransport.doGet("/account", mockUserManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
-        when(httpTransport.doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"))).thenReturn("[]");
+        when(mockHttpTransport.doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"))).thenReturn("[]");
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", subscriptionProperties);
 
         Response response = given()
@@ -279,17 +274,17 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
         Response response = given().when().get("/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
     }
 
     @Test
     public void testDownloadPrivateArtifactWithSubscription() throws Exception {
-        when(httpTransport.doGet("/account", userManager.getCurrentUser().getToken()))
+        when(mockHttpTransport.doGet("/account", mockUserManager.getCurrentUser().getToken()))
                 .thenReturn("[{roles:[\"account/owner\"],accountReference:{id:accountId}}]");
 
-        when(httpTransport.doGet("/account/accountId/subscriptions", userManager.getCurrentUser().getToken()))
+        when(mockHttpTransport.doGet("/account/accountId/subscriptions", mockUserManager.getCurrentUser().getToken()))
                 .thenReturn("[{serviceId:OnPremises,id:subscriptionId}]");
 
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), "codenvy", "1.0.1", "tmp", authenticationRequiredProperties);
@@ -308,7 +303,7 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"unknownAccountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
         Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
                                    .when().get(JettyHttpServer.SECURE_PATH + "/repository/download/codenvy/1.0.1/accountId");
         assertEquals(response.statusCode(), javax.ws.rs.core.Response.Status.FORBIDDEN.getStatusCode());
@@ -414,9 +409,9 @@ public class TestRepositoryService extends BaseTest {
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
                  + "}]")
-                .when(httpTransport).doGet(endsWith("/account"), eq("token"));
+                .when(mockHttpTransport).doGet(endsWith("/account"), eq("token"));
         doReturn("[{serviceId:" + SaasAccountServiceProxy.ON_PREMISES + ",id:subscriptionId,startDate:\"01/01/2014\", endDate:\"01/01/2020\"}]")
-                .when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
+                .when(mockHttpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -429,8 +424,8 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"account/member\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -445,8 +440,8 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"anotherAccountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/account/accountId/subscriptions"), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -461,9 +456,9 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
-        doThrow(new IOException("Unexpected error.")).when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
+        doThrow(new IOException("Unexpected error.")).when(mockHttpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -477,9 +472,9 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
-        doReturn("{\"message\":\"Error.\"}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
+        doReturn("{\"message\":\"Error.\"}").when(mockHttpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -493,9 +488,9 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
-        doReturn("{}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
+        doReturn("{}").when(mockHttpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
@@ -509,11 +504,11 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
-        doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
-        doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
-        doThrow(MessagingException.class).when(mailUtil).sendNotificationLetter("accountId", "userEmail");
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
+        doReturn("{\"id\":\"subscriptionId\"}").when(mockHttpTransport).doPost(endsWith("subscription"), any(Object.class), eq("token"));
+        doReturn("{\"email\": \"userEmail\"}").when(mockHttpTransport).doGet(endsWith("/user"), eq("token"));
+        doThrow(MessagingException.class).when(mockMailUtil).sendNotificationLetter("accountId", "userEmail");
 
         Response response = given().auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                                    .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
@@ -531,33 +526,33 @@ public class TestRepositoryService extends BaseTest {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"
-                 + "}]").when(httpTransport).doGet("/account", "token");
-        doReturn("[]").when(httpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
-        doReturn("{\"id\":\"subscriptionId\"}").when(httpTransport).doPost(endsWith("subscription"), eq(expectedSubscription), eq("token"));
-        doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
+                 + "}]").when(mockHttpTransport).doGet("/account", "token");
+        doReturn("[]").when(mockHttpTransport).doGet(endsWith("/subscription/find/account?id=accountId"), eq("token"));
+        doReturn("{\"id\":\"subscriptionId\"}").when(mockHttpTransport).doPost(endsWith("subscription"), eq(expectedSubscription), eq("token"));
+        doReturn("{\"email\": \"userEmail\"}").when(mockHttpTransport).doGet(endsWith("/user"), eq("token"));
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when()
                 .post(JettyHttpServer.SECURE_PATH + "/repository/subscription/accountId");
 
         assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
-        verify(mailUtil).sendNotificationLetter("accountId", "userEmail");
-        verify(testLog).info(matches("EVENT#im-subscription-added TIME#\\d*# USER#id# PLAN#opm-free#"));
+        verify(mockMailUtil).sendNotificationLetter("accountId", "userEmail");
+        verify(mockEventLogger).log(EventLogger.IM_SUBSCRIPTION_ADDED, ImmutableMap.of(EventLogger.PLAN_PARAM, "opm-free"));
     }
 
     @Test
     public void testSendNotificationLetterGetEmailFromName() throws Exception {
         repositoryService
                 .sendNotificationLetter("accountId", new UserImpl("name@codenvy.com", "id", "token", Collections.<String>emptyList(), false));
-        verify(mailUtil).sendNotificationLetter("accountId", "name@codenvy.com");
+        verify(mockMailUtil).sendNotificationLetter("accountId", "name@codenvy.com");
     }
 
     @Test
     public void testSendNotificationLetterGetEmailFromRequest() throws Exception {
-        doReturn("{\"email\": \"userEmail\"}").when(httpTransport).doGet(endsWith("/user"), eq("token"));
+        doReturn("{\"email\": \"userEmail\"}").when(mockHttpTransport).doGet(endsWith("/user"), eq("token"));
         repositoryService
                 .sendNotificationLetter("accountId", new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
-        verify(mailUtil).sendNotificationLetter("accountId", "userEmail");
+        verify(mockMailUtil).sendNotificationLetter("accountId", "userEmail");
     }
 
     @Test
@@ -584,13 +579,15 @@ public class TestRepositoryService extends BaseTest {
         String testEventName = "name";
 
         HttpServletRequest requestContext = mock(HttpServletRequest.class);
-        doReturn("10.20.30.40").when(requestContext).getRemoteAddr();
+        String testUserIp = "10.20.30.40";
+        doReturn(testUserIp).when(requestContext).getRemoteAddr();
 
         javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEventName, testEventParameters);
         assertEquals(response.getStatus(), OK_RESPONSE.getStatus());
 
-        verify(testLog).info(matches("EVENT#name PARAM2#param2-value# PARAM1#param1-value# TIME#\\d*# USER#id# USER-IP#10.20.30.40#"));
+        verify(mockEventLogger).log(testEventName, ImmutableMap.of("PARAM1", "param1-value",
+                                                                   "PARAM2", "param2-value",
+                                                                   EventLogger.USER_IP, testUserIp));
     }
 
 }
-

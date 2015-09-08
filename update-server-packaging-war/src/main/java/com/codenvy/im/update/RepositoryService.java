@@ -27,7 +27,6 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.IllegalVersionException;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
-import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import org.apache.catalina.connector.ClientAbortException;
@@ -99,14 +98,6 @@ public class RepositoryService {
     public static final String  CAN_NOT_ADD_TRIAL_SUBSCRIPTION =
         "You do not have a valid subscription to install Codenvy. Please contact sales@codenvy.com to add subscription.";
 
-    public static final String TIME                   = "TIME";
-    public static final String USER                   = "USER";
-    public static final String PLAN                   = "PLAN";
-    public static final String ARTIFACT               = "ARTIFACT";
-    public static final String VERSION                = "VERSION";
-    public static final String IM_ARTIFACT_DOWNLOADED = "im-artifact-downloaded";
-    public static final String IM_SUBSCRIPTION_ADDED  = "im-subscription-added";
-
     static Logger LOG = LoggerFactory.getLogger(RepositoryService.class);  // with default access and is not final for testing propose
 
     private final String                  saasApiEndpoint;
@@ -116,6 +107,7 @@ public class RepositoryService {
     private final MailUtil                mailUtil;
     private final SaasUserServiceProxy    saasUserServiceProxy;
     private final SaasAccountServiceProxy saasAccountServiceProxy;
+    private final EventLogger             eventLogger;
 
     @Inject
     public RepositoryService(@Named("saas.api.endpoint") String saasApiEndpoint,
@@ -124,7 +116,8 @@ public class RepositoryService {
                              HttpTransport httpTransport,
                              MailUtil mailUtil,
                              SaasUserServiceProxy saasUserServiceProxy,
-                             SaasAccountServiceProxy saasAccountServiceProxy) {
+                             SaasAccountServiceProxy saasAccountServiceProxy,
+                             EventLogger eventLogger) {
         this.artifactStorage = artifactStorage;
         this.httpTransport = httpTransport;
         this.saasApiEndpoint = saasApiEndpoint;
@@ -132,6 +125,7 @@ public class RepositoryService {
         this.mailUtil = mailUtil;
         this.saasUserServiceProxy = saasUserServiceProxy;
         this.saasAccountServiceProxy = saasAccountServiceProxy;
+        this.eventLogger = eventLogger;
     }
 
     /**
@@ -150,12 +144,7 @@ public class RepositoryService {
         try {
             Collection<Version> versions = artifactStorage.getVersions(artifact, fromVersion);
 
-            List<String> l = FluentIterable.from(versions).transform(new Function<Version, String>() {
-                @Override
-                public String apply(Version version) {
-                    return version.toString();
-                }
-            }).toList();
+            List<String> l = FluentIterable.from(versions).transform(Version::toString).toList();
 
             return Response.status(Response.Status.OK).entity(new JsonArrayImpl<>(l)).build();
         } catch (IllegalVersionException e) {
@@ -366,23 +355,19 @@ public class RepositoryService {
             LOG.info(format("User '%s' is downloading %s", userId, fileName));
         }
 
-        StreamingOutput stream = new StreamingOutput() {
-            public void write(OutputStream output) throws IOException, WebApplicationException {
-                try (InputStream input = new FileInputStream(path.toFile())) {
-                    IOUtils.copyLarge(input, output);
+        StreamingOutput stream = output -> {
+            try (InputStream input = new FileInputStream(path.toFile())) {
+                IOUtils.copyLarge(input, output);
 
-                    logEvent(IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(TIME, String.valueOf(System.currentTimeMillis()),
-                                                                       USER, userId == null ? "" : userId,
-                                                                       ARTIFACT, artifact.toLowerCase(),
-                                                                       VERSION, version));
+                eventLogger.log(EventLogger.IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(EventLogger.ARTIFACT_PARAM, artifact.toLowerCase(),
+                                                                                    EventLogger.VERSION_PARAM, version));
 
-                } catch (ClientAbortException e) {
-                    // do nothing
-                    LOG.info(format("User %s aborted downloading %s:%s", userId == null ? "Anonymous" : userId, artifact, version));
-                } catch (Exception e) {
-                    LOG.info(format("User %s failed to download %s:%s", userId == null ? "Anonymous" : userId, artifact, version), e);
-                    throw new IOException(e.getMessage(), e);
-                }
+            } catch (ClientAbortException e) {
+                // do nothing
+                LOG.info(format("User %s aborted downloading %s:%s", userId == null ? "Anonymous" : userId, artifact, version));
+            } catch (Exception e) {
+                LOG.info(format("User %s failed to download %s:%s", userId == null ? "Anonymous" : userId, artifact, version), e);
+                throw new IOException(e.getMessage(), e);
             }
         };
 
@@ -482,7 +467,7 @@ public class RepositoryService {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-            doAddOnpremisesSubscription(userId, accountId, accessToken);
+            doAddOnpremisesSubscription(accountId, accessToken);
             sendNotificationLetter(accountId, userManager.getCurrentUser());
 
             return Response.status(Response.Status.OK).build();
@@ -508,15 +493,10 @@ public class RepositoryService {
 
             Map<String, String> eventParameters = new HashMap<>(initialEventParameters);
             
-            eventParameters.put("TIME", String.valueOf(System.currentTimeMillis()));
-
-            String userId = userManager.getCurrentUser().getId();
-            eventParameters.put("USER", userId == null ? "" : userId);
-
             String userIp = requestContext.getRemoteAddr();
-            eventParameters.put("USER-IP", userIp);
+            eventParameters.put(EventLogger.USER_IP, userIp);
 
-            logEvent(eventName, eventParameters);
+            eventLogger.log(eventName, eventParameters);
 
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
@@ -525,18 +505,7 @@ public class RepositoryService {
         }
     }
 
-
-    private void logEvent(String eventName, Map<String, String> eventParameters) {
-        StringBuilder record = new StringBuilder("EVENT#" + eventName);
-
-        for (Map.Entry<String, String> entry: eventParameters.entrySet()) {
-            record.append(format(" %s#%s#", entry.getKey(), entry.getValue()));
-        }
-
-        LOG.info(record.toString());
-    }
-
-    protected void doAddOnpremisesSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
+    protected void doAddOnpremisesSubscription(String accountId, String accessToken) throws IOException, JsonParseException {
         try {
             final String planId = "opm-free";
             NewSubscription newSubscription = DtoFactory.newDto(NewSubscription.class)
@@ -553,9 +522,7 @@ public class RepositoryService {
                 }
             }
 
-            logEvent(IM_SUBSCRIPTION_ADDED, ImmutableMap.of(TIME, String.valueOf(System.currentTimeMillis()),
-                                                              USER, userId,
-                                                              PLAN, planId));
+            eventLogger.log(EventLogger.IM_SUBSCRIPTION_ADDED, ImmutableMap.of(EventLogger.PLAN_PARAM, planId));
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
         }
