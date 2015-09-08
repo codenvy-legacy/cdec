@@ -196,6 +196,10 @@ pressYKeyToContinue() {
 }
 
 printPreInstallInfo_single() {
+    MIN_RAM=8
+    MIN_CORES=4
+    MIN_DISK_SPACE=300
+
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
     availableDiskSpace=$(( `sudo df ${HOME} | tail -1 | awk '{print $2}'` /1000/1000 ))
     availableCores=`grep -c ^processor /proc/cpuinfo`
@@ -209,13 +213,20 @@ printPreInstallInfo_single() {
 
     printLn
     printLn "RESOURCE      : RECOMENDED : AVAILABLE"
-    printLn "RAM           : 8 GB       : ${availableRAM} GB"
-    printLn "CPU           : 4 cores    : ${availableCores} cores"
-    printLn "Disk Space    : 300 GB     : ${availableDiskSpace} GB"
+    printLn "RAM           : ${MIN_RAM} GB       : ${availableRAM} GB"
+    printLn "CPU           : ${MIN_CORES} cores    : ${availableCores} cores"
+    printLn "Disk Space    : ${MIN_DISK_SPACE} GB     : ${availableDiskSpace} GB"
     printLn
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     printLn
+
+    if [[ ${MIN_RAM} > ${availableRAM} ]] || [[ ${MIN_CORES} > ${availableCores} ]] || [[ ${MIN_DISK_SPACE} > ${availableDiskSpace} ]]; then
+        if [[ ${SILENT} == false ]]; then
+            printLn "WARNING: available resources doesn't meet recomended"
+            pressYKeyToContinue
+        fi
+    fi
 
     if [[ ${SILENT} == true ]]; then
         [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
