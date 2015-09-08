@@ -225,6 +225,7 @@ printPreInstallInfo_single() {
         if [[ ${SILENT} == false ]]; then
             printLn "WARNING: available resources doesn't meet recommended"
             pressYKeyToContinue
+            printLn
         fi
     fi
 
