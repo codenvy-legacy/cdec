@@ -46,7 +46,6 @@ import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -73,10 +72,10 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
@@ -299,19 +298,19 @@ public class TestInstallationManagerService extends BaseTest {
     public void testAddTrialSubscriptionShouldReturnOkResponse() throws Exception {
         SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
         service.saasUserCredentials = testUserCredentials;
-        doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
 
         Response result = service.addTrialSubscription();
         assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
+        verify(mockFacade).addTrialSaasSubscription(testUserCredentials);
     }
 
     @Test
     public void testAddTrialSubscriptionShouldReturnForbiddenResponse() throws Exception {
         SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        doNothing().when(mockFacade).addTrialSaasSubscription(testUserCredentials);
 
         Response result = service.addTrialSubscription();
         assertEquals(result.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
+        verify(mockFacade, never()).addTrialSaasSubscription(testUserCredentials);
     }
 
     @Test
@@ -517,10 +516,9 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testInsertStoragePropertiesShouldReturnOkResponse() throws Exception {
-        doNothing().when(mockFacade).storeStorageProperties(anyMap());
-
         Response response = service.insertStorageProperties(Collections.<String, String>emptyMap());
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        verify(mockFacade).storeStorageProperties(Collections.EMPTY_MAP);
     }
 
     @Test

@@ -35,7 +35,6 @@ import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
@@ -53,12 +52,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Function;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.jayway.restassured.RestAssured.given;
@@ -109,18 +108,14 @@ public class TestInstallationManagerServiceContract {
                 ContentType.JSON,                             // produce content type
                 HttpMethod.POST,                              // HTTP method
                 OK_RESPONSE_BODY,                             // response body
-                Response.Status.CREATED,                           // response status
-                new Function<Object, Object>() {              // before test
-                    @Nullable
-                    @Override
-                    public Object apply(@Nullable Object o) {
-                        try {
-                            doReturn(new BackupInfo()).when(facade).backup(any(BackupConfig.class));
-                        } catch (IOException e) {
-                            fail(e.getMessage(), e);
-                        }
-                        return null;
+                Response.Status.CREATED,                      // response status
+                o -> {                                        // before test
+                    try {
+                        doReturn(new BackupInfo()).when(facade).backup(any(BackupConfig.class));
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
                     }
+                    return null;
                 },
                 null // assertion
         );
@@ -138,19 +133,15 @@ public class TestInstallationManagerServiceContract {
                 HttpMethod.POST,                              // HTTP method
                 OK_RESPONSE_BODY,                             // response body
                 Response.Status.CREATED,                           // response status
-                new Function<Object, Object>() {              // before test
-                    @Nullable
-                    @Override
-                    public Object apply(@Nullable Object o) {
-                        BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                                          .setBackupFile("test");
-                        try {
-                            doReturn(new BackupInfo()).when(facade).restore(testBackupConfig);
-                        } catch (IOException e) {
-                            fail(e.getMessage(), e);
-                        }
-                        return null;
+                o -> {                                        // before test
+                    BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                                      .setBackupFile("test");
+                    try {
+                        doReturn(new BackupInfo()).when(facade).restore(testBackupConfig);
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
                     }
+                    return null;
                 },
                 null // assertion
         );
@@ -167,17 +158,13 @@ public class TestInstallationManagerServiceContract {
              HttpMethod.POST,                 // HTTP method
              OK_RESPONSE_BODY,                // response body
              Response.Status.CREATED,              // response status
-             new Function<Object, Object>() { // before test
-                 @Nullable
-                 @Override
-                 public Object apply(@Nullable Object o) {
-                     try {
-                         doReturn(new NodeInfo()).when(facade).addNode("test");
-                     } catch (IOException e) {
-                         fail(e.getMessage(), e);
-                     }
-                     return null;
+             o -> {                                        // before test
+                 try {
+                     doReturn(new NodeInfo()).when(facade).addNode("test");
+                 } catch (IOException e) {
+                     fail(e.getMessage(), e);
                  }
+                 return null;
              },
              null // assertion
         );
@@ -194,17 +181,13 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.DELETE,               // HTTP method
             null,                // response body
             Response.Status.NO_CONTENT,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn(new NodeInfo()).when(facade).removeNode("test");
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                            // before test
+                try {
+                    doReturn(new NodeInfo()).when(facade).removeNode("test");
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -223,17 +206,13 @@ public class TestInstallationManagerServiceContract {
             "    \"id\": \"id\"\n" +
             "}",                // response body
             Response.Status.OK,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn("id").when(facade).getDownloadIdInProgress();
-                    } catch (DownloadNotStartedException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                           // before test
+                try {
+                    doReturn("id").when(facade).getDownloadIdInProgress();
+                } catch (DownloadNotStartedException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -252,17 +231,13 @@ public class TestInstallationManagerServiceContract {
             null,                            // response body
             Response.Status.ACCEPTED,        // response status
             null,                            // before test
-            new Function<Object, Object>() { // assertion
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).startDownload(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
-                    } catch (InterruptedException | DownloadAlreadyStartedException | IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                           // before test
+                try {
+                    verify(facade).startDownload(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
+                } catch (InterruptedException | DownloadAlreadyStartedException | IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             });
     }
 
@@ -278,17 +253,13 @@ public class TestInstallationManagerServiceContract {
             null,                            // response body
             Response.Status.NO_CONTENT,      // response status
             null,                            // before test
-            new Function<Object, Object>() { // assertion
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).stopDownload();
-                    } catch (InterruptedException | DownloadNotStartedException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                           // before test
+                try {
+                    verify(facade).stopDownload();
+                } catch (InterruptedException | DownloadNotStartedException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             });
     }
 
@@ -305,18 +276,14 @@ public class TestInstallationManagerServiceContract {
             "    \"percents\": 0\n" +
             "}",                           // response body
             Response.Status.OK,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        DownloadProgressResponse downloadDescriptor = new DownloadProgressResponse();
-                        doReturn(downloadDescriptor).when(facade).getDownloadProgress();
-                    } catch (IOException | DownloadNotStartedException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                           // before test
+                try {
+                    DownloadProgressResponse downloadDescriptor = new DownloadProgressResponse();
+                    doReturn(downloadDescriptor).when(facade).getDownloadProgress();
+                } catch (IOException | DownloadNotStartedException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -335,17 +302,13 @@ public class TestInstallationManagerServiceContract {
             "    \n" +
             "]",                // response body
             Response.Status.OK,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn(ImmutableList.of()).when(facade).getInstalledVersions();
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                           // before test
+                try {
+                    doReturn(ImmutableList.of()).when(facade).getInstalledVersions();
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -364,17 +327,13 @@ public class TestInstallationManagerServiceContract {
             "    \n" +
             "]",                // response body
             Response.Status.OK,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn(Collections.emptyList()).when(facade).getUpdates();
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                           // before test
+                try {
+                    doReturn(Collections.emptyList()).when(facade).getUpdates();
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -391,27 +350,23 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.POST,                 // HTTP method
             null,                // response body
             Response.Status.ACCEPTED,              // response status
-            new Function<Object, Object>() { // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-                        doReturn(null).when(configManager).prepareInstallProperties(anyString(),
-                                                                                    any(Path.class),
-                                                                                    any(InstallType.class),
-                                                                                    any(Artifact.class),
-                                                                                    any(Version.class),
-                                                                                    anyBoolean());
-                        doReturn("id").when(facade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
-                        doReturn(ImmutableList.of("a", "b")).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
-                        doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-
-                    return null;
+            o -> {                           // before test
+                try {
+                    doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+                    doReturn(null).when(configManager).prepareInstallProperties(anyString(),
+                                                                                any(Path.class),
+                                                                                any(InstallType.class),
+                                                                                any(Artifact.class),
+                                                                                any(Version.class),
+                                                                                anyBoolean());
+                    doReturn("id").when(facade).update(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+                    doReturn(ImmutableList.of("a", "b")).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
+                    doReturn(Version.valueOf("1.0.0")).when(facade).getLatestInstallableVersion(any(Artifact.class));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+
+                return null;
             },
             null // assertion
         );
@@ -428,24 +383,20 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.POST,                                   // HTTP method
             "",                                                // response body
             Response.Status.OK,                                // response status
-            new Function<Object, Object>() {                   // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn(new DtoServerImpls.TokenImpl().withValue("token"))
-                                .when(facade)
-                                .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
+            o -> {                                             // before test
+                try {
+                    doReturn(new DtoServerImpls.TokenImpl().withValue("token"))
+                            .when(facade)
+                            .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
 
-                        doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId("id").withName("name"))
-                                .when(facade).getAccountWhereUserIsOwner(anyString(), anyString());
+                    doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId("id").withName("name"))
+                            .when(facade).getAccountWhereUserIsOwner(anyString(), anyString());
 
-                    } catch (Exception e) {
-                        fail(e.getMessage(), e);
-                    }
-
-                    return null;
+                } catch (Exception e) {
+                    fail(e.getMessage(), e);
                 }
+
+                return null;
             },
             null // assertion
         );
@@ -469,21 +420,17 @@ public class TestInstallationManagerServiceContract {
             + "    }\n"
             + "}",                                             // response body
             Response.Status.OK,                                // response status
-            new Function<Object, Object>() {                   // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        service.saasUserCredentials = new SaasUserCredentials("id", "token");
+            o -> {                                             // before test
+                try {
+                    service.saasUserCredentials = new SaasUserCredentials("id", "token");
 
-                        SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson("{}", SubscriptionDescriptor.class);
-                        doReturn(descriptor).when(facade).getSaasSubscription(anyString(), any(SaasUserCredentials.class));
-                    } catch (Exception e) {
-                        fail(e.getMessage(), e);
-                    }
-
-                    return null;
+                    SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson("{}", SubscriptionDescriptor.class);
+                    doReturn(descriptor).when(facade).getSaasSubscription(anyString(), any(SaasUserCredentials.class));
+                } catch (Exception e) {
+                    fail(e.getMessage(), e);
                 }
+
+                return null;
             },
             null // assertion
         );
@@ -500,18 +447,14 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.POST,                                   // HTTP method
             null,                                  // response body
             Response.Status.CREATED,                                // response status
-            new Function<Object, Object>() {                   // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        service.saasUserCredentials = new SaasUserCredentials("id", "token");
-                        doNothing().when(facade).addTrialSaasSubscription(any(SaasUserCredentials.class));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                             // before test
+                try {
+                    service.saasUserCredentials = new SaasUserCredentials("id", "token");
+                    doNothing().when(facade).addTrialSaasSubscription(any(SaasUserCredentials.class));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -530,17 +473,13 @@ public class TestInstallationManagerServiceContract {
             + "    \"a\": \"b\"\n"
             + "}",                                             // response body
             Response.Status.OK,                                // response status
-            new Function<Object, Object>() {                   // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn(ImmutableMap.of("a", "b")).when(facade).loadStorageProperties();
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                             // before test
+                try {
+                    doReturn(ImmutableMap.of("a", "b")).when(facade).loadStorageProperties();
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -558,17 +497,13 @@ public class TestInstallationManagerServiceContract {
             "",                                                // response body
             Response.Status.OK,                                // response status
             null,                                              // before test
-            new Function<Object, Object>() {
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).storeStorageProperties(ImmutableMap.of("a", "b"));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                             // before test
+                try {
+                    verify(facade).storeStorageProperties(ImmutableMap.of("a", "b"));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             }                                                 // assertion
         );
     }
@@ -584,17 +519,13 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.GET,                                   // HTTP method
             "b",                                              // response body
             Response.Status.OK,                               // response status
-            new Function<Object, Object>() {                  // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        doReturn("b").when(facade).loadStorageProperty("a");
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                            // before test
+                try {
+                    doReturn("b").when(facade).loadStorageProperty("a");
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -612,17 +543,13 @@ public class TestInstallationManagerServiceContract {
             "",                                               // response body
             Response.Status.OK,                               // response status
             null,                                             // before test
-            new Function<Object, Object>() {
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).storeStorageProperty("a", "b");
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                            // before test
+                try {
+                    verify(facade).storeStorageProperty("a", "b");
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             }                                                 // assertion
         );
     }
@@ -639,17 +566,13 @@ public class TestInstallationManagerServiceContract {
             null,                                             // response body
             Response.Status.NO_CONTENT,                       // response status
             null,                                             // before test
-            new Function<Object, Object>() {
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).deleteStorageProperty("a");
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                            // before test
+                try {
+                    verify(facade).deleteStorageProperty("a");
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             }                                                 // assertion
         );
     }
@@ -668,18 +591,14 @@ public class TestInstallationManagerServiceContract {
             + "    \"password\": \"*****\"\n"
             + "}",                                             // response body
             Response.Status.OK,                                // response status
-            new Function<Object, Object>() {                   // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        Config testConfig = new Config(ImmutableMap.of("a", "b", "password", "123"));
-                        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                             // before test
+                try {
+                    Config testConfig = new Config(ImmutableMap.of("a", "b", "password", "123"));
+                    doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -698,18 +617,14 @@ public class TestInstallationManagerServiceContract {
             "    \"host_url\": \"test.com\"\n" +
             "}",                                       // response body
             Response.Status.OK,                               // response status
-            new Function<Object, Object>() {                  // before test
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        Config testConfig = new Config(ImmutableMap.of("host_url", "test.com"));
-                        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {                                            // before test
+                try {
+                    Config testConfig = new Config(ImmutableMap.of("host_url", "test.com"));
+                    doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             },
             null // assertion
         );
@@ -727,17 +642,13 @@ public class TestInstallationManagerServiceContract {
             null,                                               // response body
             Response.Status.CREATED,                               // response status
             null,                                             // before test
-            new Function<Object, Object>() {
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of("a", "b"));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {
+                try {
+                    verify(facade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of("a", "b"));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             }                                                 // assertion
         );
     }
@@ -773,13 +684,9 @@ public class TestInstallationManagerServiceContract {
              + "    \"a\": \"b\"\n"
              + "}",                                               // response body
              Response.Status.OK,                                  // response status
-             new Function<Object, Object>() {                     // before test
-                 @Nullable
-                 @Override
-                 public Object apply(@Nullable Object o) {
-                     doReturn(ImmutableMap.of("a", "b")).when(facade).getInstallationManagerProperties();
-                     return null;
-                 }
+             o -> {                                               // before test
+                 doReturn(ImmutableMap.of("a", "b")).when(facade).getInstallationManagerProperties();
+                 return null;
              },
              null                                                 // assertion
         );
@@ -797,17 +704,13 @@ public class TestInstallationManagerServiceContract {
             null,                                             // response body
             Response.Status.NO_CONTENT,                       // response status
             null,                                             // before test
-            new Function<Object, Object>() {
-                @Nullable
-                @Override
-                public Object apply(@Nullable Object o) {
-                    try {
-                        verify(facade).deleteDownloadedArtifact(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
+            o -> {
+                try {
+                    verify(facade).deleteDownloadedArtifact(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
+                return null;
             }                                                 // assertion
         );
     }
@@ -826,18 +729,14 @@ public class TestInstallationManagerServiceContract {
                 "]",                                             // response body
                 Response.Status.OK,                       // response status
                 null,                                             // before test
-                new Function<Object, Object>() {
-                    @Nullable
-                    @Override
-                    public Object apply(@Nullable Object o) {
-                        try {
-                            doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-                            doReturn(Collections.emptyList()).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
-                        } catch (IOException e) {
-                            fail(e.getMessage(), e);
-                        }
-                        return null;
+                o -> {
+                    try {
+                        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+                        doReturn(Collections.emptyList()).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
+                    } catch (IOException e) {
+                        fail(e.getMessage(), e);
                     }
+                    return null;
                 }                                                 // assertion
                     );
     }
@@ -857,17 +756,13 @@ public class TestInstallationManagerServiceContract {
                 null,                                             // response body
                 Response.Status.ACCEPTED,                       // response status
                 null,                                             // before test
-                new Function<Object, Object>() {
-                    @Nullable
-                    @Override
-                    public Object apply(@Nullable Object o) {
-                        try {
-                            verify(facade).logSaasAnalyticsEvent(new Event(Event.Type.CDEC_FIRST_LOGIN, ImmutableMap.of("a", "b")), null);
-                        } catch (Exception e) {
-                            fail(e.getMessage(), e);
-                        }
-                        return null;
+                o -> {
+                    try {
+                        verify(facade).logSaasAnalyticsEvent(new Event(Event.Type.CDEC_FIRST_LOGIN, ImmutableMap.of("a", "b")), null);
+                    } catch (Exception e) {
+                        fail(e.getMessage(), e);
                     }
+                    return null;
                 }                                                 // assertion
         );
     }
