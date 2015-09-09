@@ -21,6 +21,9 @@ package com.codenvy.im.update;
 import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.event.Event;
+import com.codenvy.im.event.EventFactory;
+import com.codenvy.im.event.EventLogger;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
@@ -58,7 +61,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -68,7 +70,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashMap;
@@ -107,7 +108,7 @@ public class RepositoryService {
     private final MailUtil                mailUtil;
     private final SaasUserServiceProxy    saasUserServiceProxy;
     private final SaasAccountServiceProxy saasAccountServiceProxy;
-    private final EventLogger             eventLogger;
+    private final EventLogger eventLogger;
 
     @Inject
     public RepositoryService(@Named("saas.api.endpoint") String saasApiEndpoint,
@@ -359,8 +360,10 @@ public class RepositoryService {
             try (InputStream input = new FileInputStream(path.toFile())) {
                 IOUtils.copyLarge(input, output);
 
-                eventLogger.log(EventLogger.IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(EventLogger.ARTIFACT_PARAM, artifact.toLowerCase(),
-                                                                                    EventLogger.VERSION_PARAM, version));
+                Event event = EventFactory.create(Event.Type.IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(EventFactory.ARTIFACT_PARAM, artifact.toLowerCase(),
+                                                                                                     EventFactory.VERSION_PARAM, version,
+                                                                                                     EventFactory.USER_PARAM, userId == null ? "" : userId));
+                eventLogger.log(event);
 
             } catch (ClientAbortException e) {
                 // do nothing
@@ -467,7 +470,7 @@ public class RepositoryService {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
 
-            doAddOnpremisesSubscription(accountId, accessToken);
+            doAddOnpremisesSubscription(userId, accountId, accessToken);
             sendNotificationLetter(accountId, userManager.getCurrentUser());
 
             return Response.status(Response.Status.OK).build();
@@ -480,23 +483,19 @@ public class RepositoryService {
     /** Log event. */
     @GenerateLink(rel = "log event")
     @POST
-    @Path("/log-event/{eventName}")
+    @Path("/log-event")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response logEvent(@Context HttpServletRequest requestContext,
-                             @PathParam("eventName") String eventName,
-                             Map<String, String> initialEventParameters) {
+                             Event event) {
         try {
-            if (initialEventParameters == null) {
-                initialEventParameters = new HashMap<>();
-            }
-
-            Map<String, String> eventParameters = new HashMap<>(initialEventParameters);
-            
             String userIp = requestContext.getRemoteAddr();
-            eventParameters.put(EventLogger.USER_IP, userIp);
+            event.putParameter(EventFactory.USER_IP_PARAM, userIp);
 
-            eventLogger.log(eventName, eventParameters);
+            String userId = userManager.getCurrentUser().getId();
+            event.putParameter(EventFactory.USER_PARAM, userId == null ? "" : userId);
+
+            eventLogger.log(event);
 
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
@@ -505,7 +504,7 @@ public class RepositoryService {
         }
     }
 
-    protected void doAddOnpremisesSubscription(String accountId, String accessToken) throws IOException, JsonParseException {
+    protected void doAddOnpremisesSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
         try {
             final String planId = "opm-free";
             NewSubscription newSubscription = DtoFactory.newDto(NewSubscription.class)
@@ -522,7 +521,9 @@ public class RepositoryService {
                 }
             }
 
-            eventLogger.log(EventLogger.IM_SUBSCRIPTION_ADDED, ImmutableMap.of(EventLogger.PLAN_PARAM, planId));
+            Event event = EventFactory.create(Event.Type.IM_SUBSCRIPTION_ADDED, ImmutableMap.of(EventFactory.PLAN_PARAM, planId,
+                                                                                                EventFactory.USER_PARAM, userId == null ? "" : userId));
+            eventLogger.log(event);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);
         }

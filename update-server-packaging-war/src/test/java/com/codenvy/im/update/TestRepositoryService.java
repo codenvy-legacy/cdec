@@ -19,6 +19,9 @@ package com.codenvy.im.update;
 
 import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.event.Event;
+import com.codenvy.im.event.EventFactory;
+import com.codenvy.im.event.EventLogger;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.Commons;
@@ -26,12 +29,14 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.MailUtil;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.specification.Argument;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.che.commons.user.UserImpl;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.testng.MockitoTestNGListener;
@@ -69,6 +74,7 @@ import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -86,6 +92,7 @@ import static org.testng.Assert.assertTrue;
 public class TestRepositoryService extends BaseTest {
 
     public static final javax.ws.rs.core.Response OK_RESPONSE = javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).build();
+    public static final String TEST_USER = "id";
     private ArtifactStorage   artifactStorage;
     private RepositoryService repositoryService;
 
@@ -127,7 +134,7 @@ public class TestRepositoryService extends BaseTest {
                                                   saasAccountServiceProxy,
                                                   mockEventLogger);
 
-        when(mockUserManager.getCurrentUser()).thenReturn(new UserImpl("name", "id", "token", Collections.<String>emptyList(), false));
+        when(mockUserManager.getCurrentUser()).thenReturn(new UserImpl("name", TEST_USER, "token", Collections.<String>emptyList(), false));
         super.setUp();
     }
 
@@ -175,14 +182,20 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testDownloadPublicArtifact() throws Exception {
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
 
         Response response = given().when().get("repository/public/download/" + InstallManagerArtifact.NAME + "/1.0.1");
         assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         assertEquals(IOUtils.toString(response.body().asInputStream()), "content");
 
-        verify(mockEventLogger).log(EventLogger.IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(EventLogger.ARTIFACT_PARAM, "installation-manager-cli",
-                                                                                        EventLogger.VERSION_PARAM, "1.0.1"));
+        verify(mockEventLogger).log(eventCaptor.capture());
+
+        Event loggedEvent = eventCaptor.getValue();
+        assertEquals(loggedEvent.getType(), Event.Type.IM_ARTIFACT_DOWNLOADED);
+        assertTrue(loggedEvent.getParameters().toString().matches("\\{ARTIFACT=installation-manager-cli, VERSION=1.0.1, USER=, TIME=\\d*}"),
+                   "Actual value: " + loggedEvent.getParameters().toString());
     }
 
     @Test
@@ -518,6 +531,8 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testAddSubscription() throws Exception {
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
         final String planId = "opm-free";
         NewSubscription expectedSubscription = DtoFactory.newDto(NewSubscription.class)
                                                     .withAccountId("accountId")
@@ -538,7 +553,12 @@ public class TestRepositoryService extends BaseTest {
 
         assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
         verify(mockMailUtil).sendNotificationLetter("accountId", "userEmail");
-        verify(mockEventLogger).log(EventLogger.IM_SUBSCRIPTION_ADDED, ImmutableMap.of(EventLogger.PLAN_PARAM, "opm-free"));
+        verify(mockEventLogger).log(eventCaptor.capture());
+
+        Event loggedEvent = eventCaptor.getValue();
+        assertEquals(loggedEvent.getType(), Event.Type.IM_SUBSCRIPTION_ADDED);
+        assertTrue(loggedEvent.getParameters().toString().matches("\\{PLAN=opm-free, USER=id, TIME=\\d*}"),
+                   "Actual value: " + loggedEvent.getParameters().toString());
     }
 
     @Test
@@ -572,23 +592,30 @@ public class TestRepositoryService extends BaseTest {
 
     @Test
     public void testLogEvent() throws UnsupportedEncodingException {
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
         Map<String,String> testEventParameters = ImmutableMap.of(
             "PARAM1", "param1-value",
             "PARAM2", "param2-value"
         );
 
-        String testEventName = "name";
+        Event.Type testEvenType = Event.Type.IM_ARTIFACT_DOWNLOADED;
 
         HttpServletRequest requestContext = mock(HttpServletRequest.class);
         String testUserIp = "10.20.30.40";
         doReturn(testUserIp).when(requestContext).getRemoteAddr();
 
-        javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEventName, testEventParameters);
+        Event testEvent = EventFactory.create(testEvenType, testEventParameters);
+        javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEvent);
         assertEquals(response.getStatus(), OK_RESPONSE.getStatus());
 
-        verify(mockEventLogger).log(testEventName, ImmutableMap.of("PARAM1", "param1-value",
-                                                                   "PARAM2", "param2-value",
-                                                                   EventLogger.USER_IP, testUserIp));
+        verify(mockEventLogger).log(eventCaptor.capture());
+
+        Event loggedEvent = eventCaptor.getValue();
+        assertEquals(loggedEvent.getType(), testEvenType);
+        assertTrue(loggedEvent.getParameters().toString().matches("\\{PARAM1=param1-value, PARAM2=param2-value, TIME=\\d*, USER-IP=" + testUserIp + ", USER=" + TEST_USER + "}"),
+                   "Actual value: " + loggedEvent.getParameters().toString());
+
     }
 
 }
