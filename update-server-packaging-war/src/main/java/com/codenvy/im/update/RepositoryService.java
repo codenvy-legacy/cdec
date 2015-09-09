@@ -483,7 +483,7 @@ public class RepositoryService {
     /** Log event. */
     @GenerateLink(rel = "log event")
     @POST
-    @Path("/log-event")
+    @Path("/event")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response logEvent(@Context HttpServletRequest requestContext,
