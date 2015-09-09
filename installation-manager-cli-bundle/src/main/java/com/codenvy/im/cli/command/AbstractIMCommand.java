@@ -26,6 +26,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
@@ -228,6 +229,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     protected String getSaasServerEndpoint() {
         return facade.getSaasServerEndpoint();
+    }
+
+    void logEventToSaasCodenvy(Event event) throws IOException {
+        facade.logEventToSaasCodenvy(event, preferencesStorage.getAuthToken());
     }
 
     @Nullable

@@ -19,6 +19,7 @@ package com.codenvy.im.facade;
 
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
@@ -630,5 +631,15 @@ public class InstallationManagerFacade {
      */
     public void reinstall(Artifact artifact) throws IOException {
         installManager.performReinstall(artifact);
+    }
+
+    public void logEventToSaasCodenvy(Event event, @Nullable String authToken) throws IOException {
+        String requestUrl = combinePaths(updateServerEndpoint, "/repository/event");
+
+        if (authToken != null) {
+            transport.doPost(requestUrl, event, authToken);
+        } else {
+            transport.doPost(requestUrl, event);
+        }
     }
 }

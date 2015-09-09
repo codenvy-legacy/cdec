@@ -33,7 +33,6 @@ public class EventFactory {
     public static final String USER_IP_PARAM       = "USER-IP";
     public static final String ERROR_MESSAGE_PARAM = "ERROR-MESSAGE";
 
-
     /**
      * Creates Event object of certain type with certain parameters + parameter(TIME = [current_system_time])
      */
@@ -44,18 +43,16 @@ public class EventFactory {
         return new Event(type, parameters);
     }
 
-    public static Event createImSubscriptionAddedEvent(final String planId, final String userId) {
+    public static Event createImSubscriptionAddedEventWithTime(final String planId, final String userId) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-
         eventParameters.put(PLAN_PARAM, planId);
         eventParameters.put(USER_PARAM, userId);
 
         return createWithTime(Event.Type.IM_SUBSCRIPTION_ADDED, eventParameters);
     }
 
-    public static Event createImArtifactDownloadedEvent(final String artifact, final String version, final String userId) {
+    public static Event createImArtifactDownloadedEventWithTime(final String artifact, final String version, final String userId) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-
         eventParameters.put(ARTIFACT_PARAM, artifact);
         eventParameters.put(VERSION_PARAM, version);
         eventParameters.put(USER_PARAM, userId);
@@ -63,39 +60,28 @@ public class EventFactory {
         return createWithTime(Event.Type.IM_ARTIFACT_DOWNLOADED, eventParameters);
     }
 
-    public static Event createImArtifactInstallStartedEvent(final String artifact, final String version, final String userId, String userIp) {
+    public static Event createImArtifactInstallStartedEventWithTime(final String artifact, final String version) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-
         eventParameters.put(ARTIFACT_PARAM, artifact);
         eventParameters.put(VERSION_PARAM, version);
-        eventParameters.put(USER_PARAM, userId);
-        eventParameters.put(USER_IP_PARAM, userIp);
 
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_STARTED, eventParameters);
     }
 
-    public static Event createImArtifactInstallFinishedSuccessfullyEvent(final String artifact, final String version, final String userId, final String userIp) {
+    public static Event createImArtifactInstallFinishedSuccessfullyEventWithTime(final String artifact, final String version) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-
         eventParameters.put(ARTIFACT_PARAM, artifact);
         eventParameters.put(VERSION_PARAM, version);
-        eventParameters.put(USER_PARAM, userId);
-        eventParameters.put(USER_IP_PARAM, userIp);
 
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);
     }
 
-    public static Event createImArtifactInstallFinishedUnsuccessfullyEvent(final String artifact,
-                                                                           final String version,
-                                                                           final String userId,
-                                                                           final String userIp,
-                                                                           final String errorMessage) {
+    public static Event createImArtifactInstallFinishedUnsuccessfullyEventWithTime(final String artifact,
+                                                                                   final String version,
+                                                                                   final String errorMessage) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-
         eventParameters.put(ARTIFACT_PARAM, artifact);
         eventParameters.put(VERSION_PARAM, version);
-        eventParameters.put(USER_PARAM, userId);
-        eventParameters.put(USER_IP_PARAM, userIp);
         eventParameters.put(ERROR_MESSAGE_PARAM, errorMessage);
 
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);

@@ -31,7 +31,6 @@ import com.codenvy.im.utils.IllegalVersionException;
 import com.codenvy.im.utils.MailUtil;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableMap;
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -360,9 +359,9 @@ public class RepositoryService {
             try (InputStream input = new FileInputStream(path.toFile())) {
                 IOUtils.copyLarge(input, output);
 
-                Event event = EventFactory.createImArtifactDownloadedEvent(artifact.toLowerCase(),
-                                                                           version,
-                                                                           userId == null ? "" : userId);
+                Event event = EventFactory.createImArtifactDownloadedEventWithTime(artifact.toLowerCase(),
+                                                                                   version,
+                                                                                   userId == null ? "" : userId);
                 eventLogger.log(event);
 
             } catch (ClientAbortException e) {
@@ -521,7 +520,7 @@ public class RepositoryService {
                 }
             }
 
-            Event event = EventFactory.createImSubscriptionAddedEvent(planId, userId == null ? "" : userId);
+            Event event = EventFactory.createImSubscriptionAddedEventWithTime(planId, userId == null ? "" : userId);
             eventLogger.log(event);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);

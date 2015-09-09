@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -32,8 +33,9 @@ import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.felix.service.command.CommandSession;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
@@ -56,7 +58,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -72,7 +73,6 @@ public class TestInstallCommand extends AbstractTestCommand {
     private InstallCommand spyCommand;
 
     private IMArtifactLabeledFacade facade;
-    private ConfigManager           mockConfigManager;
     private CommandSession          commandSession;
 
     private ByteArrayOutputStream outputStream;
@@ -81,9 +81,15 @@ public class TestInstallCommand extends AbstractTestCommand {
     PrintStream originOut = System.out;
     PrintStream originErr = System.err;
 
+    @Mock
+    private PreferencesStorage mockPreferencesStorage;
+    @Mock
+    private ConfigManager mockConfigManager;
+
     @BeforeMethod
     public void initMocks() throws Exception {
-        mockConfigManager = mock(ConfigManager.class);
+        MockitoAnnotations.initMocks(this);
+
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
                                                                                                                         InstallType.SINGLE_SERVER);
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
@@ -95,6 +101,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         spyCommand = spy(new InstallCommand(mockConfigManager));
         spyCommand.facade = facade;
+        spyCommand.preferencesStorage = mockPreferencesStorage;
 
         performBaseMocks(spyCommand, true);
     }
@@ -289,7 +296,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         testInstallArtifactStepInfo.setStatus(InstallArtifactStatus.FAILURE);
         testInstallArtifactStepInfo.setMessage("error");
 
-        doNothing().when(facade).waitForInstallStepCompleted(anyString());
         doReturn(testInstallArtifactStepInfo).when(facade).getUpdateStepInfo(anyString());
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

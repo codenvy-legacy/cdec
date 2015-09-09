@@ -20,6 +20,8 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.event.Event;
+import com.codenvy.im.event.EventFactory;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
@@ -156,9 +158,11 @@ public class InstallCommand extends AbstractIMCommand {
         }
         versionNumber = version.toString();
 
+        Event installStartedEvent = EventFactory.createImArtifactInstallStartedEventWithTime(artifactName, versionNumber);
+        logEventToSaasCodenvy(installStartedEvent);
+
         final InstallOptions installOptions = new InstallOptions();
         final boolean isInstall = isInstall(artifact);
-
 
         if (isInstall) {
             if (multi) {
@@ -231,6 +235,10 @@ public class InstallCommand extends AbstractIMCommand {
                 }
 
                 if (installResponse.getStatus() == ResponseCode.ERROR) {
+                    Event installFinishedUnsuccesfullyEvent = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime(artifactName, versionNumber,
+                                                                                                                                      installResponse.getMessage());
+                    logEventToSaasCodenvy(installFinishedUnsuccesfullyEvent);
+
                     console.printError(" [FAIL]", true);
                     console.printResponseExitInError(installResponse);
                     return null;
@@ -244,6 +252,9 @@ public class InstallCommand extends AbstractIMCommand {
 
         // only OK response can be here
         if (lastStep == finalStep) {
+            Event installFinishedSuccesfullyEvent = EventFactory.createImArtifactInstallFinishedSuccessfullyEventWithTime(artifactName, versionNumber);
+            logEventToSaasCodenvy(installFinishedSuccesfullyEvent);
+
             console.println(toJson(installResponse));
 
             if (isInteractive() && artifactName.equals(InstallManagerArtifact.NAME)) {
