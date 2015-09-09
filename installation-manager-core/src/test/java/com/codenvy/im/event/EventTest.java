@@ -28,6 +28,10 @@ import java.util.Map;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 
+/**
+ * @author Anatoly Bazko
+ * @author Dmytro Nochevnov
+ */
 public class EventTest {
 
     public static final Event.Type TEST_EVENT = Event.Type.IM_ARTIFACT_DOWNLOADED;
