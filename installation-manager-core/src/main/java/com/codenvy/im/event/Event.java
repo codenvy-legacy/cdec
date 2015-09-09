@@ -35,7 +35,10 @@ public class Event {
 
     public enum Type {
         IM_ARTIFACT_DOWNLOADED,
-        IM_SUBSCRIPTION_ADDED;
+        IM_SUBSCRIPTION_ADDED,
+        IM_ARTIFACT_INSTALL_STARTED,
+        IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY,
+        IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY;
 
         /**
          * transform from "IM_ARTIFACT_DOWNLOADED" to "im-artifact-downloaded"
@@ -45,6 +48,9 @@ public class Event {
         }
     }
 
+    public Event() {
+    }
+
     public Event(Type type, Map<String, String> parameters) {
         validate(parameters);
 
@@ -52,6 +58,25 @@ public class Event {
         this.parameters = parameters;
     }
 
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public Map<String, String> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(Map<String, String> parameters) {
+        this.parameters = parameters;
+    }
+
+    /**
+     * adds new parameter or replaces existed one
+     */
     public void putParameter(String key, String value) {
         this.parameters.put(key, value);
     }
@@ -99,8 +124,7 @@ public class Event {
 
     private void validate(Map<String, String> parameters) throws IllegalArgumentException {
         if (parameters.size() > MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER) {
-            throw new IllegalArgumentException("The number of parameters exceeded the limit in " +
-                                               MAX_EXTENDED_PARAMS_NUMBER);
+            throw new IllegalArgumentException("The number of parameters exceeded the limit in " + MAX_EXTENDED_PARAMS_NUMBER);
         }
 
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
@@ -109,22 +133,12 @@ public class Event {
 
             if (param.length() > MAX_PARAM_NAME_LENGTH) {
                 throw new IllegalArgumentException(
-                    "The length of parameter name " + param + " exceeded the length in " + MAX_PARAM_NAME_LENGTH +
-                    " characters");
+                    "The length of parameter name " + param + " exceeded the length in " + MAX_PARAM_NAME_LENGTH + " characters");
 
             } else if (value.length() > MAX_PARAM_VALUE_LENGTH) {
                 throw new IllegalArgumentException(
-                    "The length of parameter value " + value + " exceeded the length in " + MAX_PARAM_VALUE_LENGTH +
-                    " characters");
+                    "The length of parameter value " + value + " exceeded the length in " + MAX_PARAM_VALUE_LENGTH + " characters");
             }
         }
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public Map<String, String> getParameters() {
-        return parameters;
     }
 }

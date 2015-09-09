@@ -360,9 +360,9 @@ public class RepositoryService {
             try (InputStream input = new FileInputStream(path.toFile())) {
                 IOUtils.copyLarge(input, output);
 
-                Event event = EventFactory.create(Event.Type.IM_ARTIFACT_DOWNLOADED, ImmutableMap.of(EventFactory.ARTIFACT_PARAM, artifact.toLowerCase(),
-                                                                                                     EventFactory.VERSION_PARAM, version,
-                                                                                                     EventFactory.USER_PARAM, userId == null ? "" : userId));
+                Event event = EventFactory.createImArtifactDownloadedEvent(artifact.toLowerCase(),
+                                                                           version,
+                                                                           userId == null ? "" : userId);
                 eventLogger.log(event);
 
             } catch (ClientAbortException e) {
@@ -483,7 +483,7 @@ public class RepositoryService {
     /** Log event. */
     @GenerateLink(rel = "log event")
     @POST
-    @Path("/event")
+    @Path("/log-event")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response logEvent(@Context HttpServletRequest requestContext,
@@ -521,8 +521,7 @@ public class RepositoryService {
                 }
             }
 
-            Event event = EventFactory.create(Event.Type.IM_SUBSCRIPTION_ADDED, ImmutableMap.of(EventFactory.PLAN_PARAM, planId,
-                                                                                                EventFactory.USER_PARAM, userId == null ? "" : userId));
+            Event event = EventFactory.createImSubscriptionAddedEvent(planId, userId == null ? "" : userId);
             eventLogger.log(event);
         } catch (IOException | JsonParseException e) {
             throw new IOException("Can't add subscription. " + e.getMessage(), e);

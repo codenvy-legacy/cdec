@@ -73,7 +73,7 @@ public class EventLoggerTest {
             "PARAM2", "param2-value"
         );
 
-        Event event = EventFactory.create(TEST_EVENT, testEventParameters);
+        Event event = EventFactory.createWithTime(TEST_EVENT, testEventParameters);
         spyEventLogger.log(event);
 
         Thread.sleep(2 * EventLogger.LogThread.SLEEP_ON_EMPTY_QUEUE_TIMEOUT_MILLIS);

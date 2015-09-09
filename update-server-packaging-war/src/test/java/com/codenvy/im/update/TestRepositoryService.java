@@ -603,7 +603,7 @@ public class TestRepositoryService extends BaseTest {
         String testUserIp = "10.20.30.40";
         doReturn(testUserIp).when(requestContext).getRemoteAddr();
 
-        Event testEvent = EventFactory.create(testEvenType, testEventParameters);
+        Event testEvent = EventFactory.createWithTime(testEvenType, testEventParameters);
         javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEvent);
         assertEquals(response.getStatus(), OK_RESPONSE.getStatus());
 

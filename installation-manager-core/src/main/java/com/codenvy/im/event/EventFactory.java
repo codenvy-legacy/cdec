@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.event;
 
+import javax.annotation.Nonnull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -24,20 +25,80 @@ import java.util.Map;
  * @author Dmytro Nochevnov
  */
 public class EventFactory {
-    public static final String TIME_PARAM     = "TIME";
-    public static final String USER_PARAM     = "USER";
-    public static final String PLAN_PARAM     = "PLAN";
-    public static final String ARTIFACT_PARAM = "ARTIFACT";
-    public static final String VERSION_PARAM  = "VERSION";
-    public static final String USER_IP_PARAM  = "USER-IP";
+    public static final String TIME_PARAM          = "TIME";
+    public static final String USER_PARAM          = "USER";
+    public static final String PLAN_PARAM          = "PLAN";
+    public static final String ARTIFACT_PARAM      = "ARTIFACT";
+    public static final String VERSION_PARAM       = "VERSION";
+    public static final String USER_IP_PARAM       = "USER-IP";
+    public static final String ERROR_MESSAGE_PARAM = "ERROR-MESSAGE";
 
 
-    public static Event create(Event.Type type, Map<String, String> initialEventParameters) {
-        Map<String, String> eventParameters = new LinkedHashMap<>(initialEventParameters);
+    /**
+     * Creates Event object of certain type with certain parameters + parameter(TIME = [current_system_time])
+     */
+    public static Event createWithTime(final Event.Type type, @Nonnull Map<String, String> parameters) {
+        parameters = new LinkedHashMap<>(parameters);
+        parameters.put(TIME_PARAM, getTime());
 
-        eventParameters.put(TIME_PARAM, getTime());
+        return new Event(type, parameters);
+    }
 
-        return new Event(type, eventParameters);
+    public static Event createImSubscriptionAddedEvent(final String planId, final String userId) {
+        Map<String, String> eventParameters = new LinkedHashMap<>();
+
+        eventParameters.put(PLAN_PARAM, planId);
+        eventParameters.put(USER_PARAM, userId);
+
+        return createWithTime(Event.Type.IM_SUBSCRIPTION_ADDED, eventParameters);
+    }
+
+    public static Event createImArtifactDownloadedEvent(final String artifact, final String version, final String userId) {
+        Map<String, String> eventParameters = new LinkedHashMap<>();
+
+        eventParameters.put(ARTIFACT_PARAM, artifact);
+        eventParameters.put(VERSION_PARAM, version);
+        eventParameters.put(USER_PARAM, userId);
+
+        return createWithTime(Event.Type.IM_ARTIFACT_DOWNLOADED, eventParameters);
+    }
+
+    public static Event createImArtifactInstallStartedEvent(final String artifact, final String version, final String userId, String userIp) {
+        Map<String, String> eventParameters = new LinkedHashMap<>();
+
+        eventParameters.put(ARTIFACT_PARAM, artifact);
+        eventParameters.put(VERSION_PARAM, version);
+        eventParameters.put(USER_PARAM, userId);
+        eventParameters.put(USER_IP_PARAM, userIp);
+
+        return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_STARTED, eventParameters);
+    }
+
+    public static Event createImArtifactInstallFinishedSuccessfullyEvent(final String artifact, final String version, final String userId, final String userIp) {
+        Map<String, String> eventParameters = new LinkedHashMap<>();
+
+        eventParameters.put(ARTIFACT_PARAM, artifact);
+        eventParameters.put(VERSION_PARAM, version);
+        eventParameters.put(USER_PARAM, userId);
+        eventParameters.put(USER_IP_PARAM, userIp);
+
+        return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);
+    }
+
+    public static Event createImArtifactInstallFinishedUnsuccessfullyEvent(final String artifact,
+                                                                           final String version,
+                                                                           final String userId,
+                                                                           final String userIp,
+                                                                           final String errorMessage) {
+        Map<String, String> eventParameters = new LinkedHashMap<>();
+
+        eventParameters.put(ARTIFACT_PARAM, artifact);
+        eventParameters.put(VERSION_PARAM, version);
+        eventParameters.put(USER_PARAM, userId);
+        eventParameters.put(USER_IP_PARAM, userIp);
+        eventParameters.put(ERROR_MESSAGE_PARAM, errorMessage);
+
+        return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);
     }
 
     private static String getTime() {
