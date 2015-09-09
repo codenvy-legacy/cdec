@@ -158,13 +158,13 @@ public class InstallCommand extends AbstractIMCommand {
         }
         versionNumber = version.toString();
 
-        Event installStartedEvent = EventFactory.createImArtifactInstallStartedEventWithTime(artifactName, versionNumber);
-        logEventToSaasCodenvy(installStartedEvent);
-
         final InstallOptions installOptions = new InstallOptions();
         final boolean isInstall = isInstall(artifact);
 
         if (isInstall) {
+            Event installStartedEvent = EventFactory.createImArtifactInstallStartedEventWithTime(artifactName, versionNumber);
+            logEventToSaasCodenvy(installStartedEvent);
+
             if (multi) {
                 installType = InstallType.MULTI_SERVER;
             } else {
@@ -235,9 +235,11 @@ public class InstallCommand extends AbstractIMCommand {
                 }
 
                 if (installResponse.getStatus() == ResponseCode.ERROR) {
-                    Event installFinishedUnsuccesfullyEvent = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime(artifactName, versionNumber,
-                                                                                                                                      installResponse.getMessage());
-                    logEventToSaasCodenvy(installFinishedUnsuccesfullyEvent);
+                    if (isInstall) {
+                        Event installFinishedUnsuccesfullyEvent = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime(artifactName, versionNumber,
+                                                                                                                                          installResponse.getMessage());
+                        logEventToSaasCodenvy(installFinishedUnsuccesfullyEvent);
+                    }
 
                     console.printError(" [FAIL]", true);
                     console.printResponseExitInError(installResponse);
@@ -252,8 +254,10 @@ public class InstallCommand extends AbstractIMCommand {
 
         // only OK response can be here
         if (lastStep == finalStep) {
-            Event installFinishedSuccesfullyEvent = EventFactory.createImArtifactInstallFinishedSuccessfullyEventWithTime(artifactName, versionNumber);
-            logEventToSaasCodenvy(installFinishedSuccesfullyEvent);
+            if (isInstall) {
+                Event installFinishedSuccesfullyEvent = EventFactory.createImArtifactInstallFinishedSuccessfullyEventWithTime(artifactName, versionNumber);
+                logEventToSaasCodenvy(installFinishedSuccesfullyEvent);
+            }
 
             console.println(toJson(installResponse));
 
