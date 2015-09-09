@@ -36,6 +36,7 @@ import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -69,6 +70,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    HttpTransport transport,
                                    SaasAuthServiceProxy saasAuthServiceProxy,
                                    SaasAccountServiceProxy saasAccountServiceProxy,
+                                   SaasRepositoryServiceProxy saasRepositoryServiceProxy,
                                    PasswordManager passwordManager,
                                    NodeManager nodeManager,
                                    BackupManager backupManager,
@@ -81,6 +83,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
               transport,
               saasAuthServiceProxy,
               saasAccountServiceProxy,
+              saasRepositoryServiceProxy,
               passwordManager,
               nodeManager,
               backupManager,

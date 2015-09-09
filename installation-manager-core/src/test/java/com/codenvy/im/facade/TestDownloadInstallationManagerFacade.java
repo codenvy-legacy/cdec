@@ -30,6 +30,7 @@ import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 
@@ -61,28 +62,30 @@ public class TestDownloadInstallationManagerFacade {
     private InstallationManagerFacade installationManagerService;
 
     @Mock
-    private SaasAuthServiceProxy    saasAuthServiceProxy;
+    private SaasAuthServiceProxy       saasAuthServiceProxy;
     @Mock
-    private SaasAccountServiceProxy saasAccountServiceProxy;
+    private SaasAccountServiceProxy    saasAccountServiceProxy;
     @Mock
-    private HttpTransport           transport;
+    private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
-    private PasswordManager         passwordManager;
+    private HttpTransport              transport;
     @Mock
-    private NodeManager             nodeManager;
+    private PasswordManager            passwordManager;
     @Mock
-    private BackupManager           backupManager;
+    private NodeManager                nodeManager;
     @Mock
-    private StorageManager          storageManager;
+    private BackupManager              backupManager;
     @Mock
-    private InstallManager          installManager;
+    private StorageManager             storageManager;
     @Mock
-    private DownloadManager         downloadManager;
+    private InstallManager             installManager;
+    @Mock
+    private DownloadManager            downloadManager;
 
-    private Artifact            installManagerArtifact;
-    private Artifact            cdecArtifact;
-    private Path                pathCDEC;
-    private Path                pathIM;
+    private Artifact installManagerArtifact;
+    private Artifact cdecArtifact;
+    private Path     pathCDEC;
+    private Path     pathIM;
 
     @BeforeMethod
     public void init() throws Exception {
@@ -93,6 +96,7 @@ public class TestDownloadInstallationManagerFacade {
                                                                    transport,
                                                                    saasAuthServiceProxy,
                                                                    saasAccountServiceProxy,
+                                                                   saasRepositoryServiceProxy,
                                                                    passwordManager,
                                                                    nodeManager,
                                                                    backupManager,

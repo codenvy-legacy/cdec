@@ -23,6 +23,7 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -790,6 +791,30 @@ public class TestInstallationManagerService extends BaseTest {
         Response response = service.getUpdateInfo();
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
+
+    @Test
+    public void shouldLogEventToSaasAnalyticsWhenUserDidnotLogIn() throws Exception {
+        Event event = new Event(Event.Type.CDEC_FIRST_LOGIN, Collections.emptyMap());
+
+        Response response = service.logSaasAnalyticsEvent(event);
+
+        assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        verify(mockFacade).logSaasAnalyticsEvent(event, null);
+    }
+
+    @Test
+    public void shouldLogEventToSaasAnalyticsWhenUserLoggedIn() throws Exception {
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        service.saasUserCredentials = testUserCredentials;
+
+        Event event = new Event(Event.Type.CDEC_FIRST_LOGIN, Collections.emptyMap());
+
+        Response response = service.logSaasAnalyticsEvent(event);
+
+        assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        verify(mockFacade).logSaasAnalyticsEvent(event, TEST_ACCESS_TOKEN);
+    }
+
 
     private void assertOkResponse(Response result) throws IOException {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());

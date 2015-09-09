@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
@@ -663,7 +664,7 @@ public class InstallationManagerService {
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets list of the specific artifact and version properties")
     public Response getArtifactProperties(@PathParam("artifact") final String artifactName,
-                                                           @PathParam("version") final String artifactVersion) {
+                                          @PathParam("version") final String artifactVersion) {
         try {
             Artifact artifact = createArtifact(artifactName);
             Version version;
@@ -832,6 +833,27 @@ public class InstallationManagerService {
         }
     }
 
+    /** Log SaaS Codenvy analytics event. */
+    @POST
+    @Path("event")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response logSaasAnalyticsEvent(Event event) {
+        try {
+
+            String saasUserToken = null;
+            if (saasUserCredentials != null) {
+                saasUserToken = saasUserCredentials.getToken();
+            }
+
+            delegate.logSaasAnalyticsEvent(event, saasUserToken);
+            return Response.status(Response.Status.ACCEPTED).build();
+        } catch (IllegalArgumentException e) {
+            return handleException(e, Response.Status.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
     private Response handleException(Exception e) {
         Response.Status status;
 
@@ -915,4 +937,6 @@ public class InstallationManagerService {
 
         return false;
     }
+
+
 }

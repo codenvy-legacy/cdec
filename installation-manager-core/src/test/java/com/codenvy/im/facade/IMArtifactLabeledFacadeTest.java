@@ -38,6 +38,7 @@ import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
@@ -64,25 +65,27 @@ import static org.testng.AssertJUnit.assertEquals;
 public class IMArtifactLabeledFacadeTest extends BaseTest {
 
     @Mock
-    private HttpTransport           transport;
+    private HttpTransport              transport;
     @Mock
-    private SaasAuthServiceProxy    saasAuthServiceProxy;
+    private SaasAuthServiceProxy       saasAuthServiceProxy;
     @Mock
-    private SaasAccountServiceProxy saasAccountServiceProxy;
+    private SaasAccountServiceProxy    saasAccountServiceProxy;
     @Mock
-    private PasswordManager         passwordManager;
+    private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
-    private NodeManager             nodeManager;
+    private PasswordManager            passwordManager;
     @Mock
-    private BackupManager           backupManager;
+    private NodeManager                nodeManager;
     @Mock
-    private StorageManager          storageManager;
+    private BackupManager              backupManager;
     @Mock
-    private InstallManager          installManager;
+    private StorageManager             storageManager;
     @Mock
-    private DownloadManager         downloadManager;
+    private InstallManager             installManager;
     @Mock
-    private ConfigManager           configManager;
+    private DownloadManager            downloadManager;
+    @Mock
+    private ConfigManager              configManager;
 
     private IMArtifactLabeledFacade         facade;
     private ImmutableMap<Artifact, Version> versions;
@@ -104,6 +107,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
                                                  transport,
                                                  saasAuthServiceProxy,
                                                  saasAccountServiceProxy,
+                                                 saasRepositoryServiceProxy,
                                                  passwordManager,
                                                  nodeManager,
                                                  backupManager,

@@ -20,6 +20,7 @@ package com.codenvy.im.service;
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -122,7 +123,7 @@ public class TestInstallationManagerServiceContract {
                     }
                 },
                 null // assertion
-                    );
+        );
     }
 
     @Test
@@ -152,7 +153,7 @@ public class TestInstallationManagerServiceContract {
                     }
                 },
                 null // assertion
-                    );
+        );
     }
 
     @Test
@@ -839,6 +840,36 @@ public class TestInstallationManagerServiceContract {
                     }
                 }                                                 // assertion
                     );
+    }
+
+    @Test
+    public void testLogAnalyticsEvent() {
+        testContract(
+                "event",                                          // path
+                null,                                             // query parameters
+                "{" +
+                "\"type\":\"CDEC_FIRST_LOGIN\"," +
+                "\"parameters\":{\"a\":\"b\"}" +
+                "}",                                             // request body
+                ContentType.JSON,                                // consume content type
+                null,                                             // produce content type
+                HttpMethod.POST,                                // HTTP method
+                null,                                             // response body
+                Response.Status.ACCEPTED,                       // response status
+                null,                                             // before test
+                new Function<Object, Object>() {
+                    @Nullable
+                    @Override
+                    public Object apply(@Nullable Object o) {
+                        try {
+                            verify(facade).logSaasAnalyticsEvent(new Event(Event.Type.CDEC_FIRST_LOGIN, ImmutableMap.of("a", "b")), null);
+                        } catch (Exception e) {
+                            fail(e.getMessage(), e);
+                        }
+                        return null;
+                    }
+                }                                                 // assertion
+        );
     }
 
     private void testContract(String path,

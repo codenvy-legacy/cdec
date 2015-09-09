@@ -107,7 +107,7 @@ public class RepositoryService {
     private final MailUtil                mailUtil;
     private final SaasUserServiceProxy    saasUserServiceProxy;
     private final SaasAccountServiceProxy saasAccountServiceProxy;
-    private final EventLogger eventLogger;
+    private final EventLogger             eventLogger;
 
     @Inject
     public RepositoryService(@Named("saas.api.endpoint") String saasApiEndpoint,

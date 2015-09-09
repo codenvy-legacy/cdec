@@ -232,7 +232,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     void logEventToSaasCodenvy(Event event) throws IOException {
-        facade.logEventToSaasCodenvy(event, preferencesStorage.getAuthToken());
+        facade.logSaasAnalyticsEvent(event, preferencesStorage.getAuthToken());
     }
 
     @Nullable

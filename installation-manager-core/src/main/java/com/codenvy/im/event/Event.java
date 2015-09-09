@@ -35,10 +35,11 @@ public class Event {
 
     public enum Type {
         IM_ARTIFACT_DOWNLOADED,
-        IM_SUBSCRIPTION_ADDED,
         IM_ARTIFACT_INSTALL_STARTED,
         IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY,
-        IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY;
+        IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY,
+        IM_SUBSCRIPTION_ADDED,
+        CDEC_FIRST_LOGIN;
 
         /**
          * transform from "IM_ARTIFACT_DOWNLOADED" to "im-artifact-downloaded"
@@ -81,6 +82,7 @@ public class Event {
         this.parameters.put(key, value);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String toString() {
         StringBuilder record = new StringBuilder(format("EVENT#%s#", type));
@@ -92,6 +94,7 @@ public class Event {
         return record.toString();
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -114,6 +117,7 @@ public class Event {
         return true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
