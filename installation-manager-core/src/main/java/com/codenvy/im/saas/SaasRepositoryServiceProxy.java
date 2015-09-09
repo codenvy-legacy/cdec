@@ -26,6 +26,7 @@ import com.google.inject.Singleton;
 
 import javax.inject.Named;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
@@ -48,7 +49,8 @@ public class SaasRepositoryServiceProxy {
 
     public void logAnalyticsEvent(Event.Type eventType, Map<String, String> params) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "event");
-        Event event = EventFactory.create(eventType, params);
+        Event event = EventFactory.createWithTime(eventType, params == null ? Collections.emptyMap()
+                                                                            : params);
 
         transport.doPost(requestUrl, event);
     }
