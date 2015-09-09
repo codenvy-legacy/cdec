@@ -23,6 +23,7 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -789,6 +790,17 @@ public class TestInstallationManagerService extends BaseTest {
 
         Response response = service.getUpdateInfo();
         assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
+    public void testLogAnalyticsEvent() throws Exception {
+        String event = "cdec-first-login";
+        Map<String, String> params = Collections.emptyMap();
+
+        Response response = service.logAnalyticsEvent(event, params);
+
+        assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        verify(mockFacade).logAnalyticsEvent(Event.Type.CDEC_FIRST_LOGIN, params);
     }
 
     private void assertOkResponse(Response result) throws IOException {

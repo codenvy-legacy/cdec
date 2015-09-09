@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.AdditionalNodesConfigUtil;
@@ -832,6 +833,22 @@ public class InstallationManagerService {
         }
     }
 
+    /** Log analytics event. */
+    @POST
+    @Path("event/{name}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response logAnalyticsEvent(@PathParam("name") String name, Map<String, String> params) {
+        try {
+            Event.Type eventType = Event.Type.valueOf(name.toUpperCase().replace("-", "_"));
+            delegate.logAnalyticsEvent(eventType, params);
+            return Response.status(Response.Status.ACCEPTED).build();
+        } catch (IllegalArgumentException e) {
+            return handleException(e, Response.Status.BAD_REQUEST);
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
     private Response handleException(Exception e) {
         Response.Status status;
 
@@ -915,4 +932,6 @@ public class InstallationManagerService {
 
         return false;
     }
+
+
 }

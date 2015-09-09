@@ -20,6 +20,7 @@ package com.codenvy.im.service;
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -833,6 +834,33 @@ public class TestInstallationManagerServiceContract {
                             doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
                             doReturn(Collections.emptyList()).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
                         } catch (IOException e) {
+                            fail(e.getMessage(), e);
+                        }
+                        return null;
+                    }
+                }                                                 // assertion
+                    );
+    }
+
+    @Test
+    public void testLogAnalyticsEvent() {
+        testContract(
+                "event/cdec-first-login",       // path
+                null,                                             // query parameters
+                "{\"a\":\"b\"}",                                             // request body
+                ContentType.JSON,                                             // consume content type
+                null,                                             // produce content type
+                HttpMethod.POST,                                // HTTP method
+                null,                                             // response body
+                Response.Status.ACCEPTED,                       // response status
+                null,                                             // before test
+                new Function<Object, Object>() {
+                    @Nullable
+                    @Override
+                    public Object apply(@Nullable Object o) {
+                        try {
+                            verify(facade).logAnalyticsEvent(Event.Type.CDEC_FIRST_LOGIN, ImmutableMap.of("a", "b"));
+                        } catch (Exception e) {
                             fail(e.getMessage(), e);
                         }
                         return null;

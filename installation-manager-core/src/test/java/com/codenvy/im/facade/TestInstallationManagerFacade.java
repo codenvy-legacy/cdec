@@ -21,6 +21,7 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.ConfigManager;
@@ -37,6 +38,7 @@ import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -85,25 +87,27 @@ public class TestInstallationManagerFacade extends BaseTest {
     private Artifact                  cdecArtifact;
 
     @Mock
-    private HttpTransport           transport;
+    private HttpTransport              transport;
     @Mock
-    private SaasAuthServiceProxy    saasAuthServiceProxy;
+    private SaasAuthServiceProxy       saasAuthServiceProxy;
     @Mock
-    private SaasAccountServiceProxy saasAccountServiceProxy;
+    private SaasAccountServiceProxy    saasAccountServiceProxy;
     @Mock
-    private PasswordManager         passwordManager;
+    private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
-    private NodeManager             nodeManager;
+    private PasswordManager            passwordManager;
     @Mock
-    private BackupManager           backupManager;
+    private NodeManager                nodeManager;
     @Mock
-    private StorageManager          storageManager;
+    private BackupManager              backupManager;
     @Mock
-    private InstallManager          installManager;
+    private StorageManager             storageManager;
     @Mock
-    private DownloadManager         downloadManager;
+    private InstallManager             installManager;
     @Mock
-    private ConfigManager           configManager;
+    private DownloadManager            downloadManager;
+    @Mock
+    private ConfigManager              configManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -115,6 +119,7 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       transport,
                                                                       saasAuthServiceProxy,
                                                                       saasAccountServiceProxy,
+                                                                      saasRepositoryServiceProxy,
                                                                       passwordManager,
                                                                       nodeManager,
                                                                       backupManager,
@@ -529,5 +534,14 @@ public class TestInstallationManagerFacade extends BaseTest {
     public void testReinstallCodenvy() throws IOException {
         installationManagerFacade.reinstall(cdecArtifact);
         verify(installManager).performReinstall(cdecArtifact);
+    }
+
+    @Test
+    public void testLogAnalyticsEvent() throws Exception {
+        Map<String, String> params = ImmutableMap.of("a", "b");
+
+        installationManagerFacade.logAnalyticsEvent(Event.Type.CDEC_FIRST_LOGIN, params);
+
+        verify(saasRepositoryServiceProxy).logAnalyticsEvent(Event.Type.CDEC_FIRST_LOGIN, params);
     }
 }

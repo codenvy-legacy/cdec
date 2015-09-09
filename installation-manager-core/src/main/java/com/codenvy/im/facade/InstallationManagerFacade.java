@@ -19,6 +19,7 @@ package com.codenvy.im.facade;
 
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.event.Event;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
@@ -46,6 +47,7 @@ import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
+import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
@@ -87,15 +89,16 @@ import static java.lang.String.format;
  */
 @Singleton
 public class InstallationManagerFacade {
-    protected final HttpTransport           transport;
-    protected final SaasAuthServiceProxy    saasAuthServiceProxy;
-    protected final SaasAccountServiceProxy saasAccountServiceProxy;
-    protected final PasswordManager passwordManager;
-    protected final NodeManager     nodeManager;
-    protected final BackupManager   backupManager;
-    protected final StorageManager  storageManager;
-    protected final InstallManager  installManager;
-    protected final DownloadManager downloadManager;
+    protected final HttpTransport              transport;
+    protected final SaasAuthServiceProxy       saasAuthServiceProxy;
+    protected final SaasAccountServiceProxy    saasAccountServiceProxy;
+    protected final SaasRepositoryServiceProxy saasRepositoryServiceProxy;
+    protected final PasswordManager            passwordManager;
+    protected final NodeManager                nodeManager;
+    protected final BackupManager              backupManager;
+    protected final StorageManager             storageManager;
+    protected final InstallManager             installManager;
+    protected final DownloadManager            downloadManager;
 
     private final String updateServerEndpoint;
     private final Path downloadDir;
@@ -108,12 +111,14 @@ public class InstallationManagerFacade {
                                      HttpTransport transport,
                                      SaasAuthServiceProxy saasAuthServiceProxy,
                                      SaasAccountServiceProxy saasAccountServiceProxy,
+                                     SaasRepositoryServiceProxy saasRepositoryServiceProxy,
                                      PasswordManager passwordManager,
                                      NodeManager nodeManager,
                                      BackupManager backupManager,
                                      StorageManager storageManager,
                                      InstallManager installManager,
                                      DownloadManager downloadManager) {
+        this.saasRepositoryServiceProxy = saasRepositoryServiceProxy;
         this.installManager = installManager;
         this.downloadManager = downloadManager;
         this.downloadDir = Paths.get(downloadDir);
@@ -630,5 +635,12 @@ public class InstallationManagerFacade {
      */
     public void reinstall(Artifact artifact) throws IOException {
         installManager.performReinstall(artifact);
+    }
+
+    /**
+     * @see com.codenvy.im.saas.SaasRepositoryServiceProxy#logAnalyticsEvent(com.codenvy.im.event.Event.Type, java.util.Map)
+     */
+    public void logAnalyticsEvent(Event.Type eventType, Map<String, String> params) throws IOException {
+        saasRepositoryServiceProxy.logAnalyticsEvent(eventType, params);
     }
 }
