@@ -489,10 +489,10 @@ public class RepositoryService {
                              Event event) {
         try {
             String userIp = requestContext.getRemoteAddr();
-            event.putParameter(EventFactory.USER_IP_PARAM, userIp);
+            event.putParameter(Event.USER_IP_PARAM, userIp);
 
             String userId = userManager.getCurrentUser().getId();
-            event.putParameter(EventFactory.USER_PARAM, userId == null ? "" : userId);
+            event.putParameter(Event.USER_PARAM, userId == null ? "" : userId);
 
             eventLogger.log(event);
 

@@ -17,6 +17,13 @@
  */
 package com.codenvy.im.event;
 
+import com.codenvy.im.utils.Commons;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.eclipse.che.dto.server.JsonSerializable;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -24,14 +31,35 @@ import static java.lang.String.format;
 /**
  * @author Dmytro Nochevnov
  */
-public class Event {
-    private static final int MAX_EXTENDED_PARAMS_NUMBER = 3;
-    private static final int RESERVED_PARAMS_NUMBER     = 6;
-    private static final int MAX_PARAM_NAME_LENGTH      = 20;
-    private static final int MAX_PARAM_VALUE_LENGTH     = 100;
+public class Event implements JsonSerializable {
+    public static final String TIME_PARAM          = "TIME";
+    public static final String USER_PARAM          = "USER";
+    public static final String PLAN_PARAM          = "PLAN";
+    public static final String ARTIFACT_PARAM      = "ARTIFACT";
+    public static final String VERSION_PARAM       = "VERSION";
+    public static final String USER_IP_PARAM       = "USER-IP";
+    public static final String ERROR_MESSAGE_PARAM = "ERROR-MESSAGE";
+
+    public static final int MAX_EXTENDED_PARAMS_NUMBER  = 10;
+    public static final int RESERVED_PARAMS_NUMBER      = 5;     // reserved for TIME_PARAM, USER_PARAM and USER_IP_PARAM
+    public static final int MAX_PARAM_NAME_LENGTH       = 20;
+    public static final int MAX_PARAM_VALUE_LENGTH      = 100;
+    public static final int MAX_LONG_PARAM_VALUE_LENGTH = 1000;
+
+    public static final Collection NAMES_OF_LONG_PARAMETERS = Arrays.asList(ERROR_MESSAGE_PARAM);
 
     private Type type;
+
     private Map<String, String> parameters;
+
+    @Override
+    public String toJson() {
+        try {
+            return Commons.toJson(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
     public enum Type {
         IM_ARTIFACT_DOWNLOADED,
@@ -71,30 +99,43 @@ public class Event {
         return parameters;
     }
 
+    /**
+     * set parameters as extended
+     */
     public void setParameters(Map<String, String> parameters) {
+        validate(parameters);
+
         this.parameters = parameters;
     }
 
     /**
-     * adds new parameter or replaces existed one
+     * add new parameter or replace existed one
      */
     public void putParameter(String key, String value) {
-        this.parameters.put(key, value);
+        Map<String, String> parameters = new LinkedHashMap<>(this.getParameters());
+        parameters.put(key, value);
+        validate(parameters);
+
+        this.parameters = parameters;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         StringBuilder record = new StringBuilder(format("EVENT#%s#", type));
 
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            record.append(format(" %s#%s#", entry.getKey(), entry.getValue()));
-        }
+        parameters.forEach((key, value) -> {
+            record.append(format(" %s#%s#", key, value));
+        });
 
         return record.toString();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -117,7 +158,9 @@ public class Event {
         return true;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
@@ -127,22 +170,43 @@ public class Event {
 
 
     private void validate(Map<String, String> parameters) throws IllegalArgumentException {
+        validateNumberOfParameters(parameters);
+
+        parameters.forEach(this::validate);
+    }
+
+    public void validateNumberOfParameters(Map<String, String> parameters) throws IllegalArgumentException {
         if (parameters.size() > MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER) {
-            throw new IllegalArgumentException("The number of parameters exceeded the limit in " + MAX_EXTENDED_PARAMS_NUMBER);
+            throw new IllegalArgumentException("The number of parameters exceeded the limit in " + MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER);
+        }
+    }
+
+    private void validate(String param, String value) {
+        if (param.length() > MAX_PARAM_NAME_LENGTH) {
+            throw new IllegalArgumentException(format("The length of parameter name '%s' exceeded the length in %s characters",
+                                                      param,
+                                                      MAX_PARAM_NAME_LENGTH));
         }
 
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            String param = entry.getKey();
-            String value = entry.getValue();
+        if (!NAMES_OF_LONG_PARAMETERS.contains(param)
+            && value.length() > MAX_PARAM_VALUE_LENGTH) {
+            throw new IllegalArgumentException(format("The length of parameter %s value '%s' exceeded the length in %s characters",
+                                                      param,
+                                                      value,
+                                                      MAX_PARAM_VALUE_LENGTH));
+        }
 
-            if (param.length() > MAX_PARAM_NAME_LENGTH) {
-                throw new IllegalArgumentException(
-                    "The length of parameter name " + param + " exceeded the length in " + MAX_PARAM_NAME_LENGTH + " characters");
+        if (value.length() > MAX_LONG_PARAM_VALUE_LENGTH) {
+            throw new IllegalArgumentException(format("The length of parameter %s value '%s' exceeded the length in %s characters",
+                                                      param,
+                                                      value,
+                                                      MAX_LONG_PARAM_VALUE_LENGTH));
+        }
+    }
 
-            } else if (value.length() > MAX_PARAM_VALUE_LENGTH) {
-                throw new IllegalArgumentException(
-                    "The length of parameter value " + value + " exceeded the length in " + MAX_PARAM_VALUE_LENGTH + " characters");
-            }
+    public static void validateNumberOfParametersTreatingAsExtended(Map<String, String> parameters) throws IllegalArgumentException {
+        if (parameters.size() > MAX_EXTENDED_PARAMS_NUMBER) {
+            throw new IllegalArgumentException("The number of parameters exceeded the limit of extended parameters in " + MAX_EXTENDED_PARAMS_NUMBER);
         }
     }
 }

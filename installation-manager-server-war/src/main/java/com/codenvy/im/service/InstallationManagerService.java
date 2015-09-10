@@ -833,12 +833,21 @@ public class InstallationManagerService {
         }
     }
 
-    /** Log SaaS Codenvy analytics event. */
+    /** Log SaaS Codenvy Analytics event. */
     @POST
     @Path("event")
     @Consumes(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+        @ApiResponse(code = 202, message = "Successfully log"),
+        @ApiResponse(code = 400, message = "Event doesn't comply requirements for parameters."),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Log SaaS Codenvy Analytics event. Requirements for event parameters: "
+                          + " maximum parameters number = " + Event.MAX_EXTENDED_PARAMS_NUMBER + ", "
+                          + " maximum parameter name length = " + Event.MAX_PARAM_NAME_LENGTH + ", "
+                          + " maximum parameter value length = " + Event.MAX_PARAM_VALUE_LENGTH)
     public Response logSaasAnalyticsEvent(Event event) {
         try {
+            Event.validateNumberOfParametersTreatingAsExtended(event.getParameters());
 
             String saasUserToken = null;
             if (saasUserCredentials != null) {

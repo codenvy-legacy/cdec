@@ -58,6 +58,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.jayway.restassured.RestAssured.given;
@@ -67,6 +68,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -764,6 +766,38 @@ public class TestInstallationManagerServiceContract {
                     }
                     return null;
                 }                                                 // assertion
+        );
+    }
+
+    @Test
+    public void shouldReturn500ErrorOnWrongEventJson() {
+        StringBuilder eventWithTooManyParameters = new StringBuilder("{" +
+                                            "\"type\":\"CDEC_FIRST_LOGIN\"," +
+                                            "\"parameters\":{");
+
+        IntStream.range(0, Event.MAX_EXTENDED_PARAMS_NUMBER + Event.RESERVED_PARAMS_NUMBER + 1)
+                 .forEach(i -> eventWithTooManyParameters.append(format("\"%s\":\"a\",", String.valueOf(i))));
+
+        eventWithTooManyParameters.append("}" +
+                             "}");
+        testContract(
+            "event",                                          // path
+            null,                                             // query parameters
+            eventWithTooManyParameters.toString(),            // request body
+            ContentType.JSON,                                 // consume content type
+            null,                                             // produce content type
+            HttpMethod.POST,                                  // HTTP method
+            null,                                             // response body
+            Response.Status.INTERNAL_SERVER_ERROR,            // response status
+            null,                                             // before test
+            o -> {
+                try {
+                    verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), any(String.class));
+                } catch (Exception e) {
+                    fail(e.getMessage(), e);
+                }
+                return null;
+            }                                                 // assertion
         );
     }
 

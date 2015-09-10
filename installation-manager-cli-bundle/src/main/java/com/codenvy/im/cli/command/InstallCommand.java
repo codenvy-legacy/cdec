@@ -179,7 +179,15 @@ public class InstallCommand extends AbstractIMCommand {
 
         List<String> infos;
         if (isInstall) {
-            infos = facade.getInstallInfo(artifact, installType);
+            try {
+                infos = facade.getInstallInfo(artifact, installType);
+            } catch(Exception e) {
+                Event installFinishedUnsuccesfullyEvent = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime(artifactName, versionNumber,
+                                                                                                                                  e.getMessage());
+                logEventToSaasCodenvy(installFinishedUnsuccesfullyEvent);
+
+                throw e;
+            }
         } else {
             infos = facade.getUpdateInfo(artifact, installType);
         }

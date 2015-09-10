@@ -77,6 +77,7 @@ import static org.testng.Assert.assertTrue;
 public class TestInstallCommand extends AbstractTestCommand {
     public static final String TEST_ARTIFACT = CDECArtifact.NAME;
     public static final String TEST_VERSION = "1.0.1";
+    public static final String ERROR_MESSAGE = "error";
     private InstallCommand spyCommand;
 
     private IMArtifactLabeledFacade facade;
@@ -235,7 +236,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand.console).askUser(anyString());
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", "1.0.2");
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -274,7 +275,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public void shouldFailOnInstallationStepException() throws Exception {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
-        doThrow(new IOException("step failed")).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doThrow(new IOException(ERROR_MESSAGE)).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
@@ -289,9 +290,9 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "    \"version\" : \"%s\",\n" +
                              "    \"status\" : \"FAILURE\"\n" +
                              "  } ],\n" +
-                             "  \"message\" : \"step failed\",\n" +
+                             "  \"message\" : \"%s\",\n" +
                              "  \"status\" : \"ERROR\"\n" +
-                             "}\n", TEST_ARTIFACT, TEST_VERSION));
+                             "}\n", TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE));
 
         verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
 
@@ -300,54 +301,83 @@ public class TestInstallCommand extends AbstractTestCommand {
         assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
                    "Actual parameters: " + values.get(0).getParameters().toString());
 
-        // TODO [ndp] there was "im-artifact-install-finished-successfully"
-//        assertEquals(values.get(1).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY);
-//        assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
-//                   "Actual parameters: " + values.get(1).getParameters().toString());
+        assertEquals(values.get(1).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY);
+        assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, ERROR-MESSAGE=%s, TIME=\\d*}",
+                                                                           TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE)),
+                   "Actual parameters: " + values.get(1).getParameters().toString());
     }
 
     @Test
     public void shouldFailOnErrorOfGettingUpdateStepInfo() throws Exception {
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+        
         InstallArtifactStepInfo testInstallArtifactStepInfo = new InstallArtifactStepInfo();
         testInstallArtifactStepInfo.setStatus(InstallArtifactStatus.FAILURE);
-        testInstallArtifactStepInfo.setMessage("error");
+        testInstallArtifactStepInfo.setMessage(ERROR_MESSAGE);
 
         doReturn(testInstallArtifactStepInfo).when(facade).getUpdateStepInfo(anyString());
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
-        commandInvoker.argument("version", "1.0.1");
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "step 1 [FAIL]\n" +
-                             "{\n" +
-                             "  \"artifacts\" : [ {\n" +
-                             "    \"artifact\" : \"codenvy\",\n" +
-                             "    \"version\" : \"1.0.1\",\n" +
-                             "    \"status\" : \"FAILURE\"\n" +
-                             "  } ],\n" +
-                             "  \"message\" : \"error\",\n" +
-                             "  \"status\" : \"ERROR\"\n" +
-                             "}\n");
+        assertEquals(output, format("step 1 [FAIL]\n" +
+                                    "{\n" +
+                                    "  \"artifacts\" : [ {\n" +
+                                    "    \"artifact\" : \"%s\",\n" +
+                                    "    \"version\" : \"%s\",\n" +
+                                    "    \"status\" : \"FAILURE\"\n" +
+                                    "  } ],\n" +
+                                    "  \"message\" : \"%s\",\n" +
+                                    "  \"status\" : \"ERROR\"\n" +
+                                    "}\n", TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE));
+
+        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
+
+        assertEquals(values.get(1).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY);
+        assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, ERROR-MESSAGE=%s, TIME=\\d*}",
+                                                                           TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE)),
+                   "Actual parameters: " + values.get(1).getParameters().toString());
     }
 
 
     @Test
     public void testInstallWhenServiceThrowsError2() throws Exception {
-        doThrow(new IOException("Property is missed")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+
+        String errorMessage = "Property is missed";
+        doThrow(new IOException(errorMessage)).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
-        commandInvoker.argument("version", "1.0.1");
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "{\n"
-                             + "  \"message\" : \"Property is missed\",\n"
+        assertEquals(output, format("{\n"
+                             + "  \"message\" : \"%s\",\n"
                              + "  \"status\" : \"ERROR\"\n"
-                             + "}\n");
+                             + "}\n", errorMessage));
+
+        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
+
+        assertEquals(values.get(1).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY);
+        assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, ERROR-MESSAGE=%s, TIME=\\d*}",
+                                                                           TEST_ARTIFACT, TEST_VERSION, errorMessage)),
+                   "Actual parameters: " + values.get(1).getParameters().toString());
     }
 
     @Test
@@ -393,6 +423,8 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testEnterInstallOptionsForInstall() throws Exception {
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+        
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).prepareInstallProperties(anyString(),
                                                                                                                     any(Path.class),
                                                                                                                     any(InstallType.class),
@@ -420,20 +452,31 @@ public class TestInstallCommand extends AbstractTestCommand {
         }).when(spyCommand.console).askUser(anyString());
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
-        commandInvoker.argument("version", "1.0.0");
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
 
-        assertEquals(output, "{\n" +
+        assertEquals(output, format("{\n" +
                              "  \"artifacts\" : [ {\n" +
-                             "    \"artifact\" : \"codenvy\",\n" +
-                             "    \"version\" : \"1.0.0\",\n" +
+                             "    \"artifact\" : \"%s\",\n" +
+                             "    \"version\" : \"%s\",\n" +
                              "    \"status\" : \"SUCCESS\"\n" +
                              "  } ],\n" +
                              "  \"status\" : \"OK\"\n" +
-                             "}\n");
+                             "}\n", TEST_ARTIFACT, TEST_VERSION));
+
+        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
+
+        assertEquals(values.get(1).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY);
+        assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(1).getParameters().toString());
     }
 
     @Test
@@ -447,6 +490,8 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"message\" : \"Parameter 'version' is missed\",\n"
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
+
+        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
     }
 
     @Test
@@ -461,21 +506,25 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"message\" : \"Parameter 'artifact' is missed\",\n"
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
+
+        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
     }
 
     @Test
     public void testInstallArtifactFromLocalBinaries() throws Exception {
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+        
         String versionNumber = "3.10.1";
         String binaries = "/path/to/file";
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--binaries", binaries);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", versionNumber);
 
         CommandInvoker.Result result = commandInvoker.invoke();
 
-        String output = result.disableAnsi().getOutputStream();
+        String output = result.disableAnsi().getOutputStream();   // TODO [ndp] strange result
         assertEquals(output, "step 1{\n"
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
@@ -483,20 +532,27 @@ public class TestInstallCommand extends AbstractTestCommand {
         verify(mockConfigManager).prepareInstallProperties(isNull(String.class),
                                                        eq(Paths.get(binaries)),
                                                        eq(InstallType.SINGLE_SERVER),
-                                                       eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
+                                                       eq(ArtifactFactory.createArtifact(TEST_ARTIFACT)),
                                                        eq(Version.valueOf(versionNumber)),
                                                        eq(Boolean.TRUE));
 
-        verify(spyCommand.facade).install(eq(ArtifactFactory.createArtifact(CDECArtifact.NAME)),
+        verify(facade).install(eq(ArtifactFactory.createArtifact(TEST_ARTIFACT)),
                                           eq(Version.valueOf(versionNumber)),
                                           eq(Paths.get(binaries)),
                                           any(InstallOptions.class));
+
+        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, versionNumber)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
     }
 
     @Test
     public void testReinstallCodenvy() throws Exception {
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("artifact", CDECArtifact.NAME);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.option("--reinstall", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -509,7 +565,8 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"OK\"\n"
                              + "}\n");
 
-        verify(facade).reinstall(createArtifact(CDECArtifact.NAME));
+        verify(facade).reinstall(createArtifact(TEST_ARTIFACT));
+        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
     }
 
     @Test
@@ -530,5 +587,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"message\" : \"error message\",\n"
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
+
+        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
     }
 }

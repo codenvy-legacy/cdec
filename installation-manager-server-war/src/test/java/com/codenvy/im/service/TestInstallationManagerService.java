@@ -67,8 +67,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
@@ -813,6 +815,24 @@ public class TestInstallationManagerService extends BaseTest {
         verify(mockFacade).logSaasAnalyticsEvent(event, TEST_ACCESS_TOKEN);
     }
 
+    @Test
+    public void shouldThrowBadRequestErrorIfEventHasTooManyParameters() throws Exception {
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        service.saasUserCredentials = testUserCredentials;
+
+        Map<String, String> parameters = new HashMap<>();
+        IntStream.range(0, Event.MAX_EXTENDED_PARAMS_NUMBER + 1)
+                 .forEach(i -> parameters.put(String.valueOf(i), "a"));
+
+        Event event = new Event(Event.Type.CDEC_FIRST_LOGIN, parameters);
+
+        Response response = service.logSaasAnalyticsEvent(event);
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        assertEquals(response.getEntity().toString(),
+                     format("{message=The number of parameters exceeded the limit of extended parameters in %s}", Event.MAX_EXTENDED_PARAMS_NUMBER));
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class), any(String.class));
+    }
 
     private void assertOkResponse(Response result) throws IOException {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());

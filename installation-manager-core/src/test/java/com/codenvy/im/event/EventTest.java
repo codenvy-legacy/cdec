@@ -18,6 +18,8 @@
 
 package com.codenvy.im.event;
 
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang.StringUtils;
 import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -35,25 +37,35 @@ import static org.testng.Assert.assertEquals;
 public class EventTest {
 
     public static final Event.Type TEST_EVENT = Event.Type.IM_ARTIFACT_DOWNLOADED;
+    public static final String STRING_LENGTH_21   = StringUtils.repeat("1", 21);
+    public static final String STRING_LENGTH_101  = StringUtils.repeat("1", 101);
+    public static final String STRING_LENGTH_1001 = StringUtils.repeat("1", 1001);
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "The length of parameter value " +
-                                            "012345678901234567890123456789012345678901234567891012345678901234567890123456789012345678901234567891012345678901" +
-                                            "234567890123456789012345678901234567891 exceeded the length in 100 characters")
+          expectedExceptionsMessageRegExp = "The length of parameter PARAM value '[1]{101}' exceeded the length in " + Event.MAX_PARAM_VALUE_LENGTH + " characters")
     public void shouldThrowExceptionIfValidationFailedForValue() throws UnsupportedEncodingException {
-        Map<String, String> parameters = new HashMap<String, String>() {{
-            put("PARAM", "012345678901234567890123456789012345678901234567891" +
-                         "012345678901234567890123456789012345678901234567891" +
-                         "012345678901234567890123456789012345678901234567891");
-        }};
+        Map<String, String> parameters = ImmutableMap.of("PARAM", STRING_LENGTH_21);
+        new Event(TEST_EVENT, parameters);   // there should be no exceptions here
 
+        parameters = ImmutableMap.of("PARAM", STRING_LENGTH_101);
         new Event(TEST_EVENT, parameters);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "The length of parameter " + Event.ERROR_MESSAGE_PARAM + " value '[1]{1001}' exceeded the length in " + Event.MAX_LONG_PARAM_VALUE_LENGTH + " characters")
+    public void shouldThrowExceptionOnLongErrorMessageParameter() throws UnsupportedEncodingException {
+        Map<String, String> parameters = ImmutableMap.of(Event.ERROR_MESSAGE_PARAM, STRING_LENGTH_101);
+        new Event(TEST_EVENT, parameters);   // there should be no exceptions here
+
+        parameters = ImmutableMap.of(Event.ERROR_MESSAGE_PARAM, STRING_LENGTH_1001);
+        new Event(TEST_EVENT, parameters);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = "The length of parameter name '[1]{21}' exceeded the length in " + Event.MAX_PARAM_NAME_LENGTH + " characters")
     public void shouldThrowExceptionIfValidationFailedForParam() throws UnsupportedEncodingException {
         Map<String, String> parameters = new HashMap<String, String>() {{
-            put("0123456789012345678901234567890123456789", "value");
+            put(STRING_LENGTH_21, "value");
         }};
 
         new Event(TEST_EVENT, parameters);

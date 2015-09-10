@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.event;
 
+import org.apache.commons.lang.StringUtils;
+
 import javax.annotation.Nonnull;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,66 +27,63 @@ import java.util.Map;
  * @author Dmytro Nochevnov
  */
 public class EventFactory {
-    public static final String TIME_PARAM          = "TIME";
-    public static final String USER_PARAM          = "USER";
-    public static final String PLAN_PARAM          = "PLAN";
-    public static final String ARTIFACT_PARAM      = "ARTIFACT";
-    public static final String VERSION_PARAM       = "VERSION";
-    public static final String USER_IP_PARAM       = "USER-IP";
-    public static final String ERROR_MESSAGE_PARAM = "ERROR-MESSAGE";
+
 
     /**
      * Creates Event object of certain type with certain parameters + parameter(TIME = [current_system_time])
      */
     public static Event createWithTime(final Event.Type type, @Nonnull Map<String, String> parameters) {
         parameters = new LinkedHashMap<>(parameters);
-        parameters.put(TIME_PARAM, getTime());
+        parameters.put(Event.TIME_PARAM, getTime());
 
         return new Event(type, parameters);
     }
 
     public static Event createImSubscriptionAddedEventWithTime(final String planId, final String userId) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-        eventParameters.put(PLAN_PARAM, planId);
-        eventParameters.put(USER_PARAM, userId);
+        eventParameters.put(Event.PLAN_PARAM, planId);
+        eventParameters.put(Event.USER_PARAM, userId);
 
         return createWithTime(Event.Type.IM_SUBSCRIPTION_ADDED, eventParameters);
     }
 
     public static Event createImArtifactDownloadedEventWithTime(final String artifact, final String version, final String userId) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-        eventParameters.put(ARTIFACT_PARAM, artifact);
-        eventParameters.put(VERSION_PARAM, version);
-        eventParameters.put(USER_PARAM, userId);
+        eventParameters.put(Event.ARTIFACT_PARAM, artifact);
+        eventParameters.put(Event.VERSION_PARAM, version);
+        eventParameters.put(Event.USER_PARAM, userId);
 
         return createWithTime(Event.Type.IM_ARTIFACT_DOWNLOADED, eventParameters);
     }
 
     public static Event createImArtifactInstallStartedEventWithTime(final String artifact, final String version) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-        eventParameters.put(ARTIFACT_PARAM, artifact);
-        eventParameters.put(VERSION_PARAM, version);
+        eventParameters.put(Event.ARTIFACT_PARAM, artifact);
+        eventParameters.put(Event.VERSION_PARAM, version);
 
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_STARTED, eventParameters);
     }
 
     public static Event createImArtifactInstallFinishedSuccessfullyEventWithTime(final String artifact, final String version) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
-        eventParameters.put(ARTIFACT_PARAM, artifact);
-        eventParameters.put(VERSION_PARAM, version);
+        eventParameters.put(Event.ARTIFACT_PARAM, artifact);
+        eventParameters.put(Event.VERSION_PARAM, version);
 
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);
     }
 
     public static Event createImArtifactInstallFinishedUnsuccessfullyEventWithTime(final String artifact,
                                                                                    final String version,
-                                                                                   final String errorMessage) {
-        Map<String, String> eventParameters = new LinkedHashMap<>();
-        eventParameters.put(ARTIFACT_PARAM, artifact);
-        eventParameters.put(VERSION_PARAM, version);
-        eventParameters.put(ERROR_MESSAGE_PARAM, errorMessage);
+                                                                                   String errorMessage) {
+        errorMessage = errorMessage.replace("#", " "); // TODO [ndp] use PARAMETERS + URLEncode instead replacement
+        errorMessage = StringUtils.substring(errorMessage, 0, Event.MAX_LONG_PARAM_VALUE_LENGTH - 1);
 
-        return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);
+        Map<String, String> eventParameters = new LinkedHashMap<>();
+        eventParameters.put(Event.ARTIFACT_PARAM, artifact);
+        eventParameters.put(Event.VERSION_PARAM, version);
+        eventParameters.put(Event.ERROR_MESSAGE_PARAM, errorMessage);
+
+        return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY, eventParameters);
     }
 
     private static String getTime() {
