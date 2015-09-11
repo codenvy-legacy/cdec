@@ -81,7 +81,7 @@ public class EventTest {
                     + "}", TEST_EVENT.name())},
 
             {TEST_EVENT, ImmutableMap.of(ANY_PARAM, STRING_LENGTH_21),
-             format("EVENT#%s# %s#%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21),
+             format("EVENT#%s# PARAMETERS#%s=%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21),
              format("{\n"
                     + "  \"type\" : \"%s\",\n"
                     + "  \"parameters\" : {\n"
@@ -90,7 +90,7 @@ public class EventTest {
                     + "}", TEST_EVENT.name(), ANY_PARAM, STRING_LENGTH_21)},
 
             {TEST_EVENT, ImmutableMap.of(Event.ERROR_MESSAGE_PARAM, STRING_LENGTH_101),
-             format("EVENT#%s# %s#%s#", TEST_EVENT, Event.ERROR_MESSAGE_PARAM, STRING_LENGTH_101),
+             format("EVENT#%s# PARAMETERS#%s=%s#", TEST_EVENT, Event.ERROR_MESSAGE_PARAM, STRING_LENGTH_101),
              format("{\n"
                     + "  \"type\" : \"%s\",\n"
                     + "  \"parameters\" : {\n"
@@ -143,19 +143,19 @@ public class EventTest {
         return new Object[][]{
             {new Event(TEST_EVENT, null),
              ANY_PARAM, STRING_LENGTH_21,
-             format("EVENT#%s# %s#%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21)},
+             format("EVENT#%s# PARAMETERS#%s=%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21)},
 
             {new Event(TEST_EVENT, new HashMap<>()),
              ANY_PARAM, STRING_LENGTH_21,
-             format("EVENT#%s# %s#%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21)},
+             format("EVENT#%s# PARAMETERS#%s=%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21)},
 
             {new Event(TEST_EVENT, ImmutableMap.of(ANY_PARAM, STRING_LENGTH_21)),
              ANY_PARAM, ANY_VALUE,
-             format("EVENT#%s# %s#%s#", TEST_EVENT, ANY_PARAM, ANY_VALUE)},
+             format("EVENT#%s# PARAMETERS#%s=%s#", TEST_EVENT, ANY_PARAM, ANY_VALUE)},
 
             {new Event(TEST_EVENT, ImmutableMap.of(ANY_PARAM, STRING_LENGTH_21)),
              Event.TIME_PARAM, ANY_VALUE,
-             format("EVENT#%s# %s#%s# %s#%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21, Event.TIME_PARAM, ANY_VALUE)},
+             format("EVENT#%s# PARAMETERS#%s=%s,%s=%s#", TEST_EVENT, ANY_PARAM, STRING_LENGTH_21, Event.TIME_PARAM, ANY_VALUE)},
         };
     }
 
@@ -207,11 +207,12 @@ public class EventTest {
             put("p1", ",");
             put("p2", "=");
             put("p3", "#");
-            put("p4", " ");
+            put("p4", "+");
+            put("p5", " ");
         }};
 
         Event event = new Event(TEST_EVENT, parameters);
-        assertEquals(event.toString(), "EVENT#" + TEST_EVENT + "# p1#,# p2#=# p3### p4# #");
+        assertEquals(event.toString(), "EVENT#" + TEST_EVENT + "# PARAMETERS#p1=%2C,p2=%3D,p3=%23,p4=%2B,p5=+#");
     }
 
     @Test

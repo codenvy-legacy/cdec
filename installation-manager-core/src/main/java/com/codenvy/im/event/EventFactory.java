@@ -75,7 +75,6 @@ public class EventFactory {
     public static Event createImArtifactInstallFinishedUnsuccessfullyEventWithTime(final String artifact,
                                                                                    final String version,
                                                                                    String errorMessage) {
-        errorMessage = errorMessage.replace("#", " "); // TODO [ndp] use PARAMETERS + URLEncode instead replacement
         errorMessage = StringUtils.substring(errorMessage, 0, Event.MAX_LONG_PARAM_VALUE_LENGTH - 1);
 
         Map<String, String> eventParameters = new LinkedHashMap<>();

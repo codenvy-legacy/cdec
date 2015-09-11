@@ -22,6 +22,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.eclipse.che.dto.server.JsonSerializable;
 
 import javax.annotation.Nullable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -40,6 +42,7 @@ public class Event implements JsonSerializable {
     public static final String VERSION_PARAM       = "VERSION";
     public static final String USER_IP_PARAM       = "USER-IP";
     public static final String ERROR_MESSAGE_PARAM = "ERROR-MESSAGE";
+    public static final String PARAMETERS_PARAM    = "PARAMETERS";
 
     public static final int MAX_EXTENDED_PARAMS_NUMBER  = 10;
     public static final int RESERVED_PARAMS_NUMBER      = 5;     // reserved for TIME_PARAM, USER_PARAM and USER_IP_PARAM
@@ -146,11 +149,12 @@ public class Event implements JsonSerializable {
     public String toString() {
         StringBuilder record = new StringBuilder(format("EVENT#%s#", type));
 
-        if (parameters == null) {
+        if (parameters == null
+            || parameters.size() == 0) {
             return record.toString();
         }
 
-        parameters.forEach((key, value) -> record.append(format(" %s#%s#", key, value)));
+        record.append(format(" %s#%s#", PARAMETERS_PARAM, getParametersAsString(parameters)));
 
         return record.toString();
     }
@@ -228,6 +232,26 @@ public class Event implements JsonSerializable {
                                                       value,
                                                       MAX_LONG_PARAM_VALUE_LENGTH));
         }
+    }
+
+    private String getParametersAsString(Map<String, String> parameters) {
+        StringBuilder builder = new StringBuilder();
+
+        parameters.forEach((key, value) -> {
+            if (builder.length() > 0) {
+                builder.append(',');
+            }
+
+            try {
+                builder.append(URLEncoder.encode(key, "UTF-8"));
+                builder.append('=');
+                builder.append(URLEncoder.encode(value, "UTF-8"));
+            } catch(UnsupportedEncodingException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
+
+        return builder.toString();
     }
 
     public static void validateNumberOfParametersTreatingAsExtended(Map<String, String> parameters) throws IllegalArgumentException {

@@ -84,7 +84,7 @@ public class EventLoggerTest {
 
         boolean findOne = false;
         for (String value: values) {
-            if (value.matches("EVENT#" + TEST_EVENT + "# PARAM1#param1-value# PARAM2#param2-value# TIME#\\d*#")) {
+            if (value.matches("EVENT#" + TEST_EVENT + "# PARAMETERS#PARAM1=param1-value,PARAM2=param2-value,TIME=\\d*#")) {
                 findOne = true;
             }
         }
