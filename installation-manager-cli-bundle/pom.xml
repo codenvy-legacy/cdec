@@ -49,13 +49,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <!-- Is required by Sonar -->
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>cli-preferences-api</artifactId>
             <version>${codenvy.cli.version}</version>
@@ -83,6 +76,13 @@
             <groupId>com.codenvy.platform-api-client-java</groupId>
             <artifactId>codenvy-platform-api-client-java-dummy</artifactId>
             <version>${codenvy.platform-api-client-java.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Is required by Sonar -->
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
