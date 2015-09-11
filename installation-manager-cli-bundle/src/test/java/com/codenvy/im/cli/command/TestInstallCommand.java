@@ -590,4 +590,33 @@ public class TestInstallCommand extends AbstractTestCommand {
 
         verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
     }
+
+    @Test
+    public void shouldNotInterruptInstallIfLoggingToSaasCodenvyFail() throws Exception {
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+
+        doThrow(new IOException("error")).when(facade).logSaasAnalyticsEvent(any(Event.class), any(String.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, format("step 1 [OK]\n" +
+                                    "step 2 [OK]\n" +
+                                    "{\n" +
+                                    "  \"artifacts\" : [ {\n" +
+                                    "    \"artifact\" : \"%s\",\n" +
+                                    "    \"version\" : \"%s\",\n" +
+                                    "    \"status\" : \"SUCCESS\"\n" +
+                                    "  } ],\n" +
+                                    "  \"status\" : \"OK\"\n" +
+                                    "}\n", TEST_ARTIFACT, TEST_VERSION));
+
+    }
 }

@@ -231,8 +231,12 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return facade.getSaasServerEndpoint();
     }
 
-    void logEventToSaasCodenvy(Event event) throws IOException {
-        facade.logSaasAnalyticsEvent(event, preferencesStorage.getAuthToken());
+    void logEventToSaasCodenvy(Event event) {
+        try {
+            facade.logSaasAnalyticsEvent(event, preferencesStorage.getAuthToken());
+        } catch(Exception e) {
+            LOG.log(Level.WARNING, "Error of logging event to SaaS Codenvy: " + e.getMessage(), e);   // do not interrupt main process
+        }
     }
 
     @Nullable
