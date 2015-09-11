@@ -138,7 +138,7 @@ public class PuppetErrorInterrupter implements Command {
         try {
             lastLines = readNLines(node);
         } catch (AgentException | CommandException e) {
-            LOG.log(Level.SEVERE, getRuntimeErrorMessage(node, e), e);    // ignore to don't interrupt installation process
+            LOG.log(Level.WARNING, getRuntimeErrorMessage(node, e), e);    // ignore to don't interrupt installation process
         }
 
         try {

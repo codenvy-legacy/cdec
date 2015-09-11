@@ -21,6 +21,7 @@ import com.codenvy.im.utils.Commons;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.eclipse.che.dto.server.JsonSerializable;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -77,14 +78,15 @@ public class Event implements JsonSerializable {
         }
     }
 
+    /** Default constructor is needed to use Event object as an argument of REST services */
     public Event() {
     }
 
     public Event(Type type, Map<String, String> parameters) {
         validate(parameters);
 
-        this.type = type;
-        this.parameters = parameters;
+        setType(type);
+        setParameters(parameters);
     }
 
     public Type getType() {
@@ -92,6 +94,10 @@ public class Event implements JsonSerializable {
     }
 
     public void setType(Type type) {
+        if (type == null) {
+            throw new IllegalArgumentException("Type cannot be null");
+        }
+
         this.type = type;
     }
 
@@ -111,12 +117,26 @@ public class Event implements JsonSerializable {
     /**
      * add new parameter or replace existed one
      */
-    public void putParameter(String key, String value) {
-        Map<String, String> parameters = new LinkedHashMap<>(this.getParameters());
-        parameters.put(key, value);
-        validate(parameters);
+    public void putParameter(String param, String value) {
+        if (param == null) {
+            throw new IllegalArgumentException("Parameter name cannot be null");
+        }
 
-        this.parameters = parameters;
+        if (value == null) {
+            throw new IllegalArgumentException("Parameter value cannot be null");
+        }
+
+        Map<String, String> newParameters;
+        if (this.parameters != null) {
+            newParameters = new LinkedHashMap<>(this.getParameters());
+        } else {
+            newParameters = new LinkedHashMap<>();
+        }
+
+        newParameters.put(param, value);
+        validate(newParameters);
+
+        this.parameters = newParameters;
     }
 
     /**
@@ -126,9 +146,11 @@ public class Event implements JsonSerializable {
     public String toString() {
         StringBuilder record = new StringBuilder(format("EVENT#%s#", type));
 
-        parameters.forEach((key, value) -> {
-            record.append(format(" %s#%s#", key, value));
-        });
+        if (parameters == null) {
+            return record.toString();
+        }
+
+        parameters.forEach((key, value) -> record.append(format(" %s#%s#", key, value)));
 
         return record.toString();
     }
@@ -169,15 +191,19 @@ public class Event implements JsonSerializable {
     }
 
 
-    private void validate(Map<String, String> parameters) throws IllegalArgumentException {
+    private void validate(@Nullable Map<String, String> parameters) throws IllegalArgumentException {
+        if (parameters == null) {
+            return;
+        }
+
         validateNumberOfParameters(parameters);
 
         parameters.forEach(this::validate);
     }
 
     public void validateNumberOfParameters(Map<String, String> parameters) throws IllegalArgumentException {
-        if (parameters.size() > MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER) {
-            throw new IllegalArgumentException("The number of parameters exceeded the limit in " + MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER);
+        if (parameters.size() > (MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER)) {
+            throw new IllegalArgumentException("The number of parameters exceeded the limit in " + (MAX_EXTENDED_PARAMS_NUMBER + RESERVED_PARAMS_NUMBER));
         }
     }
 

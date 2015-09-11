@@ -231,7 +231,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return facade.getSaasServerEndpoint();
     }
 
-    void logEventToSaasCodenvy(Event event) {
+    protected void logEventToSaasCodenvy(Event event) {
         try {
             facade.logSaasAnalyticsEvent(event, preferencesStorage.getAuthToken());
         } catch(Exception e) {
