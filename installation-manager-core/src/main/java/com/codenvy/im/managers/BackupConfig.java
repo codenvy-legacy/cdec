@@ -26,7 +26,7 @@ import com.wordnik.swagger.annotations.ApiModelProperty;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,7 +100,7 @@ public class BackupConfig {
         return this;
     }
 
-    @Nonnull
+    @NotNull
     public String getBackupDirectory() {
         return backupDirectory;
     }
@@ -249,7 +249,7 @@ public class BackupConfig {
     /**
      * @return config of backup, stored in this.backupFile
      */
-    @Nonnull
+    @NotNull
     public BackupConfig extractConfigFromBackup() throws IOException {
         Path tempDir = BASE_TMP_DIRECTORY;
         Files.createDirectories(tempDir);

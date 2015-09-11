@@ -27,7 +27,7 @@ import org.eclipse.che.api.account.shared.dto.MemberDescriptor;
 import org.slf4j.LoggerFactory;
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.text.DateFormat;

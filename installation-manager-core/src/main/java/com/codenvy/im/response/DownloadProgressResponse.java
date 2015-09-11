@@ -20,9 +20,9 @@ package com.codenvy.im.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,10 +53,10 @@ public class DownloadProgressResponse {
      * @param artifacts
      *         the result of downloaded artifacts
      */
-    public DownloadProgressResponse(@Nonnull DownloadArtifactStatus status,
+    public DownloadProgressResponse(@NotNull DownloadArtifactStatus status,
                                     @Nullable String message,
-                                    @Nonnegative int percents,
-                                    @Nonnull List<DownloadArtifactInfo> artifacts) {
+                                    @Min(value=0) int percents,
+                                    @NotNull List<DownloadArtifactInfo> artifacts) {
         this.status = status;
         this.percents = percents;
         this.message = message;
@@ -71,9 +71,9 @@ public class DownloadProgressResponse {
      * @param artifacts
      *         the result of downloaded artifacts
      */
-    public DownloadProgressResponse(@Nonnull DownloadArtifactStatus status,
-                                    @Nonnegative int percents,
-                                    @Nonnull List<DownloadArtifactInfo> artifacts) {
+    public DownloadProgressResponse(@NotNull DownloadArtifactStatus status,
+                                    @Min(value=0) int percents,
+                                    @NotNull List<DownloadArtifactInfo> artifacts) {
         this(status, null, percents, artifacts);
     }
 

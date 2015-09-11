@@ -27,7 +27,7 @@ import com.google.inject.Module;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -123,7 +123,7 @@ public class InjectorBootstrap {
     }
 
     /** Override default properties from jar with values from CHE_LOCAL_CONF_DIR directory */
-    protected static void overrideDefaultProperties(@Nonnull String localConfDir) {
+    protected static void overrideDefaultProperties(@NotNull String localConfDir) {
         Path confDirPath = Paths.get(localConfDir);
 
         if (exists(confDirPath)) {

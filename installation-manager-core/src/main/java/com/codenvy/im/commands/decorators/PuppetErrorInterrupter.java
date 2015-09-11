@@ -29,7 +29,7 @@ import com.codenvy.im.utils.InjectorBootstrap;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
