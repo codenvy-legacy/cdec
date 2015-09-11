@@ -21,8 +21,8 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.utils.Version;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -39,7 +39,7 @@ public class TestCheckInstalledVersionCommand {
     private Artifact                     artifact;
     private CheckInstalledVersionCommand command;
 
-    @Before
+    @BeforeTest
     public void setUp() throws Exception {
         artifact = mock(CDECArtifact.class);
         command = spy(new CheckInstalledVersionCommand(artifact, Version.valueOf("3.3.0")));

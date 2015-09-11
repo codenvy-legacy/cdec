@@ -21,7 +21,7 @@ import com.codenvy.im.utils.OSUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import org.junit.After;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -38,7 +38,7 @@ import static org.testng.Assert.assertNotNull;
 public class TestConfig {
     public static final String INITIAL_OS_VERSION = OSUtils.VERSION;
 
-    @After
+    @AfterTest
     public void tearDown() {
         OSUtils.VERSION = INITIAL_OS_VERSION;
     }

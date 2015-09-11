@@ -20,7 +20,7 @@ package com.codenvy.im.response;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.toJson;
