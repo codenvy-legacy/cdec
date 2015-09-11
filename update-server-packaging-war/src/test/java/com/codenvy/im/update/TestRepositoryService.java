@@ -76,6 +76,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -90,7 +91,8 @@ import static org.testng.Assert.assertTrue;
 public class TestRepositoryService extends BaseTest {
 
     public static final javax.ws.rs.core.Response OK_RESPONSE = javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).build();
-    public static final String TEST_USER = "id";
+    public static final String TEST_USER_ID = "id";
+    public static final String ANY_NAME     = "any_name";
     private ArtifactStorage   artifactStorage;
     private RepositoryService repositoryService;
 
@@ -132,7 +134,7 @@ public class TestRepositoryService extends BaseTest {
                                                   saasAccountServiceProxy,
                                                   mockEventLogger);
 
-        when(mockUserManager.getCurrentUser()).thenReturn(new UserImpl("name", TEST_USER, "token", Collections.<String>emptyList(), false));
+        when(mockUserManager.getCurrentUser()).thenReturn(new UserImpl("name", TEST_USER_ID, "token", Collections.<String>emptyList(), false));
         super.setUp();
     }
 
@@ -589,21 +591,32 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testLogEvent() throws UnsupportedEncodingException {
+    public void shouldLogEventOfAnonymousUser() throws UnsupportedEncodingException {
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         Map<String,String> testEventParameters = ImmutableMap.of(
             "PARAM1", "param1-value",
             "PARAM2", "param2-value"
         );
-
         Event.Type testEvenType = Event.Type.IM_ARTIFACT_DOWNLOADED;
+        Event testEvent = EventFactory.createWithTime(testEvenType, testEventParameters);
 
         HttpServletRequest requestContext = mock(HttpServletRequest.class);
         String testUserIp = "10.20.30.40";
         doReturn(testUserIp).when(requestContext).getRemoteAddr();
 
-        Event testEvent = EventFactory.createWithTime(testEvenType, testEventParameters);
+        UserManager spyUserManager = spy(new UserManager());
+        when(spyUserManager.getCurrentUser()).thenReturn(new UserImpl(UserManager.ANONYMOUS_USER_NAME, TEST_USER_ID, "token", Collections.<String>emptyList(), false));
+
+        repositoryService = new RepositoryService("",
+                                                  spyUserManager,
+                                                  artifactStorage,
+                                                  mockHttpTransport,
+                                                  mockMailUtil,
+                                                  saasUserServiceProxy,
+                                                  saasAccountServiceProxy,
+                                                  mockEventLogger);
+
         javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEvent);
         assertEquals(response.getStatus(), OK_RESPONSE.getStatus());
 
@@ -611,7 +624,46 @@ public class TestRepositoryService extends BaseTest {
 
         Event loggedEvent = eventCaptor.getValue();
         assertEquals(loggedEvent.getType(), testEvenType);
-        assertTrue(loggedEvent.getParameters().toString().matches("\\{PARAM1=param1-value, PARAM2=param2-value, TIME=\\d*, USER-IP=" + testUserIp + ", USER=" + TEST_USER + "}"),
+        assertTrue(loggedEvent.getParameters().toString().matches("\\{PARAM1=param1-value, PARAM2=param2-value, TIME=\\d*, USER-IP=" + testUserIp + ", USER=}"),
+                   "Actual value: " + loggedEvent.getParameters().toString());
+
+    }
+
+    @Test
+    public void shouldLogEventOfAuthorizedUser() throws UnsupportedEncodingException {
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
+        Map<String,String> testEventParameters = ImmutableMap.of(
+            "PARAM1", "param1-value",
+            "PARAM2", "param2-value"
+        );
+        Event.Type testEvenType = Event.Type.IM_ARTIFACT_DOWNLOADED;
+        Event testEvent = EventFactory.createWithTime(testEvenType, testEventParameters);
+
+        HttpServletRequest requestContext = mock(HttpServletRequest.class);
+        String testUserIp = "10.20.30.40";
+        doReturn(testUserIp).when(requestContext).getRemoteAddr();
+
+        UserManager spyUserManager = spy(new UserManager());
+        when(spyUserManager.getCurrentUser()).thenReturn(new UserImpl(ANY_NAME, TEST_USER_ID, "token", Collections.<String>emptyList(), false));
+
+        repositoryService = new RepositoryService("",
+                                                  spyUserManager,
+                                                  artifactStorage,
+                                                  mockHttpTransport,
+                                                  mockMailUtil,
+                                                  saasUserServiceProxy,
+                                                  saasAccountServiceProxy,
+                                                  mockEventLogger);
+
+        javax.ws.rs.core.Response response = repositoryService.logEvent(requestContext, testEvent);
+        assertEquals(response.getStatus(), OK_RESPONSE.getStatus());
+
+        verify(mockEventLogger).log(eventCaptor.capture());
+
+        Event loggedEvent = eventCaptor.getValue();
+        assertEquals(loggedEvent.getType(), testEvenType);
+        assertTrue(loggedEvent.getParameters().toString().matches("\\{PARAM1=param1-value, PARAM2=param2-value, TIME=\\d*, USER-IP=" + testUserIp + ", USER=" + TEST_USER_ID + "}"),
                    "Actual value: " + loggedEvent.getParameters().toString());
 
     }

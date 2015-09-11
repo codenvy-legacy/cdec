@@ -491,8 +491,12 @@ public class RepositoryService {
             String userIp = requestContext.getRemoteAddr();
             event.putParameter(Event.USER_IP_PARAM, userIp);
 
-            String userId = userManager.getCurrentUser().getId();
-            event.putParameter(Event.USER_PARAM, userId == null ? "" : userId);
+            if (userManager.isAnonymous()) {
+                event.putParameter(Event.USER_PARAM, "");
+            } else {
+                String userId = userManager.getCurrentUser().getId();
+                event.putParameter(Event.USER_PARAM, userId == null ? "" : userId);
+            }
 
             eventLogger.log(event);
 

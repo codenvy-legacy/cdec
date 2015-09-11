@@ -28,7 +28,14 @@ import org.eclipse.che.commons.user.User;
 @Singleton
 public class UserManager {
 
+    public static final String ANONYMOUS_USER_NAME = "Anonymous";
+
     public User getCurrentUser() {
         return EnvironmentContext.getCurrent().getUser();
+    }
+
+    public boolean isAnonymous() {
+        return getCurrentUser() == null
+               || ANONYMOUS_USER_NAME.equals(getCurrentUser().getName());
     }
 }
