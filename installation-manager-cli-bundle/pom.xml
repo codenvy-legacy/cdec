@@ -49,6 +49,13 @@
             </exclusions>
         </dependency>
         <dependency>
+            <!-- Is requred by Sonar -->
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.codenvy.cli</groupId>
             <artifactId>cli-preferences-api</artifactId>
             <version>${codenvy.cli.version}</version>

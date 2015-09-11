@@ -122,6 +122,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <!-- Is requred by Sonar -->
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
