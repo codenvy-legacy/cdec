@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.managers;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;

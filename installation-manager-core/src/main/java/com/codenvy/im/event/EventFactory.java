@@ -19,9 +19,7 @@ package com.codenvy.im.event;
 
 import org.apache.commons.lang.StringUtils;
 
-import javax.annotation.Nonnull;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import javax.validation.constraints.NotNull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -34,7 +32,7 @@ public class EventFactory {
     /**
      * Creates Event object of certain type with certain parameters + parameter(TIME = [current_system_time])
      */
-    public static Event createWithTime(final Event.Type type, @Nonnull Map<String, String> parameters) {
+    public static Event createWithTime(final Event.Type type, @NotNull Map<String, String> parameters) {
         parameters = new LinkedHashMap<>(parameters);
         parameters.put(Event.TIME_PARAM, getTime());
 

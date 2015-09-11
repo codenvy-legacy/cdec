@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.io.OutputStream;

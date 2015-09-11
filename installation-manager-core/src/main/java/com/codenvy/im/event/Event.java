@@ -21,7 +21,7 @@ import com.codenvy.im.utils.Commons;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.eclipse.che.dto.server.JsonSerializable;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;

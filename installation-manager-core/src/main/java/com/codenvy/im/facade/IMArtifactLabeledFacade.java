@@ -44,8 +44,8 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.util.Collection;
@@ -152,7 +152,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
     }
 
     @Nullable
-    protected VersionLabel fetchVersionLabel(@Nonnull String artifactName, @Nonnull String versionNumber) throws IOException {
+    protected VersionLabel fetchVersionLabel(@NotNull String artifactName, @NotNull String versionNumber) throws IOException {
         Artifact artifact = createArtifact(artifactName);
         Version version = Version.valueOf(versionNumber);
 

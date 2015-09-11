@@ -33,7 +33,7 @@ import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

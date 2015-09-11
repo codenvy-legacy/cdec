@@ -41,8 +41,8 @@ import com.codenvy.im.utils.Version;
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.dto.server.DtoFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -207,7 +207,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
      * Find out remote for saas server.
      * Creates new one with default name if there is no such remote stored in preferences.
      */
-    @Nonnull
+    @NotNull
     protected String getOrCreateRemoteNameForSaasServer() {
         URL url;
         try {
@@ -250,7 +250,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return new SaasUserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
     }
 
-    @Nonnull
+    @NotNull
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());
     }
@@ -278,7 +278,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     /** Returns true if only remoteName = name of remote which has url = {saas server url} */
-    protected boolean isRemoteForSaasServer(@Nonnull String remoteName) {
+    protected boolean isRemoteForSaasServer(@NotNull String remoteName) {
         return remoteName.equals(getOrCreateRemoteNameForSaasServer());
     }
 

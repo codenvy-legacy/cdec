@@ -24,7 +24,7 @@ import com.codenvy.im.agent.SecureShellAgent;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.InjectorBootstrap;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
