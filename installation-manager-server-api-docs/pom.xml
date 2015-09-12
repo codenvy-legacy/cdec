@@ -38,6 +38,12 @@
             <groupId>com.wordnik</groupId>
             <artifactId>swagger-core_2.10</artifactId>
             <version>${com.wordnik.swagger.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jsr305</artifactId>
+                    <groupId>com.google.code.findbugs</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.wordnik</groupId>
