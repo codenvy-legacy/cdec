@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;

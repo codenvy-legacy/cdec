@@ -23,7 +23,7 @@ import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.utils.Version;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;

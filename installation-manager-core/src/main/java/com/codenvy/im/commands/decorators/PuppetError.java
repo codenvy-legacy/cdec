@@ -19,7 +19,7 @@ package com.codenvy.im.commands.decorators;
 
 import com.codenvy.im.managers.NodeConfig;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

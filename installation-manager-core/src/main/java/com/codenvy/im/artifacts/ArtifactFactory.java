@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.artifacts;
 
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 
@@ -25,7 +25,7 @@ import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 public class ArtifactFactory {
 
     /** Artifact factory. */
-    public static Artifact createArtifact(@Nonnull String name) throws ArtifactNotFoundException {
+    public static Artifact createArtifact(@NotNull String name) throws ArtifactNotFoundException {
         switch (name) {
             case CDECArtifact.NAME:
                 return INJECTOR.getInstance(CDECArtifact.class);

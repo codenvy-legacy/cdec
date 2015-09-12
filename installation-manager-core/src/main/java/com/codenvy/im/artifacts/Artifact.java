@@ -23,7 +23,7 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.Version;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;

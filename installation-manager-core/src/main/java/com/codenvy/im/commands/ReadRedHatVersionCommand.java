@@ -21,7 +21,7 @@ import com.codenvy.im.agent.LocalAgent;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 
 import static java.lang.String.format;

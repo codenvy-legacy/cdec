@@ -25,7 +25,7 @@ import com.google.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
 
-import javax.annotation.Nullable;
+import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
