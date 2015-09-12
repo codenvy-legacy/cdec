@@ -20,6 +20,8 @@ package com.codenvy.im.event;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -75,12 +77,11 @@ public class EventFactory {
     public static Event createImArtifactInstallFinishedUnsuccessfullyEventWithTime(final String artifact,
                                                                                    final String version,
                                                                                    String errorMessage) {
-        errorMessage = errorMessage.replace("#", " "); // TODO [ndp] use PARAMETERS + URLEncode instead replacement
-        errorMessage = StringUtils.substring(errorMessage, 0, Event.MAX_LONG_PARAM_VALUE_LENGTH - 1);
-
         Map<String, String> eventParameters = new LinkedHashMap<>();
         eventParameters.put(Event.ARTIFACT_PARAM, artifact);
         eventParameters.put(Event.VERSION_PARAM, version);
+
+        errorMessage = StringUtils.substring(errorMessage, 0, Event.MAX_LONG_PARAM_VALUE_LENGTH - 1);
         eventParameters.put(Event.ERROR_MESSAGE_PARAM, errorMessage);
 
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY, eventParameters);

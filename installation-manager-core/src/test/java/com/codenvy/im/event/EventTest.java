@@ -24,8 +24,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
@@ -203,15 +203,24 @@ public class EventTest {
 
     @Test
     public void shouldLogEventWithParametersSpecialCharactersUseCase1() throws UnsupportedEncodingException {
-        Map<String, String> parameters = new LinkedHashMap<String, String>() {{
-            put("p1", ",");
-            put("p2", "=");
-            put("p3", "#");
-            put("p4", " ");
-        }};
+        Map<String, String> parameters = ImmutableMap.of("p1", ",",
+                                                         "p2", "=",
+                                                         "p3", "#",
+                                                         "p4", " ");
 
         Event event = new Event(TEST_EVENT, parameters);
         assertEquals(event.toString(), "EVENT#" + TEST_EVENT + "# p1#,# p2#=# p3### p4# #");
+    }
+
+    @Test
+    public void shouldLogEventWithParametersSpecialCharactersUseCase2() throws UnsupportedEncodingException {
+        String keyToEncode = Event.PARAMETERS_TO_ENCODE.get(0);
+        String valueToEncode = ",=# ";
+        Map<String, String> parameters = ImmutableMap.of(keyToEncode, valueToEncode);
+
+        Event event = new Event(TEST_EVENT, parameters);
+        assertEquals(event.toString(),
+                     format("EVENT#%s# %s#%s#", TEST_EVENT, keyToEncode, URLEncoder.encode(valueToEncode, "UTF-8")));
     }
 
     @Test

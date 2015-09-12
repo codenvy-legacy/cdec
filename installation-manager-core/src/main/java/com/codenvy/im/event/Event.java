@@ -22,9 +22,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.eclipse.che.dto.server.JsonSerializable;
 
 import javax.annotation.Nullable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -33,13 +36,14 @@ import static java.lang.String.format;
  * @author Dmytro Nochevnov
  */
 public class Event implements JsonSerializable {
-    public static final String TIME_PARAM          = "TIME";
-    public static final String USER_PARAM          = "USER";
-    public static final String PLAN_PARAM          = "PLAN";
-    public static final String ARTIFACT_PARAM      = "ARTIFACT";
-    public static final String VERSION_PARAM       = "VERSION";
-    public static final String USER_IP_PARAM       = "USER-IP";
-    public static final String ERROR_MESSAGE_PARAM = "ERROR-MESSAGE";
+    public static final String       TIME_PARAM           = "TIME";
+    public static final String       USER_PARAM           = "USER";
+    public static final String       PLAN_PARAM           = "PLAN";
+    public static final String       ARTIFACT_PARAM       = "ARTIFACT";
+    public static final String       VERSION_PARAM        = "VERSION";
+    public static final String       USER_IP_PARAM        = "USER-IP";
+    public static final String       ERROR_MESSAGE_PARAM  = "ERROR-MESSAGE";
+    public static final List<String> PARAMETERS_TO_ENCODE = Arrays.asList(ERROR_MESSAGE_PARAM);
 
     public static final int MAX_EXTENDED_PARAMS_NUMBER  = 10;
     public static final int RESERVED_PARAMS_NUMBER      = 5;     // reserved for TIME_PARAM, USER_PARAM and USER_IP_PARAM
@@ -150,7 +154,17 @@ public class Event implements JsonSerializable {
             return record.toString();
         }
 
-        parameters.forEach((key, value) -> record.append(format(" %s#%s#", key, value)));
+        parameters.forEach((key, value) -> {
+            if (isParameterToEncode(key)) {
+                try {
+                    value = URLEncoder.encode(value, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+
+            record.append(format(" %s#%s#", key, value));
+        });
 
         return record.toString();
     }
@@ -234,5 +248,14 @@ public class Event implements JsonSerializable {
         if (parameters.size() > MAX_EXTENDED_PARAMS_NUMBER) {
             throw new IllegalArgumentException("The number of parameters exceeded the limit of extended parameters in " + MAX_EXTENDED_PARAMS_NUMBER);
         }
+    }
+
+    /**
+     * The parameter which contains special characters like "#" and so should be encoded to be properly processed by Analytics.
+     *
+     * @return true if key belongs to list of parameters to encode
+     */
+    private static boolean isParameterToEncode(String key) {
+        return PARAMETERS_TO_ENCODE.contains(key.toUpperCase());
     }
 }
