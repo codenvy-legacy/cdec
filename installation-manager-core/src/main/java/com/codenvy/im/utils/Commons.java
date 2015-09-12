@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.dto.server.DtoFactory;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

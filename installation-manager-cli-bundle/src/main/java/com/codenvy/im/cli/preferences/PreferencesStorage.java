@@ -20,7 +20,7 @@ package com.codenvy.im.cli.preferences;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.security.RemoteCredentials;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 
 /** @author Dmytro Nochevnov */
 public class PreferencesStorage {

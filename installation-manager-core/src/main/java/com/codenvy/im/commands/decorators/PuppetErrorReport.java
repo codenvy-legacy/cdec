@@ -26,7 +26,7 @@ import com.google.inject.name.Names;
 
 import org.apache.commons.io.FileUtils;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

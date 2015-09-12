@@ -42,8 +42,8 @@ import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -131,7 +131,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public String install(@NotNull Artifact artifact, @NotNull Version version, @NotNull InstallOptions installOptions) throws IOException {
+    public String install(@Nonnull Artifact artifact, @Nonnull Version version, @Nonnull InstallOptions installOptions) throws IOException {
         if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
             throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be installed");
         }
@@ -140,10 +140,10 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public String install(@NotNull Artifact artifact,
-                          @NotNull Version version,
-                          @NotNull Path binaries,
-                          @NotNull InstallOptions installOptions) throws IOException {
+    public String install(@Nonnull Artifact artifact,
+                          @Nonnull Version version,
+                          @Nonnull Path binaries,
+                          @Nonnull InstallOptions installOptions) throws IOException {
         if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
             throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be installed");
         }
@@ -154,7 +154,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public String update(@NotNull Artifact artifact, @NotNull Version version, @NotNull InstallOptions installOptions) throws IOException {
+    public String update(@Nonnull Artifact artifact, @Nonnull Version version, @Nonnull InstallOptions installOptions) throws IOException {
         if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
             throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be updated");
         }
@@ -163,10 +163,10 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public String update(@NotNull Artifact artifact,
-                         @NotNull Version version,
-                         @NotNull Path binaries,
-                         @NotNull InstallOptions installOptions) throws IOException {
+    public String update(@Nonnull Artifact artifact,
+                         @Nonnull Version version,
+                         @Nonnull Path binaries,
+                         @Nonnull InstallOptions installOptions) throws IOException {
         if (artifact.getName().equals(InstallManagerArtifact.NAME)) {
             throw new UnsupportedOperationException(InstallManagerArtifact.NAME + " can't be updated");
         }

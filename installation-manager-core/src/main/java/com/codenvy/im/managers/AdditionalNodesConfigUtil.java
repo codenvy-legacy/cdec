@@ -19,7 +19,7 @@ package com.codenvy.im.managers;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

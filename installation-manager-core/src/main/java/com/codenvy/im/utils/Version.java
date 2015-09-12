@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.utils;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,7 +65,7 @@ public class Version implements Comparable<Version> {
      *
      * @throws IllegalVersionException
      */
-    public static Version valueOf(@NotNull String version) throws IllegalVersionException {
+    public static Version valueOf(@Nonnull String version) throws IllegalVersionException {
         Matcher matcher = VERSION.matcher(version);
         if (!matcher.find()) {
             throw new IllegalVersionException(version);

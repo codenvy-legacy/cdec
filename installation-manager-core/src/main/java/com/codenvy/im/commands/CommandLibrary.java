@@ -23,7 +23,7 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

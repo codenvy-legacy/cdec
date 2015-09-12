@@ -20,8 +20,8 @@ package com.codenvy.im.managers;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -95,7 +95,7 @@ public class StorageManager {
 
     /** Loads property with certain key. */
     @Nullable
-    public String loadProperty(@NotNull String key) throws IOException {
+    public String loadProperty(@Nonnull String key) throws IOException {
         Path storageFile = getStorageFile();
         Properties properties = loadProperties(storageFile);
 
@@ -107,7 +107,7 @@ public class StorageManager {
     }
 
     /** Stores property with certain key. */
-    public void storeProperty(@NotNull String key, @NotNull String value) throws IOException {
+    public void storeProperty(@Nonnull String key, @Nonnull String value) throws IOException {
         Path storageFile = getStorageFile();
         Properties properties = loadProperties(storageFile);
 
@@ -123,7 +123,7 @@ public class StorageManager {
     }
 
     /** Deletes property with certain key. */
-    public void deleteProperty(@NotNull String key) throws IOException {
+    public void deleteProperty(@Nonnull String key) throws IOException {
         Path storageFile = getStorageFile();
         Properties properties = loadProperties(storageFile);
 

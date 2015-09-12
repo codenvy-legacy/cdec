@@ -28,7 +28,7 @@ import com.google.inject.Singleton;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.fusesource.jansi.Ansi;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;

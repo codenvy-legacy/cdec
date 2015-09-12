@@ -64,8 +64,8 @@ import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -163,7 +163,7 @@ public class InstallationManagerFacade {
     /**
      * Adds trial subscription for user being logged into Codenvy SaaS.
      */
-    public void addTrialSaasSubscription(@NotNull SaasUserCredentials saasUserCredentials) throws IOException {
+    public void addTrialSaasSubscription(@Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
         String requestUrl = combinePaths(updateServerEndpoint, "/repository/subscription", saasUserCredentials.getAccountId());
         transport.doPost(requestUrl, null, saasUserCredentials.getToken());
     }
@@ -171,8 +171,8 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#hasValidSubscription(String, String, String)
      */
-    public boolean hasValidSaasSubscription(@NotNull String subscription,
-                                            @NotNull SaasUserCredentials saasUserCredentials) throws IOException {
+    public boolean hasValidSaasSubscription(@Nonnull String subscription,
+                                            @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
         return saasAccountServiceProxy.hasValidSubscription(subscription,
                                                             saasUserCredentials.getToken(),
                                                             saasUserCredentials.getAccountId());
@@ -393,9 +393,9 @@ public class InstallationManagerFacade {
      *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performInstallStep
      */
-    public String install(@NotNull Artifact artifact,
-                          @NotNull Version version,
-                          @NotNull InstallOptions installOptions) throws IOException {
+    public String install(@Nonnull Artifact artifact,
+                          @Nonnull Version version,
+                          @Nonnull InstallOptions installOptions) throws IOException {
         SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
         if (!downloadedVersions.containsKey(version)) {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
@@ -409,10 +409,10 @@ public class InstallationManagerFacade {
      *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performInstallStep
      */
-    public String install(@NotNull Artifact artifact,
-                          @NotNull Version version,
-                          @NotNull Path binaries,
-                          @NotNull InstallOptions installOptions) throws IOException {
+    public String install(@Nonnull Artifact artifact,
+                          @Nonnull Version version,
+                          @Nonnull Path binaries,
+                          @Nonnull InstallOptions installOptions) throws IOException {
         return installManager.performInstallStep(artifact, version, binaries, installOptions);
     }
 
@@ -421,9 +421,9 @@ public class InstallationManagerFacade {
      *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performUpdateStep
      */
-    public String update(@NotNull Artifact artifact,
-                         @NotNull Version version,
-                         @NotNull InstallOptions installOptions) throws IOException {
+    public String update(@Nonnull Artifact artifact,
+                         @Nonnull Version version,
+                         @Nonnull InstallOptions installOptions) throws IOException {
         SortedMap<Version, Path> downloadedVersions = downloadManager.getDownloadedVersions(artifact);
         if (!downloadedVersions.containsKey(version)) {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
@@ -437,10 +437,10 @@ public class InstallationManagerFacade {
      *         if binaries to install given artifact not found
      * @see com.codenvy.im.managers.InstallManager#performUpdateStep
      */
-    public String update(@NotNull Artifact artifact,
-                         @NotNull Version version,
-                         @NotNull Path binaries,
-                         @NotNull InstallOptions installOptions) throws IOException {
+    public String update(@Nonnull Artifact artifact,
+                         @Nonnull Version version,
+                         @Nonnull Path binaries,
+                         @Nonnull InstallOptions installOptions) throws IOException {
         return installManager.performUpdateStep(artifact, version, binaries, installOptions);
     }
 
@@ -456,7 +456,7 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getAccountWhereUserIsOwner(String, String)
      */
     @Nullable
-    public AccountReference getAccountWhereUserIsOwner(@Nullable String accountName, @NotNull String authToken) throws IOException {
+    public AccountReference getAccountWhereUserIsOwner(@Nullable String accountName, @Nonnull String authToken) throws IOException {
         return saasAccountServiceProxy.getAccountWhereUserIsOwner(accountName, authToken);
     }
 
@@ -478,7 +478,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.NodeManager#add(String)
      */
-    public NodeInfo addNode(@NotNull String dns) throws IOException {
+    public NodeInfo addNode(@Nonnull String dns) throws IOException {
         NodeConfig nodeConfig = nodeManager.add(dns);
 
         NodeInfo nodeInfo = new NodeInfo();
@@ -491,7 +491,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.NodeManager#remove(String)
      */
-    public NodeInfo removeNode(@NotNull String dns) throws IOException {
+    public NodeInfo removeNode(@Nonnull String dns) throws IOException {
         NodeConfig nodeConfig = nodeManager.remove(dns);
 
         NodeInfo nodeInfo = new NodeInfo();
@@ -504,7 +504,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.BackupManager#backup(com.codenvy.im.managers.BackupConfig)
      */
-    public BackupInfo backup(@NotNull BackupConfig config) throws IOException {
+    public BackupInfo backup(@Nonnull BackupConfig config) throws IOException {
         BackupConfig backupConfig = backupManager.backup(config);
 
         BackupInfo backupInfo = new BackupInfo();
@@ -518,7 +518,7 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.BackupManager#restore(com.codenvy.im.managers.BackupConfig)
      */
-    public BackupInfo restore(@NotNull BackupConfig backupConfig) throws IOException {
+    public BackupInfo restore(@Nonnull BackupConfig backupConfig) throws IOException {
         backupManager.restore(backupConfig);
 
         BackupInfo backupInfo = new BackupInfo();
@@ -532,14 +532,14 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.saas.SaasAuthServiceProxy#login(org.eclipse.che.api.auth.shared.dto.Credentials)
      */
-    public Token loginToCodenvySaaS(@NotNull Credentials credentials) throws IOException, AuthenticationException {
+    public Token loginToCodenvySaaS(@Nonnull Credentials credentials) throws IOException, AuthenticationException {
         return saasAuthServiceProxy.login(credentials);
     }
 
     /**
      * @see com.codenvy.im.saas.SaasAuthServiceProxy#logout(String)
      */
-    public void logoutFromCodenvySaaS(@NotNull String authToken) throws IOException {
+    public void logoutFromCodenvySaaS(@Nonnull String authToken) throws IOException {
         saasAuthServiceProxy.logout(authToken);
     }
 
@@ -547,7 +547,7 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.saas.SaasAccountServiceProxy#getSubscription(String, String, String)
      */
     @Nullable
-    public SubscriptionDescriptor getSaasSubscription(String subscriptionName, @NotNull SaasUserCredentials saasUserCredentials) throws IOException {
+    public SubscriptionDescriptor getSaasSubscription(String subscriptionName, @Nonnull SaasUserCredentials saasUserCredentials) throws IOException {
         return saasAccountServiceProxy.getSubscription(subscriptionName,
                                                        saasUserCredentials.getToken(),
                                                        saasUserCredentials.getAccountId());

@@ -19,7 +19,7 @@ package com.codenvy.im.utils;
 
 import org.eclipse.che.dto.server.DtoFactory;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedOutputStream;

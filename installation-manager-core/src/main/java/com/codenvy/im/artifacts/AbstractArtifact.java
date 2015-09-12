@@ -25,7 +25,7 @@ import com.codenvy.im.utils.Version;
 
 import org.eclipse.che.commons.json.JsonParseException;
 
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

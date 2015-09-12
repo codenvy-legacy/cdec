@@ -34,8 +34,8 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import java.io.BufferedReader;
 import java.io.File;
@@ -320,7 +320,7 @@ public class ConfigManager {
      * @throws UnknownInstallationTypeException
      *         if can't detect installation type
      */
-    @NotNull
+    @Nonnull
     public InstallType detectInstallationType() throws UnknownInstallationTypeException {
         try {
             HierarchicalINIConfiguration iniFile = new HierarchicalINIConfiguration();
@@ -369,7 +369,7 @@ public class ConfigManager {
      * @throws java.lang.IllegalStateException
      *         if host name is not set
      */
-    @NotNull
+    @Nonnull
     public String fetchMasterHostName() throws IOException {
         try {
             HierarchicalINIConfiguration iniFile = new HierarchicalINIConfiguration();
