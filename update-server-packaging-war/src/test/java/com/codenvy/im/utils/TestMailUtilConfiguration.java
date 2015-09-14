@@ -17,9 +17,11 @@
  */
 package com.codenvy.im.utils;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 /**
  * @author Dmytro Nochevnov
@@ -27,9 +29,31 @@ import static org.testng.Assert.assertEquals;
 public class TestMailUtilConfiguration {
 
     @Test
-    public void testMailTransportConfiguration() {
-        MailUtilConfiguration config = new MailUtilConfiguration("emails", "sender");
-        assertEquals(config.getNotificationRecipients(), "emails");
+    public void shouldCreateObject() {
+        MailUtilConfiguration config = new MailUtilConfiguration("sender", "emails");
         assertEquals(config.getNotificationSender(), "sender");
+        assertEquals(config.getNotificationRecipients(), "emails");
+    }
+
+    @Test(dataProvider = "dataToTestIncorrectArguments")
+    public void shouldThrowExceptionOnIncorrectArguments(String sender, String recipients, String expectedErrorMessage) {
+        try {
+            new MailUtilConfiguration(sender, recipients);
+        } catch(IllegalArgumentException e) {
+            assertEquals(e.getMessage(), expectedErrorMessage);
+            return;
+        }
+
+        fail("There should be IllegalArgumentException above.");
+    }
+
+    @DataProvider
+    public Object[][] dataToTestIncorrectArguments() {
+        return new Object[][] {
+            {null, null, MailUtilConfiguration.MAIL_NOTIFICATION_SENDER + " property cannot be null or empty."},
+            {"", null, MailUtilConfiguration.MAIL_NOTIFICATION_SENDER + " property cannot be null or empty."},
+            {"sender", null, MailUtilConfiguration.MAIL_NOTIFICATION_RECIPIENTS + " property cannot be null or empty."},
+            {"sender", "", MailUtilConfiguration.MAIL_NOTIFICATION_RECIPIENTS + " property cannot be null or empty."},
+        };
     }
 }

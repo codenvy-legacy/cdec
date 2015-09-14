@@ -21,19 +21,31 @@ import com.google.inject.Inject;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 /** @author Dmytro Nochevnov */
 @Singleton
 public class MailUtilConfiguration {
 
+    public static final String MAIL_NOTIFICATION_SENDER = "mail.notification.sender";
+    public static final String MAIL_NOTIFICATION_RECIPIENTS = "mail.notification.recipients";
+
     private final String notificationRecipients;
     private final String notificationSender;
 
     @Inject
-    public MailUtilConfiguration(@Named("mail.notification.recipients") String notificationRecipients,
-                                 @Named("mail.notification.sender") String notificationSender) {
-        this.notificationRecipients = notificationRecipients;
+    public MailUtilConfiguration(@Named(MAIL_NOTIFICATION_SENDER) @NotNull String notificationSender,
+                                 @Named(MAIL_NOTIFICATION_RECIPIENTS) @NotNull String notificationRecipients) {
+        if (notificationSender == null || notificationSender.isEmpty()) {
+            throw new IllegalArgumentException(MAIL_NOTIFICATION_SENDER + " property cannot be null or empty.");
+        }
+
+        if (notificationRecipients == null || notificationRecipients.isEmpty()) {
+            throw new IllegalArgumentException(MAIL_NOTIFICATION_RECIPIENTS + " property cannot be null or empty.");
+        }
+
         this.notificationSender = notificationSender;
+        this.notificationRecipients = notificationRecipients;
     }
 
     public String getNotificationRecipients() {

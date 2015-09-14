@@ -38,10 +38,10 @@ import static org.mockito.Mockito.verify;
  * @author Dmytro Nochevnov
  */
 public class TestMailUtil {
-    public static final String SENDER_EMAIL = "from@com";
     public static final String RECEIVER_EMAILS = "to@com";
+    public static final String SENDER_EMAIL = "from@com";
     private MailUtil spyMailUtil;
-    private MailUtilConfiguration mailTransportConfig = new MailUtilConfiguration(RECEIVER_EMAILS, SENDER_EMAIL);
+    private MailUtilConfiguration mailTransportConfig = new MailUtilConfiguration(SENDER_EMAIL, RECEIVER_EMAILS);
 
     @Mock
     private MailSenderClient mockMailService;
@@ -49,7 +49,6 @@ public class TestMailUtil {
     @BeforeMethod
     public void init() {
         MockitoAnnotations.initMocks(this);
-        new MailUtilConfiguration("", "0");
         spyMailUtil = spy(new MailUtil(mockMailService, mailTransportConfig));
     }
 
@@ -69,4 +68,5 @@ public class TestMailUtil {
                                          eq(MediaType.TEXT_PLAIN),
                                          startsWith(expectedSubscriptionInfo));
     }
+
 }
