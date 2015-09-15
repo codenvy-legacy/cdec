@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 import static java.lang.String.format;
 
@@ -50,12 +51,14 @@ public abstract class AbstractAgent implements Agent {
     }
 
     private String readOutput(InputStream in) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-            String output = IOUtils.toString(reader);
+        try {
+            String output = IOUtils.toString(in, Charset.forName("UTF-8"));
             if (output.endsWith("\n")) {
                 output = output.substring(0, output.length() - 1);
             }
             return output;
+        } finally {
+            in.close();
         }
     }
 }

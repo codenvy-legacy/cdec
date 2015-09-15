@@ -178,7 +178,7 @@ public class HttpTransport {
             conn.addRequestProperty("content-type", "application/json");
             conn.setDoOutput(true);
             try (OutputStream output = conn.getOutputStream()) {
-                output.write(DtoFactory.getInstance().toJson(body).getBytes());
+                output.write(DtoFactory.getInstance().toJson(body).getBytes("UTF-8"));
             }
         }
         final int responseCode = conn.getResponseCode();

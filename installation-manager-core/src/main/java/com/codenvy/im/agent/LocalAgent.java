@@ -21,7 +21,11 @@ import com.codenvy.im.console.Console;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -91,8 +95,9 @@ public class LocalAgent extends AbstractAgent {
         }
     }
 
-    protected void passPasswordToProcess(Process process, char[] pwd) {
-        final PrintWriter stdIn = new PrintWriter(process.getOutputStream());
+    protected void passPasswordToProcess(Process process, char[] pwd) throws UnsupportedEncodingException {
+        OutputStreamWriter osw = new OutputStreamWriter(process.getOutputStream(), "UTF-8");
+        final PrintWriter stdIn = new PrintWriter(osw);
 
         for (char ch : pwd) {
             stdIn.append(ch);

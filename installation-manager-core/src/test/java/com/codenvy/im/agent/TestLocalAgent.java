@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -192,7 +193,7 @@ public class TestLocalAgent {
     }
 
     @Test
-    public void testPassPasswordToProcess() throws InterruptedException {
+    public void testPassPasswordToProcess() throws InterruptedException, UnsupportedEncodingException {
         spyTestAgent.passPasswordToProcess(spyProcess, TEST_PASSWORD.toCharArray());
         assertEquals(outputStreamOfSpyProcess.toString(), TEST_PASSWORD + "\n");
     }
