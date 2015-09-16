@@ -51,9 +51,6 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
-
-    public static Path PUPPET_LOG_FILE = Paths.get("/var/log/puppet/puppet-agent.log");
-
     public static final int READ_LOG_TIMEOUT_MILLIS = 200;
     public static final int SELECTION_LINE_NUMBER   = 20;
 
@@ -68,8 +65,6 @@ public class PuppetErrorInterrupter implements Command {
     private static final Logger LOG = Logger.getLogger(PuppetErrorInterrupter.class.getSimpleName());
 
     private FutureTask<String> task;
-
-    protected static boolean useSudo = true;  // for testing propose
 
     /** Map PuppetError{node, type, shortMessage} -> Set<logLine>  */
     protected Map<PuppetError, Set<String>> registeredErrors = new HashMap<>();   // protected access for testing propose
@@ -152,7 +147,7 @@ public class PuppetErrorInterrupter implements Command {
 
                         LOG.log(Level.SEVERE, getPuppetErrorMessageForLog(node, line));
 
-                        Path errorReport = PuppetErrorReport.create(node);  // do it after the logging into the IM log
+                        Path errorReport = PuppetErrorReport.create(node, getPuppetLogFile());  // do it after the logging into the IM log
 
                         throw new PuppetErrorException(getMessageForImOutput(error, errorReport));
                     }
@@ -206,9 +201,9 @@ public class PuppetErrorInterrupter implements Command {
      */
     protected Command createReadFileCommand(@Nullable NodeConfig node) throws AgentException {
         if (node == null) {
-            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE, SELECTION_LINE_NUMBER, useSudo);
+            return CommandLibrary.createTailCommand(getPuppetLogFile(), SELECTION_LINE_NUMBER, useSudo());
         } else {
-            return CommandLibrary.createTailCommand(PUPPET_LOG_FILE, SELECTION_LINE_NUMBER, node, useSudo);
+            return CommandLibrary.createTailCommand(getPuppetLogFile(), SELECTION_LINE_NUMBER, node, useSudo());
         }
     }
 
@@ -263,10 +258,20 @@ public class PuppetErrorInterrupter implements Command {
     @Override
     public String toString() {
         if (nodes == null) {
-            return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), PUPPET_LOG_FILE);
+            return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), getPuppetLogFile());
         }
 
-        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), PUPPET_LOG_FILE,
+        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), getPuppetLogFile(),
                       nodes.toString());
     }
+    
+    /** for testing propose */
+    protected Path getPuppetLogFile() {
+        return Paths.get("/var/log/puppet/puppet-agent.log");
+    }
+
+    /** for testing propose */
+    protected boolean useSudo() {
+        return true;
+    }  
 }

@@ -69,7 +69,7 @@ public class PuppetErrorReport {
      * @return path to created error report, or null in case of problems with report creation
      */
     @Nullable
-    public static Path create(@Nullable final NodeConfig node) {
+    public static Path create(@Nullable final NodeConfig node, Path puppetLogFile) {
         final Path report = createPathToErrorReport();
 
         try {
@@ -82,7 +82,7 @@ public class PuppetErrorReport {
                 Files.createDirectory(report.getParent());
             }
 
-            Command createReportCommands = createConsolidateLogsCommand(report, node);
+            Command createReportCommands = createConsolidateLogsCommand(report, node, puppetLogFile);
             createReportCommands.execute();
         } catch (IOException e) {
             LOG.log(Level.SEVERE, format("Error report creation error: %s", e.getMessage()), e);
@@ -125,16 +125,16 @@ public class PuppetErrorReport {
      * - copy installation manager logs
      * - pack local temp dir into report file
      */
-    private static Command createConsolidateLogsCommand(Path reportFile, @Nullable NodeConfig node) throws IOException {
+    private static Command createConsolidateLogsCommand(Path reportFile, @Nullable NodeConfig node, Path puppetLogFile) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         if (node == null) {
             // copy puppet log file into temp dir
-            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE, BASE_TMP_DIRECTORY, useSudo));
+            commands.add(createCopyCommand(puppetLogFile, BASE_TMP_DIRECTORY, useSudo));
 
             // change permission of puppet log file with puppet logs to the 666 to be able to pack it
-            Path puppetLogFile = BASE_TMP_DIRECTORY.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
-            commands.add(createChmodCommand("666", puppetLogFile, useSudo));
+            Path copyPuppetLogFile = BASE_TMP_DIRECTORY.resolve(puppetLogFile.getFileName());
+            commands.add(createChmodCommand("666", copyPuppetLogFile, useSudo));
 
         } else {
             // create local temp dir for puppet log file from node with name = type_of_node
@@ -146,10 +146,10 @@ public class PuppetErrorReport {
             commands.add(createCommand(format("mkdir -p %s", remoteTempDir), node));
 
             // copy file with puppet logs into the remote temp dir
-            commands.add(createCopyCommand(PuppetErrorInterrupter.PUPPET_LOG_FILE, remoteTempDir, node, useSudo));
+            commands.add(createCopyCommand(puppetLogFile, remoteTempDir, node, useSudo));
 
             // change permission of file with puppet logs to the 666 to be able to copy it to local machine
-            Path remoteLogFile = remoteTempDir.resolve(PuppetErrorInterrupter.PUPPET_LOG_FILE.getFileName());
+            Path remoteLogFile = remoteTempDir.resolve(puppetLogFile.getFileName());
             commands.add(createChmodCommand("666", remoteLogFile, node, useSudo));
 
             // copy remote puppet log file into the local_temp_dir/{node_type}/ directory
