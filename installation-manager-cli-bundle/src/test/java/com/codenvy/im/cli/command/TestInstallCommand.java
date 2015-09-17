@@ -78,6 +78,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     public static final String TEST_ARTIFACT = CDECArtifact.NAME;
     public static final String TEST_VERSION = "1.0.1";
     public static final String ERROR_MESSAGE = "error";
+    public static final List<String> INSTALL_INFO = ImmutableList.of("step 1", "step 2");
     private InstallCommand spyCommand;
 
     private IMArtifactLabeledFacade facade;
@@ -104,7 +105,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
         facade = mock(IMArtifactLabeledFacade.class);
-        doReturn(ImmutableList.of("step 1", "step 2")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        doReturn(INSTALL_INFO).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
         commandSession = mock(CommandSession.class);
 
         spyCommand = spy(new InstallCommand(mockConfigManager));
@@ -618,5 +619,110 @@ public class TestInstallCommand extends AbstractTestCommand {
                                     "  \"status\" : \"OK\"\n" +
                                     "}\n", TEST_ARTIFACT, TEST_VERSION));
 
+    }
+
+    @Test
+    public void shouldInstallArtifactForceFirstStepOnly() throws Exception {
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
+        commandInvoker.option("--step", "1-1");
+        commandInvoker.option("--forceInstall", true);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "step 1 [OK]\n");
+
+        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
+    }
+
+    @Test
+    public void shouldInstallArtifactForceLastStepOnly() throws Exception {
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
+        commandInvoker.option("--step", format("%1$d-%1$d", INSTALL_INFO.size()));
+        commandInvoker.option("--forceInstall", true);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, format("step 2 [OK]\n" +
+                                    "{\n" +
+                                    "  \"artifacts\" : [ {\n" +
+                                    "    \"artifact\" : \"%s\",\n" +
+                                    "    \"version\" : \"%s\",\n" +
+                                    "    \"status\" : \"SUCCESS\"\n" +
+                                    "  } ],\n" +
+                                    "  \"status\" : \"OK\"\n" +
+                                    "}\n", TEST_ARTIFACT, TEST_VERSION));
+
+        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
+    }
+
+    @Test
+    public void shouldInstallArtifactForceAllSteps() throws Exception {
+        ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
+
+        InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
+        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+
+        doReturn(info).when(facade).getUpdateStepInfo(anyString());
+        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("artifact", TEST_ARTIFACT);
+        commandInvoker.argument("version", TEST_VERSION);
+        commandInvoker.option("--step", format("1-%d", INSTALL_INFO.size()));
+        commandInvoker.option("--forceInstall", true);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, format("step 1 [OK]\n" +
+                                    "step 2 [OK]\n" +
+                                    "{\n" +
+                                    "  \"artifacts\" : [ {\n" +
+                                    "    \"artifact\" : \"%s\",\n" +
+                                    "    \"version\" : \"%s\",\n" +
+                                    "    \"status\" : \"SUCCESS\"\n" +
+                                    "  } ],\n" +
+                                    "  \"status\" : \"OK\"\n" +
+                                    "}\n", TEST_ARTIFACT, TEST_VERSION));
+
+        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+
+        List<Event> values = eventArgument.getAllValues();
+        assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
+        assertTrue(values.get(0).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(0).getParameters().toString());
+
+        assertEquals(values.get(1).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY);
+        assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, TIME=\\d*}", TEST_ARTIFACT, TEST_VERSION)),
+                   "Actual parameters: " + values.get(1).getParameters().toString());
     }
 }

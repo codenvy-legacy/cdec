@@ -79,6 +79,7 @@ public class InstallCommand extends AbstractIMCommand {
     @Option(name = "--binaries", aliases = "-b", description = "Path to binaries to install", required = false)
     private String binaries;
 
+    /** Could be */
     @Option(name = "--step", aliases = "-s", description = "Particular installation step to perform", required = false)
     private String installStep;
 
@@ -161,9 +162,14 @@ public class InstallCommand extends AbstractIMCommand {
         final InstallOptions installOptions = new InstallOptions();
         final boolean isInstall = isInstall(artifact);
 
+
+        final int firstStep = getFirstInstallStep();
+
         if (isInstall) {
-            Event installStartedEvent = EventFactory.createImArtifactInstallStartedEventWithTime(artifactName, versionNumber);
-            logEventToSaasCodenvy(installStartedEvent);
+            if (firstStep == 0) {
+                Event installStartedEvent = EventFactory.createImArtifactInstallStartedEventWithTime(artifactName, versionNumber);
+                logEventToSaasCodenvy(installStartedEvent);
+            }
 
             if (multi) {
                 installType = InstallType.MULTI_SERVER;
@@ -193,7 +199,6 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         final int finalStep = infos.size() - 1;
-        final int firstStep = getFirstInstallStep();
         final int lastStep = getLastInstallationStep(finalStep);
 
         int maxInfoLen = 0;
@@ -322,7 +327,7 @@ public class InstallCommand extends AbstractIMCommand {
             if (installStep == null) {
                 return maxStep;
             } else if (!installStep.contains("-")) {
-                return Integer.parseInt(installStep.split("-")[0]) - 1;
+                return Integer.parseInt(installStep) - 1;
             } else {
                 return Integer.parseInt(installStep.split("-")[1]) - 1;
             }
