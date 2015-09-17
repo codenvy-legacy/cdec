@@ -46,6 +46,9 @@ import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.codenvy.im.event.EventFactory.createImArtifactInstallStartedWithTime;
+import static com.codenvy.im.event.EventFactory.createImArtifactInstallSuccessWithTime;
+import static com.codenvy.im.event.EventFactory.createImArtifactInstallUnsuccessWithTime;
 import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
@@ -81,7 +84,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     /** Could be */
     @Option(name = "--step", aliases = "-s", description = "Particular installation step to perform", required = false)
-    private String installStep;
+    private Integer installStep;
 
     @Option(name = "--forceInstall", aliases = "-fi", description = "Force installation in case of splitting process by steps", required = false)
     private boolean forceInstall;
@@ -165,12 +168,11 @@ public class InstallCommand extends AbstractIMCommand {
 
         final int firstStep = getFirstInstallStep();
 
-        if (isInstall) {
-            if (firstStep == 0) {
-                Event installStartedEvent = EventFactory.createImArtifactInstallStartedEventWithTime(artifactName, versionNumber);
-                logEventToSaasCodenvy(installStartedEvent);
-            }
+        if ((firstStep == 0) && isInstall) {
+            logEventToSaasCodenvy(createImArtifactInstallStartedWithTime(artifactName, versionNumber));
+        }
 
+        if (isInstall) {
             if (multi) {
                 installType = InstallType.MULTI_SERVER;
             } else {
@@ -188,10 +190,7 @@ public class InstallCommand extends AbstractIMCommand {
             try {
                 infos = facade.getInstallInfo(artifact, installType);
             } catch(Exception e) {
-                Event installFinishedUnsuccesfullyEvent = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime(artifactName, versionNumber,
-                                                                                                                                  e.getMessage());
-                logEventToSaasCodenvy(installFinishedUnsuccesfullyEvent);
-
+                logEventToSaasCodenvy(createImArtifactInstallUnsuccessWithTime(artifactName, versionNumber, e.getMessage()));
                 throw e;
             }
         } else {
@@ -249,9 +248,7 @@ public class InstallCommand extends AbstractIMCommand {
 
                 if (installResponse.getStatus() == ResponseCode.ERROR) {
                     if (isInstall) {
-                        Event installFinishedUnsuccesfullyEvent = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime(artifactName, versionNumber,
-                                                                                                                                          installResponse.getMessage());
-                        logEventToSaasCodenvy(installFinishedUnsuccesfullyEvent);
+                        logEventToSaasCodenvy(createImArtifactInstallUnsuccessWithTime(artifactName, versionNumber, installResponse.getMessage()));
                     }
 
                     console.printError(" [FAIL]", true);
@@ -268,8 +265,7 @@ public class InstallCommand extends AbstractIMCommand {
         // only OK response can be here
         if (lastStep == finalStep) {
             if (isInstall) {
-                Event installFinishedSuccesfullyEvent = EventFactory.createImArtifactInstallFinishedSuccessfullyEventWithTime(artifactName, versionNumber);
-                logEventToSaasCodenvy(installFinishedSuccesfullyEvent);
+                logEventToSaasCodenvy(createImArtifactInstallSuccessWithTime(artifactName, versionNumber));
             }
 
             console.println(toJson(installResponse));
@@ -313,27 +309,17 @@ public class InstallCommand extends AbstractIMCommand {
     private int getFirstInstallStep() {
         if (installStep == null) {
             return 0;
-        } else {
-            try {
-                return Integer.parseInt(installStep.split("-")[0]) - 1;
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
-            }
         }
+
+        return installStep - 1;
     }
 
     private int getLastInstallationStep(int maxStep) {
-        try {
-            if (installStep == null) {
-                return maxStep;
-            } else if (!installStep.contains("-")) {
-                return Integer.parseInt(installStep) - 1;
-            } else {
-                return Integer.parseInt(installStep.split("-")[1]) - 1;
-            }
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(format("Wrong installation step format '%s'", installStep));
+        if (installStep == null) {
+            return maxStep;
         }
+
+        return installStep - 1;
     }
 
 }

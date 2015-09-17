@@ -49,7 +49,7 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateImArtifactInstallStartedEventWithTime() {
-        Event event = EventFactory.createImArtifactInstallStartedEventWithTime("codenvy", "1.0.0");
+        Event event = EventFactory.createImArtifactInstallStartedWithTime("codenvy", "1.0.0");
         assertEquals(event.getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
         assertEquals(event.getParameters().size(), 3);
         assertEquals(event.getParameters().get(Event.ARTIFACT_PARAM), "codenvy");
@@ -59,7 +59,7 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateImArtifactInstallFinishedSuccessfullyEventWithTime() {
-        Event event = EventFactory.createImArtifactInstallFinishedSuccessfullyEventWithTime("codenvy", "1.0.0");
+        Event event = EventFactory.createImArtifactInstallSuccessWithTime("codenvy", "1.0.0");
         assertEquals(event.getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY);
         assertEquals(event.getParameters().size(), 3);
         assertEquals(event.getParameters().get(Event.ARTIFACT_PARAM), "codenvy");
@@ -69,7 +69,7 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateImArtifactInstallFinishedUnsuccessfullyEventWithTime() {
-        Event event = EventFactory.createImArtifactInstallFinishedUnsuccessfullyEventWithTime("codenvy", "1.0.0", STRING_LENGTH_1001);
+        Event event = EventFactory.createImArtifactInstallUnsuccessWithTime("codenvy", "1.0.0", STRING_LENGTH_1001);
         assertEquals(event.getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY);
         assertEquals(event.getParameters().size(), 4);
         assertEquals(event.getParameters().get(Event.ARTIFACT_PARAM), "codenvy");

@@ -56,7 +56,7 @@ public class EventFactory {
         return createWithTime(Event.Type.IM_ARTIFACT_DOWNLOADED, eventParameters);
     }
 
-    public static Event createImArtifactInstallStartedEventWithTime(final String artifact, final String version) {
+    public static Event createImArtifactInstallStartedWithTime(final String artifact, final String version) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
         eventParameters.put(Event.ARTIFACT_PARAM, artifact);
         eventParameters.put(Event.VERSION_PARAM, version);
@@ -64,7 +64,7 @@ public class EventFactory {
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_STARTED, eventParameters);
     }
 
-    public static Event createImArtifactInstallFinishedSuccessfullyEventWithTime(final String artifact, final String version) {
+    public static Event createImArtifactInstallSuccessWithTime(final String artifact, final String version) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
         eventParameters.put(Event.ARTIFACT_PARAM, artifact);
         eventParameters.put(Event.VERSION_PARAM, version);
@@ -72,9 +72,9 @@ public class EventFactory {
         return createWithTime(Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY, eventParameters);
     }
 
-    public static Event createImArtifactInstallFinishedUnsuccessfullyEventWithTime(final String artifact,
-                                                                                   final String version,
-                                                                                   String errorMessage) {
+    public static Event createImArtifactInstallUnsuccessWithTime(final String artifact,
+                                                                 final String version,
+                                                                 String errorMessage) {
         Map<String, String> eventParameters = new LinkedHashMap<>();
         eventParameters.put(Event.ARTIFACT_PARAM, artifact);
         eventParameters.put(Event.VERSION_PARAM, version);
