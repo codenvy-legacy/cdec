@@ -140,11 +140,11 @@ printPrompt() {
 }
 
 print() {
-    printPrompt; echo -n "$1"
+    printPrompt; echo -n "$@"
 }
 
 printLn() {
-    printPrompt; echo "$1"
+    printPrompt; echo "$@"
 }
 
 askProperty() {
@@ -187,7 +187,13 @@ pressAnyKeyToContinue() {
 
 pressYKeyToContinue() {
     if [[ ${SILENT} == false ]]; then
-        print  "Continue installation [y/N]: "
+        if [[ ! -z $1 ]]; then
+            print $@
+        else
+            print "Continue installation"
+        fi
+        echo -n " [y/N]:"
+
         read ANSWER
         if [[ ! "${ANSWER}" == "y" ]]; then
             exit 1
@@ -208,10 +214,10 @@ printPreInstallInfo_single() {
     preconfigureSystem
 
     printLn
-    printLn "RESOURCE      : RECOMENDED : AVAILABLE"
-    printLn "RAM           : 8 GB       : ${availableRAM} GB"
-    printLn "CPU           : 4 cores    : ${availableCores} cores"
-    printLn "Disk Space    : 300 GB     : ${availableDiskSpace} GB"
+    printLn "RESOURCE      : RECOMMENDED : AVAILABLE"
+    printLn "RAM           : 8 GB        : ${availableRAM} GB"
+    printLn "CPU           : 4 cores     : ${availableCores} cores"
+    printLn "Disk Space    : 300 GB      : ${availableDiskSpace} GB"
     printLn
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
@@ -224,9 +230,11 @@ printPreInstallInfo_single() {
         printLn
         printLn
     else
-        [ -z "${SYSTEM_ADMIN_NAME}" ] && printLn "System admin user name : will prompt for entry"
+        doCheckAvailableResources_single
+
+        [ -z "${SYSTEM_ADMIN_NAME}" ]     && printLn "System admin user name : will prompt for entry"
         [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password  : will prompt for entry"
-        [ -z "${HOST_NAME}" ] && printLn "Codenvy DNS hostname   : will prompt for entry"
+        [ -z "${HOST_NAME}" ]             && printLn "Codenvy DNS hostname   : will prompt for entry"
 
         printLn
 
@@ -269,10 +277,9 @@ doCheckAvailableResources_single() {
 
     if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_CORES} > ${availableCores} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
         printLn "WARNING: available resources don't meet recommended"
-        pressYKeyToContinue
+        pressYKeyToContinue "Confirm installation"
         printLn
     fi
-    cursorUp
 }
 
 printPreInstallInfo_multi() {
@@ -284,12 +291,12 @@ printPreInstallInfo_multi() {
     preconfigureSystem
 
     printLn
-    printLn "Recomemnded resources for the nodes:"
+    printLn "Recommended resources for the nodes:"
     printLn "RAM         : 1 GB"
     printLn "Disk Space  : 14 GB"
     printLn "OS          : CentOS 7"
     printLn
-    printLn "Recomemnded resources for the runners:"
+    printLn "Recommended resources for the runners:"
     printLn "RAM         : 1.5 GB"
     printLn "Disk Space  : 50 GB"
     printLn "OS          : CentOS 7"
@@ -324,7 +331,6 @@ printPreInstallInfo_multi() {
         printLn "Codenvy Site node DNS hostname          : "${SITE_HOST_NAME}
         printLn
         printLn
-        printLn
 
     else
         [ -z ${SYSTEM_ADMIN_NAME} ] && printLn "System admin user name : will prompt for entry"
@@ -356,13 +362,13 @@ printPreInstallInfo_multi() {
         askAndInsertProperty "Please set the DNS hostname of the Analytics node" "analytics_host_name"
         askAndInsertProperty "Please set the DNS hostname of the Site node" "site_host_name"
 
-        printLn
+        doCheckAvailableResources_multi
+
         printLn
         printLn
     fi
 
     pressYKeyToContinue
-    printLn
     printLn
 }
 
@@ -378,8 +384,8 @@ doCheckAvailableResources_multi() {
     ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
     SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
 
-    for HOST_NAME in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
-        if [[ ${HOST_NAME} == ${RUNNER_HOST_NAME} ]]; then
+    for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+        if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
             MIN_RAM=1500000 # in KB
             MIN_DISK_SPACE=50000000 # in KB
         else
@@ -387,23 +393,23 @@ doCheckAvailableResources_multi() {
             MIN_DISK_SPACE=14000000 # in KB
         fi
 
-        availableRAM=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no ${HOST_NAME} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
-        availableDiskSpace=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no ${HOST_NAME} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        availableRAM=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no ${HOST} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        availableDiskSpace=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no ${HOST} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
         if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
-            printLn "WARNING: available resources at ${HOST_NAME} don't meet recommended"
+            printLn
+            printLn "WARNING: available resources at ${HOST} don't meet recommended"
             printLn
             printLn "RESOURCE      : AVAILABLE"
             printLn "RAM           : `echo ${availableRAM} | awk '{tmp = $1/1000/1000; printf"%0.1f",tmp}'` GB"
             printLn "Disk Space    : $(( ${availableDiskSpace} / 1000 /1000 )) GB"
             printLn
-            pressYKeyToContinue
+            pressYKeyToContinue "Confirm installation"
 
-            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
-            printLn; printLn; printLn; printLn; printLn; printLn; printLn;
-            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
+            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
+            printLn; printLn; printLn; printLn; printLn; printLn; printLn; printLn
+            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
         fi
     done
-    printLn
 }
 
 doConfigureSystem() {
@@ -547,9 +553,6 @@ printPostInstallInfo() {
 set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
-if [[ ${SILENT} == false ]]; then
-    doCheckAvailableResources_${CODENVY_TYPE}
-fi
 
 runTimer
 
