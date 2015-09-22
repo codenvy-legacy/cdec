@@ -139,6 +139,10 @@ printPrompt() {
     echo -en "\e[94m[CODENVY]\e[0m "    # with blue color
 }
 
+printRed() {
+    echo -en "\e[91m$1\e[0m" # with red color
+}
+
 print() {
     printPrompt; echo -n "$@"
 }
@@ -201,17 +205,117 @@ pressYKeyToContinue() {
     fi
 }
 
+doCheckPortRemote() {
+    PROTOCOL=$1
+    PORT=$2
+    HOST=$3
+    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no $HOST "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
+    echo ${OUTPUT}
+}
+
+doCheckPortLocal() {
+    PROTOCOL=$1
+    PORT=$2
+    OUTPUT=$(netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ":${PORT}\s")
+    echo ${OUTPUT}
+}
+
+validatePortLocal() {
+    PROTOCOL=$1
+    PORT=$2
+    OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
+
+    if [ "${OUTPUT}" != "" ]; then
+        printLn "$(printRed "ERROR"): The port ${PROTOCOL}:${PORT} is busy."
+        exit 1
+    fi
+}
+
+validatePortRemote() {
+    PROTOCOL=$1
+    PORT=$2
+    HOST=$3
+    OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
+
+    if [ "${OUTPUT}" != "" ]; then
+        printLn "$(printRed "ERROR"): The port ${PROTOCOL}:${PORT} on host ${HOST} is busy."
+        exit 1
+    fi
+}
+
+doGetHostsVariables() {
+    HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
+    PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    RUNNER_HOST_NAME=`grep runner_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    DATASOURCE_HOST_NAME=`grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
+}
+
+PUPPET_MATER_PORTS=("tcp:8140");
+SITE_PORTS=("tcp:80" "tcp:443" "tcp:10050" "tcp:32001" "tcp:32101");
+API_PORTS=("tcp:8080" "tcp:8180" "tcp:10050" "tcp:32001" "tcp:32101" "tcp:32201" "tcp:32301");
+DATA_PORTS=("tcp:389" "tcp:5432" "tcp:10050" "tcp:27017" "tcp:28017");
+DATASOURCE_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
+RUNNER_PORTS=("tcp:80" "tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
+BUILDER_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
+ANALYTICS_PORTS=("tcp:7777" "tcp:8080" "udp:5140" "tcp:9763" "tcp:10050" "tcp:32001" "tcp:32101");
+
+doCheckAvailablePorts_single() {
+    for PORT in ${PUPPET_MATER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]} ${ANALYTICS_PORTS[@]}; do
+        PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
+        PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
+
+        validatePortLocal "${PROTOCOL}" "${PORT_ONLY}"
+    done
+}
+
+doCheckAvailablePorts_multi() {
+    doGetHostsVariables
+
+    for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+        if [[ ${HOST} == ${PUPPET_MASTER_HOST_NAME} ]]; then
+            PORTS=${PUPPET_MATER_PORTS[@]}
+        elif [[ ${HOST} == ${DATA_HOST_NAME} ]]; then
+            PORTS=${DATA_PORTS[@]}
+        elif [[ ${HOST} == ${API_HOST_NAME} ]]; then
+            PORTS=${API_PORTS[@]}
+        elif [[ ${HOST} == ${BUILDER_HOST_NAME} ]]; then
+            PORTS=${BUILDER_PORTS[@]}
+        elif [[ ${HOST} == ${DATASOURCE_HOST_NAME} ]]; then
+            PORTS=${DATASOURCE_PORTS[@]}
+        elif [[ ${HOST} == ${ANALYTICS_HOST_NAME} ]]; then
+            PORTS=${ANALYTICS_PORTS[@]}
+        elif [[ ${HOST} == ${SITE_HOST_NAME} ]]; then
+            PORTS=${SITE_PORTS[@]}
+        elif [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
+            PORTS=${RUNNER_PORTS[@]}
+        fi
+
+        for PORT in ${PORTS[@]}; do
+            PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
+            PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
+
+            validatePortRemote "${PROTOCOL}" "${PORT_ONLY}" ${HOST}
+        done
+    done
+}
+
 printPreInstallInfo_single() {
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
     availableDiskSpace=$(( `sudo df ${HOME} | tail -1 | awk '{print $2}'` /1000/1000 ))
     availableCores=`grep -c ^processor /proc/cpuinfo`
 
+    preconfigureSystem
+
     clear
-    printLn "Welcome. This program installs a single node Codenvy On-Prem."
+    printLn "Welcome. This program installs"
+    printLn "a single node Codenvy ${VERSION} On-Prem."
     printLn
     printLn "Checking for system pre-requisites..."
-
-    preconfigureSystem
 
     printLn
     printLn "RESOURCE      : RECOMMENDED : AVAILABLE"
@@ -222,6 +326,8 @@ printPreInstallInfo_single() {
     printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
     printLn "Configuration File : "${CONFIG}
     printLn
+
+    doCheckAvailablePorts_single
 
     if [[ ${SILENT} == true ]]; then
         [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
@@ -283,13 +389,13 @@ doCheckAvailableResources_single() {
 }
 
 printPreInstallInfo_multi() {
-    clear
-    printLn "Welcome. This program installs a multi-node Codenvy On-Prem."
-    printLn
-    printLn "Checking for system pre-requisites..."
-
     preconfigureSystem
 
+    clear
+    printLn "Welcome. This program installs"
+    printLn "a multi-node Codenvy ${VERSION} On-Prem."
+    printLn
+    printLn "Checking for system pre-requisites..."
     printLn
     printLn "Recommended resources for the nodes:"
     printLn "RAM         : 1 GB"
@@ -310,15 +416,7 @@ printPreInstallInfo_multi() {
         [ ! -z ${SYSTEM_ADMIN_PASSWORD} ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         [ ! -z ${HOST_NAME} ] && insertProperty "host_url" ${HOST_NAME}
 
-        HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
-        PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        RUNNER_HOST_NAME=`grep runner_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        DATASOURCE_HOST_NAME=`grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
-        SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
+        doGetHostsVariables
 
         printLn "Codenvy DNS hostname                    : "${HOST_NAME}
         printLn "Codenvy Puppet Master node DNS hostname : "${PUPPET_MASTER_HOST_NAME}
@@ -368,21 +466,15 @@ printPreInstallInfo_multi() {
         printLn
     fi
 
+    doCheckAvailablePorts_multi
+
     pressYKeyToContinue
     printLn
 }
 
 
 doCheckAvailableResources_multi() {
-    HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
-    PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    RUNNER_HOST_NAME=`grep runner_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    DATASOURCE_HOST_NAME=`grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    doGetHostsVariables
 
     for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
