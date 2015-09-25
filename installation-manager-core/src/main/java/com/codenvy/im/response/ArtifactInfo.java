@@ -69,15 +69,27 @@ public class ArtifactInfo extends BasicArtifactInfo {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ArtifactInfo)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ArtifactInfo)) {
+            return false;
+        }
 
         ArtifactInfo that = (ArtifactInfo)o;
 
-        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) return false;
-        if (label != that.label) return false;
-        if (status != that.status) return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) {
+            return false;
+        }
+        if (label != that.label) {
+            return false;
+        }
+        if (status != that.status) {
+            return false;
+        }
+        if (version != null ? !version.equals(that.version) : that.version != null) {
+            return false;
+        }
 
         return true;
     }

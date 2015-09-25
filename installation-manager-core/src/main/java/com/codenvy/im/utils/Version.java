@@ -106,18 +106,36 @@ public class Version implements Comparable<Version> {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Version)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Version)) {
+            return false;
+        }
 
         Version version = (Version)o;
 
-        if (bugFix != version.bugFix) return false;
-        if (hotFix != version.hotFix) return false;
-        if (major != version.major) return false;
-        if (milestone != version.milestone) return false;
-        if (minor != version.minor) return false;
-        if (rc != version.rc) return false;
-        if (snapshot != version.snapshot) return false;
+        if (bugFix != version.bugFix) {
+            return false;
+        }
+        if (hotFix != version.hotFix) {
+            return false;
+        }
+        if (major != version.major) {
+            return false;
+        }
+        if (milestone != version.milestone) {
+            return false;
+        }
+        if (minor != version.minor) {
+            return false;
+        }
+        if (rc != version.rc) {
+            return false;
+        }
+        if (snapshot != version.snapshot) {
+            return false;
+        }
 
         return true;
     }

@@ -92,16 +92,30 @@ public class DownloadArtifactInfo extends BasicArtifactInfo {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DownloadArtifactInfo)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DownloadArtifactInfo)) {
+            return false;
+        }
 
         DownloadArtifactInfo result = (DownloadArtifactInfo)o;
 
-        if (artifact != null ? !artifact.equals(result.artifact) : result.artifact != null) return false;
-        if (file != null ? !file.equals(result.file) : result.file != null) return false;
-        if (label != result.label) return false;
-        if (status != result.status) return false;
-        if (version != null ? !version.equals(result.version) : result.version != null) return false;
+        if (artifact != null ? !artifact.equals(result.artifact) : result.artifact != null) {
+            return false;
+        }
+        if (file != null ? !file.equals(result.file) : result.file != null) {
+            return false;
+        }
+        if (label != result.label) {
+            return false;
+        }
+        if (status != result.status) {
+            return false;
+        }
+        if (version != null ? !version.equals(result.version) : result.version != null) {
+            return false;
+        }
 
         return true;
     }

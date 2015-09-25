@@ -23,9 +23,9 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
 
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -74,8 +74,12 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AbstractArtifact)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AbstractArtifact)) {
+            return false;
+        }
 
         AbstractArtifact that = (AbstractArtifact)o;
 

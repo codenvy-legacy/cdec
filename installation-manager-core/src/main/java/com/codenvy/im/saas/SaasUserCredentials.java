@@ -61,8 +61,12 @@ public class SaasUserCredentials implements Cloneable {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SaasUserCredentials)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SaasUserCredentials)) {
+            return false;
+        }
 
         SaasUserCredentials that = (SaasUserCredentials)o;
 

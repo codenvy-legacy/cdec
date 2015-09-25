@@ -78,14 +78,24 @@ public class BasicResponse implements Response {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BasicResponse)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof BasicResponse)) {
+            return false;
+        }
 
         BasicResponse that = (BasicResponse)o;
 
-        if (message != null ? !message.equals(that.message) : that.message != null) return false;
-        if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
-        if (status != that.status) return false;
+        if (message != null ? !message.equals(that.message) : that.message != null) {
+            return false;
+        }
+        if (properties != null ? !properties.equals(that.properties) : that.properties != null) {
+            return false;
+        }
+        if (status != that.status) {
+            return false;
+        }
 
         return true;
     }

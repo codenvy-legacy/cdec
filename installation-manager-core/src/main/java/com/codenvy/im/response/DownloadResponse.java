@@ -71,14 +71,24 @@ public class DownloadResponse implements Response {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DownloadResponse)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DownloadResponse)) {
+            return false;
+        }
 
         DownloadResponse that = (DownloadResponse)o;
 
-        if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) return false;
-        if (message != null ? !message.equals(that.message) : that.message != null) return false;
-        if (status != that.status) return false;
+        if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) {
+            return false;
+        }
+        if (message != null ? !message.equals(that.message) : that.message != null) {
+            return false;
+        }
+        if (status != that.status) {
+            return false;
+        }
 
         return true;
     }

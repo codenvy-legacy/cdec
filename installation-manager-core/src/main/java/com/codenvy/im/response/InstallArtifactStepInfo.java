@@ -90,17 +90,33 @@ public class InstallArtifactStepInfo extends BasicArtifactInfo {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof InstallArtifactStepInfo)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof InstallArtifactStepInfo)) {
+            return false;
+        }
 
         InstallArtifactStepInfo that = (InstallArtifactStepInfo)o;
 
-        if (step != that.step) return false;
-        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) return false;
-        if (label != that.label) return false;
-        if (message != null ? !message.equals(that.message) : that.message != null) return false;
-        if (status != that.status) return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+        if (step != that.step) {
+            return false;
+        }
+        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) {
+            return false;
+        }
+        if (label != that.label) {
+            return false;
+        }
+        if (message != null ? !message.equals(that.message) : that.message != null) {
+            return false;
+        }
+        if (status != that.status) {
+            return false;
+        }
+        if (version != null ? !version.equals(that.version) : that.version != null) {
+            return false;
+        }
 
         return true;
     }

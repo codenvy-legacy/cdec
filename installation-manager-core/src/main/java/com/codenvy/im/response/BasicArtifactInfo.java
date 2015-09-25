@@ -54,4 +54,8 @@ public abstract class BasicArtifactInfo implements Info, Comparable<BasicArtifac
             return thatVersion.compareTo(thisVersion);
         }
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public abstract boolean equals(Object obj);
 }
