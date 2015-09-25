@@ -58,4 +58,8 @@ public abstract class BasicArtifactInfo implements Info, Comparable<BasicArtifac
     /** {@inheritDoc} */
     @Override
     public abstract boolean equals(Object obj);
+
+    /** {@inheritDoc} */
+    @Override
+    public abstract int hashCode();
 }
