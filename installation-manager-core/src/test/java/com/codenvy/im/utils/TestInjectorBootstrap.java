@@ -54,7 +54,7 @@ public class TestInjectorBootstrap {
     public void testInjector() {
         Injector injector = InjectorBootstrap.INJECTOR;
         Map<Key<?>, Binding<?>> bindings = injector.getBindings();
-        assertEquals(bindings.size(), 17);
+        assertEquals(bindings.size(), 19);
     }
 
     @Test(dataProvider = "testProperties")
