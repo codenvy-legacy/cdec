@@ -20,6 +20,7 @@ package com.codenvy.im.managers;
 import com.google.common.collect.ImmutableMap;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,10 +95,10 @@ public class AdditionalNodesConfigUtil {
             }
 
             String typeString = type.toString().toLowerCase();
-            String base_node_domain = ConfigManager.getBaseNodeDomain(baseNode).toLowerCase();
+            String baseNodeDomain = ConfigManager.getBaseNodeDomain(baseNode).toLowerCase();
             String regex = format("^%s\\d+%s$",
                                   typeString,
-                                  base_node_domain);
+                                  baseNodeDomain);
 
             if (dns != null && dns.toLowerCase().matches(regex)) {
                 return new NodeConfig(type, dns, null);

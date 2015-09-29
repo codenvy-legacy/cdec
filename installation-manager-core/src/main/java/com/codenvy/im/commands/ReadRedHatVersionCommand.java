@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
 import javax.inject.Named;
 
 import static java.lang.String.format;
@@ -36,7 +37,7 @@ import static java.lang.String.format;
 public class ReadRedHatVersionCommand extends SimpleCommand {
 
     @Inject
-    private ReadRedHatVersionCommand(@Named("os.redhat_release_file") String releaseFile) {
+    public ReadRedHatVersionCommand(@Named("os.redhat_release_file") String releaseFile) {
         super(format("if [ ! -f %1$s ]; then" +
                      "     exit 1;" +
                      " else" +

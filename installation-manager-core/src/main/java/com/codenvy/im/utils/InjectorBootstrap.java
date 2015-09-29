@@ -52,7 +52,8 @@ public class InjectorBootstrap {
     public static final  Injector            INJECTOR;
     protected static final Map<String, String> boundProperties;
 
-    private static final Pattern envPattern = Pattern.compile("\\$\\{([^\\}]*)\\}"); // ${...}
+    // ${...}
+    private static final Pattern envPattern = Pattern.compile("\\$\\{([^\\}]*)\\}");
 
     static {
         boundProperties = new HashMap<>();

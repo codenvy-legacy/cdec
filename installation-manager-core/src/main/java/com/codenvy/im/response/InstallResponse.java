@@ -65,7 +65,9 @@ public class InstallResponse implements Response {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof InstallResponse)) return false;
+        if (!(o instanceof InstallResponse)) {
+            return false;
+        }
 
         InstallResponse that = (InstallResponse)o;
 

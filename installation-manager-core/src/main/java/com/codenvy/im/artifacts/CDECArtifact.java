@@ -38,8 +38,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
-
 import org.eclipse.che.commons.annotation.Nullable;
+
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -209,7 +209,7 @@ public class CDECArtifact extends AbstractArtifact {
             }
         }
 
-        if (nonexistentProperties.size() != 0) {
+        if (!nonexistentProperties.isEmpty()) {
             throw new PropertiesNotFoundException(nonexistentProperties);
         }
 

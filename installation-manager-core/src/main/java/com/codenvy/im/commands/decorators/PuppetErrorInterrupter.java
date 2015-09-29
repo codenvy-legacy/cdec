@@ -30,6 +30,7 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,10 +101,10 @@ public class PuppetErrorInterrupter implements Command {
                         Exception originException = (Exception)e.getCause();
 
                         if (originException instanceof CommandException) {
-                            throw ((CommandException)originException);
+                            throw (CommandException)originException;
 
                         } else if (originException instanceof RuntimeException) {
-                            throw ((RuntimeException)originException);
+                            throw (RuntimeException)originException;
                         }
 
                         throw new RuntimeException(originException.getMessage(), e);

@@ -20,8 +20,6 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.event.Event;
-import com.codenvy.im.event.EventFactory;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
@@ -52,7 +50,6 @@ import static com.codenvy.im.event.EventFactory.createImArtifactInstallUnsuccess
 import static com.codenvy.im.utils.Commons.toJson;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static java.lang.Math.max;
-import static java.lang.String.format;
 
 /**
  * @author Alexander Reshetnyak
@@ -96,8 +93,10 @@ public class InstallCommand extends AbstractIMCommand {
         this.configManager = INJECTOR.getInstance(ConfigManager.class);
     }
 
-    /** For testing purpose only */
     @Deprecated
+    /**
+     * For testing purpose only
+     */
     InstallCommand(ConfigManager configManager) {
         this.configManager = configManager;
     }

@@ -29,6 +29,7 @@ import com.wordnik.swagger.jaxrs.listing.ApiListingResource;
 import com.wordnik.swagger.jaxrs.listing.ResourceListingProvider;
 import com.wordnik.swagger.jaxrs.reader.DefaultJaxrsApiReader;
 import com.wordnik.swagger.reader.ClassReaders;
+
 import org.eclipse.che.inject.DynaModule;
 
 import javax.annotation.PostConstruct;
@@ -89,7 +90,7 @@ public class DocsModule extends AbstractModule {
     }
 
     static class SwaggerBootstrap {
-        final String BASE_SERVER_URL = "/im";
+        private final static String BASE_SERVER_URL = "/im";
 
         @PostConstruct
         public void init() {

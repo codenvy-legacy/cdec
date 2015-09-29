@@ -38,11 +38,12 @@ import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Version;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.dto.server.DtoFactory;
 
 import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -90,7 +91,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     protected void updateImCliClientIfNeeded() {
-        final String UPDATE_FAIL_MESSAGE = "WARNING: automatic update of IM CLI client has been failed. See logs for details.\n";
+        final String updateFailMessage = "WARNING: automatic update of IM CLI client has been failed. See logs for details.\n";
 
         try {
             // get latest update of IM CLI client
@@ -112,7 +113,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
                     if (downloadProgressResponse.getStatus().equals(DownloadArtifactStatus.FAILED)) {
                         // log error and continue working
                         LOG.log(Level.SEVERE, format("Fail of automatic download of update of IM CLI client. Error: %s", downloadProgressResponse.getMessage()));
-                        console.printError(UPDATE_FAIL_MESSAGE, isInteractive());
+                        console.printError(updateFailMessage, isInteractive());
                         return;
                     }
 
@@ -125,7 +126,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             // update IM CLI client
             InstallOptions installOptions = new InstallOptions();
             installOptions.setCliUserHomeDir(System.getProperty("user.home"));
-            installOptions.setConfigProperties(Collections.EMPTY_MAP);
+            installOptions.setConfigProperties(Collections.emptyMap());
             installOptions.setInstallType(InstallType.SINGLE_SERVER);
             installOptions.setStep(0);
 
@@ -135,7 +136,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
                 // log error and continue working
                 LOG.log(Level.SEVERE, format("Fail of automatic install of update of IM CLI client. Error: %s", updateStepInfo.getMessage()));
-                console.printError(UPDATE_FAIL_MESSAGE, isInteractive());
+                console.printError(updateFailMessage, isInteractive());
                 return;
             }
 
@@ -145,7 +146,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
         } catch (Exception e) {
             // log error and continue working
             LOG.log(Level.SEVERE, format("Fail of automatic update of IM CLI client. Error: %s", e.getMessage()));
-            console.printError(UPDATE_FAIL_MESSAGE, isInteractive());
+            console.printError(updateFailMessage, isInteractive());
         }
     }
 
