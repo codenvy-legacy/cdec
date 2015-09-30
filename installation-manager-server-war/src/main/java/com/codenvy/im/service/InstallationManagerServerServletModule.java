@@ -41,7 +41,7 @@ public class InstallationManagerServerServletModule extends ServletModule {
         bind(com.codenvy.auth.sso.client.TokenHandler.class).to(com.codenvy.auth.sso.client.RecoverableTokenHandler.class);
 
         filterRegex("/(?!_sso/).*$").through(LoginFilter.class);
-        serve("/*").with(GuiceEverrestServlet.class);
         install(new SsoClientServletModule());
+        serve("/*").with(GuiceEverrestServlet.class);
     }
 }
