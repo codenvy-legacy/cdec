@@ -160,12 +160,41 @@ insertProperty() {
     sed -i s/$1=.*/$1=$2/g ${CONFIG}
 }
 
-askAndInsertProperty() {
+validateHostname() {
+    DNS=$1
+
+    OUTPUT=$(ping -c 1 ${DNS} &> /dev/null && echo success || echo fail)
+
+    echo ${OUTPUT}
+}
+
+askHostnameAndInsertProperty() {
     PROMPT=$1
     VARIABLE=$2
-    
-    print "${PROMPT}: "
-    read VALUE
+
+    FIRST_ATTEMPT=true
+
+    while :
+    do
+        if [[ ${FIRST_ATTEMPT} == false ]]; then
+            cursorUp
+            cursorUp
+            clearLine
+        else
+            FIRST_ATTEMPT=false
+        fi
+
+        print "${PROMPT}: "
+
+        read VALUE
+
+        OUTPUT=$(validateHostname ${VALUE})
+        if [ "${OUTPUT}" == "success" ]; then
+           break
+        else
+            printLn "The hostname '${VALUE}' isn't availabe or wrong. Please try again..."
+        fi
+    done
 
     insertProperty "${VARIABLE}" ${VALUE}
 }
@@ -450,16 +479,17 @@ printPreInstallInfo_multi() {
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
         insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
 
-        askAndInsertProperty "Please set the DNS hostname to be used by Codenvy" "host_url"
-        askAndInsertProperty "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the Data node" "data_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the API node" "api_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the Builder node" "builder_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the Runner node" "runner_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the Datasource node" "datasource_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the Analytics node" "analytics_host_name"
-        askAndInsertProperty "Please set the DNS hostname of the Site node" "site_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname to be used by Codenvy" "host_url"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Data node" "data_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the API node" "api_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Builder node" "builder_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Runner node" "runner_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Datasource node" "datasource_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Analytics node" "analytics_host_name"
+        askHostnameAndInsertProperty "Please set the DNS hostname of the Site node" "site_host_name"
 
+        clearLine
         doCheckAvailableResources_multi
 
         printLn
