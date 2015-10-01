@@ -24,6 +24,8 @@ import com.codenvy.im.utils.Version;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
+
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -47,7 +49,9 @@ public class TestCheckInstalledVersionCommand {
 
     @Test
     public void testExecute() throws Exception {
-        doReturn(Version.valueOf("3.1.0")).doReturn(Version.valueOf("3.3.0")).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("3.1.0")))
+        .doReturn(Optional.of(Version.valueOf("3.3.0")))
+        .when(artifact).getInstalledVersion();
         command.execute();
 
         verify(command, times(2)).checkExpectedVersion();

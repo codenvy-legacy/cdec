@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createFileRestoreOrBackupCommand;
@@ -341,8 +342,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server starts
-        if (original.getInstalledVersion() != null) {
-            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        Optional<Version> installedVersion = original.getInstalledVersion();  // TODO
+        if (installedVersion.isPresent()) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
         }
 
         // remove temp dir
@@ -431,8 +433,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server restarts
-        if (original.getInstalledVersion() != null) {
-            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        Optional<Version> installedVersion = original.getInstalledVersion();
+        if (installedVersion.isPresent()) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
         }
 
         // remove temp dir
@@ -465,8 +468,9 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createForcePuppetAgentCommand());
 
         // wait until API server restarts
-        if (original.getInstalledVersion() != null) {
-            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        Optional<Version> installedVersion = original.getInstalledVersion();
+        if (installedVersion.isPresent()) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
         }
 
         return new MacroCommand(commands, "Change config commands");

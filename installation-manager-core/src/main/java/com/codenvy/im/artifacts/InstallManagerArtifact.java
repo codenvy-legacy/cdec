@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import static java.lang.String.format;
@@ -68,13 +69,13 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    public Version getInstalledVersion() throws IOException {
+    public Optional<Version> getInstalledVersion() throws IOException {
         try (InputStream in = Artifact.class.getClassLoader().getResourceAsStream("codenvy/BuildInfo.properties")) {
             Properties props = new Properties();
             props.load(in);
 
             if (props.containsKey("version")) {
-                return Version.valueOf((String)props.get("version"));
+                return Optional.of(Version.valueOf((String)props.get("version")));
             } else {
                 throw new IOException(format("Can't get the version of '%s' artifact", NAME));
             }

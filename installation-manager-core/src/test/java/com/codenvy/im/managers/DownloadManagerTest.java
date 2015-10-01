@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
@@ -564,7 +565,7 @@ public class DownloadManagerTest extends BaseTest {
     public void testGetAllUpdates() throws Exception {
         final Version cdecVersion = Version.valueOf("2.0.0");
         doReturn("[\"2.0.1\", \"2.0.2\"]").when(transport).doGet(endsWith("updates/codenvy?fromVersion=2.0.0"));
-        doReturn(cdecVersion).when(cdecArtifact).getInstalledVersion();
+        doReturn(Optional.of(cdecVersion)).when(cdecArtifact).getInstalledVersion();
 
         Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact);
 
@@ -574,7 +575,7 @@ public class DownloadManagerTest extends BaseTest {
     @Test
     public void testGetAllUpdatesNoStartVersion() throws Exception {
         doReturn("[\"2.0.1\"]").when(transport).doGet(endsWith("updates/codenvy"));
-        doReturn(null).when(cdecArtifact).getInstalledVersion();
+        doReturn(Optional.empty()).when(cdecArtifact).getInstalledVersion();
 
         Collection<Map.Entry<Artifact, Version>> updates = downloadManager.getAllUpdates(cdecArtifact);
         assertEquals(updates.size(), 1);

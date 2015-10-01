@@ -49,6 +49,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
@@ -385,10 +386,10 @@ public class DownloadManager {
         }
 
         for (final Artifact art2Check : artifacts2Check) {
-            Version installedVersion = art2Check.getInstalledVersion();
+            Optional<Version> installedVersion = art2Check.getInstalledVersion();
             String requestUrl = combinePaths(updateEndpoint,
                                              "repository/updates",
-                                             art2Check + (installedVersion == null ? "" : "?fromVersion=" + installedVersion.toString()));
+                                             art2Check + (installedVersion.isPresent() ? "?fromVersion=" + installedVersion.get().toString() : ""));
             try {
                 List<String> l = fromJson(transport.doGet(requestUrl), List.class);
                 allUpdates.addAll(FluentIterable.from(l).transform(new Function<String, Map.Entry<Artifact, Version>>() {

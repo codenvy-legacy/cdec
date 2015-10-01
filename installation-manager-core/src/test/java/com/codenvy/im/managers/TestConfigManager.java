@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static java.lang.String.format;
@@ -62,11 +63,15 @@ public class TestConfigManager extends BaseTest {
 
     private ConfigManager configManager;
     private HttpTransport transport;
+    private Artifact spyCdec;
 
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
         configManager = spy(new ConfigManager("", "target/puppet", transport));
+
+        spyCdec = spy(ArtifactFactory.createArtifact(CDECArtifact.NAME));
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdec).getInstalledVersion();
     }
 
     @Test
@@ -437,7 +442,7 @@ public class TestConfigManager extends BaseTest {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "1"));
 
         Artifact artifact = mock(Artifact.class);
-        doReturn(Version.valueOf("1.0.0")).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(artifact).getInstalledVersion();
         doReturn(CDECArtifact.NAME).when(artifact).getName();
         doReturn(properties).when(configManager).loadConfigProperties("file");
         doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
@@ -471,7 +476,7 @@ public class TestConfigManager extends BaseTest {
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       null,
                                                                                       InstallType.SINGLE_SERVER,
-                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      spyCdec,
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
         assertEquals(actualProperties.size(), 2);
@@ -492,10 +497,11 @@ public class TestConfigManager extends BaseTest {
         doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
         doReturn("master").when(configManager).fetchMasterHostName();
 
+
         Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
                                                                                       null,
                                                                                       InstallType.MULTI_SERVER,
-                                                                                      ArtifactFactory.createArtifact(CDECArtifact.NAME),
+                                                                                      spyCdec,
                                                                                       Version.valueOf("3.1.0"),
                                                                                       false);
         assertEquals(actualProperties.size(), 3);

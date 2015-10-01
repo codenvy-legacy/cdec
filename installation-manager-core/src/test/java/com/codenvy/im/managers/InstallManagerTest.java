@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -86,7 +87,7 @@ public class InstallManagerTest extends BaseTest {
         prepareSingleNodeEnv(configManager);
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
 
-        doReturn(null).when(artifact).getInstalledVersion();
+        doReturn(Optional.empty()).when(artifact).getInstalledVersion();
 
         List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
         assertTrue(info.size() > 0);
@@ -99,7 +100,7 @@ public class InstallManagerTest extends BaseTest {
         Version version = Version.valueOf("1.0.0");
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
 
-        doReturn(version).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(version)).when(artifact).getInstalledVersion();
 
         List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
 
@@ -112,7 +113,7 @@ public class InstallManagerTest extends BaseTest {
         createSingleNodeConf();
 
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        doReturn(Version.valueOf("0.9.1")).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("0.9.1"))).when(artifact).getInstalledVersion();
 
         List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
 
@@ -125,7 +126,7 @@ public class InstallManagerTest extends BaseTest {
         createSingleNodeConf();
 
         Artifact artifact = spy(createArtifact(CDECArtifact.NAME));
-        doReturn(Version.valueOf("1.0.1")).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.1"))).when(artifact).getInstalledVersion();
 
         List<String> info = installManager.getInstallInfo(artifact, InstallType.SINGLE_SERVER);
 
@@ -144,7 +145,7 @@ public class InstallManagerTest extends BaseTest {
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
-        doReturn(null).when(artifact).getInstalledVersion();
+        doReturn(Optional.empty()).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
@@ -165,7 +166,7 @@ public class InstallManagerTest extends BaseTest {
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
-        doReturn(version).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(version)).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
@@ -188,7 +189,7 @@ public class InstallManagerTest extends BaseTest {
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
-        doReturn(Version.valueOf("0.9.1")).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("0.9.1"))).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
@@ -211,7 +212,7 @@ public class InstallManagerTest extends BaseTest {
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setStep(1);
 
-        doReturn(Version.valueOf("1.0.1")).when(artifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.1"))).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
@@ -234,8 +235,8 @@ public class InstallManagerTest extends BaseTest {
         Version version100 = Version.valueOf("1.0.0");
         Version version200 = Version.valueOf("2.0.0");
 
-        doReturn(version100).when(cdecArtifact).getInstalledVersion();
-        doReturn(version200).when(installManagerArtifact).getInstalledVersion();
+        doReturn(Optional.of(version100)).when(cdecArtifact).getInstalledVersion();
+        doReturn(Optional.of(version200)).when(installManagerArtifact).getInstalledVersion();
 
         Map<Artifact, Version> installedArtifacts = installManager.getInstalledArtifacts();
 

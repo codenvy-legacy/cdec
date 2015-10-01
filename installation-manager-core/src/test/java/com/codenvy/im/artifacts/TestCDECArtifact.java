@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
@@ -219,8 +220,10 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetInstalledVersionShouldReturnNullIfPuppetConfigAbsent() throws Exception {
+        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
         doThrow(UnknownInstallationTypeException.class).when(configManager).loadInstalledCodenvyConfig();
-        assertNull(spyCdecArtifact.getInstalledVersion());
+
+        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
     }
 
     @Test
@@ -228,7 +231,7 @@ public class TestCDECArtifact extends BaseTest {
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doThrow(IOException.class).when(configManager).loadInstalledCodenvyConfig();
 
-        assertNull(spyCdecArtifact.getInstalledVersion());
+        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
     }
 
     @Test
@@ -236,30 +239,30 @@ public class TestCDECArtifact extends BaseTest {
         prepareSingleNodeEnv(configManager, transport);
         doThrow(IOException.class).when(transport).doOption("http://localhost/api/", null);
 
-        assertNull(spyCdecArtifact.getInstalledVersion());
+        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
     }
 
     @Test
     public void testGetInstalledVersionShouldReturnVersion() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
 
-        assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.3.0"));
+        assertEquals(spyCdecArtifact.getInstalledVersion().get(), Version.valueOf("3.3.0"));
     }
 
     @Test
-    public void testGetInstalledVersionShouldReturnNullIfRequestEmpty() throws Exception {
+    public void installedVersionShouldBeEmptyIfRequestEmpty() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
         doReturn("").when(transport).doOption("http://localhost/api/", null);
 
-        assertNull(spyCdecArtifact.getInstalledVersion());
+        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
     }
 
     @Test
     public void testGetInstalledVersionFromAssemblyPropertiesFile() throws Exception {
         prepareSingleNodeEnv(configManager, transport);
-        FileUtils.write(Paths.get(ASSEMBLY_PROPERTIES).toFile(), "assembly.version  =3.11.3.2");
+        FileUtils.write(Paths.get(ASSEMBLY_PROPERTIES).toFile(), "assembly.version=3.11.3.2");
 
-        assertEquals(spyCdecArtifact.getInstalledVersion(), Version.valueOf("3.11.3.2"));
+        assertEquals(spyCdecArtifact.getInstalledVersion().get(), Version.valueOf("3.11.3.2"));
     }
 
     @Test
@@ -482,7 +485,7 @@ public class TestCDECArtifact extends BaseTest {
         doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES);
         doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(
                 Config.SINGLE_SERVER_BASE_PROPERTIES);
-        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdecArtifact).getInstalledVersion();
 
         CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact, configManager);
 
@@ -525,7 +528,7 @@ public class TestCDECArtifact extends BaseTest {
         doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(
                 Config.MULTI_SERVER_BASE_PROPERTIES);
         doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES);
-        doReturn(Version.valueOf("1.0.0")).when(spyCdecArtifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdecArtifact).getInstalledVersion();
 
         CDECMultiServerHelper testHelper = new CDECMultiServerHelper(spyCdecArtifact, configManager);
 
@@ -589,6 +592,7 @@ public class TestCDECArtifact extends BaseTest {
         doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         doReturn(config).when(configManager).loadInstalledCodenvyConfig();
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(Optional.empty()).when(spyCdecArtifact).fetchAssemblyVersion();
 
         Command command = spyCdecArtifact.getReinstallCommand();
         List<Command> commands = ((MacroCommand) command).getCommands();

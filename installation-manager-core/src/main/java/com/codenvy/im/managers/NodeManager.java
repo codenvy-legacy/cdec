@@ -31,6 +31,7 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
@@ -68,7 +69,10 @@ public class NodeManager {
         addingNode.setUser(nodeSshUser);
 
         // check if Codenvy is alive
-        Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
+        Optional<Version> installedVersion = cdecArtifact.getInstalledVersion();
+        if (!installedVersion.isPresent()) {
+            throw new IllegalStateException("It is impossible to define installed version.");  // TODO [ndp] check is Codenvy alive
+        }
 
         String property = nodesConfigUtil.getPropertyNameBy(addingNode.getType());
         if (property == null) {
@@ -77,7 +81,7 @@ public class NodeManager {
 
         validate(addingNode);
 
-        Command addNodeCommand = getAddNodeCommand(currentCodenvyVersion, property, nodesConfigUtil, addingNode, config);
+        Command addNodeCommand = getAddNodeCommand(installedVersion.get(), property, nodesConfigUtil, addingNode, config);
         addNodeCommand.execute();
 
         return addingNode;
@@ -188,7 +192,7 @@ public class NodeManager {
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
 
         // check if Codenvy is alive
-        Version currentCodenvyVersion = cdecArtifact.getInstalledVersion();
+        Version currentCodenvyVersion = cdecArtifact.getInstalledVersion().get();
 
         NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeFromConfigBy(dns);
         if (nodeType == null) {

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.managers.BackupConfig.removeGzipExtension;
@@ -65,11 +66,11 @@ public class BackupManager {
             Path backupFile = backupConfig.generateBackupFilePath();
             backupConfig.setBackupFile(backupFile.toString());
 
-            Version artifactVersion = artifact.getInstalledVersion();
-            if (artifactVersion == null) {
+            Optional<Version> artifactVersion = artifact.getInstalledVersion();
+            if (!artifactVersion.isPresent()) {
                 throw new IllegalStateException("Artifact version is unavailable");
             }
-            backupConfig.setArtifactVersion(artifactVersion.toString());
+            backupConfig.setArtifactVersion(artifactVersion.get().toString());
             backupConfig.storeConfigIntoBackup();
 
             Command backupCommand = artifact.getBackupCommand(backupConfig);
@@ -133,21 +134,21 @@ public class BackupManager {
         }
 
         String backedUpArtifactVersion = storedBackupConfig.getArtifactVersion();
-        Version restoringArtifactVersion;
+        Optional<Version> restoringArtifactVersion;
         String nullVersionErrorMessage = format("It is impossible to get version of restoring artifact '%s'", restoringArtifactName);
         try {
             restoringArtifactVersion = restoringArtifact.getInstalledVersion();
         } catch (IOException e) {
             throw new IllegalStateException(nullVersionErrorMessage);
         }
-        if (restoringArtifactVersion == null) {
+        if (!restoringArtifactVersion.isPresent()) {
             throw new IllegalStateException(nullVersionErrorMessage);
         }
 
-        if (!restoringArtifactVersion.toString().equals(backedUpArtifactVersion)) {
+        if (!restoringArtifactVersion.get().toString().equals(backedUpArtifactVersion)) {
             throw new IllegalArgumentException(format("Version of backed up artifact '%s' doesn't equal to restoring version '%s'",
                                                       backedUpArtifactVersion,
-                                                      restoringArtifactVersion));
+                                                      restoringArtifactVersion.get()));
         }
     }
 

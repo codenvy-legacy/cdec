@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
@@ -82,7 +83,7 @@ public class TestBackupManager {
         doReturn(mockCdecArtifact).when(spyManager).getArtifact(CDECArtifact.NAME);
 
         doReturn(CDECArtifact.NAME).when(mockCdecArtifact).getName();
-        doReturn(Version.valueOf("1.0.0")).when(mockCdecArtifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(mockCdecArtifact).getInstalledVersion();
     }
 
     @AfterMethod
@@ -133,7 +134,7 @@ public class TestBackupManager {
           expectedExceptionsMessageRegExp = "Artifact version is unavailable")
     public void testBackupNullArtifactVersionException() throws IOException {
         BackupConfig backupConfig = new BackupConfig().setArtifactName("codenvy");
-        doReturn(null).when(mockCdecArtifact).getInstalledVersion();
+        doReturn(Optional.empty()).when(mockCdecArtifact).getInstalledVersion();
         spyManager.backup(backupConfig);
     }
 
@@ -285,7 +286,7 @@ public class TestBackupManager {
 
         String expectedExceptionMessage = "It is impossible to get version of restoring artifact 'codenvy'";
 
-        doReturn(null).when(mockCdecArtifact).getInstalledVersion();
+        doReturn(Optional.empty()).when(mockCdecArtifact).getInstalledVersion();
         try {
             spyManager.checkBackup(mockCdecArtifact, checkingConfig);
             fail("Here should be IllegalStateException.");

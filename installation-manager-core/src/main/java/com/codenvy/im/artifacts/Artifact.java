@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Anatoliy Bazko
@@ -40,8 +41,7 @@ public interface Artifact extends Comparable<Artifact> {
     String getName();
 
     /** @return current installed version of the artifact or null if artifact is not installed. */
-    @Nullable
-    Version getInstalledVersion() throws IOException;
+    Optional<Version> getInstalledVersion() throws IOException;
 
     /** @return the priority of the artifact to install, update etc. */
     int getPriority();

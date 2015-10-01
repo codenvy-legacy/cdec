@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.codenvy.im.commands.CommandLibrary.createCompressCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromLocalToRemoteCommand;
@@ -532,8 +533,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet", apiNode));
 
         // wait until API server restarts
-        if (original.getInstalledVersion() != null) {
-            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        Optional<Version> installedVersion = original.getInstalledVersion();
+        if (installedVersion.isPresent()) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
         }
 
         // remove local temp dir
@@ -707,8 +709,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet", apiNode));
 
         // wait until API server restarts
-        if (original.getInstalledVersion() != null) {
-            commands.add(new CheckInstalledVersionCommand(original, original.getInstalledVersion()));
+        Optional<Version> installedVersion = original.getInstalledVersion();
+        if (installedVersion.isPresent()) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
         }
 
         // remove local temp dir
@@ -750,9 +753,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
 
         // wait until API server restarts
-        Version installedVersion = original.getInstalledVersion();
-        if (installedVersion != null) {
-            commands.add(new CheckInstalledVersionCommand(original, installedVersion));
+        Optional<Version> installedVersion = original.getInstalledVersion();
+        if (installedVersion.isPresent()) {
+            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
         }
         return new MacroCommand(commands, "Change config commands");
     }

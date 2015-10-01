@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,9 +68,9 @@ public class InstallManager {
         Map<Artifact, Version> installed = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             try {
-                Version installedVersion = artifact.getInstalledVersion();
-                if (installedVersion != null) {
-                    installed.put(artifact, installedVersion);
+                Optional<Version> installedVersion = artifact.getInstalledVersion();
+                if (installedVersion.isPresent()) {
+                    installed.put(artifact, installedVersion.get());
                 }
             } catch (IOException e) {
                 throw getProperException(e, artifact);

@@ -21,13 +21,12 @@ import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
 import com.codenvy.im.artifacts.helper.CDECMultiServerHelper;
 import com.codenvy.im.artifacts.helper.CDECSingleServerHelper;
 import com.codenvy.im.commands.Command;
-import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
@@ -36,9 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
-import org.eclipse.che.commons.annotation.Nullable;
 
 import javax.inject.Named;
 import java.io.IOException;
@@ -46,8 +43,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.codenvy.im.commands.SimpleCommand.createCommandWithoutLogging;
+import static com.codenvy.im.managers.NodeConfig.extractConfigFrom;
 import static com.codenvy.im.utils.Commons.createDtoFromJson;
 import static java.lang.String.format;
 
@@ -76,48 +75,34 @@ public class CDECArtifact extends AbstractArtifact {
 
     /** {@inheritDoc} */
     @Override
-    @Nullable
-    public Version getInstalledVersion() throws IOException {
-        try {
-            ApiInfo apiInfo = getApiInfo();
-            if (apiInfo == null) {
-                return null; // API server is down
-            }
-
-            Version version = fetchAssemblyVersion();
-            if (version != null) {
-                return version;
-            }
-
-            if (! apiInfo.getIdeVersion().contains("codenvy.ide.version")) {  // workaround
-                return Version.valueOf(apiInfo.getIdeVersion());
-            }
-
-            return fetchVersionFromPuppetConfig();
-        } catch (UnknownInstallationTypeException | IOException e) {
-            return null;
-        }
+    public Optional<Version> getInstalledVersion() throws IOException {
+        return getInstalledVersion(true);
     }
 
-    @Nullable
-    private ApiInfo getApiInfo() {
-        try {
-            String response = transport.doOption(configManager.getApiEndpoint() + "/", null);
-            return createDtoFromJson(response, ApiInfo.class);
-        } catch (IOException e) {
-            return null;  // API server is down
+    /**
+     * @throws IOException if API server is down
+     */
+    private Optional<Version> getVersionFromApiService() throws IOException {
+        String response = transport.doOption(configManager.getApiEndpoint() + "/", null);
+        ApiInfo apiInfo = createDtoFromJson(response, ApiInfo.class);
+        if (apiInfo != null) {
+            String ideVersion = apiInfo.getIdeVersion();
+            if (ideVersion != null
+                && !ideVersion.contains("codenvy.cloud-ide.version")) {
+                return Optional.of(Version.valueOf(ideVersion));
+            }
         }
+
+        return Optional.empty();
     }
 
-    @Nullable
-    protected Version fetchVersionFromPuppetConfig() throws IOException {
+    protected Optional<Version> fetchVersionFromPuppetConfig() throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
         String value = config.getValue(Config.VERSION);
-        return value == null ? null : Version.valueOf(value);
+        return value == null ? Optional.empty() : Optional.of(Version.valueOf(value));
     }
 
-    @Nullable
-    protected Version fetchAssemblyVersion() throws CommandException {
+    protected Optional<Version> fetchAssemblyVersion() throws IOException {
         String cmd = format("if sudo test -f %1$s; then " +
                             "   sudo cat %1$s " +
                             "       | grep assembly.version " +
@@ -127,9 +112,18 @@ public class CDECArtifact extends AbstractArtifact {
             cmd = cmd.replace("sudo", "");
         }
 
-        SimpleCommand command = createCommandWithoutLogging(cmd);
+        Command command;
+        InstallType installType = configManager.detectInstallationType();
+        if (installType.equals(InstallType.SINGLE_SERVER)) {
+            command = createCommandWithoutLogging(cmd);
+        } else {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            NodeConfig api = extractConfigFrom(config, NodeConfig.NodeType.API);
+            command = createCommandWithoutLogging(cmd, api);
+        }
+
         String result = command.execute().trim();
-        return result.isEmpty() ? null : Version.valueOf(result);
+        return result.isEmpty() ? Optional.empty() : Optional.of(Version.valueOf(result));
     }
 
     /** {@inheritDoc} */
@@ -221,22 +215,69 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Command getReinstallCommand() throws IOException {
+        Optional<Version> installedVersion = getInstalledVersion(false);
+        if (!installedVersion.isPresent()) {
+            throw new RuntimeException("It is impossible to define installed version.");
+        }
+
         InstallType installType = configManager.detectInstallationType();
         Config config = configManager.loadInstalledCodenvyConfig(installType);
 
-        Version installedVersion = getInstalledVersion();
-        if (installedVersion == null) {   // get version info outside API server if it is down
-            installedVersion = fetchAssemblyVersion();
-        }
-
-        if (installedVersion == null) {
-            installedVersion = fetchVersionFromPuppetConfig();
-        }
-
-        return getHelper(installType).getReinstallCommand(config, installedVersion);
+        return getHelper(installType).getReinstallCommand(config, installedVersion.get());
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }
+
+    /**
+     * @param returnEmptyOnDeadApiServer
+     * @return installed version or null if it could not be defined, or if there was UnknownInstallationTypeException thrown
+     * @throws IOException
+     */
+    private Optional<Version> getInstalledVersion(boolean returnEmptyOnDeadApiServer) throws IOException {
+        try {
+            if (!isApiServiceAlive() && returnEmptyOnDeadApiServer) {
+                return Optional.empty();
+            }
+
+            Optional<Version> version;
+            try {
+                version = fetchAssemblyVersion();
+                if (version.isPresent()) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore IOException here
+            }
+
+            try {
+                version = getVersionFromApiService();
+                if (version.isPresent()) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore IOException here
+            }
+
+            try {
+                return fetchVersionFromPuppetConfig();
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        } catch(UnknownInstallationTypeException e) {
+            return Optional.empty();
+        }
+    }
+
+    private boolean isApiServiceAlive() {
+        try {
+            transport.doOption(configManager.getApiEndpoint() + "/", null);
+            return true;
+        } catch (IOException e) {
+            return false;  // API server is down
+        }
+
+    }
+
 }

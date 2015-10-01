@@ -21,6 +21,7 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,8 +71,12 @@ public class CheckInstalledVersionCommand implements Command {
     }
 
     protected boolean checkExpectedVersion() throws IOException {
-        Version installedVersion = artifact.getInstalledVersion();
-        return expectedVersion.equals(installedVersion);
+        Optional<Version> installedVersion = artifact.getInstalledVersion();
+        if (!installedVersion.isPresent()) {
+            return false;
+        }
+
+        return expectedVersion.equals(installedVersion.get());
     }
 
     /** {@inheritDoc} */

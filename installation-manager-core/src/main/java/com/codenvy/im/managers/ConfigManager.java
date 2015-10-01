@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -452,7 +453,12 @@ public class ConfigManager {
                     if (binaries != null) {
                         properties = loadConfigProperties(binaries, installType);
                     } else {
-                        properties = merge(artifact.getInstalledVersion(),
+                        Optional<Version> installVersion = artifact.getInstalledVersion();
+                        if (!installVersion.isPresent()) {
+                            throw new IOException("It is impossible to obtain installed version.");
+                        }
+
+                        properties = merge(artifact.getInstalledVersion().get(),
                                            loadInstalledCodenvyProperties(installType),
                                            configFile != null ? loadConfigProperties(configFile)
                                                               : loadCodenvyDefaultProperties(version2Install, installType));

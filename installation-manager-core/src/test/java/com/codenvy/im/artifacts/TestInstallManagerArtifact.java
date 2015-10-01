@@ -33,6 +33,7 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dmytro Nochevnov
@@ -104,7 +105,7 @@ public class TestInstallManagerArtifact {
 
     @Test
     public void testGetInstalledVersion() throws Exception {
-        assertNotNull(imArtifact.getInstalledVersion());
+        assertTrue(imArtifact.getInstalledVersion().isPresent());
     }
 
     @Test

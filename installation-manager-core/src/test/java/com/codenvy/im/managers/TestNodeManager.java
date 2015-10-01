@@ -32,6 +32,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.mockito.Mockito.doNothing;
@@ -74,7 +75,7 @@ public class TestNodeManager extends BaseTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        doReturn(TEST_VERSION).when(mockCdecArtifact).getInstalledVersion();
+        doReturn(Optional.of(TEST_VERSION)).when(mockCdecArtifact).getInstalledVersion();
 
         initConfigs();
 

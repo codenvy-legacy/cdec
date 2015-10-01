@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
@@ -107,25 +108,25 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Override
     public boolean isInstallable(Version versionToInstall) throws IOException {
-        Version installedVersion = getInstalledVersion();
+        Optional<Version> installedVersion = getInstalledVersion();
 
-        if (installedVersion == null) {  // check if there is installed version of artifact
+        if (!installedVersion.isPresent()) {  // check if Codenvy alive TODO [ndp]
             return true;
         }
 
         String allowedPreviousVersions = getProperty(versionToInstall, PREVIOUS_VERSION_PROPERTY);
         if (allowedPreviousVersions != null) {
-            return installedVersion.isSuitedFor(allowedPreviousVersions);
+            return installedVersion.get().isSuitedFor(allowedPreviousVersions);
         }
 
-        return installedVersion.compareTo(versionToInstall) < 0;
+        return installedVersion.get().compareTo(versionToInstall) < 0;
     }
 
     /** {@inheritDoc} */
     @Nullable
     public Version getLatestInstallableVersion() throws IOException {
-        Version installedVersion = getInstalledVersion();
-        if (installedVersion == null) {
+        Optional<Version> installedVersion = getInstalledVersion();
+        if (!installedVersion.isPresent()) {
             String versionNumber = getLatestVersionProperty(VERSION_PROPERTY);
             return versionNumber != null ? Version.valueOf(versionNumber) : null;
         }
@@ -138,7 +139,7 @@ public abstract class AbstractArtifact implements Artifact {
             Version version2Check = entry.getValue();
 
             String prevAllowedVersionNumber = getProperty(version2Check, PREVIOUS_VERSION_PROPERTY);
-            if (installedVersion.isSuitedFor(prevAllowedVersionNumber)) {
+            if (installedVersion.get().isSuitedFor(prevAllowedVersionNumber)) {
                 if (ver2Install == null || ver2Install.compareTo(version2Check) < 0) {
                     ver2Install = version2Check;
                 }

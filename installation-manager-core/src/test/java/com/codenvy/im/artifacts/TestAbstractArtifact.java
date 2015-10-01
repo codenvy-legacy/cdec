@@ -41,6 +41,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
 import static org.mockito.Matchers.endsWith;
@@ -102,7 +103,7 @@ public class TestAbstractArtifact extends BaseTest {
     public void testIsInstallableWhenPreviousVersionOfNewArtifactIsUnknown() throws IOException {
         Version newVersion = Version.valueOf("2.0.0");
 
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
+        doReturn(Optional.of(TEST_VERSION)).when(spyTestArtifact).getInstalledVersion();
         doReturn("{}").when(mockTransport)
                       .doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION));  // allowed previous version of new artifact is unknown
         doReturn("{}").when(mockTransport)
@@ -114,7 +115,7 @@ public class TestAbstractArtifact extends BaseTest {
 
     @Test
     public void testIsInstallableWhenThereIsNoInstalledArtifact() throws IOException {
-        doReturn(null).when(spyTestArtifact).getInstalledVersion();
+        doReturn(Optional.empty()).when(spyTestArtifact).getInstalledVersion();
         doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport)
                                                                    .doGet(endsWith(TEST_ARTIFACT_NAME + "/" + Version.valueOf("2.0.0")));
 
@@ -125,18 +126,18 @@ public class TestAbstractArtifact extends BaseTest {
     @Test
     public void testIsInstallableBaseOnPreviousVersion() throws IOException {
         String versionToInstall = "2.0.0";
-        doReturn(TEST_VERSION).when(spyTestArtifact).getInstalledVersion();
+        doReturn(Optional.of(TEST_VERSION)).when(spyTestArtifact).getInstalledVersion();
 
         doReturn("{\"previous-version\":\"" + TEST_VERSION + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + versionToInstall));
         assertTrue(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall)));
 
-        doReturn(Version.valueOf("0.0.1")).when(spyTestArtifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("0.0.1"))).when(spyTestArtifact).getInstalledVersion();
         assertFalse(spyTestArtifact.isInstallable(Version.valueOf(versionToInstall)));
     }
 
     @Test
     public void testGetLatestInstallableVersion() throws Exception {
-        doReturn(Version.valueOf("1.0.0")).when(spyTestArtifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyTestArtifact).getInstalledVersion();
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
             add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.1")));
             add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.2")));
@@ -154,9 +155,9 @@ public class TestAbstractArtifact extends BaseTest {
 
     @Test
     public void testGetNullLatestInstallableVersion() throws Exception {
-        doReturn(Version.valueOf("1.0.0")).when(spyTestArtifact).getInstalledVersion();
+        doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyTestArtifact).getInstalledVersion();
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
-            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.3")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.3")));
         }}).when(spyTestArtifact).getAllUpdates();
         doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
 
@@ -174,9 +175,8 @@ public class TestAbstractArtifact extends BaseTest {
             super(name, updateEndpoint, downloadDir, transport, configManager);
         }
 
-        @Nullable
         @Override
-        public Version getInstalledVersion() throws IOException {
+        public Optional<Version> getInstalledVersion() throws IOException {
             throw new UnsupportedOperationException();
         }
 
