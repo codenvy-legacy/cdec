@@ -256,6 +256,7 @@ validatePortLocal() {
 
     if [ "${OUTPUT}" != "" ]; then
         printLn "$(printRed "ERROR"): The port ${PROTOCOL}:${PORT} is busy."
+        printLn "$(printRed "ERROR"): The installation can't be proceeded."
         exit 1
     fi
 }
@@ -268,6 +269,7 @@ validatePortRemote() {
 
     if [ "${OUTPUT}" != "" ]; then
         printLn "$(printRed "ERROR"): The port ${PROTOCOL}:${PORT} on host ${HOST} is busy."
+        printLn "$(printRed "ERROR"): The installation can't be proceeded."
         exit 1
     fi
 }
