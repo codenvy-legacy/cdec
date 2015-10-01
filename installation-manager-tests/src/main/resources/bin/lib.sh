@@ -71,8 +71,8 @@ validateInstalledCodenvyVersion() {
     [[ -z ${VERSION} ]] && VERSION=${LATEST_CODENVY_VERSION}
     logStartCommand "validateInstalledCodenvyVersion "${VERSION}
 
-    OUTPUT=$(curl -X OPTIONS http://codenvy.onprem/api/)
-    validateExpectedString ".*\"ideVersion\"\:\"${VERSION}\".*"
+    executeIMCommand "im-install" "--list"
+    validateExpectedString ".*\"artifact\".*\:.*\"codenvy\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".*"
 
     logEndCommand "validateInstalledCodenvyVersion: OK"
 }

@@ -31,7 +31,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertiesNotFoundException;
-import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
@@ -216,53 +215,6 @@ public class TestCDECArtifact extends BaseTest {
         options.setStep(1);
 
         spyCdecArtifact.getInstallCommand(null, null, options);
-    }
-
-    @Test
-    public void testGetInstalledVersionShouldReturnNullIfPuppetConfigAbsent() throws Exception {
-        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
-        doThrow(UnknownInstallationTypeException.class).when(configManager).loadInstalledCodenvyConfig();
-
-        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
-    }
-
-    @Test
-    public void testGetInstalledVersionShouldReturnNullIfConfigAbsent() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doThrow(IOException.class).when(configManager).loadInstalledCodenvyConfig();
-
-        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
-    }
-
-    @Test
-    public void testGetInstalledVersionShouldReturnNullIfRequestThrowException() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
-        doThrow(IOException.class).when(transport).doOption("http://localhost/api/", null);
-
-        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
-    }
-
-    @Test
-    public void testGetInstalledVersionShouldReturnVersion() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
-
-        assertEquals(spyCdecArtifact.getInstalledVersion().get(), Version.valueOf("3.3.0"));
-    }
-
-    @Test
-    public void installedVersionShouldBeEmptyIfRequestEmpty() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
-        doReturn("").when(transport).doOption("http://localhost/api/", null);
-
-        assertFalse(spyCdecArtifact.getInstalledVersion().isPresent());
-    }
-
-    @Test
-    public void testGetInstalledVersionFromAssemblyPropertiesFile() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
-        FileUtils.write(Paths.get(ASSEMBLY_PROPERTIES).toFile(), "assembly.version=3.11.3.2");
-
-        assertEquals(spyCdecArtifact.getInstalledVersion().get(), Version.valueOf("3.11.3.2"));
     }
 
     @Test

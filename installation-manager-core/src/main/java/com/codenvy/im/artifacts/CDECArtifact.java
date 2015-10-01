@@ -30,6 +30,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.IllegalVersionException;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -82,7 +83,7 @@ public class CDECArtifact extends AbstractArtifact {
     /**
      * @throws IOException if API server is down
      */
-    private Optional<Version> getVersionFromApiService() throws IOException {
+    protected Optional<Version> getVersionFromApiService() throws IOException {
         String response = transport.doOption(configManager.getApiEndpoint() + "/", null);
         ApiInfo apiInfo = createDtoFromJson(response, ApiInfo.class);
         if (apiInfo != null) {
@@ -103,27 +104,29 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     protected Optional<Version> fetchAssemblyVersion() throws IOException {
+        Command command = getReadAssemblyPropertiesCommand();
+        String result = command.execute().trim();
+        return result.isEmpty() ? Optional.empty() : Optional.of(Version.valueOf(result));
+    }
+
+    protected Command getReadAssemblyPropertiesCommand() throws IOException {
         String cmd = format("if sudo test -f %1$s; then " +
                             "   sudo cat %1$s " +
                             "       | grep assembly.version " +
                             "       | sed 's/assembly.version\\s*=\\s*\\(.*\\)/\\1/';" +
                             "fi", assemblyProperties);
         if (!assemblyProperties.startsWith("/")) { // make it works for tests
-            cmd = cmd.replace("sudo", "");
+            cmd = cmd.replaceAll("sudo", "");
         }
 
-        Command command;
         InstallType installType = configManager.detectInstallationType();
         if (installType.equals(InstallType.SINGLE_SERVER)) {
-            command = createCommandWithoutLogging(cmd);
+            return createCommandWithoutLogging(cmd);
         } else {
             Config config = configManager.loadInstalledCodenvyConfig();
-            NodeConfig api = extractConfigFrom(config, NodeConfig.NodeType.API);
-            command = createCommandWithoutLogging(cmd, api);
+            NodeConfig apiNode = extractConfigFrom(config, NodeConfig.NodeType.API);
+            return createCommandWithoutLogging(cmd, apiNode);
         }
-
-        String result = command.execute().trim();
-        return result.isEmpty() ? Optional.empty() : Optional.of(Version.valueOf(result));
     }
 
     /** {@inheritDoc} */
@@ -265,12 +268,12 @@ public class CDECArtifact extends AbstractArtifact {
             } catch (IOException e) {
                 return Optional.empty();
             }
-        } catch(UnknownInstallationTypeException e) {
+        } catch(UnknownInstallationTypeException | IllegalVersionException e) {
             return Optional.empty();
         }
     }
 
-    private boolean isApiServiceAlive() {
+    protected boolean isApiServiceAlive() {
         try {
             transport.doOption(configManager.getApiEndpoint() + "/", null);
             return true;

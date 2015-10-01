@@ -27,6 +27,8 @@ import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -45,7 +47,8 @@ public class BaseTest {
     protected static final String UPDATE_API_ENDPOINT = "update/endpoint";
     protected static final String ASSEMBLY_PROPERTIES = "target/assembly.properties";
     protected static final String SAAS_API_ENDPOINT   = "saas/endpoint";
-    public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
+    public static final Path   PUPPET_CONF_FILE = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
+    public static final String TEST_VERSION_STR = "3.3.0";
 
     @BeforeMethod
     public void clear() throws Exception {
@@ -75,15 +78,23 @@ public class BaseTest {
                                                                "    certname = hostname\n");
     }
 
+    private void createAssemblyProperty() throws IOException {
+        File assemblyPropertiesFile = Paths.get(ASSEMBLY_PROPERTIES).toFile();
+        FileUtils.deleteQuietly(assemblyPropertiesFile);
+        FileUtils.writeStringToFile(assemblyPropertiesFile, "assembly.version=" + TEST_VERSION_STR);
+    }
+
     protected void prepareSingleNodeEnv(ConfigManager configManager, HttpTransport transport) throws Exception {
         prepareSingleNodeEnv(configManager);
-        when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
+        when(transport.doOption("http://localhost/api/", null)).thenReturn("{\"ideVersion\":\"" + TEST_VERSION_STR + "\"}");
     }
 
     protected void prepareSingleNodeEnv(ConfigManager configManager) throws Exception {
-        Map<String, String> properties = ImmutableMap.of("host_url", "hostname");
+        Map<String, String> properties = ImmutableMap.of("host_url", "hostname",
+                                                         Config.VERSION, TEST_VERSION_STR);
 
         createSingleNodeConf();
+        createAssemblyProperty();
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doReturn("http://localhost/api").when(configManager).getApiEndpoint();
         doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
@@ -91,7 +102,7 @@ public class BaseTest {
 
     protected void prepareMultiNodeEnv(ConfigManager configManager, HttpTransport transport) throws Exception {
         prepareMultiNodeEnv(configManager);
-        when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"ideVersion\":\"3.3.0\"}");
+        when(transport.doOption("http://hostname/api/", null)).thenReturn("{\"ideVersion\":\"" + TEST_VERSION_STR + "\"}");
     }
 
     protected void prepareMultiNodeEnv(ConfigManager configManager) throws Exception {
@@ -100,10 +111,12 @@ public class BaseTest {
                         "api_host_name", "api.example.com",
                         "data_host_name", "data.example.com",
                         "analytics_host_name", "analytics.example.com",
-                        "host_url", "hostname"
+                        "host_url", "hostname",
+                        Config.VERSION, TEST_VERSION_STR
                 );
 
         createMultiNodeConf();
+        createAssemblyProperty();
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
         doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
     }
