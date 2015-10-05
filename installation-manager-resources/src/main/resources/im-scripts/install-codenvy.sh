@@ -238,7 +238,7 @@ doCheckPortRemote() {
     PROTOCOL=$1
     PORT=$2
     HOST=$3
-    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -tt $HOST "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
+    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t $HOST "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
     echo ${OUTPUT}
 }
 
@@ -517,8 +517,8 @@ doCheckAvailableResources_multi() {
             MIN_DISK_SPACE=14000000 # in KB
         fi
 
-        availableRAM=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -tt ${HOST} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
-        availableDiskSpace=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -tt ${HOST} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        availableRAM=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        availableDiskSpace=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
         if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
             printLn
             printLn "WARNING: available resources at ${HOST} don't meet recommended"
