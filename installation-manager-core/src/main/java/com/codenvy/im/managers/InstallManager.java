@@ -99,7 +99,7 @@ public class InstallManager {
                                  final InstallOptions options,
                                  final boolean isUpdate) throws IOException {
 
-        if (options.getStep() == 1 && !isInstallable(artifact, version)) {
+        if (options.getStep() == 0 && !isInstallable(artifact, version)) {
             throw new IllegalStateException(format("%s:%s is not installable", artifact.getName(), version.toString()));
         }
 
