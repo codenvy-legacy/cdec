@@ -143,7 +143,7 @@ public class InstallManagerTest extends BaseTest {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setStep(1);
+        options.setStep(0);
 
         doReturn(Optional.empty()).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
@@ -164,7 +164,7 @@ public class InstallManagerTest extends BaseTest {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setStep(1);
+        options.setStep(0);
 
         doReturn(Optional.of(version)).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
@@ -187,7 +187,7 @@ public class InstallManagerTest extends BaseTest {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(Collections.<String, String>emptyMap());
-        options.setStep(1);
+        options.setStep(0);
 
         doReturn(Optional.of(Version.valueOf("0.9.1"))).when(artifact).getInstalledVersion();
         doReturn(null).when(installManager).executeCommand(any(Command.class));
@@ -259,7 +259,7 @@ public class InstallManagerTest extends BaseTest {
     @Test
     public void testWaitForInstallStepCompleted() throws Exception {
         InstallOptions options = new InstallOptions();
-        options.setStep(1);
+        options.setStep(0);
 
         Version version = Version.valueOf("1.0.0");
         Path pathToBinaries = Paths.get("some path");
@@ -286,7 +286,7 @@ public class InstallManagerTest extends BaseTest {
         installManager.waitForStepCompleted(stepId);
 
         assertEquals(info.getStatus(), InstallArtifactStatus.SUCCESS);
-        assertEquals(info.getStep(), 1);
+        assertEquals(info.getStep(), 0);
     }
 
     @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "codenvy:1.0.0 is not installable")
@@ -296,7 +296,7 @@ public class InstallManagerTest extends BaseTest {
         Path pathToBinaries = Paths.get("some path");
 
         InstallOptions options = new InstallOptions();
-        options.setStep(1);
+        options.setStep(0);
 
         doReturn(false).when(installManager).isInstallable(artifact, version);
 

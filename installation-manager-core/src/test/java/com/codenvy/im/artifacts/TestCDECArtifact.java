@@ -62,7 +62,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -105,7 +104,7 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetInstallSingleServerInfo() throws Exception {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.SINGLE_SERVER);
-        options.setStep(1);
+        options.setStep(0);
 
         List<String> info = spyCdecArtifact.getInstallInfo(InstallType.SINGLE_SERVER);
         assertNotNull(info);
@@ -212,7 +211,7 @@ public class TestCDECArtifact extends BaseTest {
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
-        options.setStep(1);
+        options.setStep(0);
 
         spyCdecArtifact.getInstallCommand(null, null, options);
     }
