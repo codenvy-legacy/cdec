@@ -131,10 +131,12 @@ uploadCodenvyServerInstallMultiScript
 uploadCodenvyServerInstallInstalationManagerScript
 uploadCodenvyServerInstallScript
 
-for VERSION in 3.12.5.1; do
+for DIR in installation-manager-resources/src/main/resources/codenvy-properties/*; do
+    VERSION=`basename ${DIR}`
     uploadCodenvySingleServerInstallProperties ${VERSION}
 done
 
-for VERSION in 3.12.5.1; do
+for DIR in installation-manager-resources/src/main/resources/codenvy-properties/*; do
+    VERSION=`basename ${DIR}`
     uploadCodenvyMultiServerInstallProperties ${VERSION}
 done
