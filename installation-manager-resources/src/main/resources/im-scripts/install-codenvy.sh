@@ -17,6 +17,17 @@ unset SYSTEM_ADMIN_NAME
 unset SYSTEM_ADMIN_PASSWORD
 unset PROGRESS_PID
 
+JAVA_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
+
+PUPPET_MASTER_PORTS=("tcp:8140");
+SITE_PORTS=("tcp:80" "tcp:443" "tcp:10050" "tcp:32001" "tcp:32101");
+API_PORTS=("tcp:8080" "tcp:8180" "tcp:10050" "tcp:32001" "tcp:32101" "tcp:32201" "tcp:32301");
+DATA_PORTS=("tcp:389" "tcp:5432" "tcp:10050" "tcp:27017" "tcp:28017");
+DATASOURCE_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
+RUNNER_PORTS=("tcp:80" "tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
+BUILDER_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
+ANALYTICS_PORTS=("tcp:7777" "tcp:8080" "udp:5140" "tcp:9763" "tcp:10050" "tcp:32001" "tcp:32101");
+
 function cleanUp() {
     killTimer
 
@@ -69,19 +80,21 @@ downloadConfig() {
 
 validateOS() {
     if [ -f /etc/redhat-release ]; then
-        OS="Red Hat"
+        osToDisplay="Red Hat"
     else
         printLn  "Operation system isn't supported."
         exit 1
     fi
-    OS_VERSION=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
 
-    if [ "${VERSION}" == "3.1.0" ] && [ "${OS_VERSION}" != "6" ]; then
+    OS = `cat /etc/redhat-release`
+    osVersion=`${osToDisplay} | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+
+    if [ "${VERSION}" == "3.1.0" ] && [ "${osVersion}" != "6" ]; then
         printLn "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
         exit 1
     fi
 
-    if [ "${CODENVY_TYPE}" == "multi" ] && [ "${OS_VERSION}" != "7" ]; then
+    if [ "${CODENVY_TYPE}" == "multi" ] && [ "${osVersion}" != "7" ]; then
         printLn "Codenvy multi-node can be installed onto CentOS 7.x only"
         exit 1
     fi
@@ -95,8 +108,6 @@ installPackageIfNeed() {
 }
 
 preconfigureSystem() {
-    validateOS
-
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
 
@@ -106,7 +117,7 @@ preconfigureSystem() {
 }
 
 installJava() {
-    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' 'http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz' --output-document=jre.tar.gz
+    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' ${JAVA_URL} --output-document=jre.tar.gz
 
     tar -xf jre.tar.gz -C ${DIR}
     mv ${DIR}/jre1.8.0_45 ${DIR}/jre
@@ -225,7 +236,7 @@ pressYKeyToContinue() {
         else
             print "Continue installation"
         fi
-        echo -n " [y/N]:"
+        echo -n " [y/N]: "
 
         read ANSWER
         if [[ ! "${ANSWER}" == "y" ]]; then
@@ -286,17 +297,8 @@ doGetHostsVariables() {
     SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
 }
 
-PUPPET_MATER_PORTS=("tcp:8140");
-SITE_PORTS=("tcp:80" "tcp:443" "tcp:10050" "tcp:32001" "tcp:32101");
-API_PORTS=("tcp:8080" "tcp:8180" "tcp:10050" "tcp:32001" "tcp:32101" "tcp:32201" "tcp:32301");
-DATA_PORTS=("tcp:389" "tcp:5432" "tcp:10050" "tcp:27017" "tcp:28017");
-DATASOURCE_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
-RUNNER_PORTS=("tcp:80" "tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
-BUILDER_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
-ANALYTICS_PORTS=("tcp:7777" "tcp:8080" "udp:5140" "tcp:9763" "tcp:10050" "tcp:32001" "tcp:32101");
-
 doCheckAvailablePorts_single() {
-    for PORT in ${PUPPET_MATER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]} ${ANALYTICS_PORTS[@]}; do
+    for PORT in ${PUPPET_MASTER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]} ${ANALYTICS_PORTS[@]}; do
         PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
         PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
 
@@ -309,7 +311,7 @@ doCheckAvailablePorts_multi() {
 
     for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
         if [[ ${HOST} == ${PUPPET_MASTER_HOST_NAME} ]]; then
-            PORTS=${PUPPET_MATER_PORTS[@]}
+            PORTS=${PUPPET_MASTER_PORTS[@]}
         elif [[ ${HOST} == ${DATA_HOST_NAME} ]]; then
             PORTS=${DATA_PORTS[@]}
         elif [[ ${HOST} == ${API_HOST_NAME} ]]; then
@@ -336,29 +338,21 @@ doCheckAvailablePorts_multi() {
 }
 
 printPreInstallInfo_single() {
-    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
-    availableDiskSpace=$(( `sudo df ${HOME} | tail -1 | awk '{print $2}'` /1000/1000 ))
-    availableCores=`grep -c ^processor /proc/cpuinfo`
-
-    preconfigureSystem
-
     clear
-    printLn "Welcome. This program installs"
-    printLn "a single node Codenvy ${VERSION} On-Prem."
-    printLn
-    printLn "Checking for system pre-requisites..."
 
+    printLn "Welcome. This program installs Codenvy."
     printLn
-    printLn "RESOURCE      : RECOMMENDED : AVAILABLE"
-    printLn "RAM           : 8 GB        : ${availableRAM} GB"
-    printLn "CPU           : 4 cores     : ${availableCores} cores"
-    printLn "Disk Space    : 300 GB      : ${availableDiskSpace} GB"
-    printLn
-    printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
-    printLn "Configuration File : "${CONFIG}
+    printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
+    printLn "Configuration File:  "${CONFIG}
     printLn
 
-    doCheckAvailablePorts_single
+    doCheckAvailableResources_single
+
+    checkingAccessToExternalDependencies
+
+    printLn "Configuring system properties..."
+    printLn
+    preconfigureSystem
 
     if [[ ${SILENT} == true ]]; then
         [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
@@ -367,56 +361,200 @@ printPreInstallInfo_single() {
         printLn
         printLn
     else
-        doCheckAvailableResources_single
-
-        [ -z "${SYSTEM_ADMIN_NAME}" ]     && printLn "System admin user name : will prompt for entry"
-        [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password  : will prompt for entry"
-        [ -z "${HOST_NAME}" ]             && printLn "Codenvy DNS hostname   : will prompt for entry"
+        [ -z "${SYSTEM_ADMIN_NAME}" ]     && printLn "System admin user name:  will prompt for entry"
+        [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password:   will prompt for entry"
+        [ -z "${HOST_NAME}" ]             && printLn "Codenvy hostname:        will prompt for entry"
 
         printLn
 
         if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
-            print "System admin user name: "
+            print "System admin user name:  "
             SYSTEM_ADMIN_NAME=$(askProperty)
         fi
 
         if [ -z "${SYSTEM_ADMIN_PASSWORD}" ]; then
-            print "System admin password: "
+            print "System admin password:   "
             SYSTEM_ADMIN_PASSWORD=$(askProperty)
         fi
 
         if [ -z "${HOST_NAME}" ]; then
-            print "Codenvy DNS hostname: "
+            print "Codenvy hostname:        "
             HOST_NAME=$(askProperty)
         fi
 
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
         insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         insertProperty "host_url" ${HOST_NAME}
+        printLn
 
-        printLn
-        printLn
-        printLn
+        doCheckAvailablePorts_single
     fi
 
-    pressYKeyToContinue
+    pressYKeyToContinue "Proceed?"
     printLn
 }
 
 doCheckAvailableResources_single() {
-    MIN_RAM=8000000
+    printLn "Checking system pre-requisites..."
+    printLn
+
+    osIssueFound=false
+
+    case `uname` in
+        Linux )
+            if [ -f /etc/redhat-release ] ; then
+            osType=centos;
+            osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+            osToDisplay=`cat /etc/redhat-release | sed 's/Linux release //'`
+
+        elif [ -f /etc/SuSE-release ] ; then
+            osType="SuSE"
+            osToDisplay=osType
+
+        elif [ -f /etc/debian_version ]; then
+            osType=debian;
+            osToDisplay=`cat /etc/issue.net`;
+
+        elif [ -f /etc/lsb-release ]; then
+            osType=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')
+            osToDisplay=osType
+        fi
+        ;;
+
+      * )
+         osType="";
+         osToDisplay=`uname`;
+         ;;
+    esac
+
+    if [[ ${osType} == "centos" && ${VERSION} == "3.1.0" && ${osVersion} != "6" ]]; then
+        osIssueFound=true
+    fi
+
+    if [[ ${osType} == "centos" && ${CODENVY_TYPE} == "multi" && ${osVersion} != "7" ]]; then
+        osIssueFound=true
+    fi
+
+    if [[ ${osType} != "centos" ]]; then
+        osIssueFound=true
+    fi
+
+    printLn "DETECTED OS: $(printf "%-29s" "${osToDisplay}") "$([ ${osIssueFound} == false ] && echo " [OK]" || echo " [NOT OK]")
+
+    resourceIssueFound=false
+
+    MIN_RAM=8000000 # in KB
     MIN_CORES=4
-    MIN_DISK_SPACE=300000000
+    MIN_DISK_SPACE=300000000 # in KB
 
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
-    availableCores=`grep -c ^processor /proc/cpuinfo`
+    availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+    availableRAMIssue=false
 
-    if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_CORES} > ${availableCores} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
-        printLn "WARNING: available resources don't meet recommended"
-        pressYKeyToContinue "Confirm installation"
+    availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
+    availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+    availableDiskSpaceIssue=false
+
+    availableCores=`grep -c ^processor /proc/cpuinfo`
+    availableCoresIssue=false
+
+    if (( ${availableRAM} < ${MIN_RAM} )); then
+        resourceIssueFound=true
+        availableRAMIssue=true
+    fi
+
+    if (( ${availableCores} < ${MIN_CORES})); then
+        resourceIssueFound=true
+        availableCoresIssue=true
+    fi
+
+    if (( ${availableDiskSpace} < ${MIN_DISK_SPACE})); then
+        resourceIssueFound=true
+        availableDiskSpaceIssue=true
+    fi
+
+    printLn
+    printLn "                RECOMMENDED     AVAILABLE"
+    printLn "RAM             8 GB            $(printf "%-11s" "${availableRAMToDisplay} GB")"$([ ${availableRAMIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+    printLn "CPU             4 cores         $(printf "%-11s" "${availableCores} cores")"$([ ${availableCoresIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+    printLn "Disk Space      300 GB          $(printf "%-11s" "${availableDiskSpaceToDisplay} GB")"$([ ${availableDiskSpaceIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+    printLn
+
+    if [[ ${osIssueFound} == true ]]; then
+        printLn "!!! The OS version or config do not match requirements. !!!"
+    fi
+
+    if [[ ${resourceIssueFound} == true ]]; then
+        printLn "!!! The resources available are lower than required.    !!!"
+    fi
+
+    printLn
+
+    if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
+        if [[ ${SILENT} == true ]]; then
+            exit 1;
+        fi
+
+        pressYKeyToContinue "Proceed?"
         printLn
     fi
+}
+
+checkingAccessToExternalDependencies() {
+    printLn "Checking access to external dependencies..."
+    printLn
+
+    resourceIssueFound=false
+
+    checkUrl https://install.codenvycorp.com || resourceIssueFound=true
+    checkUrl http://archive.apache.org/dist/ant/binaries || resourceIssueFound=true
+    checkUrl ${JAVA_URL} "Cookie: oraclelicense=accept-securebackup-cookie" || resourceIssueFound=true
+    checkUrl http://dl.fedoraproject.org/pub/epel/ || resourceIssueFound=true
+    checkUrl https://storage.googleapis.com/appengine-sdks/ || resourceIssueFound=true
+    checkUrl http://www.us.apache.org/dist/maven/ || resourceIssueFound=true
+    checkUrl https://repo.mongodb.org/yum/redhat/ || resourceIssueFound=true
+    checkUrl http://repo.mysql.com/ || resourceIssueFound=true
+    checkUrl http://nginx.org/packages/centos/ || resourceIssueFound=true
+    checkUrl http://yum.postgresql.org/ || resourceIssueFound=true
+    checkUrl http://yum.puppetlabs.com/ || resourceIssueFound=true
+    checkUrl http://repo.zabbix.com/zabbix/ || resourceIssueFound=true
+    checkUrl http://mirror.centos.org/centos/ || resourceIssueFound=true
+
+    printLn
+
+    if [[ ${resourceIssueFound} == true ]]; then
+        printLn "!!! Some repositories are not accessible. The installation will fail. !!!"
+        printLn "!!! Consider setting up a proxy server.                               !!!"
+        printLn "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/       !!!"
+        printLn
+    fi
+
+    if [[ ${resourceIssueFound} == true ]]; then
+        if [[ ${SILENT} == true ]]; then
+            exit 1;
+        fi
+
+        pressYKeyToContinue "Proceed?"
+        printLn
+    fi
+}
+
+# parameter 1 - url
+# parameter 2 - cookie
+checkUrl() {
+    checkFailed=0
+    url=$1
+    cookie=$2
+
+    if [[ ${cookie} == "" ]]; then
+        wget --quiet --spider ${url} || checkFailed=1
+    else
+        wget --quiet --spider --no-cookies --no-check-certificate --header "${cookie}" ${url} || checkFailed=1
+    fi
+
+    printLn "$(printf "%-79s" ${url})"$([ ${checkFailed} == 0 ] && echo " [OK]" || echo " [NOT OK]")
+
+    return ${checkFailed}
 }
 
 printPreInstallInfo_multi() {
