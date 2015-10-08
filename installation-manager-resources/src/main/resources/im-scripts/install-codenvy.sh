@@ -348,7 +348,7 @@ printPreInstallInfo_single() {
 
     printLn "Checking system pre-requisites..."
     printLn
-    doCheckAvailableResources_single 8000000 4 300000000
+    doCheckAvailableResourcesLocally 8000000 4 300000000
 
     printLn "Checking access to external dependencies..."
     printLn
@@ -403,7 +403,7 @@ printPreInstallInfo_single() {
 # parameter 1 - MIN_RAM_KB
 # parameter 2 - MIN_CORES
 # parameter 3 - MIN_DISK_SPACE_KB
-doCheckAvailableResources_single() {
+doCheckAvailableResourcesLocally() {
     MIN_RAM_KB=$1
     MIN_CORES=$2
     MIN_DISK_SPACE_KB=$3
@@ -579,7 +579,7 @@ printPreInstallInfo_multi() {
 
     printLn "Checking system pre-requisites..."
     printLn
-    doCheckAvailableResources_single 1000000 1 14000000
+    doCheckAvailableResourcesLocally 1000000 1 14000000
 
     printLn "Configuring system properties..."
     printLn
@@ -641,7 +641,7 @@ printPreInstallInfo_multi() {
 
     printLn "Checking access to Codenvy nodes..."
     printLn
-    doCheckAvailableResources_multi
+    doCheckAvailableResourcesOnNodes
     printLn
     doCheckAvailablePorts_multi
 
@@ -653,7 +653,7 @@ printPreInstallInfo_multi() {
     printLn
 }
 
-doCheckAvailableResources_multi() {
+doCheckAvailableResourcesOnNodes() {
     globalResourseIssueFound=false
 
     doGetHostsVariables
