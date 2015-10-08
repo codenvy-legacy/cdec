@@ -411,7 +411,7 @@ doCheckAvailableResources_single() {
     osIssueFound=false
     osType=""
     osVersion=""
-    osToDisplay=""
+    osInfo=""
 
     case `uname` in
         Linux )
@@ -419,24 +419,24 @@ doCheckAvailableResources_single() {
             if [ -f /etc/redhat-release ] ; then
                 osType="CentOS"
                 osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
-                osToDisplay=`cat /etc/redhat-release | sed 's/Linux release //'`
+                osInfo=`cat /etc/redhat-release | sed 's/Linux release //'`
 
             # SuSE
             elif [ -f /etc/SuSE-release ] ; then
-                osToDisplay="SuSE"
+                osInfo="SuSE"
 
             # debian
             elif [ -f /etc/debian_version ]; then
-                osToDisplay=`cat /etc/issue.net`
+                osInfo=`cat /etc/issue.net`
 
             # other linux OS
             elif [ -f /etc/lsb-release ]; then
-                osToDisplay=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')
+                osInfo=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')
             fi
             ;;
 
         * )
-            osToDisplay=`uname`;
+            osInfo=`uname`;
             ;;
     esac
 
@@ -445,16 +445,17 @@ doCheckAvailableResources_single() {
         osIssueFound=true
     fi
 
-    printLn "DETECTED OS: $(printf "%-29s" "${osToDisplay}") "$([ ${osIssueFound} == false ] && echo " [OK]" || echo " [NOT OK]")
+    osInfoToDisplay=$(printf "%-30s" "${osInfo}")
+    osStateToDisplay=$([ ${osIssueFound} == false ] && echo "[OK]" || echo "[NOT OK]")
+    printLn "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
+
 
     resourceIssueFound=false
 
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
     availableRAMIssue=false
 
     availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
-    availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
     availableDiskSpaceIssue=false
 
     availableCores=`grep -c ^processor /proc/cpuinfo`
@@ -475,11 +476,25 @@ doCheckAvailableResources_single() {
         availableDiskSpaceIssue=true
     fi
 
+    minRAMToDisplay=$(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB")
+    availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+    availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
+    RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+
+    minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
+    availableCoresToDisplay=$(printf "%-11s" "${availableCores} cores")
+    coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+
+    minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
+    availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+    availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
+    diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+
     printLn
     printLn "                RECOMMENDED     AVAILABLE"
-    printLn "RAM             $(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB") $(printf "%-11s" "${availableRAMToDisplay} GB")"$([ ${availableRAMIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
-    printLn "CPU             $(printf "%-15s" "${MIN_CORES} cores") $(printf "%-11s" "${availableCores} cores")"$([ ${availableCoresIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
-    printLn "Disk Space      $(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB") $(printf "%-11s" "${availableDiskSpaceToDisplay} GB")"$([ ${availableDiskSpaceIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+    printLn "RAM             ${minRAMToDisplay} ${availableRAMToDisplay} ${RAMStateToDisplay}"
+    printLn "CPU             ${minCoresToDisplay} ${availableCoresToDisplay} ${coresStateToDisplay}"
+    printLn "Disk Space      ${minDiskSpaceToDisplay} ${availableDiskSpaceToDisplay} ${diskStateToDisplay}"
     printLn
 
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
@@ -658,31 +673,31 @@ doCheckAvailableResources_multi() {
 
         osType=""
         osVersion=""
-        osToDisplay=""
+        osInfo=""
 
         case `${SSH_PREFIX} "uname" | sed 's/\r//'` in
             Linux )
                 if [[ `${SSH_PREFIX} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
                     osType="CentOS";
                     osVersion=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
-                    osToDisplay=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
+                    osInfo=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
 
                 # SuSE
                 elif [[ `${SSH_PREFIX} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osToDisplay="SuSE"
+                    osInfo="SuSE"
 
                 # debian
                 elif [[ `${SSH_PREFIX} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osToDisplay=`${SSH_PREFIX} "cat /etc/issue.net" | sed 's/\r//'`
+                    osInfo=`${SSH_PREFIX} "cat /etc/issue.net" | sed 's/\r//'`
 
                 # other linux OS
                 elif [[ `${SSH_PREFIX} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osToDisplay=`${SSH_PREFIX} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
+                    osInfo=`${SSH_PREFIX} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
                 fi
                 ;;
 
             * )
-                osToDisplay=`${SSH_PREFIX} "uname" | sed 's/\r//'`;
+                osInfo=`${SSH_PREFIX} "uname" | sed 's/\r//'`;
                 ;;
         esac
 
@@ -691,14 +706,13 @@ doCheckAvailableResources_multi() {
             osIssueFound=true
         fi
 
+
         resourceIssueFound=false
 
         availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
-        availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
         availableRAMIssue=false
 
         availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
-        availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
         availableDiskSpaceIssue=false
 
         if (( ${availableRAM} < ${MIN_RAM_KB} )); then
@@ -716,15 +730,26 @@ doCheckAvailableResources_multi() {
 
             globalResourseIssueFound=true
 
+            osInfoToDisplay=$(printf "%-30s" "${osInfo}")
             if [[ ${osIssueFound} == true ]]; then
-                printLn "> DETECTED OS: $(printf "%-30s" "${osToDisplay}") [NOT OK]"
+                printLn "> DETECTED OS: ${osInfoToDisplay} [NOT OK]"
                 printLn
             fi
 
+            minRAMToDisplay=$(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB")
+            availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+            availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
+            RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+
+            minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
+            availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+            availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
+            diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+
             if [[ ${resourceIssueFound} == true ]]; then
                 printLn ">                 RECOMMENDED     AVAILABLE"
-                printLn "> RAM             $(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB") $(printf "%-11s" "${availableRAMToDisplay} GB")"$([ ${availableRAMIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
-                printLn "> Disk Space      $(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB") $(printf "%-11s" "${availableDiskSpaceToDisplay} GB")"$([ ${availableDiskSpaceIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+                printLn "> RAM             ${minRAMToDisplay} ${availableRAMToDisplay} ${RAMStateToDisplay}"
+                printLn "> Disk Space      ${minDiskSpaceToDisplay} ${availableDiskSpaceToDisplay} ${diskStateToDisplay}"
                 printLn
             fi
         else
