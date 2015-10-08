@@ -195,7 +195,7 @@ askHostnameAndInsertProperty() {
             FIRST_ATTEMPT=false
         fi
 
-        print "${PROMPT}: "
+        print "$(printf "%-35s" "${PROMPT}:") "
 
         read VALUE
 
@@ -203,7 +203,7 @@ askHostnameAndInsertProperty() {
         if [ "${OUTPUT}" == "success" ]; then
            break
         else
-            printLn "The hostname '${VALUE}' isn't availabe or wrong. Please try again..."
+            printLn "$(printRed "ERROR"): The hostname '${VALUE}' isn't availabe or wrong. Please try again..."
         fi
     done
 
@@ -346,8 +346,12 @@ printPreInstallInfo_single() {
     printLn "Configuration File:  "${CONFIG}
     printLn
 
-    doCheckAvailableResources_single
+    printLn "Checking system pre-requisites..."
+    printLn
+    doCheckAvailableResources_single 8000000 4 300000000
 
+    printLn "Checking access to external dependencies..."
+    printLn
     checkingAccessToExternalDependencies
 
     printLn "Configuring system properties..."
@@ -392,60 +396,58 @@ printPreInstallInfo_single() {
 
     pressYKeyToContinue "Proceed?"
     printLn
+    printLn
+    printLn
 }
 
+# parameter 1 - MIN_RAM_KB
+# parameter 2 - MIN_CORES
+# parameter 3 - MIN_DISK_SPACE_KB
 doCheckAvailableResources_single() {
-    printLn "Checking system pre-requisites..."
-    printLn
+    MIN_RAM_KB=$1
+    MIN_CORES=$2
+    MIN_DISK_SPACE_KB=$3
 
     osIssueFound=false
+    osType=""
+    osVersion=""
+    osToDisplay=""
 
     case `uname` in
         Linux )
+            # CentOS
             if [ -f /etc/redhat-release ] ; then
-            osType=centos;
-            osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
-            osToDisplay=`cat /etc/redhat-release | sed 's/Linux release //'`
+                osType="CentOS"
+                osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+                osToDisplay=`cat /etc/redhat-release | sed 's/Linux release //'`
 
-        elif [ -f /etc/SuSE-release ] ; then
-            osType="SuSE"
-            osToDisplay=osType
+            # SuSE
+            elif [ -f /etc/SuSE-release ] ; then
+                osToDisplay="SuSE"
 
-        elif [ -f /etc/debian_version ]; then
-            osType=debian;
-            osToDisplay=`cat /etc/issue.net`;
+            # debian
+            elif [ -f /etc/debian_version ]; then
+                osToDisplay=`cat /etc/issue.net`
 
-        elif [ -f /etc/lsb-release ]; then
-            osType=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')
-            osToDisplay=osType
-        fi
-        ;;
+            # other linux OS
+            elif [ -f /etc/lsb-release ]; then
+                osToDisplay=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')
+            fi
+            ;;
 
-      * )
-         osType="";
-         osToDisplay=`uname`;
-         ;;
+        * )
+            osToDisplay=`uname`;
+            ;;
     esac
 
-    if [[ ${osType} == "centos" && ${VERSION} == "3.1.0" && ${osVersion} != "6" ]]; then
-        osIssueFound=true
-    fi
-
-    if [[ ${osType} == "centos" && ${CODENVY_TYPE} == "multi" && ${osVersion} != "7" ]]; then
-        osIssueFound=true
-    fi
-
-    if [[ ${osType} != "centos" ]]; then
+    # check on OS CentOS 7
+    if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
         osIssueFound=true
     fi
 
     printLn "DETECTED OS: $(printf "%-29s" "${osToDisplay}") "$([ ${osIssueFound} == false ] && echo " [OK]" || echo " [NOT OK]")
 
     resourceIssueFound=false
-
-    MIN_RAM=8000000 # in KB
-    MIN_CORES=4
-    MIN_DISK_SPACE=300000000 # in KB
 
     availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
     availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
@@ -458,7 +460,7 @@ doCheckAvailableResources_single() {
     availableCores=`grep -c ^processor /proc/cpuinfo`
     availableCoresIssue=false
 
-    if (( ${availableRAM} < ${MIN_RAM} )); then
+    if (( ${availableRAM} < ${MIN_RAM_KB} )); then
         resourceIssueFound=true
         availableRAMIssue=true
     fi
@@ -468,42 +470,38 @@ doCheckAvailableResources_single() {
         availableCoresIssue=true
     fi
 
-    if (( ${availableDiskSpace} < ${MIN_DISK_SPACE})); then
+    if (( ${availableDiskSpace} < ${MIN_DISK_SPACE_KB})); then
         resourceIssueFound=true
         availableDiskSpaceIssue=true
     fi
 
     printLn
     printLn "                RECOMMENDED     AVAILABLE"
-    printLn "RAM             8 GB            $(printf "%-11s" "${availableRAMToDisplay} GB")"$([ ${availableRAMIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
-    printLn "CPU             4 cores         $(printf "%-11s" "${availableCores} cores")"$([ ${availableCoresIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
-    printLn "Disk Space      300 GB          $(printf "%-11s" "${availableDiskSpaceToDisplay} GB")"$([ ${availableDiskSpaceIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
-    printLn
-
-    if [[ ${osIssueFound} == true ]]; then
-        printLn "!!! The OS version or config do not match requirements. !!!"
-    fi
-
-    if [[ ${resourceIssueFound} == true ]]; then
-        printLn "!!! The resources available are lower than required.    !!!"
-    fi
-
+    printLn "RAM             $(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB") $(printf "%-11s" "${availableRAMToDisplay} GB")"$([ ${availableRAMIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+    printLn "CPU             $(printf "%-15s" "${MIN_CORES} cores") $(printf "%-11s" "${availableCores} cores")"$([ ${availableCoresIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+    printLn "Disk Space      $(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB") $(printf "%-11s" "${availableDiskSpaceToDisplay} GB")"$([ ${availableDiskSpaceIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
     printLn
 
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
+        if [[ ${osIssueFound} == true ]]; then
+            printLn "!!! The OS version or config do not match requirements. !!!"
+        fi
+
+        if [[ ${resourceIssueFound} == true ]]; then
+            printLn "!!! The resources available are lower than required.    !!!"
+        fi
+
         if [[ ${SILENT} == true ]]; then
             exit 1;
         fi
 
+        printLn
         pressYKeyToContinue "Proceed?"
         printLn
     fi
 }
 
 checkingAccessToExternalDependencies() {
-    printLn "Checking access to external dependencies..."
-    printLn
-
     resourceIssueFound=false
 
     checkUrl https://install.codenvycorp.com || resourceIssueFound=true
@@ -527,9 +525,7 @@ checkingAccessToExternalDependencies() {
         printLn "!!! Consider setting up a proxy server.                               !!!"
         printLn "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/       !!!"
         printLn
-    fi
 
-    if [[ ${resourceIssueFound} == true ]]; then
         if [[ ${SILENT} == true ]]; then
             exit 1;
         fi
@@ -558,120 +554,196 @@ checkUrl() {
 }
 
 printPreInstallInfo_multi() {
+    clear
+
+    printLn "Welcome. This program installs Codenvy."
+    printLn
+    printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
+    printLn "Configuration File:  "${CONFIG}
+    printLn
+
+    printLn "Checking system pre-requisites..."
+    printLn
+    doCheckAvailableResources_single 1000000 1 14000000
+
+    printLn "Configuring system properties..."
+    printLn
     preconfigureSystem
 
-    clear
-    printLn "Welcome. This program installs"
-    printLn "a multi-node Codenvy ${VERSION} On-Prem."
-    printLn
-    printLn "Checking for system pre-requisites..."
-    printLn
-    printLn "Recommended resources for the nodes:"
-    printLn "RAM         : 1 GB"
-    printLn "Disk Space  : 14 GB"
-    printLn "OS          : CentOS 7"
-    printLn
-    printLn "Recommended resources for the runners:"
-    printLn "RAM         : 1.5 GB"
-    printLn "Disk Space  : 50 GB"
-    printLn "OS          : CentOS 7"
-    printLn
-    printLn "Sizing Guide       : http://docs.codenvy.com/onprem"
-    printLn "Configuration File : "${CONFIG}
-    printLn
-
     if [[ ${SILENT} == true ]]; then
-        [ ! -z ${SYSTEM_ADMIN_NAME} ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-        [ ! -z ${SYSTEM_ADMIN_PASSWORD} ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        [ ! -z ${HOST_NAME} ] && insertProperty "host_url" ${HOST_NAME}
+        [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
+        [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
 
         doGetHostsVariables
 
-        printLn "Codenvy DNS hostname                    : "${HOST_NAME}
-        printLn "Codenvy Puppet Master node DNS hostname : "${PUPPET_MASTER_HOST_NAME}
-        printLn "Codenvy Data node DNS hostname          : "${DATA_HOST_NAME}
-        printLn "Codenvy API node DNS hostname           : "${API_HOST_NAME}
-        printLn "Codenvy Builder node DNS hostname       : "${BUILDER_HOST_NAME}
-        printLn "Codenvy Runner node DNS hostname        : "${RUNNER_HOST_NAME}
-        printLn "Codenvy Datasource node DNS hostname    : "${DATASOURCE_HOST_NAME}
-        printLn "Codenvy Analytics node DNS hostname     : "${ANALYTICS_HOST_NAME}
-        printLn "Codenvy Site node DNS hostname          : "${SITE_HOST_NAME}
+        printLn "Hostname of Codenvy              : "${HOST_NAME}
+        printLn "Hostname of Puppet master node   : "${PUPPET_MASTER_HOST_NAME}
+        printLn "Hostname of data node            : "${DATA_HOST_NAME}
+        printLn "Hostname of API node             : "${API_HOST_NAME}
+        printLn "Hostname of builder node         : "${BUILDER_HOST_NAME}
+        printLn "Hostname of runner node          : "${RUNNER_HOST_NAME}
+        printLn "Hostname of datasource node      : "${DATASOURCE_HOST_NAME}
+        printLn "Hostname of analytics node       : "${ANALYTICS_HOST_NAME}
+        printLn "Hostname of site node            : "${SITE_HOST_NAME}
         printLn
-        printLn
-
     else
-        [ -z ${SYSTEM_ADMIN_NAME} ] && printLn "System admin user name : will prompt for entry"
-        [ -z ${SYSTEM_ADMIN_PASSWORD} ] && printLn "System admin password  : will prompt for entry"
-        printLn "Codenvy nodes' DNS hostnames : will prompt for entry"
-
+        [ -z "${SYSTEM_ADMIN_NAME}" ]     && printLn "System admin user name:  will prompt for entry"
+        [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password:   will prompt for entry"
+        printLn "Codenvy hostnames:       will prompt for entry"
         printLn
 
         if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
-            print "System admin user name: "
+            print "System admin user name:             "
             SYSTEM_ADMIN_NAME=$(askProperty)
         fi
 
         if [ -z "${SYSTEM_ADMIN_PASSWORD}" ]; then
-            print "System admin password: "
+            print "System admin password:              "
             SYSTEM_ADMIN_PASSWORD=$(askProperty)
         fi
 
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
         insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        printLn
 
-        askHostnameAndInsertProperty "Please set the DNS hostname to be used by Codenvy" "host_url"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Puppet Master node" "puppet_master_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Data node" "data_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the API node" "api_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Builder node" "builder_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Runner node" "runner_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Datasource node" "datasource_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Analytics node" "analytics_host_name"
-        askHostnameAndInsertProperty "Please set the DNS hostname of the Site node" "site_host_name"
+        askHostnameAndInsertProperty "Set hostname of Codenvy" "host_url"
+        askHostnameAndInsertProperty "Set hostname of Puppet master node" "puppet_master_host_name"
+        askHostnameAndInsertProperty "Set hostname of data node" "data_host_name"
+        askHostnameAndInsertProperty "Set hostname of API node" "api_host_name"
+        askHostnameAndInsertProperty "Set hostname of builder node" "builder_host_name"
+        askHostnameAndInsertProperty "Set hostname of runner node" "runner_host_name"
+        askHostnameAndInsertProperty "Set hostname of datasource node" "datasource_host_name"
+        askHostnameAndInsertProperty "Set hostname of analytics node" "analytics_host_name"
+        askHostnameAndInsertProperty "Set hostname of site node" "site_host_name"
 
         clearLine
-        doCheckAvailableResources_multi
 
         printLn
+        pressYKeyToContinue "Proceed?"
         printLn
     fi
 
+    printLn "Checking access to Codenvy nodes..."
+    printLn
+    doCheckAvailableResources_multi
+    printLn
     doCheckAvailablePorts_multi
 
-    pressYKeyToContinue
+    clear
+    printLn "Checking access to external dependencies..."
+    printLn
+    checkingAccessToExternalDependencies
+    printLn
     printLn
 }
 
-
 doCheckAvailableResources_multi() {
+    globalResourseIssueFound=false
+
     doGetHostsVariables
 
     for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+        SSH_PREFIX="ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
+
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
-            MIN_RAM=1500000 # in KB
-            MIN_DISK_SPACE=50000000 # in KB
+            MIN_RAM_KB=1500000
+            MIN_DISK_SPACE_KB=50000000
         else
-            MIN_RAM=1000000 # in KB
-            MIN_DISK_SPACE=14000000 # in KB
+            MIN_RAM_KB=1000000
+            MIN_DISK_SPACE_KB=14000000
         fi
 
-        availableRAM=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
-        availableDiskSpace=`ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
-        if (( ${MIN_RAM} > ${availableRAM} )) || (( ${MIN_DISK_SPACE} > ${availableDiskSpace} )); then
-            printLn
-            printLn "WARNING: available resources at ${HOST} don't meet recommended"
-            printLn
-            printLn "RESOURCE      : AVAILABLE"
-            printLn "RAM           : `echo ${availableRAM} | awk '{tmp = $1/1000/1000; printf"%0.1f",tmp}'` GB"
-            printLn "Disk Space    : $(( ${availableDiskSpace} / 1000 /1000 )) GB"
-            printLn
-            pressYKeyToContinue "Confirm installation"
+        osIssueFound=false
 
-            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
-            printLn; printLn; printLn; printLn; printLn; printLn; printLn; printLn
-            cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp; cursorUp
+        osType=""
+        osVersion=""
+        osToDisplay=""
+
+        case `${SSH_PREFIX} "uname" | sed 's/\r//'` in
+            Linux )
+                if [[ `${SSH_PREFIX} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osType="CentOS";
+                    osVersion=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+                    osToDisplay=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
+
+                # SuSE
+                elif [[ `${SSH_PREFIX} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osToDisplay="SuSE"
+
+                # debian
+                elif [[ `${SSH_PREFIX} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osToDisplay=`${SSH_PREFIX} "cat /etc/issue.net" | sed 's/\r//'`
+
+                # other linux OS
+                elif [[ `${SSH_PREFIX} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osToDisplay=`${SSH_PREFIX} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
+                fi
+                ;;
+
+            * )
+                osToDisplay=`${SSH_PREFIX} "uname" | sed 's/\r//'`;
+                ;;
+        esac
+
+        # check on OS CentOS 7
+        if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
+            osIssueFound=true
+        fi
+
+        resourceIssueFound=false
+
+        availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+        availableRAMIssue=false
+
+        availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+        availableDiskSpaceIssue=false
+
+        if (( ${availableRAM} < ${MIN_RAM_KB} )); then
+            resourceIssueFound=true
+            availableRAMIssue=true
+        fi
+
+        if (( ${availableDiskSpace} < ${MIN_DISK_SPACE_KB})); then
+            resourceIssueFound=true
+            availableDiskSpaceIssue=true
+        fi
+
+        if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
+            printLn "$(printf "%-45s" "${HOST}") [NOT OK]"
+
+            globalResourseIssueFound=true
+
+            if [[ ${osIssueFound} == true ]]; then
+                printLn "> DETECTED OS: $(printf "%-30s" "${osToDisplay}") [NOT OK]"
+                printLn
+            fi
+
+            if [[ ${resourceIssueFound} == true ]]; then
+                printLn ">                 RECOMMENDED     AVAILABLE"
+                printLn "> RAM             $(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB") $(printf "%-11s" "${availableRAMToDisplay} GB")"$([ ${availableRAMIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+                printLn "> Disk Space      $(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB") $(printf "%-11s" "${availableDiskSpaceToDisplay} GB")"$([ ${availableDiskSpaceIssue} == false ] && echo " [OK]" || echo " [NOT OK]")
+                printLn
+            fi
+        else
+            printLn "$(printf "%-45s" "${HOST}") [OK]"
         fi
     done
+
+    if [[ ${globalResourseIssueFound} == true ]]; then
+        printLn "!!! Some nodes do not match requirements.             !!!"
+        printLn "!!! See: http://docs.codenvy.com/onprem/#sizing-guide !!!"
+        printLn
+
+        if [[ ${SILENT} == true ]]; then
+            exit 1;
+        fi
+
+        pressYKeyToContinue "Proceed?"
+        printLn
+    fi
 }
 
 doConfigureSystem() {
