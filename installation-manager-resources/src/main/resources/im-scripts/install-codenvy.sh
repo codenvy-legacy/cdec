@@ -17,7 +17,8 @@ unset SYSTEM_ADMIN_NAME
 unset SYSTEM_ADMIN_PASSWORD
 unset PROGRESS_PID
 
-JAVA_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
+JDK_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
+JRE_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz
 
 PUPPET_MASTER_PORTS=("tcp:8140");
 SITE_PORTS=("tcp:80" "tcp:443" "tcp:10050" "tcp:32001" "tcp:32101");
@@ -117,7 +118,7 @@ preconfigureSystem() {
 }
 
 installJava() {
-    wget -q --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' ${JAVA_URL} --output-document=jre.tar.gz
+    wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz
 
     tar -xf jre.tar.gz -C ${DIR}
     mv ${DIR}/jre1.8.0_45 ${DIR}/jre
@@ -396,12 +397,12 @@ printPreInstallInfo_single() {
         printLn
 
         doCheckAvailablePorts_single
-    fi
 
-    pressYKeyToContinue "Proceed?"
-    printLn
-    printLn
-    printLn
+        pressYKeyToContinue "Proceed?"
+        printLn
+        printLn
+        printLn
+    fi
 }
 
 # parameter 1 - MIN_RAM_KB
@@ -480,8 +481,8 @@ doCheckAvailableResourcesLocally() {
         availableDiskSpaceIssue=true
     fi
 
-    minRAMToDisplay=$(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB")
-    availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+    minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
+    availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
     availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
     RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
 
@@ -510,13 +511,16 @@ doCheckAvailableResourcesLocally() {
             printLn "!!! The resources available are lower than required.    !!!"
         fi
 
-        if [[ ${SILENT} == true ]]; then
+        if [[ ${SILENT} == true && ${osIssueFound} == true ]]; then
             exit 1;
         fi
 
         printLn
-        pressYKeyToContinue "Proceed?"
-        printLn
+
+        if [[ ${SILENT} != true ]]; then
+            pressYKeyToContinue "Proceed?"
+            printLn
+        fi
     fi
 }
 
@@ -525,7 +529,7 @@ checkingAccessToExternalDependencies() {
 
     checkUrl https://install.codenvycorp.com || resourceIssueFound=true
     checkUrl http://archive.apache.org/dist/ant/binaries || resourceIssueFound=true
-    checkUrl ${JAVA_URL} "Cookie: oraclelicense=accept-securebackup-cookie" || resourceIssueFound=true
+    checkUrl ${JDK_URL} "Cookie: oraclelicense=accept-securebackup-cookie" || resourceIssueFound=true
     checkUrl http://dl.fedoraproject.org/pub/epel/ || resourceIssueFound=true
     checkUrl https://storage.googleapis.com/appengine-sdks/ || resourceIssueFound=true
     checkUrl http://www.us.apache.org/dist/maven/ || resourceIssueFound=true
@@ -613,12 +617,12 @@ printPreInstallInfo_multi() {
         printLn
 
         if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
-            print "System admin user name:             "
+            print "System admin user name:  "
             SYSTEM_ADMIN_NAME=$(askProperty)
         fi
 
         if [ -z "${SYSTEM_ADMIN_PASSWORD}" ]; then
-            print "System admin password:              "
+            print "System admin password:   "
             SYSTEM_ADMIN_PASSWORD=$(askProperty)
         fi
 
@@ -658,7 +662,8 @@ printPreInstallInfo_multi() {
 }
 
 doCheckAvailableResourcesOnNodes() {
-    globalResourseIssueFound=false
+    globalNodeIssueFound=false
+    globalOsIssueFound=false
 
     doGetHostsVariables
 
@@ -710,7 +715,6 @@ doCheckAvailableResourcesOnNodes() {
             osIssueFound=true
         fi
 
-
         resourceIssueFound=false
 
         availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
@@ -730,9 +734,9 @@ doCheckAvailableResourcesOnNodes() {
         fi
 
         if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
-            printLn "$(printf "%-45s" "${HOST}") [NOT OK]"
+            printLn "$(printf "%-43s" "${HOST}") [NOT OK]"
 
-            globalResourseIssueFound=true
+            globalNodeIssueFound=true
 
             osInfoToDisplay=$(printf "%-30s" "${osInfo}")
             if [[ ${osIssueFound} == true ]]; then
@@ -740,12 +744,12 @@ doCheckAvailableResourcesOnNodes() {
                 printLn
             fi
 
-            minRAMToDisplay=$(printf "%-15s" "$(printf "%0.1f" "$(( ${MIN_RAM_KB} /1000/1000 ))") GB")
-            availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.1f",tmp}'`
+            minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
+            availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
             availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
             RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
 
-            minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
+            minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB}/1000/1000 )) GB")
             availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
             availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
             diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
@@ -757,21 +761,23 @@ doCheckAvailableResourcesOnNodes() {
                 printLn
             fi
         else
-            printLn "$(printf "%-45s" "${HOST}") [OK]"
+            printLn "$(printf "%-43s" "${HOST}") [OK]"
         fi
     done
 
-    if [[ ${globalResourseIssueFound} == true ]]; then
+    if [[ ${globalNodeIssueFound} == true ]]; then
         printLn "!!! Some nodes do not match requirements.             !!!"
         printLn "!!! See: http://docs.codenvy.com/onprem/#sizing-guide !!!"
         printLn
 
-        if [[ ${SILENT} == true ]]; then
+        if [[ ${SILENT} == true && ${globalOsIssueFound} == true ]]; then
             exit 1;
         fi
 
-        pressYKeyToContinue "Proceed?"
-        printLn
+        if [[ ${SILENT} != true ]]; then
+            pressYKeyToContinue "Proceed?"
+            printLn
+        fi
     fi
 }
 
