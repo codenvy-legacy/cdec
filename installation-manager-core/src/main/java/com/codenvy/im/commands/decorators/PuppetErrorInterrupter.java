@@ -122,6 +122,8 @@ public class PuppetErrorInterrupter implements Command {
         if (nodes == null) {
             lookingForPuppetError(null);
 
+
+
         } else {
             for (NodeConfig node : nodes) {
                 lookingForPuppetError(node);

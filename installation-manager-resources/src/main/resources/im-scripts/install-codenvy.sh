@@ -332,7 +332,11 @@ doCheckAvailablePorts_multi() {
             PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
             PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
 
-            validatePortRemote "${PROTOCOL}" "${PORT_ONLY}" ${HOST}
+            if [[ ${HOST} == ${PUPPET_MASTER_HOST_NAME} ]]; then
+                validatePortLocal "${PROTOCOL}" "${PORT_ONLY}"
+            else
+                validatePortRemote "${PROTOCOL}" "${PORT_ONLY}" ${HOST}
+            fi
         done
     done
 }

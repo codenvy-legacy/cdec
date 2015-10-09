@@ -127,7 +127,7 @@ public class TestNodeConfig {
 
     @Test
     public void testTypeEnum() throws Exception {
-        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS, PUPPET_MASTER, API]");
+        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS, API]");
     }
 
     @Test
@@ -153,7 +153,6 @@ public class TestNodeConfig {
                                         "{'host':'runner1.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'RUNNER'}, " +
                                         "{'host':'datasource.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'DATASOURCE'}, " +
                                         "{'host':'analytics.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'ANALYTICS'}, " +
-                                        "{'host':'puppet-master.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'PUPPET_MASTER'}, " +
                                         "{'host':'api.dev.com', 'port':'22', 'user':'null', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'API'}]");
     }
 

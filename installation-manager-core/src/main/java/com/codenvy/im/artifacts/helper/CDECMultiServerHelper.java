@@ -209,39 +209,16 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
                     commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
-
-                commands.add(createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf"));
-                commands.add(createReplaceCommand("/etc/puppet/puppet.conf",
-                                                  "\\[main\\]",
-                                                  format("\\[master\\]\\n" +
-                                                         "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
-                                                         "    ca = true\\n" +
-                                                         "    ssldir = /var/lib/puppet/ssl\\n" +
-                                                         "    pluginsync = true\\n" +
-                                                         "\\n" +
-                                                         "\\[main\\]\\n" +
-                                                         "    certname = %s\\n" +
-                                                         "    privatekeydir = $ssldir/private_keys { group = service }\\n" +
-                                                         "    hostprivkey = $privatekeydir/$certname.pem { mode = 640 }\\n" +
-                                                         "    autosign = $confdir/autosign.conf { mode = 664 }\\n" +
-                                                         "\\n",
-                                                         config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
-
-                // remove "[agent]" section
-                commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                                  "  show_diff = true\\n" +
-                                                  "  pluginsync = true\\n" +
-                                                  "  report = true\\n" +
-                                                  "  default_schedules = false\\n" +
-                                                  "  certname = %s\\n" +
-                                                  "  runinterval = 300\\n" +
-                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())));
+                commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
 
                 // make it possible to sign up nodes' certificates automatically
                 String autosignFileContent = "";
                 for (NodeConfig node : nodeConfigs) {
                     autosignFileContent += format("%s\n", node.getHost());
                 }
+                autosignFileContent += format("%s\n", config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY));
+
                 commands.add(createCommand(format("sudo sh -c \"echo -e '%s' > /etc/puppet/autosign.conf\"",
                                                   autosignFileContent)));
 
@@ -250,7 +227,33 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
             case 4: {
                 List<Command> commands = new ArrayList<>();
-                commands.add(CommandLibrary.createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf", nodeConfigs));
+
+                // update puppet.conf on puppet master
+                commands.add(createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf"));
+
+                commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/" +
+                                                  "[master]\\n" +
+                                                  "  certname = %1$s\\n" +
+                                                  "\\n" +
+                                                  "\\[agent\\]\\n" +
+                                                  "  show_diff = true\\n" +
+                                                  "  pluginsync = true\\n" +
+                                                  "  report = true\\n" +
+                                                  "  default_schedules = false\\n" +
+                                                  "  certname = %1$s\\n/g' /etc/puppet/puppet.conf",
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+
+                commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
+                                                  "  server = %s\\n" +
+                                                  "  runinterval = 420\\n" +
+                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+
+                // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
+                commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'"));
+
+                // update puppet.conf on nodes
+                commands.add(createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf", nodeConfigs));
                 commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                                   "  server = %s\\n" +
                                                   "  runinterval = 420\\n" +
@@ -270,15 +273,18 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'", node));
                 }
 
-                return new MacroCommand(commands, "Configure puppet agents on each node");
+                return new MacroCommand(commands, "Configure puppet agents");
             }
 
             case 5:
                 return createCommand("sudo systemctl start puppetmaster");
 
             case 6:
-                return new MacroCommand(ImmutableList.of(createCommand("sudo systemctl start puppet", nodeConfigs)),
-                                        "Launch puppet agent");
+                List<Command> commands = new ArrayList<>();
+                commands.add(createCommand("sudo systemctl start puppet", nodeConfigs));
+                commands.add(createCommand("sudo systemctl start puppet"));
+
+                return new MacroCommand(commands, "Launch puppet agent");
 
             case 7:
                 NodeConfig siteNodeConfig = extractConfigFrom(config, NodeConfig.NodeType.SITE);
@@ -776,12 +782,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
         // remove /home/codenvy/archives and /home/codenvy-im/archives
         for (NodeConfig node : nodes) {
-            if (node.getType() == NodeConfig.NodeType.PUPPET_MASTER) {
-                commands.add(createCommand("sudo rm -rf /home/codenvy-im/archives", node));
-            } else {
-                commands.add(createCommand("sudo rm -rf /home/codenvy/archives", node));
-            }
+            commands.add(createCommand("sudo rm -rf /home/codenvy/archives", node));
         }
+        commands.add(createCommand("sudo rm -rf /home/codenvy-im/archives"));
 
         // stop Codenvy API server
         commands.add(createStopServiceCommand("codenvy", apiNode));
@@ -790,6 +793,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         for (NodeConfig node : nodes) {
             commands.add(createForcePuppetAgentCommand(node));
         }
+        commands.add(createForcePuppetAgentCommand());
+
 
         if (installedVersion != null) {
             // wait until API server starts

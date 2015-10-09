@@ -62,6 +62,8 @@ import static java.nio.file.Files.exists;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class ConfigManager {
+    public static final String PUPPET_MASTER_DEFAULT_HOSTNAME = "puppet-master.example.com";
+
     public static final Pattern PUPPET_PROP_TEMPLATE  = Pattern.compile(" *\\$([^\\s]+) *= *\"([^\"]*)\"");
     public static final Pattern CODENVY_PROP_TEMPLATE = Pattern.compile("^([^\\s=#]+)=(.*)");
 
@@ -216,13 +218,6 @@ public class ConfigManager {
                 case RUNNER: {
                     String replacingToken = "runner\\\\d+\\\\.example.com";
                     String replacement = format("runner\\\\d+\\\\%s", getBaseNodeDomain(node));
-                    replacements.put(replacingToken, replacement);
-                    break;
-                }
-
-                case PUPPET_MASTER: {
-                    String replacingToken = "puppet-master.example.com";
-                    String replacement = node.getHost();
                     replacements.put(replacingToken, replacement);
                     break;
                 }

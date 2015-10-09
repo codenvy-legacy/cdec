@@ -36,7 +36,6 @@ public class NodeConfig {
         RUNNER,
         DATASOURCE,
         ANALYTICS,
-        PUPPET_MASTER,
         API,
     }
 
