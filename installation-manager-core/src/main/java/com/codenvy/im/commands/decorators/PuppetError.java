@@ -120,8 +120,7 @@ public class PuppetError {
     @Nullable
     public static PuppetError match(String logLine, NodeConfig node) {
         for (Type type : Type.values()) {
-            Boolean match = type.match(logLine);
-            if (match != null && match) {
+            if (type.match(logLine)) {
                 return new PuppetError(node, type.extractShortMessage(logLine));
             }
         }

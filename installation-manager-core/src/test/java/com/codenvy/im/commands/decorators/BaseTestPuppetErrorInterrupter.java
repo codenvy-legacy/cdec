@@ -18,9 +18,11 @@
 package com.codenvy.im.commands.decorators;
 
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
@@ -30,16 +32,23 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS;
 import static java.nio.file.Files.createDirectory;
 import static java.nio.file.Files.deleteIfExists;
+import static java.nio.file.Files.exists;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public abstract class BaseTestPuppetErrorInterrupter {
@@ -91,7 +100,7 @@ public abstract class BaseTestPuppetErrorInterrupter {
         spyInterrupter = getSpyInterrupter();
         when(spyInterrupter.useSudo()).thenReturn(false);   // prevents asking sudo password when running the tests locally
 
-        // create puppet log file
+        // create local puppet log file
         Path puppetLogFile = LOG_TMP_DIRECTORY.resolve(spyInterrupter.getPuppetLogFile().getFileName());
         FileUtils.write(puppetLogFile.toFile(), logWithoutErrorMessages);
         when(spyInterrupter.getPuppetLogFile()).thenReturn(puppetLogFile);
@@ -117,6 +126,8 @@ public abstract class BaseTestPuppetErrorInterrupter {
     abstract public PuppetErrorInterrupter getSpyInterrupter();
 
     abstract public InstallType getInstallType();
+
+    abstract public PuppetError getTestPuppetError();
 
     @AfterMethod
     public void tearDown() throws InterruptedException, IOException {
@@ -190,5 +201,42 @@ public abstract class BaseTestPuppetErrorInterrupter {
         };
     }
 
-    abstract public PuppetError getTestPuppetError();
+    protected void assertLocalErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException, InterruptedException {
+        Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
+        Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
+        assertTrue(pathToReportMatcher.find());
+
+        Path report = Paths.get(pathToReportMatcher.group());
+        assertNotNull(report);
+        assertTrue(exists(report));
+
+        CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
+        Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(spyInterrupter.getPuppetLogFile().getFileName());
+        assertTrue(exists(puppetLogFile));
+        String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
+        assertEquals(puppetLogFileContent, expectedContentOfLogFile);
+
+        Path imLogfile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
+        assertTrue(exists(imLogfile));
+    }
+
+
+    protected void assertNodeErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode)
+        throws IOException, InterruptedException {
+        Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
+        Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
+        assertTrue(pathToReportMatcher.find());
+
+        Path report = Paths.get(pathToReportMatcher.group());
+        assertNotNull(report);
+        assertTrue(exists(report));
+
+        CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
+        Path puppetLogFile =
+            TEST_TMP_DIRECTORY.resolve(testNode.getType().toString().toLowerCase()).resolve(spyInterrupter.getPuppetLogFile().getFileName());
+        assertTrue(exists(puppetLogFile));
+
+        String logFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
+        assertEquals(logFileContent, expectedContentOfLogFile);
+    }
 }

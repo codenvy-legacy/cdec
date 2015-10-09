@@ -42,7 +42,10 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -65,7 +68,66 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
-    public void testInterruptWhenAddError() throws InterruptedException, IOException {
+    public void testInterruptWhenAddErrorLocally() throws InterruptedException, IOException {
+        doReturn(Collections.emptyList()).when(spyInterrupter).readNLines(testNode);
+
+        final String[] failMessage = {null};
+
+        final String puppetErrorMessage = "2015-07-29 16:01:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n"
+                                          + "2015-07-29 16:02:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n"
+                                          + "2015-07-29 16:03:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n";
+
+        doAnswer(invocationOnMock -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
+                failMessage[0] = "mockCommand should be interrupted by spyInterrupter, but wasn't";
+                return null;
+            } catch (InterruptedException e) {
+                // it's okay here
+                return null;
+            }
+        }).when(mockCommand).execute();
+
+        Executors.newSingleThreadExecutor().submit(() -> {
+            try {
+                Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
+                FileUtils.writeStringToFile(spyInterrupter.getPuppetLogFile().toFile(), puppetErrorMessage, true);
+            } catch (Exception e) {
+                fail(e.getMessage());
+            }
+        });
+
+        try {
+            spyInterrupter.execute();
+        } catch (Exception e) {
+            assertEquals(e.getClass(), PuppetErrorException.class);
+
+            String errorMessage = e.getMessage();
+
+            Pattern errorMessagePattern = Pattern.compile(
+                "Puppet error: 'Could not retrieve catalog from remote server: No route to host - connect[(]2[)]'. " +
+                "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. " +
+                "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. " +
+                "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. " +
+                "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node/#install-troubleshooting.");
+
+            assertTrue("Actual errorMessage: " + errorMessage, errorMessagePattern.matcher(errorMessage).find());
+
+            assertLocalErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage);
+            return;
+        }
+
+        if (failMessage[0] != null) {
+            fail(failMessage[0]);
+        }
+
+        fail("spyInterrupter.execute() should throw PuppetErrorException");
+    }
+
+    @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
+    public void testInterruptWhenAddErrorOnNode() throws InterruptedException, IOException {
+        doReturn(Collections.emptyList()).when(spyInterrupter).readNLines(null);
+
         final String[] failMessage = {null};
 
         final String puppetErrorMessage = "2015-07-29 16:01:00 +0100 Puppet (err): Could not retrieve catalog from remote server: No route to host - connect(2)\n"
@@ -108,7 +170,7 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
 
             assertTrue("Actual errorMessage: " + errorMessage, errorMessagePattern.matcher(errorMessage).find());
 
-            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage, testNode);
+            assertNodeErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessage, testNode);
             return;
         }
 
@@ -117,25 +179,6 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
         }
 
         fail("spyInterrupter.execute() should throw PuppetErrorException");
-    }
-
-    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile, NodeConfig testNode)
-        throws IOException, InterruptedException {
-        Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
-        Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
-        assertTrue(pathToReportMatcher.find());
-
-        Path report = Paths.get(pathToReportMatcher.group());
-        assertNotNull(report);
-        assertTrue(Files.exists(report));
-
-        CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
-        Path puppetLogFile =
-            TEST_TMP_DIRECTORY.resolve(testNode.getType().toString().toLowerCase()).resolve(spyInterrupter.getPuppetLogFile().getFileName());
-        assertTrue(Files.exists(puppetLogFile));
-
-        String logFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
-        assertEquals(logFileContent, expectedContentOfLogFile);
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
@@ -230,13 +273,6 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
         }
 
         assertEquals(error, expectedError);
-    }
-
-    @AfterMethod
-    public void tearDown() throws InterruptedException, IOException {
-        PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
-
-        deleteDirectory(BASE_TMP_DIRECTORY.toFile());
     }
 
     @Override

@@ -119,12 +119,9 @@ public class PuppetErrorInterrupter implements Command {
     }
 
     private void listenToPuppetError() throws CommandException {
-        if (nodes == null) {
-            lookingForPuppetError(null);
+        lookingForPuppetError(null);
 
-
-
-        } else {
+        if (nodes != null) {
             for (NodeConfig node : nodes) {
                 lookingForPuppetError(node);
             }
@@ -264,7 +261,7 @@ public class PuppetErrorInterrupter implements Command {
             return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally", command.toString(), getPuppetLogFile());
         }
 
-        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s of nodes: %s", command.toString(), getPuppetLogFile(),
+        return format("PuppetErrorInterrupter{ %s }; looking on errors in file %s locally and at the nodes: %s", command.toString(), getPuppetLogFile(),
                       nodes.toString());
     }
     

@@ -18,42 +18,23 @@
 package com.codenvy.im.commands.decorators;
 
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.commands.CommandLibrary;
-import com.codenvy.im.managers.Config;
-import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS;
-import static java.nio.file.Files.createDirectory;
-import static java.nio.file.Files.deleteIfExists;
-import static java.nio.file.Files.exists;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -114,7 +95,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
 
             assertTrue("Actual errorMessage: " + errorMessage, errorMessagePattern.matcher(errorMessage).find());
 
-            assertErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessages);
+            assertLocalErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessages);
             return;
         }
 
@@ -123,25 +104,6 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
         }
 
         fail("testInterrupter.execute() should throw PuppetErrorException");
-    }
-
-    private void assertErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException, InterruptedException {
-        Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
-        Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
-        assertTrue(pathToReportMatcher.find());
-
-        Path report = Paths.get(pathToReportMatcher.group());
-        assertNotNull(report);
-        assertTrue(exists(report));
-
-        CommandLibrary.createUnpackCommand(report, TEST_TMP_DIRECTORY).execute();
-        Path puppetLogFile = TEST_TMP_DIRECTORY.resolve(spyInterrupter.getPuppetLogFile().getFileName());
-        assertTrue(exists(puppetLogFile));
-        String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
-        assertEquals(puppetLogFileContent, expectedContentOfLogFile);
-
-        Path imLogfile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
-        assertTrue(exists(imLogfile));
     }
 
     @Test(timeOut = MOCK_COMMAND_TIMEOUT_MILLIS * 10)
@@ -214,7 +176,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
                 Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS);
                 throw new RuntimeException("error");
             } catch (InterruptedException e) {
-                failMessage[0] = "mockCommand should not be interrupted by testInterrupter, but was.";
+                failMessage[0] = "mockCommand should not be interrupted by spyInterrupter, but was.";
                 return null;
             }
         }).when(mockCommand).execute();
@@ -265,6 +227,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
         return InstallType.SINGLE_SERVER;
     }
 
+    @Override
     public PuppetErrorInterrupter getSpyInterrupter() {
         return spy(new PuppetErrorInterrupter(mockCommand, mockConfigManager));
     }
