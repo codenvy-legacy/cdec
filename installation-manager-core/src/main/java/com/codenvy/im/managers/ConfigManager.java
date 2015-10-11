@@ -333,20 +333,22 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * @return true if only there is "main" section without "server" property in the puppet.conf file
+     */
     private boolean isSingleTypeConfig(HierarchicalINIConfiguration iniFile) {
         Set<String> sections = iniFile.getSections();
-        return sections.contains("agent")
-               && !iniFile.getSection("agent").getString("certname", "").isEmpty()
-               && sections.contains("master")
-               && !iniFile.getSection("master").getString("certname", "").isEmpty();
+        return sections.contains("main")
+               && iniFile.getSection("main").getString("server", "").isEmpty();
     }
 
+    /**
+     * @return true if only there is "main" section with "server" property in the puppet.conf file
+     */
     private boolean isMultiTypeConfig(HierarchicalINIConfiguration iniFile) {
         Set<String> sections = iniFile.getSections();
         return sections.contains("main")
-               && !iniFile.getSection("main").getString("server", "").isEmpty()
-               && sections.contains("agent")
-               && !iniFile.getSection("agent").getString("certname", "").isEmpty();
+               && !iniFile.getSection("main").getString("server", "").isEmpty();
     }
 
     /**

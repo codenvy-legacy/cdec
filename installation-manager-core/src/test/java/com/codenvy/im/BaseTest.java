@@ -67,15 +67,57 @@ public class BaseTest {
     protected void createSingleNodeConf() throws Exception {
         FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[master]\n" +
                                                                "    certname = hostname\n" +
+                                                               "[main]\n" +
+                                                               "  dns_alt_names = puppet\n" +
                                                                "[agent]\n" +
-                                                               "    certname = hostname\n");
+                                                               "  show_diff = true\n" +
+                                                               "  pluginsync = true\n" +
+                                                               "  report = true\n" +
+                                                               "  default_schedules = false\n" +
+                                                               "  certname = %s\n" +
+                                                               "  runinterval = 300\n" +
+                                                               "  configtimeout = 600\n");
     }
 
     protected void createMultiNodeConf() throws Exception {
-        FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[main]\n" +
-                                                               "    server = hostname\n" +
-                                                               "[agent]\n" +
-                                                               "    certname = hostname\n");
+        FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[main]\n"
+                                                               + " server = master.codenvy.onprem\n"
+                                                               + " runinterval = 420\n"
+                                                               + " configtimeout = 600\n"
+                                                               + "\n"
+                                                               + "   # The Puppet log directory.\n"
+                                                               + "   # The default value is '$vardir/log'.\n"
+                                                               + "   logdir = /var/log/puppet\n"
+                                                               + "\n"
+                                                               + "   # Where Puppet PID files are kept.\n"
+                                                               + "   # The default value is '$vardir/run'.\n"
+                                                               + "   rundir = /var/run/puppet\n"
+                                                               + "\n"
+                                                               + "   # Where SSL certificates are kept.\n"
+                                                               + "   # The default value is '$confdir/ssl'.\n"
+                                                               + "   ssldir = $vardir/ssl\n"
+                                                               + "\n"
+                                                               + "[master]\n"
+                                                               + " certname = master.codenvy.onprem\n"
+                                                               + "\n"
+                                                               + "[agent]\n"
+                                                               + " show_diff = true\n"
+                                                               + " pluginsync = true\n"
+                                                               + " report = true\n"
+                                                               + " default_schedules = false\n"
+                                                               + " certname = master.codenvy.onprem\n"
+                                                               + "\n"
+                                                               + "   # The file in which puppetd stores a list of the classes\n"
+                                                               + "   # associated with the retrieved configuratiion.  Can be loaded in\n"
+                                                               + "   # the separate ``puppet`` executable using the ``--loadclasses``\n"
+                                                               + "   # option.\n"
+                                                               + "   # The default value is '$confdir/classes.txt'.\n"
+                                                               + "   classfile = $vardir/classes.txt\n"
+                                                               + "\n"
+                                                               + "   # Where puppetd caches the local configuration.  An\n"
+                                                               + "   # extension indicating the cache format is added automatically.\n"
+                                                               + "   # The default value is '$confdir/localconfig'.\n"
+                                                               + "   localconfig = $vardir/localconfig\n");
     }
 
     private void createAssemblyProperty() throws IOException {
