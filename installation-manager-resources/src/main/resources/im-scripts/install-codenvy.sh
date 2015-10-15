@@ -76,7 +76,18 @@ setRunOptions() {
 }
 
 downloadConfig() {
-    curl -s -o ${CONFIG} https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}
+    url="https://codenvy-stg.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
+
+    # check url to config on http error
+    http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
+    if [[ ! ${http_code} -eq 200 ]]; then    # if response code != "200 OK"
+        # print response from update server
+        printLn $(curl --silent ${url})
+        exit 1
+    fi
+
+    # load config into the ${CONFIG} file
+    curl --silent --output ${CONFIG} ${url}
 }
 
 validateOS() {
@@ -87,7 +98,7 @@ validateOS() {
         exit 1
     fi
 
-    OS = `cat /etc/redhat-release`
+    OS=`cat /etc/redhat-release`
     osVersion=`${osToDisplay} | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
 
     if [ "${VERSION}" == "3.1.0" ] && [ "${osVersion}" != "6" ]; then
