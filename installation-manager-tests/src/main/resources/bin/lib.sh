@@ -74,6 +74,7 @@ retrievePuppetLogs() {
     else
         scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy:/var/log/puppet/puppet-agent.log puppet-agent-${UUID}.log
     fi
+    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/home/vagrant/install.log install-${UUID}.log
 }
 
 vagrantDestroy() {
