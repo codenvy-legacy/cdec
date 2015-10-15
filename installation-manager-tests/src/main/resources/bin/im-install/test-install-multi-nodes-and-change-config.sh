@@ -32,11 +32,11 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 # change Codenvy hostname
-executeSshCommand "sudo sed -i 's/ codenvy.onprem/ test.codenvy.onprem/' /etc/hosts"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
 
 # verify changes on api node
-executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy.onprem"
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
@@ -46,8 +46,8 @@ auth "admin" "new-password" "http://${NEW_HOSTNAME}"
 # test re-install
 # remove codenvy binaries
 
-executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "api.codenvy.onprem"
-executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "runner1.codenvy.onprem"
+executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "api.codenvy"
+executeSshCommand "sudo rm -rf /home/codenvy/codenvy-tomcat/webapps" "runner1.codenvy"
 executeSshCommand "sudo rm -rf /home/codenvy-im/codenvy-im-tomcat/webapps"
 
 # perform re-install

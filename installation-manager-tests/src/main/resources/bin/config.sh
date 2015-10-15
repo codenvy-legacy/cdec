@@ -22,7 +22,7 @@ SAAS_SERVER="https://nightly.codenvy-stg.com"
 TEST_LOG="installation-manager-test.log"
 SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
 MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
-NEW_HOSTNAME="test.codenvy.onprem"
+NEW_HOSTNAME="test.codenvy"
 
 AVAILABLE_CODENVY_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/codenvy)
 PREV_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`

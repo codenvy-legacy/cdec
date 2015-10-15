@@ -35,21 +35,21 @@ BACKUP=${OUTPUT}
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
-doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy.onprem/api/account?token=${TOKEN}"
+doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy/api/account?token=${TOKEN}"
 fetchJsonParameter "id"
 ACCOUNT_ID=${OUTPUT}
 
-doPost "application/json" "{\"name\":\"workspace-1\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy.onprem/api/workspace?token=${TOKEN}"
+doPost "application/json" "{\"name\":\"workspace-1\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy/api/workspace?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
-doPost "application/json" "{\"type\":\"blank\",\"visibility\":\"public\"}" "http://codenvy.onprem/api/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
+doPost "application/json" "{\"type\":\"blank\",\"visibility\":\"public\"}" "http://codenvy/api/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
 
-doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://codenvy.onprem/api/user/create?token=${TOKEN}"
+doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://codenvy/api/user/create?token=${TOKEN}"
 fetchJsonParameter "id"
 USER_ID=${OUTPUT}
 
-doPost "application/json" "{\"userId\":\"${USER_ID}\",\"roles\":[\"account/owner\"]}" "http://codenvy.onprem/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
+doPost "application/json" "{\"userId\":\"${USER_ID}\",\"roles\":[\"account/owner\"]}" "http://codenvy/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
 fetchJsonParameter "id"
 ACCOUNT_ID=${OUTPUT}
 
@@ -60,20 +60,20 @@ fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
 # set date on tomorrow (repeate 3 times for sure)
-executeSshCommand "sudo service ntpd stop" "analytics.codenvy.onprem"
+executeSshCommand "sudo service ntpd stop" "analytics.codenvy"
 TOMORROW_DATE=$(LC_TIME="uk_US.UTF-8" date -d '1 day')
-executeSshCommand "sudo LC_TIME=\"uk_US.UTF-8\" date -s \"${TOMORROW_DATE}\"" "analytics.codenvy.onprem"
+executeSshCommand "sudo LC_TIME=\"uk_US.UTF-8\" date -s \"${TOMORROW_DATE}\"" "analytics.codenvy"
 
 # analytics data
 DATE=`date +"%Y%m%d"`
 auth "admin" "new-password"
-doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
-doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
-doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
-doGet "http://codenvy.onprem/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
+doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
+doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
 
 # check analytics: request users profiles = 1
-doGet "http://codenvy.onprem/api/analytics/metric/users_profiles?token=${TOKEN}"
+doGet "http://codenvy/api/analytics/metric/users_profiles?token=${TOKEN}"
 validateExpectedString ".*\"value\"\:\"1\".*"
 
 # restore
@@ -82,23 +82,23 @@ executeIMCommand "im-restore" ${BACKUP}
 # check data
 auth "admin" "password"
 
-doGet "http://codenvy.onprem/api/account/${ACCOUNT_ID}?token=${TOKEN}"
+doGet "http://codenvy/api/account/${ACCOUNT_ID}?token=${TOKEN}"
 validateExpectedString ".*Account.*not.found.*"
 
-doGet "http://codenvy.onprem/api/project/${WORKSPACE_ID}?token=${TOKEN}"
+doGet "http://codenvy/api/project/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*Workspace.*not.found.*"
 
-doGet "http://codenvy.onprem/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
+doGet "http://codenvy/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*Workspace.*not.found.*"
 
-doGet "http://codenvy.onprem/api/user/${USER_ID}?token=${TOKEN}"
+doGet "http://codenvy/api/user/${USER_ID}?token=${TOKEN}"
 validateExpectedString ".*User.*not.found.*"
 
-doGet "http://codenvy.onprem/api/factory/${FACTORY_ID}?token=${TOKEN}"
+doGet "http://codenvy/api/factory/${FACTORY_ID}?token=${TOKEN}"
 validateExpectedString ".*Factory.*not.found.*"
 
 # check analytics: request users profiles  = 0
-doGet "http://codenvy.onprem/api/analytics/metric/users_profiles?token=${TOKEN}"
+doGet "http://codenvy/api/analytics/metric/users_profiles?token=${TOKEN}"
 validateExpectedString ".*\"value\"\:\"0\".*"
 
 # update

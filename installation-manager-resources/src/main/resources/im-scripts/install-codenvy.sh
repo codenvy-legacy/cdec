@@ -166,6 +166,10 @@ printRed() {
     echo -en "\e[91m$1\e[0m" # with red color
 }
 
+printGreen() {
+    echo -en "\e[32m$1\e[0m" # with green color
+}
+
 print() {
     printPrompt; echo -n "$@"
 }
@@ -356,11 +360,13 @@ doCheckAvailablePorts_multi() {
 printPreInstallInfo_single() {
     clear
 
-    printLn "Welcome. This program installs Codenvy."
+    printLn "Welcome. This program installs Codenvy "${VERSION}
     printLn
     printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
     printLn "Configuration File:  "${CONFIG}
     printLn
+
+    preconfigureSystem
 
     printLn "Checking system pre-requisites..."
     printLn
@@ -370,50 +376,14 @@ printPreInstallInfo_single() {
     printLn
     checkingAccessToExternalDependencies
 
-    printLn "Configuring system properties..."
+    [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
+    [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+    [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
+
+    doCheckAvailablePorts_single
     printLn
-    preconfigureSystem
-
-    if [[ ${SILENT} == true ]]; then
-        [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-        [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
-        printLn
-        printLn
-    else
-        [ -z "${SYSTEM_ADMIN_NAME}" ]     && printLn "System admin user name:  will prompt for entry"
-        [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password:   will prompt for entry"
-        [ -z "${HOST_NAME}" ]             && printLn "Codenvy hostname:        will prompt for entry"
-
-        printLn
-
-        if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
-            print "System admin user name:  "
-            SYSTEM_ADMIN_NAME=$(askProperty)
-        fi
-
-        if [ -z "${SYSTEM_ADMIN_PASSWORD}" ]; then
-            print "System admin password:   "
-            SYSTEM_ADMIN_PASSWORD=$(askProperty)
-        fi
-
-        if [ -z "${HOST_NAME}" ]; then
-            print "Codenvy hostname:        "
-            HOST_NAME=$(askProperty)
-        fi
-
-        insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-        insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        insertProperty "host_url" ${HOST_NAME}
-        printLn
-
-        doCheckAvailablePorts_single
-
-        pressYKeyToContinue "Proceed?"
-        printLn
-        printLn
-        printLn
-    fi
+    printLn
+    printLn
 }
 
 # parameter 1 - MIN_RAM_KB
@@ -462,7 +432,7 @@ doCheckAvailableResourcesLocally() {
     fi
 
     osInfoToDisplay=$(printf "%-30s" "${osInfo}")
-    osStateToDisplay=$([ ${osIssueFound} == false ] && echo "[OK]" || echo "[NOT OK]")
+    osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
     printLn "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
 
 
@@ -495,16 +465,16 @@ doCheckAvailableResourcesLocally() {
     minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
     availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
     availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-    RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+    RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
     minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
     availableCoresToDisplay=$(printf "%-11s" "${availableCores} cores")
-    coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+    coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
     minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
     availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
     availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-    diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+    diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
     printLn
     printLn "                RECOMMENDED     AVAILABLE"
@@ -516,19 +486,17 @@ doCheckAvailableResourcesLocally() {
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
         if [[ ${osIssueFound} == true ]]; then
             printLn "!!! The OS version or config do not match requirements. !!!"
+            exit 1;
         fi
 
         if [[ ${resourceIssueFound} == true ]]; then
             printLn "!!! The resources available are lower than required.    !!!"
-        fi
-
-        if [[ ${SILENT} == true && ${osIssueFound} == true ]]; then
-            exit 1;
+            printLn "!!! Troubleshooting: http://docs.codenvy.com/onprem     !!!"
         fi
 
         printLn
 
-        if [[ ${SILENT} != true ]]; then
+        if [[ ${SILENT} == false && ${resourceIssueFound} == true ]]; then
             pressYKeyToContinue "Proceed?"
             printLn
         fi
@@ -582,7 +550,7 @@ checkUrl() {
         wget --quiet --spider --no-cookies --no-check-certificate --header "${cookie}" ${url} || checkFailed=1
     fi
 
-    printLn "$(printf "%-79s" ${url})"$([ ${checkFailed} == 0 ] && echo " [OK]" || echo " [NOT OK]")
+    printLn "$(printf "%-79s" ${url})"$([ ${checkFailed} == 0 ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
     return ${checkFailed}
 }
@@ -590,7 +558,7 @@ checkUrl() {
 printPreInstallInfo_multi() {
     clear
 
-    printLn "Welcome. This program installs Codenvy."
+    printLn "Welcome. This program installs Codenvy "${VERSION}
     printLn
     printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
     printLn "Configuration File:  "${CONFIG}
@@ -604,9 +572,10 @@ printPreInstallInfo_multi() {
     printLn
     preconfigureSystem
 
+    [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
+    [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+
     if [[ ${SILENT} == true ]]; then
-        [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-        [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
 
         doGetHostsVariables
@@ -622,23 +591,7 @@ printPreInstallInfo_multi() {
         printLn "Hostname of site node            : "${SITE_HOST_NAME}
         printLn
     else
-        [ -z "${SYSTEM_ADMIN_NAME}" ]     && printLn "System admin user name:  will prompt for entry"
-        [ -z "${SYSTEM_ADMIN_PASSWORD}" ] && printLn "System admin password:   will prompt for entry"
         printLn "Codenvy hostnames:       will prompt for entry"
-        printLn
-
-        if [ -z "${SYSTEM_ADMIN_NAME}" ]; then
-            print "System admin user name:  "
-            SYSTEM_ADMIN_NAME=$(askProperty)
-        fi
-
-        if [ -z "${SYSTEM_ADMIN_PASSWORD}" ]; then
-            print "System admin password:   "
-            SYSTEM_ADMIN_PASSWORD=$(askProperty)
-        fi
-
-        insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-        insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         printLn
 
         askHostnameAndInsertProperty "Set hostname of Codenvy" "host_url"
@@ -664,7 +617,6 @@ printPreInstallInfo_multi() {
     printLn
     doCheckAvailablePorts_multi
 
-    clear
     printLn "Checking access to external dependencies..."
     printLn
     checkingAccessToExternalDependencies
@@ -745,25 +697,25 @@ doCheckAvailableResourcesOnNodes() {
         fi
 
         if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
-            printLn "$(printf "%-43s" "${HOST}") [NOT OK]"
+            printLn "$(printf "%-43s" "${HOST}" &&  printRed "[NOT OK]")"
 
             globalNodeIssueFound=true
 
             osInfoToDisplay=$(printf "%-30s" "${osInfo}")
             if [[ ${osIssueFound} == true ]]; then
-                printLn "> DETECTED OS: ${osInfoToDisplay} [NOT OK]"
+                printLn "> DETECTED OS: ${osInfoToDisplay} $(printRed "[NOT OK]")"
                 printLn
             fi
 
             minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
             availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
             availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-            RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+            RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
             minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB}/1000/1000 )) GB")
             availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
             availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-            diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "[OK]" || echo "[NOT OK]")
+            diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
             if [[ ${resourceIssueFound} == true ]]; then
                 printLn ">                 RECOMMENDED     AVAILABLE"
@@ -772,7 +724,7 @@ doCheckAvailableResourcesOnNodes() {
                 printLn
             fi
         else
-            printLn "$(printf "%-43s" "${HOST}") [OK]"
+            printLn "$(printf "%-43s" "${HOST}" &&  printGreen "[OK]")"
         fi
     done
 
@@ -922,12 +874,11 @@ printPostInstallInfo() {
     printLn
     printLn "Codenvy is ready at http://"${HOST_NAME}
     printLn
-    printLn "Administrator dashboard ready at http://${HOST_NAME}/admin"
-    printLn "System admin user name : "${SYSTEM_ADMIN_NAME}
-    printLn "System admin password  : "${SYSTEM_ADMIN_PASSWORD}
+    printLn "!!! Set up a DNS entry for Codenvy, or add a hosts rule to your clients: !!!"
+    printLn "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq        !!!"
     printLn
-    printLn "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-${CODENVY_TYPE}-node/#install-troubleshooting"
-    printLn "Upgrade & Configuration Docs: http://docs.codenvy.com/onpremises/installation-${CODENVY_TYPE}-node/#upgrades"
+    printLn "Admin user name : "${SYSTEM_ADMIN_NAME}
+    printLn "Admin password  : "${SYSTEM_ADMIN_PASSWORD}
 }
 
 set -e

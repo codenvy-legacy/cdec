@@ -101,7 +101,7 @@ installCodenvy() {
         shift
     fi
 
-    if [[ ${INSTALL_ON_NODE} == "master.codenvy.onprem" ]]; then
+    if [[ ${INSTALL_ON_NODE} == "master.codenvy" ]]; then
         scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
         MULTI_OPTION="--multi"
     fi
@@ -126,7 +126,7 @@ installImCliClient() {
     VERSION_OPTION=""
     [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
 
-    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy.onprem 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
+    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
     logEndCommand "installImCliClient: OK"
@@ -157,7 +157,7 @@ doAuth() {
     REALM=$3
     SERVER_DNS=$4
 
-    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="http://codenvy.onprem"
+    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="http://codenvy"
 
     OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' ${SERVER_DNS}/api/auth/login)
     EXIT_CODE=$?
@@ -214,13 +214,13 @@ executeSshCommand() {
 }
 
 detectMasterNode() {
-    ping -c1 -q "master.codenvy.onprem" >> ${TEST_LOG}
+    ping -c1 -q "master.codenvy" >> ${TEST_LOG}
     if [[ $? == 0 ]]; then
-        echo "master.codenvy.onprem"
+        echo "master.codenvy"
     else
-        ping -c1 -q "codenvy.onprem" >> ${TEST_LOG}
+        ping -c1 -q "codenvy" >> ${TEST_LOG}
         if [[ $? == 0 ]]; then
-            echo "codenvy.onprem"
+            echo "codenvy"
         else
             validateExitCode 1
         fi
@@ -267,7 +267,7 @@ createDefaultFactory() {
 
     TOKEN=$1
 
-    OUTPUT=$(curl 'http://codenvy.onprem/api/factory/?token='${TOKEN} -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7yqwdS1Jq8TWiUAE'  --data-binary $'------WebKitFormBoundary7yqwdS1Jq8TWiUAE\r\nContent-Disposition: form-data; name="factoryUrl"\r\n\r\n{\r\n  "v": "2.1",\r\n  "project": {\r\n    "name": "my-minimalistic-factory",\r\n    "description": "Minimalistic Template"\r\n  },\r\n  "source": {\r\n    "project": {\r\n      "location": "https://github.com/codenvy/sdk",\r\n      "type": "git"\r\n    }\r\n  }\r\n}\r\n------WebKitFormBoundary7yqwdS1Jq8TWiUAE--\r\n')
+    OUTPUT=$(curl 'http://codenvy/api/factory/?token='${TOKEN} -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7yqwdS1Jq8TWiUAE'  --data-binary $'------WebKitFormBoundary7yqwdS1Jq8TWiUAE\r\nContent-Disposition: form-data; name="factoryUrl"\r\n\r\n{\r\n  "v": "2.1",\r\n  "project": {\r\n    "name": "my-minimalistic-factory",\r\n    "description": "Minimalistic Template"\r\n  },\r\n  "source": {\r\n    "project": {\r\n      "location": "https://github.com/codenvy/sdk",\r\n      "type": "git"\r\n    }\r\n  }\r\n}\r\n------WebKitFormBoundary7yqwdS1Jq8TWiUAE--\r\n')
     EXIT_CODE=$?
     log ${OUTPUT}
 

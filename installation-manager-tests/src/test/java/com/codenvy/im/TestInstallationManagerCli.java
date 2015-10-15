@@ -35,14 +35,14 @@ import static org.testng.Assert.assertEquals;
 /**
  * Modify /etc/hosts:
  *
- * 192.168.56.110 codenvy.onprem
- * 192.168.56.110 test.codenvy.onprem
- * 192.168.56.19 master.codenvy.onprem
- * 192.168.56.18 analytics.codenvy.onprem
- * 192.168.56.13 api.codenvy.onprem
- * 192.168.56.15 runner1.codenvy.onprem
- * 192.168.56.20 runner2.codenvy.onprem
- * 192.168.56.21 runner3.codenvy.onprem
+ * 192.168.56.110 codenvy
+ * 192.168.56.110 test.codenvy
+ * 192.168.56.19 master.codenvy
+ * 192.168.56.18 analytics.codenvy
+ * 192.168.56.13 api.codenvy
+ * 192.168.56.15 runner1.codenvy
+ * 192.168.56.20 runner2.codenvy
+ * 192.168.56.21 runner3.codenvy
  *
  * @author Anatoliy Bazko
  */
