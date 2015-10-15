@@ -49,15 +49,30 @@ validateExitCode() {
     if [[ ! -z ${VALID_CODE} ]]; then
         if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
             printAndLog "RESULT: FAILED"
+            $(retrievePuppetLogs)
             vagrantDestroy
             exit 1
         fi
     else
         if [[ ! ${EXIT_CODE} == "0" ]];then
             printAndLog "RESULT: FAILED"
+            $(retrievePuppetLogs)
             vagrantDestroy
             exit 1
         fi
+    fi
+}
+
+retrievePuppetLogs() {
+    INSTALL_ON_NODE=$(detectMasterNode)
+    UUID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
+    log "* UUID: "${UUID}
+    if [[ ${INSTALL_ON_NODE} == "master.codenvy" ]]; then
+        for HOST in master api analytics data site runner1 builder1 datasource; do
+            scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy:/var/log/puppet/puppet-agent.log puppet-agent-${HOST}-${UUID}.log
+        done
+    else
+        scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy:/var/log/puppet/puppet-agent.log puppet-agent-${UUID}.log
     fi
 }
 
