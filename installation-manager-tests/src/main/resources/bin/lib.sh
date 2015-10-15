@@ -46,35 +46,53 @@ log() {
 validateExitCode() {
     EXIT_CODE=$1
     VALID_CODE=$2
+    IS_INSTALL_CODENVY=$3
+
     if [[ ! -z ${VALID_CODE} ]]; then
-        if [[ ! ${EXIT_CODE} == ${VALID_CODE} ]];then
-            printAndLog "RESULT: FAILED"
-            $(retrievePuppetLogs)
-            vagrantDestroy
-            exit 1
+        if [[ ${EXIT_CODE} == ${VALID_CODE} ]]; then
+            return
         fi
     else
-        if [[ ! ${EXIT_CODE} == "0" ]];then
-            printAndLog "RESULT: FAILED"
-            $(retrievePuppetLogs)
-            vagrantDestroy
-            exit 1
+        if [[ ${EXIT_CODE} == "0" ]]; then
+            return
         fi
     fi
+
+    printAndLog "RESULT: FAILED"
+    $(retrieveTestLogs)
+
+    if [[ ! -z ${IS_INSTALL_CODENVY} ]]; then
+        installLogContent=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@$(detectMasterNode) "cat install.log | sed 's/-\\\|\\///g'" | sed 's/\r//')
+        printAndLog "============= Install.log file content ========="
+        printAndLog "${installLogContent}"
+        printAndLog "================================================="
+    fi
+
+    vagrantDestroy
+    exit 1
 }
 
-retrievePuppetLogs() {
+retrieveTestLogs() {
     INSTALL_ON_NODE=$(detectMasterNode)
-    UUID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
-    log "* UUID: "${UUID}
+    logDirName="logs/`basename "$0" | sed 's/\\.sh//g'`"
+    log "Name of directory with logs: "${logDirName}
+
+    mkdir --parent ${logDirName}
+
     if [[ ${INSTALL_ON_NODE} == "master.codenvy" ]]; then
         for HOST in master api analytics data site runner1 builder1 datasource; do
-            scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy:/var/log/puppet/puppet-agent.log puppet-agent-${HOST}-${UUID}.log
+            $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy "sudo chown -R root:root /var/log/puppet")
+            $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy "sudo chmod 777 /var/log/puppet")
+            scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy:/var/log/puppet/puppet-agent.log ${logDirName}/puppet-agent-${HOST}.log
         done
     else
-        scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy:/var/log/puppet/puppet-agent.log puppet-agent-${UUID}.log
+        $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@$(detectMasterNode) "sudo chown -R root:root /var/log/puppet")
+        $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@$(detectMasterNode) "sudo chmod 777 /var/log/puppet")
+        scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy:/var/log/puppet/puppet-agent.log ${logDirName}/puppet-agent.log
     fi
-    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/home/vagrant/install.log install-${UUID}.log
+
+    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/home/vagrant/install.log ${logDirName}/install.log
+    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/home/vagrant/codenvy-im/codenvy-cli/data/tmp/im-non-interactive.log ${logDirName}/im-non-interactive.log
 }
 
 vagrantDestroy() {
@@ -129,7 +147,7 @@ installCodenvy() {
 
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-codenvy) --silent '${MULTI_OPTION}' '${VERSION_OPTION} >> ${TEST_LOG}
     EXIT_CODE=$?
-    validateExitCode ${EXIT_CODE} ${VALID_CODE}
+    validateExitCode ${EXIT_CODE} ${VALID_CODE} --installCodenvy
 
     sleep 5m
     logEndCommand "installCodenvy: OK"
