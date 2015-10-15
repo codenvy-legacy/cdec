@@ -76,7 +76,7 @@ setRunOptions() {
 }
 
 downloadConfig() {
-    url="https://codenvy-stg.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
+    url="https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
 
     # check url to config on http error
     http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
