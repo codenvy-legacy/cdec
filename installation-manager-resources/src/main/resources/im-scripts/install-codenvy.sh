@@ -365,11 +365,10 @@ printPreInstallInfo_single() {
     printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
     printLn "Configuration File:  "${CONFIG}
     printLn
-
-    preconfigureSystem
-
     printLn "Checking system pre-requisites..."
     printLn
+
+    preconfigureSystem
     doCheckAvailableResourcesLocally 8000000 4 300000000
 
     printLn "Checking access to external dependencies..."
@@ -563,14 +562,11 @@ printPreInstallInfo_multi() {
     printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
     printLn "Configuration File:  "${CONFIG}
     printLn
-
     printLn "Checking system pre-requisites..."
     printLn
-    doCheckAvailableResourcesLocally 1000000 1 14000000
 
-    printLn "Configuring system properties..."
-    printLn
     preconfigureSystem
+    doCheckAvailableResourcesLocally 1000000 1 14000000
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
