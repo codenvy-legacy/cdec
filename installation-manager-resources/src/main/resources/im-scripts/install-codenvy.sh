@@ -627,6 +627,13 @@ doCheckAvailableResourcesOnNodes() {
     doGetHostsVariables
 
     for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+        # check if host available
+        OUTPUT=$(validateHostname ${HOST})
+        if [ "${OUTPUT}" != "success" ]; then
+            printLn "$(printRed "ERROR"): The hostname '${HOST}' isn't availabe or wrong."
+            exit 1
+        fi
+
         SSH_PREFIX="ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
 
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
@@ -682,12 +689,12 @@ doCheckAvailableResourcesOnNodes() {
         availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
         availableDiskSpaceIssue=false
 
-        if (( ${availableRAM} < ${MIN_RAM_KB} )); then
+        if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
             resourceIssueFound=true
             availableRAMIssue=true
         fi
 
-        if (( ${availableDiskSpace} < ${MIN_DISK_SPACE_KB})); then
+        if [[ -z ${availableDiskSpace} || ${availableDiskSpace} < ${MIN_DISK_SPACE_KB} ]]; then
             resourceIssueFound=true
             availableDiskSpaceIssue=true
         fi
