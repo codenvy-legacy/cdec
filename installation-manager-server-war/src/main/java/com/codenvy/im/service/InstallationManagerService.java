@@ -654,6 +654,32 @@ public class InstallationManagerService {
         }
     }
 
+    @POST
+    @Path("password")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+    @ApiOperation(value = "Changes admin passwords")
+    public Response changeAdminPassword(
+            @ApiParam(required = true, value = "currentPassword and newPassword parameters are specified here") Map<String, String> passwords) {
+        try {
+            final String currentPwdKey = "currentPassword";
+            final String newPwdKey = "newPassword";
+
+            if (!passwords.containsKey(currentPwdKey) || !passwords.containsKey(newPwdKey)) {
+                return handleException(new IllegalArgumentException("Current and new admin passwords have to be specified"),
+                                       Response.Status.BAD_REQUEST);
+            }
+
+            delegate.changeAdminPassword(passwords.get(currentPwdKey).getBytes("UTF-8"),
+                                         passwords.get(newPwdKey).getBytes("UTF-8"));
+            return Response.ok().build();
+        } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
     /** @return the properties of the specific artifact and version */
     @GET
     @Path("artifact/{artifact}/version/{version}/properties")

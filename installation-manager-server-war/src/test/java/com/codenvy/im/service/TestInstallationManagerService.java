@@ -46,6 +46,7 @@ import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -438,7 +439,7 @@ public class TestInstallationManagerService extends BaseTest {
 
     @Test
     public void testGetNodeConfigWhenPropertiesIsAbsence() throws IOException {
-        Config testConfig = new Config(new LinkedHashMap<String, String>());
+        Config testConfig = new Config(new LinkedHashMap<>());
         doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
@@ -832,6 +833,36 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(response.getEntity().toString(),
                      format("{message=The number of parameters exceeded the limit of extended parameters in %s}", Event.MAX_EXTENDED_PARAMS_NUMBER));
         verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class), any(String.class));
+    }
+
+    @Test
+    public void shouldChangeAdminPassword() throws Exception {
+        String currentPassword = "current";
+        String newPassword = "new";
+
+        service.changeAdminPassword(ImmutableMap.of("currentPassword", currentPassword, "newPassword", newPassword));
+
+        verify(mockFacade).changeAdminPassword(currentPassword.getBytes("UTF-8"), newPassword.getBytes("UTF-8"));
+    }
+
+    @Test
+    public void shouldThrowBadRequestIfCurrentPasswordNotSpecified() throws Exception {
+        String newPassword = "new";
+
+        Response response = service.changeAdminPassword(ImmutableMap.of("newPassword", newPassword));
+
+        verify(mockFacade, never()).changeAdminPassword(any(), any());
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void shouldThrowBadRequestIfNewPasswordNotSpecified() throws Exception {
+        String currentPassword = "current";
+
+        Response response = service.changeAdminPassword(ImmutableMap.of("currentPassword", currentPassword));
+
+        verify(mockFacade, never()).changeAdminPassword(any(), any());
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     private void assertOkResponse(Response result) throws IOException {
