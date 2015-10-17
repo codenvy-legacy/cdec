@@ -258,43 +258,23 @@ public class TestCommandLibrary {
     @Test
     public void testCreateStopServiceCommand() throws AgentException {
         Command testCommand = CommandLibrary.createStopServiceCommand("test-service");
-        assertEquals(testCommand.toString(), "{" +
-                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
-                                             "if [ $? -eq 0 ]; then" +
-                                             "   sudo service test-service stop; " +
-                                             "fi; ', " +
-                                             "'agent'='LocalAgent'" +
-                                             "}");
+        assertEquals(testCommand.toString(), "{'command'='/bin/systemctl status test-service.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop test-service.service; fi; ', " +
+                                             "'agent'='LocalAgent'}");
 
         testCommand = CommandLibrary.createStopServiceCommand("test-service", testApiNode);
-        assertEquals(testCommand.toString(), format("{" +
-                                                    "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
-                                                    "if [ $? -eq 0 ]; then" +
-                                                    "   sudo service test-service stop; " +
-                                                    "fi; ', " +
-                                                    "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                                    "}", SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(), format("{'command'='/bin/systemctl status test-service.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop test-service.service; fi; ', " +
+                                                    "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test
     public void testCreateStartServiceCommand() throws AgentException {
         Command testCommand = CommandLibrary.createStartServiceCommand("test-service");
-        assertEquals(testCommand.toString(), "{" +
-                                             "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
-                                             "if [ $? -ne 0 ]; then" +
-                                             "   sudo service test-service start; " +
-                                             "fi; ', " +
-                                             "'agent'='LocalAgent'" +
-                                             "}");
+        assertEquals(testCommand.toString(), "{'command'='/bin/systemctl status test-service.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start test-service.service; fi; ', " +
+                                             "'agent'='LocalAgent'}");
 
         testCommand = CommandLibrary.createStartServiceCommand("test-service", testApiNode);
-        assertEquals(testCommand.toString(), format("{" +
-                                                    "'command'='sudo service test-service status | grep 'Active: active (running)'; " +
-                                                    "if [ $? -ne 0 ]; then" +
-                                                    "   sudo service test-service start; " +
-                                                    "fi; ', " +
-                                                    "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'" +
-                                                    "}", SYSTEM_USER_NAME));
+        assertEquals(testCommand.toString(), format("{'command'='/bin/systemctl status test-service.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start test-service.service; fi; ', " +
+                                                    "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,

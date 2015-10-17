@@ -258,21 +258,6 @@ public class NodeManager {
         }
     }
 
-    protected boolean isPuppetAgentActive(NodeConfig node) throws AgentException {
-        Command getPuppetAgentStatusCommand = getShellAgentCommand("sudo service puppet status", node);
-
-        String result;
-        try {
-            result = getPuppetAgentStatusCommand.execute();
-        } catch (CommandException e) {
-            return false;
-        }
-
-        return result != null
-               && result.contains("Loaded: loaded")
-               && result.contains("(running)");
-    }
-
     protected void validate(NodeConfig node) throws NodeException {
         String testCommand = "sudo ls";
         try {

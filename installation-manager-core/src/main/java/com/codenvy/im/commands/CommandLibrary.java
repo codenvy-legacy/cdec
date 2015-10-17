@@ -162,16 +162,16 @@ public class CommandLibrary {
     protected static String getServiceManagementCommand(String serviceName, String action) {
         switch (action) {
             case STOP:
-                return format("sudo service %1$s status | grep 'Active: active (running)'; "
+                return format("/bin/systemctl status %1$s.service; "
                               + "if [ $? -eq 0 ]; then "
-                              + "  sudo service %1$s stop; "
+                              + "  sudo /bin/systemctl stop %1$s.service; "
                               + "fi; ",
                               serviceName);
 
             case START:
-                return format("sudo service %1$s status | grep 'Active: active (running)'; "
+                return format("/bin/systemctl status %1$s.service; "
                               + "if [ $? -ne 0 ]; then "
-                              + "  sudo service %1$s start; "
+                              + "  sudo /bin/systemctl start %1$s.service; "
                               + "fi; ",
                               serviceName);
             default:

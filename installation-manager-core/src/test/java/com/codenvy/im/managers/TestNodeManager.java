@@ -235,31 +235,6 @@ public class TestNodeManager extends BaseTest {
         spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
     }
 
-    @Test(dataProvider = "PuppetAgentStates")
-    public void testIsPuppetAgentActive(String state, boolean expectedResult) throws Exception {
-        prepareMultiNodeEnv(configManager);
-        doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo service puppet status", TEST_NODE);
-        doReturn(state).when(mockCommand).execute();
-        assertEquals(spyManager.isPuppetAgentActive(TEST_NODE), expectedResult);
-    }
-
-    @DataProvider(name = "PuppetAgentStates")
-    public static Object[][] PuppetAgentStates() {
-        return new Object[][]{
-                {null, false},
-                {"Active: inactive (dead)", false},
-                {"Loaded: loaded  Active: active (running)", true},
-        };
-    }
-
-    @Test
-    public void testIsPuppetAgentActiveWhenCommandError() throws Exception {
-        prepareMultiNodeEnv(configManager);
-        doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo service puppet status", TEST_NODE);
-        doThrow(new CommandException("error", null)).when(mockCommand).execute();
-        assertFalse(spyManager.isPuppetAgentActive(TEST_NODE));
-    }
-
     @Test
     public void testValidateNode() throws AgentException, CommandException, NodeException {
         doReturn(mockCommand).when(spyManager).getShellAgentCommand("sudo ls", TEST_NODE);
