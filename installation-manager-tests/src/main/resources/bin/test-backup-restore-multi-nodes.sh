@@ -67,10 +67,10 @@ executeSshCommand "sudo LC_TIME=\"uk_US.UTF-8\" date -s \"${TOMORROW_DATE}\"" "a
 # analytics data
 DATE=`date +"%Y%m%d"`
 auth "admin" "new-password"
-doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
-doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
-doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
-doGet "http://codenvy/analytics/api/service/launch/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
+doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
+doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
+doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
+doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
 
 # check analytics: request users profiles = 1
 doGet "http://codenvy/api/analytics/metric/users_profiles?token=${TOKEN}"
