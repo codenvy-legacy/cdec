@@ -23,20 +23,8 @@ printAndLog "TEST CASE: Check subscription"
 
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-# TODO [ndp] Test is failing so as on hosted Codenvy server "https://nightly.codenvy-stg.com" autorization doesn't work:
-# POST requests to adding subscription method https://updater-nightly.codenvy-dev.com/update/repository/subscription return error message about invalid token.
-
-#UPDATE_SERVER="http://updater.codenvy-stg.com"
-#UPDATE_SERVICE="https://codenvy-stg.com/update"
-#SAAS_SERVER="https://codenvy-stg.com"
-
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
-
-#executeSshCommand "echo 'export CHE_LOCAL_CONF_DIR=/home/vagrant/codenvy_conf' >> .bashrc"
-#executeSshCommand "mkdir /home/vagrant/codenvy_conf"
-#executeSshCommand "echo 'saas.api.endpoint=https://codenvy-stg.com/api' > /home/vagrant/codenvy_conf/im.properties"
-#executeSshCommand "echo 'installation-manager.update_server_endpoint=https://codenvy-stg.com/update' >> /home/vagrant/codenvy_conf/im.properties"
 
 installImCliClient
 validateInstalledImCliClientVersion
