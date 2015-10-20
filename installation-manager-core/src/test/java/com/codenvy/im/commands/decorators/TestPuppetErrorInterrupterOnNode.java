@@ -263,7 +263,7 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
         }
     }
 
-    @Test(dataProvider = "dataForCheckPuppetError")
+    @Test(dataProvider = "getDataToCheckPuppetError")
     public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
         List<String> lines = Arrays.asList(puppetLog.split("\n"));
 
