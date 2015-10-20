@@ -273,7 +273,7 @@ doPost() {
     BODY=$2
     URL=$3
 
-    OUTPUT=$(curl -H "Content-Type: ${CONTENT_TYPE}" -d ${BODY} -X POST ${URL})
+    OUTPUT=$(curl -H "Content-Type: ${CONTENT_TYPE}" -d "${BODY}" -X POST ${URL})
     EXIT_CODE=$?
     log ${OUTPUT}
 
