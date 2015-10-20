@@ -122,6 +122,7 @@ installPackageIfNeed() {
 preconfigureSystem() {
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
+    installPackageIfNeed net-tools
 
     if [[ ! -f ${CONFIG} ]]; then
         downloadConfig

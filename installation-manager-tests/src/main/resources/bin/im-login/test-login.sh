@@ -55,11 +55,11 @@ USER_MEMBER_ID=${OUTPUT}
 doPost "application/json" "{\"userId\":\"${USER_MEMBER_ID}\",\"roles\":[\"account/member\"]}" "${SAAS_SERVER}/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
 
 # login with username and password
-executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
+executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
 validateExpectedString ".*Your.Codenvy.account..${ACCOUNT_NAME}..will.be.used.to.verify.on-premises.subscription.*Login.success.*"
 
 # login with username and password and account
-executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NAME}"
+executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NAME}"
 validateExpectedString ".*Login.success.*"
 
 # login with wrong password
