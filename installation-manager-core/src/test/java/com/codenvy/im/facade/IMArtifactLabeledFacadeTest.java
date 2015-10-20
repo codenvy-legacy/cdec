@@ -160,7 +160,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         doReturn(new TreeMap<Version, Path>() {{
             put(version, Paths.get("path"));
         }}).when(downloadManager).getDownloadedVersions(artifact);
-        doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
+        doReturn(VersionLabel.UNSTABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
         Collection<UpdatesArtifactInfo> updates = facade.getAllUpdates(artifact);
 
@@ -170,7 +170,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
         assertEquals(result.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
-        assertEquals(result.getLabel(), VersionLabel.STABLE);
+        assertEquals(result.getLabel(), VersionLabel.UNSTABLE);
     }
 
     @Test

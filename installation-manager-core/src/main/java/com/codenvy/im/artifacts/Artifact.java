@@ -79,10 +79,6 @@ public interface Artifact extends Comparable<Artifact> {
     @Nullable
     String getProperty(Version version, String name) throws IOException;
 
-    /** @return property stored at update server */
-    @Nullable
-    String getLatestVersionProperty(String name) throws IOException;
-
     /** @return command to collect backup data at the certain backup directory */
     Command getBackupCommand(BackupConfig backupConfig) throws IOException;
 
@@ -91,4 +87,7 @@ public interface Artifact extends Comparable<Artifact> {
 
     /** Updates artifact configuration */
     void updateConfig(Map<String, String> properties) throws IOException;
+
+    /** Get label property of artifact */
+    Optional<VersionLabel> getLabel(Version version) throws IOException;
 }

@@ -36,7 +36,7 @@ public class UpdatesArtifactInfoTest {
     @Test
     public void test() throws Exception {
         UpdatesArtifactInfo info = new UpdatesArtifactInfo();
-        info.setLabel(VersionLabel.RC);
+        info.setLabel(VersionLabel.STABLE);
         info.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
         info.setArtifact("codenvy");
         info.setVersion("1.0.1");
@@ -46,7 +46,7 @@ public class UpdatesArtifactInfoTest {
         assertEquals(json, "{\n" +
                            "  \"artifact\" : \"codenvy\",\n" +
                            "  \"version\" : \"1.0.1\",\n" +
-                           "  \"label\" : \"RC\",\n" +
+                           "  \"label\" : \"STABLE\",\n" +
                            "  \"status\" : \"AVAILABLE_TO_DOWNLOAD\"\n" +
                            "}");
 

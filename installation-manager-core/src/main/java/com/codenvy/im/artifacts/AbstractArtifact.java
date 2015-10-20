@@ -22,7 +22,6 @@ import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.InjectorBootstrap;
 import com.codenvy.im.utils.Version;
-
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
@@ -31,17 +30,19 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
-import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.Commons.asMap;
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static java.lang.String.format;
 import static java.nio.file.Files.newInputStream;
 
 /**
@@ -53,6 +54,8 @@ public abstract class AbstractArtifact implements Artifact {
     protected final ConfigManager configManager;
     protected final String        updateEndpoint;
     private final Path            downloadDir;
+
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(AbstractArtifact.class.getSimpleName());
 
     public AbstractArtifact(String name,
                             String updateEndpoint,
@@ -125,16 +128,17 @@ public abstract class AbstractArtifact implements Artifact {
     /** {@inheritDoc} */
     @Nullable
     public Version getLatestInstallableVersion() throws IOException {
+        List<Map.Entry<Artifact, Version>> allUpdates = getAllUpdates();
+        if (allUpdates == null || allUpdates.isEmpty()) {
+            return null;
+        }
+
         Optional<Version> installedVersion = getInstalledVersion();
         if (!installedVersion.isPresent()) {
-            String versionNumber = getLatestVersionProperty(VERSION_PROPERTY);
-            return versionNumber != null ? Version.valueOf(versionNumber) : null;
+            return allUpdates.get(allUpdates.size() - 1).getValue();  // get last one so as list of updates should be sorted by version ascendantly
         }
 
         Version ver2Install = null;
-
-        Collection<Map.Entry<Artifact, Version>> allUpdates = getAllUpdates();
-
         for (Map.Entry<Artifact, Version> entry : allUpdates) {
             Version version2Check = entry.getValue();
 
@@ -149,11 +153,32 @@ public abstract class AbstractArtifact implements Artifact {
         return ver2Install;
     }
 
-    protected Collection<Map.Entry<Artifact, Version>> getAllUpdates() throws IOException {
-        DownloadManager downloadManager = InjectorBootstrap.INJECTOR.getInstance(DownloadManager.class);
-        return downloadManager.getAllUpdates(this);
+    /**
+     * @return stable versions only
+     */
+    protected List<Map.Entry<Artifact, Version>> getAllUpdates() throws IOException {
+        DownloadManager downloadManager = getDownloadManager();
+        return downloadManager.getAllUpdates(this)
+                              .stream()
+                              .filter((Map.Entry<Artifact, Version> update) -> {
+                                  Artifact artifact = update.getKey();
+                                  Version version = update.getValue();
+
+                                  try {
+                                      Optional<VersionLabel> label = artifact.getLabel(version);
+                                      return ! VersionLabel.UNSTABLE.equals(label.orElse(null));
+                                  } catch (IOException e) {
+                                      throw new RuntimeException(e.getMessage(), e);
+                                  }
+                              }).collect(Collectors.toList());
     }
 
+    /**
+     * for testing propose.
+     */
+    protected DownloadManager getDownloadManager() {
+        return InjectorBootstrap.INJECTOR.getInstance(DownloadManager.class);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -174,12 +199,18 @@ public abstract class AbstractArtifact implements Artifact {
         return properties.get(name);
     }
 
-    /** {@inheritDoc} */
     @Override
-    @Nullable
-    public String getLatestVersionProperty(String name) throws IOException {
-        Map<String, String> properties = fetchPropertiesFromUpdateServer(null);
-        return properties.get(name);
+    public Optional<VersionLabel> getLabel(Version version) throws IOException {
+        VersionLabel versionLabel;
+        try {
+            String labelStr = getProperty(version, ArtifactProperties.LABEL_PROPERTY);
+            versionLabel = VersionLabel.valueOf(labelStr.toUpperCase());
+        } catch(Exception e) {
+            LOG.log(Level.WARNING, format("Error of getting label of artifact %s:%s", name, version), e);
+            return Optional.empty();
+        }
+
+        return Optional.of(versionLabel);
     }
 
     /**
@@ -214,7 +245,7 @@ public abstract class AbstractArtifact implements Artifact {
 
 
     /**
-     * If version is not specified then the properties of the latest version will be retrieved
+     * If version is not specified then the properties of the latest stable version will be retrieved
      */
     private Map<String, String> fetchPropertiesFromUpdateServer(@Nullable Version version) throws IOException {
         String requestUrl = combinePaths(updateEndpoint, "repository/properties", getName() + (version != null ? "/" + version.toString()

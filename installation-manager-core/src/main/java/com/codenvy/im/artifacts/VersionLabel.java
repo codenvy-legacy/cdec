@@ -23,6 +23,5 @@ package com.codenvy.im.artifacts;
  */
 public enum VersionLabel {
     STABLE,
-    RC,
-    RC_UNSTABLE
+    UNSTABLE
 }

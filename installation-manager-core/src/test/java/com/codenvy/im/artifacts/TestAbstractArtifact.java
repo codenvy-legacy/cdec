@@ -21,6 +21,7 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
@@ -32,7 +33,6 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,9 +43,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.codenvy.im.artifacts.ArtifactProperties.LABEL_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.PREVIOUS_VERSION_PROPERTY;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -56,47 +58,54 @@ import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestAbstractArtifact extends BaseTest {
+    public static final String FILE_NAME = "file1";
     private AbstractArtifact spyTestArtifact;
 
+    private static final String  MD5                 = "a";
     private static final String  TEST_ARTIFACT_NAME  = "test_artifact_name";
     private static final String  TEST_VERSION_STRING = "1.0.0";
     private static final Version TEST_VERSION        = Version.valueOf(TEST_VERSION_STRING);
+    private static final String  ANY_VALUE           = "any_value";
+    private static final String  UNKNOWN_PROPERTY    = "unknown_property";
 
     @Mock
-    private HttpTransport mockTransport;
+    private HttpTransport   mockTransport;
     @Mock
-    private ConfigManager configManager;
+    private ConfigManager   configManager;
+    @Mock
+    private DownloadManager mockDownloadManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         spyTestArtifact = spy(new TestedAbstractArtifact(TEST_ARTIFACT_NAME, UPDATE_API_ENDPOINT, DOWNLOAD_DIR, mockTransport, configManager));
+        doReturn(mockDownloadManager).when(spyTestArtifact).getDownloadManager();
     }
 
     @Test
     public void testGetArtifactPropertiesFromPropertyFile() throws Exception {
         Path propertiesFile = Paths.get(DOWNLOAD_DIR, spyTestArtifact.getName(), TEST_VERSION.toString(), Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
         Files.createDirectories(propertiesFile.getParent());
-        FileUtils.write(propertiesFile.toFile(), "file=file1\n"
-                                                 + "md5=a\n");
+        FileUtils.write(propertiesFile.toFile(), "file=" + FILE_NAME + "\n"
+                                                 + "md5=" + MD5 + "\n");
 
         Map m = spyTestArtifact.fetchPropertiesFromLocalFile(TEST_VERSION);
         assertTrue(m.containsKey("file"));
         assertTrue(m.containsKey("md5"));
-        assertEquals(m.get("file"), "file1");
-        assertEquals(m.get("md5"), "a");
+        assertEquals(m.get("file"), FILE_NAME);
+        assertEquals(m.get("md5"), MD5);
     }
 
     @Test
     public void testGetArtifactPropertiesFromUpdateServer() throws Exception {
-        doReturn("{\"file\":\"file1\", \"md5\":\"a\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
+        doReturn("{\"file\":\"" + FILE_NAME + "\", \"md5\":\"" + MD5 + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
 
         Map m = spyTestArtifact.getProperties(TEST_VERSION);
         assertTrue(m.containsKey("file"));
         assertTrue(m.containsKey("md5"));
-        assertEquals(m.get("file"), "file1");
-        assertEquals(m.get("md5"), "a");
+        assertEquals(m.get("file"), FILE_NAME);
+        assertEquals(m.get("md5"), MD5);
     }
 
     @Test
@@ -111,6 +120,14 @@ public class TestAbstractArtifact extends BaseTest {
 
         assertFalse(spyTestArtifact.isInstallable(TEST_VERSION));
         assertTrue(spyTestArtifact.isInstallable(newVersion));
+    }
+
+    @Test
+    public void testGetProperty() throws Exception {
+        doReturn("{\"file\":\"" + FILE_NAME + "\", \"md5\":\"" + MD5 + "\"}").when(mockTransport).doGet(endsWith(TEST_ARTIFACT_NAME + "/" + TEST_VERSION_STRING));
+        assertEquals(spyTestArtifact.getProperty(TEST_VERSION, ArtifactProperties.FILE_NAME_PROPERTY), FILE_NAME);
+        assertEquals(spyTestArtifact.getProperty(TEST_VERSION, ArtifactProperties.MD5_PROPERTY), MD5);
+        assertEquals(spyTestArtifact.getProperty(TEST_VERSION, UNKNOWN_PROPERTY), null);
     }
 
     @Test
@@ -139,27 +156,64 @@ public class TestAbstractArtifact extends BaseTest {
     public void testGetLatestInstallableVersion() throws Exception {
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyTestArtifact).getInstalledVersion();
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
-            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.1")));
-            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.2")));
-            add(new AbstractMap.SimpleEntry<Artifact, Version>(spyTestArtifact, Version.valueOf("1.0.3")));
-        }}).when(spyTestArtifact).getAllUpdates();
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("0.0.9")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.0")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.1")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.2")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.3")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.4")));
+        }}).when(mockDownloadManager).getAllUpdates(spyTestArtifact);
+
+        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("0.0.9"), PREVIOUS_VERSION_PROPERTY);
+        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.0"), PREVIOUS_VERSION_PROPERTY);
         doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.1"), PREVIOUS_VERSION_PROPERTY);
-        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.2"), PREVIOUS_VERSION_PROPERTY);
+        doReturn("1\\.0\\.1").when(spyTestArtifact).getProperty(Version.valueOf("1.0.2"), PREVIOUS_VERSION_PROPERTY);
         doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
+        doReturn("1\\.0\\.3").when(spyTestArtifact).getProperty(Version.valueOf("1.0.4"), PREVIOUS_VERSION_PROPERTY);
+
+        doThrow(IOException.class).when(spyTestArtifact).getProperty(Version.valueOf("0.0.9"), LABEL_PROPERTY);
+        doReturn(ANY_VALUE).when(spyTestArtifact).getProperty(Version.valueOf("1.0.0"), LABEL_PROPERTY);
+        doReturn("stable").when(spyTestArtifact).getProperty(Version.valueOf("1.0.1"), LABEL_PROPERTY);
+        doReturn(VersionLabel.STABLE.toString()).when(spyTestArtifact).getProperty(Version.valueOf("1.0.2"), LABEL_PROPERTY);
+        doReturn(VersionLabel.UNSTABLE.toString()).when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), LABEL_PROPERTY);
+        doReturn(null).when(spyTestArtifact).getProperty(Version.valueOf("1.0.4"), LABEL_PROPERTY);
 
         Version version = spyTestArtifact.getLatestInstallableVersion();
 
         assertNotNull(version);
-        assertEquals(version, Version.valueOf("1.0.2"));
+        assertEquals(version, Version.valueOf("1.0.1"));
+    }
+
+    @Test
+    public void testGetLatestInstallableVersionWhenInstallVersionUnknown() throws Exception {
+        doReturn(Optional.empty()).when(spyTestArtifact).getInstalledVersion();
+        doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.0")));
+            add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.1")));
+        }}).when(mockDownloadManager).getAllUpdates(spyTestArtifact);
+
+        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.0"), PREVIOUS_VERSION_PROPERTY);
+        doReturn("1\\.0\\.(.*)").when(spyTestArtifact).getProperty(Version.valueOf("1.0.1"), PREVIOUS_VERSION_PROPERTY);
+
+        doReturn(VersionLabel.STABLE.toString()).when(spyTestArtifact).getProperty(Version.valueOf("1.0.0"), LABEL_PROPERTY);
+        doReturn(VersionLabel.UNSTABLE.toString()).when(spyTestArtifact).getProperty(Version.valueOf("1.0.1"), LABEL_PROPERTY);
+
+        Version version = spyTestArtifact.getLatestInstallableVersion();
+
+        assertNotNull(version);
+        assertEquals(version, Version.valueOf("1.0.0"));
     }
 
     @Test
     public void testGetNullLatestInstallableVersion() throws Exception {
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyTestArtifact).getInstalledVersion();
+
         doReturn(new ArrayList<Map.Entry<Artifact, Version>>() {{
             add(new AbstractMap.SimpleEntry<>(spyTestArtifact, Version.valueOf("1.0.3")));
-        }}).when(spyTestArtifact).getAllUpdates();
+        }}).when(mockDownloadManager).getAllUpdates(spyTestArtifact);
+
         doReturn("1\\.0\\.2").when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), PREVIOUS_VERSION_PROPERTY);
+        doReturn(VersionLabel.STABLE.toString()).when(spyTestArtifact).getProperty(Version.valueOf("1.0.3"), LABEL_PROPERTY);
 
         Version version = spyTestArtifact.getLatestInstallableVersion();
 

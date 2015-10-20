@@ -151,19 +151,14 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
         }
     }
 
+    /**
+     * @return label value, or null if (1) label is unknown or (2) label is absent among the VersionLabel constants
+     */
     @Nullable
     protected VersionLabel fetchVersionLabel(@NotNull String artifactName, @NotNull String versionNumber) throws IOException {
         Artifact artifact = createArtifact(artifactName);
         Version version = Version.valueOf(versionNumber);
 
-        Map<String, String> properties;
-        try {
-            properties = artifact.getProperties(version);
-        } catch (IOException e) {
-            return null;
-        }
-
-        String label = properties.get(ArtifactProperties.LABEL_PROPERTY);
-        return label != null ? VersionLabel.valueOf(label.toUpperCase()) : null;
+        return artifact.getLabel(version).orElse(null);
     }
 }

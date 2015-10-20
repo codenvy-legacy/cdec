@@ -37,14 +37,14 @@ public class InstallArtifactInfoTest {
         InstallArtifactInfo info = new InstallArtifactInfo();
         info.setArtifact("codenvy");
         info.setVersion("1.0.1");
-        info.setLabel(VersionLabel.RC);
+        info.setLabel(VersionLabel.UNSTABLE);
         info.setStatus(InstallArtifactStatus.SUCCESS);
 
         String json = toJson(info);
         assertEquals(json, "{\n" +
                            "  \"artifact\" : \"codenvy\",\n" +
                            "  \"version\" : \"1.0.1\",\n" +
-                           "  \"label\" : \"RC\",\n" +
+                           "  \"label\" : \"UNSTABLE\",\n" +
                            "  \"status\" : \"SUCCESS\"\n" +
                            "}");
         assertEquals(fromJson(json, InstallArtifactInfo.class), info);
