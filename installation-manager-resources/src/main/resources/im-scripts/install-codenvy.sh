@@ -369,8 +369,8 @@ printPreInstallInfo_single() {
     printLn "Checking system pre-requisites..."
     printLn
 
-    preconfigureSystem
     doCheckAvailableResourcesLocally 8000000 4 300000000
+    preconfigureSystem
 
     printLn "Checking access to external dependencies..."
     printLn
@@ -567,8 +567,8 @@ printPreInstallInfo_multi() {
     printLn "Checking system pre-requisites..."
     printLn
 
-    preconfigureSystem
     doCheckAvailableResourcesLocally 1000000 1 14000000
+    preconfigureSystem
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
