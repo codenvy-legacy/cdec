@@ -114,7 +114,7 @@ validateOS() {
 
 # $1 - command name
 installPackageIfNeed() {
-    command -v $1 >/dev/null 2>&1 || { # check if requered command had been already installed earlier
+    rpm -qa | grep "^$1-" &> /dev/null || { # check if requered package had been already installed earlier
         sudo yum install $1 -y -q
     }
 }
@@ -220,7 +220,7 @@ askHostnameAndInsertProperty() {
         if [ "${OUTPUT}" == "success" ]; then
            break
         else
-            printLn "$(printRed "ERROR"): The hostname '${VALUE}' isn't availabe or wrong. Please try again..."
+            printLn $(printRed "ERROR: The hostname '${VALUE}' isn't availabe or wrong. Please try again...")
         fi
     done
 
@@ -283,8 +283,8 @@ validatePortLocal() {
     OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
 
     if [ "${OUTPUT}" != "" ]; then
-        printLn "$(printRed "ERROR"): The port ${PROTOCOL}:${PORT} is busy."
-        printLn "$(printRed "ERROR"): The installation can't be proceeded."
+        printLn $(printRed "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
+        printLn $(printRed "ERROR: The installation can't be proceeded.")
         exit 1
     fi
 }
@@ -296,8 +296,8 @@ validatePortRemote() {
     OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
 
     if [ "${OUTPUT}" != "" ]; then
-        printLn "$(printRed "ERROR"): The port ${PROTOCOL}:${PORT} on host ${HOST} is busy."
-        printLn "$(printRed "ERROR"): The installation can't be proceeded."
+        printLn $(printRed "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
+        printLn $(printRed "ERROR: The installation can't be proceeded.")
         exit 1
     fi
 }
@@ -374,7 +374,7 @@ printPreInstallInfo_single() {
 
     printLn "Checking access to external dependencies..."
     printLn
-    checkingAccessToExternalDependencies
+    checkAccessToExternalDependencies
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -390,14 +390,14 @@ printPreInstallInfo_single() {
 # parameter 2 - MIN_CORES
 # parameter 3 - MIN_DISK_SPACE_KB
 doCheckAvailableResourcesLocally() {
-    MIN_RAM_KB=$1
-    MIN_CORES=$2
-    MIN_DISK_SPACE_KB=$3
+    local MIN_RAM_KB=$1
+    local MIN_CORES=$2
+    local MIN_DISK_SPACE_KB=$3
 
-    osIssueFound=false
-    osType=""
-    osVersion=""
-    osInfo=""
+    local osIssueFound=false
+    local osType=""
+    local osVersion=""
+    local osInfo=""
 
     case `uname` in
         Linux )
@@ -431,21 +431,21 @@ doCheckAvailableResourcesLocally() {
         osIssueFound=true
     fi
 
-    osInfoToDisplay=$(printf "%-30s" "${osInfo}")
-    osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local osInfoToDisplay=$(printf "%-30s" "${osInfo}")
+    local osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
     printLn "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
 
 
     resourceIssueFound=false
 
-    availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-    availableRAMIssue=false
+    local availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
+    local availableRAMIssue=false
 
-    availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
-    availableDiskSpaceIssue=false
+    local availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
+    local availableDiskSpaceIssue=false
 
-    availableCores=`grep -c ^processor /proc/cpuinfo`
-    availableCoresIssue=false
+    local availableCores=`grep -c ^processor /proc/cpuinfo`
+    local availableCoresIssue=false
 
     if (( ${availableRAM} < ${MIN_RAM_KB} )); then
         resourceIssueFound=true
@@ -462,19 +462,19 @@ doCheckAvailableResourcesLocally() {
         availableDiskSpaceIssue=true
     fi
 
-    minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
-    availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
-    availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-    RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
+    local availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+    local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
+    local RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
-    minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
-    availableCoresToDisplay=$(printf "%-11s" "${availableCores} cores")
-    coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
+    local availableCoresToDisplay=$(printf "%-11s" "${availableCores} cores")
+    local coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
-    minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
-    availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
-    availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-    diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
+    local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+    local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
+    local diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
     printLn
     printLn "                RECOMMENDED     AVAILABLE"
@@ -485,13 +485,13 @@ doCheckAvailableResourcesLocally() {
 
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
         if [[ ${osIssueFound} == true ]]; then
-            printLn "!!! The OS version or config do not match requirements. !!!"
+            printLn $(printRed "!!! The OS version or config do not match requirements.")
             exit 1;
         fi
 
         if [[ ${resourceIssueFound} == true ]]; then
-            printLn "!!! The resources available are lower than required.    !!!"
-            printLn "!!! Troubleshooting: http://docs.codenvy.com/onprem     !!!"
+            printLn $(printRed "!!! The resources available are lower than required.")
+            printLn $(printRed "!!! Troubleshooting: http://docs.codenvy.com/onprem")
         fi
 
         printLn
@@ -503,8 +503,8 @@ doCheckAvailableResourcesLocally() {
     fi
 }
 
-checkingAccessToExternalDependencies() {
-    resourceIssueFound=false
+checkAccessToExternalDependencies() {
+    local resourceIssueFound=false
 
     checkUrl https://install.codenvycorp.com || resourceIssueFound=true
     checkUrl http://archive.apache.org/dist/ant/binaries || resourceIssueFound=true
@@ -519,13 +519,14 @@ checkingAccessToExternalDependencies() {
     checkUrl http://yum.puppetlabs.com/ || resourceIssueFound=true
     checkUrl http://repo.zabbix.com/zabbix/ || resourceIssueFound=true
     checkUrl http://mirror.centos.org/centos/ || resourceIssueFound=true
+    checkUrl https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION} || resourceIssueFound=true  # check Codenvy binary accessibility
 
     printLn
 
     if [[ ${resourceIssueFound} == true ]]; then
-        printLn "!!! Some repositories are not accessible. The installation will fail. !!!"
-        printLn "!!! Consider setting up a proxy server.                               !!!"
-        printLn "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/       !!!"
+        printLn $(printRed "!!! Some repositories are not accessible. The installation will fail.")
+        printLn $(printRed "!!! Consider setting up a proxy server.")
+        printLn $(printRed "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/")
         printLn
 
         if [[ ${SILENT} == true ]]; then
@@ -540,9 +541,9 @@ checkingAccessToExternalDependencies() {
 # parameter 1 - url
 # parameter 2 - cookie
 checkUrl() {
-    checkFailed=0
-    url=$1
-    cookie=$2
+    local checkFailed=0
+    local url=$1
+    local cookie=$2
 
     if [[ ${cookie} == "" ]]; then
         wget --quiet --spider ${url} || checkFailed=1
@@ -616,26 +617,26 @@ printPreInstallInfo_multi() {
 
     printLn "Checking access to external dependencies..."
     printLn
-    checkingAccessToExternalDependencies
+    checkAccessToExternalDependencies
     printLn
     printLn
 }
 
 doCheckAvailableResourcesOnNodes() {
-    globalNodeIssueFound=false
-    globalOsIssueFound=false
+    local globalNodeIssueFound=false
+    local globalOsIssueFound=false
 
     doGetHostsVariables
 
     for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
         # check if host available
-        OUTPUT=$(validateHostname ${HOST})
+        local OUTPUT=$(validateHostname ${HOST})
         if [ "${OUTPUT}" != "success" ]; then
-            printLn "$(printRed "ERROR"): The hostname '${HOST}' isn't availabe or wrong."
+            printLn $(printRed "ERROR: The hostname '${HOST}' isn't availabe or wrong.")
             exit 1
         fi
 
-        SSH_PREFIX="ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
+        local SSH_PREFIX="ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
 
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
             MIN_RAM_KB=1500000
@@ -645,11 +646,11 @@ doCheckAvailableResourcesOnNodes() {
             MIN_DISK_SPACE_KB=14000000
         fi
 
-        osIssueFound=false
+        local osIssueFound=false
 
-        osType=""
-        osVersion=""
-        osInfo=""
+        local osType=""
+        local osVersion=""
+        local osInfo=""
 
         case `${SSH_PREFIX} "uname" | sed 's/\r//'` in
             Linux )
@@ -682,13 +683,13 @@ doCheckAvailableResourcesOnNodes() {
             osIssueFound=true
         fi
 
-        resourceIssueFound=false
+        local resourceIssueFound=false
 
-        availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
-        availableRAMIssue=false
+        local availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        local availableRAMIssue=false
 
-        availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
-        availableDiskSpaceIssue=false
+        local availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        local availableDiskSpaceIssue=false
 
         if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
             resourceIssueFound=true
@@ -711,15 +712,15 @@ doCheckAvailableResourcesOnNodes() {
                 printLn
             fi
 
-            minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
-            availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
-            availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-            RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+            local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
+            local availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+            local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
+            local RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
-            minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB}/1000/1000 )) GB")
-            availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
-            availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-            diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+            local minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB}/1000/1000 )) GB")
+            local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+            local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
+            local diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
 
             if [[ ${resourceIssueFound} == true ]]; then
                 printLn ">                 RECOMMENDED     AVAILABLE"
@@ -733,8 +734,8 @@ doCheckAvailableResourcesOnNodes() {
     done
 
     if [[ ${globalNodeIssueFound} == true ]]; then
-        printLn "!!! Some nodes do not match requirements.             !!!"
-        printLn "!!! See: http://docs.codenvy.com/onprem/#sizing-guide !!!"
+        printLn $(printRed "!!! Some nodes do not match requirements.")
+        printLn $(printRed "!!! See: http://docs.codenvy.com/onprem/#sizing-guide")
         printLn
 
         if [[ ${SILENT} == true && ${globalOsIssueFound} == true ]]; then
@@ -878,8 +879,8 @@ printPostInstallInfo() {
     printLn
     printLn "Codenvy is ready at http://"${HOST_NAME}
     printLn
-    printLn "!!! Set up a DNS entry for Codenvy, or add a hosts rule to your clients: !!!"
-    printLn "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq        !!!"
+    printLn "!!! Set up a DNS entry for Codenvy, or add a hosts rule to your clients:"
+    printLn "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq"
     printLn
     printLn "Admin user name : "${SYSTEM_ADMIN_NAME}
     printLn "Admin password  : "${SYSTEM_ADMIN_PASSWORD}
