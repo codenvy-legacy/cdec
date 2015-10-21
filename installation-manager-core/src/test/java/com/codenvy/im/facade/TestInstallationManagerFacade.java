@@ -163,7 +163,7 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         installationManagerFacade.install(cdecArtifact, version, installOptions);
 
-        verify(installManager).performInstallStep(cdecArtifact, version, pathToBinaries, installOptions);
+        verify(installManager).performInstallStep(cdecArtifact, version, pathToBinaries, installOptions, true);
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)
@@ -188,7 +188,7 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         installationManagerFacade.update(cdecArtifact, version, installOptions);
 
-        verify(installManager).performUpdateStep(cdecArtifact, version, pathToBinaries, installOptions);
+        verify(installManager).performUpdateStep(cdecArtifact, version, pathToBinaries, installOptions, true);
     }
 
     @Test(expectedExceptions = FileNotFoundException.class)

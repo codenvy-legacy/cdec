@@ -149,7 +149,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
-        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
+        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options, true);
         installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
@@ -170,7 +170,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
-        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
+        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options, true);
         installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
@@ -193,7 +193,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
-        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
+        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options, true);
         installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
@@ -216,7 +216,7 @@ public class InstallManagerTest extends BaseTest {
         doReturn(null).when(installManager).executeCommand(any(Command.class));
         doReturn(true).when(installManager).isInstallable(artifact, version);
 
-        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
+        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options, true);
         installManager.waitForStepCompleted(stepId);
 
         verify(installManager).executeCommand(any(Command.class));
@@ -276,7 +276,7 @@ public class InstallManagerTest extends BaseTest {
             }
         }).when(installManager).executeCommand(any(Command.class));
 
-        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options);
+        String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options, false);
 
         InstallArtifactStepInfo info = installManager.getUpdateStepInfo(stepId);
         assertEquals(info.getStatus(), InstallArtifactStatus.IN_PROGRESS);
@@ -300,7 +300,7 @@ public class InstallManagerTest extends BaseTest {
 
         doReturn(false).when(installManager).isInstallable(artifact, version);
 
-        installManager.performInstallStep(artifact, version, pathToBinaries, options);
+        installManager.performInstallStep(artifact, version, pathToBinaries, options, true);
     }
 
     @Test

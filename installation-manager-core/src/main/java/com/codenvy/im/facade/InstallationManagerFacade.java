@@ -401,7 +401,7 @@ public class InstallationManagerFacade {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
 
-        return installManager.performInstallStep(artifact, version, downloadedVersions.get(version), installOptions);
+        return installManager.performInstallStep(artifact, version, downloadedVersions.get(version), installOptions, true);
     }
 
     /**
@@ -413,7 +413,7 @@ public class InstallationManagerFacade {
                           @NotNull Version version,
                           @NotNull Path binaries,
                           @NotNull InstallOptions installOptions) throws IOException {
-        return installManager.performInstallStep(artifact, version, binaries, installOptions);
+        return installManager.performInstallStep(artifact, version, binaries, installOptions, false);
     }
 
     /**
@@ -429,7 +429,7 @@ public class InstallationManagerFacade {
             throw new FileNotFoundException(format("Binaries to install %s:%s not found", artifact.getName(), version.toString()));
         }
 
-        return installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions);
+        return installManager.performUpdateStep(artifact, version, downloadedVersions.get(version), installOptions, true);
     }
 
     /**
@@ -441,7 +441,7 @@ public class InstallationManagerFacade {
                          @NotNull Version version,
                          @NotNull Path binaries,
                          @NotNull InstallOptions installOptions) throws IOException {
-        return installManager.performUpdateStep(artifact, version, binaries, installOptions);
+        return installManager.performUpdateStep(artifact, version, binaries, installOptions, false);
     }
 
 

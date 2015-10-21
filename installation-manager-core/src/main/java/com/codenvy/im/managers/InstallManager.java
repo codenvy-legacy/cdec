@@ -80,27 +80,65 @@ public class InstallManager {
         return installed;
     }
 
-    /** Installs specific artifact. */
+    /**
+     * Installs specific artifact.
+     *
+     * @param artifact
+     *        Artifact
+     * @param version
+     *        Version
+     * @param pathToBinaries
+     *        Path, path to binary
+     * @param options
+     *        installation option
+     * @param isBinaryFromRepo
+     *        true, if the binaries from repository, will be check it in remote repository
+     *        false, if the binaries is local, no any checks in remote repository
+     * @return
+     * @throws IOException
+               if an I/O error occurred
+     */
     public String performInstallStep(final Artifact artifact,
                                      final Version version,
                                      final Path pathToBinaries,
-                                     final InstallOptions options) throws IOException {
-        return performStep(artifact, version, pathToBinaries, options, false);
+                                     final InstallOptions options,
+                                     boolean isBinaryFromRepo) throws IOException {
+        return performStep(artifact, version, pathToBinaries, options, false, isBinaryFromRepo);
     }
 
-    /** Updates specific artifact. */
-    public String performUpdateStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options) throws IOException {
-        return performStep(artifact, version, pathToBinaries, options, true);
+    /**
+     * Updates specific artifact.
+     *
+     * @param artifact
+     *        Artifact
+     * @param version
+     *        Version
+     * @param pathToBinaries
+     *        Path, path to binary
+     * @param options
+     *        installation option
+     * @param isBinaryFromRepo
+     *        true, if the binaries from repository, will be check it in remote repository
+     *        false, if the binaries is local, no any checks in remote repository
+     * @return
+     * @throws IOException
+    if an I/O error occurred
+     */
+    public String performUpdateStep(Artifact artifact, Version version, Path pathToBinaries, InstallOptions options, boolean isBinaryFromRepo) throws IOException {
+        return performStep(artifact, version, pathToBinaries, options, true, isBinaryFromRepo);
     }
 
     protected String performStep(final Artifact artifact,
                                  final Version version,
                                  final Path pathToBinaries,
                                  final InstallOptions options,
-                                 final boolean isUpdate) throws IOException {
+                                 final boolean isUpdate,
+                                 final boolean isBinaryFromRepo) throws IOException {
 
-        if (options.getStep() == 0 && !isInstallable(artifact, version)) {
-            throw new IllegalStateException(format("%s:%s is not installable", artifact.getName(), version.toString()));
+        if (isBinaryFromRepo) {
+            if (options.getStep() == 0 && !isInstallable(artifact, version)) {
+                throw new IllegalStateException(format("%s:%s is not installable", artifact.getName(), version.toString()));
+            }
         }
 
         final String stepId = UUID.randomUUID().toString();
