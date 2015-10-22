@@ -60,6 +60,7 @@ fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
 # set date on tomorrow (repeate 3 times for sure)
+executeSshCommand "sudo service puppet stop" "analytics.codenvy"   # stop puppet which ensures that ntpd service is alive"
 executeSshCommand "sudo service ntpd stop" "analytics.codenvy"
 TOMORROW_DATE=$(LC_TIME="uk_US.UTF-8" date -d '1 day')
 executeSshCommand "sudo LC_TIME=\"uk_US.UTF-8\" date -s \"${TOMORROW_DATE}\"" "analytics.codenvy"
@@ -75,6 +76,8 @@ doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.service
 # check analytics: request users profiles = 1
 doGet "http://codenvy/api/analytics/metric/users_profiles?token=${TOKEN}"
 validateExpectedString ".*\"value\"\:\"1\".*"
+
+executeSshCommand "sudo service puppet start" "analytics.codenvy"
 
 # restore
 executeIMCommand "im-restore" ${BACKUP}
