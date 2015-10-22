@@ -47,7 +47,6 @@ validateExitCode() {
 }
 
 setRunOptions() {
-    START_TIME=`date +%s`
     DIR="${HOME}/codenvy-im"
     ARTIFACT="codenvy"
     CODENVY_TYPE="single"
@@ -824,6 +823,10 @@ nextStep() {
     continueTimer
 }
 
+initTimer() {
+    START_TIME=`date +%s`
+}
+
 runTimer() {
     updateTimer &
     PROGRESS_PID=$!
@@ -890,6 +893,7 @@ set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
 
+initTimer
 runTimer
 
 doConfigureSystem
