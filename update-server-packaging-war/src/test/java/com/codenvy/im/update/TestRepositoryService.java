@@ -18,7 +18,9 @@
 package com.codenvy.im.update;
 
 import com.codenvy.api.subscription.shared.dto.NewSubscription;
+import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.event.EventFactory;
 import com.codenvy.im.event.EventLogger;
@@ -64,11 +66,13 @@ import static com.codenvy.im.artifacts.ArtifactProperties.ARTIFACT_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.AUTHENTICATION_REQUIRED_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
+import static com.codenvy.im.artifacts.ArtifactProperties.LABEL_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.MD5_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.saas.SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT;
 import static com.jayway.restassured.RestAssured.given;
+import static java.lang.String.format;
 import static java.util.Calendar.getInstance;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.endsWith;
@@ -91,6 +95,7 @@ import static org.testng.Assert.assertTrue;
 public class TestRepositoryService extends BaseTest {
 
     public static final javax.ws.rs.core.Response OK_RESPONSE = javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).build();
+    public static final javax.ws.rs.core.Response NOT_FOUND_RESPONSE = javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND).build();
     public static final String TEST_USER_ID = "id";
     public static final String ANY_NAME     = "any_name";
     private ArtifactStorage   artifactStorage;
@@ -139,8 +144,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testGetLatestVersion() throws Exception {
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", new Properties());
+    public void testGetPropertiesOfLatestVersion() throws Exception {
         artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", new Properties());
 
         Response response = given().when().get("repository/properties/" + InstallManagerArtifact.NAME);
@@ -153,6 +157,43 @@ public class TestRepositoryService extends BaseTest {
         assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.2");
         assertNull(value.get(MD5_PROPERTY));
+    }
+
+    @Test
+    public void testGetPropertiesOfLatestStableVersion() throws Exception {
+        Properties stableVersionProps = new Properties();
+        stableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.STABLE.toString()));
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.0", "tmp", stableVersionProps);
+        stableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.STABLE.toString()));
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", stableVersionProps);
+
+        Properties unstableVersionProps = new Properties();
+        unstableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.UNSTABLE.toString()));
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", unstableVersionProps);
+
+        Properties emptyProps = new Properties();
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.3", "tmp", emptyProps);
+
+        Response response = given().when().get(format("repository/properties/%s?label=%s", InstallManagerArtifact.NAME, VersionLabel.STABLE.toString().toLowerCase()));
+        assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
+
+        Map value = Commons.asMap(response.body().asString());
+
+        assertNotNull(value);
+        assertEquals(value.size(), 4);
+        assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
+        assertEquals(value.get(VERSION_PROPERTY), "1.0.1");
+        assertEquals(value.get(LABEL_PROPERTY), VersionLabel.STABLE.toString());
+    }
+
+    @Test
+    public void testFailOfGettingLatestStableVersion() throws Exception {
+        Properties unstableVersionProps = new Properties();
+        unstableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.UNSTABLE.toString()));
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", unstableVersionProps);
+
+        Response response = given().when().get(format("repository/properties/%s?label=%s", InstallManagerArtifact.NAME, VersionLabel.STABLE.toString().toLowerCase()));
+        assertEquals(response.statusCode(), NOT_FOUND_RESPONSE.getStatus());
     }
 
     @Test

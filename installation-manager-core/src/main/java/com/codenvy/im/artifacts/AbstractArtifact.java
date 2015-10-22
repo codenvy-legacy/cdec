@@ -166,7 +166,7 @@ public abstract class AbstractArtifact implements Artifact {
 
                                   try {
                                       Optional<VersionLabel> label = artifact.getLabel(version);
-                                      return ! VersionLabel.UNSTABLE.equals(label.orElse(null));
+                                      return VersionLabel.STABLE.equals(label.orElse(null));
                                   } catch (IOException e) {
                                       throw new RuntimeException(e.getMessage(), e);
                                   }

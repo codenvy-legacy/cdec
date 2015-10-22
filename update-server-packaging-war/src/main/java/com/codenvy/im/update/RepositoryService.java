@@ -163,15 +163,18 @@ public class RepositoryService {
      *
      * @param artifact
      *         the name of the artifact
+     * @param label
+     *         label of artifact version
      * @return Response
      */
     @GenerateLink(rel = "artifact properties")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/properties/{artifact}")
-    public Response getArtifactProperties(@PathParam("artifact") final String artifact) {
+    public Response getLatestArtifactProperties(@PathParam("artifact") final String artifact,
+                                                @QueryParam("label") final String label) {
         try {
-            String version = artifactStorage.getLatestVersion(artifact);
+            String version = artifactStorage.getLatestVersion(artifact, label);
             Map<String, String> properties = doGetArtifactProperties(artifact, version);
 
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(properties)).build();
@@ -312,15 +315,18 @@ public class RepositoryService {
      *
      * @param artifact
      *         the name of the artifact
+     * @param label
+     *         label of artifact version
      * @return Response
      */
     @GenerateLink(rel = "download artifact")
     @GET
     @Path("/public/download/{artifact}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") String artifact) {
+    public Response downloadPublicArtifactLatestVersion(@PathParam("artifact") final String artifact,
+                                                        @QueryParam("label") final String label) {
         try {
-            String version = artifactStorage.getLatestVersion(artifact);
+            String version = artifactStorage.getLatestVersion(artifact, label);
             return doDownloadArtifact(artifact, version, null);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();

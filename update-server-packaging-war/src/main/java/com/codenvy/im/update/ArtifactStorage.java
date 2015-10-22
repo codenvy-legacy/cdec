@@ -18,6 +18,7 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeSet;
 
@@ -46,6 +48,7 @@ import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
 import static com.codenvy.im.utils.Commons.getVersionsList;
+import static java.lang.String.format;
 import static java.nio.file.Files.newOutputStream;
 
 /**
@@ -65,20 +68,46 @@ public class ArtifactStorage {
     }
 
     /**
-     * @return the latest available version of the artifact in the repository
+     * @return the latest available version of the artifact in the repository filtered by certain label.
      * @throws com.codenvy.im.artifacts.ArtifactNotFoundException
      *         if artifact is absent in the repository
      * @throws java.io.IOException
      *         if an I/O error occurs
      */
-    public String getLatestVersion(String artifact) throws IOException {
+    public String getLatestVersion(String artifact, @Nullable String expectedLabel) throws IOException {
         Path dir = getArtifactDir(artifact);
         TreeSet<Version> versions = getVersionsList(dir);
         if (versions.isEmpty()) {
             throw ArtifactNotFoundException.from(artifact);
         }
 
-        return versions.last().toString();
+        if (expectedLabel == null) {
+            return versions.last().toString();
+        }
+
+        // filter versions by expected label and then return last one
+        Optional<Version> lastVersion = versions.descendingSet()
+                                                .stream()
+                                                .filter((version) -> {
+                                                    Optional<String> label = null;
+                                                    try {
+                                                        label = getProperty(artifact, version, ArtifactProperties.LABEL_PROPERTY);
+                                                    } catch (IOException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                    return label.isPresent() && label.get().toUpperCase().equals(expectedLabel.toUpperCase());
+                                                }).findFirst();
+
+        if (!lastVersion.isPresent()) {
+            throw new ArtifactNotFoundException(format("There is no version of artifact %s with label %s", artifact, expectedLabel));
+        }
+
+        return lastVersion.get().toString();
+    }
+
+    private Optional<String> getProperty(String artifact, Version version, String propertyName) throws IOException {
+        Properties properties = loadProperties(artifact, version.toString());
+        return Optional.ofNullable((String) properties.get(propertyName));
     }
 
     /**
