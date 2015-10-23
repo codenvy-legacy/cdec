@@ -19,6 +19,7 @@ package com.codenvy.im.update;
 
 import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.event.Event;
@@ -162,26 +163,30 @@ public class TestRepositoryService extends BaseTest {
     @Test
     public void testGetPropertiesOfLatestStableVersion() throws Exception {
         Properties stableVersionProps = new Properties();
+        stableVersionProps.putAll(ImmutableMap.<Object, Object>of(
+            ArtifactProperties.LABEL_PROPERTY, VersionLabel.STABLE.toString())
+        );
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), CDECArtifact.NAME, "1.0.0", "tmp", stableVersionProps);
         stableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.STABLE.toString()));
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.0", "tmp", stableVersionProps);
-        stableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.STABLE.toString()));
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.1", "tmp", stableVersionProps);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), CDECArtifact.NAME, "1.0.1", "tmp", stableVersionProps);
 
         Properties unstableVersionProps = new Properties();
-        unstableVersionProps.putAll(ImmutableMap.<Object, Object>of(ArtifactProperties.LABEL_PROPERTY, VersionLabel.UNSTABLE.toString()));
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.2", "tmp", unstableVersionProps);
+        unstableVersionProps.putAll(ImmutableMap.<Object, Object>of(
+            ArtifactProperties.LABEL_PROPERTY, VersionLabel.UNSTABLE.toString())
+        );
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), CDECArtifact.NAME, "1.0.2", "tmp", unstableVersionProps);
 
         Properties emptyProps = new Properties();
-        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), InstallManagerArtifact.NAME, "1.0.3", "tmp", emptyProps);
+        artifactStorage.upload(new ByteArrayInputStream("content".getBytes()), CDECArtifact.NAME, "1.0.3", "tmp", emptyProps);
 
-        Response response = given().when().get(format("repository/properties/%s?label=%s", InstallManagerArtifact.NAME, VersionLabel.STABLE.toString().toLowerCase()));
+        Response response = given().when().get(format("repository/properties/%s?label=%s", CDECArtifact.NAME, VersionLabel.STABLE.toString().toLowerCase()));
         assertEquals(response.statusCode(), OK_RESPONSE.getStatus());
 
         Map value = Commons.asMap(response.body().asString());
 
         assertNotNull(value);
         assertEquals(value.size(), 4);
-        assertEquals(value.get(ARTIFACT_PROPERTY), InstallManagerArtifact.NAME);
+        assertEquals(value.get(ARTIFACT_PROPERTY), CDECArtifact.NAME);
         assertEquals(value.get(VERSION_PROPERTY), "1.0.1");
         assertEquals(value.get(LABEL_PROPERTY), VersionLabel.STABLE.toString());
     }

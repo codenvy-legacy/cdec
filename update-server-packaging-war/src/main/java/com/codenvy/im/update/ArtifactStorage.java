@@ -89,23 +89,23 @@ public class ArtifactStorage {
         Optional<Version> lastVersion = versions.descendingSet()
                                                 .stream()
                                                 .filter((version) -> {
-                                                    Optional<String> label = null;
                                                     try {
-                                                        label = getProperty(artifact, version, ArtifactProperties.LABEL_PROPERTY);
+                                                        Optional<String> label = getProperty(artifact, version, ArtifactProperties.LABEL_PROPERTY);
+                                                        return label.isPresent() && label.get().toUpperCase().equals(expectedLabel.toUpperCase());
                                                     } catch (IOException e) {
                                                         throw new RuntimeException(e);
                                                     }
-                                                    return label.isPresent() && label.get().toUpperCase().equals(expectedLabel.toUpperCase());
+
                                                 }).findFirst();
 
         if (!lastVersion.isPresent()) {
-            throw new ArtifactNotFoundException(format("There is no version of artifact %s with label %s", artifact, expectedLabel));
+            throw new ArtifactNotFoundException(format("There is no version of artifact %s with label '%s'", artifact, expectedLabel));
         }
 
         return lastVersion.get().toString();
     }
 
-    private Optional<String> getProperty(String artifact, Version version, String propertyName) throws IOException {
+    protected Optional<String> getProperty(String artifact, Version version, String propertyName) throws IOException {
         Properties properties = loadProperties(artifact, version.toString());
         return Optional.ofNullable((String) properties.get(propertyName));
     }

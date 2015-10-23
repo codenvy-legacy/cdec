@@ -18,6 +18,9 @@
 package com.codenvy.im.update;
 
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
+import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.io.IOUtils;
@@ -26,7 +29,9 @@ import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -41,6 +46,8 @@ import static com.codenvy.im.artifacts.ArtifactProperties.BUILD_TIME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.FILE_NAME_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.SUBSCRIPTION_PROPERTY;
 import static com.codenvy.im.artifacts.ArtifactProperties.VERSION_PROPERTY;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -227,5 +234,32 @@ public class TestArtifactStorage extends BaseTest {
 
         assertEquals(versions.size(), 1);
         assertEquals(versions.iterator().next(), Version.valueOf("1.0.3"));
+    }
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class,
+          expectedExceptionsMessageRegExp = "Artifact 'codenvy' not found")
+    public void testGetLatestArtifactVersionFailOnAbsentAnyVersions() throws Exception {
+        ArtifactStorage spyArtifactStorage = spy(new ArtifactStorage(DOWNLOAD_DIRECTORY.toString()));
+        doThrow(new IOException("error")).when(spyArtifactStorage).getProperty(CDECArtifact.NAME, Version.valueOf("1.0.0"), ArtifactProperties.LABEL_PROPERTY);
+        spyArtifactStorage.getLatestVersion(CDECArtifact.NAME, "any value");
+    }
+
+    @Test(expectedExceptions = RuntimeException.class,
+          expectedExceptionsMessageRegExp = "java.io.IOException: error")
+    public void testGetLatestArtifactVersionFailOnIOException() throws Exception {
+        ArtifactStorage spyArtifactStorage = spy(new ArtifactStorage(DOWNLOAD_DIRECTORY.toString()));
+
+        spyArtifactStorage.upload(new ByteArrayInputStream("content".getBytes()), CDECArtifact.NAME, "1.0.0", "tmp", new Properties());
+        doThrow(new IOException("error")).when(spyArtifactStorage).getProperty(CDECArtifact.NAME, Version.valueOf("1.0.0"), ArtifactProperties.LABEL_PROPERTY);
+
+        spyArtifactStorage.getLatestVersion(CDECArtifact.NAME, "any value");
+    }
+
+    @Test(expectedExceptions = ArtifactNotFoundException.class,
+          expectedExceptionsMessageRegExp = "There is no version of artifact codenvy with label 'any value'")
+    public void testGetLatestArtifactVersionFailOnAbsentStableVersion() throws Exception {
+        ArtifactStorage spyArtifactStorage = spy(new ArtifactStorage(DOWNLOAD_DIRECTORY.toString()));
+        spyArtifactStorage.upload(new ByteArrayInputStream("content".getBytes()), CDECArtifact.NAME, "1.0.0", "tmp", new Properties());
+        spyArtifactStorage.getLatestVersion(CDECArtifact.NAME, "any value");
     }
 }
