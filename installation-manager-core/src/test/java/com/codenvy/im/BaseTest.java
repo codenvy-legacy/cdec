@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.nio.file.Files.delete;
@@ -148,19 +149,22 @@ public class BaseTest {
     }
 
     protected void prepareMultiNodeEnv(ConfigManager configManager) throws Exception {
-        Map<String, String> properties = ImmutableMap.of
-                (
-                        "api_host_name", "api.example.com",
-                        "data_host_name", "data.example.com",
-                        "analytics_host_name", "analytics.example.com",
-                        "host_url", "hostname",
-                        Config.VERSION, TEST_VERSION_STR
-                );
-
+        Map<String, String> properties = getTestMultiNodeProperties();
         createMultiNodeConf();
         createAssemblyProperty();
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
         doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
+    }
+
+    protected Map<String, String> getTestMultiNodeProperties() {
+        return new HashMap<String, String>() {{
+                put("api_host_name", "api.example.com");
+                put("data_host_name", "data.example.com");
+                put("analytics_host_name", "analytics.example.com");
+                put("host_url", "hostname");
+                put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, "master.example.com");
+                put(Config.VERSION, TEST_VERSION_STR);
+            }};
     }
 
     @AfterMethod

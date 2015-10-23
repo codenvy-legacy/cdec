@@ -338,6 +338,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
                     commands.add(createReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
+                commands.add(createReplaceCommand("/tmp/codenvy/" + Config.MULTI_SERVER_NODES_PROPERTIES, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:

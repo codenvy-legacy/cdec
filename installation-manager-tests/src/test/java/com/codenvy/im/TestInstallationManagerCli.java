@@ -86,13 +86,13 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testUpdateSingleNode() throws Exception {
-        doTest("test-update-single-node.sh");
+    public void testUpdateSingleNodeFromBinary() throws Exception {
+        doTest("test-update-single-node-from-binary.sh");
     }
 
     @Test
-    public void testUpdateMultiNodes() throws Exception {
-        doTest("test-update-multi-nodes.sh");
+    public void testUpdateMultiNodesFromBinary() throws Exception {
+        doTest("test-update-multi-nodes-from-binary.sh");
     }
 
     @Test

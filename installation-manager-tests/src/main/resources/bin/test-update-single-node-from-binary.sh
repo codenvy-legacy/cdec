@@ -18,7 +18,7 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Update single-node Codenvy"
+printAndLog "TEST CASE: Update single-node Codenvy from binary"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installCodenvy ${PREV_CODENVY_VERSION}
@@ -39,6 +39,7 @@ executeSshCommand "cp /etc/puppet/manifests/nodes/single_server/base_config.pp /
 executeSshCommand "cp /etc/puppet/manifests/nodes/single_server/single_server.pp /tmp/codenvy/manifests/nodes/single_server/single_server.pp"
 executeSshCommand "sed -i s/${PREV_CODENVY_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/single_server/base_config.pp"
 executeSshCommand "sed -i s/${PREV_CODENVY_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/single_server/single_server.pp"
+executeSshCommand "sudo yum install zip -y -q"
 executeSshCommand "cd /tmp/codenvy && zip -r /tmp/codenvy.zip ."
 
 # install from local folder

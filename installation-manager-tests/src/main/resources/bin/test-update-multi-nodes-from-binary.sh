@@ -18,7 +18,7 @@
 
 . ./lib.sh
 
-printAndLog "TEST CASE: Update multi-nodes Codenvy"
+printAndLog "TEST CASE: Update multi-nodes Codenvy from binary"
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
 installCodenvy ${PREV_CODENVY_VERSION}
