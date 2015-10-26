@@ -71,7 +71,7 @@ public class BackupConfig {
     }
 
     protected static String BACKUP_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
-    protected static Path   BASE_TMP_DIRECTORY      = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+    public static    Path   BASE_TMP_DIRECTORY      = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
 
     @ApiModelProperty(required = true, allowableValues = CDECArtifact.NAME)
     private String artifactName;

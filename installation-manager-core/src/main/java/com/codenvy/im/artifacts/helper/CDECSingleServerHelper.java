@@ -227,42 +227,41 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
         switch (step) {
             case 0:
-                return createCommand(format("rm -rf /tmp/codenvy; " +
-                                            "mkdir /tmp/codenvy/; " +
-                                            "unzip -o %s -d /tmp/codenvy", pathToBinaries.toString()));
+                return createCommand(format("rm -rf %1$s; " +
+                                            "mkdir %1$s; " +
+                                            "unzip -o %2$s -d %1$s", getTmpCodenvyDir(), pathToBinaries.toString()));
 
             case 1:
                 List<Command> commands = new ArrayList<>();
-                commands.add(createCommand(format("sed -i 's/%s/%s/g' /tmp/codenvy/%s",
-                                                  "YOUR_DNS_NAME",
+                commands.add(createCommand(format("sed -i 's/YOUR_DNS_NAME/%s/g' %s",
                                                   config.getHostUrl(),
-                                                  Config.SINGLE_SERVER_PROPERTIES)));
+                                                  Paths.get(getTmpCodenvyDir(), Config.SINGLE_SERVER_PROPERTIES))));
                 for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                     String property = e.getKey();
                     String value = e.getValue();
 
-                    commands.add(createPropertyReplaceCommand("/tmp/codenvy/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createPropertyReplaceCommand("/tmp/codenvy/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createPropertyReplaceCommand(getTmpCodenvyDir() + "/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
+                    commands.add(createPropertyReplaceCommand(getTmpCodenvyDir() + "/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
                 }
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                return createPatchCommand(Paths.get("/tmp/codenvy/patches/"),
+                return createPatchCommand(Paths.get(getTmpCodenvyDir(), "patches"),
                                           CommandLibrary.PatchType.BEFORE_UPDATE,
                                           installOptions);
 
             case 3:
-                return createCommand("sudo rm -rf /etc/puppet/files; " +
-                                     "sudo rm -rf /etc/puppet/modules; " +
-                                     "sudo rm -rf /etc/puppet/manifests; " +
-                                     "sudo rm -rf /etc/puppet/patches; " +
-                                     "sudo mv /tmp/codenvy/* /etc/puppet");
+                return createCommand(format("sudo rm -rf %1$s/files; " +
+                                            "sudo rm -rf %1$s/modules; " +
+                                            "sudo rm -rf %1$s/manifests; " +
+                                            "sudo rm -rf %1$s/patches; " +
+                                            "sudo mv %2$s/* %1$s", getPuppetDir(), getTmpCodenvyDir()));
 
             case 4:
                 return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate), configManager);
 
             case 5:
-                return createPatchCommand(Paths.get("/etc/puppet/patches/"),
+                return createPatchCommand(Paths.get(getPuppetDir(), "patches"),
                                           CommandLibrary.PatchType.AFTER_UPDATE,
                                           installOptions);
 

@@ -25,8 +25,8 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-
 import org.eclipse.che.commons.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -81,4 +81,14 @@ public abstract class CDECArtifactHelper {
 
     /** @return list of commands to re-install Codenvy */
     public abstract Command getReinstallCommand(Config config, @Nullable Version installedVersion) throws IOException;
+
+    /** for testing propose */
+    public String getTmpCodenvyDir() {
+        return "/tmp/codenvy";
+    }
+
+    /** for testing propose */
+    public String getPuppetDir() {
+        return "/etc/puppet";
+    }
 }

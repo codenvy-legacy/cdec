@@ -35,7 +35,6 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.testng.annotations.AfterMethod;
@@ -53,8 +52,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static java.nio.file.Files.createDirectories;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -71,34 +68,56 @@ import static org.testng.Assert.fail;
  * @author Dmytro Nochevnov
  */
 public class TestCDECArtifact extends BaseTest {
-    private static final String initialOsVersion = OSUtils.VERSION;
-    private static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+    public static final String INITIAL_OS_VERSION = OSUtils.VERSION;
+    public static final String SYSTEM_USER_NAME   = System.getProperty("user.name");
 
-    private CDECArtifact       spyCdecArtifact;
+    public static final String BASE_TMP_DIR = "target/" + TestCDECArtifact.class.getSimpleName();
+    public static final String TMP_CODENVY  = BASE_TMP_DIR + "/codenvy";
+    public static final String ETC_PUPPET   = BASE_TMP_DIR + "/etc/puppet";
+
+    private CDECArtifact spyCdecArtifact;
+
     @Mock
-    private HttpTransport      transport;
+    private HttpTransport mockTransport;
     @Mock
-    private ConfigManager      configManager;
+    private ConfigManager mockConfigManager;
     @Mock
-    private Config             config;
+    private Config        mockConfig;
     @Mock
-    private Command            mockCommand;
-    @Mock
-    private CDECArtifactHelper mockHelper;
+    private Command       mockCommand;
+
+    private CDECArtifactHelper spyCDECSingleServerHelper;
+    private CDECArtifactHelper spyCDECMultiServerHelper;
 
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager));
+        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, mockTransport, mockConfigManager));
 
-        // cleanup temp directory
-        File remoteTempDir = new File("/tmp/codenvy");
-        FileUtils.deleteDirectory(remoteTempDir);
+        spyCDECSingleServerHelper = spy(new CDECSingleServerHelper(spyCdecArtifact, mockConfigManager));
+        spyCDECMultiServerHelper = spy(new CDECMultiServerHelper(spyCdecArtifact, mockConfigManager));
+
+        doReturn(spyCDECSingleServerHelper).when(spyCdecArtifact).getHelper(InstallType.SINGLE_SERVER);
+        doReturn(spyCDECMultiServerHelper).when(spyCdecArtifact).getHelper(InstallType.MULTI_SERVER);
+
+        doReturn(TMP_CODENVY).when(spyCDECSingleServerHelper).getTmpCodenvyDir();
+        doReturn(TMP_CODENVY).when(spyCDECMultiServerHelper).getTmpCodenvyDir();
+        FileUtils.writeStringToFile(Paths.get(TMP_CODENVY, "patches", InstallType.SINGLE_SERVER.toString().toLowerCase(), "patch_before_update.sh").toFile(),
+                                    "echo -n \"$test_property1\"");
+        FileUtils.writeStringToFile(Paths.get(TMP_CODENVY, "patches", InstallType.MULTI_SERVER.toString().toLowerCase(), "patch_before_update.sh").toFile(),
+                                    "echo -n \"$test_property1\"");
+
+        doReturn(ETC_PUPPET).when(spyCDECSingleServerHelper).getPuppetDir();
+        doReturn(ETC_PUPPET).when(spyCDECMultiServerHelper).getPuppetDir();
+        FileUtils.writeStringToFile(Paths.get(ETC_PUPPET, "patches", InstallType.SINGLE_SERVER.toString().toLowerCase(), "patch_after_update.sh").toFile(),
+                                    "echo -n \"$test_property1\"");
+        FileUtils.writeStringToFile(Paths.get(ETC_PUPPET, "patches", InstallType.MULTI_SERVER.toString().toLowerCase(), "patch_after_update.sh").toFile(),
+                                    "echo -n \"$test_property1\"");
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
-        OSUtils.VERSION = initialOsVersion;
+        OSUtils.VERSION = INITIAL_OS_VERSION;
     }
 
     @Test
@@ -221,28 +240,42 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetUpdateSingleServerCommand() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
         options.setInstallType(InstallType.SINGLE_SERVER);
 
-        int steps = spyCdecArtifact.getUpdateInfo(InstallType.SINGLE_SERVER).size();
-        for (int i = 0; i < steps; i++) {
-            options.setStep(i);
-            Command command = spyCdecArtifact.getUpdateCommand(Version.valueOf("4.0.0"), Paths.get("some path"), options);
-            assertNotNull(command);
-        }
+        final String updateVersion = "4.0.0";
+        Version versionToUpdate = Version.valueOf(updateVersion);
+        Path pathToBinaries = Paths.get("some path");
+        assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(0)).toString(),
+                     "{'command'='rm -rf " + TMP_CODENVY + "; mkdir " + TMP_CODENVY + "; unzip -o some path -d " + TMP_CODENVY + "', " +
+                     "'agent'='LocalAgent'}");
+
+        assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(1)).toString(),
+                     "[{'command'='sed -i 's/YOUR_DNS_NAME/null/g' " + TMP_CODENVY + "/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/single_server/single_server.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$some property *= *\"[^\"]*\"|$some property = \"some value\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/single_server/base_config.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$some property *= *\"[^\"]*\"|$some property = \"some value\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}]");
+
+        assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(2)).toString(),
+                     "[{'command'='sudo cat " + TMP_CODENVY + "/patches/single_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$some property|some value|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/single_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='bash " + TMP_CODENVY + "/patches/single_server/patch_before_update.sh', 'agent'='LocalAgent'}]");
+
+        assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(3)).toString(),
+                     "{'command'='sudo rm -rf " + ETC_PUPPET + "/files; sudo rm -rf " + ETC_PUPPET + "/modules; sudo rm -rf " + ETC_PUPPET + "/manifests; sudo rm -rf " + ETC_PUPPET + "/patches; sudo mv " + TMP_CODENVY + "/* " + ETC_PUPPET + "', 'agent'='LocalAgent'}");
+
+        assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(4)).toString(),
+                     "PuppetErrorInterrupter{ Expected to be installed 'codenvy' of the version '4.0.0' }; looking on errors in file /var/log/puppet/puppet-agent.log locally");
+
+        assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(5)).toString(),
+                     "[{'command'='sudo cat " + ETC_PUPPET + "/patches/single_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$some property|some value|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
+                     "{'command'='bash " + ETC_PUPPET + "/patches/single_server/patch_after_update.sh', 'agent'='LocalAgent'}]");
     }
 
     @Test
     public void testGetUpdateMultiServerCommand() throws Exception {
-        prepareMultiNodeEnv(configManager, transport);
-
-        Path patchDir = Paths.get("/tmp/codenvy/patches/");
-        createDirectories(patchDir);
-        FileUtils.writeStringToFile(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_before_update.sh").toFile(), "echo -n \"$test_property1\"");
-        FileUtils.writeStringToFile(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_after_update.sh").toFile(), "echo -n \"$test_property1\"");
+        prepareMultiNodeEnv(mockConfigManager, mockTransport);
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(getTestMultiNodeProperties());
@@ -252,50 +285,56 @@ public class TestCDECArtifact extends BaseTest {
         Version versionToUpdate = Version.valueOf(updateVersion);
         Path pathToBinaries = Paths.get("some path");
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(0)).toString(),
-                     "{'command'='rm -rf /tmp/codenvy; mkdir /tmp/codenvy/; unzip -o some path -d /tmp/codenvy', " +
+                     "{'command'='rm -rf " + TMP_CODENVY + "; mkdir " + TMP_CODENVY + "; unzip -o some path -d " + TMP_CODENVY + "', " +
                      "'agent'='LocalAgent'}");
 
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(1)).toString(),
-                     "[{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name *= *\"[^\"]*\"|$data_host_name = \"data.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name *= *\"[^\"]*\"|$data_host_name = \"data.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name *= *\"[^\"]*\"|$puppet_master_host_name = \"master.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name *= *\"[^\"]*\"|$puppet_master_host_name = \"master.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url *= *\"[^\"]*\"|$host_url = \"hostname\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url *= *\"[^\"]*\"|$host_url = \"hostname\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name *= *\"[^\"]*\"|$api_host_name = \"api.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name *= *\"[^\"]*\"|$api_host_name = \"api.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name *= *\"[^\"]*\"|$analytics_host_name = \"analytics.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name *= *\"[^\"]*\"|$analytics_host_name = \"analytics.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version *= *\"[^\"]*\"|$version = \"3.3.0\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version *= *\"[^\"]*\"|$version = \"3.3.0\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|api.example.com|api.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|data.example.com|data.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|analytics.example.com|analytics.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|puppet-master.example.com|master.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}]");
+                     "[{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name *= *\"[^\"]*\"|$data_host_name = \"data.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name *= *\"[^\"]*\"|$data_host_name = \"data.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name *= *\"[^\"]*\"|$puppet_master_host_name = \"master.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name *= *\"[^\"]*\"|$puppet_master_host_name = \"master.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url *= *\"[^\"]*\"|$host_url = \"hostname\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url *= *\"[^\"]*\"|$host_url = \"hostname\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name *= *\"[^\"]*\"|$api_host_name = \"api.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name *= *\"[^\"]*\"|$api_host_name = \"api.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name *= *\"[^\"]*\"|$analytics_host_name = \"analytics.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name *= *\"[^\"]*\"|$analytics_host_name = \"analytics.example.com\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version *= *\"[^\"]*\"|$version = \"3.3.0\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version *= *\"[^\"]*\"|$version = \"3.3.0\"|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|api.example.com|api.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|data.example.com|data.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|analytics.example.com|analytics.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|puppet-master.example.com|master.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/manifests/nodes/multi_server/nodes.pp', 'agent'='LocalAgent'}]");
 
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(2)).toString(),
-                     "[{'command'='sudo cat /tmp/codenvy/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name|data.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name|master.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url|hostname|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name|api.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name|analytics.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
-                     + "{'command'='sudo cat /tmp/codenvy/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version|3.3.0|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
-                     + "{'command'='bash /tmp/codenvy/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}]");
+                     "[{'command'='sudo cat " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name|data.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name|master.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url|hostname|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name|api.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name|analytics.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version|3.3.0|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='bash " + TMP_CODENVY + "/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}]");
 
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(3)).toString(),
-                     "{'command'='sudo rm -rf /etc/puppet/files; sudo rm -rf /etc/puppet/modules; sudo rm -rf /etc/puppet/manifests; sudo rm -rf /etc/puppet/patches; sudo mv /tmp/codenvy/* /etc/puppet', " +
+                     "{'command'='sudo rm -rf " + ETC_PUPPET + "/files; sudo rm -rf " + ETC_PUPPET + "/modules; sudo rm -rf " + ETC_PUPPET + "/manifests; sudo rm -rf " + ETC_PUPPET + "/patches; sudo mv " + TMP_CODENVY + "/* " + ETC_PUPPET + "', " +
                      "'agent'='LocalAgent'}");
 
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(4)).toString(),
                      "PuppetErrorInterrupter{ Expected to be installed 'codenvy' of the version '" + updateVersion + "' }; looking on errors in file /var/log/puppet/puppet-agent.log locally");
 
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(5)).toString(),
-                     "[]");
+                     "[{'command'='sudo cat " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$data_host_name|data.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$puppet_master_host_name|master.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$host_url|hostname|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$api_host_name|api.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$analytics_host_name|analytics.example.com|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='sudo cat " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$version|3.3.0|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}, "
+                     + "{'command'='bash " + ETC_PUPPET + "/patches/multi_server/patch_after_update.sh', 'agent'='LocalAgent'}]");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Step number .* is out of update range")
     public void testGetUpdateCommandNonexistentStepError() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         OSUtils.VERSION = "7";
 
@@ -310,7 +349,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromSingleToMultiServerError() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         OSUtils.VERSION = "7";
 
@@ -325,7 +364,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromMultiToSingleServerError() throws Exception {
-        prepareMultiNodeEnv(configManager, transport);
+        prepareMultiNodeEnv(mockConfigManager, mockTransport);
 
         spyCdecArtifact.getUpdateInfo(InstallType.SINGLE_SERVER);
     }
@@ -333,7 +372,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromSingleToMultiServerError() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         OSUtils.VERSION = "7";
 
@@ -348,7 +387,7 @@ public class TestCDECArtifact extends BaseTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromMultiToSingleServerError() throws Exception {
-        prepareMultiNodeEnv(configManager, transport);
+        prepareMultiNodeEnv(mockConfigManager, mockTransport);
 
         OSUtils.VERSION = "7";
 
@@ -362,7 +401,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetBackupSingleServerCommand() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupDirectory("some_dir");
@@ -374,7 +413,7 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetRestoreSingleServerCommand() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
 
@@ -389,7 +428,7 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetRestoreMultiServerCommandFromFullBackup() throws Exception {
         Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
 
-        prepareMultiNodeEnv(configManager, transport);
+        prepareMultiNodeEnv(mockConfigManager, mockTransport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupFile(testingBackup.toString())
@@ -397,16 +436,16 @@ public class TestCDECArtifact extends BaseTest {
 
         Command result = spyCdecArtifact.getRestoreCommand(backupConfig);
         assertNotNull(result);
-        assertTrue(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"));  // check presence of restore FS commands
-        assertTrue(result.toString().contains("mongorestore"));  // check presence of restore MONGO and MONGO_ANALYTICS commands
-        assertTrue(result.toString().contains("sudo slapadd -q"));  // check presence of restore LDAP commands
+        assertTrue(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"), "Actual result: " + result);  // check presence of restore FS commands
+        assertTrue(result.toString().contains("mongorestore"), "Actual result: " + result);  // check presence of restore MONGO and MONGO_ANALYTICS commands
+        assertTrue(result.toString().contains("sudo slapadd -q"), "Actual result: " + result);  // check presence of restore LDAP commands
     }
 
     @Test
     public void testGetRestoreMultiServerCommandFromEmptyBackup() throws Exception {
         Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/empty_backup.tar").getPath());
 
-        prepareMultiNodeEnv(configManager, transport);
+        prepareMultiNodeEnv(mockConfigManager, mockTransport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupFile(testingBackup.toString())
@@ -414,9 +453,9 @@ public class TestCDECArtifact extends BaseTest {
 
         Command result = spyCdecArtifact.getRestoreCommand(backupConfig);
         assertNotNull(result);
-        assertFalse(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"));  // check absence of restore FS commands
-        assertFalse(result.toString().contains("mongorestore"));  // check absence of restore MONGO and MONGO_ANALYTICS commands
-        assertFalse(result.toString().contains("sudo slapadd -q"));  // check absence of restore LDAP commands
+        assertFalse(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"), "Actual result: " + result);  // check absence of restore FS commands
+        assertFalse(result.toString().contains("mongorestore"), "Actual result: " + result);  // check absence of restore MONGO and MONGO_ANALYTICS commands
+        assertFalse(result.toString().contains("sudo slapadd -q"), "Actual result: " + result);  // check absence of restore LDAP commands
     }
 
     @Test
@@ -424,15 +463,14 @@ public class TestCDECArtifact extends BaseTest {
         Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "c");
 
         Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "a", "property2", "b"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(testConfig).when(mockConfigManager).loadInstalledCodenvyConfig();
 
-        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(InstallType.MULTI_SERVER).when(mockConfigManager).detectInstallationType();
 
-        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testConfig, properties);
-        doReturn(mockHelper).when(spyCdecArtifact).getHelper(InstallType.MULTI_SERVER);
+        doReturn(mockCommand).when(spyCDECMultiServerHelper).getUpdateConfigCommand(testConfig, properties);
 
         spyCdecArtifact.updateConfig(properties);
-        verify(mockHelper).getUpdateConfigCommand(testConfig, properties);
+        verify(spyCDECMultiServerHelper).getUpdateConfigCommand(testConfig, properties);
     }
 
     @Test
@@ -440,12 +478,11 @@ public class TestCDECArtifact extends BaseTest {
         Map<String, String> properties = ImmutableMap.of("property2", "a", "property3", "b", "property4", "c");
 
         Config testConfig = new Config(ImmutableMap.of("property1", "a"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(testConfig).when(mockConfigManager).loadInstalledCodenvyConfig();
 
-        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(InstallType.MULTI_SERVER).when(mockConfigManager).detectInstallationType();
 
-        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testConfig, properties);
-        doReturn(mockHelper).when(spyCdecArtifact).getHelper(InstallType.MULTI_SERVER);
+        doReturn(mockCommand).when(spyCDECMultiServerHelper).getUpdateConfigCommand(testConfig, properties);
 
         try {
             spyCdecArtifact.updateConfig(properties);
@@ -464,11 +501,11 @@ public class TestCDECArtifact extends BaseTest {
         Map<String, String> properties = ImmutableMap.of("a", "c");
 
         Config testConfig = new Config(ImmutableMap.of("a", "c"));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(testConfig).when(mockConfigManager).loadInstalledCodenvyConfig();
+        doReturn(InstallType.MULTI_SERVER).when(mockConfigManager).detectInstallationType();
 
         doThrow(new CommandException("error", new AgentException("error"))).when(mockCommand).execute();
-        doReturn(mockCommand).when(mockHelper).getUpdateConfigCommand(testConfig, properties);
-        doReturn(mockHelper).when(spyCdecArtifact).getHelper(any(InstallType.class));
+        doReturn(mockCommand).when(spyCDECMultiServerHelper).getUpdateConfigCommand(testConfig, properties);
 
         spyCdecArtifact.updateConfig(properties);
     }
@@ -478,12 +515,12 @@ public class TestCDECArtifact extends BaseTest {
         Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "a");
         Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "c"));
 
-        doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES);
-        doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(
+        doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES)).when(mockConfigManager).getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES);
+        doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES)).when(mockConfigManager).getPuppetConfigFile(
                 Config.SINGLE_SERVER_BASE_PROPERTIES);
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdecArtifact).getInstalledVersion();
 
-        CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact, configManager);
+        CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact, mockConfigManager);
 
         Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
 
@@ -521,12 +558,12 @@ public class TestCDECArtifact extends BaseTest {
                                                        "api_host_name", "api.dev.com",
                                                        "data_host_name", "data.dev.com"));
 
-        doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).when(configManager).getPuppetConfigFile(
+        doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES)).when(mockConfigManager).getPuppetConfigFile(
                 Config.MULTI_SERVER_BASE_PROPERTIES);
-        doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES)).when(configManager).getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES);
+        doReturn(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES)).when(mockConfigManager).getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES);
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdecArtifact).getInstalledVersion();
 
-        CDECMultiServerHelper testHelper = new CDECMultiServerHelper(spyCdecArtifact, configManager);
+        CDECMultiServerHelper testHelper = new CDECMultiServerHelper(spyCdecArtifact, mockConfigManager);
 
         Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
         List<Command> commands = ((MacroCommand) command).getCommands();
@@ -560,9 +597,9 @@ public class TestCDECArtifact extends BaseTest {
         Map<String, String> properties = ImmutableMap.of(Config.VERSION, "1.0.0");
 
         Config config = new Config(properties);
-        doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);
-        doReturn(config).when(configManager).loadInstalledCodenvyConfig();
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(config).when(mockConfigManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);
+        doReturn(config).when(mockConfigManager).loadInstalledCodenvyConfig();
+        doReturn(InstallType.SINGLE_SERVER).when(mockConfigManager).detectInstallationType();
 
         Command command = spyCdecArtifact.getReinstallCommand();
         List<Command> commands = ((MacroCommand) command).getCommands();
@@ -585,9 +622,9 @@ public class TestCDECArtifact extends BaseTest {
                                                          );
 
         Config config = new Config(properties);
-        doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
-        doReturn(config).when(configManager).loadInstalledCodenvyConfig();
-        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(config).when(mockConfigManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+        doReturn(config).when(mockConfigManager).loadInstalledCodenvyConfig();
+        doReturn(InstallType.MULTI_SERVER).when(mockConfigManager).detectInstallationType();
         doReturn(Optional.empty()).when(spyCdecArtifact).fetchAssemblyVersion();
 
         Command command = spyCdecArtifact.getReinstallCommand();
@@ -606,7 +643,8 @@ public class TestCDECArtifact extends BaseTest {
 
     @AfterMethod
     public void removeTempDir() throws IOException {
-        FileUtils.deleteDirectory(new File("/tmp/codenvy"));
+        FileUtils.deleteDirectory(new File(BASE_TMP_DIR));
+        FileUtils.deleteDirectory(BackupConfig.BASE_TMP_DIRECTORY.toFile());  // to clean up directories creating in time of executing backup/restore tests
     }
 
 }

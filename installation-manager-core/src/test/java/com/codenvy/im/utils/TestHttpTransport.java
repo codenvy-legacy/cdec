@@ -107,8 +107,8 @@ public class TestHttpTransport {
 
     @Test
     public void testDownload(ITestContext context) throws Exception {
-        java.nio.file.Path destDir = Paths.get("target", "download");
-        java.nio.file.Path destFile = destDir.resolve("tmp");
+        java.nio.file.Path destDir = Paths.get("target", TestHttpTransport.class.getSimpleName(), "download");
+        java.nio.file.Path destFile = destDir.resolve("temp");
 
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         httpTransport.download("http://localhost:" + port + "/rest/test/download", destDir);
@@ -200,7 +200,7 @@ public class TestHttpTransport {
         @Path("download")
         @Produces(MediaType.APPLICATION_OCTET_STREAM)
         public Response download() throws IOException {
-            java.nio.file.Path file = Paths.get("target", "tmp");
+            java.nio.file.Path file = Paths.get("target", TestHttpTransport.class.getSimpleName(), "temp");
             Files.copy(new ByteArrayInputStream("content".getBytes()), file, StandardCopyOption.REPLACE_EXISTING);
             return Response.ok(file.toFile(), MediaType.APPLICATION_OCTET_STREAM)
                            .header("Content-Length", String.valueOf(Files.size(file)))

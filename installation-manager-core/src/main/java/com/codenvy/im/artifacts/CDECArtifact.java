@@ -100,13 +100,13 @@ public class CDECArtifact extends AbstractArtifact {
     protected Optional<Version> fetchVersionFromPuppetConfig() throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
         String value = config.getValue(Config.VERSION);
-        return value == null ? Optional.empty() : Optional.of(Version.valueOf(value));
+        return value == null ? Optional.<Version>empty() : Optional.of(Version.valueOf(value));
     }
 
     protected Optional<Version> fetchAssemblyVersion() throws IOException {
         Command command = getReadAssemblyPropertiesCommand();
         String result = command.execute().trim();
-        return result.isEmpty() ? Optional.empty() : Optional.of(Version.valueOf(result));
+        return result.isEmpty() ? Optional.<Version>empty() : Optional.of(Version.valueOf(result));
     }
 
     protected Command getReadAssemblyPropertiesCommand() throws IOException {
@@ -282,5 +282,4 @@ public class CDECArtifact extends AbstractArtifact {
         }
 
     }
-
 }
