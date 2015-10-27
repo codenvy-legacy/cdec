@@ -32,16 +32,16 @@ ANALYTICS_PORTS=("tcp:7777" "tcp:8080" "udp:5140" "tcp:9763" "tcp:10050" "tcp:32
 function cleanUp() {
     killTimer
 
-    printLn
-    printLn
+    println
+    println
 }
 
 validateExitCode() {
     EXIT_CODE=$1
     if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
         pauseTimer
-        printLn
-        printLn "Unexpected error occurred. See install.log for more details"
+        println
+        println "Unexpected error occurred. See install.log for more details"
         exit ${EXIT_CODE}
     fi
 }
@@ -81,7 +81,7 @@ downloadConfig() {
     http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
     if [[ ! ${http_code} -eq 200 ]]; then    # if response code != "200 OK"
         # print response from update server
-        printLn $(curl --silent ${url})
+        println $(curl --silent ${url})
         exit 1
     fi
 
@@ -93,7 +93,7 @@ validateOS() {
     if [ -f /etc/redhat-release ]; then
         osToDisplay="Red Hat"
     else
-        printLn  "Operation system isn't supported."
+        println  "Operation system isn't supported."
         exit 1
     fi
 
@@ -101,12 +101,12 @@ validateOS() {
     osVersion=`${osToDisplay} | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
 
     if [ "${VERSION}" == "3.1.0" ] && [ "${osVersion}" != "6" ]; then
-        printLn "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
+        println "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
         exit 1
     fi
 
     if [ "${CODENVY_TYPE}" == "multi" ] && [ "${osVersion}" != "7" ]; then
-        printLn "Codenvy multi-node can be installed onto CentOS 7.x only"
+        println "Codenvy multi-node can be installed onto CentOS 7.x only"
         exit 1
     fi
 }
@@ -157,24 +157,33 @@ cursorUp() {
     echo -en "\e[1A"
 }
 
+# https://wiki.archlinux.org/index.php/Color_Bash_Prompt
+printError() {
+    echo -en "\e[91m$1\e[0m" # with High Intensity RED color
+}
+
+printSuccess() {
+    echo -en "\e[32m$1\e[0m" # with Underline GREEN color
+}
+
+printWarning() {
+    echo -en "\e[93m$1\e[0m" # with High Intensity YELLOW color
+}
+
+printImportantInfo() {
+    echo -en "\e[94m$1\e[0m" # with High Intensity blue color
+}
+
 printPrompt() {
     clearLine
-    echo -en "\e[94m[CODENVY]\e[0m "    # with blue color
-}
-
-printRed() {
-    echo -en "\e[91m$1\e[0m" # with red color
-}
-
-printGreen() {
-    echo -en "\e[32m$1\e[0m" # with green color
+    echo -en "\e[34m[CODENVY] \e[0m" # with Underline blue color
 }
 
 print() {
     printPrompt; echo -n "$@"
 }
 
-printLn() {
+println() {
     printPrompt; echo "$@"
 }
 
@@ -219,7 +228,7 @@ askHostnameAndInsertProperty() {
         if [ "${OUTPUT}" == "success" ]; then
            break
         else
-            printLn $(printRed "ERROR: The hostname '${VALUE}' isn't availabe or wrong. Please try again...")
+            println $(printError "ERROR: The hostname '${VALUE}' isn't availabe or wrong. Please try again...")
         fi
     done
 
@@ -232,7 +241,7 @@ executeIMCommand() {
 
 pressAnyKeyToContinueAndClearConsole() {
     if [[ ${SILENT} == false ]]; then
-        printLn  "Press any key to continue"
+        println  "Press any key to continue"
         read -n1 -s
         clear
     fi
@@ -240,7 +249,7 @@ pressAnyKeyToContinueAndClearConsole() {
 
 pressAnyKeyToContinue() {
     if [[ ${SILENT} == false ]]; then
-        printLn  "Press any key to continue"
+        println  "Press any key to continue"
         read -n1 -s
     fi
 }
@@ -282,8 +291,8 @@ validatePortLocal() {
     OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
 
     if [ "${OUTPUT}" != "" ]; then
-        printLn $(printRed "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
-        printLn $(printRed "ERROR: The installation can't be proceeded.")
+        println $(printError "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
+        println $(printError "ERROR: The installation can't be proceeded.")
         exit 1
     fi
 }
@@ -295,8 +304,8 @@ validatePortRemote() {
     OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
 
     if [ "${OUTPUT}" != "" ]; then
-        printLn $(printRed "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
-        printLn $(printRed "ERROR: The installation can't be proceeded.")
+        println $(printError "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
+        println $(printError "ERROR: The installation can't be proceeded.")
         exit 1
     fi
 }
@@ -360,29 +369,32 @@ doCheckAvailablePorts_multi() {
 printPreInstallInfo_single() {
     clear
 
-    printLn "Welcome. This program installs Codenvy "${VERSION}
-    printLn
-    printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
-    printLn "Configuration File:  "${CONFIG}
-    printLn
-    printLn "Checking system pre-requisites..."
-    printLn
+    println "Welcome. This program installs Codenvy "${VERSION}
+    println
+    println "Sizing Guide:        http://docs.codenvy.com/onprem"
+    println "Configuration File:  "${CONFIG}
+    println
+    println "Checking system pre-requisites..."
+    println
 
     doCheckAvailableResourcesLocally 8000000 4 300000000
     preconfigureSystem
 
-    printLn "Checking access to external dependencies..."
-    printLn
+    println "Checking access to external dependencies..."
+    println
     checkAccessToExternalDependencies
+
+    println "Configuring system properties with file://${CONFIG}..."
+    println
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
     [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
 
     doCheckAvailablePorts_single
-    printLn
-    printLn
-    printLn
+    println
+    println
+    println
 }
 
 # parameter 1 - MIN_RAM_KB
@@ -431,9 +443,8 @@ doCheckAvailableResourcesLocally() {
     fi
 
     local osInfoToDisplay=$(printf "%-30s" "${osInfo}")
-    local osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
-    printLn "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
-
+    local osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
+    println "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
 
     resourceIssueFound=false
 
@@ -464,40 +475,40 @@ doCheckAvailableResourcesLocally() {
     local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
     local availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
     local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-    local RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printWarning "[WARNING]")")
 
     local minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
     local availableCoresToDisplay=$(printf "%-11s" "${availableCores} cores")
-    local coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printWarning "[WARNING]")")
 
     local minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
     local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
     local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-    local diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printWarning "[WARNING]")")
 
-    printLn
-    printLn "                RECOMMENDED     AVAILABLE"
-    printLn "RAM             ${minRAMToDisplay} ${availableRAMToDisplay} ${RAMStateToDisplay}"
-    printLn "CPU             ${minCoresToDisplay} ${availableCoresToDisplay} ${coresStateToDisplay}"
-    printLn "Disk Space      ${minDiskSpaceToDisplay} ${availableDiskSpaceToDisplay} ${diskStateToDisplay}"
-    printLn
+    println
+    println "                RECOMMENDED     AVAILABLE"
+    println "RAM             $minRAMToDisplay $availableRAMToDisplay $RAMStateToDisplay"
+    println "CPU             $minCoresToDisplay $availableCoresToDisplay $coresStateToDisplay"
+    println "Disk Space      $minDiskSpaceToDisplay $availableDiskSpaceToDisplay $diskStateToDisplay"
+    println
 
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
         if [[ ${osIssueFound} == true ]]; then
-            printLn $(printRed "!!! The OS version or config do not match requirements.")
+            println $(printError "!!! The OS version or config do not match requirements.")
             exit 1;
         fi
 
         if [[ ${resourceIssueFound} == true ]]; then
-            printLn $(printRed "!!! The resources available are lower than required.")
-            printLn $(printRed "!!! Troubleshooting: http://docs.codenvy.com/onprem")
+            println $(printWarning "!!! The resources available are lower than recommended.")
+            println $(printWarning "!!! Troubleshooting: http://docs.codenvy.com/onprem")
         fi
 
-        printLn
+        println
 
         if [[ ${SILENT} == false && ${resourceIssueFound} == true ]]; then
             pressYKeyToContinue "Proceed?"
-            printLn
+            println
         fi
     fi
 }
@@ -520,20 +531,20 @@ checkAccessToExternalDependencies() {
     checkUrl http://mirror.centos.org/centos/ || resourceIssueFound=true
     checkUrl https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION} || resourceIssueFound=true  # check Codenvy binary accessibility
 
-    printLn
+    println
 
     if [[ ${resourceIssueFound} == true ]]; then
-        printLn $(printRed "!!! Some repositories are not accessible. The installation will fail.")
-        printLn $(printRed "!!! Consider setting up a proxy server.")
-        printLn $(printRed "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/")
-        printLn
+        println $(printError "!!! Some repositories are not accessible. The installation will fail.")
+        println $(printError "!!! Consider setting up a proxy server.")
+        println $(printError "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/")
+        println
 
         if [[ ${SILENT} == true ]]; then
             exit 1;
         fi
 
         pressYKeyToContinue "Proceed?"
-        printLn
+        println
     fi
 }
 
@@ -550,7 +561,8 @@ checkUrl() {
         wget --quiet --spider --no-cookies --no-check-certificate --header "${cookie}" ${url} || checkFailed=1
     fi
 
-    printLn "$(printf "%-79s" ${url})"$([ ${checkFailed} == 0 ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+    local checkStatus=$([ ${checkFailed} == 0 ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
+    println "$(printf "%-79s" ${url}) ${checkStatus}"
 
     return ${checkFailed}
 }
@@ -558,16 +570,19 @@ checkUrl() {
 printPreInstallInfo_multi() {
     clear
 
-    printLn "Welcome. This program installs Codenvy "${VERSION}
-    printLn
-    printLn "Sizing Guide:        http://docs.codenvy.com/onprem"
-    printLn "Configuration File:  "${CONFIG}
-    printLn
-    printLn "Checking system pre-requisites..."
-    printLn
+    println "Welcome. This program installs Codenvy "${VERSION}
+    println
+    println "Sizing Guide:        http://docs.codenvy.com/onprem"
+    println "Configuration File:  "${CONFIG}
+    println
+    println "Checking system pre-requisites..."
+    println
 
     doCheckAvailableResourcesLocally 1000000 1 14000000
     preconfigureSystem
+
+    println "Configuring system properties with file://${CONFIG}..."
+    println
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -577,19 +592,19 @@ printPreInstallInfo_multi() {
 
         doGetHostsVariables
 
-        printLn "Hostname of Codenvy              : "${HOST_NAME}
-        printLn "Hostname of Puppet master node   : "${PUPPET_MASTER_HOST_NAME}
-        printLn "Hostname of data node            : "${DATA_HOST_NAME}
-        printLn "Hostname of API node             : "${API_HOST_NAME}
-        printLn "Hostname of builder node         : "${BUILDER_HOST_NAME}
-        printLn "Hostname of runner node          : "${RUNNER_HOST_NAME}
-        printLn "Hostname of datasource node      : "${DATASOURCE_HOST_NAME}
-        printLn "Hostname of analytics node       : "${ANALYTICS_HOST_NAME}
-        printLn "Hostname of site node            : "${SITE_HOST_NAME}
-        printLn
+        println "Hostname of Codenvy              : "${HOST_NAME}
+        println "Hostname of Puppet master node   : "${PUPPET_MASTER_HOST_NAME}
+        println "Hostname of data node            : "${DATA_HOST_NAME}
+        println "Hostname of API node             : "${API_HOST_NAME}
+        println "Hostname of builder node         : "${BUILDER_HOST_NAME}
+        println "Hostname of runner node          : "${RUNNER_HOST_NAME}
+        println "Hostname of datasource node      : "${DATASOURCE_HOST_NAME}
+        println "Hostname of analytics node       : "${ANALYTICS_HOST_NAME}
+        println "Hostname of site node            : "${SITE_HOST_NAME}
+        println
     else
-        printLn "Codenvy hostnames:       will prompt for entry"
-        printLn
+        println "Codenvy hostnames:       will prompt for entry"
+        println
 
         askHostnameAndInsertProperty "Set hostname of Codenvy" "host_url"
         askHostnameAndInsertProperty "Set hostname of Puppet master node" "puppet_master_host_name"
@@ -603,22 +618,22 @@ printPreInstallInfo_multi() {
 
         clearLine
 
-        printLn
+        println
         pressYKeyToContinue "Proceed?"
-        printLn
+        println
     fi
 
-    printLn "Checking access to Codenvy nodes..."
-    printLn
+    println "Checking access to Codenvy nodes..."
+    println
     doCheckAvailableResourcesOnNodes
-    printLn
+    println
     doCheckAvailablePorts_multi
 
-    printLn "Checking access to external dependencies..."
-    printLn
+    println "Checking access to external dependencies..."
+    println
     checkAccessToExternalDependencies
-    printLn
-    printLn
+    println
+    println
 }
 
 doCheckAvailableResourcesOnNodes() {
@@ -631,7 +646,7 @@ doCheckAvailableResourcesOnNodes() {
         # check if host available
         local OUTPUT=$(validateHostname ${HOST})
         if [ "${OUTPUT}" != "success" ]; then
-            printLn $(printRed "ERROR: The hostname '${HOST}' isn't availabe or wrong.")
+            println $(printError "ERROR: The hostname '${HOST}' isn't availabe or wrong.")
             exit 1
         fi
 
@@ -682,8 +697,6 @@ doCheckAvailableResourcesOnNodes() {
             osIssueFound=true
         fi
 
-        local resourceIssueFound=false
-
         local availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
         local availableRAMIssue=false
 
@@ -691,51 +704,55 @@ doCheckAvailableResourcesOnNodes() {
         local availableDiskSpaceIssue=false
 
         if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
-            resourceIssueFound=true
             availableRAMIssue=true
         fi
 
         if [[ -z ${availableDiskSpace} || ${availableDiskSpace} < ${MIN_DISK_SPACE_KB} ]]; then
-            resourceIssueFound=true
             availableDiskSpaceIssue=true
         fi
 
-        if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
-            printLn "$(printf "%-43s" "${HOST}" &&  printRed "[NOT OK]")"
-
+        if [[ ${osIssueFound} == true || ${availableRAMIssue} == true || ${availableDiskSpaceIssue} == true ]]; then
             globalNodeIssueFound=true
+
+            local nodeStateToDisplay=$([ ${osIssueFound} == true ] && echo $(printError "[NOT OK]") || echo $(printWarning "[WARNING]"))
+            println "$(printf "%-43s" "${HOST}" ${nodeStateToDisplay})"
 
             osInfoToDisplay=$(printf "%-30s" "${osInfo}")
             if [[ ${osIssueFound} == true ]]; then
-                printLn "> DETECTED OS: ${osInfoToDisplay} $(printRed "[NOT OK]")"
-                printLn
+                println "> DETECTED OS: ${osInfoToDisplay} $(printError "[NOT OK]")"
+                println
             fi
 
-            local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
-            local availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
-            local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-            local RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+            if [[ ${availableRAMIssue} == true || ${availableDiskSpaceIssue} == true ]]; then
+                println ">                 RECOMMENDED     AVAILABLE"
 
-            local minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB}/1000/1000 )) GB")
-            local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
-            local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-            local diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printGreen "[OK]")" || echo "$(printRed "[NOT OK]")")
+                if [[ ${availableRAMIssue} == true ]]; then
+                    local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
+                    local availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+                    local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
 
-            if [[ ${resourceIssueFound} == true ]]; then
-                printLn ">                 RECOMMENDED     AVAILABLE"
-                printLn "> RAM             ${minRAMToDisplay} ${availableRAMToDisplay} ${RAMStateToDisplay}"
-                printLn "> Disk Space      ${minDiskSpaceToDisplay} ${availableDiskSpaceToDisplay} ${diskStateToDisplay}"
-                printLn
+                    println "> RAM             $minRAMToDisplay $availableRAMToDisplay $(printWarning "[WARNING]")"
+                fi
+
+                if [[ ${availableDiskSpaceIssue} == true ]]; then
+                    local minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB}/1000/1000 )) GB")
+                    local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
+                    local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
+
+                    println "> Disk Space      $minDiskSpaceToDisplay $availableDiskSpaceToDisplay $(printWarning "[WARNING]")"
+                fi
+
+                println
             fi
         else
-            printLn "$(printf "%-43s" "${HOST}" &&  printGreen "[OK]")"
+            println "$(printf "%-43s" "${HOST}" && printSuccess "[OK]")"
         fi
     done
 
     if [[ ${globalNodeIssueFound} == true ]]; then
-        printLn $(printRed "!!! Some nodes do not match requirements.")
-        printLn $(printRed "!!! See: http://docs.codenvy.com/onprem/#sizing-guide")
-        printLn
+        println $(printWarning "!!! Some nodes do not match recommended.")
+        println $(printWarning "!!! See: http://docs.codenvy.com/onprem/#sizing-guide")
+        println
 
         if [[ ${SILENT} == true && ${globalOsIssueFound} == true ]]; then
             exit 1;
@@ -743,7 +760,7 @@ doCheckAvailableResourcesOnNodes() {
 
         if [[ ${SILENT} != true ]]; then
             pressYKeyToContinue "Proceed?"
-            printLn
+            println
         fi
     fi
 }
@@ -790,7 +807,7 @@ doInstallCodenvy() {
         if [ ${STEP} == 9 ]; then
             nextStep $(( $STEP+3 )) "Booting Codenvy... "
         else
-            nextStep $(( $STEP+3 )) "Installing Codenvy... "
+            nextStep $(( $STEP+3 )) "Installing Codenvy... ~20 mins"
         fi
 
         if [ ${CODENVY_TYPE} == "multi" ]; then
@@ -817,7 +834,7 @@ nextStep() {
 
     cursorUp
     cursorUp
-    printLn "$@"
+    println "$@"
     updateProgress ${CURRENT_STEP}
 
     continueTimer
@@ -851,7 +868,7 @@ updateTimer() {
         M=$(( $DURATION/60 ))
         S=$(( $DURATION%60 ))
 
-        printLn "Elapsed time: "${M}"m "${S}"s"
+        println "Elapsed time: "${M}"m "${S}"s"
         cursorUp
 
         sleep 1
@@ -874,19 +891,24 @@ updateProgress() {
     echo "] "${PROGRESS}"%"
 }
 
+printLastPuppetLogLine() {
+    local lastLine=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log)
+
+
+}
+
 printPostInstallInfo() {
     [ -z ${SYSTEM_ADMIN_NAME} ] && SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
     [ -z ${SYSTEM_ADMIN_PASSWORD} ] && SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
     [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
 
-    printLn
-    printLn "Codenvy is ready at http://"${HOST_NAME}
-    printLn
-    printLn "!!! Set up a DNS entry for Codenvy, or add a hosts rule to your clients:"
-    printLn "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq"
-    printLn
-    printLn "Admin user name : "${SYSTEM_ADMIN_NAME}
-    printLn "Admin password  : "${SYSTEM_ADMIN_PASSWORD}
+    println
+    println "Codenvy is ready at $(printImportantInfo "http://$HOST_NAME")"
+    println "Admin user name: $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
+    println "Admin password: $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
+    println
+    println "!!! Your clients must add a hosts rule, or you can set up a DNS entry. Learn more:"
+    println "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq"
 }
 
 set -e
