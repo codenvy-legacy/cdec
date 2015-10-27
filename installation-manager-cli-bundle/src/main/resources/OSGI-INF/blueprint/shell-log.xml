@@ -53,5 +53,8 @@
         <command>
             <action class="com.codenvy.im.cli.command.ChangeAdminPasswordCommand"/>
         </command>
+        <command>
+            <action class="com.codenvy.im.cli.command.VersionCommand"/>
+        </command>
     </command-bundle>
 </blueprint>

@@ -25,12 +25,12 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
-
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.utils.Version;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.util.Collections;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -119,56 +118,6 @@ public class TestDownloadCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "Downloading might take several minutes depending on your internet connection. Please wait.\n" + expectedOutput + "\n");
-    }
-
-    @Test
-    public void testCheckUpdates() throws Exception {
-        doReturn(Collections.emptyList()).when(service).getUpdates();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--check-remote", Boolean.TRUE);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifacts\" : [ ],\n" +
-                             "  \"status\" : \"OK\"\n" +
-                             "}\n");
-    }
-
-    @Test
-    public void testCheckUpdatesWhenErrorInResponse() throws Exception {
-        doNothing().when(spyCommand).updateImCliClientIfNeeded();
-
-        doThrow(new IOException("Some error")).when(service).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--check-remote", Boolean.TRUE);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"message\" : \"Some error\",\n" +
-                             "  \"status\" : \"ERROR\"\n" +
-                             "}\n");
-    }
-
-    @Test
-    public void testCheckUpdatesWhenServiceThrowsError() throws Exception {
-        doNothing().when(spyCommand).updateImCliClientIfNeeded();
-
-        String expectedOutput = "{\n"
-                                + "  \"message\" : \"Server Error Exception\",\n"
-                                + "  \"status\" : \"ERROR\"\n"
-                                + "}";
-        doThrow(new RuntimeException("Server Error Exception")).when(service).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--check-remote", Boolean.TRUE);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, expectedOutput + "\n");
     }
 
     @Test

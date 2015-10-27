@@ -21,17 +21,17 @@ import com.codenvy.im.artifacts.VersionLabel;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
- * @author Dmytro Nochevnov
- * @author Anatoliy Bazko
+ * @author Alexander Reshetnyak
  */
-@JsonPropertyOrder({"artifact", "version", "label", "status"})
-public class ArtifactInfo extends BasicArtifactInfo {
-    private String         artifact;
-    private String         version;
-    private VersionLabel   label;
-    private ArtifactStatus status;
+@JsonPropertyOrder({"artifact", "version", "label", "availableVersion", "status"})
+public class VersionArtifactInfo extends BasicArtifactInfo {
+    private String               artifact;
+    private String               version;
+    private VersionLabel         label;
+    private AvailableVersionInfo availableVersion;
+    private String               status;
 
-    public ArtifactInfo() {
+    public VersionArtifactInfo() {
     }
 
     public String getArtifact() {
@@ -46,18 +46,6 @@ public class ArtifactInfo extends BasicArtifactInfo {
         return version;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public ArtifactStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ArtifactStatus status) {
-        this.status = status;
-    }
-
     public VersionLabel getLabel() {
         return label;
     }
@@ -66,28 +54,51 @@ public class ArtifactInfo extends BasicArtifactInfo {
         this.label = label;
     }
 
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public AvailableVersionInfo getAvailableVersion() {
+        return availableVersion;
+    }
+
+    public void setAvailableVersion(AvailableVersionInfo availableVersion) {
+        this.availableVersion = availableVersion;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ArtifactInfo)) {
+        if (!(o instanceof VersionArtifactInfo)) {
             return false;
         }
 
-        ArtifactInfo that = (ArtifactInfo)o;
+        VersionArtifactInfo that = (VersionArtifactInfo)o;
 
         if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) {
+            return false;
+        }
+        if (version != null ? !version.equals(that.version) : that.version != null) {
             return false;
         }
         if (label != that.label) {
             return false;
         }
-        if (status != that.status) {
+        if (availableVersion != null ? !availableVersion.equals(that.availableVersion) : that.availableVersion != null) {
             return false;
         }
-        if (version != null ? !version.equals(that.version) : that.version != null) {
+        if (status != null ? !status.equals(that.status) : that.status != null) {
             return false;
         }
 
@@ -99,7 +110,7 @@ public class ArtifactInfo extends BasicArtifactInfo {
     public int hashCode() {
         int result = artifact != null ? artifact.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (label != null ? label.hashCode() : 0);
+        result = 31 * result + (availableVersion != null ? availableVersion.hashCode() : 0);
         result = 31 * result + (status != null ? status.hashCode() : 0);
         return result;
     }

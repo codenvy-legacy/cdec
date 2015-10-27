@@ -28,12 +28,12 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -54,7 +54,6 @@ import java.util.List;
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static java.lang.String.format;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
@@ -381,47 +380,6 @@ public class TestInstallCommand extends AbstractTestCommand {
         assertTrue(values.get(1).getParameters().toString().matches(format("\\{ARTIFACT=%s, VERSION=%s, ERROR-MESSAGE=%s, TIME=\\d*}",
                                                                            TEST_ARTIFACT, TEST_VERSION, errorMessage)),
                    "Actual parameters: " + values.get(1).getParameters().toString());
-    }
-
-    @Test
-    public void testListInstalledArtifacts() throws Exception {
-        doReturn(ImmutableList.of(new InstallArtifactInfo().withArtifact("codenvy")
-                                                           .withVersion("1.0.1")
-                                                           .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--list", Boolean.TRUE);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.getOutputStream();
-        assertEquals(output, "{\n"
-                             + "  \"artifacts\" : [ {\n"
-                             + "    \"artifact\" : \"codenvy\",\n"
-                             + "    \"version\" : \"1.0.1\",\n"
-                             + "    \"status\" : \"SUCCESS\"\n"
-                             + "  } ],\n"
-                             + "  \"status\" : \"OK\"\n"
-                             + "}\n");
-    }
-
-    @Test
-    public void testListInstalledArtifactsWhenServiceError() throws Exception {
-        doReturn(new HashMap<>(ImmutableMap.of("a", "2", "b", "MANDATORY"))).when(mockConfigManager)
-                                                                            .merge(any(Version.class), anyMap(), anyMap());
-
-        doThrow(new RuntimeException("Server Error Exception"))
-                .when(facade)
-                .getInstalledVersions();
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--list", Boolean.TRUE);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n"
-                             + "  \"message\" : \"Server Error Exception\",\n"
-                             + "  \"status\" : \"ERROR\"\n"
-                             + "}\n");
     }
 
     @Test

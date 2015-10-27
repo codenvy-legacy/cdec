@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class InstallArtifactInfo extends BasicArtifactInfo {
     private String                artifact;
     private String                version;
-    private VersionLabel label;
+    private VersionLabel          label;
     private InstallArtifactStatus status;
 
     public InstallArtifactInfo() {

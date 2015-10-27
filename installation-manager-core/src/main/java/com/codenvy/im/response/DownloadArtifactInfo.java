@@ -32,7 +32,7 @@ public class DownloadArtifactInfo extends BasicArtifactInfo {
     private String                 artifact;
     private String                 version;
     private String                 file;
-    private VersionLabel label;
+    private VersionLabel           label;
     private DownloadArtifactStatus status;
 
     public DownloadArtifactInfo() {

@@ -39,7 +39,6 @@ import org.eclipse.che.commons.json.JsonParseException;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -66,9 +65,6 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Argument(index = 1, name = "version", description = "The specific version of the artifact to install", required = false, multiValued = false)
     private String versionNumber;
-
-    @Option(name = "--list", aliases = "-l", description = "To show installed list of artifacts", required = false)
-    private boolean list;
 
     @Option(name = "--multi", aliases = "-m", description = "To install artifact on multiply nodes (by default on single node)", required = false)
     private boolean multi;
@@ -103,9 +99,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        if (list) {
-            doExecuteListInstalledArtifacts();
-        } else if (reinstall) {
+        if (reinstall) {
             doExecuteReinstall();
         } else {
             doExecuteInstall();
@@ -275,15 +269,6 @@ public class InstallCommand extends AbstractIMCommand {
             }
         }
 
-        return null;
-    }
-
-    protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {
-        Collection<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();
-        InstallResponse installResponse = new InstallResponse();
-        installResponse.setArtifacts(installedVersions);
-        installResponse.setStatus(ResponseCode.OK);
-        console.printResponseExitInError(installResponse);
         return null;
     }
 

@@ -26,8 +26,6 @@ import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.DownloadResponse;
 import com.codenvy.im.response.ResponseCode;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesResponse;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 
@@ -58,17 +56,10 @@ public class DownloadCommand extends AbstractIMCommand {
     @Option(name = "--list-local", aliases = "-l", description = "To show the list of downloaded artifacts", required = false)
     private boolean listLocal;
 
-    @Option(name = "--check-remote", aliases = "-c", description = "To check on remote versions to see if new version is available", required = false)
-    private boolean checkRemote;
-
     @Override
     protected void doExecuteCommand() throws Exception {
         if (listLocal) {
             doList();
-
-        } else if (checkRemote) {
-            doCheck();
-
         } else {
             doDownload();
         }
@@ -113,14 +104,6 @@ public class DownloadCommand extends AbstractIMCommand {
                 break;
             }
         }
-    }
-
-    private void doCheck() throws JsonParseException, IOException {
-        Collection<UpdatesArtifactInfo> updates = facade.getAllUpdates(null);
-        UpdatesResponse updatesResponse = new UpdatesResponse();
-        updatesResponse.setArtifacts(updates);
-        updatesResponse.setStatus(ResponseCode.OK);
-        console.printResponseExitInError(updatesResponse);
     }
 
     private void doList() throws JsonParseException, IOException {
