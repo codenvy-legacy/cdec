@@ -55,6 +55,12 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>analyze</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-dependencies-jar</id>
                         <phase>generate-resources</phase>
                         <goals>

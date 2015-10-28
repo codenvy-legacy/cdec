@@ -27,66 +27,91 @@
     </parent>
     <artifactId>installation-manager-core</artifactId>
     <name>Codenvy :: IM :: Installation Manager Core</name>
-    <properties>
-        <com.jcraft.version>0.1.51</com.jcraft.version>
-        <org.apache.sshd.version>0.9.0</org.apache.sshd.version>
-    </properties>
     <dependencies>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${ch.qos.logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${ch.qos.logback.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.codenvy.hosted-infrastructure</groupId>
             <artifactId>codenvy-hosted-api-subscription</artifactId>
-            <version>${codenvy.hosted-infrastructure.version}</version>
         </dependency>
         <dependency>
             <groupId>com.codenvy.hosted-infrastructure</groupId>
             <artifactId>codenvy-hosted-platform-api-impl</artifactId>
-            <version>${codenvy.hosted-infrastructure.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${com.google.guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-multibindings</artifactId>
         </dependency>
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
-            <version>${com.jcraft.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wordnik</groupId>
+            <artifactId>swagger-annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
-            <version>1.10</version>
             <!-- TODO -->
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>${commons-io.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>${commons-compress.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-account</artifactId>
-            <version>${che.core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-auth</artifactId>
-            <version>${che.core.version}</version>
             <!-- exclude to solve conflict with 'org.everrest:everrest-assured' artifact-->
             <exclusions>
                 <exclusion>
@@ -96,78 +121,82 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.everrest</groupId>
-            <artifactId>everrest-core</artifactId>
-            <version>${org.everrest.version}</version>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.restlet.jse</groupId>
-            <artifactId>org.restlet.ext.jackson</artifactId>
-            <version>${org.restlet.version}</version>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-dto</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.restlet.jse</groupId>
-            <artifactId>org.restlet.ext.json</artifactId>
-            <version>${org.restlet.version}</version>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-user</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-commons-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-commons-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-commons-lang</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>${org.slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.console</artifactId>
-            <version>${org.apache.karaf.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <!-- Is required by Sonar -->
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
-            <version>${org.apache.sshd.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.everrest</groupId>
             <artifactId>everrest-assured</artifactId>
-            <version>${org.everrest.assured.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${org.mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockitong</groupId>
             <artifactId>mockitong</artifactId>
-            <version>${org.mockitong.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>mockito-all</artifactId>
-                    <groupId>org.mockito</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
-            <version>${org.powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>${org.testng.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
