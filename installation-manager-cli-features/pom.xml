@@ -32,7 +32,6 @@
         <dependency>
             <groupId>com.codenvy.im</groupId>
             <artifactId>installation-manager-cli-bundle</artifactId>
-            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>installation-manager-core</artifactId>
@@ -69,6 +68,18 @@
                     </execution>
                 </executions>
                 <inherited>false</inherited>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>analyze</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
